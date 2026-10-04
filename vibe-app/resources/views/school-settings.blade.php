@@ -52,7 +52,7 @@
     </section>
     @endif
     <section class="mb-5 rounded border border-outline-variant/30 bg-white p-5 sm:p-6"><div class="mb-5 flex items-center justify-between"><div><h2 class="text-lg font-semibold">Agency / Department</h2><p class="mt-1 text-xs text-on-surface-variant">Manage the organization identity and district information used in official records and document headers.</p></div><span class="material-symbols-outlined text-on-surface-variant">account_balance</span></div>
-        <form id="department-details-form" data-editable-form method="POST" action="{{ route('school-settings.agency') }}" enctype="multipart/form-data" class="grid grid-cols-1 gap-4 md:grid-cols-2">@csrf
+        <form id="department-details-form" data-editable-form method="POST" action="{{ route('school-settings.agency') }}" enctype="multipart/form-data" class="grid grid-cols-1 gap-4 md:grid-cols-2">@csrf<input type="hidden" name="school_id" value="{{ request('school_id') }}">
             <div class="rounded border border-primary/15 bg-surface-low p-4 md:col-span-2">
                 <div class="mb-4 border-b border-outline-variant/30 pb-3"><h3 class="text-sm font-semibold text-primary">Agency / Department details</h3><p class="mt-1 text-xs text-on-surface-variant">General agency identity, department information, contact details, and primary logo.</p></div>
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">

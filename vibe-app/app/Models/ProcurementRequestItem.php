@@ -4,12 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\BelongsToOrganization;
 
 class ProcurementRequestItem extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToOrganization;
 
-    protected $fillable = ['procurement_request_id', 'name', 'description', 'quantity', 'unit', 'unit_price', 'total'];
+    protected $fillable = ['organization_id', 'procurement_request_id', 'name', 'description', 'quantity', 'unit', 'unit_price', 'total'];
 
     protected function casts(): array
     {

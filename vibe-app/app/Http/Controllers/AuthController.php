@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
+use App\Models\Organization;
 use App\Models\School;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -65,6 +67,11 @@ class AuthController extends Controller
         ]);
 
         DB::transaction(function () use ($data) {
+            $organization = Organization::create([
+                'name' => $data['name'],
+                'slug' => 'org-' . Str::lower(Str::random(12)),
+                'status' => 'pending',
+            ]);
             $schoolData = collect($data)->except([
                 'system_user_name',
                 'system_user_email',
@@ -72,6 +79,7 @@ class AuthController extends Controller
                 'system_user_password_confirmation',
             ])->all();
             $schoolData['status'] = 'inactive';
+            $schoolData['organization_id'] = $organization->id;
 
             $nextNumber = max(1000, ((int) School::max('id')) + 1000);
             do {
@@ -85,6 +93,7 @@ class AuthController extends Controller
                 'email' => $data['system_user_email'],
                 'password' => $data['system_user_password'],
                 'role' => 'school_admin',
+                'organization_id' => $organization->id,
                 'school_id' => $school->id,
                 'position' => 'School Administrator',
             ]);

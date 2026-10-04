@@ -9,13 +9,21 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\Concerns\BelongsToOrganization;
 
-#[Fillable(['name', 'email', 'password', 'role', 'school_id', 'position', 'procurement_role', 'bac_role'])]
+#[Fillable(['name', 'email', 'password', 'role', 'organization_id', 'school_id', 'position', 'procurement_role', 'bac_role'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, BelongsToOrganization;
+
+    protected $fillable = ['name', 'email', 'password', 'role', 'organization_id', 'school_id', 'position', 'procurement_role', 'bac_role'];
+
+    public function organization()
+    {
+        return $this->belongsTo(Organization::class);
+    }
 
     public function school()
     {

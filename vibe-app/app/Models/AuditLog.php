@@ -4,12 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\BelongsToOrganization;
 
 class AuditLog extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToOrganization;
 
-    protected $fillable = ['user_id', 'school_id', 'action', 'auditable_type', 'auditable_id', 'metadata'];
+    protected $fillable = ['organization_id', 'user_id', 'school_id', 'action', 'auditable_type', 'auditable_id', 'metadata'];
 
     protected function casts(): array
     {

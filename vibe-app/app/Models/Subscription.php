@@ -4,12 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\BelongsToOrganization;
 
 class Subscription extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToOrganization;
 
-    protected $fillable = ['school_id', 'plan', 'billing_cycle', 'amount', 'status', 'starts_at', 'renews_at', 'canceled_at'];
+    protected $fillable = ['organization_id', 'school_id', 'plan', 'billing_cycle', 'amount', 'status', 'starts_at', 'renews_at', 'canceled_at'];
 
     protected function casts(): array
     {

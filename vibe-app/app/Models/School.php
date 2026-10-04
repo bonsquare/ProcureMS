@@ -4,12 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\BelongsToOrganization;
 
 class School extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToOrganization;
 
-    protected $fillable = ['code', 'name', 'address', 'region', 'division', 'district', 'school_type', 'school_head', 'contact_email', 'contact_number', 'status', 'logo_path'];
+    protected $fillable = ['organization_id', 'code', 'name', 'address', 'region', 'division', 'district', 'school_type', 'school_head', 'contact_email', 'contact_number', 'status', 'logo_path'];
 
     public function users()
     {

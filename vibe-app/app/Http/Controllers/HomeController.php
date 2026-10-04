@@ -12,10 +12,12 @@ use App\Models\AuditLog;
 use App\Models\Subscription;
 use App\Models\SchoolStaff;
 use App\Models\User;
+use App\Models\Organization;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 
 class HomeController extends Controller
 {
@@ -32,12 +34,15 @@ class HomeController extends Controller
 
         return $this->isMasterUser($user)
             ? School::query()->pluck('id')
-            : collect(array_filter([$user?->school_id]));
+            : School::query()->where('organization_id', $user?->organization_id)->pluck('id');
     }
 
     private function authorizeSchoolAccess(?int $schoolId): void
     {
-        abort_if(!$this->isMasterUser() && (int) request()->user()?->school_id !== (int) $schoolId, 403);
+        abort_if(!$this->isMasterUser() && !School::query()
+            ->whereKey($schoolId)
+            ->where('organization_id', request()->user()?->organization_id)
+            ->exists(), 403);
     }
 
     private function authorizeProcurementAccess(ProcurementRequest $procurementRequest): void
@@ -50,7 +55,7 @@ class HomeController extends Controller
         $user = request()->user();
         $schools = School::withCount('users')
             ->with(['subscriptions' => fn ($query) => $query->latest()])
-            ->when(!$this->isMasterUser($user), fn ($query) => $query->whereKey($user?->school_id))
+            ->when(!$this->isMasterUser($user), fn ($query) => $query->where('organization_id', $user?->organization_id))
             ->latest()
             ->get();
         $schoolIds = $schools->pluck('id');
@@ -59,10 +64,10 @@ class HomeController extends Controller
             'schools' => $schools,
             'totalSchools' => $schools->count(),
             'activeSchools' => $schools->where('status', 'active')->count(),
-            'totalUsers' => User::when(!$this->isMasterUser($user), fn ($query) => $query->where('school_id', $user?->school_id))->count(),
+            'totalUsers' => User::when(!$this->isMasterUser($user), fn ($query) => $query->where('organization_id', $user?->organization_id))->count(),
             'activeSubscriptions' => Subscription::where('status', 'active')->whereIn('school_id', $schoolIds)->count(),
             'auditLogs' => AuditLog::with(['user', 'school'])
-                ->when(!$this->isMasterUser($user), fn ($query) => $query->where('school_id', $user?->school_id))
+                ->when(!$this->isMasterUser($user), fn ($query) => $query->whereIn('school_id', $schoolIds))
                 ->latest()
                 ->take(10)
                 ->get(),
@@ -88,7 +93,7 @@ class HomeController extends Controller
     public function exportAuditLogs()
     {
         $logs = AuditLog::with(['user', 'school'])
-            ->when(!$this->isMasterUser(), fn ($query) => $query->where('school_id', request()->user()?->school_id))
+            ->when(!$this->isMasterUser(), fn ($query) => $query->whereIn('school_id', $this->scopedSchoolIds()))
             ->latest()
             ->get();
 
@@ -134,6 +139,11 @@ class HomeController extends Controller
         $actorId = $request->user()?->id;
 
         DB::transaction(function () use ($data, $actorId) {
+            $organization = Organization::create([
+                'name' => $data['name'],
+                'slug' => 'org-' . Str::lower(Str::random(12)),
+                'status' => $data['status'] === 'active' ? 'active' : 'pending',
+            ]);
             $schoolData = collect($data)->except([
                 'system_user_name',
                 'system_user_email',
@@ -141,6 +151,7 @@ class HomeController extends Controller
                 'system_user_password',
                 'system_user_password_confirmation',
             ])->all();
+            $schoolData['organization_id'] = $organization->id;
 
             $nextNumber = max(1000, ((int) School::max('id')) + 1000);
             do {
@@ -154,6 +165,7 @@ class HomeController extends Controller
                 'email' => $data['system_user_email'],
                 'password' => $data['system_user_password'],
                 'role' => $data['system_user_role'],
+                'organization_id' => $organization->id,
                 'school_id' => $school->id,
                 'position' => 'System User',
             ]);
@@ -208,7 +220,7 @@ class HomeController extends Controller
     public function suppliers()
     {
         return view('suppliers', [
-            'suppliers' => Supplier::when(!$this->isMasterUser(), fn ($query) => $query->where('school_id', request()->user()?->school_id))
+            'suppliers' => Supplier::when(!$this->isMasterUser(), fn ($query) => $query->whereIn('school_id', $this->scopedSchoolIds()))
                 ->latest('business_name')
                 ->get(),
         ]);
@@ -1065,6 +1077,7 @@ class HomeController extends Controller
             'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:50'],
             'head_name' => ['nullable', 'string', 'max:255'],
+            'school_id' => ['nullable', 'exists:schools,id'],
             'department_logo' => ['nullable', 'image', 'max:2048'],
             'division_logo' => ['nullable', 'image', 'max:2048'],
         ]);
@@ -1075,7 +1088,15 @@ class HomeController extends Controller
             $data['division_logo_path'] = $request->file('division_logo')->store('logos', 'public');
         }
         unset($data['department_logo'], $data['division_logo']);
-        AgencySetting::updateOrCreate(['id' => 1], $data);
+        $organizationId = $request->user()?->organization_id;
+        if ($this->isMasterUser() && !empty($data['school_id'])) {
+            $organizationId = School::withoutGlobalScopes()->findOrFail($data['school_id'])->organization_id;
+        }
+        unset($data['school_id']);
+        AgencySetting::updateOrCreate(
+            ['organization_id' => $organizationId],
+            $data + ['organization_id' => $organizationId]
+        );
         return back()->with('success', 'Agency and department details saved.');
     }
 
@@ -1115,6 +1136,7 @@ class HomeController extends Controller
         abort_unless($this->isMasterUser(), 403);
 
         $school->update(['status' => 'active']);
+        $school->organization?->update(['status' => 'active']);
 
         AuditLog::create([
             'user_id' => request()->user()?->id,

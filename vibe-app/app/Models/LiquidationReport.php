@@ -4,12 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\BelongsToOrganization;
 
 class LiquidationReport extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToOrganization;
 
-    protected $fillable = ['school_id', 'procurement_request_id', 'submitted_by', 'report_number', 'amount', 'status', 'notes', 'submitted_at', 'approved_at'];
+    protected $fillable = ['organization_id', 'school_id', 'procurement_request_id', 'submitted_by', 'report_number', 'amount', 'status', 'notes', 'submitted_at', 'approved_at'];
 
     protected function casts(): array
     {
