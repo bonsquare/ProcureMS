@@ -10,7 +10,7 @@ class LiquidationReport extends Model
 {
     use HasFactory, BelongsToOrganization;
 
-    protected $fillable = ['organization_id', 'school_id', 'procurement_request_id', 'submitted_by', 'report_number', 'amount', 'status', 'notes', 'submitted_at', 'approved_at'];
+    protected $fillable = ['organization_id', 'school_id', 'procurement_request_id', 'submitted_by', 'report_number', 'ors_number', 'purpose', 'amount', 'status', 'notes', 'submitted_at', 'approved_at'];
 
     protected function casts(): array
     {

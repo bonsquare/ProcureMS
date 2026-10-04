@@ -30,7 +30,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/procurement/{procurementRequest}/documents/{procurementDocument}/print', [HomeController::class, 'printProcurementDocument'])->name('procurement.documents.print');
     Route::get('/procurement/{procurementRequest}/delivery-reconciliation', [HomeController::class, 'printDeliveryReconciliation'])->name('procurement.delivery-reconciliation');
     Route::get('/liquidation', [HomeController::class, 'liquidation'])->name('liquidation');
+    Route::post('/liquidation', [HomeController::class, 'storeLiquidation'])->name('liquidation.store');
+    Route::patch('/liquidation/{liquidationReport}/status', [HomeController::class, 'updateLiquidationStatus'])->name('liquidation.status');
     Route::get('/google-drive', [HomeController::class, 'googleDrive'])->name('google-drive');
+    Route::post('/google-drive/settings', [HomeController::class, 'updateGoogleDriveSettings'])->name('google-drive.settings');
     Route::get('/reports', [HomeController::class, 'reports'])->name('reports');
     Route::get('/user-management', [HomeController::class, 'userManagement'])->name('user-management');
     Route::get('/subscriptions', [HomeController::class, 'subscriptions'])->name('subscriptions');

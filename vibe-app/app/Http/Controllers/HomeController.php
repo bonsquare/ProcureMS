@@ -9,12 +9,14 @@ use App\Models\Supplier;
 use App\Models\School;
 use App\Models\AgencySetting;
 use App\Models\AuditLog;
+use App\Models\LiquidationReport;
 use App\Models\Subscription;
 use App\Models\SchoolStaff;
 use App\Models\User;
 use App\Models\Organization;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
@@ -32,16 +34,25 @@ class HomeController extends Controller
     {
         $user ??= request()->user();
 
-        return $this->isMasterUser($user)
-            ? School::query()->pluck('id')
-            : School::query()->where('organization_id', $user?->organization_id)->pluck('id');
+        if ($this->isMasterUser($user)) {
+            return School::query()->pluck('id');
+        }
+
+        return Schema::hasColumn('schools', 'organization_id') && $user?->organization_id
+            ? School::query()->where('organization_id', $user->organization_id)->pluck('id')
+            : School::query()->whereKey($user?->school_id)->pluck('id');
     }
 
     private function authorizeSchoolAccess(?int $schoolId): void
     {
+        $user = request()->user();
         abort_if(!$this->isMasterUser() && !School::query()
             ->whereKey($schoolId)
-            ->where('organization_id', request()->user()?->organization_id)
+            ->when(
+                Schema::hasColumn('schools', 'organization_id') && $user?->organization_id,
+                fn ($query) => $query->where('organization_id', $user->organization_id),
+                fn ($query) => $query->whereKey($user?->school_id)
+            )
             ->exists(), 403);
     }
 
@@ -50,21 +61,33 @@ class HomeController extends Controller
         $this->authorizeSchoolAccess($procurementRequest->school_id);
     }
 
+    private function authorizeLiquidationAccess(LiquidationReport $liquidationReport): void
+    {
+        $this->authorizeSchoolAccess($liquidationReport->school_id);
+    }
+
     public function index()
     {
         $user = request()->user();
         $schools = School::withCount('users')
             ->with(['subscriptions' => fn ($query) => $query->latest()])
-            ->when(!$this->isMasterUser($user), fn ($query) => $query->where('organization_id', $user?->organization_id))
+            ->when(!$this->isMasterUser($user), fn ($query) => $query->whereIn('id', $this->scopedSchoolIds($user)))
             ->latest()
             ->get();
         $schoolIds = $schools->pluck('id');
+        $pendingPreRegistrations = $this->isMasterUser($user)
+            ? School::with(['users' => fn ($query) => $query->oldest()])
+                ->where('status', 'inactive')
+                ->orderBy('created_at')
+                ->get()
+            : collect();
 
         return view('home', [
             'schools' => $schools,
+            'pendingPreRegistrations' => $pendingPreRegistrations,
             'totalSchools' => $schools->count(),
             'activeSchools' => $schools->where('status', 'active')->count(),
-            'totalUsers' => User::when(!$this->isMasterUser($user), fn ($query) => $query->where('organization_id', $user?->organization_id))->count(),
+            'totalUsers' => User::when(!$this->isMasterUser($user), fn ($query) => $query->whereIn('school_id', $schoolIds))->count(),
             'activeSubscriptions' => Subscription::where('status', 'active')->whereIn('school_id', $schoolIds)->count(),
             'auditLogs' => AuditLog::with(['user', 'school'])
                 ->when(!$this->isMasterUser($user), fn ($query) => $query->whereIn('school_id', $schoolIds))
@@ -1008,12 +1031,161 @@ class HomeController extends Controller
 
     public function liquidation()
     {
-        return view('liquidation');
+        $user = request()->user();
+        $schoolIds = $this->scopedSchoolIds($user);
+        $schools = School::whereIn('id', $schoolIds)->orderBy('name')->get();
+        $selectedSchoolId = request('school_id');
+        $status = request('status', 'all');
+        $search = trim((string) request('search'));
+
+        $liquidations = LiquidationReport::with(['school', 'submitter', 'procurementRequest'])
+            ->whereIn('school_id', $schoolIds)
+            ->when($selectedSchoolId && $schoolIds->contains((int) $selectedSchoolId), fn ($query) => $query->where('school_id', $selectedSchoolId))
+            ->when($status !== 'all', fn ($query) => $query->where('status', $status))
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($subQuery) use ($search) {
+                    $subQuery->where('report_number', 'like', "%{$search}%")
+                        ->orWhere('ors_number', 'like', "%{$search}%")
+                        ->orWhere('purpose', 'like', "%{$search}%")
+                        ->orWhere('notes', 'like', "%{$search}%")
+                        ->orWhereHas('school', fn ($schoolQuery) => $schoolQuery->where('name', 'like', "%{$search}%"))
+                        ->orWhereHas('procurementRequest', fn ($requestQuery) => $requestQuery->where('title', 'like', "%{$search}%"));
+                });
+            })
+            ->latest()
+            ->get();
+
+        $allLiquidations = LiquidationReport::whereIn('school_id', $schoolIds)->get();
+        $approvedThisMonth = $allLiquidations
+            ->where('status', 'approved')
+            ->filter(fn ($report) => $report->approved_at?->isSameMonth(now()))
+            ->count();
+        $availableProcurements = ProcurementRequest::with('school')
+            ->whereIn('school_id', $schoolIds)
+            ->whereDoesntHave('liquidationReports')
+            ->latest()
+            ->get();
+
+        return view('liquidation', [
+            'schools' => $schools,
+            'liquidations' => $liquidations,
+            'availableProcurements' => $availableProcurements,
+            'selectedSchoolId' => $selectedSchoolId,
+            'selectedStatus' => $status,
+            'search' => $search,
+            'isMasterUser' => $this->isMasterUser($user),
+            'metrics' => [
+                'total' => $allLiquidations->count(),
+                'forReview' => $allLiquidations->where('status', 'for_review')->count(),
+                'pendingDocuments' => $allLiquidations->where('status', 'pending_documents')->count(),
+                'approvedThisMonth' => $approvedThisMonth,
+                'totalAmount' => $allLiquidations->sum('amount'),
+            ],
+            'statusCounts' => [
+                'draft' => $allLiquidations->where('status', 'draft')->count(),
+                'for_review' => $allLiquidations->where('status', 'for_review')->count(),
+                'pending_documents' => $allLiquidations->where('status', 'pending_documents')->count(),
+                'approved' => $allLiquidations->where('status', 'approved')->count(),
+                'returned' => $allLiquidations->where('status', 'returned')->count(),
+            ],
+        ]);
+    }
+
+    public function storeLiquidation(Request $request)
+    {
+        $schoolIds = $this->scopedSchoolIds();
+        $data = $request->validate([
+            'school_id' => ['required', 'exists:schools,id'],
+            'procurement_request_id' => ['nullable', 'exists:procurement_requests,id'],
+            'ors_number' => ['required', 'string', 'max:100'],
+            'purpose' => ['required', 'string', 'max:255'],
+            'amount' => ['required', 'numeric', 'min:0'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+        abort_unless($schoolIds->contains((int) $data['school_id']), 403);
+        if (!empty($data['procurement_request_id'])) {
+            $procurementRequest = ProcurementRequest::findOrFail($data['procurement_request_id']);
+            $this->authorizeProcurementAccess($procurementRequest);
+            abort_unless((int) $procurementRequest->school_id === (int) $data['school_id'], 422);
+        }
+
+        $reportNumber = DB::transaction(function () use ($data) {
+            $nextId = ((int) LiquidationReport::max('id')) + 1;
+            do {
+                $reportNumber = 'LR-' . now()->format('Y') . '-' . str_pad((string) $nextId++, 4, '0', STR_PAD_LEFT);
+            } while (LiquidationReport::where('report_number', $reportNumber)->exists());
+
+            LiquidationReport::create([
+                'school_id' => $data['school_id'],
+                'procurement_request_id' => $data['procurement_request_id'] ?? null,
+                'submitted_by' => request()->user()?->id,
+                'report_number' => $reportNumber,
+                'ors_number' => $data['ors_number'],
+                'purpose' => $data['purpose'],
+                'amount' => $data['amount'],
+                'status' => 'for_review',
+                'notes' => $data['notes'] ?? null,
+                'submitted_at' => now(),
+            ]);
+
+            return $reportNumber;
+        });
+
+        return back()->with('success', "{$reportNumber} has been submitted for accounting review.");
+    }
+
+    public function updateLiquidationStatus(Request $request, LiquidationReport $liquidationReport)
+    {
+        abort_unless($this->isMasterUser(), 403);
+        $this->authorizeLiquidationAccess($liquidationReport);
+
+        $data = $request->validate([
+            'status' => ['required', Rule::in(['for_review', 'pending_documents', 'approved', 'returned'])],
+        ]);
+        $liquidationReport->update([
+            'status' => $data['status'],
+            'approved_at' => $data['status'] === 'approved' ? now() : null,
+        ]);
+
+        return back()->with('success', "{$liquidationReport->report_number} status updated.");
     }
 
     public function googleDrive()
     {
-        return view('google-drive');
+        return view('google-drive', [
+            'agency' => AgencySetting::first() ?? new AgencySetting(),
+        ]);
+    }
+
+    public function updateGoogleDriveSettings(Request $request)
+    {
+        $data = $request->validate([
+            'google_drive_folder_name' => ['nullable', 'string', 'max:255'],
+            'google_drive_folder_id' => ['nullable', 'string', 'max:255'],
+            'google_drive_folder_url' => ['nullable', 'url', 'max:1000'],
+        ]);
+
+        $folderId = trim($data['google_drive_folder_id'] ?? '');
+        $folderUrl = trim($data['google_drive_folder_url'] ?? '');
+        if (!$folderId && $folderUrl && preg_match('~/folders/([^/?#]+)~', $folderUrl, $matches)) {
+            $folderId = $matches[1];
+        }
+
+        $organizationId = $request->user()?->organization_id;
+        $agency = AgencySetting::first() ?? new AgencySetting();
+        $agency->fill([
+            'google_drive_enabled' => (bool) ($folderId || $folderUrl),
+            'google_drive_folder_name' => $data['google_drive_folder_name'] ?: 'ProcureMS Shared Drive',
+            'google_drive_folder_id' => $folderId ?: null,
+            'google_drive_folder_url' => $folderUrl ?: null,
+            'google_drive_connected_at' => now(),
+        ]);
+        if (\Illuminate\Support\Facades\Schema::hasColumn('agency_settings', 'organization_id') && !$agency->organization_id) {
+            $agency->organization_id = $organizationId;
+        }
+        $agency->save();
+
+        return back()->with('success', 'Google Drive settings saved.');
     }
 
     public function reports()
@@ -1038,23 +1210,32 @@ class HomeController extends Controller
     public function schoolSettings()
     {
         $schoolIds = $this->scopedSchoolIds();
+        $isMasterUser = $this->isMasterUser();
         if (request('ui') !== 'staff-save-v7') {
+            $parameters = ['ui' => 'staff-save-v7'];
+            if ($schoolIds->contains((int) request('school_id'))) {
+                $parameters['school_id'] = request('school_id');
+            } elseif (!$isMasterUser && $schoolIds->isNotEmpty()) {
+                $parameters['school_id'] = $schoolIds->first();
+            }
+
             return redirect()->route('school-settings', array_filter([
-                'ui' => 'staff-save-v7',
-                'school_id' => $schoolIds->contains((int) request('school_id')) ? request('school_id') : $schoolIds->first(),
+                ...$parameters,
             ]));
         }
 
         $schools = School::withCount(['users', 'procurementRequests'])->whereIn('id', $schoolIds)->orderBy('name')->get();
-        $selectedSchool = $schools->firstWhere('id', (int) request('school_id')) ?? $schools->first();
+        $selectedSchool = $schools->firstWhere('id', (int) request('school_id')) ?? ($isMasterUser ? null : $schools->first());
 
         return response()->view('school-settings', [
             'agency' => AgencySetting::first() ?? new AgencySetting(),
             'schools' => $schools,
             'selectedSchool' => $selectedSchool,
-            'staff' => SchoolStaff::with('school')->where('school_id', $selectedSchool?->id)->orderBy('name')->get(),
-            'isMasterUser' => $this->isMasterUser(),
-            'pendingPreRegistrations' => $this->isMasterUser()
+            'staff' => $selectedSchool
+                ? SchoolStaff::with('school')->where('school_id', $selectedSchool->id)->orderBy('name')->get()
+                : collect(),
+            'isMasterUser' => $isMasterUser,
+            'pendingPreRegistrations' => $isMasterUser
                 ? School::with(['users' => fn ($query) => $query->oldest()])->where('status', 'inactive')->orderBy('created_at')->get()
                 : collect(),
         ])->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
@@ -1072,6 +1253,7 @@ class HomeController extends Controller
             'division_office' => ['nullable', 'string', 'max:255'],
             'division_name' => ['nullable', 'string', 'max:255'],
             'district_name' => ['nullable', 'string', 'max:255'],
+            'division_address' => ['nullable', 'string', 'max:1000'],
             'office_section' => ['nullable', 'string', 'max:255'],
             'address' => ['nullable', 'string', 'max:1000'],
             'email' => ['nullable', 'email', 'max:255'],
@@ -1147,8 +1329,11 @@ class HomeController extends Controller
             'metadata' => ['school_code' => $school->code],
         ]);
 
+        $redirectRoute = request('redirect_to') === 'dashboard' ? 'home' : 'school-settings';
+        $redirectParameters = $redirectRoute === 'school-settings' ? ['ui' => 'staff-save-v7', 'school_id' => $school->id] : [];
+
         return redirect()
-            ->route('school-settings', ['ui' => 'staff-save-v7', 'school_id' => $school->id])
+            ->route($redirectRoute, $redirectParameters)
             ->with('success', $school->name . ' has been approved and activated.');
     }
 

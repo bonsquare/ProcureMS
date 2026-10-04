@@ -3,6 +3,7 @@
 namespace App\Models\Concerns;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 trait BelongsToOrganization
 {
@@ -10,12 +11,17 @@ trait BelongsToOrganization
     {
         static::addGlobalScope('organization', function ($query) {
             $user = Auth::hasUser() ? Auth::user() : null;
-            if ($user && $user->role !== 'master_user' && $user->organization_id) {
-                $query->where($query->getModel()->getTable() . '.organization_id', $user->organization_id);
+            $table = $query->getModel()->getTable();
+            if ($user && $user->role !== 'master_user' && $user->organization_id && Schema::hasColumn($table, 'organization_id')) {
+                $query->where($table . '.organization_id', $user->organization_id);
             }
         });
 
         static::creating(function ($model) {
+            if (!Schema::hasColumn($model->getTable(), 'organization_id')) {
+                return;
+            }
+
             if ($model->organization_id) {
                 return;
             }

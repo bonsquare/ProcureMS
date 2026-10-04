@@ -10,7 +10,7 @@
 <body class="flex min-h-screen items-center justify-center bg-surface px-4 font-inter text-on-surface">
     <main class="w-full max-w-md rounded border border-outline-variant/30 bg-white p-8 shadow-sm sm:p-10">
         <div class="mb-8 flex items-center gap-3"><div class="flex h-10 w-10 items-center justify-center rounded bg-primary text-white"><span class="material-symbols-outlined">school</span></div><div><p class="text-xl font-semibold">ProcureMS</p><p class="text-xs text-on-surface-variant">Multi-School Procurement System</p></div></div>
-        <h1 class="text-2xl font-semibold">Sign in</h1><p class="mt-2 text-sm text-on-surface-variant">Access your procurement and liquidation workspace.</p>
+        <h1 class="text-2xl font-semibold">Sign in</h1><p class="mt-2 text-sm text-on-surface-variant">Access your procurement, accounting, budget, and cash workspace.</p>
         @if(session('success'))<div class="mt-5 rounded border border-secondary/30 bg-secondary/10 px-4 py-3 text-sm font-medium text-secondary">{{ session('success') }}</div>@endif
         <form id="login-form" method="POST" action="{{ route('login.store') }}" class="mt-8 space-y-5">@csrf
             <div><label for="email" class="text-xs font-semibold text-on-surface-variant">Email address</label><input id="email" name="email" type="email" value="{{ old('email') }}" required autofocus class="mt-2 w-full rounded border border-outline-variant/50 bg-surface px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10">@error('email')<p class="mt-1 text-xs text-error">{{ $message }}</p>@enderror</div>
