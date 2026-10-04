@@ -72,5 +72,6 @@
             document.addEventListener('click', function(event) { if (!event.target.closest('#request-menu') && !event.target.closest('[title="More actions"]')) document.getElementById('request-menu').classList.add('hidden'); });
         </script>
     </div>
+@include('partials.profile-menu')
 </body>
 </html>

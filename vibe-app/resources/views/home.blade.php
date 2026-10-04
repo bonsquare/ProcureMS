@@ -208,5 +208,6 @@
         schoolModal?.addEventListener('click', (event) => { if (event.target === schoolModal) closeModal('add-school-modal'); });
         document.addEventListener('keydown', (event) => { if (event.key === 'Escape') ['add-school-modal', 'notifications-modal', 'diagnostics-modal', 'tasks-modal'].forEach(closeModal); });
     </script>
+@include('partials.profile-menu')
 </body>
 </html>

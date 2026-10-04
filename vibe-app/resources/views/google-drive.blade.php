@@ -26,5 +26,6 @@
 
         <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2"><section class="rounded border border-outline-variant/30 bg-white p-5"><div class="flex items-start gap-4"><span class="material-symbols-outlined text-3xl text-secondary">cloud_done</span><div><h3 class="text-lg font-semibold">Google Drive Connected</h3><p class="mt-1 text-xs leading-5 text-on-surface-variant">Documents are synchronized with the organization’s shared Drive. Last synchronization completed 4 minutes ago.</p><button class="mt-4 text-xs font-semibold text-primary hover:underline">Manage connection</button></div></div></section><section class="rounded border border-outline-variant/30 bg-white p-5"><div class="flex items-start gap-4"><span class="material-symbols-outlined text-3xl text-primary">security</span><div><h3 class="text-lg font-semibold">Document Access</h3><p class="mt-1 text-xs leading-5 text-on-surface-variant">School administrators can access their assigned folders. Master users can manage all organization records.</p><button class="mt-4 text-xs font-semibold text-primary hover:underline">Review permissions</button></div></div></section></div>
     </div></main></div>
+@include('partials.profile-menu')
 </body>
 </html>

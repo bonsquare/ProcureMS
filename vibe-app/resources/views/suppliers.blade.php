@@ -107,4 +107,4 @@ document.getElementById('close-supplier-modal').addEventListener('click',closeMo
         }));
         toggleOwnerFields();
     })();
-</script></body></html>
+</script>@include('partials.profile-menu')</body></html>

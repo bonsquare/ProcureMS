@@ -144,5 +144,6 @@
         });
     });
 </script>
+@include('partials.profile-menu')
 </body>
 </html>
