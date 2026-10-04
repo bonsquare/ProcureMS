@@ -7,11 +7,16 @@
     $awardAmountWords = $awardAmountInWords ?? $amountInWords;
     $schoolName = $procurementRequest->school?->name ?? '____________________________';
     $schoolHeadName = $schoolHead?->name ?? $procurementRequest->school?->school_head ?? '____________________________';
+    $leftLogo = $agency?->department_logo_path ? asset('storage/'.$agency->department_logo_path) : asset('images/official-deped-logo.png');
+    $rightLogo = $procurementRequest->school?->logo_path ? asset('storage/'.$procurementRequest->school->logo_path) : ($agency?->division_logo_path ? asset('storage/'.$agency->division_logo_path) : asset('images/official-school-logo.png'));
 @endphp
 
 <style>
     .noa-page{width:210mm;min-height:297mm;padding:9mm 16mm 16mm;font-family:Arial,sans-serif;font-size:10.5pt;line-height:1.35}
-    .noa-letterhead{text-align:center;line-height:1.24;font-size:9.5pt}
+    .noa-letterhead{position:relative;text-align:center;line-height:1.24;font-size:9.5pt}
+    .noa-letterhead img{position:absolute;top:0;width:20mm;height:20mm;object-fit:contain}
+    .noa-letterhead .left-logo{left:0}
+    .noa-letterhead .right-logo{right:0}
     .noa-letterhead .department{font-size:10.5pt;font-weight:700}
     .noa-letterhead .school{margin-top:2px;font-size:12.5pt;font-weight:700}
     .noa-rule{margin-top:10px;border-top:1px solid #111}
@@ -35,11 +40,13 @@
 
 <main class="page noa-page">
     <header class="noa-letterhead">
-        <div>{{ $agency?->republic_name ?? 'Republic of the Philippines' }}</div>
-        <div class="department">{{ $agency?->department_name ?? 'Department of Education' }}</div>
-        <div>{{ $agency?->region_name ?? $procurementRequest->school?->region }}</div>
-        <div>{{ $agency?->division_office ?? $procurementRequest->school?->division }}</div>
-        <div>{{ $agency?->district_name ?? $procurementRequest->school?->district }}</div>
+        @if($leftLogo)<img class="left-logo" src="{{ $leftLogo }}" alt="Department logo">@endif
+        @if($rightLogo)<img class="right-logo" src="{{ $rightLogo }}" alt="School logo">@endif
+        <div>{{ $agency?->republic_name ?: 'Republic of the Philippines' }}</div>
+        <div class="department">{{ $agency?->department_name ?: 'Department of Education' }}</div>
+        <div>{{ $procurementRequest->school?->region }}</div>
+        <div>{{ $procurementRequest->school?->division }}</div>
+        <div>{{ $procurementRequest->school?->district }}</div>
         <div class="school">{{ strtoupper($schoolName) }}</div>
         <div class="noa-rule"></div>
     </header>

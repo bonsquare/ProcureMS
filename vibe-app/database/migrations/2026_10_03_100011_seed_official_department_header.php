@@ -12,9 +12,9 @@ return new class extends Migration
             [
                 'republic_name' => 'Republic of the Philippines',
                 'department_name' => 'Department of Education',
-                'region_name' => 'Region XII',
-                'division_office' => 'Schools Division Office of Cotabato',
-                'district_name' => 'Magpet East District',
+                'region_name' => null,
+                'division_office' => null,
+                'district_name' => null,
                 'updated_at' => now(),
                 'created_at' => now(),
             ]

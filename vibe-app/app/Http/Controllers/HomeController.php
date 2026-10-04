@@ -19,21 +19,55 @@ use Illuminate\Validation\Rule;
 
 class HomeController extends Controller
 {
+    private function isMasterUser(?User $user = null): bool
+    {
+        $user ??= request()->user();
+
+        return $user?->role === 'master_user';
+    }
+
+    private function scopedSchoolIds(?User $user = null)
+    {
+        $user ??= request()->user();
+
+        return $this->isMasterUser($user)
+            ? School::query()->pluck('id')
+            : collect(array_filter([$user?->school_id]));
+    }
+
+    private function authorizeSchoolAccess(?int $schoolId): void
+    {
+        abort_if(!$this->isMasterUser() && (int) request()->user()?->school_id !== (int) $schoolId, 403);
+    }
+
+    private function authorizeProcurementAccess(ProcurementRequest $procurementRequest): void
+    {
+        $this->authorizeSchoolAccess($procurementRequest->school_id);
+    }
+
     public function index()
     {
+        $user = request()->user();
         $schools = School::withCount('users')
             ->with(['subscriptions' => fn ($query) => $query->latest()])
+            ->when(!$this->isMasterUser($user), fn ($query) => $query->whereKey($user?->school_id))
             ->latest()
             ->get();
+        $schoolIds = $schools->pluck('id');
 
         return view('home', [
             'schools' => $schools,
             'totalSchools' => $schools->count(),
             'activeSchools' => $schools->where('status', 'active')->count(),
-            'totalUsers' => User::count(),
-            'activeSubscriptions' => Subscription::where('status', 'active')->count(),
-            'auditLogs' => AuditLog::with(['user', 'school'])->latest()->take(10)->get(),
-            'pendingProcurements' => ProcurementRequest::whereIn('status', ['submitted', 'pending_approval'])->count(),
+            'totalUsers' => User::when(!$this->isMasterUser($user), fn ($query) => $query->where('school_id', $user?->school_id))->count(),
+            'activeSubscriptions' => Subscription::where('status', 'active')->whereIn('school_id', $schoolIds)->count(),
+            'auditLogs' => AuditLog::with(['user', 'school'])
+                ->when(!$this->isMasterUser($user), fn ($query) => $query->where('school_id', $user?->school_id))
+                ->latest()
+                ->take(10)
+                ->get(),
+            'pendingProcurements' => ProcurementRequest::whereIn('school_id', $schoolIds)->whereIn('status', ['submitted', 'pending_approval'])->count(),
+            'isMasterUser' => $this->isMasterUser($user),
         ]);
     }
 
@@ -53,7 +87,10 @@ class HomeController extends Controller
 
     public function exportAuditLogs()
     {
-        $logs = AuditLog::with(['user', 'school'])->latest()->get();
+        $logs = AuditLog::with(['user', 'school'])
+            ->when(!$this->isMasterUser(), fn ($query) => $query->where('school_id', request()->user()?->school_id))
+            ->latest()
+            ->get();
 
         return response()->streamDownload(function () use ($logs) {
             $output = fopen('php://output', 'w');
@@ -76,6 +113,8 @@ class HomeController extends Controller
 
     public function storeSchool(Request $request)
     {
+        abort_unless($this->isMasterUser(), 403);
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'school_type' => ['nullable', 'string', 'max:100'],
@@ -134,10 +173,13 @@ class HomeController extends Controller
 
     public function procurement()
     {
-        $requests = ProcurementRequest::with('school', 'requester')
+        $user = request()->user();
+        $procurementRequests = ProcurementRequest::with('school', 'requester')
+            ->whereIn('school_id', $this->scopedSchoolIds())
             ->latest()
-            ->get()
-            ->map(fn (ProcurementRequest $request) => [
+            ->get();
+
+        $requests = $procurementRequests->map(fn (ProcurementRequest $request) => [
                 'record_id' => $request->id,
                 'id' => $request->request_number,
                 'title' => $request->title,
@@ -149,19 +191,35 @@ class HomeController extends Controller
                 'date' => optional($request->requested_at ?? $request->created_at)->format('M d, Y'),
             ])->all();
 
-        return view('procurement', compact('requests'));
+        return view('procurement', [
+            'requests' => $requests,
+            'isMasterUser' => $this->isMasterUser($user),
+            'currentSchoolName' => $this->isMasterUser($user) ? null : $user?->school?->name,
+            'procurementMetrics' => [
+                'total' => $procurementRequests->count(),
+                'pending' => $procurementRequests->whereIn('status', ['submitted', 'pending_approval'])->count(),
+                'forCanvass' => $procurementRequests->whereIn('status', ['for_canvass', 'submitted'])->count(),
+                'completed' => $procurementRequests->whereIn('status', ['approved', 'completed'])->count(),
+                'completedAmount' => $procurementRequests->whereIn('status', ['approved', 'completed'])->sum('amount'),
+            ],
+        ]);
     }
 
     public function suppliers()
     {
         return view('suppliers', [
-            'suppliers' => Supplier::latest('business_name')->get(),
+            'suppliers' => Supplier::when(!$this->isMasterUser(), fn ($query) => $query->where('school_id', request()->user()?->school_id))
+                ->latest('business_name')
+                ->get(),
         ]);
     }
 
     public function storeSupplier(Request $request)
     {
         $data = $request->validate($this->supplierRules());
+        if (!$this->isMasterUser()) {
+            $data['school_id'] = $request->user()?->school_id;
+        }
         $data['has_company_owner'] = $request->boolean('has_company_owner');
         if (!$data['has_company_owner']) {
             $data = array_merge($data, ['owner_salutation' => null, 'owner_given_name' => null, 'owner_middle_initial' => null, 'owner_last_name' => null]);
@@ -173,7 +231,12 @@ class HomeController extends Controller
 
     public function updateSupplier(Request $request, Supplier $supplier)
     {
+        $this->authorizeSchoolAccess($supplier->school_id);
+
         $data = $request->validate($this->supplierRules());
+        if (!$this->isMasterUser()) {
+            $data['school_id'] = $request->user()?->school_id;
+        }
         $data['has_company_owner'] = $request->boolean('has_company_owner');
         if (!$data['has_company_owner']) {
             $data = array_merge($data, ['owner_salutation' => null, 'owner_given_name' => null, 'owner_middle_initial' => null, 'owner_last_name' => null]);
@@ -210,7 +273,7 @@ class HomeController extends Controller
     public function createProcurement()
     {
         return view('procurement-create', [
-            'schools' => School::where('status', 'active')->orderBy('name')->get(),
+            'schools' => School::where('status', 'active')->whereIn('id', $this->scopedSchoolIds())->orderBy('name')->get(),
             'editingRequest' => null,
             'agency' => AgencySetting::first(),
             'nextPrNumber' => $this->nextPurchaseRequestNumber(false),
@@ -219,10 +282,12 @@ class HomeController extends Controller
 
     public function editProcurement(ProcurementRequest $procurementRequest)
     {
+        $this->authorizeProcurementAccess($procurementRequest);
+
         $procurementRequest->load(['items', 'school']);
 
         return view('procurement-create', [
-            'schools' => School::where('status', 'active')->orderBy('name')->get(),
+            'schools' => School::where('status', 'active')->whereIn('id', $this->scopedSchoolIds())->orderBy('name')->get(),
             'editingRequest' => $procurementRequest,
             'agency' => AgencySetting::first(),
             'nextPrNumber' => $this->nextPurchaseRequestNumber(false),
@@ -232,6 +297,7 @@ class HomeController extends Controller
     public function storeProcurement(Request $request)
     {
         $validated = $this->validateProcurement($request);
+        $this->authorizeSchoolAccess((int) $validated['school_id']);
         $items = $validated['items'];
         $amount = collect($items)->sum(fn (array $item) => (float) $item['quantity'] * (float) $item['unit_price']);
 
@@ -270,7 +336,9 @@ class HomeController extends Controller
 
     public function updateProcurement(Request $request, ProcurementRequest $procurementRequest)
     {
+        $this->authorizeProcurementAccess($procurementRequest);
         $validated = $this->validateProcurement($request);
+        $this->authorizeSchoolAccess((int) $validated['school_id']);
         $items = $validated['items'];
         $amount = collect($items)->sum(fn (array $item) => (float) $item['quantity'] * (float) $item['unit_price']);
         $requestNumber = !empty($validated['manually_encode_pr_number'])
@@ -356,6 +424,8 @@ class HomeController extends Controller
 
     public function printProcurement(ProcurementRequest $procurementRequest)
     {
+        $this->authorizeProcurementAccess($procurementRequest);
+
         $procurementRequest->load(['school', 'requester', 'items', 'documents']);
         $staff = SchoolStaff::where('school_id', $procurementRequest->school_id)->get();
         $rfqMetadata = $procurementRequest->documents->firstWhere('document_type', 'request_for_quotation')?->metadata ?? [];
@@ -364,13 +434,7 @@ class HomeController extends Controller
             ?? $staff->firstWhere('procurement_role', 'Procurement Officer');
         $approver = $staff->firstWhere('procurement_role', 'Approver')
             ?? $staff->first(fn ($member) => str_contains(strtolower((string) $member->position), 'school head'));
-        $agency = AgencySetting::first() ?? new AgencySetting([
-            'republic_name' => 'Republic of the Philippines',
-            'department_name' => 'Department of Education',
-            'region_name' => 'Region XII',
-            'division_office' => 'Schools Division Office of Cotabato',
-            'district_name' => 'Magpet East District',
-        ]);
+        $agency = AgencySetting::first() ?? new AgencySetting();
 
         return view('procurement-print', [
             'procurementRequest' => $procurementRequest,
@@ -391,6 +455,8 @@ class HomeController extends Controller
 
     public function procurementDocuments(ProcurementRequest $procurementRequest)
     {
+        $this->authorizeProcurementAccess($procurementRequest);
+
         $procurementRequest->load(['school', 'requester', 'items', 'documents.creator']);
         $schoolStaff = SchoolStaff::where('school_id', $procurementRequest->school_id)
             ->orderBy('name')
@@ -401,7 +467,10 @@ class HomeController extends Controller
         return view('procurement-documents', [
             'procurementRequest' => $procurementRequest,
             'documentTypes' => $this->procurementDocumentTypes(),
-            'suppliers' => Supplier::where('status', 'active')->orderBy('business_name')->get([
+            'suppliers' => Supplier::where('status', 'active')
+                ->where('school_id', $procurementRequest->school_id)
+                ->orderBy('business_name')
+                ->get([
                 'id', 'business_name', 'business_address', 'tin', 'addressee', 'has_company_owner',
                 'owner_salutation', 'owner_given_name', 'owner_middle_initial', 'owner_last_name', 'contact_person',
                 'phone', 'email', 'business_permit_no', 'philgeps_no',
@@ -418,6 +487,8 @@ class HomeController extends Controller
 
     public function storeProcurementDocument(Request $request, ProcurementRequest $procurementRequest)
     {
+        $this->authorizeProcurementAccess($procurementRequest);
+
         $types = $this->procurementDocumentTypes();
         $data = $request->validate([
             'document_type' => ['required', Rule::in(array_keys($types))],
@@ -616,7 +687,9 @@ class HomeController extends Controller
             }
 
             $data['supplier_or_recipient'] = $winner['name'];
-            $supplier = Supplier::where('business_name', $winner['name'])->first();
+            $supplier = Supplier::where('school_id', $procurementRequest->school_id)
+                ->where('business_name', $winner['name'])
+                ->first();
             $ownerName = trim(implode(' ', array_filter([
                 $supplier?->owner_salutation,
                 $supplier?->owner_given_name,
@@ -775,6 +848,7 @@ class HomeController extends Controller
 
     public function printProcurementDocument(ProcurementRequest $procurementRequest, ProcurementDocument $procurementDocument)
     {
+        $this->authorizeProcurementAccess($procurementRequest);
         abort_unless($procurementDocument->procurement_request_id === $procurementRequest->id, 404);
         $procurementRequest->load(['school', 'requester', 'items']);
         $staff = SchoolStaff::where('school_id', $procurementRequest->school_id)->get();
@@ -816,6 +890,8 @@ class HomeController extends Controller
 
     public function printDeliveryReconciliation(ProcurementRequest $procurementRequest)
     {
+        $this->authorizeProcurementAccess($procurementRequest);
+
         $procurementRequest->load(['school', 'requester', 'items', 'documents']);
         $purchaseOrder = $procurementRequest->documents->firstWhere('document_type', 'purchase_order');
         $iar = $procurementRequest->documents->firstWhere('document_type', 'inspection_acceptance_report');
@@ -935,31 +1011,40 @@ class HomeController extends Controller
 
     public function userManagement()
     {
+        abort_unless($this->isMasterUser(), 403);
+
         return view('user-management');
     }
 
     public function subscriptions()
     {
+        abort_unless($this->isMasterUser(), 403);
+
         return view('subscriptions');
     }
 
     public function schoolSettings()
     {
+        $schoolIds = $this->scopedSchoolIds();
         if (request('ui') !== 'staff-save-v7') {
             return redirect()->route('school-settings', array_filter([
                 'ui' => 'staff-save-v7',
-                'school_id' => request('school_id'),
+                'school_id' => $schoolIds->contains((int) request('school_id')) ? request('school_id') : $schoolIds->first(),
             ]));
         }
 
-        $schools = School::withCount(['users', 'procurementRequests'])->orderBy('name')->get();
-        $selectedSchool = $schools->firstWhere('id', request('school_id')) ?? $schools->first();
+        $schools = School::withCount(['users', 'procurementRequests'])->whereIn('id', $schoolIds)->orderBy('name')->get();
+        $selectedSchool = $schools->firstWhere('id', (int) request('school_id')) ?? $schools->first();
 
         return response()->view('school-settings', [
             'agency' => AgencySetting::first() ?? new AgencySetting(),
             'schools' => $schools,
             'selectedSchool' => $selectedSchool,
             'staff' => SchoolStaff::with('school')->where('school_id', $selectedSchool?->id)->orderBy('name')->get(),
+            'isMasterUser' => $this->isMasterUser(),
+            'pendingPreRegistrations' => $this->isMasterUser()
+                ? School::with(['users' => fn ($query) => $query->oldest()])->where('status', 'inactive')->orderBy('created_at')->get()
+                : collect(),
         ])->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
             ->header('Pragma', 'no-cache')
             ->header('Expires', '0');
@@ -973,7 +1058,9 @@ class HomeController extends Controller
             'department_name' => ['required', 'string', 'max:255'],
             'region_name' => ['nullable', 'string', 'max:255'],
             'division_office' => ['nullable', 'string', 'max:255'],
+            'division_name' => ['nullable', 'string', 'max:255'],
             'district_name' => ['nullable', 'string', 'max:255'],
+            'office_section' => ['nullable', 'string', 'max:255'],
             'address' => ['nullable', 'string', 'max:1000'],
             'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:50'],
@@ -1006,8 +1093,13 @@ class HomeController extends Controller
             'school_head' => ['nullable', 'string', 'max:255'],
             'contact_email' => ['nullable', 'email', 'max:255'],
             'contact_number' => ['nullable', 'string', 'max:50'],
+            'status' => ['nullable', 'in:active,inactive'],
             'school_logo' => ['nullable', 'image', 'max:2048'],
         ]);
+        $this->authorizeSchoolAccess((int) $data['school_id']);
+        if (!$this->isMasterUser()) {
+            unset($data['status']);
+        }
         $school = School::findOrFail($data['school_id']);
         unset($data['school_id']);
         if ($request->hasFile('school_logo')) {
@@ -1016,6 +1108,26 @@ class HomeController extends Controller
         unset($data['school_logo']);
         $school->update($data);
         return back()->with('success', 'School details saved.');
+    }
+
+    public function approveSchoolRegistration(School $school)
+    {
+        abort_unless($this->isMasterUser(), 403);
+
+        $school->update(['status' => 'active']);
+
+        AuditLog::create([
+            'user_id' => request()->user()?->id,
+            'school_id' => $school->id,
+            'action' => 'approved_school_pre_registration',
+            'auditable_type' => School::class,
+            'auditable_id' => $school->id,
+            'metadata' => ['school_code' => $school->code],
+        ]);
+
+        return redirect()
+            ->route('school-settings', ['ui' => 'staff-save-v7', 'school_id' => $school->id])
+            ->with('success', $school->name . ' has been approved and activated.');
     }
 
     public function updateSchoolStaff(Request $request)
@@ -1028,6 +1140,7 @@ class HomeController extends Controller
             'staff.*.document_role' => ['nullable', 'string', 'max:255'],
             'staff.*.bac_role' => ['nullable', 'string', 'max:255'],
         ]);
+        $this->authorizeSchoolAccess((int) $validated['school_id']);
         foreach ($validated['staff'] as $staffId => $roles) {
             SchoolStaff::where('school_id', $validated['school_id'])->whereKey($staffId)->update($roles);
         }
@@ -1046,6 +1159,7 @@ class HomeController extends Controller
             'new_staff.*.bac_role' => ['nullable', 'string', 'max:255'],
         ]);
         $schoolId = $data['school_id'];
+        $this->authorizeSchoolAccess((int) $schoolId);
         unset($data['school_id']);
         foreach ($data['new_staff'] as $staffMember) {
             SchoolStaff::create([...$staffMember, 'school_id' => $schoolId]);

@@ -14,7 +14,10 @@
         .print-actions button { background: #00236f; color: #fff; }
         .page { width: 210mm; min-height: 297mm; margin: 0 auto 12px; padding: 8.5mm 10mm; background: #fff; }
         .form { width: 100%; border: 1px solid #111; }
-        .header { min-height: 21mm; border-bottom: 1px solid #111; text-align: center; padding: 2mm 2mm 1mm; }
+        .header { position: relative; min-height: 21mm; border-bottom: 1px solid #111; text-align: center; padding: 2mm 2mm 1mm; }
+        .header img { position: absolute; top: 2mm; width: 17mm; height: 17mm; object-fit: contain; }
+        .header .left-logo { left: 4mm; }
+        .header .right-logo { right: 4mm; }
         .agency-header { font-size: 10px; line-height: 1.15; }
         .agency-header .school-name { margin-top: 0.6mm; font-size: 12px; font-weight: bold; text-transform: uppercase; }
         .header .title { font: bold 22px Arial, sans-serif; line-height: 1.18; }
@@ -60,11 +63,19 @@
 </head>
 <body>
     <div class="print-actions"><a href="{{ route('procurement') }}">Back to Procurement</a><a href="{{ route('procurement.documents', $procurementRequest) }}">Procurement Documents</a><span style="margin-left:auto;margin-right:12px;color:#444;">Choose A4 or Folio in the print dialog</span><button type="button" onclick="window.print()">Print / Export PDF</button></div>
+    @php
+        $leftLogo = $agency?->department_logo_path ? asset('storage/'.$agency->department_logo_path) : asset('images/official-deped-logo.png');
+        $rightLogo = $procurementRequest->school?->logo_path ? asset('storage/'.$procurementRequest->school->logo_path) : ($agency?->division_logo_path ? asset('storage/'.$agency?->division_logo_path) : asset('images/official-school-logo.png'));
+    @endphp
     <div class="page">
         <div class="form">
-            <div class="header"><div class="title">PURCHASE REQUEST</div><div class="subtitle">{{ $agency->department_name ?? 'Department of Education' }}</div></div>
+            <div class="header">
+                @if($leftLogo)<img class="left-logo" src="{{ $leftLogo }}" alt="Department logo">@endif
+                @if($rightLogo)<img class="right-logo" src="{{ $rightLogo }}" alt="School logo">@endif
+                <div class="title">PURCHASE REQUEST</div><div class="subtitle">{{ $agency->department_name ?: 'Department of Education' }}</div>
+            </div>
             <div class="metadata">
-                <span class="meta-label">Entity Name:</span><span class="meta-value">{{ $procurementRequest->entity_name ?: ($agency->division_office ?? $agency->department_name ?? 'Department of Education') }}</span><span class="meta-empty"></span><span class="meta-empty"></span><span class="meta-label">Fund Cluster:</span><span class="meta-value">{{ $procurementRequest->source_of_fund }}</span>
+                <span class="meta-label">Entity Name:</span><span class="meta-value">{{ $procurementRequest->entity_name ?: ($procurementRequest->school?->division ?: ($agency->department_name ?: 'Department of Education')) }}</span><span class="meta-empty"></span><span class="meta-empty"></span><span class="meta-label">Fund Cluster:</span><span class="meta-value">{{ $procurementRequest->source_of_fund }}</span>
                 <span class="meta-label">Department :</span><span class="meta-value">{{ $procurementRequest->department_name ?: $school_name }}</span><span class="meta-label">PR No.:</span><span class="meta-value">{{ $procurementRequest->request_number }}</span><span class="meta-label">Date:</span><span class="meta-value">{{ $date }}</span>
                 <span class="meta-label">Section:</span><span class="meta-value">{{ $procurementRequest->section }}</span><span class="meta-label">SAI No. :</span><span class="meta-value">{{ $procurementRequest->sai_number }}</span><span class="meta-label">Date:</span><span class="meta-value">{{ $procurementRequest->sai_date?->format('F d, Y') }}</span>
                 <span class="meta-label meta-label-wide">Responsibility Center Code:</span><span class="meta-value">{{ $procurementRequest->responsibility_center_code }}</span><span class="meta-empty"></span><span class="meta-empty"></span><span class="meta-empty"></span><span class="meta-empty"></span>

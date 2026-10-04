@@ -16,6 +16,9 @@
     }
 
     $risBaseNumber = $document->document_number;
+    $fundCluster = ($document->metadata['source_of_fund'] ?? null) ?: $procurementRequest->source_of_fund ?: 'General Fund';
+    $divisionName = $procurementRequest->school?->division;
+    $entityName = $procurementRequest->department_name ?: $procurementRequest->school?->name;
     if (preg_match('/^RIS-(\d{4})-(\d+)(?:-\d+)?$/', $risBaseNumber, $matches)) {
         $risBaseNumber = 'RIS-'.$matches[1].'-'.str_pad((string) ((int) $matches[2]), 4, '0', STR_PAD_LEFT);
     }
@@ -43,17 +46,17 @@
             <table class="ris-table">
                 <tr>
                     <td style="width:15%">Entity Name</td>
-                    <td style="width:51%;text-decoration:underline">{{ strtoupper($procurementRequest->school?->name) }}</td>
+                    <td style="width:51%;text-decoration:underline">{{ strtoupper($entityName) }}</td>
                     <td style="width:12%">Fund<br>Cluster:</td>
-                    <td style="width:22%;text-decoration:underline">General Fund</td>
+                    <td style="width:22%;text-decoration:underline">{{ $fundCluster }}</td>
                 </tr>
                 <tr>
                     <td colspan="2" class="ris-lines">
-                        Division: <span style="text-decoration:underline">{{ strtoupper($agency?->division_office ?? '') }}</span><br>
+                        Division: <span style="text-decoration:underline">{{ strtoupper($divisionName ?? '') }}</span><br>
                         Office: <span style="text-decoration:underline">{{ strtoupper($procurementRequest->school?->name) }}</span>
                     </td>
                     <td colspan="2" class="ris-lines">
-                        Responsibility Center Code: __________________________<br>
+                        Responsibility Center Code: <span style="text-decoration:underline">{{ $procurementRequest->responsibility_center_code ?: '__________________________' }}</span><br>
                         RIS No.: <span style="text-decoration:underline">{{ $sheetRisNumber }}</span>
                     </td>
                 </tr>

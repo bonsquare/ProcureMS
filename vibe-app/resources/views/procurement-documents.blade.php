@@ -122,7 +122,7 @@
     const documentCodes = @json($documentCodes);
     const nextDocumentNumbers = @json($nextDocumentNumbers);
     const defaultMetadata = {mode_of_procurement:'SVP',delivery_term:'Pick-Up',payment_term:'30 days',delivery_days:'30',source_of_fund:@json($procurementRequest->source_of_fund ?: 'MOOE'),place_of_delivery:@json($procurementRequest->school?->name ?? ''),delivery_schedule:'',transaction_description:@json($procurementRequest->transaction_description ?? ''),project_title:@json($procurementRequest->title ?? ''),inspection_officer_name:@json($inspectionOfficerName),template_variant:'sbfp'};
-    const rfqDefaults = {transaction_description:'',project_title:@json('For '.$procurementRequest->title),date_posted:@json(now()->format('Y-m-d'))};
+    const rfqDefaults = {transaction_description:@json($procurementRequest->transaction_description ?? ''),project_title:@json($procurementRequest->title ?? ''),date_posted:@json(now()->format('Y-m-d'))};
     const abstractWinner = @json($abstractWinner);
     const purchaseOrder = @json($purchaseOrder);
     const supplierNames = @json($suppliers->pluck('business_name')->values());
@@ -411,6 +411,8 @@
         }
         document.getElementById('document-notes').value = button.dataset.notes || '';
         const metadata = {...defaultMetadata, ...(isRfq ? rfqDefaults : {}), ...(savedMetadata[button.dataset.documentType] || {})};
+        if (isRfq && !metadata.transaction_description) metadata.transaction_description = defaultMetadata.transaction_description;
+        if (isRfq && !metadata.project_title) metadata.project_title = defaultMetadata.project_title;
         if (isNtp && metadata.template_variant === 'thirty_days') metadata.template_variant = 'mooe';
         if (isNtp && metadata.template_variant === 'scheduled_delivery') metadata.template_variant = 'sbfp';
         if (isNtp) {

@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'create'])->name('login');
     Route::post('/login', [AuthController::class, 'store'])->name('login.store');
+    Route::get('/register', [AuthController::class, 'register'])->name('register');
+    Route::post('/register', [AuthController::class, 'storeRegistration'])->name('register.store');
 });
 
 Route::middleware('auth')->group(function () {
@@ -35,6 +37,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/school-settings', [HomeController::class, 'schoolSettings'])->name('school-settings');
     Route::post('/school-settings/agency', [HomeController::class, 'updateAgencySettings'])->name('school-settings.agency');
     Route::post('/school-settings/school', [HomeController::class, 'updateSchoolDetails'])->name('school-settings.school');
+    Route::post('/school-settings/schools/{school}/approve', [HomeController::class, 'approveSchoolRegistration'])->name('school-settings.school.approve');
     Route::post('/school-settings/staff', [HomeController::class, 'updateSchoolStaff'])->name('school-settings.staff');
     Route::post('/school-settings/staff/add', [HomeController::class, 'addSchoolStaff'])->name('school-settings.staff.add');
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
