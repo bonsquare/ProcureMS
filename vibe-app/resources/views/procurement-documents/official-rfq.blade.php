@@ -1,0 +1,68 @@
+@php
+    $meta = $document->metadata ?? [];
+    $transactionDescription = $meta['transaction_description'] ?? '';
+    $procurementSubject = preg_replace('/^procurement\s+of\s+/i', '', trim($transactionDescription));
+    $projectTitle = $meta['project_title'] ?? $procurementRequest->title;
+    $rfqPurpose = $transactionDescription && $projectTitle
+        ? $transactionDescription.' for '.$projectTitle
+        : ($transactionDescription ?: $projectTitle);
+    $datePosted = !empty($meta['date_posted']) ? \Carbon\Carbon::parse($meta['date_posted']) : $document->document_date;
+    $dateOpening = !empty($meta['date_opening']) ? \Carbon\Carbon::parse($meta['date_opening']) : null;
+    $timeOpening = !empty($meta['time_opening']) ? \Carbon\Carbon::createFromFormat('H:i', $meta['time_opening'])->format('g:i A') : null;
+    $openingSchedule = $dateOpening
+        ? trim(($timeOpening ? $timeOpening.' of ' : '').$dateOpening->format('F d, Y'))
+        : '____________________________';
+    $termsOfPayment = trim($meta['terms_of_payment'] ?? $meta['payment_term'] ?? '30 days after delivery');
+@endphp
+<style>
+    .rfq-page{width:215.9mm;min-height:355.6mm;padding:12mm;font-size:10.5pt;line-height:1.42}.rfq-page .official-header{font-size:9.5pt}.rfq-page .official-header img{width:21mm;height:21mm}.rfq-title{margin:15px 0 12px;text-align:center;font-size:15pt;font-weight:700;text-decoration:underline}.rfq-fields{margin:16px 0 10px 2px}.rfq-fields .row{display:grid;grid-template-columns:74mm 1fr;margin:4px 0;font-style:italic}.rfq-fields .line{border-bottom:1px solid #111;min-height:17px}.rfq-p{text-align:justify;margin:10px 0}.rfq-sign{text-align:center;margin:24px auto 18px;width:80mm}.rfq-sign .name{font-weight:700;text-decoration:underline}.rfq-page h2{font-size:12pt;margin:12px 0 7px}.rfq-page ol{margin:5px 0 0 20px;padding:0}.rfq-page li{padding-left:2px;margin:3px 0;text-align:justify}.rfq-purpose{text-align:center;font-size:13pt;font-weight:700;margin:15px 0}.rfq-spec th,.rfq-spec td{padding:5px}.rfq-spec td{height:25px}.rfq-financial{margin-top:13px}.rfq-offer th,.rfq-offer td{padding:7px}.rfq-offer td{height:57px}.rfq-lines{margin-top:36px}.rfq-lines div{margin:22px 0}.rfq-lines span{display:inline-block;border-bottom:1px solid #111;width:115mm}.rfq-estimate th,.rfq-estimate td{padding:4px}.rfq-estimate td{height:22px}@media print{@page{size:8.5in 14in;margin:0}.rfq-page{margin:0;width:215.9mm;min-height:355.6mm;box-shadow:none}}
+</style>
+<section class="page rfq-page page-break">
+    @include('procurement-documents._header')
+    <div class="bac">Bids and Awards Committee</div><h1 class="rfq-title">Request for Quotation</h1>
+    <div class="right" style="margin-left:auto;width:58mm"><div>Date: <span class="u">{{ $datePosted->format('F d, Y') }}</span></div><div>RFQ No.: <span class="u">{{ $document->document_number }}</span></div></div>
+    <div class="rfq-fields"><div class="row"><span>Company/Business Name:</span><span class="line">{{ $meta['business_name'] ?? '' }}</span></div><div class="row"><span>Address:</span><span class="line">{{ $meta['business_address'] ?? '' }}</span></div><div class="row"><span>Business/Mayor's Permit No.:</span><span class="line">{{ $meta['business_permit_no'] ?? '' }}</span></div><div class="row"><span>PhilGeps Registration Number<br>(Required):</span><span class="line">{{ $meta['philgeps_no'] ?? '' }}</span></div></div>
+    <p class="rfq-p">The <strong>{{ strtoupper($procurementRequest->school?->name) }}</strong>, through its Bids and Awards Committee (BAC), intends to procure <strong>{{ $procurementSubject ?: $projectTitle }}</strong>@if($transactionDescription && $projectTitle) for <strong>{{ $projectTitle }}</strong>@endif of the Implementing Rules and Regulations of Republic Act No. 12009.</p>
+    <p class="rfq-p">Please submit your duly signed quotation addressed to the Bids and Awards Committee (BAC) Chairperson and to the given address below, on or before <strong>{{ $openingSchedule }}</strong> subject to the compliance with the Terms and Conditions provided on this Request for Quotation (RFQ):</p>
+    <div class="rfq-sign"><div class="name">{{ strtoupper($bacChair?->name ?? 'BAC CHAIRPERSON') }}</div><div>{{ $bacChair?->position ?? '' }}</div><div>BAC Chairperson</div></div>
+    <p class="rfq-p">Interested service provider shall also submit a copy of the following documents along with the quotation on or before the above specified deadline of submission of quotation:</p>
+    <div style="margin-left:16px"><strong>a.</strong> Mayor's/Business Permit<br><strong>b.</strong> PhilGeps Registration Number<br><strong>c.</strong> Income/Business Tax Return</div>
+    <p class="rfq-p">The Head of the Procuring Entity (HoPE) of the {{ strtoupper($procurementRequest->school?->name) }}, reserves the right to reject any and all quotations, declare a failure of procurement, or not award the contract in accordance with the conditions specified under Section 70 of the IRR of RA No. 12009.</p>
+    <p class="rfq-p">For any clarification, you may contact the BAC Secretariat at {{ $procurementRequest->school?->contact_number ?: '____________' }} or send email to {{ $procurementRequest->school?->contact_email ?: '____________' }}.</p>
+    <p>By the authority of the Bids and awards Committee:</p><div style="margin-top:28px"><div class="signature-name">{{ strtoupper($bacSecretariat?->name ?? 'BAC SECRETARIAT HEAD') }}</div><div>BAC Secretariat Head</div></div>
+</section>
+<section class="page rfq-page page-break">
+    @include('procurement-documents._header')
+    <div class="bac">Bids and Awards Committee</div>
+    <h2>Instructions:</h2><p>Note: Failure to follow these instructions will disqualify your entire quotation.</p>
+    <ol><li>Do not alter the contents of this form in any way.</li><li>The use of this RFQ is highly encouraged to minimize errors or omissions of the required mandatory provisions. In cases of any changes, bidders must use or refer to the latest version of the RFQ only pertains to deadline extension. If another form is used other than the latest RFQ, the quotation shall contain all the mandatory requirements/provisions including manifestation on the agreement with the Terms and Conditions below. In case a prospective/service provider submits a filled-out RFQ with a supporting document (i.e. a price quotation in a different format), both documents shall be considered unless there will be discrepancies. In this case, provisions in the RFQ shall prevail.</li><li>All technical specifications must be complied with. Failure to comply with the mandatory requirements shall render the quotation ineligible/disqualified.</li></ol>
+    <h2 style="margin-top:15px">Terms and Conditions:</h2>
+    <ol><li>Bidders shall provide correct and accurate information required in this form.</li><li>Any interlineations, erasures or overwriting shall be valid only if they are signed or initialed by you or any of your duly authorized representative/s.</li><li>Price quotation/s must be valid for a period of FORTY-FIVE (45) calendar days from the deadline of submission.</li><li>Price quotation/s, to be denominated in Philippine peso, shall include all taxes, duties and/or levies payable.</li><li>Quotations exceeding the Approved Budget for the Contract shall be rejected.</li><li>In case two or more bidders are determined to have submitted the Lowest Calculated Quotation/Lowest Calculated and Responsive Quotation, the {{ strtoupper($procurementRequest->school?->name) }} shall employ "draw lots" as the tie-breaking method to finally determine the single winning provider in accordance with GPPB Circular 06-2005.</li><li>Award of contract shall be made to the lowest quotation which complies with the technical specifications, requirements and other terms and conditions stated herein.</li><li>The item/s shall be delivered according to the accepted offer of the bidder.</li><li>Item/s delivered shall be inspected on the scheduled date and time of the {{ strtoupper($procurementRequest->school?->name) }}. The delivery of the item/s shall be acknowledged upon delivery to confirm compliance with technical specifications.</li><li>Payment shall be made after delivery and upon submission of the required supporting documents by the supplier, contractor, or consultant: for Goods, Delivery Receipt and Charge Invoice with ATP; and for Meals, Delivery Receipt/Billing Statement and Charge Invoice/Statement of Account. Our Government Servicing Bank, Land Bank of the Philippines, shall credit the amount due to the identified bank account of the supplier, contractor, or consultant. <strong>{{ $termsOfPayment }}</strong> Please note that the corresponding bank transfer fee, if any, shall be chargeable to the account of the supplier, contractor, or consultant.</li><li>Liquidated damages equivalent to one-tenth of one percent (0.1%) of the value of the goods not delivered within the prescribed delivery period shall be imposed per day of delay. The Procuring Entity may terminate the contract once cumulative liquidated damages reach ten percent (10%) of the contract amount.</li><li>The Procuring Entity may cancel or terminate the contract at any time in accordance with grounds provided under RA No. 12009 and its IRR.</li><li>The RFQ, Purchase Order (PO), and other related documents for the above-stated procurement project/s shall be deemed to form part of the contract.</li></ol>
+</section>
+<section class="page rfq-page page-break">
+    @include('procurement-documents._header')<div class="bac">Bids and Awards Committee</div>
+    <p class="center" style="margin:15px 8mm">After having carefully read and accepted the Instruction and Terms and Conditions, I/We submit our quotation/s for the item/s as follows:</p>
+    <div class="rfq-purpose">{{ $rfqPurpose }}</div>
+    <table class="doc-table rfq-spec"><thead><tr><th style="width:34%">Minimum Technical Specifications</th><th style="width:12%">Qty.</th><th>Offered Technical<br>Specification/Service / Brand</th><th style="width:27%">Statement of Compliance<br>("Comply" or "Not Comply")</th></tr></thead><tbody><tr><td colspan="4">Note: Non-compliance with the minimum required specifications shall be rejected</td></tr><tr><td colspan="4" class="bold">Requirements:</td></tr>@foreach($procurementRequest->items as $item)<tr><td>{{ $item->name }}</td><td class="center">{{ number_format((float)$item->quantity,0) }} {{ strtoupper($item->unit) }}</td><td></td><td></td></tr>@endforeach</tbody></table>
+    <div class="rfq-financial"><h2>FINANCIAL OFFER:</h2><h2>Terms of Payment:</h2><p class="rfq-p">{{ $termsOfPayment }}</p><h2>Payment Details:</h2><p>Banking Institution: ______________________________________________</p><p>Account Number: _________________________________________________</p><p>Account Name: ___________________________________________________</p></div>
+</section>
+<section class="page rfq-page page-break">
+    @include('procurement-documents._header')
+    <div class="bac">Bids and Awards Committee</div>
+    <p class="bold" style="font-size:11pt">Please quote your BEST OFFER for the item/s below. Please do not leave any blank items. Indicate "0" if item being offered is for free.</p>
+    <div class="rfq-purpose">{{ $rfqPurpose }}</div><p class="center">(Delivery: upon receipt of Notice to Proceed)</p>
+    <table class="doc-table rfq-offer"><thead><tr><th>Approved Budget of the Contract</th><th>Total Offered Quotation (Inclusive of VAT)</th></tr></thead><tbody><tr><td rowspan="2" class="center bold" style="width:38%">{{ $amountInWords }}<br><br>Php {{ number_format((float)$procurementRequest->amount,2) }}</td><td>In Words:<div style="margin:24px 8mm 0;border-bottom:1px solid #111"></div><div style="margin:22px 8mm 0;border-bottom:1px solid #111"></div></td></tr><tr><td>In Figures:<div style="margin:24px 8mm 0;width:58mm;border-bottom:1px solid #111"></div></td></tr></tbody></table>
+    <div class="rfq-lines"><div>Signature over Printed Name: <span></span></div><div>Position/Designation: <span></span></div><div>Office Telephone / Fax / Mobile Nos.: <span style="width:85mm"></span></div><div>Email Address/es: <span style="width:105mm"></span></div></div>
+</section>
+<section class="page rfq-page">
+    @include('procurement-documents._header')<div class="bac">Bids and Awards Committee</div><h1 class="center" style="font-size:13pt;margin:14px 0">DETAILED ESTIMATES AND TECHNICAL SPECIFICATION</h1><div class="rfq-purpose">{{ $rfqPurpose }}</div>
+    <table class="doc-table rfq-estimate"><thead><tr><th style="width:7%">Stock<br>No.</th><th style="width:9%">Unit</th><th>Description</th><th style="width:7%">Qty</th><th style="width:11%">Unit Cost</th><th style="width:10%">Bid Price</th><th style="width:13%">Total Cost</th></tr></thead><tbody>
+        @foreach($procurementRequest->items as $item)
+            <tr><td class="center">{{ $loop->iteration }}</td><td class="center">{{ strtolower($item->unit) }}</td><td>{{ $item->name }}</td><td class="right">{{ number_format((float)$item->quantity,0) }}</td><td class="right">{{ number_format((float)$item->unit_price,2) }}</td><td></td><td></td></tr>
+        @endforeach
+        @for($blank = 0; $blank < 3; $blank++)
+            <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        @endfor
+        <tr><td colspan="6" class="right bold" style="border:0">Grand Total:</td><td style="height:29px;border-width:2px"></td></tr>
+    </tbody></table><div style="margin-top:24px">Conformed by:</div><div style="margin-top:52px;width:95mm;border-top:1px solid #111" class="bold">Supplier</div>
+</section>

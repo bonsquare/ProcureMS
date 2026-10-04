@@ -1,0 +1,4 @@
+/* Local styles for the CDN-only dashboard. */
+html { min-width: 320px; }
+button, select, input { font: inherit; }
+.procurement-add-good:hover { background-color: #00236f !important; color: #ffffff !important; }
