@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BudgetController;
+use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Route;
 
@@ -31,7 +33,18 @@ Route::middleware('auth')->group(function () {
     Route::get('/procurement/{procurementRequest}/delivery-reconciliation', [HomeController::class, 'printDeliveryReconciliation'])->name('procurement.delivery-reconciliation');
     Route::get('/liquidation', [HomeController::class, 'liquidation'])->name('liquidation');
     Route::post('/liquidation', [HomeController::class, 'storeLiquidation'])->name('liquidation.store');
+    Route::get('/liquidation/{liquidationReport}/print', [HomeController::class, 'printOrs'])->name('liquidation.print');
     Route::patch('/liquidation/{liquidationReport}/status', [HomeController::class, 'updateLiquidationStatus'])->name('liquidation.status');
+    Route::get('/budget', [BudgetController::class, 'index'])->name('budget');
+    Route::get('/budget/balance', [BudgetController::class, 'balance'])->name('budget.balance');
+    Route::post('/budget', [BudgetController::class, 'store'])->name('budget.store');
+    Route::delete('/budget/{budgetAllocation}', [BudgetController::class, 'destroy'])->name('budget.destroy');
+    Route::get('/accounting', [FinanceController::class, 'accounting'])->name('accounting');
+    Route::patch('/accounting/{liquidationReport}', [FinanceController::class, 'review'])->name('accounting.review');
+    Route::post('/accounting/{liquidationReport}/dv', [FinanceController::class, 'createDv'])->name('accounting.dv.store');
+    Route::get('/accounting/{liquidationReport}/dv-print', [FinanceController::class, 'printDv'])->name('accounting.dv.print');
+    Route::get('/cash', [FinanceController::class, 'cash'])->name('cash');
+    Route::post('/cash/{liquidationReport}/pay', [FinanceController::class, 'pay'])->name('cash.pay');
     Route::get('/google-drive', [HomeController::class, 'googleDrive'])->name('google-drive');
     Route::post('/google-drive/settings', [HomeController::class, 'updateGoogleDriveSettings'])->name('google-drive.settings');
     Route::get('/reports', [HomeController::class, 'reports'])->name('reports');

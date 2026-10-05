@@ -209,13 +209,14 @@ class HomeController extends Controller
     public function procurement()
     {
         $user = request()->user();
-        $procurementRequests = ProcurementRequest::with('school', 'requester')
+        $procurementRequests = ProcurementRequest::with('school', 'requester', 'liquidationReports')
             ->whereIn('school_id', $this->scopedSchoolIds())
             ->latest()
             ->get();
 
         $requests = $procurementRequests->map(fn (ProcurementRequest $request) => [
                 'record_id' => $request->id,
+                'ors' => $request->liquidationReports->map(fn ($r) => ['number' => $r->ors_number ?: $r->report_number, 'status' => $r->status])->all(),
                 'id' => $request->request_number,
                 'title' => $request->title,
                 'school' => $request->school?->name ?? 'Unassigned',
@@ -335,6 +336,7 @@ class HomeController extends Controller
         $this->authorizeSchoolAccess((int) $validated['school_id']);
         $items = $validated['items'];
         $amount = collect($items)->sum(fn (array $item) => (float) $item['quantity'] * (float) $item['unit_price']);
+        app(\App\Services\BudgetService::class)->assertAvailable('source_of_fund', (int) $validated['school_id'], $validated['source_of_fund'], (float) $amount);
 
         $procurementRequest = DB::transaction(function () use ($validated, $request, $amount, $items) {
             $requestNumber = !empty($validated['manually_encode_pr_number'])
@@ -376,6 +378,7 @@ class HomeController extends Controller
         $this->authorizeSchoolAccess((int) $validated['school_id']);
         $items = $validated['items'];
         $amount = collect($items)->sum(fn (array $item) => (float) $item['quantity'] * (float) $item['unit_price']);
+        app(\App\Services\BudgetService::class)->assertAvailable('source_of_fund', (int) $validated['school_id'], $validated['source_of_fund'], (float) $amount, $procurementRequest->created_at?->year, $procurementRequest->id);
         $requestNumber = !empty($validated['manually_encode_pr_number'])
             ? $validated['manual_pr_number']
             : (preg_match('/^PR-\d{4}-\d{3,}$/', $procurementRequest->request_number)
@@ -1097,7 +1100,13 @@ class HomeController extends Controller
         $data = $request->validate([
             'school_id' => ['required', 'exists:schools,id'],
             'procurement_request_id' => ['nullable', 'exists:procurement_requests,id'],
-            'ors_number' => ['required', 'string', 'max:100'],
+            'ors_number' => ['nullable', 'string', 'max:100', Rule::unique('liquidation_reports', 'ors_number')],
+            'redirect_to' => ['nullable', 'in:budget'],
+            'source_of_fund' => ['required', 'string', 'max:255'],
+            'payee' => ['nullable', 'string', 'max:255'],
+            'payee_address' => ['nullable', 'string', 'max:255'],
+            'payee_tin' => ['nullable', 'string', 'max:100'],
+            'responsibility_center_code' => ['nullable', 'string', 'max:100'],
             'purpose' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string', 'max:1000'],
@@ -1106,21 +1115,44 @@ class HomeController extends Controller
         if (!empty($data['procurement_request_id'])) {
             $procurementRequest = ProcurementRequest::findOrFail($data['procurement_request_id']);
             $this->authorizeProcurementAccess($procurementRequest);
-            abort_unless((int) $procurementRequest->school_id === (int) $data['school_id'], 422);
+            // The linked PR decides the school, so a mismatched dropdown can't block the entry.
+            $data['school_id'] = $procurementRequest->school_id;
+            if (empty($data['payee']) && ($awarded = $procurementRequest->awardedPayee())) {
+                $data['payee'] = $awarded['name'];
+                $data['payee_address'] ??= $awarded['address'];
+                $data['payee_tin'] ??= $awarded['tin'];
+            }
         }
 
-        $reportNumber = DB::transaction(function () use ($data) {
+        if (empty($data['procurement_request_id'])) {
+            app(\App\Services\BudgetService::class)->assertAvailable('amount', (int) $data['school_id'], $data['source_of_fund'], (float) $data['amount']);
+        }
+
+        $orsNumber = DB::transaction(function () use ($data) {
             $nextId = ((int) LiquidationReport::max('id')) + 1;
             do {
                 $reportNumber = 'LR-' . now()->format('Y') . '-' . str_pad((string) $nextId++, 4, '0', STR_PAD_LEFT);
             } while (LiquidationReport::where('report_number', $reportNumber)->exists());
+
+            $orsNumber = $data['ors_number'] ?? null;
+            if (!$orsNumber) {
+                $orsPrefix = 'ORS-' . now()->format('Y') . '-';
+                $lastOrs = LiquidationReport::withoutGlobalScopes()->where('ors_number', 'like', $orsPrefix . '%')->pluck('ors_number')
+                    ->map(fn ($n) => (int) substr($n, strlen($orsPrefix)))->max() ?? 0;
+                $orsNumber = $orsPrefix . str_pad((string) ($lastOrs + 1), 4, '0', STR_PAD_LEFT);
+            }
 
             LiquidationReport::create([
                 'school_id' => $data['school_id'],
                 'procurement_request_id' => $data['procurement_request_id'] ?? null,
                 'submitted_by' => request()->user()?->id,
                 'report_number' => $reportNumber,
-                'ors_number' => $data['ors_number'],
+                'ors_number' => $orsNumber,
+                'source_of_fund' => $data['source_of_fund'],
+                'payee' => $data['payee'] ?? null,
+                'payee_address' => $data['payee_address'] ?? null,
+                'payee_tin' => $data['payee_tin'] ?? null,
+                'responsibility_center_code' => $data['responsibility_center_code'] ?? null,
                 'purpose' => $data['purpose'],
                 'amount' => $data['amount'],
                 'status' => 'for_review',
@@ -1128,10 +1160,29 @@ class HomeController extends Controller
                 'submitted_at' => now(),
             ]);
 
-            return $reportNumber;
+            return $orsNumber;
         });
 
-        return back()->with('success', "{$reportNumber} has been submitted for accounting review.");
+        $message = "ORS {$orsNumber} has been created and sent to Accounting for review.";
+
+        return ($data['redirect_to'] ?? null) === 'budget'
+            ? redirect()->route('budget')->with('success', $message)
+            : back()->with('success', $message);
+    }
+
+    public function printOrs(LiquidationReport $liquidationReport)
+    {
+        $this->authorizeLiquidationAccess($liquidationReport);
+        $liquidationReport->load(['school', 'procurementRequest', 'submitter']);
+        $staff = SchoolStaff::where('school_id', $liquidationReport->school_id)->get();
+        $find = fn (string $needle) => $staff->first(fn ($m) => str_contains(strtolower($m->document_role . ' ' . $m->position), $needle));
+
+        return view('ors-print', [
+            'report' => $liquidationReport,
+            'agency' => AgencySetting::first() ?? new AgencySetting(),
+            'requester' => $find('school head') ?? $find('head'),
+            'budgetOfficer' => $find('disburs') ?? $find('budget'),
+        ]);
     }
 
     public function updateLiquidationStatus(Request $request, LiquidationReport $liquidationReport)
