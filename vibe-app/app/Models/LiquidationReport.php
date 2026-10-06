@@ -19,5 +19,23 @@ class LiquidationReport extends Model
 
     public function school() { return $this->belongsTo(School::class); }
     public function procurementRequest() { return $this->belongsTo(ProcurementRequest::class); }
+
+    public function budgetAllocation() { return $this->belongsTo(BudgetAllocation::class); }
+
+    /** The budget line this obligation is charged to: its own, or the one on the linked PR. */
+    public function chargedLine(): ?BudgetAllocation
+    {
+        return $this->budgetAllocation ?? $this->procurementRequest?->budgetAllocation;
+    }
     public function submitter() { return $this->belongsTo(User::class, 'submitted_by'); }
+
+    /** Next system-generated ORS serial number for the current year, e.g. ORS-2026-0007. */
+    public static function nextOrsNumber(): string
+    {
+        $prefix = 'ORS-' . now()->format('Y') . '-';
+        $last = static::withoutGlobalScopes()->where('ors_number', 'like', $prefix . '%')->pluck('ors_number')
+            ->map(fn ($number) => (int) substr($number, strlen($prefix)))->max() ?? 0;
+
+        return $prefix . str_pad((string) ($last + 1), 4, '0', STR_PAD_LEFT);
+    }
 }

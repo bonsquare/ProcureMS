@@ -18,6 +18,8 @@
         .ph { font-family: 'Times New Roman', Times, serif; color: #000; }
         @media print { html, body { background: #fff; } .print-actions { display: none; } .sheet { margin: 0; } }
     </style>
+@include('partials.input-fixes')
+@include('partials.print-clean')
 </head>
 <body>
 @php
@@ -38,7 +40,7 @@
     $accountantName = strtoupper((string) ($accountant?->name ?? ''));
     $accountantRole = $accountant?->position ?: '';
 @endphp
-<div class="print-actions"><a href="{{ route('accounting', ['tab' => 'with_dv']) }}">Back to Accounting</a><span style="margin-left:auto;margin-right:12px;color:#444;">Print on Legal / Folio (8.5 x 13 in), actual size</span><button type="button" onclick="window.print()">Print / Export PDF</button></div>
+<div class="print-actions"><button type="button" class="secondary" onclick="closePrintTab('{{ route('accounting', ['tab' => 'with_dv']) }}')">Close</button><span style="margin-left:auto;margin-right:12px;color:#444;">Print on Legal / Folio (8.5 x 13 in), actual size</span><button type="button" onclick="window.print()">Print / Export PDF</button></div>
 <div class="sheet"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 612 936" preserveAspectRatio="xMidYMid meet" stroke="#000" fill="none">
 <g fill="none">
 <line x1="17.33" y1="40.20" x2="17.33" y2="782.56" stroke-width="1.39"/>

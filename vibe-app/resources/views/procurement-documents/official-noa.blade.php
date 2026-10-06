@@ -35,7 +35,7 @@
     .noa-sign-line{width:58mm;margin-top:28mm;border-top:1px solid #111}
     .noa-conforme-date{margin-top:4mm}
     .noa-date-line{display:inline-block;width:48mm;border-bottom:1px solid #111}
-    @media print{@page{size:A4;margin:0}.noa-page{margin:0;width:210mm;min-height:297mm;box-shadow:none}.noa-title{margin-top:25px}}
+    @media print{@page{size:A4;margin:0}.noa-page{margin:0;width:210mm;min-height:295.5mm;box-shadow:none}.noa-title{margin-top:25px}}
 </style>
 
 <main class="page noa-page">

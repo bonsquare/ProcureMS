@@ -18,18 +18,23 @@
         .ph { font-family: 'Times New Roman', Times, serif; color: #000; }
         @media print { html, body { background: #fff; } .print-actions { display: none; } .sheet { margin: 0; } }
     </style>
+@include('partials.input-fixes')
+@include('partials.print-clean')
 </head>
 <body>
 @php
     $pr = $report->procurementRequest;
     $fit = fn ($s, $w, $size) => min($size, round($w / max(mb_strlen((string) $s), 1) / 0.5, 1));
     $date = ($report->submitted_at ?? $report->created_at)?->format('F d, Y');
-    $fund = $report->source_of_fund ?: $pr?->source_of_fund;
+    $line = $report->chargedLine();
+    $fund = $report->source_of_fund ?: $pr?->source_of_fund ?: $line?->source_of_fund;
     $division = $report->school?->division ?: ($agency->division_name ?: $agency->division_office);
     $payee = $report->payee ?: ($pr?->school?->name ?? $report->school?->name);
     $office = $report->school?->name;
     $address = $report->school?->address;
-    $rc = $report->responsibility_center_code ?: $pr?->responsibility_center_code;
+    $rc = $report->responsibility_center_code ?: $pr?->responsibility_center_code ?: $line?->responsibility_center;
+    $uacs = $line?->uacs_code;
+    $pap = $line?->program;
     $particulars = $report->purpose . ($report->notes ? "\n" . $report->notes : '');
     $amount = number_format((float) $report->amount, 2);
     $paidAmount = $report->paid_at ? $amount : '';
@@ -39,7 +44,7 @@
     $certifierName = strtoupper((string) ($budgetOfficer?->name ?? ''));
     $certifierRole = $budgetOfficer?->position ?: 'Disbursing Officer';
 @endphp
-<div class="print-actions"><a href="{{ route('budget') }}">Back to Budget</a><span style="margin-left:auto;margin-right:12px;color:#444;">Print on Legal / Folio (8.5 x 13 in), actual size</span><button type="button" onclick="window.print()">Print / Export PDF</button></div>
+<div class="print-actions"><button type="button" class="secondary" onclick="closePrintTab('{{ route('budget') }}')">Close</button><span style="margin-left:auto;margin-right:12px;color:#444;">Print on Legal / Folio (8.5 x 13 in), actual size</span><button type="button" onclick="window.print()">Print / Export PDF</button></div>
 <div class="sheet"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 612 936" preserveAspectRatio="xMidYMid meet" stroke="#000" fill="none">
 <g fill="none">
 <line x1="17.39" y1="44.92" x2="17.39" y2="883.92" stroke-width="1.45"/>
@@ -159,6 +164,8 @@
 <text x="118.1" y="188.4" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($address, 470, 11.6) }}">{{ $address }}</text>
 <!-- responsibility center / particulars -->
 <text x="66.3" y="237.6" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="{{ $fit($rc, 92, 10.6) }}">{{ $rc }}</text>
+<text x="362.5" y="237.6" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="{{ $fit($pap, 58, 9) }}">{{ $pap }}</text>
+<text x="432.5" y="237.6" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="{{ $fit($uacs, 64, 10) }}">{{ $uacs }}</text>
 <foreignObject x="118.1" y="227.6" width="196" height="266"><div xmlns="http://www.w3.org/1999/xhtml" style="font:10.6px/13.05px Arial,Helvetica,sans-serif;color:#000;overflow:hidden;height:266px;white-space:pre-wrap;word-wrap:break-word">{{ $particulars }}</div></foreignObject>
 <!-- amount -->
 <text x="469.1" y="286.2" font-family="Arial,Helvetica,sans-serif" font-size="9.7">₱</text>

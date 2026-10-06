@@ -60,9 +60,11 @@
         .signature-role { position: absolute; left: 2mm; right: 2mm; bottom: 1.2mm; text-align: center; }
         @media print { html, body { background: #fff; } .print-actions { display: none; } .page { margin: 0; } }
     </style>
+@include('partials.input-fixes')
+@include('partials.print-clean')
 </head>
 <body>
-    <div class="print-actions"><a href="{{ route('procurement') }}">Back to Procurement</a><a href="{{ route('procurement.documents', $procurementRequest) }}">Procurement Documents</a><span style="margin-left:auto;margin-right:12px;color:#444;">Choose A4 or Folio in the print dialog</span><button type="button" onclick="window.print()">Print / Export PDF</button></div>
+    <div class="print-actions"><button type="button" class="secondary" onclick="closePrintTab('{{ route('procurement') }}')">Close</button><span style="margin-left:auto;margin-right:12px;color:#444;">Choose A4 or Folio in the print dialog</span><button type="button" onclick="window.print()">Print / Export PDF</button></div>
     @php
         $leftLogo = $agency?->department_logo_path ? asset('storage/'.$agency->department_logo_path) : asset('images/official-deped-logo.png');
         $rightLogo = $procurementRequest->school?->logo_path ? asset('storage/'.$procurementRequest->school->logo_path) : ($agency?->division_logo_path ? asset('storage/'.$agency?->division_logo_path) : asset('images/official-school-logo.png'));

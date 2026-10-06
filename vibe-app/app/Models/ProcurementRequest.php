@@ -43,6 +43,8 @@ class ProcurementRequest extends Model
     }
 
     public function school() { return $this->belongsTo(School::class); }
+
+    public function budgetAllocation() { return $this->belongsTo(BudgetAllocation::class); }
     public function requester() { return $this->belongsTo(User::class, 'requested_by'); }
     public function liquidationReports() { return $this->hasMany(LiquidationReport::class); }
     public function items() { return $this->hasMany(ProcurementRequestItem::class); }

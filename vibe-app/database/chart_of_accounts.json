@@ -1,5 +1,4225 @@
 [
 {
+"code": "1010202019",
+"title": "Cash in Bank-Local Currency, Current Account-First Consolidated Bank (FCB)",
+"category": "Assets"
+},
+{
+"code": "1010202020",
+"title": "Cash in Bank-Local Currency, Current Account-Fuji-Mizuho Bank",
+"category": "Assets"
+},
+{
+"code": "1010202021",
+"title": "Cash in Bank-Local Currency, Current Account-Hong Kong and Shanghai Banking Corporation",
+"category": "Assets"
+},
+{
+"code": "1010202022",
+"title": "Cash in Bank-Local Currency, Current Account-International Commercial Bank of China",
+"category": "Assets"
+},
+{
+"code": "1010202023",
+"title": "Cash in Bank-Local Currency, Current Account-International Exchange Bank",
+"category": "Assets"
+},
+{
+"code": "1010202024",
+"title": "Cash in Bank-Local Currency, Current Account-Land Bank of the Philippines ( LBP)",
+"category": "Assets"
+},
+{
+"code": "1010202025",
+"title": "Cash in Bank-Local Currency, Current Account-Maybank Philippines",
+"category": "Assets"
+},
+{
+"code": "1010202026",
+"title": "Cash in Bank-Local Currency, Current Account-Metropolitan Bank and Trust Company",
+"category": "Assets"
+},
+{
+"code": "1010202027",
+"title": "Cash in Bank-Local Currency, Current Account-Philippine Bank of Communication",
+"category": "Assets"
+},
+{
+"code": "1010202028",
+"title": "Cash in Bank-Local Currency, Current Account-Philippine Business Bank",
+"category": "Assets"
+},
+{
+"code": "1010202029",
+"title": "Cash in Bank-Local Currency, Current Account-Philippine National Bank (PNB)",
+"category": "Assets"
+},
+{
+"code": "1010202030",
+"title": "Cash in Bank-Local Currency, Current Account-Philippine Postal Savings Bank (PPSB)",
+"category": "Assets"
+},
+{
+"code": "1010202031",
+"title": "Cash in Bank-Local Currency, Current Account-Philippine Trust Company",
+"category": "Assets"
+},
+{
+"code": "1010202032",
+"title": "Cash in Bank-Local Currency, Current Account-Philippine Veterans Bank (PVB)",
+"category": "Assets"
+},
+{
+"code": "1010202033",
+"title": "Cash in Bank-Local Currency, Current Account-Rizal Commercial Banking Corporation (RCBC)",
+"category": "Assets"
+},
+{
+"code": "1010202034",
+"title": "Cash in Bank-Local Currency, Current Account-Robinsons Bank",
+"category": "Assets"
+},
+{
+"code": "1010202035",
+"title": "Cash in Bank-Local Currency, Current Account-Security Bank",
+"category": "Assets"
+},
+{
+"code": "1010202036",
+"title": "Cash in Bank-Local Currency, Current Account-Standard Chartered Bank",
+"category": "Assets"
+},
+{
+"code": "1010202037",
+"title": "Cash in Bank-Local Currency, Current Account-Sterling Bank of Asia",
+"category": "Assets"
+},
+{
+"code": "1010202038",
+"title": "Cash in Bank-Local Currency, Current Account-Union Bank of the Philippines",
+"category": "Assets"
+},
+{
+"code": "1010202039",
+"title": "Cash in Bank-Local Currency, Current Account-United Coconut Planters Bank (UCPB)",
+"category": "Assets"
+},
+{
+"code": "1010203000",
+"title": "Cash in Bank-Local Currency, Savings Account",
+"category": "Assets"
+},
+{
+"code": "1010203001",
+"title": "Cash in Bank-Local Currency, Savings Account-Land Bank of the Philippines (LBP)",
+"category": "Assets"
+},
+{
+"code": "1010203002",
+"title": "Cash in Bank-Local Currency, Savings Account-Development Bank of the Philippines (DBP)",
+"category": "Assets"
+},
+{
+"code": "1010203003",
+"title": "Cash in Bank-Local Currency, Savings Account - Philippine Veterans Bank (PVB)",
+"category": "Assets"
+},
+{
+"code": "1010203004",
+"title": "Cash in Bank-Local Currency, Savings Account-Philippine National Bank (PNB)",
+"category": "Assets"
+},
+{
+"code": "1010203005",
+"title": "Cash in Bank-Local Currency, Savings Account-Philippine Amanah Bank (PAB)",
+"category": "Assets"
+},
+{
+"code": "1010203006",
+"title": "Cash in Bank-Local Currency, Savings Account-Philippine Postal Savings Bank (PPSB)",
+"category": "Assets"
+},
+{
+"code": "1010203007",
+"title": "Cash in Bank-Local Currency, Savings Account-United Coconut Planters Bank (UCPB)",
+"category": "Assets"
+},
+{
+"code": "1010301000",
+"title": "Cash in Bank-Foreign Currency, Bangko Sentral Ng Pilipinas",
+"category": "Assets"
+},
+{
+"code": "1010302000",
+"title": "Cash in Bank-Foreign Currency, Current Account",
+"category": "Assets"
+},
+{
+"code": "1010302001",
+"title": "Cash in Bank-Foreign Currency, Current Account-Foreign Banks",
+"category": "Assets"
+},
+{
+"code": "1010303000",
+"title": "Cash in Bank-Foreign Currency, Savings Account",
+"category": "Assets"
+},
+{
+"code": "1010303001",
+"title": "Cash in Bank-Foreign Currency, Savings Account-Land Bank of the Philippines (LBP)",
+"category": "Assets"
+},
+{
+"code": "1010303002",
+"title": "Cash in Bank-Foreign Currency, Savings Account-Development Bank of the Philippines (DBP)",
+"category": "Assets"
+},
+{
+"code": "1010303003",
+"title": "Cash in Bank-Foreign Currency, Savings Account-Philippine National Bank (PNB)",
+"category": "Assets"
+},
+{
+"code": "1010303004",
+"title": "Cash in Bank-Foreign Currency, Savings Account-United Coconut Planters Bank (UCPB)",
+"category": "Assets"
+},
+{
+"code": "1010303005",
+"title": "Cash in Bank-Foreign Currency, Savings Account-Foreign Banks",
+"category": "Assets"
+},
+{
+"code": "1010401000",
+"title": "Cash-Treasury/Agency Deposit, Regular",
+"category": "Assets"
+},
+{
+"code": "1010402000",
+"title": "Cash-Treasury/Agency Deposit, Special Account",
+"category": "Assets"
+},
+{
+"code": "1010403000",
+"title": "Cash-Treasury/Agency Deposit, Trust",
+"category": "Assets"
+},
+{
+"code": "1010404000",
+"title": "Cash-Modified Disbursement System (MDS), Regular",
+"category": "Assets"
+},
+{
+"code": "1010405000",
+"title": "Cash-Modified Disbursement System (MDS), Special Account",
+"category": "Assets"
+},
+{
+"code": "1010406000",
+"title": "Cash-Modified Disbursement System (MDS), Trust",
+"category": "Assets"
+},
+{
+"code": "1010407000",
+"title": "Cash-Tax Remittance Advice",
+"category": "Assets"
+},
+{
+"code": "1010408000",
+"title": "Cash-Constructive Income and Other Remittances",
+"category": "Assets"
+},
+{
+"code": "1010409000",
+"title": "Cash-Constructive Disbursements",
+"category": "Assets"
+},
+{
+"code": "1010501000",
+"title": "Treasury Bills",
+"category": "Assets"
+},
+{
+"code": "1010502000",
+"title": "Time Deposits-Local Currency",
+"category": "Assets"
+},
+{
+"code": "1010502001",
+"title": "Time Deposits-Local Currency-Land Bank of the Philippines (LBP)",
+"category": "Assets"
+},
+{
+"code": "1010502002",
+"title": "Time Deposits-Local Currency-Development Bank of the Philippines (DBP)",
+"category": "Assets"
+},
+{
+"code": "1010502003",
+"title": "Time Deposits-Local Currency-Philippine Veterans Bank (PVB)",
+"category": "Assets"
+},
+{
+"code": "1010502004",
+"title": "Time Deposits-Local Currency-Philippine National Bank (PNB)",
+"category": "Assets"
+},
+{
+"code": "1010502005",
+"title": "Time Deposits-Local Currency-United Coconut Planters Bank (UCPB)",
+"category": "Assets"
+},
+{
+"code": "1010503000",
+"title": "Time Deposits-Foreign Currency",
+"category": "Assets"
+},
+{
+"code": "1010503001",
+"title": "Time Deposits-Foreign Currency-Land Bank of the Philippines (LBP)",
+"category": "Assets"
+},
+{
+"code": "1010503002",
+"title": "Time Deposits-Foreign Currency-Development Bank of the Philippines (DBP)",
+"category": "Assets"
+},
+{
+"code": "1010503003",
+"title": "Time Deposits-Foreign Currency-Philippine National Bank (PNB)",
+"category": "Assets"
+},
+{
+"code": "1010503004",
+"title": "Time Deposits-Foreign Currency-United Coconut Planters Bank (UCPB)",
+"category": "Assets"
+},
+{
+"code": "1020101000",
+"title": "Financial Assets Held for Trading",
+"category": "Assets"
+},
+{
+"code": "1020102000",
+"title": "Financial Assets Designated at Fair Value Through Surplus or Deficit",
+"category": "Assets"
+},
+{
+"code": "1020103000",
+"title": "Derivative Financial Assets Held for Trading",
+"category": "Assets"
+},
+{
+"code": "1020104000",
+"title": "Derivative Financial Assets Designated at Fair Value Through Surplus or Deficit",
+"category": "Assets"
+},
+{
+"code": "1020201000",
+"title": "Investments in Treasury Bills-Local",
+"category": "Assets"
+},
+{
+"code": "1020201200",
+"title": "Allowance for Impairment-Investments in Treasury Bills-Local",
+"category": "Assets"
+},
+{
+"code": "1020202000",
+"title": "Investments in Treasury Bills-Foreign",
+"category": "Assets"
+},
+{
+"code": "1020202200",
+"title": "Allowance for Impairment-Investments in Treasury Bills-Foreign",
+"category": "Assets"
+},
+{
+"code": "1020203000",
+"title": "Investments in Treasury Bonds-Local",
+"category": "Assets"
+},
+{
+"code": "1020203200",
+"title": "Allowance for Impairment-Investments in Treasury Bonds-Local",
+"category": "Assets"
+},
+{
+"code": "1020204000",
+"title": "Investments in Treasury Bonds-Foreign",
+"category": "Assets"
+},
+{
+"code": "1020204200",
+"title": "Allowance for Impairment-Investments in Treasury Bonds-Foreign",
+"category": "Assets"
+},
+{
+"code": "1020301000",
+"title": "Investments in Stocks",
+"category": "Assets"
+},
+{
+"code": "1020302000",
+"title": "Investments in Bonds",
+"category": "Assets"
+},
+{
+"code": "1020399000",
+"title": "Other Investments",
+"category": "Assets"
+},
+{
+"code": "1020401000",
+"title": "Investments in Government-Owned or Controlled Corporations",
+"category": "Assets"
+},
+{
+"code": "1020401200",
+"title": "Allowance for Impairment-Investments in Government Owned or Controlled Corporations",
+"category": "Assets"
+},
+{
+"code": "1020501000",
+"title": "Investments in Joint Ventures",
+"category": "Assets"
+},
+{
+"code": "1020501200",
+"title": "Allowance for Impairment-Investments in Joint Ventures",
+"category": "Assets"
+},
+{
+"code": "1020701000",
+"title": "Sinking Fund",
+"category": "Assets"
+},
+{
+"code": "1021101000",
+"title": "Investments in Time Deposits-Local Currency",
+"category": "Assets"
+},
+{
+"code": "1021102000",
+"title": "Investments in Time Deposits-Foreign Currency",
+"category": "Assets"
+},
+{
+"code": "1030101000",
+"title": "Accounts Receivable",
+"category": "Assets"
+},
+{
+"code": "1030101200",
+"title": "Allowance for Impairment-Accounts Receivable",
+"category": "Assets"
+},
+{
+"code": "1030102000",
+"title": "Notes Receivable",
+"category": "Assets"
+},
+{
+"code": "1030102200",
+"title": "Allowance for Impairment-Notes Receivable",
+"category": "Assets"
+},
+{
+"code": "1030103000",
+"title": "Loans Receivable-Government-Owned or Controlled Corporations",
+"category": "Assets"
+},
+{
+"code": "1030103200",
+"title": "Allowance for Impairment-Loans Receivable-Government-Owned or Controlled Corporations",
+"category": "Assets"
+},
+{
+"code": "1030104000",
+"title": "Loans Receivable-Local Government Units",
+"category": "Assets"
+},
+{
+"code": "1030104200",
+"title": "Allowance for Impairment-Loans Receivable-Local Government Units",
+"category": "Assets"
+},
+{
+"code": "1030105000",
+"title": "Interests Receivable",
+"category": "Assets"
+},
+{
+"code": "1030105200",
+"title": "Allowance for Impairment-Interests Receivable",
+"category": "Assets"
+},
+{
+"code": "1030106000",
+"title": "Dividends Receivable",
+"category": "Assets"
+},
+{
+"code": "1030121000",
+"title": "Tax Receivable",
+"category": "Assets"
+},
+{
+"code": "1030121200",
+"title": "Allowance for Impairment-Tax Receivable",
+"category": "Assets"
+},
+{
+"code": "1030122000",
+"title": "Receivables from Joint Ventures",
+"category": "Assets"
+},
+{
+"code": "1030122200",
+"title": "Allowance for Impairment-Receivables from Joint Ventures",
+"category": "Assets"
+},
+{
+"code": "1030123000",
+"title": "Receivables from Joint Operators",
+"category": "Assets"
+},
+{
+"code": "1030123200",
+"title": "Allowance for Impairment-Receivables from Joint Operators",
+"category": "Assets"
+},
+{
+"code": "1030124000",
+"title": "Service Concession Arrangements Receivable",
+"category": "Assets"
+},
+{
+"code": "1030124200",
+"title": "Allowance for Impairment-Service Concession Arrangements Receivable",
+"category": "Assets"
+},
+{
+"code": "1030125000",
+"title": "Receivables from Authorized Agent Banks (AABs)/Agents",
+"category": "Assets"
+},
+{
+"code": "1030125001",
+"title": "Receivables from Authorized Agent Banks (AABs)/Agents - Land Bank of the Philippines (LBP)",
+"category": "Assets"
+},
+{
+"code": "1030125002",
+"title": "Receivables from Authorized Agent Banks (AABs)/Agents - Development Bank of the Philippines (DBP)",
+"category": "Assets"
+},
+{
+"code": "1030125003",
+"title": "Receivables from Authorized Agent Banks (AABs)/Agents - Philippine Veterans Bank (PVB)",
+"category": "Assets"
+},
+{
+"code": "1030125004",
+"title": "Receivables from Authorized Agent Banks (AABs)/Agents - Philippine National Bank (PNB)",
+"category": "Assets"
+},
+{
+"code": "1030125005",
+"title": "Receivables from Authorized Agent Banks (AABs)/Agents - Philippine Amanah Bank (PAB)",
+"category": "Assets"
+},
+{
+"code": "1030125006",
+"title": "Receivables from Authorized Agent Banks (AABs)/Agents - Philippine Postal Savings Bank (PPSB)",
+"category": "Assets"
+},
+{
+"code": "1030125007",
+"title": "Receivables from Authorized Agent Banks (AABs)/Agents - United Coconut Planters Bank (UCPB)",
+"category": "Assets"
+},
+{
+"code": "1030125008",
+"title": "Receivables from Authorized Agent Banks (AABs)/Agents - Agents (PSA)",
+"category": "Assets"
+},
+{
+"code": "1030199000",
+"title": "Loans Receivable-Others",
+"category": "Assets"
+},
+{
+"code": "1030199200",
+"title": "Allowance for Impairment-Loans Receivable-Others",
+"category": "Assets"
+},
+{
+"code": "1030201000",
+"title": "Operating Lease Receivable",
+"category": "Assets"
+},
+{
+"code": "1030201200",
+"title": "Allowance for Impairment-Operating Lease Receivable",
+"category": "Assets"
+},
+{
+"code": "1030202000",
+"title": "Finance Lease Receivable",
+"category": "Assets"
+},
+{
+"code": "1030202200",
+"title": "Allowance for Impairment-Finance Lease Receivable",
+"category": "Assets"
+},
+{
+"code": "1030301000",
+"title": "Due from National Government Agencies",
+"category": "Assets"
+},
+{
+"code": "1030301200",
+"title": "Allowance for Impairment-Due from National Government Agencies",
+"category": "Assets"
+},
+{
+"code": "1030302000",
+"title": "Due from Government-Owned or Controlled Corporations",
+"category": "Assets"
+},
+{
+"code": "1030302200",
+"title": "Allowance for Impairment-Due from Government-Owned or Controlled Corporations",
+"category": "Assets"
+},
+{
+"code": "1030303000",
+"title": "Due from Local Government Units",
+"category": "Assets"
+},
+{
+"code": "1030303200",
+"title": "Allowance for Impairment-Due from Local Government Units",
+"category": "Assets"
+},
+{
+"code": "1030401000",
+"title": "Due from Central Office",
+"category": "Assets"
+},
+{
+"code": "1030402000",
+"title": "Due from Bureaus",
+"category": "Assets"
+},
+{
+"code": "1030403000",
+"title": "Due from Regional Offices",
+"category": "Assets"
+},
+{
+"code": "1030404000",
+"title": "Due from Operating/Field Units",
+"category": "Assets"
+},
+{
+"code": "1030405000",
+"title": "Due from Other Funds",
+"category": "Assets"
+},
+{
+"code": "1039901000",
+"title": "Receivables-Disallowances/Charges",
+"category": "Assets"
+},
+{
+"code": "1039902000",
+"title": "Due from Officers and Employees",
+"category": "Assets"
+},
+{
+"code": "1039902200",
+"title": "Allowance for Impairment-Due from Officers and Employees",
+"category": "Assets"
+},
+{
+"code": "1039903000",
+"title": "Due from Non-Government Organizations/Civil Society Organizations",
+"category": "Assets"
+},
+{
+"code": "1039903200",
+"title": "Allowance for Impairment-Due from Non-Government Organizations/Civil Society Organizations",
+"category": "Assets"
+},
+{
+"code": "1039999000",
+"title": "Other Receivables",
+"category": "Assets"
+},
+{
+"code": "1039999200",
+"title": "Allowance for Impairment-Other Receivables",
+"category": "Assets"
+},
+{
+"code": "1040101000",
+"title": "Merchandise Inventory",
+"category": "Assets"
+},
+{
+"code": "1040101001",
+"title": "Merchandise Inventory - Supplies and Materials",
+"category": "Assets"
+},
+{
+"code": "1040101002",
+"title": "Merchandise Inventory - Drugs and Medicines",
+"category": "Assets"
+},
+{
+"code": "1040101003",
+"title": "Merchandise Inventory - Agricultural Produce",
+"category": "Assets"
+},
+{
+"code": "1040101004",
+"title": "Merchandise Inventory - Ammunitions",
+"category": "Assets"
+},
+{
+"code": "1040101005",
+"title": "Merchandise Inventory - Property and Equipment",
+"category": "Assets"
+},
+{
+"code": "1040101006",
+"title": "Merchandise Inventory - Land/Reclaimed Land",
+"category": "Assets"
+},
+{
+"code": "1040101007",
+"title": "Merchandise Inventory - Forest Products",
+"category": "Assets"
+},
+{
+"code": "1040101008",
+"title": "Merchandise Inventory - Seized/Distrained Personal Property",
+"category": "Assets"
+},
+{
+"code": "1040101009",
+"title": "Merchandise Inventory - Levied Real Property",
+"category": "Assets"
+},
+{
+"code": "1040101010",
+"title": "Merchandise Inventory - Acquired/Forfeited Real Property",
+"category": "Assets"
+},
+{
+"code": "1040101011",
+"title": "Merchandise Inventory - Aquaculture Produce",
+"category": "Assets"
+},
+{
+"code": "1040101099",
+"title": "Merchandise Inventory - Others",
+"category": "Assets"
+},
+{
+"code": "1040101200",
+"title": "Allowance for Impairment-Merchandise Inventory",
+"category": "Assets"
+},
+{
+"code": "1040201000",
+"title": "Food Supplies for Distribution",
+"category": "Assets"
+},
+{
+"code": "1040201200",
+"title": "Allowance for Impairment-Food Supplies for Distribution",
+"category": "Assets"
+},
+{
+"code": "1040202000",
+"title": "Welfare Goods for Distribution",
+"category": "Assets"
+},
+{
+"code": "1040202200",
+"title": "Allowance for Impairment-Welfare Goods for Distribution",
+"category": "Assets"
+},
+{
+"code": "1040203000",
+"title": "Drugs and Medicines for Distribution",
+"category": "Assets"
+},
+{
+"code": "1040203200",
+"title": "Allowance for Impairment-Drugs and Medicines for Distribution",
+"category": "Assets"
+},
+{
+"code": "1040204000",
+"title": "Medical, Dental and Laboratory Supplies for Distribution",
+"category": "Assets"
+},
+{
+"code": "1040204200",
+"title": "Allowance for Impairment-Medical, Dental and Laboratory Supplies for Distribution",
+"category": "Assets"
+},
+{
+"code": "1040205000",
+"title": "Agricultural and Marine Supplies for Distribution",
+"category": "Assets"
+},
+{
+"code": "1040205200",
+"title": "Allowance for Impairment-Agricultural and Marine Supplies for Distribution",
+"category": "Assets"
+},
+{
+"code": "1040206000",
+"title": "Agricultural Produce for Distribution",
+"category": "Assets"
+},
+{
+"code": "1040206200",
+"title": "Allowance for Impairment-Agricultural Produce for Distribution",
+"category": "Assets"
+},
+{
+"code": "1040207000",
+"title": "Textbooks and Instructional Materials for Distribution",
+"category": "Assets"
+},
+{
+"code": "1040207200",
+"title": "Allowance for Impairment-Textbooks and Instructional Materials for Distribution",
+"category": "Assets"
+},
+{
+"code": "1040208000",
+"title": "Construction Materials for Distribution",
+"category": "Assets"
+},
+{
+"code": "1040208200",
+"title": "Allowance for Impairment-Construction Materials for Distribution",
+"category": "Assets"
+},
+{
+"code": "1040209000",
+"title": "Property and Equipment for Distribution",
+"category": "Assets"
+},
+{
+"code": "1040209200",
+"title": "Allowance for Impairment-Property and Equipment for Distribution",
+"category": "Assets"
+},
+{
+"code": "1040210000",
+"title": "Aquaculture Produce for Distribution",
+"category": "Assets"
+},
+{
+"code": "1040210200",
+"title": "Allowance for Impairment-Aquaculture Produce for Distribution",
+"category": "Assets"
+},
+{
+"code": "1040299000",
+"title": "Other Supplies and Materials for Distribution",
+"category": "Assets"
+},
+{
+"code": "1040299200",
+"title": "Allowance for Impairment-Other Supplies and Materials for Distribution",
+"category": "Assets"
+},
+{
+"code": "1040301000",
+"title": "Raw Materials Inventory",
+"category": "Assets"
+},
+{
+"code": "1040301200",
+"title": "Allowance for Impairment-Raw Materials Inventory",
+"category": "Assets"
+},
+{
+"code": "1040302000",
+"title": "Work-in-Process Inventory",
+"category": "Assets"
+},
+{
+"code": "1040302200",
+"title": "Allowance for Impairment-Work-in-Process Inventory",
+"category": "Assets"
+},
+{
+"code": "1040303000",
+"title": "Finished Goods Inventory",
+"category": "Assets"
+},
+{
+"code": "1040303200",
+"title": "Allowance for Impairment-Finished Goods Inventory",
+"category": "Assets"
+},
+{
+"code": "1040401000",
+"title": "Office Supplies Inventory",
+"category": "Assets"
+},
+{
+"code": "1040401200",
+"title": "Allowance for Impairment-Office Supplies Inventory",
+"category": "Assets"
+},
+{
+"code": "1040402000",
+"title": "Accountable Forms, Plates and Stickers Inventory",
+"category": "Assets"
+},
+{
+"code": "1040402200",
+"title": "Allowance for Impairment-Accountable Forms, Plates and Stickers Inventory",
+"category": "Assets"
+},
+{
+"code": "1040403000",
+"title": "Non-Accountable Forms Inventory",
+"category": "Assets"
+},
+{
+"code": "1040403200",
+"title": "Allowance for Impairment-Non-Accountable Forms Inventory",
+"category": "Assets"
+},
+{
+"code": "1040404000",
+"title": "Animal/Zoological Supplies Inventory",
+"category": "Assets"
+},
+{
+"code": "1040404200",
+"title": "Allowance for Impairment-Animal/Zoological Supplies Inventory",
+"category": "Assets"
+},
+{
+"code": "1040405000",
+"title": "Food Supplies Inventory",
+"category": "Assets"
+},
+{
+"code": "1040405200",
+"title": "Allowance for Impairment-Food Supplies Inventory",
+"category": "Assets"
+},
+{
+"code": "1040406000",
+"title": "Drugs and Medicines Inventory",
+"category": "Assets"
+},
+{
+"code": "1040406200",
+"title": "Allowance for Impairment-Drugs and Medicines Inventory",
+"category": "Assets"
+},
+{
+"code": "1040407000",
+"title": "Medical, Dental and Laboratory Supplies Inventory",
+"category": "Assets"
+},
+{
+"code": "1040407200",
+"title": "Allowance for Impairment-Medical, Dental and Laboratory Supplies Inventory",
+"category": "Assets"
+},
+{
+"code": "1040408000",
+"title": "Fuel, Oil and Lubricants Inventory",
+"category": "Assets"
+},
+{
+"code": "1040408200",
+"title": "Allowance for Impairment-Fuel, Oil and Lubricants Inventory",
+"category": "Assets"
+},
+{
+"code": "1040409000",
+"title": "Agricultural and Marine Supplies Inventory",
+"category": "Assets"
+},
+{
+"code": "1040409200",
+"title": "Allowance for Impairment-Agricultural and Marine Supplies Inventory",
+"category": "Assets"
+},
+{
+"code": "1040410000",
+"title": "Textbooks and Instructional Materials Inventory",
+"category": "Assets"
+},
+{
+"code": "1040410200",
+"title": "Allowance for Impairment-Textbooks and Instructional Materials Inventory",
+"category": "Assets"
+},
+{
+"code": "1040411000",
+"title": "Military, Police and Traffic Supplies Inventory",
+"category": "Assets"
+},
+{
+"code": "1040411200",
+"title": "Allowance for Impairment-Military, Police and Traffic Supplies Inventory",
+"category": "Assets"
+},
+{
+"code": "1040412000",
+"title": "Chemical and Filtering Supplies Inventory",
+"category": "Assets"
+},
+{
+"code": "1040412200",
+"title": "Allowance for Impairment-Chemical and Filtering Supplies Inventory",
+"category": "Assets"
+},
+{
+"code": "1040413000",
+"title": "Construction Materials Inventory",
+"category": "Assets"
+},
+{
+"code": "1040413200",
+"title": "Allowance for Impairment-Construction Materials Inventory",
+"category": "Assets"
+},
+{
+"code": "1040420000",
+"title": "Agricultural Produce for Consumption",
+"category": "Assets"
+},
+{
+"code": "1040420200",
+"title": "Allowance for Impairment-Agricultural Produce for Consumption",
+"category": "Assets"
+},
+{
+"code": "1040421000",
+"title": "Aquaculture Produce for Consumption",
+"category": "Assets"
+},
+{
+"code": "1040421200",
+"title": "Allowance for Impairment-Aquaculture Produce for Consumption",
+"category": "Assets"
+},
+{
+"code": "1040499000",
+"title": "Other Supplies and Materials Inventory",
+"category": "Assets"
+},
+{
+"code": "1040499200",
+"title": "Allowance for Impairment-Other Supplies and Materials Inventory",
+"category": "Assets"
+},
+{
+"code": "1040501000",
+"title": "Semi-Expendable Machinery",
+"category": "Assets"
+},
+{
+"code": "1040501200",
+"title": "Allowance for Impairment-Semi-Expendable Machinery",
+"category": "Assets"
+},
+{
+"code": "1040502000",
+"title": "Semi-Expendable Office Equipment",
+"category": "Assets"
+},
+{
+"code": "1040502200",
+"title": "Allowance for Impairment-Semi-Expendable Office Equipment",
+"category": "Assets"
+},
+{
+"code": "1040503000",
+"title": "Semi-Expendable Information and Communications Technology Equipment",
+"category": "Assets"
+},
+{
+"code": "1040503200",
+"title": "Allowance for Impairment-Semi-Expendable Information and Communications Technology Equipment",
+"category": "Assets"
+},
+{
+"code": "1040504000",
+"title": "Semi-Expendable Agricultural and Forestry Equipment",
+"category": "Assets"
+},
+{
+"code": "1040504200",
+"title": "Allowance for Impairment-Semi-Expendable Agricultural and Forestry Equipment",
+"category": "Assets"
+},
+{
+"code": "1040505000",
+"title": "Semi-Expendable Marine and Fishery Equipment",
+"category": "Assets"
+},
+{
+"code": "1040505200",
+"title": "Allowance for Impairment-Semi-Expendable Marine and Fishery Equipment",
+"category": "Assets"
+},
+{
+"code": "1040506000",
+"title": "Semi-Expendable Airport Equipment",
+"category": "Assets"
+},
+{
+"code": "1040506200",
+"title": "Allowance for Impairment-Semi-Expendable Airport Equipment",
+"category": "Assets"
+},
+{
+"code": "1040507000",
+"title": "Semi-Expendable Communications Equipment",
+"category": "Assets"
+},
+{
+"code": "1040507200",
+"title": "Allowance for Impairment-Semi-Expendable Communications Equipment",
+"category": "Assets"
+},
+{
+"code": "1040508000",
+"title": "Semi-Expendable Disaster Response and Rescue Equipment",
+"category": "Assets"
+},
+{
+"code": "1040508200",
+"title": "Allowance for Impairment-Semi-Expendable Disaster Response and Rescue Equipment",
+"category": "Assets"
+},
+{
+"code": "1040509000",
+"title": "Semi-Expendable Military, Police and Security Equipment",
+"category": "Assets"
+},
+{
+"code": "1040509200",
+"title": "Allowance for Impairment-Semi-Expendable Military, Police and Security Equipment",
+"category": "Assets"
+},
+{
+"code": "1040510000",
+"title": "Semi-Expendable Medical Equipment",
+"category": "Assets"
+},
+{
+"code": "1040510200",
+"title": "Allowance for Impairment-Semi-Expendable Medical Equipment",
+"category": "Assets"
+},
+{
+"code": "1040511000",
+"title": "Semi-Expendable Printing Equipment",
+"category": "Assets"
+},
+{
+"code": "1040511200",
+"title": "Allowance for Impairment-Semi-Expendable Printing Equipment",
+"category": "Assets"
+},
+{
+"code": "1040512000",
+"title": "Semi-Expendable Sports Equipment",
+"category": "Assets"
+},
+{
+"code": "1040512200",
+"title": "Allowance for Impairment-Semi-Expendable Sports Equipment",
+"category": "Assets"
+},
+{
+"code": "1040513000",
+"title": "Semi-Expendable Technical and Scientific Equipment",
+"category": "Assets"
+},
+{
+"code": "1040513200",
+"title": "Allowance for Impairment-Semi-Expendable Technical and Scientific Equipment",
+"category": "Assets"
+},
+{
+"code": "1040514000",
+"title": "Semi-Expendable Construction Equipment",
+"category": "Assets"
+},
+{
+"code": "1040514200",
+"title": "Allowance for Impairment-Semi-Expendable Construction Equipment",
+"category": "Assets"
+},
+{
+"code": "1040599000",
+"title": "Semi-Expendable Other Equipment",
+"category": "Assets"
+},
+{
+"code": "1040599200",
+"title": "Allowance for Impairment-Semi-Expendable Other Equipment",
+"category": "Assets"
+},
+{
+"code": "1040601000",
+"title": "Semi-Expendable Furniture and Fixtures",
+"category": "Assets"
+},
+{
+"code": "1040601200",
+"title": "Allowance for Impairment-Semi-Expendable Furniture and Fixtures",
+"category": "Assets"
+},
+{
+"code": "1040602000",
+"title": "Semi-Expendable Books",
+"category": "Assets"
+},
+{
+"code": "1040602200",
+"title": "Allowance for Impairment-Semi-Expendable Books",
+"category": "Assets"
+},
+{
+"code": "1050101000",
+"title": "Investment Property, Land",
+"category": "Assets"
+},
+{
+"code": "1050101200",
+"title": "Accumulated Impairment Losses-Investment Property, Land",
+"category": "Assets"
+},
+{
+"code": "1050102000",
+"title": "Investment Property, Buildings",
+"category": "Assets"
+},
+{
+"code": "1050102100",
+"title": "Accumulated Depreciation-Investment Property, Buildings",
+"category": "Assets"
+},
+{
+"code": "1050102200",
+"title": "Accumulated Impairment Losses-Investment Property, Buildings",
+"category": "Assets"
+},
+{
+"code": "1059801000",
+"title": "Construction in Progress-Investment Property, Buildings",
+"category": "Assets"
+},
+{
+"code": "1060101000",
+"title": "Land",
+"category": "Assets"
+},
+{
+"code": "1060101200",
+"title": "Accumulated Impairment Losses-Land",
+"category": "Assets"
+},
+{
+"code": "1060201000",
+"title": "Land Improvements, Aquaculture Structures",
+"category": "Assets"
+},
+{
+"code": "1060201100",
+"title": "Accumulated Depreciation-Land Improvements, Aquaculture Structures",
+"category": "Assets"
+},
+{
+"code": "1060201200",
+"title": "Accumulated Impairment Losses-Land Improvements, Aquaculture Structures",
+"category": "Assets"
+},
+{
+"code": "1060202000",
+"title": "Land Improvements, Reforestation Projects",
+"category": "Assets"
+},
+{
+"code": "1060202200",
+"title": "Accumulated Impairment Losses-Land Improvements, Reforestation Projects",
+"category": "Assets"
+},
+{
+"code": "1060299000",
+"title": "Other Land Improvements",
+"category": "Assets"
+},
+{
+"code": "1060299100",
+"title": "Accumulated Depreciation-Other Land Improvements",
+"category": "Assets"
+},
+{
+"code": "1060299200",
+"title": "Accumulated Impairment Losses-Other Land Improvements",
+"category": "Assets"
+},
+{
+"code": "1060301000",
+"title": "Road Networks",
+"category": "Assets"
+},
+{
+"code": "1060301100",
+"title": "Accumulated Depreciation-Road Networks",
+"category": "Assets"
+},
+{
+"code": "1060301200",
+"title": "Accumulated Impairment Losses-Road Networks",
+"category": "Assets"
+},
+{
+"code": "1060302000",
+"title": "Flood Control Systems",
+"category": "Assets"
+},
+{
+"code": "1060302100",
+"title": "Accumulated Depreciation-Flood Control Systems",
+"category": "Assets"
+},
+{
+"code": "1060302200",
+"title": "Accumulated Impairment Losses-Flood Control Systems",
+"category": "Assets"
+},
+{
+"code": "1060303000",
+"title": "Sewer Systems",
+"category": "Assets"
+},
+{
+"code": "1060303100",
+"title": "Accumulated Depreciation-Sewer Systems",
+"category": "Assets"
+},
+{
+"code": "1060303200",
+"title": "Accumulated Impairment Losses-Sewer Systems",
+"category": "Assets"
+},
+{
+"code": "1060304000",
+"title": "Water Supply Systems",
+"category": "Assets"
+},
+{
+"code": "1060304100",
+"title": "Accumulated Depreciation-Water Supply Systems",
+"category": "Assets"
+},
+{
+"code": "1060304200",
+"title": "Accumulated Impairment Losses-Water Supply Systems",
+"category": "Assets"
+},
+{
+"code": "1060305000",
+"title": "Power Supply Systems",
+"category": "Assets"
+},
+{
+"code": "1060305100",
+"title": "Accumulated Depreciation-Power Supply Systems",
+"category": "Assets"
+},
+{
+"code": "1060305200",
+"title": "Accumulated Impairment Losses-Power Supply Systems",
+"category": "Assets"
+},
+{
+"code": "1060306000",
+"title": "Communications Networks",
+"category": "Assets"
+},
+{
+"code": "1060306100",
+"title": "Accumulated Depreciation-Communications Networks",
+"category": "Assets"
+},
+{
+"code": "1060306200",
+"title": "Accumulated Impairment Losses-Communications Networks",
+"category": "Assets"
+},
+{
+"code": "1060307000",
+"title": "Seaport Systems",
+"category": "Assets"
+},
+{
+"code": "1060307100",
+"title": "Accumulated Depreciation-Seaport Systems",
+"category": "Assets"
+},
+{
+"code": "1060307200",
+"title": "Accumulated Impairment Losses-Seaport Systems",
+"category": "Assets"
+},
+{
+"code": "1060308000",
+"title": "Airport Systems",
+"category": "Assets"
+},
+{
+"code": "1060308100",
+"title": "Accumulated Depreciation-Airport Systems",
+"category": "Assets"
+},
+{
+"code": "1060308200",
+"title": "Accumulated Impairment Losses-Airport Systems",
+"category": "Assets"
+},
+{
+"code": "1060309000",
+"title": "Parks, Plazas and Monuments",
+"category": "Assets"
+},
+{
+"code": "1060309100",
+"title": "Accumulated Depreciation-Parks, Plazas and Monuments",
+"category": "Assets"
+},
+{
+"code": "1060309200",
+"title": "Accumulated Impairment Losses-Parks, Plazas and Monuments",
+"category": "Assets"
+},
+{
+"code": "1060310000",
+"title": "Railway Systems",
+"category": "Assets"
+},
+{
+"code": "1060310100",
+"title": "Accumulated Depreciation-Railway Systems",
+"category": "Assets"
+},
+{
+"code": "1060310200",
+"title": "Accumulated Impairment Losses-Railway Systems",
+"category": "Assets"
+},
+{
+"code": "1060399000",
+"title": "Other Infrastructure Assets",
+"category": "Assets"
+},
+{
+"code": "1060399100",
+"title": "Accumulated Depreciation-Other Infrastructure Assets",
+"category": "Assets"
+},
+{
+"code": "1060399200",
+"title": "Accumulated Impairment Losses-Other Infrastructure Assets",
+"category": "Assets"
+},
+{
+"code": "1060401000",
+"title": "Buildings",
+"category": "Assets"
+},
+{
+"code": "1060401100",
+"title": "Accumulated Depreciation-Buildings",
+"category": "Assets"
+},
+{
+"code": "1060401200",
+"title": "Accumulated Impairment Losses-Buildings",
+"category": "Assets"
+},
+{
+"code": "1060402000",
+"title": "School Buildings",
+"category": "Assets"
+},
+{
+"code": "1060402100",
+"title": "Accumulated Depreciation-School Buildings",
+"category": "Assets"
+},
+{
+"code": "1060402200",
+"title": "Accumulated Impairment Losses-School Buildings",
+"category": "Assets"
+},
+{
+"code": "1060403000",
+"title": "Hospitals and Health Centers",
+"category": "Assets"
+},
+{
+"code": "1060403100",
+"title": "Accumulated Depreciation-Hospitals and Health Centers",
+"category": "Assets"
+},
+{
+"code": "1060403200",
+"title": "Accumulated Impairment Losses-Hospitals and Health Centers",
+"category": "Assets"
+},
+{
+"code": "1060404000",
+"title": "Markets",
+"category": "Assets"
+},
+{
+"code": "1060404100",
+"title": "Accumulated Depreciation-Markets",
+"category": "Assets"
+},
+{
+"code": "1060404200",
+"title": "Accumulated Impairment Losses-Markets",
+"category": "Assets"
+},
+{
+"code": "1060405000",
+"title": "Slaughterhouses",
+"category": "Assets"
+},
+{
+"code": "1060405100",
+"title": "Accumulated Depreciation-Slaughterhouses",
+"category": "Assets"
+},
+{
+"code": "1060405200",
+"title": "Accumulated Impairment Losses-Slaughterhouses",
+"category": "Assets"
+},
+{
+"code": "1060406000",
+"title": "Hostels and Dormitories",
+"category": "Assets"
+},
+{
+"code": "1060406100",
+"title": "Accumulated Depreciation-Hostels and Dormitories",
+"category": "Assets"
+},
+{
+"code": "1060406200",
+"title": "Accumulated Impairment Losses-Hostels and Dormitories",
+"category": "Assets"
+},
+{
+"code": "1060499000",
+"title": "Other Structures",
+"category": "Assets"
+},
+{
+"code": "1060499100",
+"title": "Accumulated Depreciation-Other Structures",
+"category": "Assets"
+},
+{
+"code": "1060499200",
+"title": "Accumulated Impairment Losses-Other Structures",
+"category": "Assets"
+},
+{
+"code": "1060501000",
+"title": "Machinery",
+"category": "Assets"
+},
+{
+"code": "1060501100",
+"title": "Accumulated Depreciation-Machinery",
+"category": "Assets"
+},
+{
+"code": "1060501200",
+"title": "Accumulated Impairment Losses-Machinery",
+"category": "Assets"
+},
+{
+"code": "1060502000",
+"title": "Office Equipment",
+"category": "Assets"
+},
+{
+"code": "1060502100",
+"title": "Accumulated Depreciation-Office Equipment",
+"category": "Assets"
+},
+{
+"code": "1060502200",
+"title": "Accumulated Impairment Losses-Office Equipment",
+"category": "Assets"
+},
+{
+"code": "1060503000",
+"title": "Information and Communications Technology Equipment",
+"category": "Assets"
+},
+{
+"code": "1060503100",
+"title": "Accumulated Depreciation-Information and Communications Technology Equipment",
+"category": "Assets"
+},
+{
+"code": "1060503200",
+"title": "Accumulated Impairment Losses-Information and Communications Technology Equipment",
+"category": "Assets"
+},
+{
+"code": "1060504000",
+"title": "Agricultural and Forestry Equipment",
+"category": "Assets"
+},
+{
+"code": "1060504100",
+"title": "Accumulated Depreciation-Agricultural and Forestry Equipment",
+"category": "Assets"
+},
+{
+"code": "1060504200",
+"title": "Accumulated Impairment Losses-Agricultural and Forestry Equipment",
+"category": "Assets"
+},
+{
+"code": "1060505000",
+"title": "Marine and Fishery Equipment",
+"category": "Assets"
+},
+{
+"code": "1060505100",
+"title": "Accumulated Depreciation-Marine and Fishery Equipment",
+"category": "Assets"
+},
+{
+"code": "1060505200",
+"title": "Accumulated Impairment Losses-Marine and Fishery Equipment",
+"category": "Assets"
+},
+{
+"code": "1060506000",
+"title": "Airport Equipment",
+"category": "Assets"
+},
+{
+"code": "1060506100",
+"title": "Accumulated Depreciation-Airport Equipment",
+"category": "Assets"
+},
+{
+"code": "1060506200",
+"title": "Accumulated Impairment Losses-Airport Equipment",
+"category": "Assets"
+},
+{
+"code": "1060507000",
+"title": "Communications Equipment",
+"category": "Assets"
+},
+{
+"code": "1060507100",
+"title": "Accumulated Depreciation-Communications Equipment",
+"category": "Assets"
+},
+{
+"code": "1060507200",
+"title": "Accumulated Impairment Losses-Communications Equipment",
+"category": "Assets"
+},
+{
+"code": "1060508000",
+"title": "Construction and Heavy Equipment",
+"category": "Assets"
+},
+{
+"code": "1060508100",
+"title": "Accumulated Depreciation-Construction and Heavy Equipment",
+"category": "Assets"
+},
+{
+"code": "1060508200",
+"title": "Accumulated Impairment Losses-Construction and Heavy Equipment",
+"category": "Assets"
+},
+{
+"code": "1060509000",
+"title": "Disaster Response and Rescue Equipment",
+"category": "Assets"
+},
+{
+"code": "1060509001",
+"title": "Disaster Response and Rescue Equipment - Firefighting Equipment and Accessories",
+"category": "Assets"
+},
+{
+"code": "1060509002",
+"title": "Disaster Response and Rescue Equipment - Flood and Rescue Equipment",
+"category": "Assets"
+},
+{
+"code": "1060509003",
+"title": "Disaster Response and Rescue Equipment - Earthquake Rescue Equipment",
+"category": "Assets"
+},
+{
+"code": "1060509004",
+"title": "Disaster Response and Rescue Equipment - Volcanic Eruption Rescue Equipment",
+"category": "Assets"
+},
+{
+"code": "1060509005",
+"title": "Disaster Response and Rescue Equipment - Landslide Rescue Equipment",
+"category": "Assets"
+},
+{
+"code": "1060509100",
+"title": "Accumulated Depreciation-Disaster Response and Rescue Equipment",
+"category": "Assets"
+},
+{
+"code": "1060509200",
+"title": "Accumulated Impairment Losses-Disaster Response and Rescue Equipment",
+"category": "Assets"
+},
+{
+"code": "1060510000",
+"title": "Military, Police and Security Equipment",
+"category": "Assets"
+},
+{
+"code": "1060510100",
+"title": "Accumulated Depreciation-Military, Police and Security Equipment",
+"category": "Assets"
+},
+{
+"code": "1060510200",
+"title": "Accumulated Impairment Losses-Military, Police and Security Equipment",
+"category": "Assets"
+},
+{
+"code": "1060511000",
+"title": "Medical Equipment",
+"category": "Assets"
+},
+{
+"code": "1060511100",
+"title": "Accumulated Depreciation-Medical Equipment",
+"category": "Assets"
+},
+{
+"code": "1060511200",
+"title": "Accumulated Impairment Losses-Medical Equipment",
+"category": "Assets"
+},
+{
+"code": "1060512000",
+"title": "Printing Equipment",
+"category": "Assets"
+},
+{
+"code": "1060512100",
+"title": "Accumulated Depreciation-Printing Equipment",
+"category": "Assets"
+},
+{
+"code": "1060512200",
+"title": "Accumulated Impairment Losses-Printing Equipment",
+"category": "Assets"
+},
+{
+"code": "1060513000",
+"title": "Sports Equipment",
+"category": "Assets"
+},
+{
+"code": "1060513100",
+"title": "Accumulated Depreciation-Sports Equipment",
+"category": "Assets"
+},
+{
+"code": "1060513200",
+"title": "Accumulated Impairment Losses-Sports Equipment",
+"category": "Assets"
+},
+{
+"code": "1060514000",
+"title": "Technical and Scientific Equipment",
+"category": "Assets"
+},
+{
+"code": "1060514100",
+"title": "Accumulated Depreciation-Technical and Scientific Equipment",
+"category": "Assets"
+},
+{
+"code": "1060514200",
+"title": "Accumulated Impairment Losses-Technical and Scientific Equipment",
+"category": "Assets"
+},
+{
+"code": "1060599000",
+"title": "Other Equipment",
+"category": "Assets"
+},
+{
+"code": "1060599100",
+"title": "Accumulated Depreciation-Other Equipment",
+"category": "Assets"
+},
+{
+"code": "1060599200",
+"title": "Accumulated Impairment Losses-Other Equipment",
+"category": "Assets"
+},
+{
+"code": "1060601000",
+"title": "Motor Vehicles",
+"category": "Assets"
+},
+{
+"code": "1060601100",
+"title": "Accumulated Depreciation-Motor Vehicles",
+"category": "Assets"
+},
+{
+"code": "1060601200",
+"title": "Accumulated Impairment Losses-Motor Vehicles",
+"category": "Assets"
+},
+{
+"code": "1060602000",
+"title": "Trains",
+"category": "Assets"
+},
+{
+"code": "1060602100",
+"title": "Accumulated Depreciation-Trains",
+"category": "Assets"
+},
+{
+"code": "1060602200",
+"title": "Accumulated Impairment Losses-Trains",
+"category": "Assets"
+},
+{
+"code": "1060603000",
+"title": "Aircrafts and Aircrafts Ground Equipment",
+"category": "Assets"
+},
+{
+"code": "1060603100",
+"title": "Accumulated Depreciation-Aircrafts and Aircrafts Ground Equipment",
+"category": "Assets"
+},
+{
+"code": "1060603200",
+"title": "Accumulated Impairment Losses-Aircrafts and Aircrafts Ground Equipment",
+"category": "Assets"
+},
+{
+"code": "1060604000",
+"title": "Watercrafts",
+"category": "Assets"
+},
+{
+"code": "1060604100",
+"title": "Accumulated Depreciation-Watercrafts",
+"category": "Assets"
+},
+{
+"code": "1060604200",
+"title": "Accumulated Impairment Losses-Watercrafts",
+"category": "Assets"
+},
+{
+"code": "1060699000",
+"title": "Other Transportation Equipment",
+"category": "Assets"
+},
+{
+"code": "1060699100",
+"title": "Accumulated Depreciation-Other Transportation Equipment",
+"category": "Assets"
+},
+{
+"code": "1060699200",
+"title": "Accumulated Impairment Losses-Other Transportation Equipment",
+"category": "Assets"
+},
+{
+"code": "1060701000",
+"title": "Furniture and Fixtures",
+"category": "Assets"
+},
+{
+"code": "1060701100",
+"title": "Accumulated Depreciation-Furniture and Fixtures",
+"category": "Assets"
+},
+{
+"code": "1060701200",
+"title": "Accumulated Impairment Losses-Furniture and Fixtures",
+"category": "Assets"
+},
+{
+"code": "1060702000",
+"title": "Books",
+"category": "Assets"
+},
+{
+"code": "1060702100",
+"title": "Accumulated Depreciation-Books",
+"category": "Assets"
+},
+{
+"code": "1060702200",
+"title": "Accumulated Impairment Losses-Books",
+"category": "Assets"
+},
+{
+"code": "1060801000",
+"title": "Leased Asset, Land",
+"category": "Assets"
+},
+{
+"code": "1060801200",
+"title": "Accumulated Impairment Losses-Leased Asset, Land",
+"category": "Assets"
+},
+{
+"code": "1060802000",
+"title": "Leased Asset, Buildings and Other Structures",
+"category": "Assets"
+},
+{
+"code": "1060802100",
+"title": "Accumulated Depreciation-Leased Asset, Buildings and Other Structures",
+"category": "Assets"
+},
+{
+"code": "1060802200",
+"title": "Accumulated Impairment Losses-Leased Asset, Buildings and Other Structures",
+"category": "Assets"
+},
+{
+"code": "1060803000",
+"title": "Leased Asset, Machinery and Equipment",
+"category": "Assets"
+},
+{
+"code": "1060803100",
+"title": "Accumulated Depreciation-Leased Asset, Machinery and Equipment",
+"category": "Assets"
+},
+{
+"code": "1060803200",
+"title": "Accumulated Impairment Losses-Leased Asset, Machinery and Equipment",
+"category": "Assets"
+},
+{
+"code": "1060804000",
+"title": "Leased Asset, Transportation Equipment",
+"category": "Assets"
+},
+{
+"code": "1060804100",
+"title": "Accumulated Depreciation-Leased Asset, Transportation Equipment",
+"category": "Assets"
+},
+{
+"code": "1060804200",
+"title": "Accumulated Impairment Losses-Leased Asset, Transportation Equipment",
+"category": "Assets"
+},
+{
+"code": "1060805000",
+"title": "Leased Asset, Furniture and Fixtures",
+"category": "Assets"
+},
+{
+"code": "1060805100",
+"title": "Accumulated Depreciation-Leased Asset, Furniture and Fixtures",
+"category": "Assets"
+},
+{
+"code": "1060805200",
+"title": "Accumulated Impairment Losses-Leased Asset, Furniture and Fixtures",
+"category": "Assets"
+},
+{
+"code": "1060899000",
+"title": "Other Leased Assets",
+"category": "Assets"
+},
+{
+"code": "1060899100",
+"title": "Accumulated Depreciation-Other Leased Assets",
+"category": "Assets"
+},
+{
+"code": "1060899200",
+"title": "Accumulated Impairment Losses-Other Leased Assets",
+"category": "Assets"
+},
+{
+"code": "1060901000",
+"title": "Leased Asset Improvements, Land",
+"category": "Assets"
+},
+{
+"code": "1060901100",
+"title": "Accumulated Depreciation-Leased Asset Improvements, Land",
+"category": "Assets"
+},
+{
+"code": "1060901200",
+"title": "Accumulated Impairment Losses-Leased Asset Improvements, Land",
+"category": "Assets"
+},
+{
+"code": "1060902000",
+"title": "Leased Asset Improvements, Buildings and Other Structures",
+"category": "Assets"
+},
+{
+"code": "1060902100",
+"title": "Accumulated Depreciation-Leased Asset Improvements, Buildings and Other Structures",
+"category": "Assets"
+},
+{
+"code": "1060902200",
+"title": "Accumulated Impairment Losses-Leased Asset Improvements, Buildings and Other Structures",
+"category": "Assets"
+},
+{
+"code": "1060999000",
+"title": "Other Leased Assets Improvements",
+"category": "Assets"
+},
+{
+"code": "1060999100",
+"title": "Accumulated Depreciation-Other Leased Assets Improvements",
+"category": "Assets"
+},
+{
+"code": "1060999200",
+"title": "Accumulated Impairment Losses-Other Leased Assets Improvements",
+"category": "Assets"
+},
+{
+"code": "1061101000",
+"title": "Historical Buildings",
+"category": "Assets"
+},
+{
+"code": "1061101100",
+"title": "Accumulated Depreciation-Historical Buildings",
+"category": "Assets"
+},
+{
+"code": "1061101200",
+"title": "Accumulated Impairment Losses-Historical Buildings",
+"category": "Assets"
+},
+{
+"code": "1061102000",
+"title": "Works of Arts and Archeological Specimens",
+"category": "Assets"
+},
+{
+"code": "1061102100",
+"title": "Accumulated Depreciation-Works of Arts and Archeological Specimens",
+"category": "Assets"
+},
+{
+"code": "1061102200",
+"title": "Accumulated Impairment Losses-Works of Arts and Archeological Specimens",
+"category": "Assets"
+},
+{
+"code": "1061199000",
+"title": "Other Heritage Assets",
+"category": "Assets"
+},
+{
+"code": "1061199100",
+"title": "Accumulated Depreciation-Other Heritage Assets",
+"category": "Assets"
+},
+{
+"code": "1061199200",
+"title": "Accumulated Impairment Losses-Other Heritage Assets",
+"category": "Assets"
+},
+{
+"code": "1061201000",
+"title": "Service Concession-Road Networks",
+"category": "Assets"
+},
+{
+"code": "1061201100",
+"title": "Accumulated Depreciation-Service Concession-Road Networks",
+"category": "Assets"
+},
+{
+"code": "1061201200",
+"title": "Accumulated Impairment Losses -Service Concession-Road Networks",
+"category": "Assets"
+},
+{
+"code": "1061202000",
+"title": "Service Concession-Flood Control Systems",
+"category": "Assets"
+},
+{
+"code": "1061202100",
+"title": "Accumulated Depreciation-Service Concession-Flood Control Systems",
+"category": "Assets"
+},
+{
+"code": "1061202200",
+"title": "Accumulated Impairment Losses-Service Concession-Flood Control Systems",
+"category": "Assets"
+},
+{
+"code": "1061203000",
+"title": "Service Concession-Sewer Systems",
+"category": "Assets"
+},
+{
+"code": "1061203100",
+"title": "Accumulated Depreciation-Service Concession-Sewer Systems",
+"category": "Assets"
+},
+{
+"code": "1061203200",
+"title": "Accumulated Impairment Losses-Service Concession-Sewer Systems",
+"category": "Assets"
+},
+{
+"code": "1061204000",
+"title": "Service Concession-Water Supply Systems",
+"category": "Assets"
+},
+{
+"code": "1061204100",
+"title": "Accumulated Depreciation-Service Concession-Water Supply Systems",
+"category": "Assets"
+},
+{
+"code": "1061204200",
+"title": "Accumulated Impairment Losses-Service Concession-Water Supply Systems",
+"category": "Assets"
+},
+{
+"code": "1061205000",
+"title": "Service Concession-Power Supply Systems",
+"category": "Assets"
+},
+{
+"code": "1061205100",
+"title": "Accumulated Depreciation-Service Concession-Power Supply Systems",
+"category": "Assets"
+},
+{
+"code": "1061205200",
+"title": "Accumulated Impairment Losses-Service Concession-Power Supply Systems",
+"category": "Assets"
+},
+{
+"code": "1061206000",
+"title": "Service Concession-Communications Networks",
+"category": "Assets"
+},
+{
+"code": "1061206100",
+"title": "Accumulated Depreciation-Service Concession-Communications Networks",
+"category": "Assets"
+},
+{
+"code": "1061206200",
+"title": "Accumulated Impairment Losses-Service Concession-Communications Networks",
+"category": "Assets"
+},
+{
+"code": "1061207000",
+"title": "Service Concession-Seaport Systems",
+"category": "Assets"
+},
+{
+"code": "1061207100",
+"title": "Accumulated Depreciation-Service Concession-Seaport Systems",
+"category": "Assets"
+},
+{
+"code": "1061207200",
+"title": "Accumulated Impairment Losses-Service Concession-Seaport Systems",
+"category": "Assets"
+},
+{
+"code": "1061208000",
+"title": "Service Concession-Airport Systems",
+"category": "Assets"
+},
+{
+"code": "1061208100",
+"title": "Accumulated Depreciation-Service Concession-Airport Systems",
+"category": "Assets"
+},
+{
+"code": "1061208200",
+"title": "Accumulated Impairment Losses-Service Concession-Airport Systems",
+"category": "Assets"
+},
+{
+"code": "1061209000",
+"title": "Service Concession-Parks, Plazas and Monuments",
+"category": "Assets"
+},
+{
+"code": "1061209100",
+"title": "Accumulated Depreciation-Service Concession-Parks, Plazas and Monuments",
+"category": "Assets"
+},
+{
+"code": "1061209200",
+"title": "Accumulated Impairment Losses-Service Concession-Parks, Plazas and Monuments",
+"category": "Assets"
+},
+{
+"code": "1061210000",
+"title": "Service Concession-Railway Systems",
+"category": "Assets"
+},
+{
+"code": "1061210100",
+"title": "Accumulated Depreciation-Service Concession-Railway Systems",
+"category": "Assets"
+},
+{
+"code": "1061210200",
+"title": "Accumulated Impairment Losses-Service Concession-Railway Systems",
+"category": "Assets"
+},
+{
+"code": "1061211000",
+"title": "Service Concession-Buildings and Other Structures",
+"category": "Assets"
+},
+{
+"code": "1061211100",
+"title": "Accumulated Depreciation-Service Concession-Buildings and Other Structures",
+"category": "Assets"
+},
+{
+"code": "1061211200",
+"title": "Accumulated Impairment Losses-Service Concession-Buildings and Other Structures",
+"category": "Assets"
+},
+{
+"code": "1061299000",
+"title": "Other Service Concession Assets",
+"category": "Assets"
+},
+{
+"code": "1061299100",
+"title": "Accumulated Depreciation-Other Service Concession Assets",
+"category": "Assets"
+},
+{
+"code": "1061299200",
+"title": "Accumulated Impairment Losses-Other Service Concession Assets",
+"category": "Assets"
+},
+{
+"code": "1061401000",
+"title": "Bearer Trees, Plants and Crops",
+"category": "Assets"
+},
+{
+"code": "1061401100",
+"title": "Accumulated Depreciation-Bearer Trees, Plants and Crops",
+"category": "Assets"
+},
+{
+"code": "1061401200",
+"title": "Accumulated Impairment Losses-Bearer Trees, Plants and Crops",
+"category": "Assets"
+},
+{
+"code": "1061402000",
+"title": "Growing Bearer Trees, Plants and Crops",
+"category": "Assets"
+},
+{
+"code": "1069801000",
+"title": "Construction in Progress-Land Improvements",
+"category": "Assets"
+},
+{
+"code": "1069802000",
+"title": "Construction in Progress-Infrastructure Assets",
+"category": "Assets"
+},
+{
+"code": "1069803000",
+"title": "Construction in Progress-Buildings and Other Structures",
+"category": "Assets"
+},
+{
+"code": "1069804000",
+"title": "Construction in Progress-Leased Assets",
+"category": "Assets"
+},
+{
+"code": "1069805000",
+"title": "Construction in Progress-Leased Assets Improvements",
+"category": "Assets"
+},
+{
+"code": "1069806000",
+"title": "Construction in Progress-Furniture and Fixtures",
+"category": "Assets"
+},
+{
+"code": "1069807000",
+"title": "Construction in Progress-Heritage Assets",
+"category": "Assets"
+},
+{
+"code": "1069808000",
+"title": "Construction in Progress-Service Concession Assets",
+"category": "Assets"
+},
+{
+"code": "1069901000",
+"title": "Work/Zoo and/or Other Animals",
+"category": "Assets"
+},
+{
+"code": "1069901100",
+"title": "Accumulated Depreciation-Work/Zoo and/or Other Animals",
+"category": "Assets"
+},
+{
+"code": "1069901200",
+"title": "Accumulated Impairment Losses-Work/Zoo and/or Other Animals",
+"category": "Assets"
+},
+{
+"code": "1069902000",
+"title": "Growing Work/Zoo and Other Animals",
+"category": "Assets"
+},
+{
+"code": "1069999000",
+"title": "Other Property, Plant and Equipment",
+"category": "Assets"
+},
+{
+"code": "1069999100",
+"title": "Accumulated Depreciation-Other Property, Plant and Equipment",
+"category": "Assets"
+},
+{
+"code": "1069999200",
+"title": "Accumulated Impairment Losses-Other Property, Plant and Equipment",
+"category": "Assets"
+},
+{
+"code": "1070101000",
+"title": "Breeding Stocks",
+"category": "Assets"
+},
+{
+"code": "1070101100",
+"title": "Accumulated Depreciation-Breeding Stocks",
+"category": "Assets"
+},
+{
+"code": "1070101200",
+"title": "Accumulated Impairment Losses-Breeding Stocks",
+"category": "Assets"
+},
+{
+"code": "1070102000",
+"title": "Livestock",
+"category": "Assets"
+},
+{
+"code": "1070102100",
+"title": "Accumulated Depreciation -Livestock",
+"category": "Assets"
+},
+{
+"code": "1070102200",
+"title": "Accumulated Impairment Losses-Livestock",
+"category": "Assets"
+},
+{
+"code": "1070103000",
+"title": "Trees, Plants and Crops",
+"category": "Assets"
+},
+{
+"code": "1070103100",
+"title": "Accumulated Depreciation - Trees, Plants and Crops",
+"category": "Assets"
+},
+{
+"code": "1070103200",
+"title": "Accumulated Impairment Losses-Trees, Plants and Crops",
+"category": "Assets"
+},
+{
+"code": "1070104000",
+"title": "Aquaculture",
+"category": "Assets"
+},
+{
+"code": "1070104100",
+"title": "Accumulated Depreciation - Aquaculture",
+"category": "Assets"
+},
+{
+"code": "1070104200",
+"title": "Accumulated Impairment Losses-Aquaculture",
+"category": "Assets"
+},
+{
+"code": "1070199000",
+"title": "Other Bearer Biological Assets",
+"category": "Assets"
+},
+{
+"code": "1070199100",
+"title": "Accumulated Depreciation-Other Bearer Biological Assets",
+"category": "Assets"
+},
+{
+"code": "1070199200",
+"title": "Accumulated Impairment Losses-Other Bearer Biological Assets",
+"category": "Assets"
+},
+{
+"code": "1070201000",
+"title": "Livestock Held for Consumption/Sale/Distribution",
+"category": "Assets"
+},
+{
+"code": "1070201001",
+"title": "Livestock Held for Consumption/Sale/Distribution - Livestock Held for Consumption",
+"category": "Assets"
+},
+{
+"code": "1070201002",
+"title": "Livestock Held for Consumption/Sale/Distribution - Livestock Held for Sale",
+"category": "Assets"
+},
+{
+"code": "1070201003",
+"title": "Livestock Held for Consumption/Sale/Distribution - Livestock Held for Distribution",
+"category": "Assets"
+},
+{
+"code": "1070201200",
+"title": "Accumulated Impairment Losses-Livestock Held for Consumption/Sale/Distribution",
+"category": "Assets"
+},
+{
+"code": "1070202000",
+"title": "Trees, Plants and Crops Held for Consumption/Sale/Distribution",
+"category": "Assets"
+},
+{
+"code": "1070202001",
+"title": "Trees, Plants and Crops Held for Consumption/Sale/Distribution - Trees, Plants and Crops Held for Consumption",
+"category": "Assets"
+},
+{
+"code": "1070202002",
+"title": "Trees, Plants and Crops Held for Consumption/Sale/Distribution - Trees, Plants and Crops Held for Sale",
+"category": "Assets"
+},
+{
+"code": "1070202003",
+"title": "Trees, Plants and Crops Held for Consumption/Sale/Distribution - Trees, Plants and Crops Held for Distribution",
+"category": "Assets"
+},
+{
+"code": "1070202200",
+"title": "Accumulated Impairment Losses-Trees, Plants and Crops Held for Consumption/Sale/Distribution",
+"category": "Assets"
+},
+{
+"code": "1070299000",
+"title": "Other Consumable Biological Assets",
+"category": "Assets"
+},
+{
+"code": "1070299200",
+"title": "Accumulated Impairment Losses-Other Consumable Biological Assets",
+"category": "Assets"
+},
+{
+"code": "1080101000",
+"title": "Patents",
+"category": "Assets"
+},
+{
+"code": "1080101100",
+"title": "Accumulated Amortization-Patents",
+"category": "Assets"
+},
+{
+"code": "1080101200",
+"title": "Accumulated Impairment Losses-Patents",
+"category": "Assets"
+},
+{
+"code": "1080102000",
+"title": "Computer Software",
+"category": "Assets"
+},
+{
+"code": "1080102100",
+"title": "Accumulated Amortization-Computer Software",
+"category": "Assets"
+},
+{
+"code": "1080102200",
+"title": "Accumulated Impairment Losses-Computer Software",
+"category": "Assets"
+},
+{
+"code": "1080103000",
+"title": "Websites",
+"category": "Assets"
+},
+{
+"code": "1080103100",
+"title": "Accumulated Amortization-Websites",
+"category": "Assets"
+},
+{
+"code": "1080103200",
+"title": "Accumulated Impairment Losses-Websites",
+"category": "Assets"
+},
+{
+"code": "1080105000",
+"title": "Copyrights",
+"category": "Assets"
+},
+{
+"code": "1080105100",
+"title": "Accumulated Amortization-Copyrights",
+"category": "Assets"
+},
+{
+"code": "1080105200",
+"title": "Accumulated Impairment Losses-Copyrights",
+"category": "Assets"
+},
+{
+"code": "1080199000",
+"title": "Other Intangible Assets",
+"category": "Assets"
+},
+{
+"code": "1080199100",
+"title": "Accumulated Amortization-Other Intangible Assets",
+"category": "Assets"
+},
+{
+"code": "1080199200",
+"title": "Accumulated Impairment Losses-Other Intangible Assets",
+"category": "Assets"
+},
+{
+"code": "1080201000",
+"title": "Service Concession-Intangible Assets",
+"category": "Assets"
+},
+{
+"code": "1080201100",
+"title": "Accumulated Amortization-Service Concession Intangible Asset",
+"category": "Assets"
+},
+{
+"code": "1080201200",
+"title": "Accumulated Impairment Losses-Service Concession Intangible Asset",
+"category": "Assets"
+},
+{
+"code": "1089801000",
+"title": "Development in Progress-Patents",
+"category": "Assets"
+},
+{
+"code": "1089802000",
+"title": "Development in Progress-Computer Software",
+"category": "Assets"
+},
+{
+"code": "1089803000",
+"title": "Development in Progress-Websites",
+"category": "Assets"
+},
+{
+"code": "1089899000",
+"title": "Development in Progress-Other Intangible Assets",
+"category": "Assets"
+},
+{
+"code": "1990101000",
+"title": "Advances for Operating Expenses",
+"category": "Assets"
+},
+{
+"code": "1990102000",
+"title": "Advances for Payroll",
+"category": "Assets"
+},
+{
+"code": "1990103000",
+"title": "Advances to Special Disbursing Officer",
+"category": "Assets"
+},
+{
+"code": "1990104000",
+"title": "Advances to Officers and Employees",
+"category": "Assets"
+},
+{
+"code": "1990201000",
+"title": "Advances to Contractors",
+"category": "Assets"
+},
+{
+"code": "1990202000",
+"title": "Prepaid Rent",
+"category": "Assets"
+},
+{
+"code": "1990203000",
+"title": "Prepaid Registration",
+"category": "Assets"
+},
+{
+"code": "1990204000",
+"title": "Prepaid Interest",
+"category": "Assets"
+},
+{
+"code": "1990205000",
+"title": "Prepaid Insurance",
+"category": "Assets"
+},
+{
+"code": "1990210000",
+"title": "Prepaid Subscription",
+"category": "Assets"
+},
+{
+"code": "1990210001",
+"title": "Prepaid Subscription - ICT Software Subscription",
+"category": "Assets"
+},
+{
+"code": "1990210002",
+"title": "Prepaid Subscription - Data Center Service",
+"category": "Assets"
+},
+{
+"code": "1990210003",
+"title": "Prepaid Subscription - Cloud Computing Service",
+"category": "Assets"
+},
+{
+"code": "1990210004",
+"title": "Prepaid Subscription - Library and Other Reading Materials Subscription",
+"category": "Assets"
+},
+{
+"code": "1990210099",
+"title": "Prepaid Subscription - Expenses Other Subscription Expenses",
+"category": "Assets"
+},
+{
+"code": "1990299000",
+"title": "Other Prepayments",
+"category": "Assets"
+},
+{
+"code": "1990301000",
+"title": "Deposit on Letters of Credit",
+"category": "Assets"
+},
+{
+"code": "1990302000",
+"title": "Guaranty Deposits",
+"category": "Assets"
+},
+{
+"code": "1990399000",
+"title": "Other Deposits",
+"category": "Assets"
+},
+{
+"code": "1990501000",
+"title": "Deferred Discount on Treasury Bills and Bonds",
+"category": "Assets"
+},
+{
+"code": "1999901000",
+"title": "Acquired Assets",
+"category": "Assets"
+},
+{
+"code": "1999901200",
+"title": "Accumulated Impairment Losses-Acquired Assets",
+"category": "Assets"
+},
+{
+"code": "1999902000",
+"title": "Foreclosed Property/Assets",
+"category": "Assets"
+},
+{
+"code": "1999902200",
+"title": "Accumulated Impairment Losses-Foreclosed Property/Assets",
+"category": "Assets"
+},
+{
+"code": "1999903000",
+"title": "Forfeited Property/Assets",
+"category": "Assets"
+},
+{
+"code": "1999903200",
+"title": "Accumulated Impairment Losses-Forfeited Property/Assets",
+"category": "Assets"
+},
+{
+"code": "1999904000",
+"title": "Confiscated Property/Assets",
+"category": "Assets"
+},
+{
+"code": "1999904200",
+"title": "Accumulated Impairment Losses-Confiscated Property/Assets",
+"category": "Assets"
+},
+{
+"code": "1999905000",
+"title": "Abandoned/Surrendered Property/Assets",
+"category": "Assets"
+},
+{
+"code": "1999905200",
+"title": "Accumulated Impairment Losses-Abandoned/Surrendered Property/Assets",
+"category": "Assets"
+},
+{
+"code": "1999906000",
+"title": "Sequestered Property/Assets",
+"category": "Assets"
+},
+{
+"code": "1999906200",
+"title": "Accumulated Impairment Losses-Sequestered Property/Assets",
+"category": "Assets"
+},
+{
+"code": "1999999000",
+"title": "Other Assets",
+"category": "Assets"
+},
+{
+"code": "1999999200",
+"title": "Accumulated Impairment Losses-Other Assets",
+"category": "Assets"
+},
+{
+"code": "2010101000",
+"title": "Accounts Payable",
+"category": "Liabilities"
+},
+{
+"code": "2010102000",
+"title": "Due to Officers and Employees",
+"category": "Liabilities"
+},
+{
+"code": "2010103000",
+"title": "Internal Revenue Allotment Payable",
+"category": "Liabilities"
+},
+{
+"code": "2010104000",
+"title": "Notes Payable",
+"category": "Liabilities"
+},
+{
+"code": "2010105000",
+"title": "Interest Payable",
+"category": "Liabilities"
+},
+{
+"code": "2010106000",
+"title": "Operating Lease Payable",
+"category": "Liabilities"
+},
+{
+"code": "2010107000",
+"title": "Finance Lease Payable",
+"category": "Liabilities"
+},
+{
+"code": "2010108000",
+"title": "Awards and Rewards Payable",
+"category": "Liabilities"
+},
+{
+"code": "2010109000",
+"title": "Service Concession Arrangements Payable",
+"category": "Liabilities"
+},
+{
+"code": "2010112000",
+"title": "Prizes Payable",
+"category": "Liabilities"
+},
+{
+"code": "2010113000",
+"title": "Indemnities Payable",
+"category": "Liabilities"
+},
+{
+"code": "2010114000",
+"title": "Payables to Joint Ventures",
+"category": "Liabilities"
+},
+{
+"code": "2010115000",
+"title": "Payables to Joint Operators",
+"category": "Liabilities"
+},
+{
+"code": "2010201000",
+"title": "Treasury Bills Payable",
+"category": "Liabilities"
+},
+{
+"code": "2010202000",
+"title": "Bonds Payable-Domestic",
+"category": "Liabilities"
+},
+{
+"code": "2010202300",
+"title": "Premium on Bonds Payable-Domestic",
+"category": "Liabilities"
+},
+{
+"code": "2010202400",
+"title": "Discount on Bonds Payable-Domestic",
+"category": "Liabilities"
+},
+{
+"code": "2010202500",
+"title": "Bond Issue Cost-Domestic",
+"category": "Liabilities"
+},
+{
+"code": "2010203000",
+"title": "Bonds Payable-Foreign",
+"category": "Liabilities"
+},
+{
+"code": "2010203300",
+"title": "Premium on Bonds Payable-Foreign",
+"category": "Liabilities"
+},
+{
+"code": "2010203400",
+"title": "Discount on Bonds Payable-Foreign",
+"category": "Liabilities"
+},
+{
+"code": "2010203500",
+"title": "Bond Issue Cost-Foreign",
+"category": "Liabilities"
+},
+{
+"code": "2010204000",
+"title": "Loans Payable-Domestic",
+"category": "Liabilities"
+},
+{
+"code": "2010205000",
+"title": "Loans Payable-Foreign",
+"category": "Liabilities"
+},
+{
+"code": "2010301000",
+"title": "Tax Refunds Payable",
+"category": "Liabilities"
+},
+{
+"code": "2020101000",
+"title": "Due to BIR",
+"category": "Liabilities"
+},
+{
+"code": "2020102000",
+"title": "Due to GSIS",
+"category": "Liabilities"
+},
+{
+"code": "2020102001",
+"title": "Due to GSIS - Life and Retirement Premium",
+"category": "Liabilities"
+},
+{
+"code": "2020102002",
+"title": "Due to GSIS - ECC",
+"category": "Liabilities"
+},
+{
+"code": "2020102003",
+"title": "Due to GSIS - Salary Loan",
+"category": "Liabilities"
+},
+{
+"code": "2020102004",
+"title": "Due to GSIS - Policy Loan",
+"category": "Liabilities"
+},
+{
+"code": "2020103000",
+"title": "Due to Pag-IBIG",
+"category": "Liabilities"
+},
+{
+"code": "2020103001",
+"title": "Due to Pag-IBIG - Pag-IBIG Premium",
+"category": "Liabilities"
+},
+{
+"code": "2020103002",
+"title": "Due to Pag-IBIG - Pag-IBIG Multi-Purpose Loan",
+"category": "Liabilities"
+},
+{
+"code": "2020103003",
+"title": "Due to Pag-IBIG - Pag-IBIG Housing Loan",
+"category": "Liabilities"
+},
+{
+"code": "2020104000",
+"title": "Due to PhilHealth",
+"category": "Liabilities"
+},
+{
+"code": "2020105000",
+"title": "Due to NGAs",
+"category": "Liabilities"
+},
+{
+"code": "2020106000",
+"title": "Due to GOCCs",
+"category": "Liabilities"
+},
+{
+"code": "2020107000",
+"title": "Due to LGUs",
+"category": "Liabilities"
+},
+{
+"code": "2030101000",
+"title": "Due to Central Office",
+"category": "Liabilities"
+},
+{
+"code": "2030102000",
+"title": "Due to Bureaus",
+"category": "Liabilities"
+},
+{
+"code": "2030103000",
+"title": "Due to Regional Offices",
+"category": "Liabilities"
+},
+{
+"code": "2030104000",
+"title": "Due to Operating Units",
+"category": "Liabilities"
+},
+{
+"code": "2030105000",
+"title": "Due to Other Funds",
+"category": "Liabilities"
+},
+{
+"code": "2040101000",
+"title": "Trust Liabilities",
+"category": "Liabilities"
+},
+{
+"code": "2040101001",
+"title": "Trust Liabilities",
+"category": "Liabilities"
+},
+{
+"code": "2040101002",
+"title": "Trust Liabilities - Fuel Marking Trust Account",
+"category": "Liabilities"
+},
+{
+"code": "2040102000",
+"title": "Trust Liabilities-Disaster Risk Reduction and Management Fund",
+"category": "Liabilities"
+},
+{
+"code": "2040103000",
+"title": "Bail Bonds Payable",
+"category": "Liabilities"
+},
+{
+"code": "2040104000",
+"title": "Guaranty/Security Deposits Payable",
+"category": "Liabilities"
+},
+{
+"code": "2040105000",
+"title": "Customers' Deposits Payable",
+"category": "Liabilities"
+},
+{
+"code": "2040108000",
+"title": "Trust Liabilities-Disallowances/Charges",
+"category": "Liabilities"
+},
+{
+"code": "2050101000",
+"title": "Deferred Finance Lease Revenue",
+"category": "Liabilities"
+},
+{
+"code": "2050102000",
+"title": "Deferred Service Concession Revenue",
+"category": "Liabilities"
+},
+{
+"code": "2050104000",
+"title": "Deferred Revenue from Grants and Donations",
+"category": "Liabilities"
+},
+{
+"code": "2050199000",
+"title": "Other Deferred Credits",
+"category": "Liabilities"
+},
+{
+"code": "2050201000",
+"title": "Unearned Revenue-Investment Property",
+"category": "Liabilities"
+},
+{
+"code": "2050299000",
+"title": "Other Unearned Revenue",
+"category": "Liabilities"
+},
+{
+"code": "2060101000",
+"title": "Pension Benefits Payable",
+"category": "Liabilities"
+},
+{
+"code": "2060102000",
+"title": "Leave Benefits Payable",
+"category": "Liabilities"
+},
+{
+"code": "2060103000",
+"title": "Retirement Gratuity Payable",
+"category": "Liabilities"
+},
+{
+"code": "2060199000",
+"title": "Other Provisions",
+"category": "Liabilities"
+},
+{
+"code": "2999999000",
+"title": "Other Payables",
+"category": "Liabilities"
+},
+{
+"code": "3010101000",
+"title": "Accumulated Surplus/(Deficit)",
+"category": "Equity"
+},
+{
+"code": "3030101000",
+"title": "Revenue and Expense Summary",
+"category": "Equity"
+},
+{
+"code": "3050101000",
+"title": "Unrealized Gain/(Loss) from Changes in the Fair Value of Financial Assets",
+"category": "Equity"
+},
+{
+"code": "4010101000",
+"title": "Income Tax",
+"category": "Revenue"
+},
+{
+"code": "4010101001",
+"title": "Income Tax-Individual",
+"category": "Revenue"
+},
+{
+"code": "4010101002",
+"title": "Income Tax-Partnerships",
+"category": "Revenue"
+},
+{
+"code": "4010101003",
+"title": "Income Tax-Corporations",
+"category": "Revenue"
+},
+{
+"code": "4010102000",
+"title": "Professional Tax",
+"category": "Revenue"
+},
+{
+"code": "4010103000",
+"title": "Travel Tax",
+"category": "Revenue"
+},
+{
+"code": "4010104000",
+"title": "Immigration Tax",
+"category": "Revenue"
+},
+{
+"code": "4010201000",
+"title": "Estate Tax",
+"category": "Revenue"
+},
+{
+"code": "4010202000",
+"title": "Donors Tax",
+"category": "Revenue"
+},
+{
+"code": "4010203000",
+"title": "Capital Gains Tax",
+"category": "Revenue"
+},
+{
+"code": "4010203001",
+"title": "Capital Gains Tax-Individuals",
+"category": "Revenue"
+},
+{
+"code": "4010203002",
+"title": "Capital Gains Tax-Corporations and Other Enterprises",
+"category": "Revenue"
+},
+{
+"code": "4010301000",
+"title": "Import Duties",
+"category": "Revenue"
+},
+{
+"code": "4010301001",
+"title": "Import Duties - Live Animals, Animal Products",
+"category": "Revenue"
+},
+{
+"code": "4010301002",
+"title": "Import Duties - Vegetable Products",
+"category": "Revenue"
+},
+{
+"code": "4010301003",
+"title": "Import Duties - Animal or Vegetable Fats and Oils and their Cleavage Products; Prepared Edible Fats; Animal or Vegetable Waxes",
+"category": "Revenue"
+},
+{
+"code": "4010301004",
+"title": "Import Duties - Prepared Foodstuffs; Beverages, Spirits and Vinegar; Tobacco and Manufactured Tobacco Substitute",
+"category": "Revenue"
+},
+{
+"code": "4010301005",
+"title": "Import Duties - Mineral Products",
+"category": "Revenue"
+},
+{
+"code": "4010301006",
+"title": "Import Duties - Products of the Chemical or Allied Industries",
+"category": "Revenue"
+},
+{
+"code": "4010301007",
+"title": "Import Duties - Plastics and Articles Thereof; Rubber and Articles Thereof",
+"category": "Revenue"
+},
+{
+"code": "4010301008",
+"title": "Import Duties - Raw Hides and Skins, Leather, Furskins and Articles Thereof; Saddlery and Harness; Travel Goods, Handbags and Similar Containers; Articles of Animal Gut (Other than Silk-Worm Gut)",
+"category": "Revenue"
+},
+{
+"code": "4010301009",
+"title": "Import Duties - Wood and Articles of Wood; Wood Charcoal; Cork and Articles of Cork; Manufactures of Straw, or of Esparto or of other Plaiting Materials; Basket ware and Wickerwork",
+"category": "Revenue"
+},
+{
+"code": "4010301010",
+"title": "Import Duties - Pulp of Wood or of other Fibrous Cellulosic Material; Recovered (Waste and Scrap) Paper or Paperboard; Paper and Paperboard and Articles Thereof",
+"category": "Revenue"
+},
+{
+"code": "4010301011",
+"title": "Import Duties - Textiles and Textile Articles",
+"category": "Revenue"
+},
+{
+"code": "4010301012",
+"title": "Import Duties - Footwear, Headgear, Umbrellas, Sun Umbrellas, Walking-Sticks, Seat-Sticks, Whips, Riding-Crops and Parts Thereof; Prepared Feathers and Articles Human Hair",
+"category": "Revenue"
+},
+{
+"code": "4010301013",
+"title": "Import Duties - made Therewith; Artificial Flowers; Articles of Articles of Stone, Plaster, Cement, Asbestos, Mica or Similar Materials; Ceramic Products; Glass and Glassware",
+"category": "Revenue"
+},
+{
+"code": "4010301014",
+"title": "Import Duties - Natural or Cultured Pearls, Precious or Semi-Precious Stones, Precious Metals, Metals Clad with Precious Metal, and Articles Thereof; Imitation Jewelry; Coin",
+"category": "Revenue"
+},
+{
+"code": "4010301015",
+"title": "Import Duties - Base Metals and Articles of Base Metal",
+"category": "Revenue"
+},
+{
+"code": "4010301016",
+"title": "Import Duties - Machinery and Mechanical Appliances; Electrical Equipment; Parts Thereof; Sound Recorders and Reproducers, Television Image and Sound Recorders and Reproducers, and Parts and Accessories of such Articles",
+"category": "Revenue"
+},
+{
+"code": "4010301017",
+"title": "Import Duties - Vehicles, Aircraft, Vessels and Associated Transport Equipment",
+"category": "Revenue"
+},
+{
+"code": "4010301018",
+"title": "Import Duties - Optical, Photographic, Cinematographic, Measuring, Checking, Precision, Medical or Surgical Instruments and Apparatus; Clocks and Watches; Musical Instruments; Parts and Accessories Thereof",
+"category": "Revenue"
+},
+{
+"code": "4010301019",
+"title": "Import Duties - Arms and Ammunition; Parts and Accessories Thereof",
+"category": "Revenue"
+},
+{
+"code": "4010301020",
+"title": "Import Duties - Miscellaneous Manufactured Articles",
+"category": "Revenue"
+},
+{
+"code": "4010301021",
+"title": "Import Duties - Works of Art, Collectors' Pieces and Antiques",
+"category": "Revenue"
+},
+{
+"code": "4010301022",
+"title": "Import Duties - Rice Tariff Revenue",
+"category": "Revenue"
+},
+{
+"code": "4010301099",
+"title": "Import Duties - Other Import Duties",
+"category": "Revenue"
+},
+{
+"code": "4010302000",
+"title": "Excise Tax",
+"category": "Revenue"
+},
+{
+"code": "4010302001",
+"title": "Excise Tax - Excise-Tobacco Products",
+"category": "Revenue"
+},
+{
+"code": "4010302002",
+"title": "Excise Tax - Excise-Alcoholic Beverages",
+"category": "Revenue"
+},
+{
+"code": "4010302003",
+"title": "Excise Tax - Excise-Mining-Non-Metallic Products",
+"category": "Revenue"
+},
+{
+"code": "4010302004",
+"title": "Excise Tax - Excise-Mining-Metallic Products",
+"category": "Revenue"
+},
+{
+"code": "4010302005",
+"title": "Excise Tax - Excise-Petroleum Products",
+"category": "Revenue"
+},
+{
+"code": "4010302006",
+"title": "Excise Tax - Excise-Motor Vehicles",
+"category": "Revenue"
+},
+{
+"code": "4010302007",
+"title": "Excise Tax - Excise-Mineral Products",
+"category": "Revenue"
+},
+{
+"code": "4010302099",
+"title": "Excise Tax - Excise-Others",
+"category": "Revenue"
+},
+{
+"code": "4010303000",
+"title": "Business Tax",
+"category": "Revenue"
+},
+{
+"code": "4010303001",
+"title": "Business Tax - Value Added Tax",
+"category": "Revenue"
+},
+{
+"code": "4010303002",
+"title": "Business Tax - Expanded Value Added Tax",
+"category": "Revenue"
+},
+{
+"code": "4010303003",
+"title": "Business Tax - Percentage Tax",
+"category": "Revenue"
+},
+{
+"code": "4010304000",
+"title": "Tax on Sand, Gravel and Other Quarry Products",
+"category": "Revenue"
+},
+{
+"code": "4010305000",
+"title": "Tax on Delivery Vans and Trucks",
+"category": "Revenue"
+},
+{
+"code": "4010306000",
+"title": "Tax on Forest Products",
+"category": "Revenue"
+},
+{
+"code": "4010401000",
+"title": "Documentary Stamp Tax",
+"category": "Revenue"
+},
+{
+"code": "4010402000",
+"title": "Motor Vehicles Users' Charge",
+"category": "Revenue"
+},
+{
+"code": "4010402001",
+"title": "Motor Vehicles Users' Charge - MVUC Proper",
+"category": "Revenue"
+},
+{
+"code": "4010402002",
+"title": "Motor Vehicles Users' Charge - MVUC Fines and Penalties",
+"category": "Revenue"
+},
+{
+"code": "4010402003",
+"title": "Motor Vehicles Users' Charge - Axle Overloading",
+"category": "Revenue"
+},
+{
+"code": "4010499000",
+"title": "Other Taxes",
+"category": "Revenue"
+},
+{
+"code": "4010499001",
+"title": "Other Taxes-Business",
+"category": "Revenue"
+},
+{
+"code": "4010499002",
+"title": "Other Taxes-Other than Business",
+"category": "Revenue"
+},
+{
+"code": "4010501000",
+"title": "Tax Revenue-Fines and Penalties-Taxes on Individual and Corporation",
+"category": "Revenue"
+},
+{
+"code": "4010502000",
+"title": "Tax Revenue-Fines and Penalties-Property Taxes",
+"category": "Revenue"
+},
+{
+"code": "4010503000",
+"title": "Tax Revenue-Fines and Penalties-Taxes on Goods and Services",
+"category": "Revenue"
+},
+{
+"code": "4010599000",
+"title": "Tax Revenue-Fines and Penalties-Other Taxes",
+"category": "Revenue"
+},
+{
+"code": "4020101000",
+"title": "Permit Fees",
+"category": "Revenue"
+},
+{
+"code": "4020101001",
+"title": "Permit Fees Import",
+"category": "Revenue"
+},
+{
+"code": "4020101002",
+"title": "Permit Fees Export",
+"category": "Revenue"
+},
+{
+"code": "4020101099",
+"title": "Permit Fees - Other Permit Fees",
+"category": "Revenue"
+},
+{
+"code": "4020102000",
+"title": "Registration Fees",
+"category": "Revenue"
+},
+{
+"code": "4020103000",
+"title": "Registration Plates, Tags and Stickers Fees",
+"category": "Revenue"
+},
+{
+"code": "4020103001",
+"title": "Registration Plates, Tags and Stickers Fees - Regular Plates",
+"category": "Revenue"
+},
+{
+"code": "4020103002",
+"title": "Registration Plates, Tags and Stickers Fees - Optional Motor Vehicle Special Plate",
+"category": "Revenue"
+},
+{
+"code": "4020103003",
+"title": "Registration Plates, Tags and Stickers Fees - Vanity Licensed Plates",
+"category": "Revenue"
+},
+{
+"code": "4020103004",
+"title": "Registration Plates, Tags and Stickers Fees - Validating Tags/Stickers",
+"category": "Revenue"
+},
+{
+"code": "4020104000",
+"title": "Clearance and Certification Fees",
+"category": "Revenue"
+},
+{
+"code": "4020104001",
+"title": "Clearance and Certification Fees - Clearance Fees",
+"category": "Revenue"
+},
+{
+"code": "4020104002",
+"title": "Clearance and Certification Fees - Certification Fees",
+"category": "Revenue"
+},
+{
+"code": "4020104003",
+"title": "Clearance and Certification Fees - Endorsement Fees",
+"category": "Revenue"
+},
+{
+"code": "4020104004",
+"title": "Clearance and Certification Fees - Identification of Specimens",
+"category": "Revenue"
+},
+{
+"code": "4020105000",
+"title": "Franchising Fees",
+"category": "Revenue"
+},
+{
+"code": "4020106000",
+"title": "Licensing Fees",
+"category": "Revenue"
+},
+{
+"code": "4020107000",
+"title": "Supervision and Regulation Enforcement Fees",
+"category": "Revenue"
+},
+{
+"code": "4020108000",
+"title": "Spectrum Usage Fees",
+"category": "Revenue"
+},
+{
+"code": "4020109000",
+"title": "Legal Fees",
+"category": "Revenue"
+},
+{
+"code": "4020110000",
+"title": "Inspection Fees",
+"category": "Revenue"
+},
+{
+"code": "4020111000",
+"title": "Verification and Authentication Fees",
+"category": "Revenue"
+},
+{
+"code": "4020111001",
+"title": "Verification and Authentication Fees - Accreditation Fees",
+"category": "Revenue"
+},
+{
+"code": "4020111002",
+"title": "Verification and Authentication Fees - Weights and Measures Fees",
+"category": "Revenue"
+},
+{
+"code": "4020111099",
+"title": "Verification and Authentication Fees - Other Verification and Authentication Fees",
+"category": "Revenue"
+},
+{
+"code": "4020112000",
+"title": "Passport and Visa Fees",
+"category": "Revenue"
+},
+{
+"code": "4020112001",
+"title": "Passport and Visa Fees - Passport Fees",
+"category": "Revenue"
+},
+{
+"code": "4020112002",
+"title": "Passport and Visa Fees - Visa Fees",
+"category": "Revenue"
+},
+{
+"code": "4020113000",
+"title": "Processing Fees",
+"category": "Revenue"
+},
+{
+"code": "4020113001",
+"title": "Processing Fees - Analysis Fees",
+"category": "Revenue"
+},
+{
+"code": "4020113002",
+"title": "Processing Fees - Appeal Fees",
+"category": "Revenue"
+},
+{
+"code": "4020113003",
+"title": "Processing Fees - Application Fees",
+"category": "Revenue"
+},
+{
+"code": "4020113004",
+"title": "Processing Fees - Assessment Fees",
+"category": "Revenue"
+},
+{
+"code": "4020113005",
+"title": "Processing Fees - Execution Fees",
+"category": "Revenue"
+},
+{
+"code": "4020113006",
+"title": "Processing Fees - Express Lane or Special Lane Fees",
+"category": "Revenue"
+},
+{
+"code": "4020113007",
+"title": "Processing Fees - Filing Fees",
+"category": "Revenue"
+},
+{
+"code": "4020113008",
+"title": "Processing Fees - Identity Card Fees",
+"category": "Revenue"
+},
+{
+"code": "4020113009",
+"title": "Processing Fees - Import Processing Fees",
+"category": "Revenue"
+},
+{
+"code": "4020113010",
+"title": "Processing Fees - Oath taking Fees",
+"category": "Revenue"
+},
+{
+"code": "4020113011",
+"title": "Processing Fees - Review Fees",
+"category": "Revenue"
+},
+{
+"code": "4020113012",
+"title": "Processing Fees - Testing Fees",
+"category": "Revenue"
+},
+{
+"code": "4020113099",
+"title": "Processing Fees - Other Processing Fees",
+"category": "Revenue"
+},
+{
+"code": "4020114000",
+"title": "Fines and Penalties-Service Income",
+"category": "Revenue"
+},
+{
+"code": "4020199000",
+"title": "Other Service Income",
+"category": "Revenue"
+},
+{
+"code": "4020199001",
+"title": "Other Service Income - Amendment Fees",
+"category": "Revenue"
+},
+{
+"code": "4020199002",
+"title": "Other Service Income - Calibration Fees",
+"category": "Revenue"
+},
+{
+"code": "4020199003",
+"title": "Other Service Income - Escheat Fees of Unclaimed Balances",
+"category": "Revenue"
+},
+{
+"code": "4020199004",
+"title": "Other Service Income - Service Fees on Relent Loan",
+"category": "Revenue"
+},
+{
+"code": "4020199005",
+"title": "Other Service Income - Technology Development Transfer and Commercialization",
+"category": "Revenue"
+},
+{
+"code": "4020199006",
+"title": "Other Service Income - Other Geological and Energy Data",
+"category": "Revenue"
+},
+{
+"code": "4020199099",
+"title": "Other Service Income",
+"category": "Revenue"
+},
+{
+"code": "4020201000",
+"title": "School Fees",
+"category": "Revenue"
+},
+{
+"code": "4020201001",
+"title": "School Fees - Tuition Fees",
+"category": "Revenue"
+},
+{
+"code": "4020201002",
+"title": "School Fees - Income Collected from Students",
+"category": "Revenue"
+},
+{
+"code": "4020201003",
+"title": "School Fees - Income from Other Sources",
+"category": "Revenue"
+},
+{
+"code": "4020201099",
+"title": "School Fees - Other School Fees",
+"category": "Revenue"
+},
+{
+"code": "4020202000",
+"title": "Affiliation Fees",
+"category": "Revenue"
+},
+{
+"code": "4020203000",
+"title": "Examination Fees",
+"category": "Revenue"
+},
+{
+"code": "4020204000",
+"title": "Seminar/Training Fees",
+"category": "Revenue"
+},
+{
+"code": "4020205000",
+"title": "Rent/Lease Income",
+"category": "Revenue"
+},
+{
+"code": "4020206000",
+"title": "Communications Network Fees",
+"category": "Revenue"
+},
+{
+"code": "4020207000",
+"title": "Transportation System Fees",
+"category": "Revenue"
+},
+{
+"code": "4020208000",
+"title": "Road Network Fees",
+"category": "Revenue"
+},
+{
+"code": "4020209000",
+"title": "Waterworks System Fees",
+"category": "Revenue"
+},
+{
+"code": "4020210000",
+"title": "Power Supply System Fees",
+"category": "Revenue"
+},
+{
+"code": "4020211000",
+"title": "Seaport System Fees",
+"category": "Revenue"
+},
+{
+"code": "4020212000",
+"title": "Landing and Parking Fees",
+"category": "Revenue"
+},
+{
+"code": "4020213000",
+"title": "Income from Hostels/Dormitories and Other Like Facilities",
+"category": "Revenue"
+},
+{
+"code": "4020214000",
+"title": "Slaughterhouse Operation",
+"category": "Revenue"
+},
+{
+"code": "4020215000",
+"title": "Income from Printing and Publication",
+"category": "Revenue"
+},
+{
+"code": "4020216000",
+"title": "Sales Revenue",
+"category": "Revenue"
+},
+{
+"code": "4020216001",
+"title": "Sales Revenue - Book Sales",
+"category": "Revenue"
+},
+{
+"code": "4020216002",
+"title": "Sales Revenue - Consultancy Fees",
+"category": "Revenue"
+},
+{
+"code": "4020216003",
+"title": "Sales Revenue - Entrance Fees",
+"category": "Revenue"
+},
+{
+"code": "4020216004",
+"title": "Sales Revenue - Film Showing Fees",
+"category": "Revenue"
+},
+{
+"code": "4020216005",
+"title": "Sales Revenue - Sale of Accountable Forms",
+"category": "Revenue"
+},
+{
+"code": "4020216006",
+"title": "Sales Revenue - Sale of Animals, Meat and Dairy",
+"category": "Revenue"
+},
+{
+"code": "4020216007",
+"title": "Sales Revenue - Sale of Technology thru Payback",
+"category": "Revenue"
+},
+{
+"code": "4020216008",
+"title": "Sales Revenue - Sale of Training Manuals",
+"category": "Revenue"
+},
+{
+"code": "4020216009",
+"title": "Sales Revenue - Sale of Drugs, Medicines and Other Medical Supplies",
+"category": "Revenue"
+},
+{
+"code": "4020216099",
+"title": "Sales Revenue - Other Sales",
+"category": "Revenue"
+},
+{
+"code": "4020216100",
+"title": "Sales Discounts",
+"category": "Revenue"
+},
+{
+"code": "4020217000",
+"title": "Hospital Fees",
+"category": "Revenue"
+},
+{
+"code": "4020217001",
+"title": "Hospital Fees - Drugs and Medicines",
+"category": "Revenue"
+},
+{
+"code": "4020217002",
+"title": "Hospital Fees - Medical Supplies",
+"category": "Revenue"
+},
+{
+"code": "4020217003",
+"title": "Hospital Fees - Medical Fees-Operating Room",
+"category": "Revenue"
+},
+{
+"code": "4020217004",
+"title": "Hospital Fees - Medical Fees-Radiology",
+"category": "Revenue"
+},
+{
+"code": "4020217005",
+"title": "Hospital Fees - Medical Fees-Laboratory",
+"category": "Revenue"
+},
+{
+"code": "4020217006",
+"title": "Hospital Fees - Medical Fees-Hemodialysis",
+"category": "Revenue"
+},
+{
+"code": "4020217007",
+"title": "Hospital Fees - Medical Fees-Cardio-Vascular Services",
+"category": "Revenue"
+},
+{
+"code": "4020217008",
+"title": "Hospital Fees - Medical Fees-Nuclear Medicine Services",
+"category": "Revenue"
+},
+{
+"code": "4020217009",
+"title": "Hospital Fees - Medical Fees-Physical Medicine & Rehabilitation Services",
+"category": "Revenue"
+},
+{
+"code": "4020217010",
+"title": "Hospital Fees - Medical Fees-Pulmonary Services",
+"category": "Revenue"
+},
+{
+"code": "4020217011",
+"title": "Hospital Fees - Medical Fees-Neurology Services",
+"category": "Revenue"
+},
+{
+"code": "4020217012",
+"title": "Hospital Fees - Medical Fees-Emergency Room Services",
+"category": "Revenue"
+},
+{
+"code": "4020217099",
+"title": "Hospital Fees - Other Fees",
+"category": "Revenue"
+},
+{
+"code": "4020217100",
+"title": "Hospital Discounts, Allowances and Free Services",
+"category": "Revenue"
+},
+{
+"code": "4020218000",
+"title": "Guarantee Income",
+"category": "Revenue"
+},
+{
+"code": "4020219000",
+"title": "Fidelity Insurance Income",
+"category": "Revenue"
+},
+{
+"code": "4020220000",
+"title": "Dividend Income",
+"category": "Revenue"
+},
+{
+"code": "4020221000",
+"title": "Interest Income",
+"category": "Revenue"
+},
+{
+"code": "4020221001",
+"title": "Interest Income - Interest on NG Deposits",
+"category": "Revenue"
+},
+{
+"code": "4020221002",
+"title": "Interest Income - Interest on Advances to GOCCs",
+"category": "Revenue"
+},
+{
+"code": "4020221099",
+"title": "Interest Income - Others",
+"category": "Revenue"
+},
+{
+"code": "4020222000",
+"title": "Share in the Profit of Joint Ventures",
+"category": "Revenue"
+},
+{
+"code": "4020223000",
+"title": "Fines and Penalties-Business Income",
+"category": "Revenue"
+},
+{
+"code": "4020224000",
+"title": "Service Concession Revenue",
+"category": "Revenue"
+},
+{
+"code": "4020299000",
+"title": "Other Business Income",
+"category": "Revenue"
+},
+{
+"code": "4020299001",
+"title": "Other Business Income - Income from Compromise Agreement",
+"category": "Revenue"
+},
+{
+"code": "4020299002",
+"title": "Other Business Income - Pasture Income",
+"category": "Revenue"
+},
+{
+"code": "4020299003",
+"title": "Other Business Income - Warehousing Fees",
+"category": "Revenue"
+},
+{
+"code": "4020299099",
+"title": "Other Business Income",
+"category": "Revenue"
+},
+{
+"code": "4030101000",
+"title": "Subsidy from National Government",
+"category": "Revenue"
+},
+{
+"code": "4030102000",
+"title": "Assistance from Other National Government Agencies",
+"category": "Revenue"
+},
+{
+"code": "4030103000",
+"title": "Assistance from Local Government Units",
+"category": "Revenue"
+},
+{
+"code": "4030104000",
+"title": "Assistance from Government-Owned or Controlled Corporations",
+"category": "Revenue"
+},
+{
+"code": "4030105000",
+"title": "Subsidy from Other Funds",
+"category": "Revenue"
+},
+{
+"code": "4030106000",
+"title": "Subsidy from Central Office",
+"category": "Revenue"
+},
+{
+"code": "4030107000",
+"title": "Subsidy from Regional Office/Staff Bureau",
+"category": "Revenue"
+},
+{
+"code": "4040101000",
+"title": "Share from National Wealth",
+"category": "Revenue"
+},
+{
+"code": "4040101001",
+"title": "Share from National Wealth - Tobacco Excise Tax (Virginia) per R.A. 7171",
+"category": "Revenue"
+},
+{
+"code": "4040101002",
+"title": "Share from National Wealth - Tobacco Excise Tax (Burley and Native) per R.A. 8240",
+"category": "Revenue"
+},
+{
+"code": "4040101003",
+"title": "Share from National Wealth - Mining Taxes per R.A. 7160",
+"category": "Revenue"
+},
+{
+"code": "4040101004",
+"title": "Share from National Wealth - Royalties per R.A. 7160",
+"category": "Revenue"
+},
+{
+"code": "4040101005",
+"title": "Share from National Wealth - Forestry Charges per R.A. 7160",
+"category": "Revenue"
+},
+{
+"code": "4040101006",
+"title": "Share from National Wealth - Fishery Charges per R.A. 7160",
+"category": "Revenue"
+},
+{
+"code": "4040101007",
+"title": "Share from National Wealth - Renewable Energy Charges per R.A. 9513",
+"category": "Revenue"
+},
+{
+"code": "4040101008",
+"title": "Share from National Wealth - Income Tax Collections in ECOZONES per R.A. 7922 and R.A. 8748",
+"category": "Revenue"
+},
+{
+"code": "4040101009",
+"title": "Share from National Wealth - Value Added Tax per R.A. 7643",
+"category": "Revenue"
+},
+{
+"code": "4040101010",
+"title": "Share from National Wealth - Value Added Tax in lieu of Franchise Tax per R.A. 7953 and R.A. 8407",
+"category": "Revenue"
+},
+{
+"code": "4040102000",
+"title": "Share from PAGCOR/PCSO",
+"category": "Revenue"
+},
+{
+"code": "4040103000",
+"title": "Share from Earnings of Government-Owned or Controlled Corporations",
+"category": "Revenue"
+},
+{
+"code": "4040105000",
+"title": "Share from Internal Revenue Collections",
+"category": "Revenue"
+},
+{
+"code": "4040201000",
+"title": "Donations in Cash",
+"category": "Revenue"
+},
+{
+"code": "4040202000",
+"title": "Donations in Kind",
+"category": "Revenue"
+},
+{
+"code": "4040301000",
+"title": "Grants in Cash",
+"category": "Revenue"
+},
+{
+"code": "4040301001",
+"title": "Grants in Cash - Grants in cash from domestic sources",
+"category": "Revenue"
+},
+{
+"code": "4040301002",
+"title": "Grants in Cash - Grants in cash from foreign sources",
+"category": "Revenue"
+},
+{
+"code": "4040302000",
+"title": "Grants in Kind",
+"category": "Revenue"
+},
+{
+"code": "4040302001",
+"title": "Grants in Kind - Grants in kind from domestic sources",
+"category": "Revenue"
+},
+{
+"code": "4040302002",
+"title": "Grants in Kind - Grants in kind from foreign sources",
+"category": "Revenue"
+},
+{
+"code": "4050101000",
+"title": "Gain on Foreign Exchange (FOREX)",
+"category": "Revenue"
+},
+{
+"code": "4050102000",
+"title": "Gain on Sale of Investments",
+"category": "Revenue"
+},
+{
+"code": "4050103000",
+"title": "Gain on Sale of Investment Property",
+"category": "Revenue"
+},
+{
+"code": "4050104000",
+"title": "Gain on Sale of Property, Plant and Equipment",
+"category": "Revenue"
+},
+{
+"code": "4050105000",
+"title": "Gain on Initial Recognition of Biological Assets",
+"category": "Revenue"
+},
+{
+"code": "4050106000",
+"title": "Gain on Sale of Biological Assets",
+"category": "Revenue"
+},
+{
+"code": "4050107000",
+"title": "Gain from Changes in Fair Value Less Costs to Sell of Biological Assets Due to Physical Change",
+"category": "Revenue"
+},
+{
+"code": "4050108000",
+"title": "Gain from Changes in Fair Value Less Costs to Sell of Biological Assets Due to Price Change",
+"category": "Revenue"
+},
+{
+"code": "4050109000",
+"title": "Gain on Sale of Agricultural Produce",
+"category": "Revenue"
+},
+{
+"code": "4050110000",
+"title": "Gain on Sale of Intangible Assets",
+"category": "Revenue"
+},
+{
+"code": "4050111000",
+"title": "Gain from Changes in Fair Value of Financial Instruments",
+"category": "Revenue"
+},
+{
+"code": "4050112000",
+"title": "Gain on Initial Recognition of Agricultural Produce",
+"category": "Revenue"
+},
+{
+"code": "4050113000",
+"title": "Gain on Sale of Unserviceable Property",
+"category": "Revenue"
+},
+{
+"code": "4050199000",
+"title": "Other Gains",
+"category": "Revenue"
+},
+{
+"code": "4060101000",
+"title": "Sale of Garnished/Confiscated/Abandoned/Seized Goods and Property",
+"category": "Revenue"
+},
+{
+"code": "4060201000",
+"title": "Reversal of Impairment Loss",
+"category": "Revenue"
+},
+{
+"code": "4069901000",
+"title": "Proceeds from Insurance/Indemnities",
+"category": "Revenue"
+},
+{
+"code": "4069999000",
+"title": "Miscellaneous Income",
+"category": "Revenue"
+},
+{
 "code": "5010101000",
 "title": "Salaries and Wages-Regular",
 "category": "Personnel Services"
@@ -66,7 +4286,7 @@
 },
 {
 "code": "5010204001",
-"title": "Clothing/Uniform Allowance - Clothing/Uniform Allowance-Civilian",
+"title": "Clothing/Uniform Allowance-Civilian",
 "category": "Personnel Services"
 },
 {
@@ -76,47 +4296,47 @@
 },
 {
 "code": "5010204003",
-"title": "Clothing/Uniform Allowance - Clothing/Uniform Allowance-Military/Uniformed Personnel",
+"title": "Clothing/Uniform Allowance-Military/Uniformed Personnel",
 "category": "Personnel Services"
 },
 {
 "code": "5010204004",
-"title": "Clothing/Uniform Allowance - Clothing/Uniform Allowance-Initial-Military/Uniformed Personnel",
+"title": "Clothing/Uniform Allowance-Initial-Military/Uniformed Personnel",
 "category": "Personnel Services"
 },
 {
 "code": "5010204005",
-"title": "Clothing/Uniform Allowance - Clothing/Uniform Allowance-Special-Military/Uniformed Personnel",
+"title": "Clothing/Uniform Allowance-Special-Military/Uniformed Personnel",
 "category": "Personnel Services"
 },
 {
 "code": "5010204006",
-"title": "Clothing/Uniform Allowance - Clothing/Uniform Allowance-Cold Weather-Military/Uniformed Personnel",
+"title": "Clothing/Uniform Allowance-Cold Weather-Military/Uniformed Personnel",
 "category": "Personnel Services"
 },
 {
 "code": "5010204007",
-"title": "Clothing/Uniform Allowance - Clothing/Uniform Allowance-Reenlistment-Military/Uniformed Personnel",
+"title": "Clothing/Uniform Allowance-Reenlistment-Military/Uniformed Personnel",
 "category": "Personnel Services"
 },
 {
 "code": "5010204008",
-"title": "Clothing/Uniform Allowance - Clothing/Uniform Allowance-Winter-Military/Uniformed Personnel",
+"title": "Clothing/Uniform Allowance-Winter-Military/Uniformed Personnel",
 "category": "Personnel Services"
 },
 {
 "code": "5010204009",
-"title": "Clothing/Uniform Allowance - Clothing/Uniform Allowance-Combat-Military/Uniformed Personnel",
+"title": "Clothing/Uniform Allowance-Combat-Military/Uniformed Personnel",
 "category": "Personnel Services"
 },
 {
 "code": "5010204010",
-"title": "Clothing/Uniform Allowance - Clothing/Uniform Allowance-Maintenance Cold Weather-Military/Uniformed Personnel",
+"title": "Clothing/Uniform Allowance-Maintenance Cold Weather-Military/Uniformed Personnel",
 "category": "Personnel Services"
 },
 {
 "code": "5010204011",
-"title": "Clothing/Uniform Allowance - Clothing/Uniform Allowance-Replacement-Military/Uniformed Personnel",
+"title": "Clothing/Uniform Allowance-Replacement-Military/Uniformed Personnel",
 "category": "Personnel Services"
 },
 {
@@ -126,22 +4346,22 @@
 },
 {
 "code": "5010205001",
-"title": "Subsistence Allowance - Subsistence Allowance-Military/Uniformed Personnel",
+"title": "Subsistence Allowance-Military/Uniformed Personnel",
 "category": "Personnel Services"
 },
 {
 "code": "5010205002",
-"title": "Subsistence Allowance - Subsistence Allowance-Magna Carta Benefits for Science and Technology under R.A. 8439",
+"title": "Subsistence Allowance-Magna Carta Benefits for Science and Technology under R.A. 8439",
 "category": "Personnel Services"
 },
 {
 "code": "5010205003",
-"title": "Subsistence Allowance - Subsistence Allowance-Magna Carta Benefits for Public Health Workers under R.A. 7305",
+"title": "Subsistence Allowance-Magna Carta Benefits for Public Health Workers under R.A. 7305",
 "category": "Personnel Services"
 },
 {
 "code": "5010205004",
-"title": "Subsistence Allowance - Subsistence Allowance-Magna Carta Benefits for Public Social Workers under R.A. 9432",
+"title": "Subsistence Allowance-Magna Carta Benefits for Public Social Workers under R.A. 9432",
 "category": "Personnel Services"
 },
 {
@@ -151,27 +4371,27 @@
 },
 {
 "code": "5010206001",
-"title": "Laundry Allowance - Laundry Allowance-Civilian",
+"title": "Laundry Allowance-Civilian",
 "category": "Personnel Services"
 },
 {
 "code": "5010206002",
-"title": "Laundry Allowance - Laundry Allowance-Military/Uniformed Personnel",
+"title": "Laundry Allowance-Military/Uniformed Personnel",
 "category": "Personnel Services"
 },
 {
 "code": "5010206003",
-"title": "Laundry Allowance - Laundry Allowance-Magna Carta Benefits for Science and Technology under R.A. 8439",
+"title": "Laundry Allowance-Magna Carta Benefits for Science and Technology under R.A. 8439",
 "category": "Personnel Services"
 },
 {
 "code": "5010206004",
-"title": "Laundry Allowance - Laundry Allowance-Magna Carta Benefits for Public Health Workers under R.A. 7305",
+"title": "Laundry Allowance-Magna Carta Benefits for Public Health Workers under R.A. 7305",
 "category": "Personnel Services"
 },
 {
 "code": "5010206005",
-"title": "Laundry Allowance - Laundry Allowance-Magna Carta Benefits for Public Social Workers under R.A. 9432",
+"title": "Laundry Allowance-Magna Carta Benefits for Public Social Workers under R.A. 9432",
 "category": "Personnel Services"
 },
 {
@@ -181,27 +4401,27 @@
 },
 {
 "code": "5010207001",
-"title": "Quarters Allowance - Quarters Allowance-Civilian",
+"title": "Quarters Allowance-Civilian",
 "category": "Personnel Services"
 },
 {
 "code": "5010207002",
-"title": "Quarters Allowance - Quarters Allowance-Military/Uniformed Personnel",
+"title": "Quarters Allowance-Military/Uniformed Personnel",
 "category": "Personnel Services"
 },
 {
 "code": "5010207003",
-"title": "Quarters Allowance - Quarters Allowance-Magna Carta Benefits for Science and Technology under R.A. 8439",
+"title": "Quarters Allowance-Magna Carta Benefits for Science and Technology under R.A. 8439",
 "category": "Personnel Services"
 },
 {
 "code": "5010207004",
-"title": "Quarters Allowance - Quarters Allowance-Magna Carta Benefits for Public Health Workers under R.A. 7305",
+"title": "Quarters Allowance-Magna Carta Benefits for Public Health Workers under R.A. 7305",
 "category": "Personnel Services"
 },
 {
 "code": "5010207005",
-"title": "Quarters Allowance - Quarters Allowance Magna Carta Benefits for Public Social Workers under R.A. 9432",
+"title": "Quarters Allowance Magna Carta Benefits for Public Social Workers under R.A. 9432",
 "category": "Personnel Services"
 },
 {
@@ -216,7 +4436,7 @@
 },
 {
 "code": "5010208002",
-"title": "Productivity Incentive Allowance - Productivity Incentive Allowance-Military/Uniformed Personnel",
+"title": "Productivity Incentive Allowance-Military/Uniformed Personnel",
 "category": "Personnel Services"
 },
 {
@@ -226,12 +4446,12 @@
 },
 {
 "code": "5010209001",
-"title": "Overseas Allowance - Overseas Allowance-Civilian",
+"title": "Overseas Allowance-Civilian",
 "category": "Personnel Services"
 },
 {
 "code": "5010209002",
-"title": "Overseas Allowance - Overseas Allowance-Military/Uniformed Personnel",
+"title": "Overseas Allowance-Military/Uniformed Personnel",
 "category": "Personnel Services"
 },
 {
@@ -241,27 +4461,27 @@
 },
 {
 "code": "5010210001",
-"title": "Honoraria - Honoraria-Civilian",
+"title": "Honoraria-Civilian",
 "category": "Personnel Services"
 },
 {
 "code": "5010210002",
-"title": "Honoraria - Honoraria-Military/Uniformed Personnel",
+"title": "Honoraria-Military/Uniformed Personnel",
 "category": "Personnel Services"
 },
 {
 "code": "5010210003",
-"title": "Honoraria - Honoraria-Magna Carta Benefits for Science and Technology under R.A. 8439",
+"title": "Honoraria-Magna Carta Benefits for Science and Technology under R.A. 8439",
 "category": "Personnel Services"
 },
 {
 "code": "5010210004",
-"title": "Honoraria - Honoraria-Magna Carta Benefits for Public Health Workers under R.A. 7305",
+"title": "Honoraria-Magna Carta Benefits for Public Health Workers under R.A. 7305",
 "category": "Personnel Services"
 },
 {
 "code": "5010210005",
-"title": "Honoraria - Honoraria-Magna Carta Benefits for Public Social Workers under R.A. 9432",
+"title": "Honoraria-Magna Carta Benefits for Public Social Workers under R.A. 9432",
 "category": "Personnel Services"
 },
 {
@@ -321,27 +4541,27 @@
 },
 {
 "code": "5010212001",
-"title": "Longevity Pay - Longevity Pay-Civilian",
+"title": "Longevity Pay-Civilian",
 "category": "Personnel Services"
 },
 {
 "code": "5010212002",
-"title": "Longevity Pay - Longevity Pay-Military/Uniformed Personnel",
+"title": "Longevity Pay-Military/Uniformed Personnel",
 "category": "Personnel Services"
 },
 {
 "code": "5010212003",
-"title": "Longevity Pay - Longevity Pay-Magna Carta Benefits for Science and Technology under R.A. 8439",
+"title": "Longevity Pay-Magna Carta Benefits for Science and Technology under R.A. 8439",
 "category": "Personnel Services"
 },
 {
 "code": "5010212004",
-"title": "Longevity Pay - Longevity Pay-Magna Carta Benefits for Public Health Workers under R.A. 7305",
+"title": "Longevity Pay-Magna Carta Benefits for Public Health Workers under R.A. 7305",
 "category": "Personnel Services"
 },
 {
 "code": "5010212005",
-"title": "Longevity Pay - Longevity Pay-Magna Carta Benefits for Public Social Workers under R.A. 9432",
+"title": "Longevity Pay-Magna Carta Benefits for Public Social Workers under R.A. 9432",
 "category": "Personnel Services"
 },
 {
@@ -366,12 +4586,12 @@
 },
 {
 "code": "5010214001",
-"title": "Year-End Bonus - Year-End Bonus-Civilian",
+"title": "Year-End Bonus-Civilian",
 "category": "Personnel Services"
 },
 {
 "code": "5010214002",
-"title": "Year-End Bonus - Year-End Bonus-Military/Uniformed Personnel",
+"title": "Year-End Bonus-Military/Uniformed Personnel",
 "category": "Personnel Services"
 },
 {
@@ -381,12 +4601,12 @@
 },
 {
 "code": "5010215001",
-"title": "Cash Gift - Cash Gift-Civilian",
+"title": "Cash Gift-Civilian",
 "category": "Personnel Services"
 },
 {
 "code": "5010215002",
-"title": "Cash Gift - Cash Gift-Military/Uniformed Personnel",
+"title": "Cash Gift-Military/Uniformed Personnel",
 "category": "Personnel Services"
 },
 {
@@ -396,12 +4616,12 @@
 },
 {
 "code": "5010216001",
-"title": "Mid-Year Bonus - Mid-Year Bonus-Civilian",
+"title": "Mid-Year Bonus-Civilian",
 "category": "Personnel Services"
 },
 {
 "code": "5010216002",
-"title": "Mid-Year Bonus - Mid-Year Bonus-Military/Uniformed Personnel",
+"title": "Mid-Year Bonus-Military/Uniformed Personnel",
 "category": "Personnel Services"
 },
 {
@@ -656,17 +4876,17 @@
 },
 {
 "code": "5010401001",
-"title": "Pension Benefits - Pension Benefits-Civilian",
+"title": "Pension Benefits-Civilian",
 "category": "Personnel Services"
 },
 {
 "code": "5010401002",
-"title": "Pension Benefits - Pension Benefits-Military/Uniformed Personnel",
+"title": "Pension Benefits-Military/Uniformed Personnel",
 "category": "Personnel Services"
 },
 {
 "code": "5010401003",
-"title": "Pension Benefits - Pension Benefits-Veterans",
+"title": "Pension Benefits-Veterans",
 "category": "Personnel Services"
 },
 {
@@ -676,12 +4896,12 @@
 },
 {
 "code": "5010402001",
-"title": "Retirement Gratuity - Retirement Gratuity-Civilian",
+"title": "Retirement Gratuity-Civilian",
 "category": "Personnel Services"
 },
 {
 "code": "5010402002",
-"title": "Retirement Gratuity - Retirement Gratuity-Military/Uniformed Personnel",
+"title": "Retirement Gratuity-Military/Uniformed Personnel",
 "category": "Personnel Services"
 },
 {
@@ -691,12 +4911,12 @@
 },
 {
 "code": "5010403001",
-"title": "Terminal Leave Benefits - Terminal Leave Benefits-Civilian",
+"title": "Terminal Leave Benefits-Civilian",
 "category": "Personnel Services"
 },
 {
 "code": "5010403002",
-"title": "Terminal Leave Benefits - Terminal Leave Benefits-Military/Uniformed Personnel",
+"title": "Terminal Leave Benefits-Military/Uniformed Personnel",
 "category": "Personnel Services"
 },
 {

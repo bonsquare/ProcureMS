@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AipController;
+use App\Http\Controllers\AllotmentRegistryController;
 use App\Http\Controllers\BudgetAllocationController;
 use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\ChartOfAccountController;
@@ -39,6 +41,18 @@ Route::middleware('auth')->group(function () {
     Route::patch('/liquidation/{liquidationReport}/status', [HomeController::class, 'updateLiquidationStatus'])->name('liquidation.status');
     Route::get('/budget', [BudgetController::class, 'index'])->name('budget');
     Route::get('/budget/balance', [BudgetController::class, 'balance'])->name('budget.balance');
+    Route::get('/aip', [AipController::class, 'index'])->name('aip');
+    Route::post('/aip', [AipController::class, 'store'])->name('aip.store');
+    Route::get('/aip/{aip}', [AipController::class, 'show'])->name('aip.show')->whereNumber('aip');
+    Route::get('/aip/{aip}/print', [AipController::class, 'print'])->name('aip.print')->whereNumber('aip');
+    Route::put('/aip/{aip}', [AipController::class, 'update'])->name('aip.update')->whereNumber('aip');
+    Route::post('/aip/{aip}/approve', [AipController::class, 'approve'])->name('aip.approve')->whereNumber('aip');
+    Route::get('/aip/{aip}/kras/create', [AipController::class, 'createKra'])->name('aip.kras.create')->whereNumber('aip');
+    Route::post('/aip/{aip}/kras', [AipController::class, 'storeKra'])->name('aip.kras.store')->whereNumber('aip');
+    Route::get('/aip/{aip}/kras/{kra}/edit', [AipController::class, 'editKra'])->name('aip.kras.edit')->whereNumber(['aip', 'kra']);
+    Route::put('/aip/{aip}/kras/{kra}', [AipController::class, 'updateKra'])->name('aip.kras.update')->whereNumber(['aip', 'kra']);
+    Route::delete('/aip/{aip}/kras/{kra}', [AipController::class, 'destroyKra'])->name('aip.kras.destroy')->whereNumber(['aip', 'kra']);
+    Route::get('/allotment-registry', [AllotmentRegistryController::class, 'index'])->name('allotment-registry');
     Route::prefix('budget/allocation')->name('budget.allocation')->group(function () {
         Route::get('/', [BudgetAllocationController::class, 'index']);
         Route::get('/create', [BudgetAllocationController::class, 'create'])->name('.create');

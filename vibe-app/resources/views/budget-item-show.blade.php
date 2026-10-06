@@ -1,15 +1,20 @@
 @extends('layouts.budget')
 @section('title', 'Budget Item')
 @section('content')
+@if(request('print'))
+<style>aside, header.fixed { display: none !important; } .md\:pl-72 { padding-left: 0 !important; } main { padding-top: 24px !important; background: #fff !important; } body { background: #fff !important; }</style>
+@endif
+<style>@media print { aside, header, .no-print { display: none !important; } .md\:pl-72 { padding-left: 0 !important; } main { padding: 0 !important; } }</style>
 @php $th = 'px-4 py-3 text-xs font-semibold uppercase tracking-wider text-on-surface-variant'; @endphp
 <div class="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
     <div>
         <h1 class="text-[28px] font-semibold leading-9 tracking-tight">{{ $item->particulars }}</h1>
-        <p class="mt-1 text-[15px] text-on-surface-variant">{{ $item->budget_ref_no }} · {{ $item->uacs_code }} · {{ $item->source_of_fund }} · FY {{ $item->fiscal_year }} · {{ $item->school?->name }}</p>
+        <p class="mt-1 text-[15px] text-on-surface-variant">{{ $item->budget_ref_no }} · {{ $item->uacs_code }} · {{ $item->source_of_fund }} · FY {{ $item->fiscal_year }} · {{ $item->office }}@if($item->responsibility_center) · RC {{ $item->responsibility_center }}@endif</p>
     </div>
-    <div class="flex gap-2">
-        @unless($item->closed_at)<a href="{{ route('budget.allocation.edit', $item) }}" class="rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Edit Budget Allocation</a>@endunless
-        <a href="{{ route('budget.allocation', ['year' => $item->fiscal_year, 'school_id' => $item->school_id]) }}" class="rounded border border-outline-variant/60 bg-white px-4 py-2.5 text-xs font-semibold hover:bg-surface-low">← Back</a>
+    <div class="no-print flex gap-2">
+        <button onclick="window.print()" class="rounded border border-outline-variant/60 bg-white px-4 py-2.5 text-xs font-semibold hover:bg-surface-low">Print</button>
+        @if(auth()->user()->canManageBudget() && !$item->closed_at)<a href="{{ route('budget.allocation.edit', $item) }}" class="rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Edit Budget Allocation</a>@endif
+        @if(request('print'))<button type="button" onclick="window.close(); setTimeout(function () { if (!window.closed) window.location.href = '{{ route('budget.allocation', ['year' => $item->fiscal_year, 'school_id' => $item->school_id]) }}'; }, 250)" class="rounded border border-primary bg-white px-4 py-2.5 text-xs font-semibold text-primary hover:bg-surface-low">Close</button>@else<a href="{{ route('budget.allocation', ['year' => $item->fiscal_year, 'school_id' => $item->school_id]) }}" class="rounded border border-outline-variant/60 bg-white px-4 py-2.5 text-xs font-semibold hover:bg-surface-low">← Back</a>@endif
     </div>
 </div>
 
@@ -38,4 +43,5 @@
 @if($item->description || $item->remarks || $item->program)
     <section class="mt-6 rounded border border-outline-variant/30 bg-white p-5 text-sm"><dl class="grid grid-cols-1 gap-3 md:grid-cols-3"><div><dt class="text-xs font-semibold uppercase text-on-surface-variant">Program</dt><dd>{{ $item->program ?: '—' }}</dd></div><div><dt class="text-xs font-semibold uppercase text-on-surface-variant">Description</dt><dd>{{ $item->description ?: '—' }}</dd></div><div><dt class="text-xs font-semibold uppercase text-on-surface-variant">Remarks</dt><dd>{{ $item->remarks ?: '—' }}</dd></div></dl></section>
 @endif
+@if(request('print'))@push('scripts')<script>window.addEventListener('load', () => window.print());</script>@endpush @endif
 @endsection

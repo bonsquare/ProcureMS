@@ -11,7 +11,7 @@ class BudgetAllocation extends Model
     use HasFactory, BelongsToOrganization;
 
     protected $fillable = [
-        'organization_id', 'school_id', 'created_by', 'budget_ref_no', 'fiscal_year', 'start_date', 'end_date',
+        'organization_id', 'school_id', 'aip_id', 'office', 'responsibility_center', 'created_by', 'budget_ref_no', 'fiscal_year', 'start_date', 'end_date',
         'source_of_fund', 'fund_name', 'program', 'chart_of_account_id', 'uacs_code', 'particulars', 'description',
         'amount', 'q1_amount', 'q2_amount', 'q3_amount', 'q4_amount', 'remarks', 'closed_at',
     ];

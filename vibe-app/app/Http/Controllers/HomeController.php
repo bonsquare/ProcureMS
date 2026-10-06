@@ -155,7 +155,7 @@ class HomeController extends Controller
             'status' => ['required', 'in:active,inactive'],
             'system_user_name' => ['required', 'string', 'max:255'],
             'system_user_email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'system_user_role' => ['required', 'in:school_admin,encoder,approver'],
+            'system_user_role' => ['required', 'in:' . implode(',', array_keys(User::ROLES))],
             'system_user_password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
@@ -308,8 +308,8 @@ class HomeController extends Controller
 
     private function openBudgetItems()
     {
-        return \App\Models\BudgetAllocation::whereIn('school_id', $this->scopedSchoolIds())->whereNull('closed_at')
-            ->where('fiscal_year', now()->year)->orderBy('particulars')->get();
+        return app(\App\Services\BudgetService::class)->withAvailability(\App\Models\BudgetAllocation::whereIn('school_id', $this->scopedSchoolIds())->whereNull('closed_at')
+            ->where('fiscal_year', now()->year)->orderBy('particulars')->get());
     }
 
     public function createProcurement()
@@ -340,6 +340,7 @@ class HomeController extends Controller
 
     public function storeProcurement(Request $request)
     {
+        abort_unless($request->user()->canCreateProcurement(), 403, 'Your role can only view procurement records.');
         $validated = $this->validateProcurement($request);
         $this->authorizeSchoolAccess((int) $validated['school_id']);
         $items = $validated['items'];
@@ -383,13 +384,14 @@ class HomeController extends Controller
 
     public function updateProcurement(Request $request, ProcurementRequest $procurementRequest)
     {
+        abort_unless($request->user()->canCreateProcurement(), 403, 'Your role can only view procurement records.');
         $this->authorizeProcurementAccess($procurementRequest);
         $validated = $this->validateProcurement($request);
         $this->authorizeSchoolAccess((int) $validated['school_id']);
         $items = $validated['items'];
         $amount = collect($items)->sum(fn (array $item) => (float) $item['quantity'] * (float) $item['unit_price']);
         app(\App\Services\BudgetService::class)->assertAvailable('source_of_fund', (int) $validated['school_id'], $validated['source_of_fund'], (float) $amount, $procurementRequest->created_at?->year, $procurementRequest->id);
-        $this->assertBudgetItem($validated, (float) $amount, $procurementRequest->id);
+        $this->assertBudgetItem($validated, (float) $amount, $procurementRequest->id, null, $procurementRequest->created_at);
         $requestNumber = !empty($validated['manually_encode_pr_number'])
             ? $validated['manual_pr_number']
             : (preg_match('/^PR-\d{4}-\d{3,}$/', $procurementRequest->request_number)
@@ -419,19 +421,33 @@ class HomeController extends Controller
             ->with('success', 'Procurement request updated successfully.');
     }
 
-    /** A chosen budget item must belong to the same school and fund, and must have room for the amount. */
-    private function assertBudgetItem(array $data, float $amount, ?int $ignorePrId = null, ?int $ignoreOrsId = null): void
+    /**
+     * Every charge must name a budget line once the school has budgeted for the year; the line must
+     * match the school and fund and have room for the amount (annual and quarterly).
+     */
+    private function assertBudgetItem(array $data, float $amount, ?int $ignorePrId = null, ?int $ignoreOrsId = null, ?\DateTimeInterface $date = null): void
     {
         if (empty($data['budget_allocation_id'])) {
+            $budgeted = \App\Models\BudgetAllocation::where('school_id', $data['school_id'])->where('fiscal_year', ($date ?? now())->format('Y'))->whereNull('closed_at');
+            if ($budgeted->exists()) {
+                $message = (clone $budgeted)->where('source_of_fund', $data['source_of_fund'])->exists()
+                    ? 'Select the budget line (account code) this expense is charged to.'
+                    : 'The selected account code has no budget allocation for this year.';
+                throw \Illuminate\Validation\ValidationException::withMessages(['budget_allocation_id' => $message]);
+            }
+
             return;
         }
 
         $item = \App\Models\BudgetAllocation::findOrFail($data['budget_allocation_id']);
-        if ($item->school_id !== (int) $data['school_id'] || strcasecmp($item->source_of_fund, (string) $data['source_of_fund']) !== 0) {
-            throw \Illuminate\Validation\ValidationException::withMessages(['budget_allocation_id' => 'The budget item must belong to the selected school and source of fund.']);
+        if ($item->school_id !== (int) $data['school_id']) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['budget_allocation_id' => 'The selected budget line belongs to a different school.']);
+        }
+        if (strcasecmp($item->source_of_fund, (string) $data['source_of_fund']) !== 0) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['budget_allocation_id' => 'The selected fund source does not match this budget line.']);
         }
 
-        app(\App\Services\BudgetService::class)->assertItemAvailable('budget_allocation_id', $item->id, $amount, $ignorePrId, $ignoreOrsId);
+        app(\App\Services\BudgetService::class)->assertItemAvailable('budget_allocation_id', $item->id, $amount, $ignorePrId, $ignoreOrsId, $date);
     }
 
     private function validateProcurement(Request $request): array
@@ -1124,11 +1140,13 @@ class HomeController extends Controller
 
     public function storeLiquidation(Request $request)
     {
+        abort_unless($request->user()->canCreateObligation(), 403, 'Your role cannot create obligation requests.');
         $schoolIds = $this->scopedSchoolIds();
         $data = $request->validate([
             'school_id' => ['required', 'exists:schools,id'],
             'procurement_request_id' => ['nullable', 'exists:procurement_requests,id'],
-            'ors_number' => ['nullable', 'string', 'max:100', Rule::unique('liquidation_reports', 'ors_number')],
+            'manually_encode_ors_number' => ['nullable', 'boolean'],
+            'ors_number' => ['nullable', 'required_if:manually_encode_ors_number,1', 'string', 'max:100', Rule::unique('liquidation_reports', 'ors_number')],
             'redirect_to' => ['nullable', 'in:budget'],
             'source_of_fund' => ['required', 'string', 'max:255'],
             'budget_allocation_id' => ['nullable', 'integer', 'exists:budget_allocations,id'],
@@ -1139,13 +1157,15 @@ class HomeController extends Controller
             'purpose' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string', 'max:1000'],
-        ]);
+        ], [], ['ors_number' => 'ORS serial number', 'manually_encode_ors_number' => 'manual ORS serial option']);
         abort_unless($schoolIds->contains((int) $data['school_id']), 403);
         if (!empty($data['procurement_request_id'])) {
             $procurementRequest = ProcurementRequest::findOrFail($data['procurement_request_id']);
             $this->authorizeProcurementAccess($procurementRequest);
             // The linked PR decides the school, so a mismatched dropdown can't block the entry.
             $data['school_id'] = $procurementRequest->school_id;
+            $data['budget_allocation_id'] = $procurementRequest->budget_allocation_id;
+            $data['responsibility_center_code'] ??= $procurementRequest->budgetAllocation?->responsibility_center;
             if (empty($data['payee']) && ($awarded = $procurementRequest->awardedPayee())) {
                 $data['payee'] = $awarded['name'];
                 $data['payee_address'] ??= $awarded['address'];
@@ -1156,8 +1176,9 @@ class HomeController extends Controller
         if (empty($data['procurement_request_id'])) {
             app(\App\Services\BudgetService::class)->assertAvailable('amount', (int) $data['school_id'], $data['source_of_fund'], (float) $data['amount']);
             $this->assertBudgetItem($data, (float) $data['amount']);
-        } else {
-            $data['budget_allocation_id'] = null;
+            if (!empty($data['budget_allocation_id'])) {
+                $data['responsibility_center_code'] ??= \App\Models\BudgetAllocation::whereKey($data['budget_allocation_id'])->value('responsibility_center');
+            }
         }
 
         $orsNumber = DB::transaction(function () use ($data) {
@@ -1166,13 +1187,7 @@ class HomeController extends Controller
                 $reportNumber = 'LR-' . now()->format('Y') . '-' . str_pad((string) $nextId++, 4, '0', STR_PAD_LEFT);
             } while (LiquidationReport::where('report_number', $reportNumber)->exists());
 
-            $orsNumber = $data['ors_number'] ?? null;
-            if (!$orsNumber) {
-                $orsPrefix = 'ORS-' . now()->format('Y') . '-';
-                $lastOrs = LiquidationReport::withoutGlobalScopes()->where('ors_number', 'like', $orsPrefix . '%')->pluck('ors_number')
-                    ->map(fn ($n) => (int) substr($n, strlen($orsPrefix)))->max() ?? 0;
-                $orsNumber = $orsPrefix . str_pad((string) ($lastOrs + 1), 4, '0', STR_PAD_LEFT);
-            }
+            $orsNumber = !empty($data['manually_encode_ors_number']) ? $data['ors_number'] : LiquidationReport::nextOrsNumber();
 
             LiquidationReport::create([
                 'school_id' => $data['school_id'],

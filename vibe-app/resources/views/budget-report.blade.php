@@ -1,10 +1,13 @@
 @extends('layouts.budget')
 @section('title', $title)
 @section('content')
+@if(request('print'))
+<style>aside, header.fixed { display: none !important; } .md\:pl-72 { padding-left: 0 !important; } main { padding-top: 24px !important; background: #fff !important; } body { background: #fff !important; }</style>
+@endif
 @php $query = ['year' => $year, 'school_id' => $selectedSchoolId]; @endphp
 <style>@media print { aside, header, .no-print { display: none !important; } .md\:pl-72 { padding-left: 0 !important; } main { padding: 0 !important; } }</style>
 <div class="no-print mb-4 flex flex-wrap items-center justify-between gap-3">
-    <a href="{{ route('budget.allocation', $query) }}" class="rounded border border-outline-variant/60 bg-white px-4 py-2.5 text-xs font-semibold hover:bg-surface-low">← Budget Allocation</a>
+    @if(request('print'))<button type="button" onclick="window.close(); setTimeout(function () { if (!window.closed) window.location.href = '{{ route('budget.allocation', $query) }}'; }, 250)" class="rounded border border-primary bg-white px-4 py-2.5 text-xs font-semibold text-primary hover:bg-surface-low">Close</button>@else<a href="{{ route('budget.allocation', $query) }}" class="rounded border border-outline-variant/60 bg-white px-4 py-2.5 text-xs font-semibold hover:bg-surface-low">← Budget Allocation</a>@endif
     <div class="flex gap-2">
         <button onclick="window.print()" class="rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Print / Save as PDF</button>
         <a href="{{ route('budget.allocation.report', ['type' => $type] + $query + ['format' => 'csv']) }}" class="rounded border border-outline-variant/60 bg-white px-4 py-2.5 text-xs font-semibold hover:bg-surface-low">Export to Excel</a>

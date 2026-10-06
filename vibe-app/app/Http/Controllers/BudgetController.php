@@ -61,11 +61,12 @@ class BudgetController extends Controller
             ->concat($directOrs->map(fn ($o) => ['date' => $o->created_at, 'type' => 'ORS (no PR)', 'ref' => $o->ors_number, 'description' => $o->purpose, 'school_id' => $o->school_id, 'fund' => $o->source_of_fund, 'amount' => $o->amount, 'status' => $o->status, 'url' => route('liquidation', ['search' => $o->ors_number])]))
             ->sortByDesc('date')->values();
 
-        $orsList = LiquidationReport::with(['school', 'procurementRequest'])->whereYear('created_at', $year)->tap($schoolFilter)->latest()->get();
-        $availableProcurements = ProcurementRequest::with('school', 'documents')->whereIn('school_id', $schoolIds)->whereDoesntHave('liquidationReports')->latest()->get();
+        $orsList = LiquidationReport::with(['school', 'procurementRequest.budgetAllocation', 'budgetAllocation'])->whereYear('created_at', $year)->tap($schoolFilter)->latest()->get();
+        $availableProcurements = ProcurementRequest::with('school', 'documents', 'budgetAllocation')->whereIn('school_id', $schoolIds)->whereDoesntHave('liquidationReports')->latest()->get();
 
         return view('budget', [
-            'budgetItems' => BudgetAllocation::whereIn('school_id', $schoolIds)->whereNull('closed_at')->where('fiscal_year', $year)->orderBy('particulars')->get(),
+            'nextOrsNumber' => LiquidationReport::nextOrsNumber(),
+            'budgetItems' => app(\App\Services\BudgetService::class)->withAvailability(BudgetAllocation::whereIn('school_id', $schoolIds)->whereNull('closed_at')->where('fiscal_year', $year)->orderBy('particulars')->get()),
             'orsList' => $orsList,
             'availableProcurements' => $availableProcurements,
             'isMasterUser' => request()->user()->role === 'master_user',

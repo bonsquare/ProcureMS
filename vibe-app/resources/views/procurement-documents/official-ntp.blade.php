@@ -34,7 +34,7 @@
     .ntp-sign-line{width:58mm;margin-top:28mm;border-top:1px solid #111}
     .ntp-conforme-date{margin-top:4mm}
     .ntp-date-line{display:inline-block;width:48mm;border-bottom:1px solid #111}
-    @media print{@page{size:A4;margin:0}.ntp-page{margin:0;width:210mm;min-height:297mm;box-shadow:none}.ntp-title{margin-top:25px}}
+    @media print{@page{size:A4;margin:0}.ntp-page{margin:0;width:210mm;min-height:295.5mm;box-shadow:none}.ntp-title{margin-top:25px}}
 </style>
 
 <main class="page ntp-page">

@@ -5,28 +5,19 @@
 @php $th = 'px-4 py-3 text-xs font-semibold uppercase tracking-wider text-on-surface-variant'; @endphp
 <div class="mb-6">
     <h1 class="text-[28px] font-semibold leading-9 tracking-tight">Chart of Accounts</h1>
-    <p class="mt-1 text-[15px] leading-6 text-on-surface-variant">Expense accounts that budget items are linked to. <a href="{{ route('budget.allocation') }}" class="font-semibold text-primary hover:underline">Budget Allocation →</a></p>
+    <p class="mt-1 text-[15px] leading-6 text-on-surface-variant">Accounts that budget items are linked to. <a href="{{ route('budget.allocation') }}" class="font-semibold text-primary hover:underline">Budget Allocation →</a></p>
 </div>
 
 @if(session('success'))<div class="mb-5 rounded border border-secondary/30 bg-secondary/5 px-4 py-3 text-sm text-secondary">{{ session('success') }}</div>@endif
 @if($errors->any())<div class="mb-5 rounded border border-error/30 bg-error/5 px-4 py-3 text-sm text-error">{{ $errors->first() }}</div>@endif
 
-<section class="mb-6 rounded border border-outline-variant/30 bg-white p-5">
-    <h2 class="text-base font-semibold">Add Account</h2>
-    <form method="POST" action="{{ route('chart-of-accounts.store') }}" class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-4">
-        @csrf
-        <input name="title" required placeholder="Account title" value="{{ old('title') }}" class="{{ $inputClass }}">
-        <input name="code" required placeholder="Account code / UACS (e.g. 5020301000)" value="{{ old('code') }}" class="{{ $inputClass }}">
-        <input name="category" required list="coa-categories" placeholder="Category" value="{{ old('category', 'MOOE') }}" class="{{ $inputClass }}">
-        <datalist id="coa-categories">@foreach($categories as $category)<option value="{{ $category }}">@endforeach</datalist>
-        <button class="rounded bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-container">Add Account</button>
-    </form>
-</section>
+
 
 <div class="mb-3 flex flex-wrap items-center gap-3">
     <input id="coa-search" type="search" placeholder="Search account title or code" class="w-full max-w-sm rounded border border-outline-variant/50 bg-white px-3 py-2.5 text-sm outline-none focus:border-primary">
     <select id="coa-category" class="rounded border border-outline-variant/50 bg-white px-3 py-2.5 text-sm outline-none"><option value="">All categories</option>@foreach($categories as $category)<option>{{ $category }}</option>@endforeach</select>
     <span id="coa-count" class="text-xs text-on-surface-variant">{{ $accounts->count() }} accounts</span>
+    <button type="button" data-open-account class="ml-auto flex items-center gap-2 rounded bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]">add</span>Add Account</button>
 </div>
 <section class="overflow-hidden rounded border border-outline-variant/30 bg-white">
     <div class="overflow-x-auto">
@@ -62,6 +53,25 @@
         </table>
     </div>
 </section>
+<div id="account-modal" class="fixed inset-0 z-[100] hidden items-center justify-center overflow-y-auto bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="account-modal-title">
+    <div class="w-full max-w-lg rounded bg-white shadow-2xl">
+        <div class="flex items-center justify-between border-b border-outline-variant/30 px-6 py-4">
+            <h2 id="account-modal-title" class="text-lg font-semibold">Add Account</h2>
+            <button type="button" data-close-account aria-label="Close" class="flex h-8 w-8 items-center justify-center rounded hover:bg-surface-container"><span class="material-symbols-outlined text-[20px]">close</span></button>
+        </div>
+        <form method="POST" action="{{ route('chart-of-accounts.store') }}" class="space-y-4 p-6">
+            @csrf
+            <label class="block text-xs font-semibold text-on-surface-variant">Account Title<input name="title" required value="{{ old('title') }}" class="{{ $inputClass }}"></label>
+            <label class="block text-xs font-semibold text-on-surface-variant">Account Code / UACS<input name="code" required value="{{ old('code') }}" placeholder="e.g. 5020301000" class="{{ $inputClass }}"></label>
+            <label class="block text-xs font-semibold text-on-surface-variant">Category<input name="category" required list="coa-categories" value="{{ old('category', 'MOOE') }}" class="{{ $inputClass }}"></label>
+            <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-4">
+                <button type="button" data-close-account class="rounded border border-outline-variant/60 px-4 py-2.5 text-sm font-semibold hover:bg-surface-low">Cancel</button>
+                <button class="rounded bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-container">Save Account</button>
+            </div>
+        </form>
+    </div>
+</div>
+<datalist id="coa-categories">@foreach($categories as $category)<option value="{{ $category }}">@endforeach</datalist>
 @endsection
 @push('scripts')
 <script>
@@ -99,6 +109,13 @@
         if (event.target.closest('[data-edit]')) setEditing(true);
         if (event.target.closest('[data-cancel]')) { row.querySelectorAll('input').forEach((input) => { input.value = input.defaultValue; }); setEditing(false); }
     });
+    const accountModal = document.getElementById('account-modal');
+    const toggleAccountModal = (open) => { accountModal.classList.toggle('hidden', !open); accountModal.classList.toggle('flex', open); if (open) accountModal.querySelector('[name=title]').focus(); };
+    document.querySelectorAll('[data-open-account]').forEach((button) => button.addEventListener('click', () => toggleAccountModal(true)));
+    document.querySelectorAll('[data-close-account]').forEach((button) => button.addEventListener('click', () => toggleAccountModal(false)));
+    accountModal.addEventListener('click', (event) => { if (event.target === accountModal) toggleAccountModal(false); });
+    document.addEventListener('keydown', (event) => { if (event.key === 'Escape') toggleAccountModal(false); });
+    @if($errors->any() && old('code') !== null) toggleAccountModal(true); @endif
     search.addEventListener('input', filter);
     category.addEventListener('change', filter);
 </script>

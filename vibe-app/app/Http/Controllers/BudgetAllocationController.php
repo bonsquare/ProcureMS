@@ -18,13 +18,18 @@ class BudgetAllocationController extends Controller
     public const REPORTS = [
         'annual' => 'Annual Budget Allocation Report',
         'quarterly' => 'Quarterly Budget Utilization Report',
-        'budget-vs-actual' => 'Budget vs Actual Expense Report',
-        'unliquidated' => 'Obligated but Not Yet Liquidated Report',
-        'liquidated' => 'Liquidated Expenses Report',
+        'budget-vs-obligation' => 'Budget vs Obligation Report',
+        'budget-vs-liquidation' => 'Budget vs Liquidation Report',
         'balance' => 'Remaining Budget Balance Report',
         'fund-source' => 'Fund Source Summary Report',
+        'expense-item' => 'Expense Item Summary Report',
+        'office' => 'Office/Department Budget Report',
+        'alerts' => 'Over Budget / Near Limit Alert Report',
+        'unliquidated' => 'Obligated but Not Yet Liquidated Report',
+        'liquidated' => 'Liquidated Expenses Report',
         'chart-of-accounts' => 'Chart of Accounts Budget Report',
     ];
+
 
     public function __construct(private BudgetService $budget)
     {
@@ -42,6 +47,13 @@ class BudgetAllocationController extends Controller
     private function authorizeItem(BudgetAllocation $item): void
     {
         abort_unless($this->schoolIds()->contains($item->school_id), 403);
+        $user = request()->user();
+        abort_if($user->role === 'office_user' && $user->office && $item->office !== $user->office, 403);
+    }
+
+    private function authorizeManage(): void
+    {
+        abort_unless(request()->user()->canManageBudget(), 403, 'Only the Budget Officer or an administrator can change budget allocations.');
     }
 
     private function accounts()
@@ -54,15 +66,23 @@ class BudgetAllocationController extends Controller
             ->orderBy('code')->get();
     }
 
-    /** Items for the selected year and school, with their quarterly matrix. */
+    /** Items for the selected filters, with their quarterly matrix. */
     private function rows(Request $request): array
     {
         $year = (int) $request->query('year', now()->year);
         $schoolId = $request->query('school_id');
         $schoolIds = $this->schoolIds();
+        $user = $request->user();
+        $search = trim((string) $request->query('q', ''));
+
         $items = BudgetAllocation::with(['school', 'account'])->where('fiscal_year', $year)->whereIn('school_id', $schoolIds)
             ->when($schoolId && $schoolIds->contains((int) $schoolId), fn ($q) => $q->where('school_id', $schoolId))
-            ->orderBy('source_of_fund')->orderBy('uacs_code')->get();
+            ->when($request->query('fund'), fn ($q, $fund) => $q->where('source_of_fund', $fund))
+            ->when($request->query('office'), fn ($q, $office) => $q->where('office', $office))
+            ->when($user->role === 'office_user' && $user->office, fn ($q) => $q->where('office', $user->office))
+            ->when($search !== '', fn ($q) => $q->where(fn ($w) => $w->where('particulars', 'like', "%{$search}%")->orWhere('uacs_code', 'like', "%{$search}%")
+                ->orWhere('office', 'like', "%{$search}%")->orWhere('program', 'like', "%{$search}%")->orWhere('source_of_fund', 'like', "%{$search}%")))
+            ->orderBy('office')->orderBy('source_of_fund')->orderBy('uacs_code')->get();
 
         return [$year, $schoolId, $this->budget->matrix($items)];
     }
@@ -82,6 +102,11 @@ class BudgetAllocationController extends Controller
         ]]);
 
         return [
+            'counts' => [
+                'fully' => $rows->where('status', 'Fully Obligated')->count(),
+                'near' => $rows->where('status', 'Near Limit')->count(),
+                'available' => $rows->where('status', 'Available')->count(),
+            ],
             'totals' => $sum($rows) + ['usage' => $rows->sum('allocated') > 0 ? round($rows->sum('obligated') / $rows->sum('allocated') * 100, 1) : 0],
             'quarters' => $quarters,
             'funds' => $rows->groupBy(fn ($r) => $r['item']->source_of_fund)->map($sum),
@@ -100,11 +125,16 @@ class BudgetAllocationController extends Controller
             'rows' => $rows,
             'summary' => $this->summaries($rows),
             'reports' => self::REPORTS,
+            'filters' => $request->only(['q', 'fund', 'office', 'quarter']),
+            'funds' => BudgetAllocation::whereIn('school_id', $this->schoolIds())->distinct()->pluck('source_of_fund')->merge(collect(\App\Models\Aip::FUNDS)->flatten()->reject(fn ($fund) => $fund === 'Others'))->unique()->sort()->values(),
+            'offices' => BudgetAllocation::whereIn('school_id', $this->schoolIds())->whereNotNull('office')->distinct()->orderBy('office')->pluck('office'),
+            'canManage' => $request->user()->canManageBudget(),
         ]);
     }
 
     public function create(Request $request)
     {
+        $this->authorizeManage();
         return view('budget-item-form', $this->formData(new BudgetAllocation([
             'fiscal_year' => (int) $request->query('year', now()->year),
             'school_id' => $request->query('school_id'),
@@ -114,6 +144,7 @@ class BudgetAllocationController extends Controller
 
     public function edit(BudgetAllocation $budgetAllocation)
     {
+        $this->authorizeManage();
         $this->authorizeItem($budgetAllocation);
         abort_if($budgetAllocation->closed_at, 403, 'This budget item is closed.');
 
@@ -126,12 +157,14 @@ class BudgetAllocationController extends Controller
             'item' => $item,
             'schools' => School::whereIn('id', $this->schoolIds())->orderBy('name')->get(),
             'accounts' => $this->accounts(),
-            'funds' => BudgetAllocation::query()->distinct()->pluck('source_of_fund')->merge(['MOOE', 'Special Education Fund', 'General Fund', 'Canteen Fund'])->unique()->values(),
+            'offices' => BudgetAllocation::whereIn('school_id', $this->schoolIds())->whereNotNull('office')->distinct()->orderBy('office')->pluck('office'),
+            'funds' => BudgetAllocation::query()->distinct()->pluck('source_of_fund')->merge(['MOOE', 'Special Education Fund', 'General Fund', 'Canteen Fund'])->merge(collect(\App\Models\Aip::FUNDS)->flatten()->reject(fn ($fund) => $fund === 'Others'))->unique()->values(),
         ];
     }
 
     public function store(Request $request)
     {
+        $this->authorizeManage();
         $data = $this->validated($request);
         $item = BudgetAllocation::create(array_merge($data, ['created_by' => $request->user()->id, 'budget_ref_no' => ($data['budget_ref_no'] ?? null) ?: $this->nextReference((int) $data['fiscal_year'])]));
         $this->audit($request, $item, 'budget_item_created');
@@ -141,6 +174,7 @@ class BudgetAllocationController extends Controller
 
     public function update(Request $request, BudgetAllocation $budgetAllocation)
     {
+        $this->authorizeManage();
         $this->authorizeItem($budgetAllocation);
         abort_if($budgetAllocation->closed_at, 403, 'This budget item is closed.');
         $data = $this->validated($request, $budgetAllocation);
@@ -173,6 +207,7 @@ class BudgetAllocationController extends Controller
 
     public function destroy(Request $request, BudgetAllocation $budgetAllocation)
     {
+        $this->authorizeManage();
         $this->authorizeItem($budgetAllocation);
         if (ProcurementRequest::where('budget_allocation_id', $budgetAllocation->id)->exists() || LiquidationReport::where('budget_allocation_id', $budgetAllocation->id)->exists()) {
             return back()->withErrors(['budget' => 'This budget item has obligations or liquidations linked to it and cannot be deleted.']);
@@ -186,6 +221,7 @@ class BudgetAllocationController extends Controller
 
     public function close(Request $request)
     {
+        $this->authorizeManage();
         $data = $request->validate(['year' => ['required', 'integer'], 'school_id' => ['nullable', 'integer']]);
         $count = BudgetAllocation::where('fiscal_year', $data['year'])->whereNull('closed_at')->whereIn('school_id', $this->schoolIds())
             ->when($data['school_id'] ?? null, fn ($q, $id) => $q->where('school_id', $id))->update(['closed_at' => now()]);
@@ -203,7 +239,9 @@ class BudgetAllocationController extends Controller
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'source_of_fund' => ['required', 'string', 'max:255'],
+            'office' => ['required', 'string', 'max:255'],
             'fund_name' => ['nullable', 'string', 'max:255'],
+            'responsibility_center' => ['nullable', 'string', 'max:255'],
             'program' => ['nullable', 'string', 'max:255'],
             'chart_of_account_id' => ['required', 'integer', 'exists:chart_of_accounts,id'],
             'description' => ['nullable', 'string', 'max:1000'],
@@ -295,9 +333,9 @@ class BudgetAllocationController extends Controller
 
         switch ($type) {
             case 'annual':
-                $lines = $rows->map(fn ($r) => [$fund($r), $code($r), $name($r), $r['allocated'], $r['quarters'][1]['allocated'], $r['quarters'][2]['allocated'], $r['quarters'][3]['allocated'], $r['quarters'][4]['allocated']])->all();
+                $lines = $rows->map(fn ($r) => [$r['item']->office, $fund($r), $code($r), $name($r), $r['allocated'], $r['quarters'][1]['allocated'], $r['quarters'][2]['allocated'], $r['quarters'][3]['allocated'], $r['quarters'][4]['allocated']])->all();
 
-                return [['Fund Source', 'Chart of Account', 'Expense Item', 'Annual Allocation', 'Q1', 'Q2', 'Q3', 'Q4'], $this->withTotal($lines, 3, 7), [3, 4, 5, 6, 7]];
+                return [['Office/Department', 'Fund Source', 'Account Code', 'Expense Item', 'Annual Allocation', 'Q1', 'Q2', 'Q3', 'Q4'], $this->withTotal($lines, 4, 8), [4, 5, 6, 7, 8]];
             case 'quarterly':
                 $lines = [];
                 foreach ($rows as $r) {
@@ -307,10 +345,27 @@ class BudgetAllocationController extends Controller
                 }
 
                 return [['Expense Item', 'Quarter', 'Allocated', 'Obligated', 'Liquidated', 'Balance', 'Utilization'], $lines, [2, 3, 4, 5]];
-            case 'budget-vs-actual':
-                $lines = $rows->map(fn ($r) => [$fund($r), $name($r), $r['allocated'], $r['liquidated'], $r['allocated'] - $r['liquidated'], $pct($r['liquidated'], $r['allocated'])])->all();
+            case 'budget-vs-obligation':
+                $lines = $rows->map(fn ($r) => [$r['item']->office, $fund($r), $code($r), $name($r), $r['allocated'], $r['obligated'], $r['balance'], $pct($r['obligated'], $r['allocated'])])->all();
 
-                return [['Fund Source', 'Expense Item', 'Budget', 'Actual (Liquidated)', 'Variance', 'Actual % of Budget'], $this->withTotal($lines, 2, 4), [2, 3, 4]];
+                return [['Office/Department', 'Fund Source', 'Account Code', 'Expense Item', 'Allocation', 'Obligated', 'Remaining', 'Obligated %'], $this->withTotal($lines, 4, 6), [4, 5, 6]];
+            case 'budget-vs-liquidation':
+                $lines = $rows->map(fn ($r) => [$r['item']->office, $fund($r), $code($r), $name($r), $r['allocated'], $r['liquidated'], $r['allocated'] - $r['liquidated'], $pct($r['liquidated'], $r['allocated'])])->all();
+
+                return [['Office/Department', 'Fund Source', 'Account Code', 'Expense Item', 'Allocation', 'Liquidated', 'Unused', 'Liquidated %'], $this->withTotal($lines, 4, 6), [4, 5, 6]];
+            case 'expense-item':
+                $lines = $rows->groupBy($code)->map(fn ($g, $c) => [$c, $g->first()['item']->particulars, $g->count(), $g->sum('allocated'), $g->sum('obligated'), $g->sum('liquidated'), $g->sum('balance'), $pct($g->sum('obligated'), $g->sum('allocated'))])->values()->all();
+
+                return [['Account Code', 'Expense Item', 'Budget Lines', 'Allocated', 'Obligated', 'Liquidated', 'Balance', 'Used'], $this->withTotal($lines, 2, 6), [3, 4, 5, 6]];
+            case 'office':
+                $lines = $rows->groupBy(fn ($r) => $r['item']->office)->map(fn ($g, $o) => [$o, $g->count(), $g->sum('allocated'), $g->sum('obligated'), $g->sum('liquidated'), $g->sum('balance'), $pct($g->sum('obligated'), $g->sum('allocated'))])->values()->all();
+
+                return [['Office/Department', 'Budget Lines', 'Allocated', 'Obligated', 'Liquidated', 'Balance', 'Used'], $this->withTotal($lines, 1, 5), [2, 3, 4, 5]];
+            case 'alerts':
+                $lines = $rows->filter(fn ($r) => in_array($r['status'], ['Near Limit', 'Fully Obligated'], true) || $r['warnings'])
+                    ->map(fn ($r) => [$r['item']->office, $fund($r), $code($r), $name($r), $r['allocated'], $r['obligated'], $r['balance'], $pct($r['obligated'], $r['allocated']), $r['warnings'] ? implode('; ', $r['warnings']) : $r['status']])->values()->all();
+
+                return [['Office/Department', 'Fund Source', 'Account Code', 'Expense Item', 'Allocation', 'Obligated', 'Remaining', 'Used', 'Alert'], $lines, [4, 5, 6]];
             case 'unliquidated':
                 $lines = [];
                 foreach ($rows as $r) {

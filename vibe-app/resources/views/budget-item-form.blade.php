@@ -26,6 +26,10 @@
             <label class="text-xs font-semibold text-on-surface-variant">School / Organization
                 <select name="school_id" required class="{{ $inputClass }}">@foreach($schools as $school)<option value="{{ $school->id }}" @selected((int) $v('school_id') === $school->id)>{{ $school->name }}</option>@endforeach</select>
             </label>
+            <label class="text-xs font-semibold text-on-surface-variant">Office / Department
+                <input name="office" required list="office-list" value="{{ $v('office') }}" placeholder="e.g. Accounting Section" class="{{ $inputClass }}">
+                <datalist id="office-list">@foreach($offices as $office)<option value="{{ $office }}">@endforeach</datalist>
+            </label>
             <label class="text-xs font-semibold text-on-surface-variant">Budget Reference No.<input name="budget_ref_no" value="{{ $v('budget_ref_no') }}" placeholder="Auto-generated" class="{{ $inputClass }}"></label>
             <label class="text-xs font-semibold text-on-surface-variant">Fiscal Year<input type="number" name="fiscal_year" required value="{{ $v('fiscal_year', now()->year) }}" class="{{ $inputClass }}"></label>
             <div class="grid grid-cols-2 gap-2">
@@ -43,15 +47,17 @@
                 <datalist id="fund-list">@foreach($funds as $fund)<option value="{{ $fund }}">@endforeach</datalist>
             </label>
             <label class="text-xs font-semibold text-on-surface-variant">Fund Name<input name="fund_name" value="{{ $v('fund_name') }}" placeholder="e.g. School MOOE Fund" class="{{ $inputClass }}"></label>
+            <label class="text-xs font-semibold text-on-surface-variant">Responsibility Center<input name="responsibility_center" value="{{ $v('responsibility_center') }}" class="{{ $inputClass }}"></label>
             <label class="text-xs font-semibold text-on-surface-variant">Program / Project / Activity<input name="program" value="{{ $v('program') }}" class="{{ $inputClass }}"></label>
-            <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Chart of Accounts · Expense Item / Account Title
-                <select name="chart_of_account_id" required class="{{ $inputClass }}">
-                    <option value="">Select account</option>
+            <label class="text-xs font-semibold text-on-surface-variant">Account Code (Chart of Accounts)
+                <select name="chart_of_account_id" id="account-code" required class="{{ $inputClass }}">
+                    <option value="">Select account code</option>
                     @foreach($accounts->groupBy('category') as $category => $group)
-                        <optgroup label="{{ $category }}">@foreach($group as $account)<option value="{{ $account->id }}" @selected((int) $v('chart_of_account_id') === $account->id)>{{ $account->code }} · {{ $account->title }}</option>@endforeach</optgroup>
+                        <optgroup label="{{ $category }}">@foreach($group as $account)<option value="{{ $account->id }}" data-title="{{ $account->title }}" @selected((int) $v('chart_of_account_id') === $account->id)>{{ $account->code }} · {{ $account->title }}</option>@endforeach</optgroup>
                     @endforeach
                 </select>
             </label>
+            <label class="text-xs font-semibold text-on-surface-variant">Account Title / Expense Item<input id="account-title" readonly tabindex="-1" placeholder="Filled in from the account code" class="{{ $inputClass }} bg-surface-low"></label>
             <label class="text-xs font-semibold text-on-surface-variant">Description / Purpose<input name="description" value="{{ $v('description') }}" class="{{ $inputClass }}"></label>
         </div>
     </section>
@@ -59,7 +65,7 @@
     <section class="rounded border border-outline-variant/30 bg-white p-5">
         <h2 class="mb-4 text-base font-semibold">Allocation</h2>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
-            <label class="text-xs font-semibold text-on-surface-variant">Annual Allocated Amount (₱)<input id="annual" type="number" step="0.01" min="0.01" name="amount" required value="{{ $v('amount') }}" class="{{ $inputClass }}"></label>
+            <label class="text-xs font-semibold text-on-surface-variant">Annual Approved Allocation (₱)<input id="annual" type="number" step="0.01" min="0.01" name="amount" required value="{{ $v('amount') }}" class="{{ $inputClass }}"></label>
             <div class="md:col-span-3">
                 <p class="text-xs font-semibold text-on-surface-variant">Quarterly Distribution</p>
                 <div class="mt-2 flex gap-6 text-sm">
@@ -88,6 +94,11 @@
 @endsection
 @push('scripts')
 <script>
+    const accountCode = document.getElementById('account-code');
+    const accountTitle = document.getElementById('account-title');
+    const showTitle = () => { accountTitle.value = accountCode.selectedOptions[0]?.dataset.title || ''; };
+    accountCode.addEventListener('change', showTitle);
+    showTitle();
     const annual = document.getElementById('annual');
     const quarters = Array.from(document.querySelectorAll('[data-quarter]'));
     const check = document.getElementById('quarter-check');
@@ -97,13 +108,14 @@
         if (mode() === 'equal') {
             const each = Math.round(total / 4 * 100) / 100;
             quarters.forEach((field, index) => { field.value = total ? (index === 3 ? (total - each * 3).toFixed(2) : each.toFixed(2)) : ''; field.readOnly = true; });
-            check.textContent = '';
+            check.textContent = total ? 'Total Quarterly Allocation ₱' + total.toLocaleString(undefined, { minimumFractionDigits: 2 }) + ' equals the annual allocation.' : '';
+            check.className = 'mt-3 text-xs font-semibold text-secondary';
             return;
         }
         quarters.forEach((field) => { field.readOnly = false; });
         const sum = quarters.reduce((acc, field) => acc + Number(field.value || 0), 0);
         const diff = Math.round((total - sum) * 100) / 100;
-        check.textContent = diff === 0 ? 'Quarters add up to the annual allocation.' : 'Quarters total ₱' + sum.toLocaleString(undefined, { minimumFractionDigits: 2 }) + ' — ' + (diff > 0 ? '₱' + diff.toLocaleString() + ' still to allocate.' : '₱' + Math.abs(diff).toLocaleString() + ' over the annual allocation.');
+        check.textContent = diff === 0 ? 'Total Quarterly Allocation ₱' + sum.toLocaleString(undefined, { minimumFractionDigits: 2 }) + ' equals the annual allocation.' : 'Quarters total ₱' + sum.toLocaleString(undefined, { minimumFractionDigits: 2 }) + ' — ' + (diff > 0 ? '₱' + diff.toLocaleString() + ' still to allocate.' : '₱' + Math.abs(diff).toLocaleString() + ' over the annual allocation.');
         check.className = 'mt-3 text-xs font-semibold ' + (diff === 0 ? 'text-secondary' : 'text-error');
     };
     annual.addEventListener('input', refresh);

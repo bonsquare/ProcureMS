@@ -11,14 +11,49 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Models\Concerns\BelongsToOrganization;
 
-#[Fillable(['name', 'email', 'password', 'role', 'organization_id', 'school_id', 'position', 'procurement_role', 'bac_role'])]
+#[Fillable(['name', 'email', 'password', 'role', 'organization_id', 'school_id', 'position', 'office', 'procurement_role', 'bac_role'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, BelongsToOrganization;
 
-    protected $fillable = ['name', 'email', 'password', 'role', 'organization_id', 'school_id', 'position', 'procurement_role', 'bac_role'];
+    protected $fillable = ['name', 'email', 'password', 'role', 'organization_id', 'school_id', 'position', 'office', 'procurement_role', 'bac_role'];
+
+    /** Budget roles: Super Admin = master_user; school_admin keeps full access to its school. */
+    public const ROLES = [
+        'school_admin' => 'School Administrator',
+        'budget_officer' => 'Budget Officer',
+        'accounting_officer' => 'Accounting Officer',
+        'procurement_officer' => 'Procurement Officer',
+        'liquidation_officer' => 'Liquidation Officer',
+        'auditor' => 'Auditor',
+        'office_user' => 'Office User / End User',
+        'encoder' => 'Encoder',
+        'approver' => 'Approver',
+    ];
+
+    public function canManageBudget(): bool
+    {
+        return in_array($this->role, ['master_user', 'school_admin', 'budget_officer'], true);
+    }
+
+    /** Auditors only view and print. */
+    public function isReadOnly(): bool
+    {
+        return $this->role === 'auditor';
+    }
+
+    public function canCreateProcurement(): bool
+    {
+        return !$this->isReadOnly();
+    }
+
+    /** ORS entries are an accounting/liquidation task; end users only submit requests. */
+    public function canCreateObligation(): bool
+    {
+        return !in_array($this->role, ['auditor', 'office_user'], true);
+    }
 
     public function organization()
     {

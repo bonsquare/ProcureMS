@@ -102,21 +102,30 @@ class BudgetService
         });
     }
 
+    /** Sets ->available_balance (annual allocation minus obligations) on each budget line. */
+    public function withAvailability($items)
+    {
+        $this->matrix($items)->each(fn (array $row) => $row['item']->setAttribute('available_balance', $row['balance']));
+
+        return $items;
+    }
+
+    /** Available → Near Limit (over 80% obligated) → Fully Obligated (no balance left). Closed periods stay Closed. */
     public function status(BudgetAllocation $a, float $allocated, float $obligated, float $liquidated): string
     {
         return match (true) {
             $a->closed_at !== null => 'Closed',
-            $obligated > $allocated + 0.001 => 'Over Budget',
-            $obligated <= 0 => 'Not Yet Used',
-            $allocated > 0 && $liquidated >= $allocated - 0.001 => 'Fully Liquidated',
-            $liquidated > 0 => 'Partially Liquidated',
-            $obligated >= $allocated - 0.001 => 'Fully Obligated',
-            default => 'Partially Obligated',
+            $allocated - $obligated <= 0.001 => 'Fully Obligated',
+            $allocated > 0 && $obligated / $allocated > 0.8 => 'Near Limit',
+            default => 'Available',
         };
     }
 
-    /** Block an obligation against a specific budget item that is closed or has too little balance. */
-    public function assertItemAvailable(string $field, ?int $budgetAllocationId, float $amount, ?int $ignorePrId = null, ?int $ignoreOrsId = null): void
+    /**
+     * Validate a charge against one budget line: open period, enough annual balance, and enough
+     * allocation through the quarter of the transaction date (earlier quarters carry forward).
+     */
+    public function assertItemAvailable(string $field, ?int $budgetAllocationId, float $amount, ?int $ignorePrId = null, ?int $ignoreOrsId = null, ?\DateTimeInterface $date = null): void
     {
         if (!$budgetAllocationId) {
             return;
@@ -124,19 +133,24 @@ class BudgetService
 
         $item = BudgetAllocation::findOrFail($budgetAllocationId);
         if ($item->closed_at) {
-            throw ValidationException::withMessages([$field => "Budget item {$item->particulars} is closed and cannot take new obligations."]);
+            throw ValidationException::withMessages([$field => 'This budget line is closed and cannot take new obligations.']);
         }
 
-        $obligated = (float) ProcurementRequest::where('budget_allocation_id', $item->id)
-            ->when($ignorePrId, fn ($q) => $q->where('id', '!=', $ignorePrId))->sum('amount')
-            + (float) LiquidationReport::where('budget_allocation_id', $item->id)->whereNull('procurement_request_id')
-            ->when($ignoreOrsId, fn ($q) => $q->where('id', '!=', $ignoreOrsId))->sum('amount');
-        $balance = (float) $item->amount - $obligated;
+        $prs = ProcurementRequest::where('budget_allocation_id', $item->id)->when($ignorePrId, fn ($q) => $q->where('id', '!=', $ignorePrId))->get(['amount', 'created_at']);
+        $direct = LiquidationReport::where('budget_allocation_id', $item->id)->whereNull('procurement_request_id')->when($ignoreOrsId, fn ($q) => $q->where('id', '!=', $ignoreOrsId))->get(['amount', 'created_at']);
+        $obligations = $prs->concat($direct);
 
+        $balance = (float) $item->amount - (float) $obligations->sum('amount');
         if ($amount > $balance + 0.001) {
-            throw ValidationException::withMessages([
-                $field => sprintf('Insufficient Budget Balance: ₱%s requested but only ₱%s remains in %s.', number_format($amount, 2), number_format(max($balance, 0), 2), $item->particulars),
-            ]);
+            throw ValidationException::withMessages([$field => sprintf('Insufficient budget balance for this expense item. ₱%s requested but only ₱%s remains in %s.', number_format($amount, 2), number_format(max($balance, 0), 2), $item->particulars)]);
+        }
+
+        $when = \Illuminate\Support\Carbon::instance($date ?? now());
+        $quarter = $when->year < $item->fiscal_year ? 1 : ($when->year > $item->fiscal_year ? 4 : $when->quarter);
+        $allowed = collect(range(1, $quarter))->sum(fn ($q) => $item->quarterAmount($q));
+        $usedThroughQuarter = (float) $obligations->filter(fn ($o) => ($o->created_at->year > $item->fiscal_year ? 4 : $o->created_at->quarter) <= $quarter)->sum('amount');
+        if ($usedThroughQuarter + $amount > $allowed + 0.001) {
+            throw ValidationException::withMessages([$field => sprintf('This transaction exceeds the quarterly allocation. Only ₱%s is still available through Q%d for %s.', number_format(max($allowed - $usedThroughQuarter, 0), 2), $quarter, $item->particulars)]);
         }
     }
 }
