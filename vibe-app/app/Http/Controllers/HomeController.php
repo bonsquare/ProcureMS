@@ -306,11 +306,18 @@ class HomeController extends Controller
         ];
     }
 
+    private function openBudgetItems()
+    {
+        return \App\Models\BudgetAllocation::whereIn('school_id', $this->scopedSchoolIds())->whereNull('closed_at')
+            ->where('fiscal_year', now()->year)->orderBy('particulars')->get();
+    }
+
     public function createProcurement()
     {
         return view('procurement-create', [
             'schools' => School::where('status', 'active')->whereIn('id', $this->scopedSchoolIds())->orderBy('name')->get(),
             'editingRequest' => null,
+            'budgetItems' => $this->openBudgetItems(),
             'agency' => AgencySetting::first(),
             'nextPrNumber' => $this->nextPurchaseRequestNumber(false),
         ]);
@@ -325,6 +332,7 @@ class HomeController extends Controller
         return view('procurement-create', [
             'schools' => School::where('status', 'active')->whereIn('id', $this->scopedSchoolIds())->orderBy('name')->get(),
             'editingRequest' => $procurementRequest,
+            'budgetItems' => $this->openBudgetItems(),
             'agency' => AgencySetting::first(),
             'nextPrNumber' => $this->nextPurchaseRequestNumber(false),
         ]);
@@ -337,6 +345,7 @@ class HomeController extends Controller
         $items = $validated['items'];
         $amount = collect($items)->sum(fn (array $item) => (float) $item['quantity'] * (float) $item['unit_price']);
         app(\App\Services\BudgetService::class)->assertAvailable('source_of_fund', (int) $validated['school_id'], $validated['source_of_fund'], (float) $amount);
+        $this->assertBudgetItem($validated, (float) $amount);
 
         $procurementRequest = DB::transaction(function () use ($validated, $request, $amount, $items) {
             $requestNumber = !empty($validated['manually_encode_pr_number'])
@@ -356,6 +365,7 @@ class HomeController extends Controller
             'sai_date' => $validated['sai_date'] ?: null,
             'responsibility_center_code' => $validated['responsibility_center_code'] ?: null,
             'source_of_fund' => $validated['source_of_fund'],
+            'budget_allocation_id' => $validated['budget_allocation_id'] ?? null,
             'description' => 'Itemized goods request',
             'amount' => $amount,
             'extra_blank_rows' => $validated['extra_blank_rows'],
@@ -379,6 +389,7 @@ class HomeController extends Controller
         $items = $validated['items'];
         $amount = collect($items)->sum(fn (array $item) => (float) $item['quantity'] * (float) $item['unit_price']);
         app(\App\Services\BudgetService::class)->assertAvailable('source_of_fund', (int) $validated['school_id'], $validated['source_of_fund'], (float) $amount, $procurementRequest->created_at?->year, $procurementRequest->id);
+        $this->assertBudgetItem($validated, (float) $amount, $procurementRequest->id);
         $requestNumber = !empty($validated['manually_encode_pr_number'])
             ? $validated['manual_pr_number']
             : (preg_match('/^PR-\d{4}-\d{3,}$/', $procurementRequest->request_number)
@@ -396,6 +407,7 @@ class HomeController extends Controller
             'sai_date' => $validated['sai_date'] ?: null,
             'responsibility_center_code' => $validated['responsibility_center_code'] ?: null,
             'source_of_fund' => $validated['source_of_fund'],
+            'budget_allocation_id' => $validated['budget_allocation_id'] ?? null,
             'amount' => $amount,
             'extra_blank_rows' => $validated['extra_blank_rows'],
             'requested_at' => $validated['request_date'],
@@ -405,6 +417,21 @@ class HomeController extends Controller
 
         return redirect()->route('procurement.print', $procurementRequest)
             ->with('success', 'Procurement request updated successfully.');
+    }
+
+    /** A chosen budget item must belong to the same school and fund, and must have room for the amount. */
+    private function assertBudgetItem(array $data, float $amount, ?int $ignorePrId = null, ?int $ignoreOrsId = null): void
+    {
+        if (empty($data['budget_allocation_id'])) {
+            return;
+        }
+
+        $item = \App\Models\BudgetAllocation::findOrFail($data['budget_allocation_id']);
+        if ($item->school_id !== (int) $data['school_id'] || strcasecmp($item->source_of_fund, (string) $data['source_of_fund']) !== 0) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['budget_allocation_id' => 'The budget item must belong to the selected school and source of fund.']);
+        }
+
+        app(\App\Services\BudgetService::class)->assertItemAvailable('budget_allocation_id', $item->id, $amount, $ignorePrId, $ignoreOrsId);
     }
 
     private function validateProcurement(Request $request): array
@@ -421,6 +448,7 @@ class HomeController extends Controller
             'responsibility_center_code' => ['nullable', 'string', 'max:255'],
             'request_date' => ['required', 'date'],
             'source_of_fund' => ['required', 'string', 'max:255'],
+            'budget_allocation_id' => ['nullable', 'integer', 'exists:budget_allocations,id'],
             'manually_encode_pr_number' => ['nullable', 'boolean'],
             'manual_pr_number' => ['nullable', 'required_if:manually_encode_pr_number,1', 'string', 'max:50', 'regex:/^PR-\d{4}-\d{3,}$/', Rule::unique('procurement_requests', 'request_number')->ignore($request->route('procurementRequest'))],
             'extra_blank_rows' => ['nullable', 'integer', 'min:0', 'max:20'],
@@ -1103,6 +1131,7 @@ class HomeController extends Controller
             'ors_number' => ['nullable', 'string', 'max:100', Rule::unique('liquidation_reports', 'ors_number')],
             'redirect_to' => ['nullable', 'in:budget'],
             'source_of_fund' => ['required', 'string', 'max:255'],
+            'budget_allocation_id' => ['nullable', 'integer', 'exists:budget_allocations,id'],
             'payee' => ['nullable', 'string', 'max:255'],
             'payee_address' => ['nullable', 'string', 'max:255'],
             'payee_tin' => ['nullable', 'string', 'max:100'],
@@ -1126,6 +1155,9 @@ class HomeController extends Controller
 
         if (empty($data['procurement_request_id'])) {
             app(\App\Services\BudgetService::class)->assertAvailable('amount', (int) $data['school_id'], $data['source_of_fund'], (float) $data['amount']);
+            $this->assertBudgetItem($data, (float) $data['amount']);
+        } else {
+            $data['budget_allocation_id'] = null;
         }
 
         $orsNumber = DB::transaction(function () use ($data) {
@@ -1149,6 +1181,7 @@ class HomeController extends Controller
                 'report_number' => $reportNumber,
                 'ors_number' => $orsNumber,
                 'source_of_fund' => $data['source_of_fund'],
+                'budget_allocation_id' => $data['budget_allocation_id'] ?? null,
                 'payee' => $data['payee'] ?? null,
                 'payee_address' => $data['payee_address'] ?? null,
                 'payee_tin' => $data['payee_tin'] ?? null,

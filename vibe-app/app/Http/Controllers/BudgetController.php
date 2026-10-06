@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AuditLog;
 use App\Models\BudgetAllocation;
 use App\Models\LiquidationReport;
 use App\Models\ProcurementRequest;
@@ -66,6 +65,7 @@ class BudgetController extends Controller
         $availableProcurements = ProcurementRequest::with('school', 'documents')->whereIn('school_id', $schoolIds)->whereDoesntHave('liquidationReports')->latest()->get();
 
         return view('budget', [
+            'budgetItems' => BudgetAllocation::whereIn('school_id', $schoolIds)->whereNull('closed_at')->where('fiscal_year', $year)->orderBy('particulars')->get(),
             'orsList' => $orsList,
             'availableProcurements' => $availableProcurements,
             'isMasterUser' => request()->user()->role === 'master_user',
@@ -93,39 +93,5 @@ class BudgetController extends Controller
         abort_unless($this->schoolIds()->contains($schoolId), 403);
 
         return response()->json($budget->position($schoolId, $request->query('fund')));
-    }
-
-    public function store(Request $request)
-    {
-        $data = $request->validate([
-            'school_id' => ['required', 'integer'],
-            'fiscal_year' => ['required', 'integer', 'between:2000,2100'],
-            'source_of_fund' => ['required', 'string', 'max:255'],
-            'uacs_code' => ['nullable', 'string', 'max:50'],
-            'particulars' => ['nullable', 'string', 'max:255'],
-            'amount' => ['required', 'numeric', 'min:0.01', 'max:9999999999999'],
-        ]);
-        abort_unless($this->schoolIds()->contains((int) $data['school_id']), 403);
-
-        $allocation = BudgetAllocation::create($data + ['created_by' => $request->user()->id]);
-        AuditLog::create([
-            'user_id' => $request->user()->id,
-            'school_id' => $allocation->school_id,
-            'action' => 'budget_allocated',
-            'auditable_type' => BudgetAllocation::class,
-            'auditable_id' => $allocation->id,
-            'metadata' => ['fund' => $allocation->source_of_fund, 'fiscal_year' => $allocation->fiscal_year, 'amount' => $allocation->amount],
-        ]);
-
-        return redirect()->route('budget', ['year' => $data['fiscal_year']])->with('success', 'Budget allocation added.');
-    }
-
-    public function destroy(BudgetAllocation $budgetAllocation)
-    {
-        abort_unless($this->schoolIds()->contains($budgetAllocation->school_id), 403);
-        $year = $budgetAllocation->fiscal_year;
-        $budgetAllocation->delete();
-
-        return redirect()->route('budget', ['year' => $year])->with('success', 'Budget allocation removed.');
     }
 }

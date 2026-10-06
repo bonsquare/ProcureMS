@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BudgetAllocationController;
 use App\Http\Controllers\BudgetController;
+use App\Http\Controllers\ChartOfAccountController;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Route;
@@ -37,9 +39,22 @@ Route::middleware('auth')->group(function () {
     Route::patch('/liquidation/{liquidationReport}/status', [HomeController::class, 'updateLiquidationStatus'])->name('liquidation.status');
     Route::get('/budget', [BudgetController::class, 'index'])->name('budget');
     Route::get('/budget/balance', [BudgetController::class, 'balance'])->name('budget.balance');
-    Route::post('/budget', [BudgetController::class, 'store'])->name('budget.store');
-    Route::delete('/budget/{budgetAllocation}', [BudgetController::class, 'destroy'])->name('budget.destroy');
+    Route::prefix('budget/allocation')->name('budget.allocation')->group(function () {
+        Route::get('/', [BudgetAllocationController::class, 'index']);
+        Route::get('/create', [BudgetAllocationController::class, 'create'])->name('.create');
+        Route::post('/', [BudgetAllocationController::class, 'store'])->name('.store');
+        Route::post('/close', [BudgetAllocationController::class, 'close'])->name('.close');
+        Route::get('/reports/{type}', [BudgetAllocationController::class, 'report'])->name('.report');
+        Route::get('/{budgetAllocation}', [BudgetAllocationController::class, 'show'])->name('.show')->whereNumber('budgetAllocation');
+        Route::get('/{budgetAllocation}/edit', [BudgetAllocationController::class, 'edit'])->name('.edit')->whereNumber('budgetAllocation');
+        Route::put('/{budgetAllocation}', [BudgetAllocationController::class, 'update'])->name('.update')->whereNumber('budgetAllocation');
+        Route::delete('/{budgetAllocation}', [BudgetAllocationController::class, 'destroy'])->name('.destroy')->whereNumber('budgetAllocation');
+    });
     Route::get('/accounting', [FinanceController::class, 'accounting'])->name('accounting');
+    Route::get('/accounting/chart-of-accounts', [ChartOfAccountController::class, 'index'])->name('chart-of-accounts');
+    Route::post('/accounting/chart-of-accounts', [ChartOfAccountController::class, 'store'])->name('chart-of-accounts.store');
+    Route::put('/accounting/chart-of-accounts/{chartOfAccount}', [ChartOfAccountController::class, 'update'])->name('chart-of-accounts.update');
+    Route::delete('/accounting/chart-of-accounts/{chartOfAccount}', [ChartOfAccountController::class, 'destroy'])->name('chart-of-accounts.destroy');
     Route::patch('/accounting/{liquidationReport}', [FinanceController::class, 'review'])->name('accounting.review');
     Route::post('/accounting/{liquidationReport}/dv', [FinanceController::class, 'createDv'])->name('accounting.dv.store');
     Route::get('/accounting/{liquidationReport}/dv-print', [FinanceController::class, 'printDv'])->name('accounting.dv.print');

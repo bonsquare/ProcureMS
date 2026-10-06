@@ -13,7 +13,7 @@
     $navigation = [['icon'=>'dashboard','label'=>'Dashboard','route'=>'home'],['icon'=>'shopping_cart','label'=>'Procurement','route'=>'procurement'],['icon'=>'receipt_long','label'=>'Liquidation','route'=>'liquidation'],['icon'=>'folder','label'=>'Google Drive','route'=>'google-drive'],['icon'=>'bar_chart','label'=>'Reports','route'=>'reports']];
     if ($isMasterUser) { $navigation[]=['icon'=>'group','label'=>'User Management','route'=>'user-management']; $navigation[]=['icon'=>'card_membership','label'=>'Subscriptions','route'=>'subscriptions']; }
     $navigation[]=['icon'=>'settings','label'=>'School Settings','route'=>'school-settings'];
-    $sub = [['Budget','account_balance','budget','budget'],['Accounting','request_quote','accounting','accounting'],['Cash','payments','cash','cash']];
+    $sub = [['Budget','account_balance','budget','budget'],['Accounting','request_quote','accounting','accounting'],['Chart of Accounts','list_alt','chart-of-accounts','chart-of-accounts'],['Cash','payments','cash','cash']];
     $peso = fn ($v) => '₱' . number_format((float) $v, 2);
     $tabs = $isCash
         ? ['unpaid' => 'DVs For Payment', 'paid' => 'Paid']

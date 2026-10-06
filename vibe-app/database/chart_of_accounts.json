@@ -1,0 +1,3057 @@
+[
+{
+"code": "5010101000",
+"title": "Salaries and Wages-Regular",
+"category": "Personnel Services"
+},
+{
+"code": "5010101001",
+"title": "Salaries and Wages-Regular - Basic Salary-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010101002",
+"title": "Salaries and Wages-Regular - Base Pay-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010102000",
+"title": "Salaries and Wages-Casual/Contractual",
+"category": "Personnel Services"
+},
+{
+"code": "5010103000",
+"title": "Salaries and Wages-Substitute Teachers",
+"category": "Personnel Services"
+},
+{
+"code": "5010201000",
+"title": "Personal Economic Relief Allowance (PERA)",
+"category": "Personnel Services"
+},
+{
+"code": "5010201001",
+"title": "Personal Economic Relief Allowance (PERA) - PERA-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010201002",
+"title": "Personal Economic Relief Allowance (PERA) - PERA-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010202000",
+"title": "Representation Allowance (RA)",
+"category": "Personnel Services"
+},
+{
+"code": "5010203000",
+"title": "Transportation Allowance (TA)",
+"category": "Personnel Services"
+},
+{
+"code": "5010203001",
+"title": "Transportation Allowance (TA) - Transportation Allowance",
+"category": "Personnel Services"
+},
+{
+"code": "5010203002",
+"title": "Transportation Allowance (TA) - RATA of Sectoral/Alternate Sectoral Representatives",
+"category": "Personnel Services"
+},
+{
+"code": "5010204000",
+"title": "Clothing/Uniform Allowance",
+"category": "Personnel Services"
+},
+{
+"code": "5010204001",
+"title": "Clothing/Uniform Allowance - Clothing/Uniform Allowance-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010204002",
+"title": "Clothing/Uniform Allowance - Shoes Allowance-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010204003",
+"title": "Clothing/Uniform Allowance - Clothing/Uniform Allowance-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010204004",
+"title": "Clothing/Uniform Allowance - Clothing/Uniform Allowance-Initial-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010204005",
+"title": "Clothing/Uniform Allowance - Clothing/Uniform Allowance-Special-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010204006",
+"title": "Clothing/Uniform Allowance - Clothing/Uniform Allowance-Cold Weather-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010204007",
+"title": "Clothing/Uniform Allowance - Clothing/Uniform Allowance-Reenlistment-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010204008",
+"title": "Clothing/Uniform Allowance - Clothing/Uniform Allowance-Winter-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010204009",
+"title": "Clothing/Uniform Allowance - Clothing/Uniform Allowance-Combat-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010204010",
+"title": "Clothing/Uniform Allowance - Clothing/Uniform Allowance-Maintenance Cold Weather-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010204011",
+"title": "Clothing/Uniform Allowance - Clothing/Uniform Allowance-Replacement-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010205000",
+"title": "Subsistence Allowance",
+"category": "Personnel Services"
+},
+{
+"code": "5010205001",
+"title": "Subsistence Allowance - Subsistence Allowance-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010205002",
+"title": "Subsistence Allowance - Subsistence Allowance-Magna Carta Benefits for Science and Technology under R.A. 8439",
+"category": "Personnel Services"
+},
+{
+"code": "5010205003",
+"title": "Subsistence Allowance - Subsistence Allowance-Magna Carta Benefits for Public Health Workers under R.A. 7305",
+"category": "Personnel Services"
+},
+{
+"code": "5010205004",
+"title": "Subsistence Allowance - Subsistence Allowance-Magna Carta Benefits for Public Social Workers under R.A. 9432",
+"category": "Personnel Services"
+},
+{
+"code": "5010206000",
+"title": "Laundry Allowance",
+"category": "Personnel Services"
+},
+{
+"code": "5010206001",
+"title": "Laundry Allowance - Laundry Allowance-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010206002",
+"title": "Laundry Allowance - Laundry Allowance-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010206003",
+"title": "Laundry Allowance - Laundry Allowance-Magna Carta Benefits for Science and Technology under R.A. 8439",
+"category": "Personnel Services"
+},
+{
+"code": "5010206004",
+"title": "Laundry Allowance - Laundry Allowance-Magna Carta Benefits for Public Health Workers under R.A. 7305",
+"category": "Personnel Services"
+},
+{
+"code": "5010206005",
+"title": "Laundry Allowance - Laundry Allowance-Magna Carta Benefits for Public Social Workers under R.A. 9432",
+"category": "Personnel Services"
+},
+{
+"code": "5010207000",
+"title": "Quarters Allowance",
+"category": "Personnel Services"
+},
+{
+"code": "5010207001",
+"title": "Quarters Allowance - Quarters Allowance-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010207002",
+"title": "Quarters Allowance - Quarters Allowance-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010207003",
+"title": "Quarters Allowance - Quarters Allowance-Magna Carta Benefits for Science and Technology under R.A. 8439",
+"category": "Personnel Services"
+},
+{
+"code": "5010207004",
+"title": "Quarters Allowance - Quarters Allowance-Magna Carta Benefits for Public Health Workers under R.A. 7305",
+"category": "Personnel Services"
+},
+{
+"code": "5010207005",
+"title": "Quarters Allowance - Quarters Allowance Magna Carta Benefits for Public Social Workers under R.A. 9432",
+"category": "Personnel Services"
+},
+{
+"code": "5010208000",
+"title": "Productivity Incentive Allowance",
+"category": "Personnel Services"
+},
+{
+"code": "5010208001",
+"title": "Productivity Incentive Allowance - Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010208002",
+"title": "Productivity Incentive Allowance - Productivity Incentive Allowance-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010209000",
+"title": "Overseas Allowance",
+"category": "Personnel Services"
+},
+{
+"code": "5010209001",
+"title": "Overseas Allowance - Overseas Allowance-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010209002",
+"title": "Overseas Allowance - Overseas Allowance-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010210000",
+"title": "Honoraria",
+"category": "Personnel Services"
+},
+{
+"code": "5010210001",
+"title": "Honoraria - Honoraria-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010210002",
+"title": "Honoraria - Honoraria-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010210003",
+"title": "Honoraria - Honoraria-Magna Carta Benefits for Science and Technology under R.A. 8439",
+"category": "Personnel Services"
+},
+{
+"code": "5010210004",
+"title": "Honoraria - Honoraria-Magna Carta Benefits for Public Health Workers under R.A. 7305",
+"category": "Personnel Services"
+},
+{
+"code": "5010210005",
+"title": "Honoraria - Honoraria-Magna Carta Benefits for Public Social Workers under R.A. 9432",
+"category": "Personnel Services"
+},
+{
+"code": "5010211000",
+"title": "Hazard Pay",
+"category": "Personnel Services"
+},
+{
+"code": "5010211001",
+"title": "Hazard Pay",
+"category": "Personnel Services"
+},
+{
+"code": "5010211002",
+"title": "Hazard Pay - Hazard Duty Pay-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010211003",
+"title": "Hazard Pay - Hazard Duty Pay-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010211004",
+"title": "Hazard Pay - HP-Magna Carta Benefits for Science and Technology under R.A. 8439",
+"category": "Personnel Services"
+},
+{
+"code": "5010211005",
+"title": "Hazard Pay - HP-Magna Carta Benefits for Public Health Workers under R.A. 7305",
+"category": "Personnel Services"
+},
+{
+"code": "5010211006",
+"title": "Hazard Pay - HP-Magna Carta Benefits for Public Social Workers under R.A. 9432",
+"category": "Personnel Services"
+},
+{
+"code": "5010211007",
+"title": "Hazard Pay - Radiation Hazard Pay not exceeding 15% of Basic Salary",
+"category": "Personnel Services"
+},
+{
+"code": "5010211008",
+"title": "Hazard Pay - High Risk Duty Pay",
+"category": "Personnel Services"
+},
+{
+"code": "5010211009",
+"title": "Hazard Pay - Hazardous Duty Pay",
+"category": "Personnel Services"
+},
+{
+"code": "5010212000",
+"title": "Longevity Pay",
+"category": "Personnel Services"
+},
+{
+"code": "5010212001",
+"title": "Longevity Pay - Longevity Pay-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010212002",
+"title": "Longevity Pay - Longevity Pay-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010212003",
+"title": "Longevity Pay - Longevity Pay-Magna Carta Benefits for Science and Technology under R.A. 8439",
+"category": "Personnel Services"
+},
+{
+"code": "5010212004",
+"title": "Longevity Pay - Longevity Pay-Magna Carta Benefits for Public Health Workers under R.A. 7305",
+"category": "Personnel Services"
+},
+{
+"code": "5010212005",
+"title": "Longevity Pay - Longevity Pay-Magna Carta Benefits for Public Social Workers under R.A. 9432",
+"category": "Personnel Services"
+},
+{
+"code": "5010213000",
+"title": "Overtime and Night Pay",
+"category": "Personnel Services"
+},
+{
+"code": "5010213001",
+"title": "Overtime and Night Pay - Overtime Pay",
+"category": "Personnel Services"
+},
+{
+"code": "5010213002",
+"title": "Overtime and Night Pay - Night-shift Differential Pay",
+"category": "Personnel Services"
+},
+{
+"code": "5010214000",
+"title": "Year-End Bonus",
+"category": "Personnel Services"
+},
+{
+"code": "5010214001",
+"title": "Year-End Bonus - Year-End Bonus-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010214002",
+"title": "Year-End Bonus - Year-End Bonus-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010215000",
+"title": "Cash Gift",
+"category": "Personnel Services"
+},
+{
+"code": "5010215001",
+"title": "Cash Gift - Cash Gift-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010215002",
+"title": "Cash Gift - Cash Gift-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010216000",
+"title": "Mid-Year Bonus",
+"category": "Personnel Services"
+},
+{
+"code": "5010216001",
+"title": "Mid-Year Bonus - Mid-Year Bonus-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010216002",
+"title": "Mid-Year Bonus - Mid-Year Bonus-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010299000",
+"title": "Other Bonuses and Allowances",
+"category": "Personnel Services"
+},
+{
+"code": "5010299001",
+"title": "Other Bonuses and Allowances - Per Diems-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010299002",
+"title": "Other Bonuses and Allowances - Allowance of PAO Lawyers and Employees Assigned in Night Courts-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010299003",
+"title": "Other Bonuses and Allowances - Allowance of Attorney's de Officio-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010299004",
+"title": "Other Bonuses and Allowances - Special Hardship Allowance-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010299005",
+"title": "Other Bonuses and Allowances - Private Messenger Fee-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010299006",
+"title": "Other Bonuses and Allowances - Inquest Allowance-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010299007",
+"title": "Other Bonuses and Allowances - Special Duty Allowance-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010299008",
+"title": "Other Bonuses and Allowances - Special Duty Allowance-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010299009",
+"title": "Other Bonuses and Allowances - Special Allowance for Judges and Justices-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010299010",
+"title": "Other Bonuses and Allowances - Special Allowance for the Members of the Prosecution Service",
+"category": "Personnel Services"
+},
+{
+"code": "5010299011",
+"title": "Other Bonuses and Allowances - Collective Negotiation Agreement Incentive-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010299012",
+"title": "Other Bonuses and Allowances - Productivity Enhancement Incentive-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010299013",
+"title": "Other Bonuses and Allowances - Productivity Enhancement Incentive-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010299014",
+"title": "Other Bonuses and Allowances - Performance Based Bonus-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010299015",
+"title": "Other Bonuses and Allowances - Performance Based Bonus-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010299016",
+"title": "Other Bonuses and Allowances - Flying Pay-Duty Based Allowance-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010299017",
+"title": "Other Bonuses and Allowances - Special Group Term Insurance-Duty Based Allowance-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010299018",
+"title": "Other Bonuses and Allowances - Sea Duty Pay--Duty Based Allowance-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010299019",
+"title": "Other Bonuses and Allowances - Combat Incentive Pay-Duty Based Allowance-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010299020",
+"title": "Other Bonuses and Allowances - Reenlistment Pay-Duty Based Allowance-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010299021",
+"title": "Other Bonuses and Allowances - Other Subsistence Allowance-Duty Based Allowance-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010299022",
+"title": "Other Bonuses and Allowances - Training Subsistence Allowance-Duty Based Allowance-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010299023",
+"title": "Other Bonuses and Allowances - Civil Disturbance Control Subsistence Allowance-Duty Based Allowance-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010299024",
+"title": "Other Bonuses and Allowances - Subsistence of Detainees-Duty Based Allowance-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010299025",
+"title": "Other Bonuses and Allowances - Hardship Allowance-Duty Based Allowance-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010299026",
+"title": "Other Bonuses and Allowances - Combat Duty Pay-Duty Based Allowance-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010299027",
+"title": "Other Bonuses and Allowances - Incentive Pay-Duty Based Allowance-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010299028",
+"title": "Other Bonuses and Allowances - Instructor's Duty Pay-Duty Based Allowance-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010299029",
+"title": "Other Bonuses and Allowances - Reservist's Pay-Duty Based Allowance-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010299030",
+"title": "Other Bonuses and Allowances - Medal of Valor Award-Duty Based Allowance-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010299031",
+"title": "Other Bonuses and Allowances - Hospitalization Expenses-Duty Based Allowance-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010299032",
+"title": "Other Bonuses and Allowances - Specialist's Pay-Duty Based Allowance-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010299033",
+"title": "Other Bonuses and Allowances - Parachutist Pay-Duty Based Allowance-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010299034",
+"title": "Other Bonuses and Allowances - Provisional Allowance-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010299035",
+"title": "Other Bonuses and Allowances - Officers’ Allowance-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010299038",
+"title": "Other Bonuses and Allowances - Anniversary Bonus-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010299039",
+"title": "Other Bonuses and Allowances - Anniversary Bonus-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010301000",
+"title": "Retirement and Life Insurance Premiums",
+"category": "Personnel Services"
+},
+{
+"code": "5010302000",
+"title": "Pag-IBIG Contributions",
+"category": "Personnel Services"
+},
+{
+"code": "5010302001",
+"title": "Pag-IBIG Contributions - Pag-IBIG-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010302002",
+"title": "Pag-IBIG Contributions - Pag-IBIG-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010303000",
+"title": "PhilHealth Contributions",
+"category": "Personnel Services"
+},
+{
+"code": "5010303001",
+"title": "PhilHealth Contributions - PhilHealth-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010303002",
+"title": "PhilHealth Contributions - PhilHealth-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010304000",
+"title": "Employees Compensation Insurance Premiums",
+"category": "Personnel Services"
+},
+{
+"code": "5010304001",
+"title": "Employees Compensation Insurance Premiums - ECIP-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010304002",
+"title": "Employees Compensation Insurance Premiums - ECIP-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010305000",
+"title": "Provident/Welfare Fund Contributions",
+"category": "Personnel Services"
+},
+{
+"code": "5010401000",
+"title": "Pension Benefits",
+"category": "Personnel Services"
+},
+{
+"code": "5010401001",
+"title": "Pension Benefits - Pension Benefits-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010401002",
+"title": "Pension Benefits - Pension Benefits-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010401003",
+"title": "Pension Benefits - Pension Benefits-Veterans",
+"category": "Personnel Services"
+},
+{
+"code": "5010402000",
+"title": "Retirement Gratuity",
+"category": "Personnel Services"
+},
+{
+"code": "5010402001",
+"title": "Retirement Gratuity - Retirement Gratuity-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010402002",
+"title": "Retirement Gratuity - Retirement Gratuity-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010403000",
+"title": "Terminal Leave Benefits",
+"category": "Personnel Services"
+},
+{
+"code": "5010403001",
+"title": "Terminal Leave Benefits - Terminal Leave Benefits-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010403002",
+"title": "Terminal Leave Benefits - Terminal Leave Benefits-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010499000",
+"title": "Other Personnel Benefits",
+"category": "Personnel Services"
+},
+{
+"code": "5010499001",
+"title": "Other Personnel Benefits - Lump-sum for Creation of New Positions-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010499002",
+"title": "Other Personnel Benefits - Lump-sum for Creation of New Positions-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010499003",
+"title": "Other Personnel Benefits - Lump-sum for Reclassification of Positions",
+"category": "Personnel Services"
+},
+{
+"code": "5010499004",
+"title": "Other Personnel Benefits - Lump-sum for Equivalent-Record Form",
+"category": "Personnel Services"
+},
+{
+"code": "5010499005",
+"title": "Other Personnel Benefits - Lump-sum for Master Teachers",
+"category": "Personnel Services"
+},
+{
+"code": "5010499006",
+"title": "Other Personnel Benefits - Lump-sum for Compensation Adjustment",
+"category": "Personnel Services"
+},
+{
+"code": "5010499007",
+"title": "Other Personnel Benefits - Lump-sum for Filling of Positions-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010499008",
+"title": "Other Personnel Benefits - Lump-sum for NBC No. 308",
+"category": "Personnel Services"
+},
+{
+"code": "5010499009",
+"title": "Other Personnel Benefits - Lump-sum for Personnel Services",
+"category": "Personnel Services"
+},
+{
+"code": "5010499010",
+"title": "Other Personnel Benefits - Lump-sum for Step Increments-Length of Service",
+"category": "Personnel Services"
+},
+{
+"code": "5010499011",
+"title": "Other Personnel Benefits - Lump-sum for Step Increments-Meritorious Performance",
+"category": "Personnel Services"
+},
+{
+"code": "5010499012",
+"title": "Other Personnel Benefits - Other Lump-sum",
+"category": "Personnel Services"
+},
+{
+"code": "5010499013",
+"title": "Other Personnel Benefits - Police Benefits (NAPOLCOM)",
+"category": "Personnel Services"
+},
+{
+"code": "5010499014",
+"title": "Other Personnel Benefits - Lump-sum for Filing of Positions-Military/Uniformed Personnel",
+"category": "Personnel Services"
+},
+{
+"code": "5010499015",
+"title": "Other Personnel Benefits - Loyalty Award-Civilian",
+"category": "Personnel Services"
+},
+{
+"code": "5010499099",
+"title": "Other Personnel Benefits",
+"category": "Personnel Services"
+},
+{
+"code": "5020101000",
+"title": "Traveling Expenses-Local",
+"category": "MOOE"
+},
+{
+"code": "5020102000",
+"title": "Traveling Expenses-Foreign",
+"category": "MOOE"
+},
+{
+"code": "5020201000",
+"title": "Training Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020201001",
+"title": "Training Expenses - ICT Training Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020201002",
+"title": "Training Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020202000",
+"title": "Scholarship Grants/Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020301000",
+"title": "Office Supplies Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020301001",
+"title": "Office Supplies Expenses - ICT Office Supplies Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020301002",
+"title": "Office Supplies Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020302000",
+"title": "Accountable Forms Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020303000",
+"title": "Non-Accountable Forms Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020304000",
+"title": "Animal/Zoological Supplies Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020305000",
+"title": "Food Supplies Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020306000",
+"title": "Welfare Goods Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020307000",
+"title": "Drugs and Medicines Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020308000",
+"title": "Medical, Dental and Laboratory Supplies Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020309000",
+"title": "Fuel, Oil and Lubricants Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020310000",
+"title": "Agricultural and Marine Supplies Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020311000",
+"title": "Textbooks and Instructional Materials Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020311001",
+"title": "Textbooks and Instructional Materials Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020311002",
+"title": "Textbooks and Instructional Materials Expenses - Chalk Allowance",
+"category": "MOOE"
+},
+{
+"code": "5020312000",
+"title": "Military, Police and Traffic Supplies Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020313000",
+"title": "Chemical and Filtering Supplies Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020321000",
+"title": "Semi-Expendable Machinery and Equipment Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020321001",
+"title": "Semi-Expendable Machinery and Equipment Expenses - Machinery",
+"category": "MOOE"
+},
+{
+"code": "5020321002",
+"title": "Semi-Expendable Machinery and Equipment Expenses - Office Equipment",
+"category": "MOOE"
+},
+{
+"code": "5020321003",
+"title": "Semi-Expendable Machinery and Equipment Expenses - Information and Communications Technology Equipment",
+"category": "MOOE"
+},
+{
+"code": "5020321004",
+"title": "Semi-Expendable Machinery and Equipment Expenses - Agricultural and Forestry Equipment",
+"category": "MOOE"
+},
+{
+"code": "5020321005",
+"title": "Semi-Expendable Machinery and Equipment Expenses - Marine and Fishery Equipment",
+"category": "MOOE"
+},
+{
+"code": "5020321006",
+"title": "Semi-Expendable Machinery and Equipment Expenses - Airport Equipment",
+"category": "MOOE"
+},
+{
+"code": "5020321007",
+"title": "Semi-Expendable Machinery and Equipment Expenses - Communications Equipment",
+"category": "MOOE"
+},
+{
+"code": "5020321008",
+"title": "Semi-Expendable Machinery and Equipment Expenses - Disaster Response and Rescue Equipment",
+"category": "MOOE"
+},
+{
+"code": "5020321009",
+"title": "Semi-Expendable Machinery and Equipment Expenses - Military, Police and Security Equipment",
+"category": "MOOE"
+},
+{
+"code": "5020321010",
+"title": "Semi-Expendable Machinery and Equipment Expenses - Medical Equipment",
+"category": "MOOE"
+},
+{
+"code": "5020321011",
+"title": "Semi-Expendable Machinery and Equipment Expenses - Printing Equipment",
+"category": "MOOE"
+},
+{
+"code": "5020321012",
+"title": "Semi-Expendable Machinery and Equipment Expenses - Sports Equipment",
+"category": "MOOE"
+},
+{
+"code": "5020321013",
+"title": "Semi-Expendable Machinery and Equipment Expenses - Technical and Scientific Equipment",
+"category": "MOOE"
+},
+{
+"code": "5020321099",
+"title": "Semi-Expendable Machinery and Equipment Expenses - Other Equipment",
+"category": "MOOE"
+},
+{
+"code": "5020322000",
+"title": "Semi-Expendable Furniture, Fixtures and Books Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020322001",
+"title": "Semi-Expendable Furniture, Fixtures and Books Expenses - Furniture and Fixtures",
+"category": "MOOE"
+},
+{
+"code": "5020322002",
+"title": "Semi-Expendable Furniture, Fixtures and Books Expenses - Books",
+"category": "MOOE"
+},
+{
+"code": "5020323000",
+"title": "Agricultural Produce Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020324000",
+"title": "Aquaculture Produce Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020329000",
+"title": "Prisoner Medical Support Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020399000",
+"title": "Other Supplies and Materials Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020401000",
+"title": "Water Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020402000",
+"title": "Electricity Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020403000",
+"title": "Gas/Heating Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020499000",
+"title": "Other Utility Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020501000",
+"title": "Postage and Courier Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020502000",
+"title": "Telephone Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020502001",
+"title": "Telephone Expenses - Mobile",
+"category": "MOOE"
+},
+{
+"code": "5020502002",
+"title": "Telephone Expenses - Landline",
+"category": "MOOE"
+},
+{
+"code": "5020503000",
+"title": "Internet Subscription Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020504000",
+"title": "Cable, Satellite, Telegraph and Radio Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020601000",
+"title": "Awards/Rewards Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020601001",
+"title": "Awards/Rewards Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020601002",
+"title": "Awards/Rewards Expenses - Rewards and Incentives",
+"category": "MOOE"
+},
+{
+"code": "5020602000",
+"title": "Prizes",
+"category": "MOOE"
+},
+{
+"code": "5020603000",
+"title": "Indemnities",
+"category": "MOOE"
+},
+{
+"code": "5020701000",
+"title": "Survey Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020701001",
+"title": "Survey Expenses - ICT Survey Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020701002",
+"title": "Survey Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020702000",
+"title": "Research, Exploration and Development Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020702001",
+"title": "Research, Exploration and Development Expenses - ICT Research, Exploration and Development Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020702002",
+"title": "Research, Exploration and Development Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020801000",
+"title": "Demolition and Relocation Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020802000",
+"title": "Desilting, Drilling and Dredging Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020901000",
+"title": "Generation, Transmission and Distribution Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020901001",
+"title": "Generation, Transmission and Distribution Expenses - ICT Generation, Transmission and Distribution Expenses",
+"category": "MOOE"
+},
+{
+"code": "5020901002",
+"title": "Generation, Transmission and Distribution Expenses",
+"category": "MOOE"
+},
+{
+"code": "5021001000",
+"title": "Confidential Expenses",
+"category": "MOOE"
+},
+{
+"code": "5021002000",
+"title": "Intelligence Expenses",
+"category": "MOOE"
+},
+{
+"code": "5021003000",
+"title": "Extraordinary and Miscellaneous Expenses",
+"category": "MOOE"
+},
+{
+"code": "5021101000",
+"title": "Legal Services",
+"category": "MOOE"
+},
+{
+"code": "5021102000",
+"title": "Auditing Services",
+"category": "MOOE"
+},
+{
+"code": "5021103000",
+"title": "Consultancy Services",
+"category": "MOOE"
+},
+{
+"code": "5021103001",
+"title": "Consultancy Services - ICT Consultancy Services",
+"category": "MOOE"
+},
+{
+"code": "5021103002",
+"title": "Consultancy Services",
+"category": "MOOE"
+},
+{
+"code": "5021199000",
+"title": "Other Professional Services",
+"category": "MOOE"
+},
+{
+"code": "5021201000",
+"title": "Environment/Sanitary Services",
+"category": "MOOE"
+},
+{
+"code": "5021202000",
+"title": "Janitorial Services",
+"category": "MOOE"
+},
+{
+"code": "5021203000",
+"title": "Security Services",
+"category": "MOOE"
+},
+{
+"code": "5021299000",
+"title": "Other General Services",
+"category": "MOOE"
+},
+{
+"code": "5021301000",
+"title": "Repairs and Maintenance-Investment Property",
+"category": "MOOE"
+},
+{
+"code": "5021302000",
+"title": "Repairs and Maintenance-Land Improvements",
+"category": "MOOE"
+},
+{
+"code": "5021302001",
+"title": "Repairs and Maintenance-Land Improvements - Aquaculture Structures",
+"category": "MOOE"
+},
+{
+"code": "5021302002",
+"title": "Repairs and Maintenance-Land Improvements - Reforestation Projects",
+"category": "MOOE"
+},
+{
+"code": "5021302099",
+"title": "Repairs and Maintenance-Land Improvements - Other Land Improvements",
+"category": "MOOE"
+},
+{
+"code": "5021303000",
+"title": "Repairs and Maintenance-Infrastructure Assets",
+"category": "MOOE"
+},
+{
+"code": "5021303001",
+"title": "Repairs and Maintenance-Infrastructure Assets - Road Networks",
+"category": "MOOE"
+},
+{
+"code": "5021303002",
+"title": "Repairs and Maintenance-Infrastructure Assets - Flood Control Systems",
+"category": "MOOE"
+},
+{
+"code": "5021303003",
+"title": "Repairs and Maintenance-Infrastructure Assets - Sewer Systems",
+"category": "MOOE"
+},
+{
+"code": "5021303004",
+"title": "Repairs and Maintenance-Infrastructure Assets - Water Supply Systems",
+"category": "MOOE"
+},
+{
+"code": "5021303005",
+"title": "Repairs and Maintenance-Infrastructure Assets - Power Supply Systems",
+"category": "MOOE"
+},
+{
+"code": "5021303006",
+"title": "Repairs and Maintenance-Infrastructure Assets - Communications Networks",
+"category": "MOOE"
+},
+{
+"code": "5021303007",
+"title": "Repairs and Maintenance-Infrastructure Assets - Seaport Systems",
+"category": "MOOE"
+},
+{
+"code": "5021303008",
+"title": "Repairs and Maintenance-Infrastructure Assets - Airport Systems",
+"category": "MOOE"
+},
+{
+"code": "5021303009",
+"title": "Repairs and Maintenance-Infrastructure Assets - Parks, Plazas and Monuments",
+"category": "MOOE"
+},
+{
+"code": "5021303010",
+"title": "Repairs and Maintenance-Infrastructure Assets - Railway Systems",
+"category": "MOOE"
+},
+{
+"code": "5021303099",
+"title": "Repairs and Maintenance-Infrastructure Assets - Other Infrastructure Assets",
+"category": "MOOE"
+},
+{
+"code": "5021304000",
+"title": "Repairs and Maintenance-Buildings and Other Structures",
+"category": "MOOE"
+},
+{
+"code": "5021304001",
+"title": "Repairs and Maintenance-Buildings and Other Structures - Buildings",
+"category": "MOOE"
+},
+{
+"code": "5021304002",
+"title": "Repairs and Maintenance-Buildings and Other Structures - School Buildings",
+"category": "MOOE"
+},
+{
+"code": "5021304003",
+"title": "Repairs and Maintenance-Buildings and Other Structures - Hospitals and Health Centers",
+"category": "MOOE"
+},
+{
+"code": "5021304004",
+"title": "Repairs and Maintenance-Buildings and Other Structures - Markets",
+"category": "MOOE"
+},
+{
+"code": "5021304005",
+"title": "Repairs and Maintenance-Buildings and Other Structures - Slaughterhouses",
+"category": "MOOE"
+},
+{
+"code": "5021304006",
+"title": "Repairs and Maintenance-Buildings and Other Structures - Hostels and Dormitories",
+"category": "MOOE"
+},
+{
+"code": "5021304099",
+"title": "Repairs and Maintenance-Buildings and Other Structures - Other Structures",
+"category": "MOOE"
+},
+{
+"code": "5021305000",
+"title": "Repairs and Maintenance-Machinery and Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021305001",
+"title": "Repairs and Maintenance-Machinery and Equipment - Machinery",
+"category": "MOOE"
+},
+{
+"code": "5021305002",
+"title": "Repairs and Maintenance-Machinery and Equipment - Office Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021305003",
+"title": "Repairs and Maintenance-Machinery and Equipment - ICT Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021305004",
+"title": "Repairs and Maintenance-Machinery and Equipment - Agricultural and Forestry Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021305005",
+"title": "Repairs and Maintenance-Machinery and Equipment - Marine and Fishery Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021305006",
+"title": "Repairs and Maintenance-Machinery and Equipment - Airport Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021305007",
+"title": "Repairs and Maintenance-Machinery and Equipment - Communications Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021305008",
+"title": "Repairs and Maintenance-Machinery and Equipment - Construction and Heavy Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021305009",
+"title": "Repairs and Maintenance-Machinery and Equipment - Disaster Response and Rescue Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021305010",
+"title": "Repairs and Maintenance-Machinery and Equipment - Military, Police and Security Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021305011",
+"title": "Repairs and Maintenance-Machinery and Equipment - Medical Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021305012",
+"title": "Repairs and Maintenance-Machinery and Equipment - Printing Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021305013",
+"title": "Repairs and Maintenance-Machinery and Equipment - Sports Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021305014",
+"title": "Repairs and Maintenance-Machinery and Equipment - Technical and Scientific Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021305099",
+"title": "Repairs and Maintenance-Machinery and Equipment - Other Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021306000",
+"title": "Repairs and Maintenance-Transportation Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021306001",
+"title": "Repairs and Maintenance-Transportation Equipment - Motor Vehicles",
+"category": "MOOE"
+},
+{
+"code": "5021306002",
+"title": "Repairs and Maintenance-Transportation Equipment - Trains",
+"category": "MOOE"
+},
+{
+"code": "5021306003",
+"title": "Repairs and Maintenance-Transportation Equipment - Aircrafts and Aircrafts Ground Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021306004",
+"title": "Repairs and Maintenance-Transportation Equipment - Watercrafts",
+"category": "MOOE"
+},
+{
+"code": "5021306099",
+"title": "Repairs and Maintenance-Transportation Equipment - Other Transportation Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021307000",
+"title": "Repairs and Maintenance-Furniture and Fixtures",
+"category": "MOOE"
+},
+{
+"code": "5021308000",
+"title": "Repairs and Maintenance-Leased Assets",
+"category": "MOOE"
+},
+{
+"code": "5021308001",
+"title": "Repairs and Maintenance-Leased Assets - Buildings and Other Structures",
+"category": "MOOE"
+},
+{
+"code": "5021308002",
+"title": "Repairs and Maintenance-Leased Assets - Machinery and Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021308003",
+"title": "Repairs and Maintenance-Leased Assets - Transportation Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021308004",
+"title": "Repairs and Maintenance-Leased Assets - ICT Machinery and Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021308099",
+"title": "Repairs and Maintenance-Leased Assets - Other Leased Assets",
+"category": "MOOE"
+},
+{
+"code": "5021309000",
+"title": "Repairs and Maintenance-Leased Assets Improvements",
+"category": "MOOE"
+},
+{
+"code": "5021309001",
+"title": "Repairs and Maintenance-Leased Assets Improvements - Land",
+"category": "MOOE"
+},
+{
+"code": "5021309002",
+"title": "Repairs and Maintenance-Leased Assets Improvements - Buildings",
+"category": "MOOE"
+},
+{
+"code": "5021309099",
+"title": "Repairs and Maintenance-Leased Assets Improvements - Other Leased Assets Improvements",
+"category": "MOOE"
+},
+{
+"code": "5021310000",
+"title": "Restoration and Maintenance-Heritage Assets",
+"category": "MOOE"
+},
+{
+"code": "5021310001",
+"title": "Restoration and Maintenance-Heritage Assets - Historical Buildings",
+"category": "MOOE"
+},
+{
+"code": "5021310002",
+"title": "Restoration and Maintenance-Heritage Assets - Works of Arts and Archeological Specimens",
+"category": "MOOE"
+},
+{
+"code": "5021310099",
+"title": "Restoration and Maintenance-Heritage Assets - Other Heritage Assets",
+"category": "MOOE"
+},
+{
+"code": "5021321000",
+"title": "Repairs and Maintenance-Semi-Expendable Machinery and Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021321001",
+"title": "Repairs and Maintenance-Semi-Expendable Machinery and Equipment - Machinery",
+"category": "MOOE"
+},
+{
+"code": "5021321002",
+"title": "Repairs and Maintenance-Semi-Expendable Machinery and Equipment - Office Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021321003",
+"title": "Repairs and Maintenance-Semi-Expendable Machinery and Equipment - Information and Communications Technology Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021321004",
+"title": "Repairs and Maintenance-Semi-Expendable Machinery and Equipment - Agricultural and Forestry Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021321005",
+"title": "Repairs and Maintenance-Semi-Expendable Machinery and Equipment - Marine and Fishery Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021321006",
+"title": "Repairs and Maintenance-Semi-Expendable Machinery and Equipment - Airport Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021321007",
+"title": "Repairs and Maintenance-Semi-Expendable Machinery and Equipment - Communications Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021321008",
+"title": "Repairs and Maintenance-Semi-Expendable Machinery and Equipment - Disaster Response and Rescue Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021321009",
+"title": "Repairs and Maintenance-Semi-Expendable Machinery and Equipment - Military, Police and Security Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021321010",
+"title": "Repairs and Maintenance-Semi-Expendable Machinery and Equipment - Medical Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021321011",
+"title": "Repairs and Maintenance-Semi-Expendable Machinery and Equipment - Printing Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021321012",
+"title": "Repairs and Maintenance-Semi-Expendable Machinery and Equipment - Sports Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021321013",
+"title": "Repairs and Maintenance-Semi-Expendable Machinery and Equipment - Technical and Scientific Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021321099",
+"title": "Repairs and Maintenance-Semi-Expendable Machinery and Equipment - Other Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021322000",
+"title": "Repairs and Maintenance-Semi-Expendable Furniture, Fixtures and Books",
+"category": "MOOE"
+},
+{
+"code": "5021322001",
+"title": "Repairs and Maintenance-Semi-Expendable Furniture, Fixtures and Books - Furniture and Fixture",
+"category": "MOOE"
+},
+{
+"code": "5021322002",
+"title": "Repairs and Maintenance-Semi-Expendable Furniture, Fixtures and Books - Books",
+"category": "MOOE"
+},
+{
+"code": "5021398000",
+"title": "Repairs and Maintenance-Others",
+"category": "MOOE"
+},
+{
+"code": "5021399000",
+"title": "Repairs and Maintenance-Other Property, Plant and Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021399001",
+"title": "Repairs and Maintenance-Other Property, Plant and Equipment - Work/Zoo Animals",
+"category": "MOOE"
+},
+{
+"code": "5021399099",
+"title": "Repairs and Maintenance-Other Property, Plant and Equipment - Other Property, Plant and Equipment",
+"category": "MOOE"
+},
+{
+"code": "5021401000",
+"title": "Subsidy to National Government Agencies",
+"category": "MOOE"
+},
+{
+"code": "5021402000",
+"title": "Assistance to Other National Government Agencies",
+"category": "MOOE"
+},
+{
+"code": "5021403000",
+"title": "Assistance to Local Government Units",
+"category": "MOOE"
+},
+{
+"code": "5021403001",
+"title": "Assistance to Local Government Units - Tobacco Excise Tax (Virginia) per R.A. 7171",
+"category": "MOOE"
+},
+{
+"code": "5021403002",
+"title": "Assistance to Local Government Units - Tobacco Excise Tax (Burley and Native) per R.A. 8240",
+"category": "MOOE"
+},
+{
+"code": "5021403003",
+"title": "Assistance to Local Government Units - Mining Taxes per R.A. 7160",
+"category": "MOOE"
+},
+{
+"code": "5021403004",
+"title": "Assistance to Local Government Units - Royalties per R.A. 7160",
+"category": "MOOE"
+},
+{
+"code": "5021403005",
+"title": "Assistance to Local Government Units - Forestry Charges per R.A. 7160",
+"category": "MOOE"
+},
+{
+"code": "5021403006",
+"title": "Assistance to Local Government Units - Fishery Charges per R.A. 7160",
+"category": "MOOE"
+},
+{
+"code": "5021403007",
+"title": "Assistance to Local Government Units - Renewable Energy charges per R.A. 9513",
+"category": "MOOE"
+},
+{
+"code": "5021403008",
+"title": "Assistance to Local Government Units - Income Tax Collections in ECO ZONES per R.A. 7922 and R.A. 8748",
+"category": "MOOE"
+},
+{
+"code": "5021403009",
+"title": "Assistance to Local Government Units - Value Added Tax per R.A. 7643",
+"category": "MOOE"
+},
+{
+"code": "5021403010",
+"title": "Assistance to Local Government Units - Value Added Tax in lieu of Franchise Tax per R.A. 7953 and R.A. 8407",
+"category": "MOOE"
+},
+{
+"code": "5021404000",
+"title": "Budgetary Support to Government-Owned or Controlled Corporations",
+"category": "MOOE"
+},
+{
+"code": "5021404001",
+"title": "Budgetary Support to Government-Owned or Controlled Corporations - Subsidy Support to Operations of GOCCs",
+"category": "MOOE"
+},
+{
+"code": "5021404002",
+"title": "Budgetary Support to Government-Owned or Controlled Corporations - Road Networks",
+"category": "MOOE"
+},
+{
+"code": "5021404003",
+"title": "Budgetary Support to Government-Owned or Controlled Corporations - Flood Control Systems",
+"category": "MOOE"
+},
+{
+"code": "5021404004",
+"title": "Budgetary Support to Government-Owned or Controlled Corporations - Sewer Systems",
+"category": "MOOE"
+},
+{
+"code": "5021404005",
+"title": "Budgetary Support to Government-Owned or Controlled Corporations - Water Supply Systems",
+"category": "MOOE"
+},
+{
+"code": "5021404006",
+"title": "Budgetary Support to Government-Owned or Controlled Corporations - Power Supply Systems",
+"category": "MOOE"
+},
+{
+"code": "5021404007",
+"title": "Budgetary Support to Government-Owned or Controlled Corporations - Communications Networks",
+"category": "MOOE"
+},
+{
+"code": "5021404008",
+"title": "Budgetary Support to Government-Owned or Controlled Corporations - Seaport Systems",
+"category": "MOOE"
+},
+{
+"code": "5021404009",
+"title": "Budgetary Support to Government-Owned or Controlled Corporations - Airport Systems",
+"category": "MOOE"
+},
+{
+"code": "5021404010",
+"title": "Budgetary Support to Government-Owned or Controlled Corporations - Parks, Plazas and Monuments",
+"category": "MOOE"
+},
+{
+"code": "5021404099",
+"title": "Budgetary Support to Government-Owned or Controlled Corporations - Other Infrastructure Assets",
+"category": "MOOE"
+},
+{
+"code": "5021405000",
+"title": "Assistance to Non-Government Organizations/Civil Society Organizations",
+"category": "MOOE"
+},
+{
+"code": "5021406000",
+"title": "Internal Revenue Allotment",
+"category": "MOOE"
+},
+{
+"code": "5021407000",
+"title": "Subsidy to Regional Offices/Staff Bureaus",
+"category": "MOOE"
+},
+{
+"code": "5021408000",
+"title": "Subsidy to Operating Units",
+"category": "MOOE"
+},
+{
+"code": "5021409000",
+"title": "Subsidy to Other Funds",
+"category": "MOOE"
+},
+{
+"code": "5021499000",
+"title": "Subsidies-Others",
+"category": "MOOE"
+},
+{
+"code": "5021501000",
+"title": "Taxes, Duties and Licenses",
+"category": "MOOE"
+},
+{
+"code": "5021501001",
+"title": "Taxes, Duties and Licenses",
+"category": "MOOE"
+},
+{
+"code": "5021501002",
+"title": "Taxes, Duties and Licenses - Tax Refund",
+"category": "MOOE"
+},
+{
+"code": "5021502000",
+"title": "Fidelity Bond Premiums",
+"category": "MOOE"
+},
+{
+"code": "5021503000",
+"title": "Insurance Expenses",
+"category": "MOOE"
+},
+{
+"code": "5021601000",
+"title": "Labor and Wages",
+"category": "MOOE"
+},
+{
+"code": "5029901000",
+"title": "Advertising, Promotional and Marketing Expenses",
+"category": "MOOE"
+},
+{
+"code": "5029902000",
+"title": "Printing and Publication Expenses",
+"category": "MOOE"
+},
+{
+"code": "5029903000",
+"title": "Representation Expenses",
+"category": "MOOE"
+},
+{
+"code": "5029904000",
+"title": "Transportation and Delivery Expenses",
+"category": "MOOE"
+},
+{
+"code": "5029905000",
+"title": "Rent/Lease Expenses",
+"category": "MOOE"
+},
+{
+"code": "5029905001",
+"title": "Rent/Lease Expenses - Rents-Buildings and Structures",
+"category": "MOOE"
+},
+{
+"code": "5029905002",
+"title": "Rent/Lease Expenses - Rents-Land",
+"category": "MOOE"
+},
+{
+"code": "5029905003",
+"title": "Rent/Lease Expenses - Rents-Motor Vehicles",
+"category": "MOOE"
+},
+{
+"code": "5029905004",
+"title": "Rent/Lease Expenses - Rents-Equipment",
+"category": "MOOE"
+},
+{
+"code": "5029905005",
+"title": "Rent/Lease Expenses - Rents-Living Quarters",
+"category": "MOOE"
+},
+{
+"code": "5029905006",
+"title": "Rent/Lease Expenses - Operating Lease",
+"category": "MOOE"
+},
+{
+"code": "5029905007",
+"title": "Rent/Lease Expenses - Financial Lease",
+"category": "MOOE"
+},
+{
+"code": "5029905008",
+"title": "Rent/Lease Expenses - Rents-ICT Machinery and Equipment",
+"category": "MOOE"
+},
+{
+"code": "5029906000",
+"title": "Membership Dues and Contributions to Organizations",
+"category": "MOOE"
+},
+{
+"code": "5029907000",
+"title": "Subscription Expenses",
+"category": "MOOE"
+},
+{
+"code": "5029907001",
+"title": "Subscription Expenses - ICT Software Subscription",
+"category": "MOOE"
+},
+{
+"code": "5029907002",
+"title": "Subscription Expenses - Data Center Service",
+"category": "MOOE"
+},
+{
+"code": "5029907003",
+"title": "Subscription Expenses - Cloud Computing Service",
+"category": "MOOE"
+},
+{
+"code": "5029907004",
+"title": "Subscription Expenses - Library and Other Reading Materials Subscription",
+"category": "MOOE"
+},
+{
+"code": "5029907099",
+"title": "Subscription Expenses - Expenses Other Subscription Expenses",
+"category": "MOOE"
+},
+{
+"code": "5029908000",
+"title": "Donations",
+"category": "MOOE"
+},
+{
+"code": "5029909000",
+"title": "Litigation/Acquired Assets Expenses",
+"category": "MOOE"
+},
+{
+"code": "5029910000",
+"title": "Loss on Guaranty",
+"category": "MOOE"
+},
+{
+"code": "5029921000",
+"title": "Legal Defense Expense",
+"category": "MOOE"
+},
+{
+"code": "5029922000",
+"title": "Bank Transaction Fee",
+"category": "MOOE"
+},
+{
+"code": "5029999000",
+"title": "Other Maintenance and Operating Expenses",
+"category": "MOOE"
+},
+{
+"code": "5029999001",
+"title": "Other Maintenance and Operating Expenses - Website Maintenance",
+"category": "MOOE"
+},
+{
+"code": "5029999099",
+"title": "Other Maintenance and Operating Expenses",
+"category": "MOOE"
+},
+{
+"code": "5030101000",
+"title": "Management Supervision/Trusteeship Fees",
+"category": "Financial Expenses"
+},
+{
+"code": "5030102000",
+"title": "Interest Expenses",
+"category": "Financial Expenses"
+},
+{
+"code": "5030102001",
+"title": "Interest Expenses - Interest Paid to Non Residents",
+"category": "Financial Expenses"
+},
+{
+"code": "5030102002",
+"title": "Interest Expenses - Interest Paid to Residents other than General Government",
+"category": "Financial Expenses"
+},
+{
+"code": "5030102003",
+"title": "Interest Expenses - Interest Paid to other General Government Units",
+"category": "Financial Expenses"
+},
+{
+"code": "5030102004",
+"title": "Interest Expenses - Interest Expense-Others",
+"category": "Financial Expenses"
+},
+{
+"code": "5030103000",
+"title": "Guarantee Fees",
+"category": "Financial Expenses"
+},
+{
+"code": "5030104000",
+"title": "Bank Charges-Loans/Borrowings",
+"category": "Financial Expenses"
+},
+{
+"code": "5030105000",
+"title": "Commitment Fees",
+"category": "Financial Expenses"
+},
+{
+"code": "5030199000",
+"title": "Other Financial Charges",
+"category": "Financial Expenses"
+},
+{
+"code": "5040101000",
+"title": "Direct Labor",
+"category": "Direct Costs"
+},
+{
+"code": "5040102000",
+"title": "Manufacturing Overhead",
+"category": "Direct Costs"
+},
+{
+"code": "5040201000",
+"title": "Cost of Sales",
+"category": "Direct Costs"
+},
+{
+"code": "5050101000",
+"title": "Depreciation-Investment Property",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050102000",
+"title": "Depreciation-Land Improvements",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050102001",
+"title": "Depreciation-Land Improvements - Aquaculture Structures",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050102002",
+"title": "Depreciation-Land Improvements - Reforestation Projects",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050102099",
+"title": "Depreciation-Land Improvements - Other Land Improvements",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050103000",
+"title": "Depreciation-Infrastructure Assets",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050103001",
+"title": "Depreciation-Infrastructure Assets - Road Networks",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050103002",
+"title": "Depreciation-Infrastructure Assets - Flood Control Systems",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050103003",
+"title": "Depreciation-Infrastructure Assets - Sewer Systems",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050103004",
+"title": "Depreciation-Infrastructure Assets - Water Supply Systems",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050103005",
+"title": "Depreciation-Infrastructure Assets - Power Supply Systems",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050103006",
+"title": "Depreciation-Infrastructure Assets - Communications Networks",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050103007",
+"title": "Depreciation-Infrastructure Assets - Seaport Systems",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050103008",
+"title": "Depreciation-Infrastructure Assets - Airport Systems",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050103009",
+"title": "Depreciation-Infrastructure Assets - Parks, Plazas and Monuments",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050103010",
+"title": "Depreciation-Infrastructure Assets - Railway Systems",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050103099",
+"title": "Depreciation-Infrastructure Assets - Other Infrastructure Assets",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050104000",
+"title": "Depreciation-Buildings and Other Structures",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050104001",
+"title": "Depreciation-Buildings and Other Structures - Buildings",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050104002",
+"title": "Depreciation-Buildings and Other Structures - School Buildings",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050104003",
+"title": "Depreciation-Buildings and Other Structures - Hospitals and Health Centers",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050104004",
+"title": "Depreciation-Buildings and Other Structures - Markets",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050104005",
+"title": "Depreciation-Buildings and Other Structures - Slaughterhouses",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050104006",
+"title": "Depreciation-Buildings and Other Structures - Hostels and Dormitories",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050104099",
+"title": "Depreciation-Buildings and Other Structures - Other Structures",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050105000",
+"title": "Depreciation-Machinery and Equipment",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050105001",
+"title": "Depreciation-Machinery and Equipment - Machinery",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050105002",
+"title": "Depreciation-Machinery and Equipment - Office Equipment",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050105003",
+"title": "Depreciation-Machinery and Equipment - ICT Equipment",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050105004",
+"title": "Depreciation-Machinery and Equipment - Agricultural and Forestry Equipment",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050105005",
+"title": "Depreciation-Machinery and Equipment - Marine and Fishery Equipment",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050105006",
+"title": "Depreciation-Machinery and Equipment - Airport Equipment",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050105007",
+"title": "Depreciation-Machinery and Equipment - Communications Equipment",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050105008",
+"title": "Depreciation-Machinery and Equipment - Construction and Heavy Equipment",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050105009",
+"title": "Depreciation-Machinery and Equipment - Disaster Response and Rescue Equipment",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050105010",
+"title": "Depreciation-Machinery and Equipment - Military, Police and Security Equipment",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050105011",
+"title": "Depreciation-Machinery and Equipment - Medical Equipment",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050105012",
+"title": "Depreciation-Machinery and Equipment - Printing Equipment",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050105013",
+"title": "Depreciation-Machinery and Equipment - Sports Equipment",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050105014",
+"title": "Depreciation-Machinery and Equipment - Technical and Scientific Equipment",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050105099",
+"title": "Depreciation-Machinery and Equipment - Other Equipment",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050106000",
+"title": "Depreciation-Transportation Equipment",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050106001",
+"title": "Depreciation-Transportation Equipment - Motor Vehicles",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050106002",
+"title": "Depreciation-Transportation Equipment - Trains",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050106003",
+"title": "Depreciation-Transportation Equipment - Aircrafts and Aircrafts Ground Equipment",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050106004",
+"title": "Depreciation-Transportation Equipment - Watercrafts",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050106099",
+"title": "Depreciation-Transportation Equipment - Other Transportation Equipment",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050107000",
+"title": "Depreciation-Furniture, Fixtures and Books",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050107001",
+"title": "Depreciation-Furniture, Fixtures and Books - Furniture and Fixtures",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050107002",
+"title": "Depreciation-Furniture, Fixtures and Books - Books",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050108000",
+"title": "Depreciation-Leased Assets",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050108001",
+"title": "Depreciation-Leased Assets - Buildings and Other Structures",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050108002",
+"title": "Depreciation-Leased Assets - Machinery and Equipment",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050108003",
+"title": "Depreciation-Leased Assets - Transportation Equipment",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050108099",
+"title": "Depreciation-Leased Assets - Other Leased Assets",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050109000",
+"title": "Depreciation-Leased Assets Improvements",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050109001",
+"title": "Depreciation-Leased Assets Improvements - Land",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050109002",
+"title": "Depreciation-Leased Assets Improvements - Buildings",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050109099",
+"title": "Depreciation-Leased Assets Improvements - Other Leased Assets Improvements",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050110000",
+"title": "Depreciation-Heritage Assets",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050110001",
+"title": "Depreciation-Heritage Assets - Historical Buildings",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050110002",
+"title": "Depreciation-Heritage Assets - Works of Arts and Archeological Specimens",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050110099",
+"title": "Depreciation-Heritage Assets - Other Heritage Assets",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050111000",
+"title": "Depreciation-Service Concession Assets",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050111001",
+"title": "Depreciation-Service Concession Assets - Road Networks",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050111002",
+"title": "Depreciation-Service Concession Assets - Flood Control Systems",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050111003",
+"title": "Depreciation-Service Concession Assets - Sewer Systems",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050111004",
+"title": "Depreciation-Service Concession Assets - Water Supply Systems",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050111005",
+"title": "Depreciation-Service Concession Assets - Power Supply Systems",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050111006",
+"title": "Depreciation-Service Concession Assets - Communications Networks",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050111007",
+"title": "Depreciation-Service Concession Assets - Seaport Systems",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050111008",
+"title": "Depreciation-Service Concession Assets - Airport Systems",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050111009",
+"title": "Depreciation-Service Concession Assets - Parks, Plazas and Monuments",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050111010",
+"title": "Depreciation-Service Concession Assets - Railway Systems",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050111011",
+"title": "Depreciation-Service Concession Assets - Buildings and Other Structures",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050111099",
+"title": "Depreciation-Service Concession Assets - Other Service Concession Assets",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050113000",
+"title": "Depreciation-Bearer Biological Assets",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050114000",
+"title": "Depreciation-Bearer Trees, Plants and Crops",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050199000",
+"title": "Depreciation-Other Property, Plant and Equipment",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050199001",
+"title": "Depreciation-Other Property, Plant and Equipment - Work/Zoo Animals",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050199099",
+"title": "Depreciation-Other Property, Plant and Equipment - Other Property, Plant and Equipment",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050201000",
+"title": "Amortization-Intangible Assets",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050201001",
+"title": "Amortization-Intangible Assets - Patents/Copyrights",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050201002",
+"title": "Amortization-Intangible Assets - Computer Software",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050201003",
+"title": "Amortization-Intangible Assets - Websites",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050201099",
+"title": "Amortization-Intangible Assets - Other Intangible Assets",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050202000",
+"title": "Amortization-Service Concession-Intangible Assets",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050301000",
+"title": "Impairment Loss-Financial Assets Held to Maturity",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050302000",
+"title": "Impairment Loss-Loans and Receivables",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050303000",
+"title": "Impairment Loss-Lease Receivables",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050304000",
+"title": "Impairment Loss-Investments in Government-Owned or Contolled Corporations",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050305000",
+"title": "Impairment Loss-Investments in Joint Venture",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050306000",
+"title": "Impairment Loss-Other Receivables",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050307000",
+"title": "Impairment Loss-Inventories",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050308000",
+"title": "Impairment Loss-Investment Property",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050308001",
+"title": "Impairment Loss-Investment Property - Investment Property, Land",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050308002",
+"title": "Impairment Loss-Investment Property - Investment Property, Buildings",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050309000",
+"title": "Impairment Loss-Property, Plant and Equipment",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050310000",
+"title": "Impairment Loss-Biological Assets",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050311000",
+"title": "Impairment Loss-Intangible Assets",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050311001",
+"title": "Impairment Loss-Intangible Assets - Patents/Copyrights",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050311002",
+"title": "Impairment Loss-Intangible Assets - Computer Software",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050311003",
+"title": "Impairment Loss-Intangible Assets - Websites",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050311099",
+"title": "Impairment Loss-Intangible Assets - Other Intangible Assets",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050399000",
+"title": "Impairment Loss-Other Assets",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050401000",
+"title": "Loss on Foreign Exchange (FOREX)",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050402000",
+"title": "Loss on Sale of Investments",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050403000",
+"title": "Loss on Sale of Investment Property",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050404000",
+"title": "Loss on Sale of Property, Plant and Equipment",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050405000",
+"title": "Loss on Sale of Biological Assets",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050406000",
+"title": "Loss on Sale of Agricultural Produce",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050407000",
+"title": "Loss on Sale of Intangible Assets",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050408000",
+"title": "Loss on Sale of Assets",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050409000",
+"title": "Loss of Assets",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050411000",
+"title": "Loss on Initial Recognition of Biological Assets",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050412000",
+"title": "Loss from Changes in Fair Value of Financial Instruments",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050413000",
+"title": "Loss from Changes in Fair Value Less Costs to Sell of Biological Assets Due to Physical Change",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050414000",
+"title": "Loss from Changes in Fair Value Less Costs to Sell of Biological Assets Due to Price Change",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050420000",
+"title": "Share in the Loss of the Joint Ventures",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050425000",
+"title": "Loss on Sale of Unserviceable Property",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5050499000",
+"title": "Other Losses",
+"category": "Non-Cash Expenses"
+},
+{
+"code": "5060101000",
+"title": "Investment in Government-Owned and/or Controlled Corporations",
+"category": "Capital Outlay"
+},
+{
+"code": "5060101001",
+"title": "Investment in Government-Owned and/or Controlled Corporations",
+"category": "Capital Outlay"
+},
+{
+"code": "5060101002",
+"title": "Investment in Government-Owned and/or Controlled Corporations - Road Networks",
+"category": "Capital Outlay"
+},
+{
+"code": "5060101003",
+"title": "Investment in Government-Owned and/or Controlled Corporations - Flood Control Systems",
+"category": "Capital Outlay"
+},
+{
+"code": "5060101004",
+"title": "Investment in Government-Owned and/or Controlled Corporations - Sewer Systems",
+"category": "Capital Outlay"
+},
+{
+"code": "5060101005",
+"title": "Investment in Government-Owned and/or Controlled Corporations - Water Supply Systems",
+"category": "Capital Outlay"
+},
+{
+"code": "5060101006",
+"title": "Investment in Government-Owned and/or Controlled Corporations - Power Supply Systems",
+"category": "Capital Outlay"
+},
+{
+"code": "5060101007",
+"title": "Investment in Government-Owned and/or Controlled Corporations - Communications Networks",
+"category": "Capital Outlay"
+},
+{
+"code": "5060101008",
+"title": "Investment in Government-Owned and/or Controlled Corporations - Seaport Systems",
+"category": "Capital Outlay"
+},
+{
+"code": "5060101009",
+"title": "Investment in Government-Owned and/or Controlled Corporations - Airport Systems",
+"category": "Capital Outlay"
+},
+{
+"code": "5060101010",
+"title": "Investment in Government-Owned and/or Controlled Corporations - Parks, Plazas and Monuments",
+"category": "Capital Outlay"
+},
+{
+"code": "5060101099",
+"title": "Investment in Government-Owned and/or Controlled Corporations - Other Infrastructure Assets",
+"category": "Capital Outlay"
+},
+{
+"code": "5060102000",
+"title": "Investment in Associates",
+"category": "Capital Outlay"
+},
+{
+"code": "5060201000",
+"title": "Loans Outlay - Government-Owned and/or Controlled Corporations",
+"category": "Capital Outlay"
+},
+{
+"code": "5060202000",
+"title": "Loans Outlay - Local Government Units",
+"category": "Capital Outlay"
+},
+{
+"code": "5060299000",
+"title": "Loans Outlay - Others",
+"category": "Capital Outlay"
+},
+{
+"code": "5060301000",
+"title": "Land and Buildings Outlay",
+"category": "Capital Outlay"
+},
+{
+"code": "5060301001",
+"title": "Land and Buildings Outlay - Investment Property-Land",
+"category": "Capital Outlay"
+},
+{
+"code": "5060301002",
+"title": "Land and Buildings Outlay - Investment Property-Buildings",
+"category": "Capital Outlay"
+},
+{
+"code": "5060401000",
+"title": "Land Outlay",
+"category": "Capital Outlay"
+},
+{
+"code": "5060401001",
+"title": "Land Outlay - Land",
+"category": "Capital Outlay"
+},
+{
+"code": "5060402000",
+"title": "Land Improvements Outlay",
+"category": "Capital Outlay"
+},
+{
+"code": "5060402001",
+"title": "Land Improvements Outlay - Aquaculture Structures",
+"category": "Capital Outlay"
+},
+{
+"code": "5060402002",
+"title": "Land Improvements Outlay - Reforestation Projects",
+"category": "Capital Outlay"
+},
+{
+"code": "5060402099",
+"title": "Land Improvements Outlay - Other Land Improvements",
+"category": "Capital Outlay"
+},
+{
+"code": "5060403000",
+"title": "Infrastructure Outlay",
+"category": "Capital Outlay"
+},
+{
+"code": "5060403001",
+"title": "Infrastructure Outlay - Road Networks",
+"category": "Capital Outlay"
+},
+{
+"code": "5060403002",
+"title": "Infrastructure Outlay - Flood Control Systems",
+"category": "Capital Outlay"
+},
+{
+"code": "5060403003",
+"title": "Infrastructure Outlay - Sewer Systems",
+"category": "Capital Outlay"
+},
+{
+"code": "5060403004",
+"title": "Infrastructure Outlay - Water Supply Systems",
+"category": "Capital Outlay"
+},
+{
+"code": "5060403005",
+"title": "Infrastructure Outlay - Power Supply Systems",
+"category": "Capital Outlay"
+},
+{
+"code": "5060403006",
+"title": "Infrastructure Outlay - Communications Networks",
+"category": "Capital Outlay"
+},
+{
+"code": "5060403007",
+"title": "Infrastructure Outlay - Seaport Systems",
+"category": "Capital Outlay"
+},
+{
+"code": "5060403008",
+"title": "Infrastructure Outlay - Airport Systems",
+"category": "Capital Outlay"
+},
+{
+"code": "5060403009",
+"title": "Infrastructure Outlay - Parks, Plazas and Monuments",
+"category": "Capital Outlay"
+},
+{
+"code": "5060403099",
+"title": "Infrastructure Outlay - Other Infrastructure Assets",
+"category": "Capital Outlay"
+},
+{
+"code": "5060404000",
+"title": "Building and Other Structures Outlay",
+"category": "Capital Outlay"
+},
+{
+"code": "5060404001",
+"title": "Building and Other Structures Outlay - Buildings",
+"category": "Capital Outlay"
+},
+{
+"code": "5060404002",
+"title": "Building and Other Structures Outlay - School Buildings",
+"category": "Capital Outlay"
+},
+{
+"code": "5060404003",
+"title": "Building and Other Structures Outlay - Hospitals and Health Centers",
+"category": "Capital Outlay"
+},
+{
+"code": "5060404004",
+"title": "Building and Other Structures Outlay - Markets",
+"category": "Capital Outlay"
+},
+{
+"code": "5060404005",
+"title": "Building and Other Structures Outlay - Slaughterhouses",
+"category": "Capital Outlay"
+},
+{
+"code": "5060404006",
+"title": "Building and Other Structures Outlay - Hostels and Dormitories",
+"category": "Capital Outlay"
+},
+{
+"code": "5060404007",
+"title": "Building and Other Structures Outlay - Ground Water Monitoring Stations",
+"category": "Capital Outlay"
+},
+{
+"code": "5060404099",
+"title": "Building and Other Structures Outlay - Other Structures",
+"category": "Capital Outlay"
+},
+{
+"code": "5060405000",
+"title": "Machinery and Equipment Outlay",
+"category": "Capital Outlay"
+},
+{
+"code": "5060405001",
+"title": "Machinery and Equipment Outlay - Machinery",
+"category": "Capital Outlay"
+},
+{
+"code": "5060405002",
+"title": "Machinery and Equipment Outlay - Office Equipment",
+"category": "Capital Outlay"
+},
+{
+"code": "5060405003",
+"title": "Machinery and Equipment Outlay - Information and Communications Technology Equipment",
+"category": "Capital Outlay"
+},
+{
+"code": "5060405004",
+"title": "Machinery and Equipment Outlay - Agricultural and Forestry Equipment",
+"category": "Capital Outlay"
+},
+{
+"code": "5060405005",
+"title": "Machinery and Equipment Outlay - Marine and Fishery Equipment",
+"category": "Capital Outlay"
+},
+{
+"code": "5060405006",
+"title": "Machinery and Equipment Outlay - Airport Equipment",
+"category": "Capital Outlay"
+},
+{
+"code": "5060405007",
+"title": "Machinery and Equipment Outlay - Communications Equipment",
+"category": "Capital Outlay"
+},
+{
+"code": "5060405008",
+"title": "Machinery and Equipment Outlay - Construction and Heavy Equipment",
+"category": "Capital Outlay"
+},
+{
+"code": "5060405009",
+"title": "Machinery and Equipment Outlay - Disaster Response and Rescue Equipment",
+"category": "Capital Outlay"
+},
+{
+"code": "5060405010",
+"title": "Machinery and Equipment Outlay - Military, Police and Security Equipment",
+"category": "Capital Outlay"
+},
+{
+"code": "5060405011",
+"title": "Machinery and Equipment Outlay - Medical Equipment",
+"category": "Capital Outlay"
+},
+{
+"code": "5060405012",
+"title": "Machinery and Equipment Outlay - Printing Equipment",
+"category": "Capital Outlay"
+},
+{
+"code": "5060405013",
+"title": "Machinery and Equipment Outlay - Sports Equipment",
+"category": "Capital Outlay"
+},
+{
+"code": "5060405014",
+"title": "Machinery and Equipment Outlay - Technical and Scientific Equipment",
+"category": "Capital Outlay"
+},
+{
+"code": "5060405015",
+"title": "Machinery and Equipment Outlay - ICT Software",
+"category": "Capital Outlay"
+},
+{
+"code": "5060405099",
+"title": "Machinery and Equipment Outlay - Other Machinery and Equipment",
+"category": "Capital Outlay"
+},
+{
+"code": "5060406000",
+"title": "Transportation Equipment Outlay",
+"category": "Capital Outlay"
+},
+{
+"code": "5060406001",
+"title": "Transportation Equipment Outlay - Motor Vehicles",
+"category": "Capital Outlay"
+},
+{
+"code": "5060406002",
+"title": "Transportation Equipment Outlay - Trains",
+"category": "Capital Outlay"
+},
+{
+"code": "5060406003",
+"title": "Transportation Equipment Outlay - Aircrafts and Aircrafts Ground Equipment",
+"category": "Capital Outlay"
+},
+{
+"code": "5060406004",
+"title": "Transportation Equipment Outlay - Watercrafts",
+"category": "Capital Outlay"
+},
+{
+"code": "5060406099",
+"title": "Transportation Equipment Outlay - Other Transportation Equipment",
+"category": "Capital Outlay"
+},
+{
+"code": "5060407000",
+"title": "Furniture, Fixtures and Books Outlay",
+"category": "Capital Outlay"
+},
+{
+"code": "5060407001",
+"title": "Furniture, Fixtures and Books Outlay - Furniture and Fixtures",
+"category": "Capital Outlay"
+},
+{
+"code": "5060407002",
+"title": "Furniture, Fixtures and Books Outlay - Books",
+"category": "Capital Outlay"
+},
+{
+"code": "5060408000",
+"title": "Heritage Assets",
+"category": "Capital Outlay"
+},
+{
+"code": "5060408001",
+"title": "Heritage Assets - Historical Buildings",
+"category": "Capital Outlay"
+},
+{
+"code": "5060408002",
+"title": "Heritage Assets - Works of Arts and Archeological Specimens",
+"category": "Capital Outlay"
+},
+{
+"code": "5060408099",
+"title": "Heritage Assets - Other Heritage Assets",
+"category": "Capital Outlay"
+},
+{
+"code": "5060409000",
+"title": "Other Property, Plant and Equipment Outlay",
+"category": "Capital Outlay"
+},
+{
+"code": "5060409001",
+"title": "Other Property, Plant and Equipment Outlay - Work/Zoo Animals",
+"category": "Capital Outlay"
+},
+{
+"code": "5060409099",
+"title": "Other Property, Plant and Equipment Outlay - Other Property, Plant and Equipment",
+"category": "Capital Outlay"
+},
+{
+"code": "5060501000",
+"title": "Bearer Biological Assets",
+"category": "Capital Outlay"
+},
+{
+"code": "5060501001",
+"title": "Bearer Biological Assets - Breeding Stocks",
+"category": "Capital Outlay"
+},
+{
+"code": "5060501002",
+"title": "Bearer Biological Assets - Livestock",
+"category": "Capital Outlay"
+},
+{
+"code": "5060501003",
+"title": "Bearer Biological Assets - Trees, Plants and Crops",
+"category": "Capital Outlay"
+},
+{
+"code": "5060501004",
+"title": "Bearer Biological Assets - Aquaculture",
+"category": "Capital Outlay"
+},
+{
+"code": "5060501099",
+"title": "Bearer Biological Assets - Other Bearer Biological Assets",
+"category": "Capital Outlay"
+},
+{
+"code": "5060601000",
+"title": "Patents/Copyrights",
+"category": "Capital Outlay"
+},
+{
+"code": "5060602000",
+"title": "Computer Software",
+"category": "Capital Outlay"
+},
+{
+"code": "5060699000",
+"title": "Other Intangible Assets",
+"category": "Capital Outlay"
+}
+]
