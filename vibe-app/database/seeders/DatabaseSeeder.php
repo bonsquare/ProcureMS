@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
             ['code' => 'SCH-8923', 'name' => 'Metro Polytechnic College', 'address' => 'Chicago, IL'],
             ['code' => 'SCH-8924', 'name' => 'Riverbend Hills University', 'address' => 'Seattle, WA'],
             ['code' => 'SCH-8925', 'name' => 'Oakridge Arts & Sciences', 'address' => 'Denver, CO'],
+            ['code' => 'SCH-TEST', 'name' => 'Test School', 'address' => 'Test City'],
         ])->map(fn (array $school) => School::updateOrCreate(['code' => $school['code']], $school));
 
         $admin = User::updateOrCreate(
@@ -35,8 +36,12 @@ class DatabaseSeeder extends Seeder
         );
 
         foreach ($schools as $school) {
+            $email = $school->code === 'SCH-TEST'
+                ? 'orong.rms@gmail.com'
+                : 'admin@' . strtolower(str_replace(' ', '', $school->name)) . '.test';
+
             $user = User::updateOrCreate(
-                ['email' => 'admin@' . strtolower(str_replace(' ', '', $school->name)) . '.test'],
+                ['email' => $email],
                 ['name' => $school->name . ' Admin', 'password' => Hash::make('password'), 'role' => 'school_admin', 'school_id' => $school->id]
             );
 
