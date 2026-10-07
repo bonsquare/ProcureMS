@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AuditLog;
 use App\Models\Organization;
 use App\Models\School;
+use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -69,9 +70,11 @@ class AuthController extends Controller
         DB::transaction(function () use ($data) {
             $organization = Organization::create([
                 'name' => $data['name'],
-                'slug' => 'org-' . Str::lower(Str::random(12)),
+                'slug' => 'org-'.Str::lower(Str::random(12)),
                 'status' => 'pending',
+                'fiscal_year' => now()->year,
             ]);
+            $organization->update(['organization_code' => sprintf('ORG-%06d', $organization->id)]);
             $schoolData = collect($data)->except([
                 'system_user_name',
                 'system_user_email',
@@ -83,7 +86,7 @@ class AuthController extends Controller
 
             $nextNumber = max(1000, ((int) School::max('id')) + 1000);
             do {
-                $schoolData['code'] = 'SCH-' . $nextNumber++;
+                $schoolData['code'] = 'SCH-'.$nextNumber++;
             } while (School::where('code', $schoolData['code'])->exists());
 
             $school = School::create($schoolData);
@@ -96,6 +99,18 @@ class AuthController extends Controller
                 'organization_id' => $organization->id,
                 'school_id' => $school->id,
                 'position' => 'School Administrator',
+            ]);
+
+            Subscription::create([
+                'organization_id' => $organization->id,
+                'school_id' => $school->id,
+                'plan' => 'trial',
+                'billing_cycle' => 'monthly',
+                'amount' => 0,
+                'payment_status' => 'pending',
+                'status' => 'trial',
+                'starts_at' => now(),
+                'subscription_end' => now()->addDays(30),
             ]);
 
             AuditLog::create([

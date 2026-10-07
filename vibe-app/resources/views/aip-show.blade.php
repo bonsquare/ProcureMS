@@ -19,6 +19,8 @@
             <span class="rounded-full px-2 py-0.5 text-xs font-semibold {{ $aip->status === 'approved' ? 'bg-secondary/10 text-secondary' : 'bg-amber-100 text-amber-800' }}">{{ \Illuminate\Support\Str::headline($aip->status) }}</span>
             @if($aip->approved_at) · approved {{ $aip->approved_at->format('M d, Y') }}@endif
         </p>
+        @if($aip->transaction)<a href="{{ route('transactions.show', $aip->transaction) }}" class="mt-2 inline-flex text-xs font-semibold text-primary underline">Transaction timeline · {{ $aip->transaction->transaction_number }}</a>@endif
+        @if($aip->sipProject)<p class="mt-1 text-xs text-on-surface-variant">SIP priority: {{ $aip->sipProject->project }}</p>@endif
     </div>
     <div class="flex flex-wrap gap-2">
         <a href="{{ route('aip') }}" class="rounded border border-outline-variant/60 bg-white px-4 py-2.5 text-xs font-semibold hover:bg-surface-low">← All AIPs</a>

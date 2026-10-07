@@ -2,24 +2,28 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AgencySetting;
 use App\Models\Aip;
 use App\Models\AipActivity;
 use App\Models\AipKra;
 use App\Models\AuditLog;
 use App\Models\BudgetAllocation;
 use App\Models\ChartOfAccount;
+use App\Models\FundSource;
 use App\Models\School;
 use App\Services\BudgetService;
+use App\Services\DocumentNumberService;
+use App\Services\FiscalYearService;
+use App\Services\MasterTransactionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class AipController extends Controller
 {
-    public function __construct(private BudgetService $budget)
-    {
-    }
+    public function __construct(private BudgetService $budget, private FiscalYearService $fiscalYears, private MasterTransactionService $transactions) {}
 
     private function schoolIds()
     {
@@ -60,13 +64,19 @@ class AipController extends Controller
         ], ['fiscal_year.unique' => 'This school already has an AIP for that fiscal year.']);
 
         $school = School::findOrFail($data['school_id']);
-        $aip = Aip::create($data + [
-            'created_by' => $request->user()->id,
-            'prepared_by_name' => $school->school_head,
-            'prepared_by_position' => 'School Head',
-            'noted_by_position' => 'Chief, SGOD',
-            'approved_by_position' => 'Schools Division Superintendent',
-        ]);
+        $this->fiscalYears->assertOpen((int) $school->organization_id, (int) $data['fiscal_year']);
+        $aip = DB::transaction(function () use ($data, $request, $school) {
+            $aip = Aip::create($data + [
+                'created_by' => $request->user()->id,
+                'prepared_by_name' => $school->school_head,
+                'prepared_by_position' => 'School Head',
+                'noted_by_position' => 'Chief, SGOD',
+                'approved_by_position' => 'Schools Division Superintendent',
+            ]);
+            $this->transactions->forAip($aip, $request->user());
+
+            return $aip;
+        });
 
         return redirect()->route('aip.show', $aip)->with('success', 'AIP created. Add the activities below.');
     }
@@ -74,12 +84,12 @@ class AipController extends Controller
     public function show(Aip $aip)
     {
         $this->authorizeAip($aip);
-        $aip->load(['school', 'kras.activities.account']);
+        $aip->load(['school', 'kras.activities.account', 'transaction', 'sipProject']);
 
         return view('aip-show', [
             'aip' => $aip,
             'accounts' => $this->accounts(),
-            'fundOptions' => $aip->fundOptions(),
+            'fundOptions' => $this->fundOptions($aip),
             'pillars' => collect(Aip::PILLARS)->merge(AipKra::whereIn('aip_id', Aip::pluck('id'))->distinct()->pluck('pillar'))->filter()->unique()->values(),
             'canManage' => request()->user()->canManageBudget(),
             'allotments' => $aip->allotments()->get(),
@@ -91,7 +101,7 @@ class AipController extends Controller
         $this->authorizeAip($aip);
         $aip->load(['school', 'kras.activities']);
 
-        return view('aip-print', ['aip' => $aip, 'agency' => \App\Models\AgencySetting::first()]);
+        return view('aip-print', ['aip' => $aip, 'agency' => AgencySetting::first()]);
     }
 
     public function update(Request $request, Aip $aip)
@@ -106,14 +116,16 @@ class AipController extends Controller
             'approved_by_name' => ['nullable', 'string', 'max:255'], 'approved_by_position' => ['nullable', 'string', 'max:255'],
         ]);
         $yearChanged = isset($data['fiscal_year']) && (int) $data['fiscal_year'] !== (int) $aip->fiscal_year;
+        $this->fiscalYears->assertOpen((int) $aip->organization_id, (int) ($data['fiscal_year'] ?? $aip->fiscal_year));
         $aip->update($data);
         if ($yearChanged) {
             // Allotments created from this AIP follow its fiscal year.
-            $aip->allotments()->update(['fiscal_year' => $data['fiscal_year'], 'start_date' => $data['fiscal_year'] . '-01-01', 'end_date' => $data['fiscal_year'] . '-12-31']);
+            $aip->allotments()->update(['fiscal_year' => $data['fiscal_year'], 'start_date' => $data['fiscal_year'].'-01-01', 'end_date' => $data['fiscal_year'].'-12-31']);
+            $aip->transaction?->update(['fiscal_year' => $data['fiscal_year'], 'title' => 'AIP FY '.$data['fiscal_year']]);
         }
 
         if ($yearChanged) {
-            return back()->with('success', 'Fiscal year changed to FY ' . $data['fiscal_year'] . '.');
+            return back()->with('success', 'Fiscal year changed to FY '.$data['fiscal_year'].'.');
         }
 
         return back()->with('success', isset($data['entity']) ? 'Entity updated. Source of fund choices now follow it.' : 'Signatories saved.');
@@ -147,7 +159,7 @@ class AipController extends Controller
                 'id', 'activity', 'physical_target', 'timeline', 'q1_amount', 'q2_amount', 'q3_amount', 'q4_amount', 'source_of_fund', 'chart_of_account_id', 'responsible_persons', 'remarks_list',
             ]))->all()),
             'accounts' => $this->accounts(),
-            'fundOptions' => $aip->fundOptions(),
+            'fundOptions' => $this->fundOptions($aip),
             'pillars' => collect(Aip::PILLARS)->merge(AipKra::whereIn('aip_id', Aip::pluck('id'))->distinct()->pluck('pillar'))->filter()->unique()->values(),
         ];
     }
@@ -157,7 +169,8 @@ class AipController extends Controller
     {
         $this->authorizeManage();
         $this->authorizeAip($aip);
-        [$kraData, $activities] = $this->validatedKraForm($request);
+        $this->fiscalYears->assertOpen((int) $aip->organization_id, (int) $aip->fiscal_year);
+        [$kraData, $activities] = $this->validatedKraForm($request, $aip);
 
         DB::transaction(function () use ($aip, $kraData, $activities) {
             $kra = $aip->kras()->create($kraData);
@@ -176,7 +189,8 @@ class AipController extends Controller
         $this->authorizeManage();
         $this->authorizeAip($aip);
         abort_unless($kra->aip_id === $aip->id, 404);
-        [$kraData, $activities] = $this->validatedKraForm($request);
+        $this->fiscalYears->assertOpen((int) $aip->organization_id, (int) $aip->fiscal_year);
+        [$kraData, $activities] = $this->validatedKraForm($request, $aip);
 
         DB::transaction(function () use ($aip, $kra, $kraData, $activities) {
             $kra->update($kraData);
@@ -204,6 +218,7 @@ class AipController extends Controller
         $this->authorizeManage();
         $this->authorizeAip($aip);
         abort_unless($kra->aip_id === $aip->id, 404);
+        $this->fiscalYears->assertOpen((int) $aip->organization_id, (int) $aip->fiscal_year);
         $kra->delete();
         $this->markRevised($aip);
 
@@ -214,7 +229,9 @@ class AipController extends Controller
     private function markRevised(Aip $aip): void
     {
         if ($aip->status === 'approved') {
+            $aip->transaction?->recordEvent('aip', 'revised', 'approved', 'revised');
             $aip->update(['status' => 'revised']);
+            $aip->transaction?->update(['status' => 'planning']);
         }
     }
 
@@ -224,12 +241,24 @@ class AipController extends Controller
         ChartOfAccount::ensureDefaults($user->organization_id);
 
         return ChartOfAccount::query()
-            ->when($user->role === 'master_user' && !$user->organization_id, fn ($q) => $q->whereNull('organization_id'))
+            ->when($user->role === 'master_user' && ! $user->organization_id, fn ($q) => $q->whereNull('organization_id'))
             ->where('category', '!=', 'Revenue')->orderBy('code')->get();
     }
 
+    private function fundOptions(Aip $aip): array
+    {
+        return FundSource::where('organization_id', $aip->organization_id)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->pluck('name')
+            ->merge($aip->fundOptions())
+            ->unique()
+            ->values()
+            ->all();
+    }
+
     /** @return array{0: array<string, mixed>, 1: array<int, array<string, mixed>>} */
-    private function validatedKraForm(Request $request): array
+    private function validatedKraForm(Request $request, Aip $aip): array
     {
         $data = $request->validate([
             'pillar' => ['nullable', 'string', 'max:100'],
@@ -247,8 +276,12 @@ class AipController extends Controller
             'activities.*.q2_amount' => ['nullable', 'numeric', 'min:0'],
             'activities.*.q3_amount' => ['nullable', 'numeric', 'min:0'],
             'activities.*.q4_amount' => ['nullable', 'numeric', 'min:0'],
-            'activities.*.source_of_fund' => ['nullable', 'string', 'max:255'],
-            'activities.*.chart_of_account_id' => ['nullable', 'integer', 'exists:chart_of_accounts,id'],
+            'activities.*.source_of_fund' => ['nullable', 'string', 'max:255', Rule::in($this->fundOptions($aip))],
+            'activities.*.chart_of_account_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('chart_of_accounts', 'id')->where('organization_id', $aip->organization_id),
+            ],
             'activities.*.responsible_persons' => ['nullable', 'array'],
             'activities.*.responsible_persons.*' => ['nullable', 'string', 'max:255'],
             'activities.*.remarks_list' => ['nullable', 'array'],
@@ -278,18 +311,21 @@ class AipController extends Controller
     {
         $this->authorizeManage();
         $this->authorizeAip($aip);
+        $this->fiscalYears->assertOpen((int) $aip->organization_id, (int) $aip->fiscal_year);
         $aip->load(['school', 'activities.account', 'activities.kra']);
 
         $funded = $aip->activities->filter(fn ($a) => $a->total > 0);
-        $incomplete = $funded->filter(fn ($a) => !$a->source_of_fund || !$a->chart_of_account_id);
+        $incomplete = $funded->filter(fn ($a) => ! $a->source_of_fund || ! $a->chart_of_account_id);
         if ($funded->isEmpty()) {
             throw ValidationException::withMessages(['aip' => 'Add at least one activity with a financial target before approving.']);
         }
         if ($incomplete->isNotEmpty()) {
-            throw ValidationException::withMessages(['aip' => sprintf('%s still need%s a source of fund and an account code (e.g. "%s").', $incomplete->count() === 1 ? '1 funded activity' : $incomplete->count() . ' funded activities', $incomplete->count() === 1 ? 's' : '', \Illuminate\Support\Str::limit($incomplete->first()->activity, 50))]);
+            throw ValidationException::withMessages(['aip' => sprintf('%s still need%s a source of fund and an account code (e.g. "%s").', $incomplete->count() === 1 ? '1 funded activity' : $incomplete->count().' funded activities', $incomplete->count() === 1 ? 's' : '', Str::limit($incomplete->first()->activity, 50))]);
         }
 
-        $groups = $funded->groupBy(fn ($a) => $a->source_of_fund . '|' . $a->chart_of_account_id . '|' . $a->kra?->program);
+        $transaction = $this->transactions->forAip($aip, $request->user());
+
+        $groups = $funded->groupBy(fn ($a) => $a->source_of_fund.'|'.$a->chart_of_account_id.'|'.$a->kra?->program);
         $created = $updated = 0;
 
         foreach ($groups as $group) {
@@ -303,33 +339,32 @@ class AipController extends Controller
                 if ($amount + 0.001 < $row['obligated']) {
                     throw ValidationException::withMessages(['aip' => sprintf('"%s" (%s) is already obligated ₱%s, which is more than the AIP now allots (₱%s).', $first->kra?->program, $first->source_of_fund, number_format($row['obligated'], 2), number_format($amount, 2))]);
                 }
-                $line->update($totals + ['amount' => $amount]);
+                $line->update($totals + ['amount' => $amount, 'master_transaction_id' => $transaction->id]);
                 $updated++;
             } else {
                 BudgetAllocation::create($totals + [
-                    'aip_id' => $aip->id, 'school_id' => $aip->school_id, 'office' => $aip->school->name, 'fiscal_year' => $aip->fiscal_year,
-                    'start_date' => $aip->fiscal_year . '-01-01', 'end_date' => $aip->fiscal_year . '-12-31',
+                    'aip_id' => $aip->id, 'school_id' => $aip->school_id, 'master_transaction_id' => $transaction->id, 'office' => $aip->school->name, 'fiscal_year' => $aip->fiscal_year,
+                    'start_date' => $aip->fiscal_year.'-01-01', 'end_date' => $aip->fiscal_year.'-12-31',
                     'source_of_fund' => $first->source_of_fund, 'program' => $first->kra?->program, 'chart_of_account_id' => $first->chart_of_account_id,
                     'uacs_code' => $first->account->code, 'particulars' => $first->account->title, 'amount' => $amount, 'created_by' => $request->user()->id,
-                    'budget_ref_no' => $this->nextReference($aip->fiscal_year), 'remarks' => 'From AIP FY ' . $aip->fiscal_year,
+                    'budget_ref_no' => $this->nextReference($aip->fiscal_year, (int) $aip->organization_id), 'remarks' => 'From AIP FY '.$aip->fiscal_year,
                 ]);
                 $created++;
             }
         }
 
+        $previousStatus = $aip->status;
         $aip->update(['status' => 'approved', 'approved_at' => now()]);
+        $transaction->update(['status' => 'budget']);
+        $transaction->recordEvent('aip', 'approved', $previousStatus, 'approved', null, ['created_allocations' => $created, 'updated_allocations' => $updated]);
         AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $aip->school_id, 'action' => 'aip_approved', 'auditable_type' => Aip::class, 'auditable_id' => $aip->id, 'metadata' => ['created' => $created, 'updated' => $updated]]);
 
         return back()->with('success', "AIP approved. Allotments created: {$created}, updated: {$updated}. See the Allotment Registry.");
     }
 
-    private function nextReference(int $year): string
+    private function nextReference(int $year, int $organizationId): string
     {
-        $next = BudgetAllocation::withoutGlobalScopes()->where('fiscal_year', $year)->count() + 1;
-        do {
-            $reference = sprintf('BA-%d-%04d', $year, $next++);
-        } while (BudgetAllocation::withoutGlobalScopes()->where('budget_ref_no', $reference)->exists());
-
-        return $reference;
+        return app(DocumentNumberService::class)
+            ->next($organizationId, 'budget_allocation', 'BA', $year);
     }
 }

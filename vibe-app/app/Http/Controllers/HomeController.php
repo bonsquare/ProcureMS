@@ -2,24 +2,28 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ProcurementRequest;
-use App\Models\ProcurementRequestItem;
-use App\Models\ProcurementDocument;
-use App\Models\Supplier;
-use App\Models\School;
 use App\Models\AgencySetting;
 use App\Models\AuditLog;
+use App\Models\BudgetAllocation;
 use App\Models\LiquidationReport;
-use App\Models\Subscription;
-use App\Models\SchoolStaff;
-use App\Models\User;
 use App\Models\Organization;
-use Illuminate\Support\Facades\Storage;
+use App\Models\ProcurementDocument;
+use App\Models\ProcurementRequest;
+use App\Models\School;
+use App\Models\SchoolStaff;
+use App\Models\Subscription;
+use App\Models\Supplier;
+use App\Models\User;
+use App\Services\BudgetService;
+use App\Services\DocumentNumberService;
+use App\Services\FiscalYearService;
+use App\Services\MasterTransactionService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class HomeController extends Controller
 {
@@ -46,7 +50,7 @@ class HomeController extends Controller
     private function authorizeSchoolAccess(?int $schoolId): void
     {
         $user = request()->user();
-        abort_if(!$this->isMasterUser() && !School::query()
+        abort_if(! $this->isMasterUser() && ! School::query()
             ->whereKey($schoolId)
             ->when(
                 Schema::hasColumn('schools', 'organization_id') && $user?->organization_id,
@@ -66,12 +70,20 @@ class HomeController extends Controller
         $this->authorizeSchoolAccess($liquidationReport->school_id);
     }
 
+    private function organizationIdForSchool(int $schoolId): int
+    {
+        $organizationId = School::withoutGlobalScopes()->whereKey($schoolId)->value('organization_id');
+        abort_unless($organizationId, 422, 'The selected school is not assigned to an organization.');
+
+        return (int) $organizationId;
+    }
+
     public function index()
     {
         $user = request()->user();
         $schools = School::withCount('users')
             ->with(['subscriptions' => fn ($query) => $query->latest()])
-            ->when(!$this->isMasterUser($user), fn ($query) => $query->whereIn('id', $this->scopedSchoolIds($user)))
+            ->when(! $this->isMasterUser($user), fn ($query) => $query->whereIn('id', $this->scopedSchoolIds($user)))
             ->latest()
             ->get();
         $schoolIds = $schools->pluck('id');
@@ -87,10 +99,10 @@ class HomeController extends Controller
             'pendingPreRegistrations' => $pendingPreRegistrations,
             'totalSchools' => $schools->count(),
             'activeSchools' => $schools->where('status', 'active')->count(),
-            'totalUsers' => User::when(!$this->isMasterUser($user), fn ($query) => $query->whereIn('school_id', $schoolIds))->count(),
+            'totalUsers' => User::when(! $this->isMasterUser($user), fn ($query) => $query->whereIn('school_id', $schoolIds))->count(),
             'activeSubscriptions' => Subscription::where('status', 'active')->whereIn('school_id', $schoolIds)->count(),
             'auditLogs' => AuditLog::with(['user', 'school'])
-                ->when(!$this->isMasterUser($user), fn ($query) => $query->whereIn('school_id', $schoolIds))
+                ->when(! $this->isMasterUser($user), fn ($query) => $query->whereIn('school_id', $schoolIds))
                 ->latest()
                 ->take(10)
                 ->get(),
@@ -116,7 +128,7 @@ class HomeController extends Controller
     public function exportAuditLogs()
     {
         $logs = AuditLog::with(['user', 'school'])
-            ->when(!$this->isMasterUser(), fn ($query) => $query->whereIn('school_id', $this->scopedSchoolIds()))
+            ->when(! $this->isMasterUser(), fn ($query) => $query->whereIn('school_id', $this->scopedSchoolIds()))
             ->latest()
             ->get();
 
@@ -134,7 +146,7 @@ class HomeController extends Controller
                 ]);
             }
             fclose($output);
-        }, 'audit-logs-' . now()->format('Y-m-d-His') . '.csv', [
+        }, 'audit-logs-'.now()->format('Y-m-d-His').'.csv', [
             'Content-Type' => 'text/csv',
         ]);
     }
@@ -155,7 +167,7 @@ class HomeController extends Controller
             'status' => ['required', 'in:active,inactive'],
             'system_user_name' => ['required', 'string', 'max:255'],
             'system_user_email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'system_user_role' => ['required', 'in:' . implode(',', array_keys(User::ROLES))],
+            'system_user_role' => ['required', 'in:'.implode(',', array_keys(User::ROLES))],
             'system_user_password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
@@ -164,9 +176,11 @@ class HomeController extends Controller
         DB::transaction(function () use ($data, $actorId) {
             $organization = Organization::create([
                 'name' => $data['name'],
-                'slug' => 'org-' . Str::lower(Str::random(12)),
+                'slug' => 'org-'.Str::lower(Str::random(12)),
                 'status' => $data['status'] === 'active' ? 'active' : 'pending',
+                'fiscal_year' => now()->year,
             ]);
+            $organization->update(['organization_code' => sprintf('ORG-%06d', $organization->id)]);
             $schoolData = collect($data)->except([
                 'system_user_name',
                 'system_user_email',
@@ -178,7 +192,7 @@ class HomeController extends Controller
 
             $nextNumber = max(1000, ((int) School::max('id')) + 1000);
             do {
-                $schoolData['code'] = 'SCH-' . $nextNumber++;
+                $schoolData['code'] = 'SCH-'.$nextNumber++;
             } while (School::where('code', $schoolData['code'])->exists());
 
             $school = School::create($schoolData);
@@ -191,6 +205,18 @@ class HomeController extends Controller
                 'organization_id' => $organization->id,
                 'school_id' => $school->id,
                 'position' => 'System User',
+            ]);
+
+            Subscription::create([
+                'organization_id' => $organization->id,
+                'school_id' => $school->id,
+                'plan' => 'trial',
+                'billing_cycle' => 'monthly',
+                'amount' => 0,
+                'payment_status' => 'pending',
+                'status' => 'trial',
+                'starts_at' => now(),
+                'subscription_end' => now()->addDays(30),
             ]);
 
             AuditLog::create([
@@ -209,23 +235,25 @@ class HomeController extends Controller
     public function procurement()
     {
         $user = request()->user();
-        $procurementRequests = ProcurementRequest::with('school', 'requester', 'liquidationReports')
+        $procurementRequests = ProcurementRequest::with('school', 'requester', 'liquidationReports', 'transaction')
             ->whereIn('school_id', $this->scopedSchoolIds())
             ->latest()
             ->get();
 
         $requests = $procurementRequests->map(fn (ProcurementRequest $request) => [
-                'record_id' => $request->id,
-                'ors' => $request->liquidationReports->map(fn ($r) => ['number' => $r->ors_number ?: $r->report_number, 'status' => $r->status])->all(),
-                'id' => $request->request_number,
-                'title' => $request->title,
-                'school' => $request->school?->name ?? 'Unassigned',
-                'by' => $request->requester?->name ?? 'System User',
-                'amount' => '₱' . number_format((float) $request->amount, 2),
-                'status' => str($request->status)->replace('_', ' ')->title()->toString(),
-                'tone' => in_array($request->status, ['pending_approval', 'returned']) ? 'error' : ($request->status === 'approved' ? 'secondary' : 'primary'),
-                'date' => optional($request->requested_at ?? $request->created_at)->format('M d, Y'),
-            ])->all();
+            'record_id' => $request->id,
+            'ors' => $request->liquidationReports->map(fn ($r) => ['number' => $r->ors_number ?: $r->report_number, 'status' => $r->status])->all(),
+            'id' => $request->request_number,
+            'title' => $request->title,
+            'transaction_id' => $request->master_transaction_id,
+            'transaction_number' => $request->transaction?->transaction_number,
+            'school' => $request->school?->name ?? 'Unassigned',
+            'by' => $request->requester?->name ?? 'System User',
+            'amount' => '₱'.number_format((float) $request->amount, 2),
+            'status' => str($request->status)->replace('_', ' ')->title()->toString(),
+            'tone' => in_array($request->status, ['pending_approval', 'returned']) ? 'error' : ($request->status === 'approved' ? 'secondary' : 'primary'),
+            'date' => optional($request->requested_at ?? $request->created_at)->format('M d, Y'),
+        ])->all();
 
         return view('procurement', [
             'requests' => $requests,
@@ -244,7 +272,7 @@ class HomeController extends Controller
     public function suppliers()
     {
         return view('suppliers', [
-            'suppliers' => Supplier::when(!$this->isMasterUser(), fn ($query) => $query->whereIn('school_id', $this->scopedSchoolIds()))
+            'suppliers' => Supplier::when(! $this->isMasterUser(), fn ($query) => $query->whereIn('school_id', $this->scopedSchoolIds()))
                 ->latest('business_name')
                 ->get(),
         ]);
@@ -253,11 +281,11 @@ class HomeController extends Controller
     public function storeSupplier(Request $request)
     {
         $data = $request->validate($this->supplierRules());
-        if (!$this->isMasterUser()) {
+        if (! $this->isMasterUser()) {
             $data['school_id'] = $request->user()?->school_id;
         }
         $data['has_company_owner'] = $request->boolean('has_company_owner');
-        if (!$data['has_company_owner']) {
+        if (! $data['has_company_owner']) {
             $data = array_merge($data, ['owner_salutation' => null, 'owner_given_name' => null, 'owner_middle_initial' => null, 'owner_last_name' => null]);
         }
         Supplier::create($data + ['status' => 'active']);
@@ -270,11 +298,11 @@ class HomeController extends Controller
         $this->authorizeSchoolAccess($supplier->school_id);
 
         $data = $request->validate($this->supplierRules());
-        if (!$this->isMasterUser()) {
+        if (! $this->isMasterUser()) {
             $data['school_id'] = $request->user()?->school_id;
         }
         $data['has_company_owner'] = $request->boolean('has_company_owner');
-        if (!$data['has_company_owner']) {
+        if (! $data['has_company_owner']) {
             $data = array_merge($data, ['owner_salutation' => null, 'owner_given_name' => null, 'owner_middle_initial' => null, 'owner_last_name' => null]);
         }
         $supplier->update($data);
@@ -308,7 +336,7 @@ class HomeController extends Controller
 
     private function openBudgetItems()
     {
-        return app(\App\Services\BudgetService::class)->withAvailability(\App\Models\BudgetAllocation::whereIn('school_id', $this->scopedSchoolIds())->whereNull('closed_at')
+        return app(BudgetService::class)->withAvailability(BudgetAllocation::whereIn('school_id', $this->scopedSchoolIds())->whereNull('closed_at')
             ->where('fiscal_year', now()->year)->orderBy('particulars')->get());
     }
 
@@ -345,36 +373,58 @@ class HomeController extends Controller
         $this->authorizeSchoolAccess((int) $validated['school_id']);
         $items = $validated['items'];
         $amount = collect($items)->sum(fn (array $item) => (float) $item['quantity'] * (float) $item['unit_price']);
-        app(\App\Services\BudgetService::class)->assertAvailable('source_of_fund', (int) $validated['school_id'], $validated['source_of_fund'], (float) $amount);
+        $budgetAllocation = ! empty($validated['budget_allocation_id'])
+            ? BudgetAllocation::findOrFail($validated['budget_allocation_id'])
+            : null;
+        $organizationId = $this->organizationIdForSchool((int) $validated['school_id']);
+        $fiscalYear = $budgetAllocation?->fiscal_year ?? (int) date('Y', strtotime($validated['request_date']));
+        app(FiscalYearService::class)->assertOpen($organizationId, (int) $fiscalYear);
+        app(BudgetService::class)->assertAvailable('source_of_fund', (int) $validated['school_id'], $validated['source_of_fund'], (float) $amount);
         $this->assertBudgetItem($validated, (float) $amount);
 
-        $procurementRequest = DB::transaction(function () use ($validated, $request, $amount, $items) {
-            $requestNumber = !empty($validated['manually_encode_pr_number'])
+        $procurementRequest = DB::transaction(function () use ($validated, $request, $amount, $items, $budgetAllocation, $organizationId, $fiscalYear) {
+            $requestNumber = ! empty($validated['manually_encode_pr_number'])
                 ? $validated['manual_pr_number']
-                : $this->nextPurchaseRequestNumber();
+                : $this->nextPurchaseRequestNumber(true, $this->organizationIdForSchool((int) $validated['school_id']));
+            $masterTransactionId = $budgetAllocation?->master_transaction_id;
+            if (! $masterTransactionId) {
+                $transaction = app(MasterTransactionService::class)->create(
+                    School::findOrFail($validated['school_id']),
+                    (int) $fiscalYear,
+                    $validated['purpose'],
+                    $request->user(),
+                    'procurement',
+                    'created',
+                );
+                $masterTransactionId = $transaction->id;
+                $budgetAllocation?->update(['master_transaction_id' => $masterTransactionId]);
+            }
 
             $procurementRequest = ProcurementRequest::create([
-            'school_id' => $validated['school_id'],
-            'requested_by' => $request->user()->id,
-            'request_number' => $requestNumber,
-            'title' => $validated['purpose'],
-            'transaction_description' => $validated['transaction_description'] ?: null,
-            'entity_name' => $validated['entity_name'],
-            'department_name' => $validated['department_name'],
-            'section' => $validated['section'] ?: null,
-            'sai_number' => $validated['sai_number'] ?: null,
-            'sai_date' => $validated['sai_date'] ?: null,
-            'responsibility_center_code' => $validated['responsibility_center_code'] ?: null,
-            'source_of_fund' => $validated['source_of_fund'],
-            'budget_allocation_id' => $validated['budget_allocation_id'] ?? null,
-            'description' => 'Itemized goods request',
-            'amount' => $amount,
-            'extra_blank_rows' => $validated['extra_blank_rows'],
-            'status' => 'submitted',
-            'requested_at' => $validated['request_date'],
+                'school_id' => $validated['school_id'],
+                'requested_by' => $request->user()->id,
+                'request_number' => $requestNumber,
+                'title' => $validated['purpose'],
+                'transaction_description' => $validated['transaction_description'] ?: null,
+                'entity_name' => $validated['entity_name'],
+                'department_name' => $validated['department_name'],
+                'section' => $validated['section'] ?: null,
+                'sai_number' => $validated['sai_number'] ?: null,
+                'sai_date' => $validated['sai_date'] ?: null,
+                'responsibility_center_code' => $validated['responsibility_center_code'] ?: null,
+                  'source_of_fund' => $validated['source_of_fund'],
+                  'budget_allocation_id' => $validated['budget_allocation_id'] ?? null,
+                'master_transaction_id' => $masterTransactionId,
+                'description' => 'Itemized goods request',
+                'amount' => $amount,
+                'extra_blank_rows' => $validated['extra_blank_rows'],
+                'status' => 'submitted',
+                'requested_at' => $validated['request_date'],
             ]);
 
-            $this->replaceProcurementItems($procurementRequest, $items);
+              $this->replaceProcurementItems($procurementRequest, $items);
+              $procurementRequest->transaction?->update(['status' => 'procurement']);
+              $procurementRequest->transaction?->recordEvent('procurement', 'pr_created', null, 'submitted', $procurementRequest->request_number, ['procurement_request_id' => $procurementRequest->id, 'amount' => $amount]);
 
             return $procurementRequest;
         });
@@ -390,13 +440,24 @@ class HomeController extends Controller
         $this->authorizeSchoolAccess((int) $validated['school_id']);
         $items = $validated['items'];
         $amount = collect($items)->sum(fn (array $item) => (float) $item['quantity'] * (float) $item['unit_price']);
-        app(\App\Services\BudgetService::class)->assertAvailable('source_of_fund', (int) $validated['school_id'], $validated['source_of_fund'], (float) $amount, $procurementRequest->created_at?->year, $procurementRequest->id);
+        $budgetAllocation = ! empty($validated['budget_allocation_id'])
+            ? BudgetAllocation::findOrFail($validated['budget_allocation_id'])
+            : null;
+        if ($procurementRequest->liquidationReports()->exists()
+            && (int) $procurementRequest->budget_allocation_id !== (int) ($budgetAllocation?->id ?? 0)) {
+            throw ValidationException::withMessages(['budget_allocation_id' => 'The budget line cannot be changed after an ORS has been linked to this PR.']);
+        }
+        app(FiscalYearService::class)->assertOpen(
+            (int) $procurementRequest->organization_id,
+            (int) ($budgetAllocation?->fiscal_year ?? date('Y', strtotime($validated['request_date']))),
+        );
+        app(BudgetService::class)->assertAvailable('source_of_fund', (int) $validated['school_id'], $validated['source_of_fund'], (float) $amount, $procurementRequest->created_at?->year, $procurementRequest->id);
         $this->assertBudgetItem($validated, (float) $amount, $procurementRequest->id, null, $procurementRequest->created_at);
-        $requestNumber = !empty($validated['manually_encode_pr_number'])
+        $requestNumber = ! empty($validated['manually_encode_pr_number'])
             ? $validated['manual_pr_number']
             : (preg_match('/^PR-\d{4}-\d{3,}$/', $procurementRequest->request_number)
                 ? $procurementRequest->request_number
-                : $this->nextPurchaseRequestNumber());
+                : $this->nextPurchaseRequestNumber(true, (int) $procurementRequest->organization_id));
 
         $procurementRequest->update([
             'school_id' => $validated['school_id'],
@@ -410,12 +471,14 @@ class HomeController extends Controller
             'responsibility_center_code' => $validated['responsibility_center_code'] ?: null,
             'source_of_fund' => $validated['source_of_fund'],
             'budget_allocation_id' => $validated['budget_allocation_id'] ?? null,
+            'master_transaction_id' => $budgetAllocation?->master_transaction_id,
             'amount' => $amount,
             'extra_blank_rows' => $validated['extra_blank_rows'],
             'requested_at' => $validated['request_date'],
             'request_number' => $requestNumber,
         ]);
         $this->replaceProcurementItems($procurementRequest, $items);
+        $procurementRequest->transaction?->recordEvent('procurement', 'pr_updated', null, $procurementRequest->status, $procurementRequest->request_number, ['procurement_request_id' => $procurementRequest->id, 'amount' => $amount]);
 
         return redirect()->route('procurement.print', $procurementRequest)
             ->with('success', 'Procurement request updated successfully.');
@@ -428,30 +491,34 @@ class HomeController extends Controller
     private function assertBudgetItem(array $data, float $amount, ?int $ignorePrId = null, ?int $ignoreOrsId = null, ?\DateTimeInterface $date = null): void
     {
         if (empty($data['budget_allocation_id'])) {
-            $budgeted = \App\Models\BudgetAllocation::where('school_id', $data['school_id'])->where('fiscal_year', ($date ?? now())->format('Y'))->whereNull('closed_at');
+            $budgeted = BudgetAllocation::where('school_id', $data['school_id'])->where('fiscal_year', ($date ?? now())->format('Y'))->whereNull('closed_at');
             if ($budgeted->exists()) {
                 $message = (clone $budgeted)->where('source_of_fund', $data['source_of_fund'])->exists()
                     ? 'Select the budget line (account code) this expense is charged to.'
                     : 'The selected account code has no budget allocation for this year.';
-                throw \Illuminate\Validation\ValidationException::withMessages(['budget_allocation_id' => $message]);
+                throw ValidationException::withMessages(['budget_allocation_id' => $message]);
             }
 
             return;
         }
 
-        $item = \App\Models\BudgetAllocation::findOrFail($data['budget_allocation_id']);
+        $item = BudgetAllocation::findOrFail($data['budget_allocation_id']);
         if ($item->school_id !== (int) $data['school_id']) {
-            throw \Illuminate\Validation\ValidationException::withMessages(['budget_allocation_id' => 'The selected budget line belongs to a different school.']);
+            throw ValidationException::withMessages(['budget_allocation_id' => 'The selected budget line belongs to a different school.']);
         }
         if (strcasecmp($item->source_of_fund, (string) $data['source_of_fund']) !== 0) {
-            throw \Illuminate\Validation\ValidationException::withMessages(['budget_allocation_id' => 'The selected fund source does not match this budget line.']);
+            throw ValidationException::withMessages(['budget_allocation_id' => 'The selected fund source does not match this budget line.']);
         }
 
-        app(\App\Services\BudgetService::class)->assertItemAvailable('budget_allocation_id', $item->id, $amount, $ignorePrId, $ignoreOrsId, $date);
+        app(BudgetService::class)->assertItemAvailable('budget_allocation_id', $item->id, $amount, $ignorePrId, $ignoreOrsId, $date);
     }
 
     private function validateProcurement(Request $request): array
     {
+        $organizationId = $request->filled('school_id')
+            ? $this->organizationIdForSchool((int) $request->input('school_id'))
+            : (int) $request->user()->organization_id;
+
         return $request->validate([
             'school_id' => ['required', 'exists:schools,id'],
             'purpose' => ['required', 'string', 'max:255'],
@@ -466,7 +533,7 @@ class HomeController extends Controller
             'source_of_fund' => ['required', 'string', 'max:255'],
             'budget_allocation_id' => ['nullable', 'integer', 'exists:budget_allocations,id'],
             'manually_encode_pr_number' => ['nullable', 'boolean'],
-            'manual_pr_number' => ['nullable', 'required_if:manually_encode_pr_number,1', 'string', 'max:50', 'regex:/^PR-\d{4}-\d{3,}$/', Rule::unique('procurement_requests', 'request_number')->ignore($request->route('procurementRequest'))],
+            'manual_pr_number' => ['nullable', 'required_if:manually_encode_pr_number,1', 'string', 'max:50', 'regex:/^PR-\d{4}-\d{3,}$/', Rule::unique('procurement_requests', 'request_number')->where('organization_id', $organizationId)->ignore($request->route('procurementRequest'))],
             'extra_blank_rows' => ['nullable', 'integer', 'min:0', 'max:20'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.name' => ['required', 'string', 'max:255'],
@@ -477,20 +544,14 @@ class HomeController extends Controller
         ]);
     }
 
-    private function nextPurchaseRequestNumber(bool $lock = true): string
+    private function nextPurchaseRequestNumber(bool $lock = true, ?int $organizationId = null): string
     {
-        $year = now()->year;
-        $prefix = "PR-{$year}-";
-        $numbers = ProcurementRequest::where('request_number', 'like', $prefix . '%');
-        if ($lock) {
-            $numbers->lockForUpdate();
-        }
-        $lastSequence = $numbers
-            ->pluck('request_number')
-            ->map(fn (string $number) => preg_match('/^PR-' . $year . '-(\d+)$/', $number, $matches) ? (int) $matches[1] : 0)
-            ->max() ?? 0;
+        $organizationId ??= (int) request()->user()->organization_id;
+        $numbers = app(DocumentNumberService::class);
 
-        return sprintf('PR-%d-%03d', $year, $lastSequence + 1);
+        return $lock
+            ? $numbers->next($organizationId, 'purchase_request', 'PR', padding: 3)
+            : $numbers->preview($organizationId, 'purchase_request', 'PR', padding: 3);
     }
 
     private function replaceProcurementItems(ProcurementRequest $procurementRequest, array $items): void
@@ -516,7 +577,7 @@ class HomeController extends Controller
             ?? $staff->firstWhere('procurement_role', 'Procurement Officer');
         $approver = $staff->firstWhere('procurement_role', 'Approver')
             ?? $staff->first(fn ($member) => str_contains(strtolower((string) $member->position), 'school head'));
-        $agency = AgencySetting::first() ?? new AgencySetting();
+        $agency = AgencySetting::first() ?? new AgencySetting;
 
         return view('procurement-print', [
             'procurementRequest' => $procurementRequest,
@@ -553,15 +614,15 @@ class HomeController extends Controller
                 ->where('school_id', $procurementRequest->school_id)
                 ->orderBy('business_name')
                 ->get([
-                'id', 'business_name', 'business_address', 'tin', 'addressee', 'has_company_owner',
-                'owner_salutation', 'owner_given_name', 'owner_middle_initial', 'owner_last_name', 'contact_person',
-                'phone', 'email', 'business_permit_no', 'philgeps_no',
-            ]),
+                    'id', 'business_name', 'business_address', 'tin', 'addressee', 'has_company_owner',
+                    'owner_salutation', 'owner_given_name', 'owner_middle_initial', 'owner_last_name', 'contact_person',
+                    'phone', 'email', 'business_permit_no', 'philgeps_no',
+                ]),
             'abstractWinner' => $this->abstractWinner($procurementRequest),
             'purchaseOrder' => $procurementRequest->documents->firstWhere('document_type', 'purchase_order'),
-            'nextPoNumber' => $this->nextPurchaseOrderNumber(false),
+            'nextPoNumber' => $this->nextPurchaseOrderNumber(false, (int) $procurementRequest->organization_id),
             'documentCodes' => collect($this->procurementDocumentTypes())->mapWithKeys(fn ($definition, $type) => [$type => $definition['prefix']]),
-            'nextDocumentNumbers' => collect($this->procurementDocumentTypes())->mapWithKeys(fn ($definition, $type) => [$type => $this->nextOfficialDocumentNumber($type, $definition['prefix'], false)]),
+            'nextDocumentNumbers' => collect($this->procurementDocumentTypes())->mapWithKeys(fn ($definition, $type) => [$type => $this->nextOfficialDocumentNumber($type, $definition['prefix'], false, (int) $procurementRequest->organization_id)]),
             'schoolStaff' => $schoolStaff,
             'inspectionOfficerName' => $inspectionOfficer?->name ?? '',
         ]);
@@ -648,7 +709,7 @@ class HomeController extends Controller
                 ->where('document_type', 'inspection_acceptance_report')
                 ->first();
 
-            if (!$inspectionAcceptanceReport) {
+            if (! $inspectionAcceptanceReport) {
                 return back()->withErrors(['document_type' => 'Prepare the Inspection and Acceptance Report first so IARS can use the actual received items.'])->withInput();
             }
 
@@ -686,19 +747,21 @@ class HomeController extends Controller
                 ->where('document_type', 'purchase_order')
                 ->first();
 
-            if (!$inspectionAcceptanceReport) {
+            if (! $inspectionAcceptanceReport) {
                 return back()->withErrors(['document_type' => 'Prepare the Inspection and Acceptance Report first so ICS can use the actual received items.'])->withInput();
             }
 
             $receivedItems = $inspectionAcceptanceReport->metadata['received_items'] ?? [];
-            $selectedItems = collect($data['ics_items'] ?? [])->filter(fn ($row) => !empty($row['included']));
+            $selectedItems = collect($data['ics_items'] ?? [])->filter(fn ($row) => ! empty($row['included']));
             if ($selectedItems->isEmpty()) {
                 return back()->withErrors(['ics_items' => 'Select at least one received item for ICS.'])->withInput();
             }
 
             foreach ($procurementRequest->items as $item) {
                 $icsItem = $data['ics_items'][$item->id] ?? null;
-                if (!$icsItem || empty($icsItem['included'])) continue;
+                if (! $icsItem || empty($icsItem['included'])) {
+                    continue;
+                }
 
                 $receivedQuantity = $receivedItems[$item->id] ?? $item->quantity;
                 $receivedQuantity = $receivedQuantity === '' || $receivedQuantity === null ? (float) $item->quantity : (float) $receivedQuantity;
@@ -730,7 +793,7 @@ class HomeController extends Controller
                 ->where('document_type', 'purchase_order')
                 ->first();
 
-            if (!$purchaseOrder) {
+            if (! $purchaseOrder) {
                 return back()->withErrors(['document_type' => 'Prepare the Purchase Order before creating an Inspection and Acceptance Report.'])->withInput();
             }
 
@@ -764,7 +827,7 @@ class HomeController extends Controller
         }
         if (in_array($data['document_type'], ['notice_to_award', 'purchase_order', 'notice_to_proceed'], true)) {
             $winner = $this->abstractWinner($procurementRequest);
-            if (!$winner) {
+            if (! $winner) {
                 return back()->withErrors(['document_type' => 'Prepare the Abstract of Bids or Quotation with at least one supplier quotation before creating this document.'])->withInput();
             }
 
@@ -796,23 +859,24 @@ class HomeController extends Controller
         $existingDocument = $procurementRequest->documents()
             ->where('document_type', $data['document_type'])
             ->first();
-        if (!empty($data['manually_encode_document_number'])) {
-            $expectedPrefix = $type['prefix'] . '-';
-            if (!str_starts_with($data['manual_document_number'], $expectedPrefix)) {
+        if (! empty($data['manually_encode_document_number'])) {
+            $expectedPrefix = $type['prefix'].'-';
+            if (! str_starts_with($data['manual_document_number'], $expectedPrefix)) {
                 return back()->withErrors(['manual_document_number' => "Use the {$type['prefix']}-YYYY-001 format for this document."])->withInput();
             }
             $numberInUse = ProcurementDocument::where('document_number', $data['manual_document_number'])
+                ->where('organization_id', $procurementRequest->organization_id)
                 ->when($existingDocument, fn ($query) => $query->whereKeyNot($existingDocument->id))
                 ->exists();
             if ($numberInUse) {
                 return back()->withErrors(['manual_document_number' => 'This document number is already in use.'])->withInput();
             }
         }
-        $documentNumber = !empty($data['manually_encode_document_number'])
+        $documentNumber = ! empty($data['manually_encode_document_number'])
             ? $data['manual_document_number']
-            : (preg_match('/^' . preg_quote($type['prefix'], '/') . '-\d{4}-\d{3,}$/', (string) $existingDocument?->document_number)
+            : (preg_match('/^'.preg_quote($type['prefix'], '/').'-\d{4}-\d{3,}$/', (string) $existingDocument?->document_number)
                 ? $existingDocument->document_number
-                : $this->nextOfficialDocumentNumber($data['document_type'], $type['prefix']));
+                : $this->nextOfficialDocumentNumber($data['document_type'], $type['prefix'], true, (int) $procurementRequest->organization_id));
 
         $document = ProcurementDocument::updateOrCreate(
             [
@@ -852,37 +916,29 @@ class HomeController extends Controller
         AuditLog::create([
             'user_id' => $request->user()?->id,
             'school_id' => $procurementRequest->school_id,
-            'action' => 'prepared_' . $data['document_type'],
+            'action' => 'prepared_'.$data['document_type'],
             'auditable_type' => ProcurementDocument::class,
             'auditable_id' => $document->id,
         ]);
 
         return redirect()->route('procurement.documents', $procurementRequest)
-            ->with('success', $type['label'] . ' saved successfully.');
+            ->with('success', $type['label'].' saved successfully.');
     }
 
-    private function nextPurchaseOrderNumber(bool $lock = true): string
+    private function nextPurchaseOrderNumber(bool $lock = true, ?int $organizationId = null): string
     {
-        return $this->nextOfficialDocumentNumber('purchase_order', 'PO', $lock);
+        return $this->nextOfficialDocumentNumber('purchase_order', 'PO', $lock, $organizationId);
     }
 
-    private function nextOfficialDocumentNumber(string $documentType, string $code, bool $lock = true): string
+    private function nextOfficialDocumentNumber(string $documentType, string $code, bool $lock = true, ?int $organizationId = null): string
     {
-        $year = now()->year;
-        $prefix = "{$code}-{$year}-";
-        $numbers = ProcurementDocument::where('document_type', $documentType)
-            ->where('document_number', 'like', $prefix . '%');
-        if ($lock) {
-            $numbers->lockForUpdate();
-        }
-        $lastSequence = $numbers
-            ->pluck('document_number')
-            ->map(fn (string $number) => preg_match('/^' . preg_quote($code, '/') . '-' . $year . '-(\d+)$/', $number, $matches) ? (int) $matches[1] : 0)
-            ->max() ?? 0;
-
+        $organizationId ??= (int) request()->user()->organization_id;
         $digits = $code === 'RIS' ? 4 : 3;
+        $numbers = app(DocumentNumberService::class);
 
-        return sprintf('%s-%d-%0'.$digits.'d', $code, $year, $lastSequence + 1);
+        return $lock
+            ? $numbers->next($organizationId, 'procurement_'.$documentType, $code, padding: $digits)
+            : $numbers->preview($organizationId, 'procurement_'.$documentType, $code, padding: $digits);
     }
 
     private function abstractWinner(ProcurementRequest $procurementRequest): ?array
@@ -891,7 +947,9 @@ class HomeController extends Controller
             ->where('document_type', 'abstract_of_bids_quotation')
             ->first();
 
-        if (!$abstract) return null;
+        if (! $abstract) {
+            return null;
+        }
 
         $meta = $abstract->metadata ?? [];
         $legacy = [
@@ -901,13 +959,14 @@ class HomeController extends Controller
         ];
         $items = $procurementRequest->relationLoaded('items') ? $procurementRequest->items : $procurementRequest->items()->get();
         $bidders = collect($meta['bidders'] ?? $legacy)
-            ->filter(fn ($bidder) => !empty($bidder['name']))
+            ->filter(fn ($bidder) => ! empty($bidder['name']))
             ->map(function (array $bidder) use ($items) {
                 $prices = $bidder['prices'] ?? [];
                 $hasCurrentItemPrice = $items->contains(fn ($item) => array_key_exists((string) $item->id, $prices));
-                if (!$hasCurrentItemPrice && !empty($prices)) {
+                if (! $hasCurrentItemPrice && ! empty($prices)) {
                     $prices = $items->values()->mapWithKeys(fn ($item, $index) => [$item->id => array_values($bidder['prices'])[$index] ?? null])->all();
                 }
+
                 return [...$bidder, 'prices' => $prices];
             })
             ->values();
@@ -921,10 +980,12 @@ class HomeController extends Controller
                     $total += (float) $price * (float) $item->quantity;
                 }
             }
+
             return ['name' => $bidder['name'], 'total' => $total, 'quotes' => $quotes, 'prices' => $bidder['prices'] ?? []];
         })->filter(fn ($bidder) => $bidder['quotes'] > 0)->sortBy('total');
 
         $winner = $totals->first();
+
         return $winner ? ['name' => $winner['name'], 'total' => $winner['total'], 'prices' => $winner['prices']] : null;
     }
 
@@ -993,7 +1054,7 @@ class HomeController extends Controller
 
             return [
                 'stock_no' => $item->id,
-                'description' => trim($item->name . ($item->description ? ' ('.$item->description.')' : '')),
+                'description' => trim($item->name.($item->description ? ' ('.$item->description.')' : '')),
                 'unit' => $item->unit,
                 'po_quantity' => $poQuantity,
                 'received_quantity' => $receivedQuantity,
@@ -1039,40 +1100,46 @@ class HomeController extends Controller
     {
         $pesos = (int) floor($amount);
         $centavos = (int) round(($amount - $pesos) * 100);
-        $words = $this->integerInWords($pesos) . ' Pesos';
+        $words = $this->integerInWords($pesos).' Pesos';
         if ($centavos > 0) {
-            $words .= ' and ' . $this->integerInWords($centavos) . ' Centavos';
+            $words .= ' and '.$this->integerInWords($centavos).' Centavos';
         }
 
-        return $words . ' Only';
+        return $words.' Only';
     }
 
     private function integerInWords(int $number): string
     {
-        if ($number === 0) return 'Zero';
+        if ($number === 0) {
+            return 'Zero';
+        }
         $ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
         $tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
         $underThousand = function (int $value) use ($ones, $tens): string {
             $parts = [];
             if ($value >= 100) {
-                $parts[] = $ones[intdiv($value, 100)] . ' Hundred';
+                $parts[] = $ones[intdiv($value, 100)].' Hundred';
                 $value %= 100;
             }
             if ($value >= 20) {
-                $parts[] = $tens[intdiv($value, 10)] . ($value % 10 ? '-' . $ones[$value % 10] : '');
+                $parts[] = $tens[intdiv($value, 10)].($value % 10 ? '-'.$ones[$value % 10] : '');
             } elseif ($value > 0) {
                 $parts[] = $ones[$value];
             }
+
             return implode(' ', $parts);
         };
         $parts = [];
         foreach ([1000000000 => 'Billion', 1000000 => 'Million', 1000 => 'Thousand'] as $value => $label) {
             if ($number >= $value) {
-                $parts[] = $underThousand(intdiv($number, $value)) . ' ' . $label;
+                $parts[] = $underThousand(intdiv($number, $value)).' '.$label;
                 $number %= $value;
             }
         }
-        if ($number > 0) $parts[] = $underThousand($number);
+        if ($number > 0) {
+            $parts[] = $underThousand($number);
+        }
+
         return implode(' ', $parts);
     }
 
@@ -1085,7 +1152,7 @@ class HomeController extends Controller
         $status = request('status', 'all');
         $search = trim((string) request('search'));
 
-        $liquidations = LiquidationReport::with(['school', 'submitter', 'procurementRequest'])
+        $liquidations = LiquidationReport::with(['school', 'submitter', 'procurementRequest', 'transaction'])
             ->whereIn('school_id', $schoolIds)
             ->when($selectedSchoolId && $schoolIds->contains((int) $selectedSchoolId), fn ($query) => $query->where('school_id', $selectedSchoolId))
             ->when($status !== 'all', fn ($query) => $query->where('status', $status))
@@ -1146,7 +1213,7 @@ class HomeController extends Controller
             'school_id' => ['required', 'exists:schools,id'],
             'procurement_request_id' => ['nullable', 'exists:procurement_requests,id'],
             'manually_encode_ors_number' => ['nullable', 'boolean'],
-            'ors_number' => ['nullable', 'required_if:manually_encode_ors_number,1', 'string', 'max:100', Rule::unique('liquidation_reports', 'ors_number')],
+            'ors_number' => ['nullable', 'required_if:manually_encode_ors_number,1', 'string', 'max:100', Rule::unique('liquidation_reports', 'ors_number')->where('organization_id', $this->organizationIdForSchool((int) $request->input('school_id')))],
             'redirect_to' => ['nullable', 'in:budget'],
             'source_of_fund' => ['required', 'string', 'max:255'],
             'budget_allocation_id' => ['nullable', 'integer', 'exists:budget_allocations,id'],
@@ -1159,7 +1226,7 @@ class HomeController extends Controller
             'notes' => ['nullable', 'string', 'max:1000'],
         ], [], ['ors_number' => 'ORS serial number', 'manually_encode_ors_number' => 'manual ORS serial option']);
         abort_unless($schoolIds->contains((int) $data['school_id']), 403);
-        if (!empty($data['procurement_request_id'])) {
+        if (! empty($data['procurement_request_id'])) {
             $procurementRequest = ProcurementRequest::findOrFail($data['procurement_request_id']);
             $this->authorizeProcurementAccess($procurementRequest);
             // The linked PR decides the school, so a mismatched dropdown can't block the entry.
@@ -1174,23 +1241,43 @@ class HomeController extends Controller
         }
 
         if (empty($data['procurement_request_id'])) {
-            app(\App\Services\BudgetService::class)->assertAvailable('amount', (int) $data['school_id'], $data['source_of_fund'], (float) $data['amount']);
+            app(BudgetService::class)->assertAvailable('amount', (int) $data['school_id'], $data['source_of_fund'], (float) $data['amount']);
             $this->assertBudgetItem($data, (float) $data['amount']);
-            if (!empty($data['budget_allocation_id'])) {
-                $data['responsibility_center_code'] ??= \App\Models\BudgetAllocation::whereKey($data['budget_allocation_id'])->value('responsibility_center');
+            if (! empty($data['budget_allocation_id'])) {
+                $data['responsibility_center_code'] ??= BudgetAllocation::whereKey($data['budget_allocation_id'])->value('responsibility_center');
             }
         }
 
-        $orsNumber = DB::transaction(function () use ($data) {
-            $nextId = ((int) LiquidationReport::max('id')) + 1;
-            do {
-                $reportNumber = 'LR-' . now()->format('Y') . '-' . str_pad((string) $nextId++, 4, '0', STR_PAD_LEFT);
-            } while (LiquidationReport::where('report_number', $reportNumber)->exists());
+        $linkedRequest = ! empty($data['procurement_request_id']) ? ProcurementRequest::findOrFail($data['procurement_request_id']) : null;
+        $linkedBudget = ! empty($data['budget_allocation_id']) ? BudgetAllocation::findOrFail($data['budget_allocation_id']) : null;
+        $organizationId = $this->organizationIdForSchool((int) $data['school_id']);
+        $fiscalYear = $linkedBudget?->fiscal_year ?? $linkedRequest?->budgetAllocation?->fiscal_year ?? (int) now()->year;
+        app(FiscalYearService::class)->assertOpen($organizationId, (int) $fiscalYear);
 
-            $orsNumber = !empty($data['manually_encode_ors_number']) ? $data['ors_number'] : LiquidationReport::nextOrsNumber();
+        $orsNumber = DB::transaction(function () use ($data, $organizationId, $linkedRequest, $linkedBudget, $fiscalYear) {
+            $numbering = app(DocumentNumberService::class);
+            $reportNumber = $numbering->next($organizationId, 'liquidation_report', 'LR');
+            $orsNumber = ! empty($data['manually_encode_ors_number'])
+                ? $data['ors_number']
+                : $numbering->next($organizationId, 'obligation_request', 'ORS');
+            $masterTransactionId = $linkedRequest?->master_transaction_id ?? $linkedBudget?->master_transaction_id;
+            if (! $masterTransactionId) {
+                $transaction = app(MasterTransactionService::class)->create(
+                    School::findOrFail($data['school_id']),
+                    (int) $fiscalYear,
+                    $data['purpose'],
+                    request()->user(),
+                    'liquidation',
+                    'created',
+                );
+                $masterTransactionId = $transaction->id;
+                $linkedBudget?->update(['master_transaction_id' => $masterTransactionId]);
+                $linkedRequest?->update(['master_transaction_id' => $masterTransactionId]);
+            }
 
-            LiquidationReport::create([
+            $report = LiquidationReport::create([
                 'school_id' => $data['school_id'],
+                'master_transaction_id' => $masterTransactionId,
                 'procurement_request_id' => $data['procurement_request_id'] ?? null,
                 'submitted_by' => request()->user()?->id,
                 'report_number' => $reportNumber,
@@ -1207,6 +1294,8 @@ class HomeController extends Controller
                 'notes' => $data['notes'] ?? null,
                 'submitted_at' => now(),
             ]);
+            $report->transaction?->update(['status' => 'liquidation']);
+            $report->transaction?->recordEvent('liquidation', 'ors_submitted', null, 'for_review', $report->ors_number, ['liquidation_report_id' => $report->id, 'amount' => $report->amount]);
 
             return $orsNumber;
         });
@@ -1223,11 +1312,11 @@ class HomeController extends Controller
         $this->authorizeLiquidationAccess($liquidationReport);
         $liquidationReport->load(['school', 'procurementRequest', 'submitter']);
         $staff = SchoolStaff::where('school_id', $liquidationReport->school_id)->get();
-        $find = fn (string $needle) => $staff->first(fn ($m) => str_contains(strtolower($m->document_role . ' ' . $m->position), $needle));
+        $find = fn (string $needle) => $staff->first(fn ($m) => str_contains(strtolower($m->document_role.' '.$m->position), $needle));
 
         return view('ors-print', [
             'report' => $liquidationReport,
-            'agency' => AgencySetting::first() ?? new AgencySetting(),
+            'agency' => AgencySetting::first() ?? new AgencySetting,
             'requester' => $find('school head') ?? $find('head'),
             'budgetOfficer' => $find('disburs') ?? $find('budget'),
         ]);
@@ -1241,10 +1330,12 @@ class HomeController extends Controller
         $data = $request->validate([
             'status' => ['required', Rule::in(['for_review', 'pending_documents', 'approved', 'returned'])],
         ]);
+        $previousStatus = $liquidationReport->status;
         $liquidationReport->update([
             'status' => $data['status'],
             'approved_at' => $data['status'] === 'approved' ? now() : null,
         ]);
+        $liquidationReport->transaction?->recordEvent('liquidation', 'status_updated', $previousStatus, $data['status'], $liquidationReport->ors_number);
 
         return back()->with('success', "{$liquidationReport->report_number} status updated.");
     }
@@ -1252,7 +1343,7 @@ class HomeController extends Controller
     public function googleDrive()
     {
         return view('google-drive', [
-            'agency' => AgencySetting::first() ?? new AgencySetting(),
+            'agency' => AgencySetting::first() ?? new AgencySetting,
         ]);
     }
 
@@ -1266,12 +1357,12 @@ class HomeController extends Controller
 
         $folderId = trim($data['google_drive_folder_id'] ?? '');
         $folderUrl = trim($data['google_drive_folder_url'] ?? '');
-        if (!$folderId && $folderUrl && preg_match('~/folders/([^/?#]+)~', $folderUrl, $matches)) {
+        if (! $folderId && $folderUrl && preg_match('~/folders/([^/?#]+)~', $folderUrl, $matches)) {
             $folderId = $matches[1];
         }
 
         $organizationId = $request->user()?->organization_id;
-        $agency = AgencySetting::first() ?? new AgencySetting();
+        $agency = AgencySetting::first() ?? new AgencySetting;
         $agency->fill([
             'google_drive_enabled' => (bool) ($folderId || $folderUrl),
             'google_drive_folder_name' => $data['google_drive_folder_name'] ?: 'ProcureMS Shared Drive',
@@ -1279,7 +1370,7 @@ class HomeController extends Controller
             'google_drive_folder_url' => $folderUrl ?: null,
             'google_drive_connected_at' => now(),
         ]);
-        if (\Illuminate\Support\Facades\Schema::hasColumn('agency_settings', 'organization_id') && !$agency->organization_id) {
+        if (Schema::hasColumn('agency_settings', 'organization_id') && ! $agency->organization_id) {
             $agency->organization_id = $organizationId;
         }
         $agency->save();
@@ -1314,7 +1405,7 @@ class HomeController extends Controller
             $parameters = ['ui' => 'staff-save-v7'];
             if ($schoolIds->contains((int) request('school_id'))) {
                 $parameters['school_id'] = request('school_id');
-            } elseif (!$isMasterUser && $schoolIds->isNotEmpty()) {
+            } elseif (! $isMasterUser && $schoolIds->isNotEmpty()) {
                 $parameters['school_id'] = $schoolIds->first();
             }
 
@@ -1325,11 +1416,14 @@ class HomeController extends Controller
 
         $schools = School::withCount(['users', 'procurementRequests'])->whereIn('id', $schoolIds)->orderBy('name')->get();
         $selectedSchool = $schools->firstWhere('id', (int) request('school_id')) ?? ($isMasterUser ? null : $schools->first());
+        $selectedOrganization = $selectedSchool?->organization
+            ?? (! $isMasterUser ? request()->user()->organization : null);
 
         return response()->view('school-settings', [
-            'agency' => AgencySetting::first() ?? new AgencySetting(),
+            'agency' => AgencySetting::first() ?? new AgencySetting,
             'schools' => $schools,
             'selectedSchool' => $selectedSchool,
+            'selectedOrganization' => $selectedOrganization,
             'staff' => $selectedSchool
                 ? SchoolStaff::with('school')->where('school_id', $selectedSchool->id)->orderBy('name')->get()
                 : collect(),
@@ -1340,6 +1434,42 @@ class HomeController extends Controller
         ])->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
             ->header('Pragma', 'no-cache')
             ->header('Expires', '0');
+    }
+
+    public function updateOrganizationSettings(Request $request)
+    {
+        $data = $request->validate([
+            'organization_id' => ['nullable', 'integer', 'exists:organizations,id'],
+            'organization_code' => ['required', 'string', 'max:30'],
+            'fiscal_year' => ['required', 'integer', 'between:2000,2100'],
+            'default_fund_source' => ['nullable', 'string', 'max:255'],
+            'pr_prefix' => ['required', 'alpha_dash', 'max:10'],
+            'ors_prefix' => ['required', 'alpha_dash', 'max:10'],
+            'dv_prefix' => ['required', 'alpha_dash', 'max:10'],
+        ]);
+
+        $organizationId = $this->isMasterUser()
+            ? (int) ($data['organization_id'] ?? 0)
+            : (int) $request->user()->organization_id;
+        abort_unless($organizationId, 403);
+
+        $organization = Organization::findOrFail($organizationId);
+        $request->validate([
+            'organization_code' => [Rule::unique('organizations', 'organization_code')->ignore($organization->id)],
+        ]);
+
+        $organization->update([
+            'organization_code' => strtoupper($data['organization_code']),
+            'fiscal_year' => $data['fiscal_year'],
+            'default_fund_source' => $data['default_fund_source'] ?: null,
+            'numbering_preferences' => [
+                'purchase_request' => strtoupper($data['pr_prefix']),
+                'obligation_request' => strtoupper($data['ors_prefix']),
+                'disbursement_voucher' => strtoupper($data['dv_prefix']),
+            ],
+        ]);
+
+        return back()->with('success', 'Organization defaults and numbering preferences saved.');
     }
 
     public function updateAgencySettings(Request $request)
@@ -1370,7 +1500,7 @@ class HomeController extends Controller
         }
         unset($data['department_logo'], $data['division_logo']);
         $organizationId = $request->user()?->organization_id;
-        if ($this->isMasterUser() && !empty($data['school_id'])) {
+        if ($this->isMasterUser() && ! empty($data['school_id'])) {
             $organizationId = School::withoutGlobalScopes()->findOrFail($data['school_id'])->organization_id;
         }
         unset($data['school_id']);
@@ -1378,6 +1508,7 @@ class HomeController extends Controller
             ['organization_id' => $organizationId],
             $data + ['organization_id' => $organizationId]
         );
+
         return back()->with('success', 'Agency and department details saved.');
     }
 
@@ -1399,7 +1530,7 @@ class HomeController extends Controller
             'school_logo' => ['nullable', 'image', 'max:2048'],
         ]);
         $this->authorizeSchoolAccess((int) $data['school_id']);
-        if (!$this->isMasterUser()) {
+        if (! $this->isMasterUser()) {
             unset($data['status']);
         }
         $school = School::findOrFail($data['school_id']);
@@ -1409,6 +1540,7 @@ class HomeController extends Controller
         }
         unset($data['school_logo']);
         $school->update($data);
+
         return back()->with('success', 'School details saved.');
     }
 
@@ -1433,7 +1565,7 @@ class HomeController extends Controller
 
         return redirect()
             ->route($redirectRoute, $redirectParameters)
-            ->with('success', $school->name . ' has been approved and activated.');
+            ->with('success', $school->name.' has been approved and activated.');
     }
 
     public function updateSchoolStaff(Request $request)
@@ -1450,6 +1582,7 @@ class HomeController extends Controller
         foreach ($validated['staff'] as $staffId => $roles) {
             SchoolStaff::where('school_id', $validated['school_id'])->whereKey($staffId)->update($roles);
         }
+
         return back()->with('success', 'School staff and procurement roles saved.');
     }
 
@@ -1471,8 +1604,8 @@ class HomeController extends Controller
             SchoolStaff::create([...$staffMember, 'school_id' => $schoolId]);
         }
 
-        return redirect(route('school-settings', ['ui' => 'staff-save-v7', 'school_id' => $schoolId]) . '#staff-list')
-            ->with('success', count($data['new_staff']) . ' staff member(s) added. No login account was created.');
+        return redirect(route('school-settings', ['ui' => 'staff-save-v7', 'school_id' => $schoolId]).'#staff-list')
+            ->with('success', count($data['new_staff']).' staff member(s) added. No login account was created.');
     }
 
     public function generate(Request $request)

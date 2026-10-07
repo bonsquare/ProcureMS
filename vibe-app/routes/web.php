@@ -1,13 +1,14 @@
 <?php
 
-use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AipController;
 use App\Http\Controllers\AllotmentRegistryController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BudgetAllocationController;
 use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\ChartOfAccountController;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PlanningController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -17,28 +18,28 @@ Route::middleware('guest')->group(function () {
     Route::post('/register', [AuthController::class, 'storeRegistration'])->name('register.store');
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::get('/', [HomeController::class, 'index'])->name('home');
     Route::get('/dashboard/diagnostics', [HomeController::class, 'dashboardDiagnostics'])->name('dashboard.diagnostics');
     Route::get('/dashboard/audit-logs/export', [HomeController::class, 'exportAuditLogs'])->name('dashboard.audit-logs.export');
     Route::post('/schools', [HomeController::class, 'storeSchool'])->name('schools.store');
     Route::get('/procurement', [HomeController::class, 'procurement'])->name('procurement');
     Route::get('/procurement/suppliers', [HomeController::class, 'suppliers'])->name('suppliers');
-    Route::post('/procurement/suppliers', [HomeController::class, 'storeSupplier'])->name('suppliers.store');
-    Route::put('/procurement/suppliers/{supplier}', [HomeController::class, 'updateSupplier'])->name('suppliers.update');
+    Route::post('/procurement/suppliers', [HomeController::class, 'storeSupplier'])->middleware('permission:supplier.manage')->name('suppliers.store');
+    Route::put('/procurement/suppliers/{supplier}', [HomeController::class, 'updateSupplier'])->middleware('permission:supplier.manage')->name('suppliers.update');
     Route::get('/procurement/create', [HomeController::class, 'createProcurement'])->name('procurement.create');
-    Route::post('/procurement', [HomeController::class, 'storeProcurement'])->name('procurement.store');
+    Route::post('/procurement', [HomeController::class, 'storeProcurement'])->middleware('permission:procurement.create')->name('procurement.store');
     Route::get('/procurement/{procurementRequest}/edit', [HomeController::class, 'editProcurement'])->name('procurement.edit');
-    Route::put('/procurement/{procurementRequest}', [HomeController::class, 'updateProcurement'])->name('procurement.update');
+    Route::put('/procurement/{procurementRequest}', [HomeController::class, 'updateProcurement'])->middleware('permission:procurement.edit')->name('procurement.update');
     Route::get('/procurement/{procurementRequest}/print', [HomeController::class, 'printProcurement'])->name('procurement.print');
     Route::get('/procurement/{procurementRequest}/documents', [HomeController::class, 'procurementDocuments'])->name('procurement.documents');
-    Route::post('/procurement/{procurementRequest}/documents', [HomeController::class, 'storeProcurementDocument'])->name('procurement.documents.store');
+    Route::post('/procurement/{procurementRequest}/documents', [HomeController::class, 'storeProcurementDocument'])->middleware('permission:procurement.edit')->name('procurement.documents.store');
     Route::get('/procurement/{procurementRequest}/documents/{procurementDocument}/print', [HomeController::class, 'printProcurementDocument'])->name('procurement.documents.print');
     Route::get('/procurement/{procurementRequest}/delivery-reconciliation', [HomeController::class, 'printDeliveryReconciliation'])->name('procurement.delivery-reconciliation');
     Route::get('/liquidation', [HomeController::class, 'liquidation'])->name('liquidation');
-    Route::post('/liquidation', [HomeController::class, 'storeLiquidation'])->name('liquidation.store');
+    Route::post('/liquidation', [HomeController::class, 'storeLiquidation'])->middleware('permission:liquidation.create')->name('liquidation.store');
     Route::get('/liquidation/{liquidationReport}/print', [HomeController::class, 'printOrs'])->name('liquidation.print');
-    Route::patch('/liquidation/{liquidationReport}/status', [HomeController::class, 'updateLiquidationStatus'])->name('liquidation.status');
+    Route::patch('/liquidation/{liquidationReport}/status', [HomeController::class, 'updateLiquidationStatus'])->middleware('permission:liquidation.approve')->name('liquidation.status');
     Route::get('/budget', [BudgetController::class, 'index'])->name('budget');
     Route::get('/budget/balance', [BudgetController::class, 'balance'])->name('budget.balance');
     Route::get('/aip', [AipController::class, 'index'])->name('aip');
@@ -47,6 +48,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/aip/{aip}/print', [AipController::class, 'print'])->name('aip.print')->whereNumber('aip');
     Route::put('/aip/{aip}', [AipController::class, 'update'])->name('aip.update')->whereNumber('aip');
     Route::post('/aip/{aip}/approve', [AipController::class, 'approve'])->name('aip.approve')->whereNumber('aip');
+    Route::get('/planning', [PlanningController::class, 'index'])->name('planning');
+    Route::post('/planning/sip', [PlanningController::class, 'storeSip'])->middleware('permission:planning.manage')->name('planning.sip.store');
+    Route::post('/planning/sip/{sipProject}/link-aip', [PlanningController::class, 'linkAip'])->middleware('permission:planning.manage')->name('planning.sip.link-aip');
+    Route::post('/planning/ppmp', [PlanningController::class, 'storePpmp'])->middleware('permission:planning.manage')->name('planning.ppmp.store');
+    Route::post('/planning/ppmp/{ppmpPlan}/approve', [PlanningController::class, 'approvePpmp'])->middleware('permission:planning.manage')->name('planning.ppmp.approve');
+    Route::post('/planning/app/generate', [PlanningController::class, 'generateApp'])->middleware('permission:planning.manage')->name('planning.app.generate');
+    Route::post('/planning/app/{appPlan}/approve', [PlanningController::class, 'approveApp'])->middleware('permission:planning.manage')->name('planning.app.approve');
+    Route::post('/planning/fund-sources', [PlanningController::class, 'storeFundSource'])->middleware('permission:planning.manage')->name('planning.funds.store');
+    Route::post('/planning/fiscal-year', [PlanningController::class, 'setFiscalYearStatus'])->middleware('permission:planning.manage')->name('planning.fiscal-year.status');
+    Route::get('/transactions/{masterTransaction}', [PlanningController::class, 'transaction'])->name('transactions.show')->whereNumber('masterTransaction');
     Route::get('/aip/{aip}/kras/create', [AipController::class, 'createKra'])->name('aip.kras.create')->whereNumber('aip');
     Route::post('/aip/{aip}/kras', [AipController::class, 'storeKra'])->name('aip.kras.store')->whereNumber('aip');
     Route::get('/aip/{aip}/kras/{kra}/edit', [AipController::class, 'editKra'])->name('aip.kras.edit')->whereNumber(['aip', 'kra']);
@@ -66,25 +77,26 @@ Route::middleware('auth')->group(function () {
     });
     Route::get('/accounting', [FinanceController::class, 'accounting'])->name('accounting');
     Route::get('/accounting/chart-of-accounts', [ChartOfAccountController::class, 'index'])->name('chart-of-accounts');
-    Route::post('/accounting/chart-of-accounts', [ChartOfAccountController::class, 'store'])->name('chart-of-accounts.store');
-    Route::put('/accounting/chart-of-accounts/{chartOfAccount}', [ChartOfAccountController::class, 'update'])->name('chart-of-accounts.update');
-    Route::delete('/accounting/chart-of-accounts/{chartOfAccount}', [ChartOfAccountController::class, 'destroy'])->name('chart-of-accounts.destroy');
-    Route::patch('/accounting/{liquidationReport}', [FinanceController::class, 'review'])->name('accounting.review');
-    Route::post('/accounting/{liquidationReport}/dv', [FinanceController::class, 'createDv'])->name('accounting.dv.store');
+    Route::post('/accounting/chart-of-accounts', [ChartOfAccountController::class, 'store'])->middleware('permission:accounting.manage')->name('chart-of-accounts.store');
+    Route::put('/accounting/chart-of-accounts/{chartOfAccount}', [ChartOfAccountController::class, 'update'])->middleware('permission:accounting.manage')->name('chart-of-accounts.update');
+    Route::delete('/accounting/chart-of-accounts/{chartOfAccount}', [ChartOfAccountController::class, 'destroy'])->middleware('permission:accounting.manage')->name('chart-of-accounts.destroy');
+    Route::patch('/accounting/{liquidationReport}', [FinanceController::class, 'review'])->middleware('permission:accounting.approve')->name('accounting.review');
+    Route::post('/accounting/{liquidationReport}/dv', [FinanceController::class, 'createDv'])->middleware('permission:accounting.approve')->name('accounting.dv.store');
     Route::get('/accounting/{liquidationReport}/dv-print', [FinanceController::class, 'printDv'])->name('accounting.dv.print');
     Route::get('/cash', [FinanceController::class, 'cash'])->name('cash');
-    Route::post('/cash/{liquidationReport}/pay', [FinanceController::class, 'pay'])->name('cash.pay');
+    Route::post('/cash/{liquidationReport}/pay', [FinanceController::class, 'pay'])->middleware('permission:cash.pay')->name('cash.pay');
     Route::get('/google-drive', [HomeController::class, 'googleDrive'])->name('google-drive');
-    Route::post('/google-drive/settings', [HomeController::class, 'updateGoogleDriveSettings'])->name('google-drive.settings');
+    Route::post('/google-drive/settings', [HomeController::class, 'updateGoogleDriveSettings'])->middleware('permission:organization.settings')->name('google-drive.settings');
     Route::get('/reports', [HomeController::class, 'reports'])->name('reports');
     Route::get('/user-management', [HomeController::class, 'userManagement'])->name('user-management');
     Route::get('/subscriptions', [HomeController::class, 'subscriptions'])->name('subscriptions');
     Route::get('/school-settings', [HomeController::class, 'schoolSettings'])->name('school-settings');
-    Route::post('/school-settings/agency', [HomeController::class, 'updateAgencySettings'])->name('school-settings.agency');
-    Route::post('/school-settings/school', [HomeController::class, 'updateSchoolDetails'])->name('school-settings.school');
+    Route::post('/school-settings/organization', [HomeController::class, 'updateOrganizationSettings'])->middleware('permission:organization.settings')->name('school-settings.organization');
+    Route::post('/school-settings/agency', [HomeController::class, 'updateAgencySettings'])->middleware('permission:organization.settings')->name('school-settings.agency');
+    Route::post('/school-settings/school', [HomeController::class, 'updateSchoolDetails'])->middleware('permission:organization.settings')->name('school-settings.school');
     Route::post('/school-settings/schools/{school}/approve', [HomeController::class, 'approveSchoolRegistration'])->name('school-settings.school.approve');
-    Route::post('/school-settings/staff', [HomeController::class, 'updateSchoolStaff'])->name('school-settings.staff');
-    Route::post('/school-settings/staff/add', [HomeController::class, 'addSchoolStaff'])->name('school-settings.staff.add');
+    Route::post('/school-settings/staff', [HomeController::class, 'updateSchoolStaff'])->middleware('permission:organization.settings')->name('school-settings.staff');
+    Route::post('/school-settings/staff/add', [HomeController::class, 'addSchoolStaff'])->middleware('permission:organization.settings')->name('school-settings.staff.add');
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
     Route::post('/generate', [HomeController::class, 'generate'])->name('generate');
 });

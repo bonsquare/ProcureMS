@@ -18,7 +18,7 @@ class Aip extends Model
     ];
 
     protected $fillable = [
-        'organization_id', 'school_id', 'created_by', 'fiscal_year', 'entity', 'status',
+        'organization_id', 'school_id', 'master_transaction_id', 'sip_project_id', 'created_by', 'fiscal_year', 'entity', 'status',
         'prepared_by_name', 'prepared_by_position', 'noted_by_name', 'noted_by_position', 'approved_by_name', 'approved_by_position', 'approved_at',
     ];
 
@@ -28,6 +28,10 @@ class Aip extends Model
     }
 
     public function school() { return $this->belongsTo(School::class); }
+
+    public function transaction() { return $this->belongsTo(MasterTransaction::class, 'master_transaction_id'); }
+
+    public function sipProject() { return $this->belongsTo(SipProject::class); }
 
     public function kras() { return $this->hasMany(AipKra::class)->orderBy('id'); }
 

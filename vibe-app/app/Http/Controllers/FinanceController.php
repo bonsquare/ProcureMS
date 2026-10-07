@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AgencySetting;
 use App\Models\AuditLog;
 use App\Models\LiquidationReport;
 use App\Models\School;
+use App\Models\SchoolStaff;
+use App\Services\DocumentNumberService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -64,21 +67,23 @@ class FinanceController extends Controller
 
     public function review(Request $request, LiquidationReport $liquidationReport)
     {
-        abort_unless($this->isMaster() && $this->schoolIds()->contains($liquidationReport->school_id), 403);
+        abort_unless($request->user()->hasPermission('accounting.approve') && $this->schoolIds()->contains($liquidationReport->school_id), 403);
         $data = $request->validate([
             'status' => ['required', Rule::in(['for_review', 'pending_documents', 'approved', 'returned'])],
             'accounting_remarks' => [Rule::requiredIf(in_array($request->input('status'), ['pending_documents', 'returned'])), 'nullable', 'string', 'max:255'],
         ]);
         abort_if($liquidationReport->paid_at && $data['status'] !== 'approved', 422, 'A paid ORS cannot be reopened.');
 
+        $previousStatus = $liquidationReport->status;
         $liquidationReport->update([
             'status' => $data['status'],
             'accounting_remarks' => $data['accounting_remarks'] ?? null,
             'approved_at' => $data['status'] === 'approved' ? now() : null,
         ]);
-        AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $liquidationReport->school_id, 'action' => 'ors_' . $data['status'], 'auditable_type' => LiquidationReport::class, 'auditable_id' => $liquidationReport->id, 'metadata' => ['ors' => $liquidationReport->ors_number]]);
+        $liquidationReport->transaction?->recordEvent('accounting', 'ors_reviewed', $previousStatus, $data['status'], $liquidationReport->ors_number);
+        AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $liquidationReport->school_id, 'action' => 'ors_'.$data['status'], 'auditable_type' => LiquidationReport::class, 'auditable_id' => $liquidationReport->id, 'metadata' => ['ors' => $liquidationReport->ors_number]]);
 
-        return back()->with('success', ($liquidationReport->ors_number ?: $liquidationReport->report_number) . ' marked ' . str_replace('_', ' ', $data['status']) . '.');
+        return back()->with('success', ($liquidationReport->ors_number ?: $liquidationReport->report_number).' marked '.str_replace('_', ' ', $data['status']).'.');
     }
 
     public function cash(Request $request)
@@ -105,7 +110,7 @@ class FinanceController extends Controller
 
     public function pay(Request $request, LiquidationReport $liquidationReport)
     {
-        abort_unless($this->isMaster() && $this->schoolIds()->contains($liquidationReport->school_id), 403);
+        abort_unless($request->user()->hasPermission('cash.pay') && $this->schoolIds()->contains($liquidationReport->school_id), 403);
         abort_unless($liquidationReport->status === 'approved' && $liquidationReport->dv_number, 422, 'A disbursement voucher must be created in Accounting first.');
         abort_if($liquidationReport->paid_at, 422, 'This ORS is already paid.');
 
@@ -116,6 +121,8 @@ class FinanceController extends Controller
         ]);
 
         $liquidationReport->update($data + ['paid_by' => $request->user()->id]);
+        $liquidationReport->transaction?->update(['status' => 'completed']);
+        $liquidationReport->transaction?->recordEvent('cash', 'payment_recorded', 'unpaid', 'paid', $data['payment_reference'] ?? null, ['payment_mode' => $data['payment_mode'], 'paid_at' => $data['paid_at']]);
         AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $liquidationReport->school_id, 'action' => 'ors_paid', 'auditable_type' => LiquidationReport::class, 'auditable_id' => $liquidationReport->id, 'metadata' => ['dv' => $liquidationReport->dv_number, 'mode' => $data['payment_mode']]]);
 
         return redirect()->route('cash')->with('success', "Payment recorded for {$liquidationReport->ors_number} (DV {$liquidationReport->dv_number}).");
@@ -123,28 +130,28 @@ class FinanceController extends Controller
 
     private function nextDvNumber(): string
     {
-        $prefix = 'DV-' . now()->format('Y') . '-';
-        $last = LiquidationReport::withoutGlobalScopes()->where('dv_number', 'like', $prefix . '%')->pluck('dv_number')
-            ->map(fn ($n) => (int) substr($n, strlen($prefix)))->max() ?? 0;
-
-        return $prefix . str_pad((string) ($last + 1), 4, '0', STR_PAD_LEFT);
+        return app(DocumentNumberService::class)
+            ->preview((int) request()->user()->organization_id, 'disbursement_voucher', 'DV');
     }
 
     public function createDv(Request $request, LiquidationReport $liquidationReport)
     {
-        abort_unless($this->isMaster() && $this->schoolIds()->contains($liquidationReport->school_id), 403);
+        abort_unless($request->user()->hasPermission('accounting.approve') && $this->schoolIds()->contains($liquidationReport->school_id), 403);
         abort_unless($liquidationReport->status === 'approved', 422, 'Approve the ORS before creating a disbursement voucher.');
         abort_if($liquidationReport->dv_number, 422, 'A DV already exists for this ORS.');
 
         $data = $request->validate([
-            'dv_number' => ['required', 'string', 'max:100', Rule::unique('liquidation_reports', 'dv_number')],
+            'dv_number' => ['nullable', 'string', 'max:100', Rule::unique('liquidation_reports', 'dv_number')->where('organization_id', $liquidationReport->organization_id)],
             'dv_date' => ['required', 'date', 'before_or_equal:today'],
             'payee' => ['required', 'string', 'max:255'],
             'dv_particulars' => ['required', 'string', 'max:255'],
             'payment_mode' => ['required', Rule::in(self::PAYMENT_MODES)],
         ]);
 
+        $data['dv_number'] ??= app(DocumentNumberService::class)
+            ->next((int) $liquidationReport->organization_id, 'disbursement_voucher', 'DV');
         $liquidationReport->update($data);
+        $liquidationReport->transaction?->recordEvent('accounting', 'dv_created', null, 'ready_for_payment', $data['dv_number'], ['dv_date' => $data['dv_date']]);
         AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $liquidationReport->school_id, 'action' => 'dv_created', 'auditable_type' => LiquidationReport::class, 'auditable_id' => $liquidationReport->id, 'metadata' => ['dv' => $data['dv_number'], 'ors' => $liquidationReport->ors_number]]);
 
         return redirect()->route('accounting', ['tab' => 'with_dv'])->with('success', "DV {$data['dv_number']} created for {$liquidationReport->ors_number}. It is now queued in Cash for payment.");
@@ -154,12 +161,12 @@ class FinanceController extends Controller
     {
         abort_unless($this->schoolIds()->contains($liquidationReport->school_id) && $liquidationReport->dv_number, 404);
         $liquidationReport->load(['school', 'procurementRequest']);
-        $staff = \App\Models\SchoolStaff::where('school_id', $liquidationReport->school_id)->get();
-        $find = fn (string $needle) => $staff->first(fn ($m) => str_contains(strtolower($m->document_role . ' ' . $m->position), $needle));
+        $staff = SchoolStaff::where('school_id', $liquidationReport->school_id)->get();
+        $find = fn (string $needle) => $staff->first(fn ($m) => str_contains(strtolower($m->document_role.' '.$m->position), $needle));
 
         return view('dv-print', [
             'report' => $liquidationReport,
-            'agency' => \App\Models\AgencySetting::first() ?? new \App\Models\AgencySetting(),
+            'agency' => AgencySetting::first() ?? new AgencySetting,
             'accountant' => $find('accountant'),
             'head' => $find('school head') ?? $find('head'),
         ]);

@@ -53,6 +53,22 @@
         </div>
     </section>
     @endif
+    @if($selectedOrganization)
+    @php $numbering = $selectedOrganization->numbering_preferences ?? []; @endphp
+    <section class="mb-5 rounded border border-outline-variant/30 bg-white p-5 sm:p-6">
+        <div class="mb-5 flex items-center justify-between"><div><h2 class="text-lg font-semibold">Organization Defaults</h2><p class="mt-1 text-xs text-on-surface-variant">Fiscal year, default fund, and tenant-specific document numbering.</p></div><span class="material-symbols-outlined text-on-surface-variant">tune</span></div>
+        <form method="POST" action="{{ route('school-settings.organization') }}" class="grid grid-cols-1 gap-4 md:grid-cols-3">@csrf
+            <input type="hidden" name="organization_id" value="{{ $selectedOrganization->id }}">
+            <label class="text-xs font-semibold text-on-surface-variant">Organization Code<input name="organization_code" required value="{{ old('organization_code', $selectedOrganization->organization_code) }}" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal"></label>
+            <label class="text-xs font-semibold text-on-surface-variant">Fiscal Year<input type="number" name="fiscal_year" min="2000" max="2100" required value="{{ old('fiscal_year', $selectedOrganization->fiscal_year ?? now()->year) }}" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal"></label>
+            <label class="text-xs font-semibold text-on-surface-variant">Default Fund Source<input name="default_fund_source" value="{{ old('default_fund_source', $selectedOrganization->default_fund_source) }}" placeholder="e.g. MOOE" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal"></label>
+            <label class="text-xs font-semibold text-on-surface-variant">PR Prefix<input name="pr_prefix" required value="{{ old('pr_prefix', $numbering['purchase_request'] ?? 'PR') }}" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal uppercase"></label>
+            <label class="text-xs font-semibold text-on-surface-variant">ORS Prefix<input name="ors_prefix" required value="{{ old('ors_prefix', $numbering['obligation_request'] ?? 'ORS') }}" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal uppercase"></label>
+            <label class="text-xs font-semibold text-on-surface-variant">DV Prefix<input name="dv_prefix" required value="{{ old('dv_prefix', $numbering['disbursement_voucher'] ?? 'DV') }}" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal uppercase"></label>
+            <div class="md:col-span-3"><button type="submit" class="rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white">Save Organization Defaults</button></div>
+        </form>
+    </section>
+    @endif
     <section class="mb-5 rounded border border-outline-variant/30 bg-white p-5 sm:p-6"><div class="mb-5 flex items-center justify-between"><div><h2 class="text-lg font-semibold">Agency / Department</h2><p class="mt-1 text-xs text-on-surface-variant">Manage the organization identity and district information used in official records and document headers.</p></div><span class="material-symbols-outlined text-on-surface-variant">account_balance</span></div>
         <form id="department-details-form" data-editable-form method="POST" action="{{ route('school-settings.agency') }}" enctype="multipart/form-data" class="grid grid-cols-1 gap-4 md:grid-cols-2">@csrf<input type="hidden" name="school_id" value="{{ request('school_id') }}">
             <div class="rounded border border-primary/15 bg-surface-low p-4 md:col-span-2">

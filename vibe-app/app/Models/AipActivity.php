@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Model;
 
 class AipActivity extends Model
 {
+    use BelongsToOrganization;
+
     protected $fillable = [
-        'aip_id', 'aip_kra_id', 'activity', 'physical_target', 'timeline', 'q1_amount', 'q2_amount', 'q3_amount', 'q4_amount',
+        'organization_id', 'aip_id', 'aip_kra_id', 'activity', 'physical_target', 'timeline', 'q1_amount', 'q2_amount', 'q3_amount', 'q4_amount',
         'source_of_fund', 'chart_of_account_id', 'responsible_persons', 'remarks_list',
     ];
 
@@ -19,11 +22,20 @@ class AipActivity extends Model
         ];
     }
 
-    public function aip() { return $this->belongsTo(Aip::class); }
+    public function aip()
+    {
+        return $this->belongsTo(Aip::class);
+    }
 
-    public function kra() { return $this->belongsTo(AipKra::class, 'aip_kra_id'); }
+    public function kra()
+    {
+        return $this->belongsTo(AipKra::class, 'aip_kra_id');
+    }
 
-    public function account() { return $this->belongsTo(ChartOfAccount::class, 'chart_of_account_id'); }
+    public function account()
+    {
+        return $this->belongsTo(ChartOfAccount::class, 'chart_of_account_id');
+    }
 
     public function getTotalAttribute(): float
     {

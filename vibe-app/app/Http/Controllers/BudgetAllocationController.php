@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Aip;
 use App\Models\AuditLog;
 use App\Models\BudgetAllocation;
 use App\Models\ChartOfAccount;
@@ -9,6 +10,9 @@ use App\Models\LiquidationReport;
 use App\Models\ProcurementRequest;
 use App\Models\School;
 use App\Services\BudgetService;
+use App\Services\DocumentNumberService;
+use App\Services\FiscalYearService;
+use App\Services\MasterTransactionService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -30,10 +34,7 @@ class BudgetAllocationController extends Controller
         'chart-of-accounts' => 'Chart of Accounts Budget Report',
     ];
 
-
-    public function __construct(private BudgetService $budget)
-    {
-    }
+    public function __construct(private BudgetService $budget) {}
 
     private function schoolIds()
     {
@@ -62,7 +63,7 @@ class BudgetAllocationController extends Controller
         ChartOfAccount::ensureDefaults($user->organization_id);
 
         return ChartOfAccount::query()
-            ->when($user->role === 'master_user' && !$user->organization_id, fn ($q) => $q->whereNull('organization_id'))
+            ->when($user->role === 'master_user' && ! $user->organization_id, fn ($q) => $q->whereNull('organization_id'))
             ->orderBy('code')->get();
     }
 
@@ -75,7 +76,7 @@ class BudgetAllocationController extends Controller
         $user = $request->user();
         $search = trim((string) $request->query('q', ''));
 
-        $items = BudgetAllocation::with(['school', 'account'])->where('fiscal_year', $year)->whereIn('school_id', $schoolIds)
+        $items = BudgetAllocation::with(['school', 'account', 'transaction'])->where('fiscal_year', $year)->whereIn('school_id', $schoolIds)
             ->when($schoolId && $schoolIds->contains((int) $schoolId), fn ($q) => $q->where('school_id', $schoolId))
             ->when($request->query('fund'), fn ($q, $fund) => $q->where('source_of_fund', $fund))
             ->when($request->query('office'), fn ($q, $office) => $q->where('office', $office))
@@ -126,7 +127,7 @@ class BudgetAllocationController extends Controller
             'summary' => $this->summaries($rows),
             'reports' => self::REPORTS,
             'filters' => $request->only(['q', 'fund', 'office', 'quarter']),
-            'funds' => BudgetAllocation::whereIn('school_id', $this->schoolIds())->distinct()->pluck('source_of_fund')->merge(collect(\App\Models\Aip::FUNDS)->flatten()->reject(fn ($fund) => $fund === 'Others'))->unique()->sort()->values(),
+            'funds' => BudgetAllocation::whereIn('school_id', $this->schoolIds())->distinct()->pluck('source_of_fund')->merge(collect(Aip::FUNDS)->flatten()->reject(fn ($fund) => $fund === 'Others'))->unique()->sort()->values(),
             'offices' => BudgetAllocation::whereIn('school_id', $this->schoolIds())->whereNotNull('office')->distinct()->orderBy('office')->pluck('office'),
             'canManage' => $request->user()->canManageBudget(),
         ]);
@@ -135,6 +136,7 @@ class BudgetAllocationController extends Controller
     public function create(Request $request)
     {
         $this->authorizeManage();
+
         return view('budget-item-form', $this->formData(new BudgetAllocation([
             'fiscal_year' => (int) $request->query('year', now()->year),
             'school_id' => $request->query('school_id'),
@@ -158,7 +160,7 @@ class BudgetAllocationController extends Controller
             'schools' => School::whereIn('id', $this->schoolIds())->orderBy('name')->get(),
             'accounts' => $this->accounts(),
             'offices' => BudgetAllocation::whereIn('school_id', $this->schoolIds())->whereNotNull('office')->distinct()->orderBy('office')->pluck('office'),
-            'funds' => BudgetAllocation::query()->distinct()->pluck('source_of_fund')->merge(['MOOE', 'Special Education Fund', 'General Fund', 'Canteen Fund'])->merge(collect(\App\Models\Aip::FUNDS)->flatten()->reject(fn ($fund) => $fund === 'Others'))->unique()->values(),
+            'funds' => BudgetAllocation::query()->distinct()->pluck('source_of_fund')->merge(['MOOE', 'Special Education Fund', 'General Fund', 'Canteen Fund'])->merge(collect(Aip::FUNDS)->flatten()->reject(fn ($fund) => $fund === 'Others'))->unique()->values(),
         ];
     }
 
@@ -166,7 +168,27 @@ class BudgetAllocationController extends Controller
     {
         $this->authorizeManage();
         $data = $this->validated($request);
-        $item = BudgetAllocation::create(array_merge($data, ['created_by' => $request->user()->id, 'budget_ref_no' => ($data['budget_ref_no'] ?? null) ?: $this->nextReference((int) $data['fiscal_year'])]));
+        $organizationId = (int) School::withoutGlobalScopes()->whereKey($data['school_id'])->value('organization_id');
+        app(FiscalYearService::class)->assertOpen($organizationId, (int) $data['fiscal_year']);
+        $item = \Illuminate\Support\Facades\DB::transaction(function () use ($data, $request, $organizationId) {
+            $transaction = app(MasterTransactionService::class)->create(
+                School::findOrFail($data['school_id']),
+                (int) $data['fiscal_year'],
+                $data['program'] ?: $data['particulars'],
+                $request->user(),
+                'budget',
+                'allocation_created',
+            );
+            $item = BudgetAllocation::create(array_merge($data, [
+                'master_transaction_id' => $transaction->id,
+                'created_by' => $request->user()->id,
+                'budget_ref_no' => ($data['budget_ref_no'] ?? null) ?: $this->nextReference((int) $data['fiscal_year'], $organizationId),
+            ]));
+            $transaction->update(['status' => 'budget']);
+            $transaction->recordEvent('budget', 'allocation_linked', null, 'allocated', $item->budget_ref_no, ['budget_allocation_id' => $item->id]);
+
+            return $item;
+        });
         $this->audit($request, $item, 'budget_item_created');
 
         return redirect()->route('budget.allocation', ['year' => $item->fiscal_year, 'school_id' => $item->school_id])->with('success', 'Budget item saved.');
@@ -178,6 +200,7 @@ class BudgetAllocationController extends Controller
         $this->authorizeItem($budgetAllocation);
         abort_if($budgetAllocation->closed_at, 403, 'This budget item is closed.');
         $data = $this->validated($request, $budgetAllocation);
+        app(FiscalYearService::class)->assertOpen((int) $budgetAllocation->organization_id, (int) $data['fiscal_year']);
 
         $matrix = $this->budget->matrix(collect([$budgetAllocation]))->first();
         if ((float) $data['amount'] + 0.001 < $matrix['obligated']) {
@@ -185,6 +208,7 @@ class BudgetAllocationController extends Controller
         }
 
         $budgetAllocation->update(array_merge($data, ['budget_ref_no' => ($data['budget_ref_no'] ?? null) ?: $budgetAllocation->budget_ref_no]));
+        $budgetAllocation->transaction?->recordEvent('budget', 'allocation_updated', null, 'allocated', $budgetAllocation->budget_ref_no, ['budget_allocation_id' => $budgetAllocation->id]);
         $this->audit($request, $budgetAllocation, 'budget_item_updated');
 
         return redirect()->route('budget.allocation', ['year' => $budgetAllocation->fiscal_year, 'school_id' => $budgetAllocation->school_id])->with('success', 'Budget item updated.');
@@ -232,9 +256,12 @@ class BudgetAllocationController extends Controller
 
     private function validated(Request $request, ?BudgetAllocation $existing = null): array
     {
+        $schoolId = (int) $request->input('school_id');
+        $organizationId = School::query()->whereKey($schoolId)->value('organization_id');
+
         $data = $request->validate([
             'school_id' => ['required', 'integer', Rule::in($this->schoolIds()->all())],
-            'budget_ref_no' => ['nullable', 'string', 'max:50', Rule::unique('budget_allocations', 'budget_ref_no')->ignore($existing?->id)],
+            'budget_ref_no' => ['nullable', 'string', 'max:50', Rule::unique('budget_allocations', 'budget_ref_no')->where('organization_id', $organizationId)->ignore($existing?->id)],
             'fiscal_year' => ['required', 'integer', 'between:2000,2100'],
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
@@ -243,7 +270,11 @@ class BudgetAllocationController extends Controller
             'fund_name' => ['nullable', 'string', 'max:255'],
             'responsibility_center' => ['nullable', 'string', 'max:255'],
             'program' => ['nullable', 'string', 'max:255'],
-            'chart_of_account_id' => ['required', 'integer', 'exists:chart_of_accounts,id'],
+            'chart_of_account_id' => [
+                'required',
+                'integer',
+                Rule::exists('chart_of_accounts', 'id')->where('organization_id', $organizationId),
+            ],
             'description' => ['nullable', 'string', 'max:1000'],
             'amount' => ['required', 'numeric', 'min:0.01', 'max:9999999999999'],
             'distribution' => ['required', Rule::in(['equal', 'manual'])],
@@ -270,24 +301,22 @@ class BudgetAllocationController extends Controller
         }
         unset($data['distribution']);
 
-        $account = ChartOfAccount::withoutGlobalScopes()->findOrFail($data['chart_of_account_id']);
+        $account = ChartOfAccount::withoutGlobalScopes()
+            ->where('organization_id', $organizationId)
+            ->findOrFail($data['chart_of_account_id']);
         $data['uacs_code'] = $account->code;
         $data['particulars'] = $account->title;
         $data['amount'] = $amount;
-        $data['start_date'] ??= $data['fiscal_year'] . '-01-01';
-        $data['end_date'] ??= $data['fiscal_year'] . '-12-31';
+        $data['start_date'] ??= $data['fiscal_year'].'-01-01';
+        $data['end_date'] ??= $data['fiscal_year'].'-12-31';
 
         return $data;
     }
 
-    private function nextReference(int $year): string
+    private function nextReference(int $year, int $organizationId): string
     {
-        $next = BudgetAllocation::withoutGlobalScopes()->where('fiscal_year', $year)->count() + 1;
-        do {
-            $reference = sprintf('BA-%d-%04d', $year, $next++);
-        } while (BudgetAllocation::withoutGlobalScopes()->where('budget_ref_no', $reference)->exists());
-
-        return $reference;
+        return app(DocumentNumberService::class)
+            ->next($organizationId, 'budget_allocation', 'BA', $year);
     }
 
     private function audit(Request $request, BudgetAllocation $item, string $action): void
@@ -326,7 +355,7 @@ class BudgetAllocationController extends Controller
     /** @return array{0: array<int,string>, 1: array<int,array<int,mixed>>, 2: array<int,int>} columns, rows, and column indexes shown as pesos */
     private function buildReport(string $type, $rows): array
     {
-        $pct = fn ($part, $whole) => $whole > 0 ? round($part / $whole * 100, 1) . '%' : '0%';
+        $pct = fn ($part, $whole) => $whole > 0 ? round($part / $whole * 100, 1).'%' : '0%';
         $name = fn ($r) => $r['item']->particulars;
         $code = fn ($r) => $r['item']->uacs_code;
         $fund = fn ($r) => $r['item']->source_of_fund;
@@ -410,7 +439,7 @@ class BudgetAllocationController extends Controller
     /** Append a TOTAL row summing numeric columns $from..$to. */
     private function withTotal(array $lines, int $from, int $to): array
     {
-        if (!$lines) {
+        if (! $lines) {
             return $lines;
         }
 

@@ -34,6 +34,9 @@
                     ['icon' => 'folder', 'label' => 'Google Drive', 'route' => 'google-drive'],
                     ['icon' => 'bar_chart', 'label' => 'Reports', 'route' => 'reports'],
                 ];
+                if (auth()->user()?->hasPermission('planning.view') || auth()->user()?->hasPermission('planning.manage')) {
+                    array_splice($navigation, 1, 0, [['icon' => 'account_tree', 'label' => 'Planning / SIP', 'route' => 'planning']]);
+                }
                 if ($isMasterUser) {
                     $navigation[] = ['icon' => 'group', 'label' => 'User Management', 'route' => 'user-management'];
                     $navigation[] = ['icon' => 'card_membership', 'label' => 'Subscriptions', 'route' => 'subscriptions'];

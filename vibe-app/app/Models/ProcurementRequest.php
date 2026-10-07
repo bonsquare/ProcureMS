@@ -10,7 +10,7 @@ class ProcurementRequest extends Model
 {
     use HasFactory, BelongsToOrganization;
 
-    protected $fillable = ['organization_id', 'school_id', 'requested_by', 'request_number', 'title', 'description', 'transaction_description', 'amount', 'entity_name', 'department_name', 'section', 'sai_number', 'sai_date', 'responsibility_center_code', 'source_of_fund', 'extra_blank_rows', 'status', 'requested_at', 'approved_at', 'budget_allocation_id'];
+    protected $fillable = ['organization_id', 'school_id', 'master_transaction_id', 'requested_by', 'request_number', 'title', 'description', 'transaction_description', 'amount', 'entity_name', 'department_name', 'section', 'sai_number', 'sai_date', 'responsibility_center_code', 'source_of_fund', 'extra_blank_rows', 'status', 'requested_at', 'approved_at', 'budget_allocation_id'];
 
     protected function casts(): array
     {
@@ -45,6 +45,7 @@ class ProcurementRequest extends Model
     public function school() { return $this->belongsTo(School::class); }
 
     public function budgetAllocation() { return $this->belongsTo(BudgetAllocation::class); }
+    public function transaction() { return $this->belongsTo(MasterTransaction::class, 'master_transaction_id'); }
     public function requester() { return $this->belongsTo(User::class, 'requested_by'); }
     public function liquidationReports() { return $this->hasMany(LiquidationReport::class); }
     public function items() { return $this->hasMany(ProcurementRequestItem::class); }

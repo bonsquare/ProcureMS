@@ -1,0 +1,118 @@
+@extends('layouts.budget')
+
+@section('title', 'Planning')
+@section('section', 'Planning')
+@section('crumb', 'SIP · AIP · PPMP · APP')
+
+@section('content')
+@php
+    $inputClass = 'mt-1 w-full rounded border border-outline-variant/50 bg-white px-3 py-2.5 text-sm outline-none focus:border-primary';
+    $peso = fn ($value) => '₱' . number_format((float) $value, 2);
+@endphp
+<div class="mb-7 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
+    <div>
+        <div class="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary"><span class="material-symbols-outlined text-base">account_tree</span> Integrated School Planning</div>
+        <h1 class="text-3xl font-semibold tracking-tight">Planning & Procurement Programs</h1>
+        <p class="mt-1 text-sm text-on-surface-variant">Connect SIP priorities to AIP funding, PPMP procurement, APP approval, and transaction history.</p>
+    </div>
+    <form method="GET" action="{{ route('planning') }}" class="flex flex-wrap gap-2 rounded border border-outline-variant/40 bg-white p-3">
+        <label class="text-xs font-semibold text-on-surface-variant">School
+            <select name="school_id" class="mt-1 min-w-52 rounded border border-outline-variant/50 bg-surface-low px-3 py-2 text-sm" onchange="this.form.submit()">
+                @foreach($schools as $school)<option value="{{ $school->id }}" @selected($selectedSchool->id === $school->id)>{{ $school->name }}</option>@endforeach
+            </select>
+        </label>
+        <label class="text-xs font-semibold text-on-surface-variant">Fiscal Year
+            <input type="number" name="year" min="2000" max="2100" value="{{ $year }}" class="mt-1 w-28 rounded border border-outline-variant/50 bg-surface-low px-3 py-2 text-sm">
+        </label>
+        <button class="self-end rounded bg-primary px-4 py-2 text-xs font-semibold text-white">View</button>
+    </form>
+</div>
+
+@if(session('success'))<div class="mb-5 rounded border border-secondary/30 bg-secondary/5 px-4 py-3 text-sm text-secondary">{{ session('success') }}</div>@endif
+@if($errors->any())<div class="mb-5 rounded border border-error/30 bg-error/5 px-4 py-3 text-sm text-error">{{ $errors->first() }}</div>@endif
+
+<section class="mb-6 grid gap-4 xl:grid-cols-2">
+    @if(auth()->user()->hasPermission('planning.manage'))
+    <div class="rounded border border-outline-variant/30 bg-white p-5">
+        <div class="mb-4"><h2 class="font-semibold">Add SIP Priority</h2><p class="mt-1 text-xs text-on-surface-variant">A saved priority receives a transaction number. Link it to an AIP when ready.</p></div>
+        <form method="POST" action="{{ route('planning.sip.store') }}" class="grid gap-3 sm:grid-cols-2">@csrf
+            <input type="hidden" name="school_id" value="{{ $selectedSchool->id }}">
+            <label class="text-xs font-semibold">School Year<input required type="number" name="school_year" value="{{ $year }}" min="2000" max="2100" class="{{ $inputClass }}"></label>
+            <label class="text-xs font-semibold">Planning Period<input name="planning_period" placeholder="e.g. 2026–2028" class="{{ $inputClass }}"></label>
+            <label class="text-xs font-semibold sm:col-span-2">Goal<input required name="goal" maxlength="255" class="{{ $inputClass }}"></label>
+            <label class="text-xs font-semibold sm:col-span-2">Project / Program<input required name="project" maxlength="255" class="{{ $inputClass }}"></label>
+            <label class="text-xs font-semibold">Objective<input name="objective" maxlength="255" class="{{ $inputClass }}"></label>
+            <label class="text-xs font-semibold">Expected Budget<input type="number" min="0" step="0.01" name="estimated_budget" class="{{ $inputClass }}"></label>
+            <label class="text-xs font-semibold sm:col-span-2">Key Activity<textarea name="activity" rows="2" class="{{ $inputClass }}"></textarea></label>
+            <label class="text-xs font-semibold">Expected Output<input name="expected_output" class="{{ $inputClass }}"></label>
+            <label class="text-xs font-semibold">Fund Source<input name="fund_source" class="{{ $inputClass }}"></label>
+            <label class="text-xs font-semibold">Target<input name="target" class="{{ $inputClass }}"></label>
+            <label class="text-xs font-semibold">Performance Indicator<input name="performance_indicator" class="{{ $inputClass }}"></label>
+            <label class="text-xs font-semibold">Implementation Schedule<input name="implementation_schedule" class="{{ $inputClass }}"></label>
+            <label class="text-xs font-semibold">Responsible Person<input name="responsible_person" class="{{ $inputClass }}"></label>
+            <div class="sm:col-span-2"><button class="rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white">Save SIP Priority</button></div>
+        </form>
+    </div>
+
+    <div class="rounded border border-outline-variant/30 bg-white p-5">
+        <div class="mb-4"><h2 class="font-semibold">Fund Sources & Fiscal Year</h2><p class="mt-1 text-xs text-on-surface-variant">These controls belong to {{ $selectedSchool->organization?->name ?? 'this organization' }}.</p></div>
+        <form method="POST" action="{{ route('planning.funds.store') }}" class="mb-5 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">@csrf<input type="hidden" name="school_id" value="{{ $selectedSchool->id }}">
+            <label class="text-xs font-semibold">Code<input name="code" required maxlength="50" placeholder="e.g. MOOE" class="{{ $inputClass }}"></label>
+            <label class="text-xs font-semibold">Fund Name<input name="name" required maxlength="255" placeholder="Maintenance and Other Operating Expenses" class="{{ $inputClass }}"></label>
+            <button class="self-end rounded border border-primary px-4 py-2.5 text-xs font-semibold text-primary">Save Fund</button>
+        </form>
+        <div class="mb-5 flex flex-wrap gap-2">@forelse($fundSources as $fund)<span class="rounded bg-surface-low px-3 py-1.5 text-xs {{ $fund->is_active ? '' : 'opacity-50 line-through' }}">{{ $fund->code }} · {{ $fund->name }}</span>@empty<span class="text-xs text-on-surface-variant">No fund sources configured.</span>@endforelse</div>
+        <form method="POST" action="{{ route('planning.fiscal-year.status') }}" class="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">@csrf<input type="hidden" name="school_id" value="{{ $selectedSchool->id }}">
+            <label class="text-xs font-semibold">Year<input type="number" name="year" required value="{{ $year }}" min="2000" max="2100" class="{{ $inputClass }}"></label>
+            <label class="text-xs font-semibold">Status<select name="status" class="{{ $inputClass }}"><option value="open">Open</option><option value="closed">Closed</option></select></label>
+            <button class="self-end rounded border border-primary px-4 py-2.5 text-xs font-semibold text-primary">Update</button>
+        </form>
+        <div class="mt-3 flex flex-wrap gap-2">@foreach($fiscalYears as $fiscalYear)<span class="rounded px-2.5 py-1 text-[11px] {{ $fiscalYear->isOpen() ? 'bg-secondary/10 text-secondary' : 'bg-error/10 text-error' }}">FY {{ $fiscalYear->year }} · {{ ucfirst($fiscalYear->status) }}</span>@endforeach</div>
+    </div>
+    @endif
+</section>
+
+<section class="mb-6 rounded border border-outline-variant/30 bg-white">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 px-5 py-4"><div><h2 class="font-semibold">SIP Projects</h2><p class="mt-1 text-xs text-on-surface-variant">{{ $sipProjects->count() }} priorities recorded</p></div><a href="{{ route('aip') }}" class="rounded border border-outline-variant/60 px-3 py-2 text-xs font-semibold">Open AIP</a></div>
+    <div class="divide-y divide-outline-variant/20">
+        @forelse($sipProjects as $sip)
+            <div class="grid gap-3 px-5 py-4 lg:grid-cols-[1fr_auto] lg:items-center">
+                <div><div class="flex flex-wrap items-center gap-2"><h3 class="text-sm font-semibold">{{ $sip->project }}</h3><span class="rounded bg-surface-low px-2 py-1 text-[10px]">SY {{ $sip->school_year }}</span></div><p class="mt-1 text-xs text-on-surface-variant">{{ $sip->goal }} · {{ $sip->expected_output ?: 'No output entered' }}</p></div>
+                <div class="flex flex-wrap items-center gap-2">@if($sip->transaction)<a class="text-xs font-semibold text-primary underline" href="{{ route('transactions.show', $sip->transaction) }}">{{ $sip->transaction->transaction_number }}</a>@endif
+                    @if(auth()->user()->hasPermission('planning.manage') && $aips->whereNull('sip_project_id')->isNotEmpty())<form method="POST" action="{{ route('planning.sip.link-aip', $sip) }}" class="flex gap-2">@csrf<select required name="aip_id" class="max-w-44 rounded border border-outline-variant/50 bg-white px-2 py-2 text-xs"><option value="">Link AIP</option>@foreach($aips->whereNull('sip_project_id') as $aip)<option value="{{ $aip->id }}">FY {{ $aip->fiscal_year }} · {{ ucfirst($aip->status) }}</option>@endforeach</select><button class="rounded bg-primary px-3 py-2 text-xs font-semibold text-white">Link</button></form>@endif
+                </div>
+            </div>
+        @empty<div class="px-5 py-8 text-center text-sm text-on-surface-variant">No SIP priorities saved for this school yet.</div>@endforelse
+    </div>
+</section>
+
+<section class="mb-6 rounded border border-outline-variant/30 bg-white">
+    <div class="border-b border-outline-variant/20 px-5 py-4"><h2 class="font-semibold">PPMP</h2><p class="mt-1 text-xs text-on-surface-variant">Draft each item against an approved AIP; approve the plan before adding it to APP.</p></div>
+    @if(auth()->user()->hasPermission('planning.manage'))
+    <form method="POST" action="{{ route('planning.ppmp.store') }}" class="grid gap-3 border-b border-outline-variant/20 bg-surface-low/60 p-5 md:grid-cols-3">@csrf
+        <label class="text-xs font-semibold md:col-span-1">Approved AIP<select required name="aip_id" class="{{ $inputClass }}"><option value="">Select AIP</option>@foreach($aips->where('status', 'approved') as $aip)<option value="{{ $aip->id }}">FY {{ $aip->fiscal_year }} · {{ $aip->entity }}</option>@endforeach</select></label>
+        <label class="text-xs font-semibold md:col-span-2">Project Title<input name="project_title" required maxlength="255" class="{{ $inputClass }}"></label>
+        <label class="text-xs font-semibold">Procurement Item<input name="procurement_item" required maxlength="255" class="{{ $inputClass }}"></label>
+        <label class="text-xs font-semibold">Specifications<input name="specifications" maxlength="2000" class="{{ $inputClass }}"></label>
+        <label class="text-xs font-semibold">Fund Source<select name="fund_source" class="{{ $inputClass }}"><option value="">Select fund source</option>@foreach($fundOptions as $fund)<option value="{{ $fund }}">{{ $fund }}</option>@endforeach</select></label>
+        <label class="text-xs font-semibold">Quantity<input type="number" name="quantity" required min="0.01" step="0.01" value="1" class="{{ $inputClass }}"></label>
+        <label class="text-xs font-semibold">Unit<input name="unit" required maxlength="50" value="lot" class="{{ $inputClass }}"></label>
+        <label class="text-xs font-semibold">Estimated Unit Cost<input type="number" name="estimated_unit_cost" required min="0" step="0.01" class="{{ $inputClass }}"></label>
+        <label class="text-xs font-semibold">Procurement Mode<input name="procurement_mode" maxlength="100" placeholder="e.g. Small Value Procurement" class="{{ $inputClass }}"></label>
+        <label class="text-xs font-semibold">Schedule<input name="procurement_schedule" maxlength="255" placeholder="e.g. Q1" class="{{ $inputClass }}"></label>
+        <div class="self-end"><button class="rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white">Save PPMP Draft</button></div>
+    </form>
+    @endif
+    <div class="divide-y divide-outline-variant/20">
+        @forelse($ppmpPlans as $plan)<div class="flex flex-wrap items-center justify-between gap-3 px-5 py-4"><div><div class="flex flex-wrap items-center gap-2"><h3 class="text-sm font-semibold">{{ $plan->project_title }}</h3><span class="rounded px-2 py-1 text-[10px] {{ $plan->status === 'approved' ? 'bg-secondary/10 text-secondary' : 'bg-surface-low text-on-surface-variant' }}">{{ ucfirst($plan->status) }}</span></div><p class="mt-1 text-xs text-on-surface-variant">FY {{ $plan->fiscal_year }} · {{ $plan->items->count() }} item(s) · {{ $peso($plan->items->sum('estimated_total_cost')) }}</p></div><div class="flex gap-3">@if($plan->transaction)<a href="{{ route('transactions.show', $plan->transaction) }}" class="self-center text-xs font-semibold text-primary underline">{{ $plan->transaction->transaction_number }}</a>@endif @if(auth()->user()->hasPermission('planning.manage') && $plan->status !== 'approved')<form method="POST" action="{{ route('planning.ppmp.approve', $plan) }}">@csrf<button class="rounded bg-secondary px-3 py-2 text-xs font-semibold text-white">Approve PPMP</button></form>@endif</div></div>@empty<div class="px-5 py-7 text-center text-sm text-on-surface-variant">No PPMP records yet.</div>@endforelse
+    </div>
+</section>
+
+<section class="rounded border border-outline-variant/30 bg-white">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 px-5 py-4"><div><h2 class="font-semibold">Annual Procurement Plan · FY {{ $year }}</h2><p class="mt-1 text-xs text-on-surface-variant">Built from approved PPMP items. Linked PR activity is visible per transaction.</p></div>@if(auth()->user()->hasPermission('planning.manage'))<form method="POST" action="{{ route('planning.app.generate') }}" class="flex gap-2">@csrf<input type="hidden" name="school_id" value="{{ $selectedSchool->id }}"><input type="hidden" name="fiscal_year" value="{{ $year }}"><button class="rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white">Generate / Refresh APP</button></form>@endif</div>
+    @if($appPlan)
+        <div class="flex flex-wrap items-center justify-between gap-3 bg-surface-low/60 px-5 py-3"><span class="text-xs">APP status: <strong>{{ ucfirst($appPlan->status) }}</strong> · {{ $appPlan->items->count() }} item(s) · Planned total <strong>{{ $peso($appPlan->items->sum('estimated_total_cost')) }}</strong></span>@if(auth()->user()->hasPermission('planning.manage') && $appPlan->status !== 'approved')<form method="POST" action="{{ route('planning.app.approve', $appPlan) }}">@csrf<button class="rounded bg-secondary px-3 py-2 text-xs font-semibold text-white">Approve APP</button></form>@endif</div>
+        <div class="overflow-x-auto"><table class="w-full min-w-[700px] text-left text-xs"><thead class="bg-surface-low text-on-surface-variant"><tr><th class="px-5 py-3">Procurement Item</th><th class="px-4 py-3">Fund / Mode</th><th class="px-4 py-3 text-right">Planned Amount</th><th class="px-5 py-3">Transaction / PR Status</th></tr></thead><tbody class="divide-y divide-outline-variant/20">@foreach($appPlan->items as $item)@php $transaction = $item->ppmpItem?->plan?->transaction; $linkedPrs = $transaction?->procurementRequests ?? collect(); @endphp<tr><td class="px-5 py-3"><span class="font-semibold">{{ $item->procurement_item }}</span><div class="mt-1 text-on-surface-variant">{{ $item->specifications ?: '—' }}</div></td><td class="px-4 py-3">{{ $item->fund_source ?: '—' }}<div class="mt-1 text-on-surface-variant">{{ $item->procurement_mode ?: 'Mode not set' }}</div></td><td class="px-4 py-3 text-right font-semibold">{{ $peso($item->estimated_total_cost) }}</td><td class="px-5 py-3">@if($transaction)<a class="font-semibold text-primary underline" href="{{ route('transactions.show', $transaction) }}">{{ $transaction->transaction_number }}</a><div class="mt-1 text-on-surface-variant">{{ $linkedPrs->count() }} linked PR(s) · {{ str($transaction->status)->replace('_', ' ')->title() }}</div>@else<span class="text-on-surface-variant">No transaction link</span>@endif</td></tr>@endforeach</tbody></table></div>
+    @else<div class="px-5 py-8 text-center text-sm text-on-surface-variant">No APP yet for FY {{ $year }}. Approve a PPMP, then generate the APP.</div>@endif
+</section>
+@endsection
