@@ -234,13 +234,15 @@ class HomeController extends Controller
         return redirect()->route('home')->with('success', 'School and system user added successfully.');
     }
 
-    public function procurement()
+    public function procurement(ProcurementWorkspaceService $workspaceService)
     {
         $user = request()->user();
-        $procurementRequests = ProcurementRequest::with('school', 'requester', 'liquidationReports', 'transaction')
+        $procurementRequests = ProcurementRequest::with('school', 'requester', 'liquidationReports', 'transaction', 'documents', 'items')
             ->whereIn('school_id', $this->scopedSchoolIds())
             ->latest()
             ->get();
+
+        $procurementRequests->each(fn (ProcurementRequest $request) => $request->setAttribute('workspace', $workspaceService->present($request)));
 
         $requests = $procurementRequests->map(fn (ProcurementRequest $request) => [
             'record_id' => $request->id,
@@ -269,13 +271,22 @@ class HomeController extends Controller
                 'completedAmount' => $procurementRequests->whereIn('status', ['approved', 'completed'])->sum('amount'),
             ],
             'activeProcurementArea' => 'overview',
+            'procurementRequests' => $procurementRequests,
+            'attentionRequests' => $procurementRequests->whereIn('status', ['submitted', 'pending_approval', 'returned', 'for_canvass'])->take(5),
+            'recentRequests' => $procurementRequests->take(6),
         ]);
     }
 
     public function procurementRequests(ProcurementWorkspaceService $workspaceService)
     {
+        $search = trim((string) request('search'));
+        $status = trim((string) request('status'));
+        $schoolId = request()->integer('school_id');
         $procurementRequests = ProcurementRequest::with(['school', 'requester', 'liquidationReports', 'transaction', 'documents', 'items'])
             ->whereIn('school_id', $this->scopedSchoolIds())
+            ->when($search !== '', fn ($builder) => $builder->where(fn ($nested) => $nested->where('request_number', 'like', "%{$search}%")->orWhere('title', 'like', "%{$search}%")))
+            ->when($status !== '', fn ($builder) => $builder->where('status', $status))
+            ->when($this->isMasterUser() && $schoolId, fn ($builder) => $builder->where('school_id', $schoolId))
             ->latest()
             ->paginate(20)
             ->withQueryString();
@@ -286,13 +297,13 @@ class HomeController extends Controller
             return $request;
         });
 
-        return view('procurement', [
-            'requests' => $this->procurementRequestRows($procurementRequests->getCollection()),
+        return view('procurement-requests', [
             'procurementRequests' => $procurementRequests,
             'isMasterUser' => $this->isMasterUser(),
             'currentSchoolName' => $this->isMasterUser() ? null : request()->user()?->school?->name,
-            'procurementMetrics' => [],
             'activeProcurementArea' => 'requests',
+            'schools' => $this->isMasterUser() ? School::where('status', 'active')->orderBy('name')->get() : collect(),
+            'filtersApplied' => $search !== '' || $status !== '' || ($this->isMasterUser() && $schoolId),
         ]);
     }
 
@@ -307,8 +318,9 @@ class HomeController extends Controller
             'workspace' => $workspaceService->present($procurementRequest),
             'isMasterUser' => $this->isMasterUser(),
             'currentSchoolName' => $this->isMasterUser() ? null : request()->user()?->school?->name,
-            'procurementMetrics' => [],
+            'procurementMetrics' => ['total' => 1, 'pending' => 0, 'forCanvass' => 0, 'completed' => 0, 'completedAmount' => 0],
             'activeProcurementArea' => 'requests',
+            'attentionRequests' => collect(), 'recentRequests' => collect(),
         ]);
     }
 
@@ -325,8 +337,9 @@ class HomeController extends Controller
             'documents' => $documents,
             'isMasterUser' => $this->isMasterUser(),
             'currentSchoolName' => $this->isMasterUser() ? null : request()->user()?->school?->name,
-            'procurementMetrics' => [],
+            'procurementMetrics' => ['total' => $documents->total(), 'pending' => 0, 'forCanvass' => 0, 'completed' => 0, 'completedAmount' => 0],
             'activeProcurementArea' => 'documents',
+            'attentionRequests' => collect(), 'recentRequests' => collect(),
         ]);
     }
 
@@ -350,8 +363,9 @@ class HomeController extends Controller
             'receivingRequests' => $receivingRequests,
             'isMasterUser' => $this->isMasterUser(),
             'currentSchoolName' => $this->isMasterUser() ? null : request()->user()?->school?->name,
-            'procurementMetrics' => [],
+            'procurementMetrics' => ['total' => $receivingRequests->total(), 'pending' => 0, 'forCanvass' => 0, 'completed' => 0, 'completedAmount' => 0],
             'activeProcurementArea' => 'receiving',
+            'attentionRequests' => collect(), 'recentRequests' => collect(),
         ]);
     }
 
