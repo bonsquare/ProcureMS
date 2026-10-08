@@ -19,6 +19,7 @@ use App\Services\BudgetService;
 use App\Services\DocumentNumberService;
 use App\Services\FiscalYearService;
 use App\Services\MasterTransactionService;
+use App\Services\ProcurementWorkspaceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -267,6 +268,90 @@ class HomeController extends Controller
                 'completed' => $procurementRequests->whereIn('status', ['approved', 'completed'])->count(),
                 'completedAmount' => $procurementRequests->whereIn('status', ['approved', 'completed'])->sum('amount'),
             ],
+            'activeProcurementArea' => 'overview',
+        ]);
+    }
+
+    public function procurementRequests(ProcurementWorkspaceService $workspaceService)
+    {
+        $procurementRequests = ProcurementRequest::with(['school', 'requester', 'liquidationReports', 'transaction', 'documents', 'items'])
+            ->whereIn('school_id', $this->scopedSchoolIds())
+            ->latest()
+            ->paginate(20)
+            ->withQueryString();
+
+        $procurementRequests->getCollection()->transform(function (ProcurementRequest $request) use ($workspaceService) {
+            $request->setAttribute('workspace', $workspaceService->present($request));
+
+            return $request;
+        });
+
+        return view('procurement', [
+            'requests' => $this->procurementRequestRows($procurementRequests->getCollection()),
+            'procurementRequests' => $procurementRequests,
+            'isMasterUser' => $this->isMasterUser(),
+            'currentSchoolName' => $this->isMasterUser() ? null : request()->user()?->school?->name,
+            'procurementMetrics' => [],
+            'activeProcurementArea' => 'requests',
+        ]);
+    }
+
+    public function showProcurement(ProcurementRequest $procurementRequest, ProcurementWorkspaceService $workspaceService)
+    {
+        $this->authorizeProcurementAccess($procurementRequest);
+        $procurementRequest->load(['school', 'requester', 'items', 'documents.creator', 'transaction', 'liquidationReports']);
+
+        return view('procurement', [
+            'requests' => $this->procurementRequestRows(collect([$procurementRequest])),
+            'procurementRequest' => $procurementRequest,
+            'workspace' => $workspaceService->present($procurementRequest),
+            'isMasterUser' => $this->isMasterUser(),
+            'currentSchoolName' => $this->isMasterUser() ? null : request()->user()?->school?->name,
+            'procurementMetrics' => [],
+            'activeProcurementArea' => 'requests',
+        ]);
+    }
+
+    public function procurementDocumentIndex()
+    {
+        $documents = ProcurementDocument::with(['procurementRequest.school', 'creator'])
+            ->whereHas('procurementRequest', fn ($query) => $query->whereIn('school_id', $this->scopedSchoolIds()))
+            ->latest('document_date')
+            ->paginate(20)
+            ->withQueryString();
+
+        return view('procurement', [
+            'requests' => $this->procurementRequestRows($documents->getCollection()->pluck('procurementRequest')->filter()->unique('id')->values()),
+            'documents' => $documents,
+            'isMasterUser' => $this->isMasterUser(),
+            'currentSchoolName' => $this->isMasterUser() ? null : request()->user()?->school?->name,
+            'procurementMetrics' => [],
+            'activeProcurementArea' => 'documents',
+        ]);
+    }
+
+    public function procurementReceiving(ProcurementWorkspaceService $workspaceService)
+    {
+        $receivingRequests = ProcurementRequest::with(['school', 'requester', 'documents', 'items'])
+            ->whereIn('school_id', $this->scopedSchoolIds())
+            ->whereHas('documents', fn ($query) => $query->whereIn('document_type', ['purchase_order', 'inspection_acceptance_report']))
+            ->latest()
+            ->paginate(20)
+            ->withQueryString();
+
+        $receivingRequests->getCollection()->transform(function (ProcurementRequest $request) use ($workspaceService) {
+            $request->setAttribute('workspace', $workspaceService->present($request));
+
+            return $request;
+        });
+
+        return view('procurement', [
+            'requests' => $this->procurementRequestRows($receivingRequests->getCollection()),
+            'receivingRequests' => $receivingRequests,
+            'isMasterUser' => $this->isMasterUser(),
+            'currentSchoolName' => $this->isMasterUser() ? null : request()->user()?->school?->name,
+            'procurementMetrics' => [],
+            'activeProcurementArea' => 'receiving',
         ]);
     }
 
@@ -276,7 +361,28 @@ class HomeController extends Controller
             'suppliers' => Supplier::when(! $this->isMasterUser(), fn ($query) => $query->whereIn('school_id', $this->scopedSchoolIds()))
                 ->latest('business_name')
                 ->get(),
+            'activeProcurementArea' => 'suppliers',
         ]);
+    }
+
+    private function procurementRequestRows($procurementRequests): array
+    {
+        return collect($procurementRequests)->map(fn (ProcurementRequest $request) => [
+            'record_id' => $request->id,
+            'ors' => $request->relationLoaded('liquidationReports')
+                ? $request->liquidationReports->map(fn ($report) => ['number' => $report->ors_number ?: $report->report_number, 'status' => $report->status])->all()
+                : [],
+            'id' => $request->request_number,
+            'title' => $request->title,
+            'transaction_id' => $request->master_transaction_id,
+            'transaction_number' => $request->relationLoaded('transaction') ? $request->transaction?->transaction_number : null,
+            'school' => $request->relationLoaded('school') ? ($request->school?->name ?? 'Unassigned') : 'Unassigned',
+            'by' => $request->relationLoaded('requester') ? ($request->requester?->name ?? 'System User') : 'System User',
+            'amount' => '₱'.number_format((float) $request->amount, 2),
+            'status' => str($request->status)->replace('_', ' ')->title()->toString(),
+            'tone' => in_array($request->status, ['pending_approval', 'returned'], true) ? 'error' : ($request->status === 'approved' ? 'secondary' : 'primary'),
+            'date' => optional($request->requested_at ?? $request->created_at)->format('M d, Y'),
+        ])->all();
     }
 
     public function storeSupplier(Request $request)

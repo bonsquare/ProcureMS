@@ -28,7 +28,11 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::post('/procurement/suppliers', [HomeController::class, 'storeSupplier'])->middleware('permission:supplier.manage')->name('suppliers.store');
     Route::put('/procurement/suppliers/{supplier}', [HomeController::class, 'updateSupplier'])->middleware('permission:supplier.manage')->name('suppliers.update');
     Route::get('/procurement/create', [HomeController::class, 'createProcurement'])->name('procurement.create');
+    Route::get('/procurement/requests', [HomeController::class, 'procurementRequests'])->name('procurement.requests');
+    Route::get('/procurement/documents', [HomeController::class, 'procurementDocumentIndex'])->name('procurement.documents.index');
+    Route::get('/procurement/receiving', [HomeController::class, 'procurementReceiving'])->name('procurement.receiving');
     Route::post('/procurement', [HomeController::class, 'storeProcurement'])->middleware('permission:procurement.create')->name('procurement.store');
+    Route::get('/procurement/{procurementRequest}', [HomeController::class, 'showProcurement'])->whereNumber('procurementRequest')->name('procurement.show');
     Route::get('/procurement/{procurementRequest}/edit', [HomeController::class, 'editProcurement'])->name('procurement.edit');
     Route::put('/procurement/{procurementRequest}', [HomeController::class, 'updateProcurement'])->middleware('permission:procurement.edit')->name('procurement.update');
     Route::get('/procurement/{procurementRequest}/print', [HomeController::class, 'printProcurement'])->name('procurement.print');
