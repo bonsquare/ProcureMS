@@ -571,7 +571,7 @@ class HomeController extends Controller
             return $procurementRequest;
         });
 
-        return redirect()->route('procurement.print', $procurementRequest);
+        return redirect()->route('procurement.show', $procurementRequest)->with('success', 'Procurement request created successfully.');
     }
 
     public function updateProcurement(Request $request, ProcurementRequest $procurementRequest)
@@ -624,7 +624,7 @@ class HomeController extends Controller
         app(AppItemLinkService::class)->recordLinks($procurementRequest);
         $procurementRequest->transaction?->recordEvent('procurement', 'pr_updated', null, $procurementRequest->status, $procurementRequest->request_number, ['procurement_request_id' => $procurementRequest->id, 'amount' => $amount]);
 
-        return redirect()->route('procurement.print', $procurementRequest)
+        return redirect()->route('procurement.show', $procurementRequest)
             ->with('success', 'Procurement request updated successfully.');
     }
 
