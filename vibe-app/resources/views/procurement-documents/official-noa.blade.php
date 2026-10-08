@@ -7,8 +7,7 @@
     $awardAmountWords = $awardAmountInWords ?? $amountInWords;
     $schoolName = $procurementRequest->school?->name ?? '____________________________';
     $schoolHeadName = $schoolHead?->name ?? $procurementRequest->school?->school_head ?? '____________________________';
-    $leftLogo = $agency?->department_logo_path ? asset('storage/'.$agency->department_logo_path) : asset('images/official-deped-logo.png');
-    $rightLogo = $procurementRequest->school?->logo_path ? asset('storage/'.$procurementRequest->school->logo_path) : ($agency?->division_logo_path ? asset('storage/'.$agency->division_logo_path) : asset('images/official-school-logo.png'));
+    [$leftLogo, $rightLogo] = \App\Support\OfficialDocument::logos($procurementRequest->school, $agency);
 @endphp
 
 <style>
@@ -35,13 +34,13 @@
     .noa-sign-line{width:58mm;margin-top:28mm;border-top:1px solid #111}
     .noa-conforme-date{margin-top:4mm}
     .noa-date-line{display:inline-block;width:48mm;border-bottom:1px solid #111}
-    @media print{@page{size:A4;margin:0}.noa-page{margin:0;width:210mm;min-height:295.5mm;box-shadow:none}.noa-title{margin-top:25px}}
+    @media print{.noa-page{margin:0;width:210mm;min-height:295.5mm;box-shadow:none}.noa-title{margin-top:25px}}
 </style>
 
 <main class="page noa-page">
     <header class="noa-letterhead">
-        @if($leftLogo)<img class="left-logo" src="{{ $leftLogo }}" alt="Department logo">@endif
-        @if($rightLogo)<img class="right-logo" src="{{ $rightLogo }}" alt="School logo">@endif
+        @if($leftLogo)<img class="left-logo official-logo" src="{{ $leftLogo }}" alt="Department logo" onerror="this.remove()">@endif
+        @if($rightLogo)<img class="right-logo official-logo" src="{{ $rightLogo }}" alt="School logo" onerror="this.remove()">@endif
         <div>{{ $agency?->republic_name ?: 'Republic of the Philippines' }}</div>
         <div class="department">{{ $agency?->department_name ?: 'Department of Education' }}</div>
         <div>{{ $procurementRequest->school?->region }}</div>

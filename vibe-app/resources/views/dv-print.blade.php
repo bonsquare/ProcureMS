@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DV {{ $report->dv_number }}</title>
     <style>
-        @page { size: 8.5in 13in; margin: 0; }
         * { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; background: #e5e7eb; }
         .print-actions { width: 8.5in; margin: 12px auto; display: flex; justify-content: space-between; align-items: center; font: 13px Arial, sans-serif; }
@@ -40,8 +39,8 @@
     $accountantName = strtoupper((string) ($accountant?->name ?? ''));
     $accountantRole = $accountant?->position ?: '';
 @endphp
-<div class="print-actions"><button type="button" class="secondary" onclick="closePrintTab('{{ route('accounting', ['tab' => 'with_dv']) }}')">Close</button><span style="margin-left:auto;margin-right:12px;color:#444;">Print on Legal / Folio (8.5 x 13 in), actual size</span><button type="button" onclick="window.print()">Print / Export PDF</button></div>
-<div class="sheet"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 612 936" preserveAspectRatio="xMidYMid meet" stroke="#000" fill="none">
+@include('partials.official-toolbar', ['closeUrl' => route('accounting', ['tab' => 'with_dv'])])
+<div class="sheet" data-official-page data-single-page data-doc="dv" data-paper="longbond"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 612 936" preserveAspectRatio="xMidYMid meet" stroke="#000" fill="none">
 <g fill="none">
 <line x1="17.33" y1="40.20" x2="17.33" y2="782.56" stroke-width="1.39"/>
 <line x1="313.30" y1="496.98" x2="313.30" y2="679.97" stroke-width="1.39"/>

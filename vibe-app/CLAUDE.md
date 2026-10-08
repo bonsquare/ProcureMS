@@ -156,3 +156,95 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - Run `vendor/bin/phpunit` to call the test runner directly. It accepts the same file path and `--filter=testName` arguments.
 
 </laravel-boost-guidelines>
+
+---
+
+# ProcureMS project handoff for Claude
+
+This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and liquidation system. Continue implementation from the existing repository and follow the product specification and phase order below.
+
+## Non-negotiable product rules
+
+1. Preserve existing relationships between all modules. Do not replace or break existing tables, routes, models, or workflows merely to introduce a new feature.
+2. Every record that belongs to a school or organization must remain tenant-isolated. A user must never read or mutate another organization’s data.
+3. Prefer additive migrations, nullable foreign keys where legacy data requires them, existing models/services, and named routes. Do not rename or drop existing columns without an explicit migration and a safe data migration.
+4. Keep the master transaction record as the cross-module audit spine. New planning, budget, procurement, delivery, accounting, cash, and liquidation records should link to it when applicable.
+5. Use organization ID consistently for organization-owned data and school ID consistently for school-owned data. Validate both ownership and permission before writes.
+6. Do not seed or invent production data. Test fixtures and the Lubas supplier seed data must remain clearly separated from production setup.
+7. Before declaring a phase complete, verify the happy path, permission failures, organization isolation, migration behavior, and the relevant reports/documents.
+
+## Current implementation status
+
+- Phase 1 foundation is substantially implemented: authentication, organizations/schools, roles and permissions, subscription/trial foundation, organization isolation, fiscal years, fund sources, and chart of accounts.
+- Phase 2 is implemented but still needs end-to-end validation: SIP, AIP linking, budget integration, fiscal-year controls, fund sources, quarterly/budget-control coverage, and master transactions.
+- Parts of Phase 3 are already present: PPMP, APP generation/approval, and planning transaction links. Treat these as in-progress, not complete.
+- 2026-10-08: SIP → AIP → PPMP → APP flow validated by `tests/Feature/PlanningFlowTest.php` (happy path, closed fiscal year, permissions, organization isolation). No defects found.
+- 2026-10-08: PR lines can now link to approved APP items (`procurement_request_items.app_item_id`, optional/nullable). `App\Services\AppItemLinkService` enforces approved APP, same school, and remaining APP quantity/cost; `returned`/`rejected` PRs release quantity. The PR form has an "Approved APP item" picker, `/planning` shows requested quantity and PR numbers per APP item, and a `pr_linked` event is logged on the planning transaction. Covered by `tests/Feature/PrAppLinkTest.php`.
+- 2026-10-08: SIP now follows the official School Improvement Plan template (PDF supplied by the user): each `sip_projects` row is a Specific Program/Project (pillar, KRA, organizational outcome, strategy, 5-point agenda) with `sip_activities` carrying Year 1-3 physical/financial targets, source of fund, responsible person, remarks; `sip_plans` holds print signatories. Official print: `/planning/sip/print?school_id=&start_year=` (`resources/views/sip-print.blade.php`). Covered by `tests/Feature/SipTemplateTest.php`.
+- 2026-10-08: All official printed documents share one print engine (`resources/views/partials/print-clean.blade.php` + `partials/official-toolbar.blade.php`). A document opts in with `data-official-page` (+ `data-doc`, `data-paper`, `data-orientation`, `data-margin`, `data-single-page`); the toolbar (screen only) offers paper size (A4, Letter, Legal, Long Bond, Folio, Custom), orientation, zoom, and Print / Save as PDF, and writes `@page` accordingly. New official documents must use it and must not declare their own `@page`. Header logos come from `App\Support\OfficialDocument::logos()` (school profile, then agency/division; no school-specific fallback; a missing logo prints blank). Covered by `tests/Feature/OfficialPrintTest.php`.
+- Still open before Phase 3 is complete: browser check of the PR form picker, PR numbering/status end-to-end validation, and deciding whether the APP link should be required for PRs.
+- The Planning page is `/planning`. The source is `resources/views/planning.blade.php`; the controller is `app/Http/Controllers/PlanningController.php`.
+- The last GitHub backup is commit `69d1d35` on `master`. Do not reset or discard local changes.
+
+## Specifications
+
+Standing specifications (official-document printing and presentation, school-profile header and logo rules, paper sizes) are in `docs/specs.md`. Follow them for every existing and future module.
+
+## Required phase order
+
+### Phase 1 — Foundation
+
+Complete and verify authentication, organizations, multi-tenancy, subscriptions, users, roles, organization profile, fiscal year, fund sources, chart of accounts, and organization settings.
+
+### Phase 2 — Planning and Budget
+
+Complete and verify SIP, AIP, SIP-to-AIP linking, budget allocations, quarterly allocations, fund-source mapping, budget control, fiscal-year open/close, document numbering, and audit history.
+
+### Phase 3 — Procurement Planning
+
+Complete PPMP, PPMP items/specifications, PPMP approval, APP generation and approval, PR creation/numbering/status, and links among SIP, AIP, APP, budget, and PR.
+
+### Phase 4 — Procurement
+
+Implement RFQ, supplier master data, quotations, quotation comparison, abstract, BAC evaluation/resolution, NOA, PO, NTP, and the complete procurement status workflow.
+
+### Phase 5 — Delivery
+
+Implement delivery records, partial/complete delivery, inspection, acceptance, accepted/rejected quantities, Inspection and Acceptance Report, and links to PO and supplier.
+
+### Phase 6 — Accounting
+
+Implement obligation, DV, journal entries, general ledger, subsidiary ledgers, trial balance, accounting approvals, and links from accounting records back to the originating transaction.
+
+### Phase 7 — Cash
+
+Implement payment processing, check/cash records, cash disbursement and receipt registers, payment status, DV links, and cash balance monitoring.
+
+### Phase 8 — Liquidation
+
+Implement liquidation records, supporting-document checklist, validation, deficient/returned documents, approval workflow, liquidation register, and complete transaction links.
+
+### Phase 9 — Documents
+
+Implement official templates for SIP, AIP, PPMP, APP, PR, RFQ, PO, DV, and liquidation; printable forms, PDF generation, document numbering, template versioning, and document archive.
+
+### Phase 10 — Reporting
+
+Implement SIP/AIP accomplishment, procurement, budget utilization, PPMP/APP, accounting, cash, liquidation, supplier, and school/organization dashboard reports.
+
+### Phase 11 — Advanced
+
+Implement email/SMS notifications, analytics, support access, configurable approval workflows, advanced audit logs, custom organization settings, and performance monitoring.
+
+## Next work sequence
+
+1. Run the application and inspect the current routes/database state.
+2. Validate the full Phase 2 and partial Phase 3 flow: SIP → AIP → PPMP → APP → PR.
+3. Fix only confirmed defects; keep changes additive and tenant-safe.
+4. Add focused feature tests for each corrected workflow and permission/isolation failure.
+5. Finish Phase 3 before starting Phase 4 supplier/RFQ work.
+6. Update this handoff and the phase checklist after every meaningful milestone.
+
+## Completion standard
+
+A phase is complete only when its database schema, UI, controller/service logic, permissions, organization isolation, transaction links, validation, tests, and user-facing output are all covered. Do not mark a phase complete because only its page or migration exists.

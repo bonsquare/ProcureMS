@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Purchase Request {{ $procurementRequest->request_number }}</title>
     <style>
-        @page { margin: 0; }
         * { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; background: #e5e7eb; color: #111; }
         body { font-family: "Times New Roman", Times, serif; }
@@ -64,16 +63,15 @@
 @include('partials.print-clean')
 </head>
 <body>
-    <div class="print-actions"><button type="button" class="secondary" onclick="closePrintTab('{{ route('procurement') }}')">Close</button><span style="margin-left:auto;margin-right:12px;color:#444;">Choose A4 or Folio in the print dialog</span><button type="button" onclick="window.print()">Print / Export PDF</button></div>
+    @include('partials.official-toolbar', ['closeUrl' => route('procurement')])
     @php
-        $leftLogo = $agency?->department_logo_path ? asset('storage/'.$agency->department_logo_path) : asset('images/official-deped-logo.png');
-        $rightLogo = $procurementRequest->school?->logo_path ? asset('storage/'.$procurementRequest->school->logo_path) : ($agency?->division_logo_path ? asset('storage/'.$agency?->division_logo_path) : asset('images/official-school-logo.png'));
+        [$leftLogo, $rightLogo] = \App\Support\OfficialDocument::logos($procurementRequest->school, $agency);
     @endphp
-    <div class="page">
+    <div class="page" data-official-page data-doc="pr" data-paper="a4">
         <div class="form">
             <div class="header">
-                @if($leftLogo)<img class="left-logo" src="{{ $leftLogo }}" alt="Department logo">@endif
-                @if($rightLogo)<img class="right-logo" src="{{ $rightLogo }}" alt="School logo">@endif
+                @if($leftLogo)<img class="left-logo official-logo" src="{{ $leftLogo }}" alt="Department logo" onerror="this.remove()">@endif
+                @if($rightLogo)<img class="right-logo official-logo" src="{{ $rightLogo }}" alt="School logo" onerror="this.remove()">@endif
                 <div class="title">PURCHASE REQUEST</div><div class="subtitle">{{ $agency->department_name ?: 'Department of Education' }}</div>
             </div>
             <div class="metadata">

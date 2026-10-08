@@ -4,7 +4,6 @@
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AIP FY {{ $aip->fiscal_year }} · {{ $aip->school?->name }}</title>
     <style>
-        @page { size: 13in 8.5in landscape; margin: 0.4in; }
         :root { color-scheme: light; }
         * { box-sizing: border-box; }
         body { margin: 0; background: #fff; color: #111; font-family: Arial, Helvetica, sans-serif; font-size: 11px; line-height: 1.35; }
@@ -62,18 +61,17 @@
     $summary = $aip->fundSummary();
     $fmt = fn ($v) => (float) $v ? number_format($v, 2) : '-';
     $school = $aip->school;
-    $leftLogo = $agency?->department_logo_path ? asset('storage/' . $agency->department_logo_path) : asset('images/official-deped-logo.png');
-    $rightLogo = $school?->logo_path ? asset('storage/' . $school->logo_path) : ($agency?->division_logo_path ? asset('storage/' . $agency->division_logo_path) : asset('images/official-school-logo.png'));
+    [$leftLogo, $rightLogo] = \App\Support\OfficialDocument::logos($school, $agency);
     $region = $school?->region ?: $agency?->region_name;
     $division = $school?->division ?: ($agency?->division_name ?: $agency?->division_office);
 @endphp
 
-<div class="toolbar"><button type="button" class="secondary" onclick="closePrintTab('{{ route('aip.show', $aip) }}')">Close</button><button type="button" class="primary" onclick="window.print()">Print / Save as PDF</button></div>
+@include('partials.official-toolbar', ['closeUrl' => route('aip.show', $aip)])
 
-<main class="paper">
+<main class="paper" data-official-page data-doc="aip" data-paper="longbond" data-orientation="landscape" data-margin="10">
     <header class="masthead">
-        <img class="left" src="{{ $leftLogo }}" alt="" onerror="this.remove()">
-        <img class="right" src="{{ $rightLogo }}" alt="" onerror="this.remove()">
+        @if($leftLogo)<img class="left official-logo" src="{{ $leftLogo }}" alt="" onerror="this.remove()">@endif
+        @if($rightLogo)<img class="right official-logo" src="{{ $rightLogo }}" alt="" onerror="this.remove()">@endif
         <div class="small">Republic of the Philippines</div>
         <div class="dept">Department of Education</div>
         @if($region)<div class="region">{{ strtoupper($region) }}</div>@endif

@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ORS {{ $report->ors_number }}</title>
     <style>
-        @page { size: 8.5in 13in; margin: 0; }
         * { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; background: #e5e7eb; }
         .print-actions { width: 8.5in; margin: 12px auto; display: flex; justify-content: space-between; align-items: center; font: 13px Arial, sans-serif; }
@@ -44,8 +43,8 @@
     $certifierName = strtoupper((string) ($budgetOfficer?->name ?? ''));
     $certifierRole = $budgetOfficer?->position ?: 'Disbursing Officer';
 @endphp
-<div class="print-actions"><button type="button" class="secondary" onclick="closePrintTab('{{ route('budget') }}')">Close</button><span style="margin-left:auto;margin-right:12px;color:#444;">Print on Legal / Folio (8.5 x 13 in), actual size</span><button type="button" onclick="window.print()">Print / Export PDF</button></div>
-<div class="sheet"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 612 936" preserveAspectRatio="xMidYMid meet" stroke="#000" fill="none">
+@include('partials.official-toolbar', ['closeUrl' => route('budget')])
+<div class="sheet" data-official-page data-single-page data-doc="ors" data-paper="longbond"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 612 936" preserveAspectRatio="xMidYMid meet" stroke="#000" fill="none">
 <g fill="none">
 <line x1="17.39" y1="44.92" x2="17.39" y2="883.92" stroke-width="1.45"/>
 <line x1="16.66" y1="528.18" x2="52.17" y2="528.18" stroke-width="1.45"/>

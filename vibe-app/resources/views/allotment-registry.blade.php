@@ -15,7 +15,7 @@
         <p class="mt-1 text-[15px] leading-6 text-on-surface-variant">FY {{ $year }}{{ $quarter ? ' · Q' . $quarter : '' }}. Allotments come from the approved AIP or budget allocation; obligations are ORS; disbursements are paid DVs.</p>
     </div>
     <div class="no-print flex flex-wrap items-center gap-2">
-        <a href="{{ route('aip') }}" class="rounded border border-outline-variant/60 bg-white px-4 py-2.5 text-xs font-semibold hover:bg-surface-low">AIP</a>
+        <a href="{{ route('planning') }}#aip" class="rounded border border-outline-variant/60 bg-white px-4 py-2.5 text-xs font-semibold hover:bg-surface-low">AIP</a>
         <a href="{{ route('allotment-registry', $query + ['format' => 'csv']) }}" class="rounded border border-outline-variant/60 bg-white px-4 py-2.5 text-xs font-semibold hover:bg-surface-low">Export to Excel</a>
         <button onclick="window.print()" class="rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Print</button>
     </div>

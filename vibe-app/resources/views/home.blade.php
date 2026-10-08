@@ -45,7 +45,7 @@
             @endphp
             @foreach ($navigation as $item)
                 <a href="{{ route($item['route']) }}" class="flex items-center rounded px-3 py-2.5 text-sm {{ ($item['active'] ?? false) ? 'bg-primary-container font-semibold text-white' : 'text-white/80 hover:bg-primary-container hover:text-white' }}"><span class="material-symbols-outlined mr-3 text-[20px]">{{ $item['icon'] }}</span>{{ $item['label'] }}</a>
-                @if(($item['label'] ?? '') === 'Reports')<a href="{{ route('aip') }}" class="ml-8 flex items-center rounded px-3 py-2 text-sm text-white/75 hover:bg-primary-container hover:text-white"><span class="material-symbols-outlined mr-2 text-[17px]">event_note</span>AIP</a>@endif @if(($item['label'] ?? '') === 'Dashboard')
+                 @if(($item['label'] ?? '') === 'Dashboard')
                     <details class="group">
                         <summary class="flex cursor-pointer list-none items-center rounded px-3 py-2.5 text-sm text-white/80 hover:bg-primary-container hover:text-white"><span class="material-symbols-outlined mr-3 text-[20px]">account_balance_wallet</span><span class="flex-1">Finance</span><span class="material-symbols-outlined text-[18px] transition-transform group-open:rotate-180">expand_more</span></summary>
                         <div class="mt-1 space-y-1">

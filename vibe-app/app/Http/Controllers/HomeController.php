@@ -14,6 +14,7 @@ use App\Models\SchoolStaff;
 use App\Models\Subscription;
 use App\Models\Supplier;
 use App\Models\User;
+use App\Services\AppItemLinkService;
 use App\Services\BudgetService;
 use App\Services\DocumentNumberService;
 use App\Services\FiscalYearService;
@@ -340,11 +341,31 @@ class HomeController extends Controller
             ->where('fiscal_year', now()->year)->orderBy('particulars')->get());
     }
 
+    /** Approved APP items the PR form can link a line to, with what each has left to request. */
+    private function appItemOptions(?int $ignorePrId = null): array
+    {
+        $links = app(AppItemLinkService::class);
+
+        return $this->scopedSchoolIds()->flatMap(fn ($schoolId) => $links->available((int) $schoolId, $ignorePrId)
+            ->map(fn ($item) => [
+                'id' => $item->id,
+                'school_id' => (int) $schoolId,
+                'name' => $item->procurement_item,
+                'specifications' => $item->specifications,
+                'unit' => $item->unit,
+                'unit_price' => (float) $item->estimated_unit_cost,
+                'remaining_quantity' => $item->remaining_quantity,
+                'remaining_cost' => $item->remaining_cost,
+                'fund_source' => $item->fund_source,
+            ]))->values()->all();
+    }
+
     public function createProcurement()
     {
         return view('procurement-create', [
             'schools' => School::where('status', 'active')->whereIn('id', $this->scopedSchoolIds())->orderBy('name')->get(),
             'editingRequest' => null,
+            'appItems' => $this->appItemOptions(),
             'budgetItems' => $this->openBudgetItems(),
             'agency' => AgencySetting::first(),
             'nextPrNumber' => $this->nextPurchaseRequestNumber(false),
@@ -360,6 +381,7 @@ class HomeController extends Controller
         return view('procurement-create', [
             'schools' => School::where('status', 'active')->whereIn('id', $this->scopedSchoolIds())->orderBy('name')->get(),
             'editingRequest' => $procurementRequest,
+            'appItems' => $this->appItemOptions($procurementRequest->id),
             'budgetItems' => $this->openBudgetItems(),
             'agency' => AgencySetting::first(),
             'nextPrNumber' => $this->nextPurchaseRequestNumber(false),
@@ -381,6 +403,7 @@ class HomeController extends Controller
         app(FiscalYearService::class)->assertOpen($organizationId, (int) $fiscalYear);
         app(BudgetService::class)->assertAvailable('source_of_fund', (int) $validated['school_id'], $validated['source_of_fund'], (float) $amount);
         $this->assertBudgetItem($validated, (float) $amount);
+        app(AppItemLinkService::class)->assertWithinApp((int) $validated['school_id'], $items);
 
         $procurementRequest = DB::transaction(function () use ($validated, $request, $amount, $items, $budgetAllocation, $organizationId, $fiscalYear) {
             $requestNumber = ! empty($validated['manually_encode_pr_number'])
@@ -423,6 +446,7 @@ class HomeController extends Controller
             ]);
 
               $this->replaceProcurementItems($procurementRequest, $items);
+              app(AppItemLinkService::class)->recordLinks($procurementRequest);
               $procurementRequest->transaction?->update(['status' => 'procurement']);
               $procurementRequest->transaction?->recordEvent('procurement', 'pr_created', null, 'submitted', $procurementRequest->request_number, ['procurement_request_id' => $procurementRequest->id, 'amount' => $amount]);
 
@@ -453,6 +477,7 @@ class HomeController extends Controller
         );
         app(BudgetService::class)->assertAvailable('source_of_fund', (int) $validated['school_id'], $validated['source_of_fund'], (float) $amount, $procurementRequest->created_at?->year, $procurementRequest->id);
         $this->assertBudgetItem($validated, (float) $amount, $procurementRequest->id, null, $procurementRequest->created_at);
+        app(AppItemLinkService::class)->assertWithinApp((int) $validated['school_id'], $items, $procurementRequest->id);
         $requestNumber = ! empty($validated['manually_encode_pr_number'])
             ? $validated['manual_pr_number']
             : (preg_match('/^PR-\d{4}-\d{3,}$/', $procurementRequest->request_number)
@@ -478,6 +503,7 @@ class HomeController extends Controller
             'request_number' => $requestNumber,
         ]);
         $this->replaceProcurementItems($procurementRequest, $items);
+        app(AppItemLinkService::class)->recordLinks($procurementRequest);
         $procurementRequest->transaction?->recordEvent('procurement', 'pr_updated', null, $procurementRequest->status, $procurementRequest->request_number, ['procurement_request_id' => $procurementRequest->id, 'amount' => $amount]);
 
         return redirect()->route('procurement.print', $procurementRequest)
@@ -536,6 +562,7 @@ class HomeController extends Controller
             'manual_pr_number' => ['nullable', 'required_if:manually_encode_pr_number,1', 'string', 'max:50', 'regex:/^PR-\d{4}-\d{3,}$/', Rule::unique('procurement_requests', 'request_number')->where('organization_id', $organizationId)->ignore($request->route('procurementRequest'))],
             'extra_blank_rows' => ['nullable', 'integer', 'min:0', 'max:20'],
             'items' => ['required', 'array', 'min:1'],
+            'items.*.app_item_id' => ['nullable', 'integer'],
             'items.*.name' => ['required', 'string', 'max:255'],
             'items.*.description' => ['nullable', 'string', 'max:255'],
             'items.*.quantity' => ['required', 'numeric', 'min:0.01'],

@@ -83,6 +83,7 @@ class DatabaseSeeder extends Seeder
 
         $this->seedSampleBudget(School::where('code', 'SCH-TEST')->first());
         $this->call(LubasTestSupplierSeeder::class);
+        $this->call(PlanningDemoSeeder::class);
 
         AuditLog::create(['user_id' => $admin->id, 'action' => 'seeded_system_data', 'metadata' => ['source' => 'DatabaseSeeder']]);
     }

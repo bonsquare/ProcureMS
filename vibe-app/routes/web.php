@@ -50,6 +50,10 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::post('/aip/{aip}/approve', [AipController::class, 'approve'])->name('aip.approve')->whereNumber('aip');
     Route::get('/planning', [PlanningController::class, 'index'])->name('planning');
     Route::post('/planning/sip', [PlanningController::class, 'storeSip'])->middleware('permission:planning.manage')->name('planning.sip.store');
+    Route::get('/planning/sip/print', [PlanningController::class, 'printSip'])->name('planning.sip.print');
+    Route::post('/planning/sip/signatories', [PlanningController::class, 'saveSipSignatories'])->middleware('permission:planning.manage')->name('planning.sip.signatories');
+    Route::post('/planning/sip/{sipProject}/activities', [PlanningController::class, 'storeSipActivity'])->middleware('permission:planning.manage')->name('planning.sip.activities.store');
+    Route::delete('/planning/sip/activities/{sipActivity}', [PlanningController::class, 'destroySipActivity'])->middleware('permission:planning.manage')->name('planning.sip.activities.destroy');
     Route::post('/planning/sip/{sipProject}/link-aip', [PlanningController::class, 'linkAip'])->middleware('permission:planning.manage')->name('planning.sip.link-aip');
     Route::post('/planning/ppmp', [PlanningController::class, 'storePpmp'])->middleware('permission:planning.manage')->name('planning.ppmp.store');
     Route::post('/planning/ppmp/{ppmpPlan}/approve', [PlanningController::class, 'approvePpmp'])->middleware('permission:planning.manage')->name('planning.ppmp.approve');

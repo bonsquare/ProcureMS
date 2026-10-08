@@ -11,6 +11,9 @@ use App\Models\MasterTransaction;
 use App\Models\PpmpItem;
 use App\Models\PpmpPlan;
 use App\Models\School;
+use App\Models\AgencySetting;
+use App\Models\SipActivity;
+use App\Models\SipPlan;
 use App\Models\SipProject;
 use App\Services\FiscalYearService;
 use App\Services\MasterTransactionService;
@@ -40,10 +43,11 @@ class PlanningController extends Controller
             'schools' => $schools,
             'selectedSchool' => $selectedSchool,
             'year' => $year,
-            'sipProjects' => SipProject::with('transaction')->where('school_id', $selectedSchool->id)->orderByDesc('school_year')->latest('id')->get(),
-            'aips' => Aip::with('sipProject')->where('school_id', $selectedSchool->id)->orderByDesc('fiscal_year')->get(),
+            'sipProjects' => SipProject::with(['transaction', 'activities'])->where('school_id', $selectedSchool->id)->orderByDesc('school_year')->latest('id')->get(),
+            'sipPlans' => SipPlan::where('school_id', $selectedSchool->id)->get()->keyBy('start_year'),
+            'aips' => Aip::with(['sipProject', 'activities'])->where('school_id', $selectedSchool->id)->orderByDesc('fiscal_year')->get(),
             'ppmpPlans' => PpmpPlan::with(['items', 'aip', 'transaction'])->where('school_id', $selectedSchool->id)->orderByDesc('fiscal_year')->latest('id')->get(),
-            'appPlan' => AppPlan::with(['items.ppmpItem.plan.transaction.procurementRequests'])->where('school_id', $selectedSchool->id)->where('fiscal_year', $year)->first(),
+            'appPlan' => AppPlan::with(['items.ppmpItem.plan.transaction.procurementRequests', 'items.requestItems.procurementRequest'])->where('school_id', $selectedSchool->id)->where('fiscal_year', $year)->first(),
             'fundSources' => FundSource::where('organization_id', $selectedSchool->organization_id)->orderBy('name')->get(),
             'fundOptions' => FundSource::where('organization_id', $selectedSchool->organization_id)->where('is_active', true)->orderBy('name')->pluck('name')->merge(collect(Aip::FUNDS)->flatten())->unique()->sort()->values(),
             'fiscalYears' => FiscalYear::where('organization_id', $selectedSchool->organization_id)->orderByDesc('year')->get(),
@@ -57,17 +61,12 @@ class PlanningController extends Controller
             'school_id' => ['required', 'integer', Rule::in($this->schoolIds()->all())],
             'school_year' => ['required', 'integer', 'between:2000,2100'],
             'planning_period' => ['nullable', 'string', 'max:100'],
-            'goal' => ['required', 'string', 'max:255'],
-            'objective' => ['nullable', 'string', 'max:255'],
+            'pillar' => ['required', 'string', 'max:100'],
+            'kra' => ['required', 'string', 'max:255'],
+            'organizational_outcome' => ['nullable', 'string', 'max:1000'],
+            'strategy' => ['nullable', 'string', 'max:255'],
+            'five_point_agenda' => ['nullable', 'string', 'max:255'],
             'project' => ['required', 'string', 'max:255'],
-            'activity' => ['nullable', 'string', 'max:2000'],
-            'expected_output' => ['nullable', 'string', 'max:1000'],
-            'target' => ['nullable', 'string', 'max:255'],
-            'performance_indicator' => ['nullable', 'string', 'max:255'],
-            'implementation_schedule' => ['nullable', 'string', 'max:255'],
-            'responsible_person' => ['nullable', 'string', 'max:255'],
-            'estimated_budget' => ['nullable', 'numeric', 'min:0'],
-            'fund_source' => ['nullable', 'string', 'max:255'],
         ]);
         $school = School::whereKey($data['school_id'])->firstOrFail();
         $fiscalYears->assertOpen((int) $school->organization_id, (int) $data['school_year']);
@@ -81,6 +80,86 @@ class PlanningController extends Controller
         });
 
         return back()->with('success', "SIP project saved under {$sip->transaction->transaction_number}.");
+    }
+
+    public function storeSipActivity(Request $request, SipProject $sipProject, FiscalYearService $fiscalYears)
+    {
+        $this->authorizeManage($request);
+        abort_unless($this->schoolIds()->contains($sipProject->school_id), 403);
+        $data = $request->validate([
+            'activity' => ['required', 'string', 'max:1000'],
+            'physical_year1' => ['nullable', 'numeric', 'min:0'], 'physical_year2' => ['nullable', 'numeric', 'min:0'], 'physical_year3' => ['nullable', 'numeric', 'min:0'],
+            'financial_year1' => ['nullable', 'numeric', 'min:0'], 'financial_year2' => ['nullable', 'numeric', 'min:0'], 'financial_year3' => ['nullable', 'numeric', 'min:0'],
+            'source_of_fund' => ['nullable', 'string', 'max:255'],
+            'responsible_person' => ['nullable', 'string', 'max:1000'],
+            'remarks' => ['nullable', 'string', 'max:1000'],
+        ]);
+        $fiscalYears->assertOpen((int) $sipProject->organization_id, (int) $sipProject->school_year);
+
+        DB::transaction(function () use ($sipProject, $data) {
+            $sipProject->activities()->create($data + ['organization_id' => $sipProject->organization_id]);
+            $this->syncSipBudget($sipProject);
+        });
+
+        return back()->with('success', 'SIP activity saved.');
+    }
+
+    public function destroySipActivity(Request $request, SipActivity $sipActivity)
+    {
+        $this->authorizeManage($request);
+        $sipProject = $sipActivity->project()->firstOrFail();
+        abort_unless($this->schoolIds()->contains($sipProject->school_id), 403);
+        app(FiscalYearService::class)->assertOpen((int) $sipProject->organization_id, (int) $sipProject->school_year);
+
+        DB::transaction(function () use ($sipActivity, $sipProject) {
+            $sipActivity->delete();
+            $this->syncSipBudget($sipProject);
+        });
+
+        return back()->with('success', 'SIP activity removed.');
+    }
+
+    public function saveSipSignatories(Request $request)
+    {
+        $this->authorizeManage($request);
+        $data = $request->validate([
+            'school_id' => ['required', 'integer', Rule::in($this->schoolIds()->all())],
+            'start_year' => ['required', 'integer', 'between:2000,2100'],
+            'prepared_by_name' => ['nullable', 'string', 'max:255'], 'prepared_by_position' => ['nullable', 'string', 'max:255'],
+            'recommended_by_name' => ['nullable', 'string', 'max:255'], 'recommended_by_position' => ['nullable', 'string', 'max:255'],
+            'approved_by_name' => ['nullable', 'string', 'max:255'], 'approved_by_position' => ['nullable', 'string', 'max:255'],
+        ]);
+        $school = School::whereKey($data['school_id'])->firstOrFail();
+        SipPlan::updateOrCreate(
+            ['school_id' => $school->id, 'start_year' => $data['start_year']],
+            collect($data)->except(['school_id', 'start_year'])->all() + ['organization_id' => $school->organization_id],
+        );
+
+        return back()->with('success', 'SIP signatories saved.');
+    }
+
+    public function printSip(Request $request)
+    {
+        abort_unless($request->user()->hasPermission('planning.view') || $request->user()->hasPermission('planning.manage'), 403);
+        $data = $request->validate([
+            'school_id' => ['required', 'integer', Rule::in($this->schoolIds()->all())],
+            'start_year' => ['required', 'integer', 'between:2000,2100'],
+        ]);
+        $school = School::whereKey($data['school_id'])->firstOrFail();
+
+        return view('sip-print', [
+            'school' => $school,
+            'startYear' => (int) $data['start_year'],
+            'projects' => SipProject::with('activities')->where('school_id', $school->id)->where('school_year', $data['start_year'])->orderBy('id')->get(),
+            'plan' => SipPlan::where('school_id', $school->id)->where('start_year', $data['start_year'])->first(),
+            'agency' => AgencySetting::first(),
+        ]);
+    }
+
+    /** The program's estimated budget is the sum of its three-year activity targets. */
+    private function syncSipBudget(SipProject $sipProject): void
+    {
+        $sipProject->update(['estimated_budget' => $sipProject->activities()->get()->sum(fn ($a) => $a->financial_total)]);
     }
 
     public function linkAip(Request $request, SipProject $sipProject, MasterTransactionService $transactions)
@@ -126,7 +205,7 @@ class PlanningController extends Controller
         if (! empty($data['fund_source']) && ! $allowedFunds->contains($data['fund_source'])) {
             throw ValidationException::withMessages(['fund_source' => 'Choose a fund source configured for this organization.']);
         }
-        abort_unless($aip->status === 'approved', 422, 'Approve the AIP before preparing its PPMP.');
+        $this->requires($aip->status === 'approved', 'Approve the AIP before preparing its PPMP.');
         $fiscalYears->assertOpen((int) $aip->organization_id, (int) $aip->fiscal_year);
         $transaction = $transactions->forAip($aip, $request->user());
         $total = round((float) $data['quantity'] * (float) $data['estimated_unit_cost'], 2);
@@ -162,7 +241,7 @@ class PlanningController extends Controller
     {
         $this->authorizeManage($request);
         abort_unless($this->schoolIds()->contains($ppmpPlan->school_id), 403);
-        abort_if($ppmpPlan->items()->doesntExist(), 422, 'Add at least one PPMP item before approval.');
+        $this->requires(! ($ppmpPlan->items()->doesntExist()), 'Add at least one PPMP item before approval.');
         app(FiscalYearService::class)->assertOpen((int) $ppmpPlan->organization_id, (int) $ppmpPlan->fiscal_year);
         $oldStatus = $ppmpPlan->status;
         $ppmpPlan->update(['status' => 'approved']);
@@ -184,7 +263,7 @@ class PlanningController extends Controller
         $approvedItems = PpmpItem::with('plan')
             ->whereHas('plan', fn (Builder $query) => $query->where('school_id', $school->id)->where('fiscal_year', $data['fiscal_year'])->where('status', 'approved'))
             ->get();
-        abort_if($approvedItems->isEmpty(), 422, 'Approve at least one PPMP before generating the APP.');
+        $this->requires(! ($approvedItems->isEmpty()), 'Approve at least one PPMP before generating the APP.');
 
         DB::transaction(function () use ($data, $school, $request, $approvedItems) {
             $appPlan = AppPlan::firstOrCreate(
@@ -225,7 +304,7 @@ class PlanningController extends Controller
     {
         $this->authorizeManage($request);
         abort_unless($this->schoolIds()->contains($appPlan->school_id), 403);
-        abort_if($appPlan->items()->doesntExist(), 422, 'Generate APP items before approval.');
+        $this->requires(! ($appPlan->items()->doesntExist()), 'Generate APP items before approval.');
         app(FiscalYearService::class)->assertOpen((int) $appPlan->organization_id, (int) $appPlan->fiscal_year);
         $appPlan->load('items.ppmpItem.plan.transaction');
         $appPlan->update(['status' => 'approved']);
@@ -290,6 +369,14 @@ class PlanningController extends Controller
         return $user->role === 'master_user' || $user->organization_id
             ? School::query()->pluck('id')
             : School::query()->whereKey($user->school_id)->pluck('id');
+    }
+
+    /** Business-rule failures go back to the page with a message instead of an error screen. */
+    private function requires(bool $condition, string $message): void
+    {
+        if (! $condition) {
+            throw ValidationException::withMessages(['planning' => $message]);
+        }
     }
 
     private function authorizeManage(Request $request): void

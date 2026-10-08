@@ -44,15 +44,10 @@ class AipController extends Controller
         abort_unless(request()->user()->canManageBudget(), 403, 'Only the Budget Officer or an administrator can change the AIP.');
     }
 
+    /** The AIP list lives on the Planning page; keep the old URL working. */
     public function index()
     {
-        $aips = Aip::with(['school', 'activities'])->whereIn('school_id', $this->schoolIds())->orderByDesc('fiscal_year')->get();
-
-        return view('aip-index', [
-            'aips' => $aips,
-            'schools' => School::whereIn('id', $this->schoolIds())->orderBy('name')->get(),
-            'canManage' => request()->user()->canManageBudget(),
-        ]);
+        return redirect()->to(route('planning').'#aip');
     }
 
     public function store(Request $request)

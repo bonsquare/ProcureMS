@@ -10,7 +10,7 @@ class ProcurementRequestItem extends Model
 {
     use HasFactory, BelongsToOrganization;
 
-    protected $fillable = ['organization_id', 'procurement_request_id', 'name', 'description', 'quantity', 'unit', 'unit_price', 'total'];
+    protected $fillable = ['organization_id', 'procurement_request_id', 'app_item_id', 'name', 'description', 'quantity', 'unit', 'unit_price', 'total'];
 
     protected function casts(): array
     {
@@ -18,4 +18,6 @@ class ProcurementRequestItem extends Model
     }
 
     public function procurementRequest() { return $this->belongsTo(ProcurementRequest::class); }
+
+    public function appItem() { return $this->belongsTo(AppItem::class); }
 }

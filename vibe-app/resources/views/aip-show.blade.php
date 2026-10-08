@@ -23,7 +23,7 @@
         @if($aip->sipProject)<p class="mt-1 text-xs text-on-surface-variant">SIP priority: {{ $aip->sipProject->project }}</p>@endif
     </div>
     <div class="flex flex-wrap gap-2">
-        <a href="{{ route('aip') }}" class="rounded border border-outline-variant/60 bg-white px-4 py-2.5 text-xs font-semibold hover:bg-surface-low">← All AIPs</a>
+        <a href="{{ route('planning') }}#aip" class="rounded border border-outline-variant/60 bg-white px-4 py-2.5 text-xs font-semibold hover:bg-surface-low">← Planning</a>
         <a href="{{ route('aip.print', $aip) }}" target="_blank" rel="noopener" class="rounded border border-outline-variant/60 bg-white px-4 py-2.5 text-xs font-semibold hover:bg-surface-low">Print AIP</a>
         @if($canManage)
             <a href="{{ route('aip.kras.create', $aip) }}" class="rounded border border-primary px-4 py-2.5 text-xs font-semibold text-primary hover:bg-primary hover:text-white">+ Add KRA and Activities</a>
@@ -42,8 +42,8 @@
         <input id="fiscal_year" name="fiscal_year" type="number" min="2000" max="2100" value="{{ $aip->fiscal_year }}" @disabled(!$canManage) title="Type the fiscal year this plan is for, then press Enter or click away." onchange="this.form.submit()" class="w-24 rounded border border-outline-variant/50 bg-white px-3 py-2 text-sm outline-none focus:border-primary">
         <span class="hidden text-outline-variant sm:inline">|</span>
         <label class="text-xs font-semibold uppercase tracking-wider text-on-surface-variant" for="entity">Governing Entity</label>
-        <select id="entity" name="entity" onchange="this.form.submit()" @disabled(!$canManage) class="rounded border border-outline-variant/50 bg-white px-3 py-2 text-sm outline-none focus:border-primary">
-            @foreach(array_keys(\App\Models\Aip::FUNDS) as $entity)<option @selected($aip->entity === $entity)>{{ $entity }}</option>@endforeach
+        <select id="entity" name="entity" title="The office that prepares this AIP. It decides the Source of Fund choices." onchange="this.form.submit()" @disabled(!$canManage) class="rounded border border-outline-variant/50 bg-white px-3 py-2 text-sm outline-none focus:border-primary">
+            @foreach(array_keys(\App\Models\Aip::FUNDS) as $entity)<option @selected($aip->entity === $entity) title="{{ $entity === 'School' ? 'The school prepares this AIP' : 'The Schools Division Office prepares this AIP' }}">{{ $entity }}</option>@endforeach
         </select>
     </form>
     <div class="flex flex-wrap items-center gap-3">
@@ -54,7 +54,22 @@
         </select>
     </div>
 </section>
-<p class="-mt-3 mb-6 text-xs text-on-surface-variant">Source of Fund (School: MOOE, SEF, IGP, others; Division Office Proper: MOOE-GASS, MOOE-HRTD, MOOE-Sub-ARO, School MOOE, SEF, others.) The choices shown follow the governing entity above.</p>
+@php
+    $entityHelp = [
+        'School' => ['Choose this when the AIP is prepared by a school (elementary, junior or senior high, integrated school) for its own activities. This is the usual choice for a school head or school budget officer.', 'MOOE, SEF, IGP, Others'],
+        'Division Office Proper' => ['Choose this only when the AIP is prepared by the Schools Division Office itself (its sections and units), not by an individual school.', 'MOOE-GASS, MOOE-HRTD, MOOE-Sub-ARO, School MOOE, SEF, Others'],
+    ];
+@endphp
+<div class="-mt-3 mb-6 rounded border border-primary/20 bg-primary/5 px-4 py-3 text-xs text-on-surface-variant">
+    <p class="flex items-center gap-1.5 font-semibold text-primary"><span class="material-symbols-outlined text-[16px]">info</span>What is the Governing Entity?</p>
+    <p class="mt-1">It is the office that owns and prepares this AIP. It decides which <strong>Source of Fund</strong> choices appear on each activity.</p>
+    <ul class="mt-2 space-y-1.5">
+        @foreach($entityHelp as $name => [$meaning, $funds])
+            <li class="rounded px-2 py-1.5 {{ $aip->entity === $name ? 'bg-white ring-1 ring-primary/30' : '' }}"><strong class="text-on-surface">{{ $name }}</strong>@if($aip->entity === $name) <span class="rounded bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-white">Selected</span>@endif — {{ $meaning }} <span class="whitespace-nowrap">Funds: <strong>{{ $funds }}</strong>.</span></li>
+        @endforeach
+    </ul>
+    <p class="mt-2">Changing the entity only changes the fund choices for new or edited activities. Activities already saved keep the fund they have, so review them after switching.</p>
+</div>
 
 @forelse($pillarGroups as $pillarName => $kras)
     <section data-pillar-card class="mb-6 overflow-hidden rounded-lg border border-outline-variant/40 bg-white">

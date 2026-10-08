@@ -49,7 +49,7 @@
     $initialItems = old('items');
     if ($initialItems === null && $editingRequest) {
         $initialItems = $editingRequest->items->map(function ($item) {
-            return ['name' => $item->name, 'description' => $item->description, 'quantity' => $item->quantity, 'unit' => $item->unit, 'unit_price' => $item->unit_price];
+            return ['name' => $item->name, 'description' => $item->description, 'app_item_id' => $item->app_item_id, 'quantity' => $item->quantity, 'unit' => $item->unit, 'unit_price' => $item->unit_price];
         })->values()->all();
     }
     $initialItems = $initialItems ?: [];
@@ -57,6 +57,7 @@
 <script>
     let itemIndex = 0;
     const existingItems = @json($initialItems);
+    const appItems = @json($appItems);
     const items = document.getElementById('items');
     const total = document.getElementById('grand-total');
     function money(value) { return '₱' + Number(value || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
@@ -75,6 +76,11 @@
     function escapeHtml(value) {
         return String(value ?? '').replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#039;', '"': '&quot;' })[character]);
     }
+    function fillAppOptions(select, selected) {
+        const schoolId = document.getElementById('school_id').value;
+        const options = appItems.filter((candidate) => String(candidate.school_id) === String(schoolId));
+        select.innerHTML = '<option value="">Not linked to the APP</option>' + options.map((candidate) => `<option value="${candidate.id}" ${String(candidate.id) === String(selected) ? 'selected' : ''}>${escapeHtml(candidate.name)} — ${candidate.remaining_quantity} ${escapeHtml(candidate.unit)} left (${money(candidate.remaining_cost)})</option>`).join('');
+    }
     function addItem(item = {}) {
         const index = itemIndex++;
         const row = document.createElement('tr');
@@ -82,9 +88,24 @@
         row.className = 'item-row bg-white';
         specificationRow.className = 'item-spec-row bg-[#fbfcfe]';
         row.innerHTML = `<td data-stock-number class="px-2 py-2 text-center text-sm font-semibold text-primary"></td><td class="px-2 py-2"><select name="items[${index}][unit]" class="w-full rounded border border-outline-variant/50 bg-white px-2 py-2 text-xs outline-none focus:border-primary"><option ${item.unit === 'piece' ? 'selected' : ''}>piece</option><option ${item.unit === 'box' ? 'selected' : ''}>box</option><option ${item.unit === 'pack' ? 'selected' : ''}>pack</option><option ${item.unit === 'ream' ? 'selected' : ''}>ream</option><option ${item.unit === 'set' ? 'selected' : ''}>set</option><option ${item.unit === 'liter' ? 'selected' : ''}>liter</option></select></td><td class="px-2 py-2"><input name="items[${index}][name]" required maxlength="255" placeholder="Item description" value="${escapeHtml(item.name)}" class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-xs outline-none focus:border-primary"></td><td class="px-2 py-2"><input data-field="quantity" name="items[${index}][quantity]" required min="0.01" step="0.01" value="${escapeHtml(item.quantity ?? 1)}" type="number" class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-xs outline-none focus:border-primary"></td><td class="px-2 py-2"><input data-field="unit_price" name="items[${index}][unit_price]" required min="0" step="0.01" value="${escapeHtml(item.unit_price ?? 0)}" type="number" class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-xs outline-none focus:border-primary"></td><td data-line-total class="px-2 py-2 text-right text-sm font-semibold text-on-surface">₱0.00</td><td class="px-2 py-2 text-center"><button type="button" class="remove-item rounded bg-red-50 px-2.5 py-2 text-[11px] font-semibold text-error hover:bg-red-100">Remove</button></td>`;
-        specificationRow.innerHTML = `<td colspan="7" class="px-2 pb-3 pt-0"><label class="flex items-center gap-3 text-[11px] font-semibold text-on-surface-variant"><span class="shrink-0">Item specification</span><input name="items[${index}][description]" maxlength="255" placeholder="Brand, size, technical specification, or other details" value="${escapeHtml(item.description)}" class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-xs font-normal outline-none focus:border-primary"></label></td>`;
+        specificationRow.innerHTML = `<td colspan="7" class="px-2 pb-3 pt-0"><label class="mb-2 flex items-center gap-3 text-[11px] font-semibold text-on-surface-variant"><span class="shrink-0">Approved APP item</span><select data-field="app_item" name="items[${index}][app_item_id]" class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-xs font-normal outline-none focus:border-primary"></select></label><label class="flex items-center gap-3 text-[11px] font-semibold text-on-surface-variant"><span class="shrink-0">Item specification</span><input name="items[${index}][description]" maxlength="255" placeholder="Brand, size, technical specification, or other details" value="${escapeHtml(item.description)}" class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-xs font-normal outline-none focus:border-primary"></label></td>`;
         items.append(row, specificationRow);
         row.querySelectorAll('input').forEach((input) => input.addEventListener('input', updateTotal));
+        const appSelect = specificationRow.querySelector('[data-field="app_item"]');
+        fillAppOptions(appSelect, item.app_item_id);
+        appSelect.addEventListener('change', () => {
+            const planned = appItems.find((candidate) => String(candidate.id) === appSelect.value);
+            if (!planned) return;
+            const unit = row.querySelector('select[name$="[unit]"]');
+            if (![...unit.options].some((option) => option.value === planned.unit)) unit.add(new Option(planned.unit, planned.unit));
+            unit.value = planned.unit;
+            row.querySelector('[name$="[name]"]').value = planned.name;
+            specificationRow.querySelector('[name$="[description]"]').value = planned.specifications || '';
+            row.querySelector('[data-field="quantity"]').value = planned.remaining_quantity;
+            row.querySelector('[data-field="unit_price"]').value = planned.unit_price;
+            updateTotal();
+        });
+        document.getElementById('school_id').addEventListener('change', () => fillAppOptions(appSelect, appSelect.value));
         row.querySelector('.remove-item').addEventListener('click', () => {
             if (items.querySelectorAll('.item-row').length > 1) {
                 specificationRow.remove();

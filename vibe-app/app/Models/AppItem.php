@@ -25,4 +25,9 @@ class AppItem extends Model
     {
         return $this->belongsTo(PpmpItem::class);
     }
+
+    public function requestItems()
+    {
+        return $this->hasMany(ProcurementRequestItem::class);
+    }
 }
