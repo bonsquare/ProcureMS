@@ -310,17 +310,15 @@ class HomeController extends Controller
     public function showProcurement(ProcurementRequest $procurementRequest, ProcurementWorkspaceService $workspaceService)
     {
         $this->authorizeProcurementAccess($procurementRequest);
-        $procurementRequest->load(['school', 'requester', 'items', 'documents.creator', 'transaction', 'liquidationReports']);
+        $procurementRequest->load(['school', 'requester', 'items', 'documents.creator', 'transaction.events.user', 'liquidationReports']);
 
-        return view('procurement', [
-            'requests' => $this->procurementRequestRows(collect([$procurementRequest])),
+        return view('procurement-show', [
             'procurementRequest' => $procurementRequest,
             'workspace' => $workspaceService->present($procurementRequest),
             'isMasterUser' => $this->isMasterUser(),
             'currentSchoolName' => $this->isMasterUser() ? null : request()->user()?->school?->name,
-            'procurementMetrics' => ['total' => 1, 'pending' => 0, 'forCanvass' => 0, 'completed' => 0, 'completedAmount' => 0],
             'activeProcurementArea' => 'requests',
-            'attentionRequests' => collect(), 'recentRequests' => collect(),
+            'activeSection' => in_array(request('section'), ['summary', 'items', 'documents', 'activity'], true) ? request('section') : 'summary',
         ]);
     }
 
