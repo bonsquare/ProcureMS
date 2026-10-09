@@ -393,3 +393,11 @@ Files: `Dockerfile` (PHP 8.4 with FrankenPHP), `deploy/Caddyfile`, `deploy/php.i
 - **Domain:** add the address under the service's Networking settings; for `celsys.trade` add a CNAME in Cloudflare to the target Railway shows (and remove the tunnel record of the same name first).
 - **Updates:** deploy again with `railway up` from `vibe-app`, or connect the GitHub repository with the root directory set to `vibe-app` for automatic deploys.
 - Tests: `tests/Feature/CreateMasterUserTest.php`.
+
+### Railway project (set up 2026-10-10)
+
+- Project `procurems` (service `procurems`, environment `production`), one replica, volume `procurems-volume` at `/data`. Address: `https://procurems-production.up.railway.app`. The master account was created with `master:create` (fresh data, no demo accounts).
+- **Deploy a new version:** from the `vibe-app` folder run `railway up --detach --service procurems`. In Git Bash set `MSYS_NO_PATHCONV=1` first, otherwise `/data/...` values are rewritten as Windows paths.
+- **Logs:** `railway logs` (and `railway logs --build`). **Variables:** `railway variables --kv`.
+- **Run a command on the server** (for example `master:create`): `railway ssh` needs an SSH key registered with Railway (`railway ssh keys add`); register a key, run the command, and remove the key again.
+- The first deploy ran the migrations by itself (`entrypoint.sh`); every later deploy runs new migrations the same way.
