@@ -11,6 +11,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PlanningController;
 use App\Http\Controllers\SchoolManagementController;
 use App\Http\Controllers\SchoolSettingsController;
+use App\Http\Controllers\SchoolTakeoverController;
 use App\Http\Controllers\StationTransferController;
 use App\Http\Controllers\UnitController;
 use Illuminate\Support\Facades\Route;
@@ -142,6 +143,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/school-management', [SchoolManagementController::class, 'index'])->name('school-management');
     Route::get('/school-management/{school}', [SchoolManagementController::class, 'show'])->name('school-management.show')->whereNumber('school');
     Route::post('/school-management/{school}/status', [SchoolManagementController::class, 'status'])->name('school-management.status')->whereNumber('school');
+    Route::post('/school-takeover/{takeover}/approve', [SchoolTakeoverController::class, 'approve'])->name('school-takeover.approve');
+    Route::post('/school-takeover/{takeover}/decline', [SchoolTakeoverController::class, 'decline'])->name('school-takeover.decline');
     Route::post('/school-management/transfers/{transfer}/end-handover', [SchoolManagementController::class, 'endHandover'])->name('school-management.handover.end');
     Route::post('/school-management/users/{user}/deactivate', [SchoolManagementController::class, 'deactivateUser'])->name('school-management.users.deactivate');
     Route::post('/school-management/users/{user}/reactivate', [SchoolManagementController::class, 'reactivateUser'])->name('school-management.users.reactivate');

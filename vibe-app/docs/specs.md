@@ -225,7 +225,7 @@ php -d zend_extension=opcache -d opcache.enable_cli=1 -d "upload_tmp_dir=<repo>/
 
 - Why not `php artisan serve`: it does not pass `-d` settings to the real server, so opcache and `upload_tmp_dir` would be missing. Without `upload_tmp_dir` PHP may fail every upload with "unable to create a temporary file". `vibe-app/dev-server.php` is the router; it must `return` the framework router's result or static files (css, images) are served as HTML and the pages lose their design.
 - Opcache makes pages about three times faster (about 0.9 s down to 0.03 s per page here).
-- Tests: `php artisan test` (all pass at the time of writing: 132).
+- Tests: `php artisan test` (all pass at the time of writing: 154).
 
 ## 9. Station transfer
 
@@ -244,3 +244,18 @@ php -d zend_extension=opcache -d opcache.enable_cli=1 -d "upload_tmp_dir=<repo>/
 - Nothing is ever deleted. Subscriptions and all school records are untouched. Every action writes an audit log row with the reason.
 - A signed-in user who becomes inactive, or whose school becomes inactive, is signed out on the next request (`EnsureAccountActive`).
 - Code: `SchoolManagementService`, `SchoolManagementController`, tests in `tests/Feature/SchoolManagementTest.php`. Design and plan: `docs/superpowers/specs/2026-10-10-school-management-design.md`, `docs/superpowers/plans/2026-10-10-school-management.md`.
+
+## 11. Transfer handover (review by the other school)
+
+- A transfer to a school that has an active user waits for that user to **Accept or Decline** (Station Transfer tab, "Incoming transfer request"). The destination has 5 days from the request; after that the request **expires** automatically and the user can send a new one. A vacant destination needs no review.
+- The master cannot approve until the destination accepted. Accepting starts a **5-day handover**, counted from the acceptance: after the master approves and the arriving user confirms, both users have access to the destination school. When the 5 days end the previous user is set inactive (reason Transferred) and signed out. The master can end a handover early ("End handover now" on the school page).
+- Only one incoming transfer per school at a time. A destination whose user left before approval counts as vacant.
+- Expiry and handover end run from the daily command `transfers:maintain` and also lazily (when the request is used, or when the previous user comes back after the deadline), so access never outlives the date.
+- Design: `docs/superpowers/specs/2026-10-10-transfer-handover-design.md`. Tests: `tests/Feature/TransferHandoverTest.php`.
+
+## 12. Vacant school takeover (new staff)
+
+- A school left vacant stays vacant, with its data, until a new person registers and chooses **Take over a vacant school** on the registration page (only active schools with no user and no waiting request are offered). No school is created.
+- The person is created as `pending` with no school: they cannot sign in (they see "waiting for the master account approval") or see any school data.
+- The master reviews a **Takeover request** card on that school page in School Management (and a badge in the list). Approve gives the person the school, its data, the school_admin role, an employee record and their own 30-day trial subscription. Decline keeps them out.
+- Design: `docs/superpowers/specs/2026-10-10-vacant-school-takeover-design.md`. Tests: `tests/Feature/VacantSchoolTakeoverTest.php`.

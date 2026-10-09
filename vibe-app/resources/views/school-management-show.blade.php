@@ -25,6 +25,34 @@
     </section>
 @endforeach
 
+@if($takeoverRequests->isNotEmpty())
+    <section id="takeover" class="mb-5 overflow-hidden rounded-xl border-2 border-primary/30 bg-white shadow-sm">
+        <div class="flex items-center gap-3 border-b border-primary/20 bg-gradient-to-r from-primary/10 to-primary/5 px-5 py-3.5">
+            <span class="grid h-10 w-10 place-items-center rounded-lg bg-white text-primary shadow-sm"><span class="material-symbols-outlined text-[22px]" aria-hidden="true">person_add</span></span>
+            <div><h2 class="text-base font-bold text-primary">Takeover request <span class="ml-1 rounded-full bg-primary px-2 py-0.5 text-xs text-white">{{ $takeoverRequests->count() }}</span></h2><p class="text-xs text-on-surface-variant">A new person asks to manage this vacant school.</p></div>
+        </div>
+        <ul class="divide-y divide-outline-variant/30">
+            @foreach($takeoverRequests as $item)
+                <li class="space-y-4 px-5 py-5 text-sm">
+                    <dl class="grid gap-x-6 gap-y-3 sm:grid-cols-3">
+                        <div><dt class="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Name</dt><dd class="mt-0.5 font-bold">{{ $item->user?->name }}</dd></div>
+                        <div><dt class="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Position</dt><dd class="mt-0.5 font-semibold">{{ $item->user?->position ?: '—' }}</dd></div>
+                        <div><dt class="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Username</dt><dd class="mt-0.5 font-semibold">{{ $item->user?->username }}</dd></div>
+                        <div><dt class="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Email</dt><dd class="mt-0.5 font-semibold">{{ $item->user?->email }}</dd></div>
+                        <div><dt class="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Mobile number</dt><dd class="mt-0.5 font-semibold">{{ $item->user?->phone ?: '—' }}</dd></div>
+                        <div><dt class="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Registered</dt><dd class="mt-0.5 font-semibold">{{ $item->created_at?->format('M d, Y') }}</dd></div>
+                    </dl>
+                    <p class="flex gap-2 rounded-lg bg-surface-low px-3 py-2.5 text-xs text-on-surface-variant"><span class="material-symbols-outlined text-[16px] text-action" aria-hidden="true">info</span><span>If approved, {{ $item->user?->name }} becomes the user of {{ $school->name }} and receives all of its data. They start a 30-day trial subscription of their own.</span></p>
+                    <div class="flex flex-wrap items-center gap-2 border-t border-outline-variant/30 pt-4">
+                        <form method="POST" action="{{ route('school-takeover.approve', $item) }}" class="flex flex-1 flex-wrap gap-2">@csrf<input name="decision_note" placeholder="Note (optional)" class="min-w-[200px] flex-1 rounded-lg border border-outline-variant bg-white px-3 py-2 text-xs outline-none focus:border-action"><button class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2 text-xs font-bold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">check</span>Approve</button></form>
+                        <form method="POST" action="{{ route('school-takeover.decline', $item) }}">@csrf<button class="inline-flex items-center gap-1.5 rounded-lg border border-error/40 px-5 py-2 text-xs font-bold text-error hover:bg-error/10"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">close</span>Decline</button></form>
+                    </div>
+                </li>
+            @endforeach
+        </ul>
+    </section>
+@endif
+
 @if($transferRequests->isNotEmpty())
     <section id="transfer" class="mb-5 overflow-hidden rounded-xl border-2 border-amber-300 bg-white shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3 border-b border-amber-200 bg-gradient-to-r from-amber-100 to-amber-50 px-5 py-3.5">

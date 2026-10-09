@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\School;
+use App\Models\SchoolTakeoverRequest;
 use App\Models\StationTransferRequest;
 use App\Models\User;
 use App\Services\SchoolManagementService;
@@ -22,13 +23,16 @@ class SchoolManagementController extends Controller
         $filter = in_array($request->query('status'), ['active', 'vacant', 'inactive'], true) ? $request->query('status') : null;
         $pending = StationTransferRequest::where('status', 'pending')->selectRaw('from_school_id, count(*) as total')->groupBy('from_school_id')->pluck('total', 'from_school_id');
 
+        $takeovers = SchoolTakeoverRequest::where('status', 'pending')->selectRaw('school_id, count(*) as total')->groupBy('school_id')->pluck('total', 'school_id');
+
         $schools = School::with('users')->orderBy('name')
             ->when($search !== '', fn ($query) => $query->where(fn ($where) => $where->where('name', 'like', '%'.$search.'%')->orWhere('code', 'like', '%'.$search.'%')))
             ->get()
-            ->map(function (School $school) use ($pending) {
+            ->map(function (School $school) use ($pending, $takeovers) {
                 $school->manager = $school->users->first(fn (User $user) => $user->role !== 'master_user' && ($user->status ?: 'active') === 'active');
                 $school->state = $school->status !== 'active' ? 'inactive' : ($school->manager ? 'active' : 'vacant');
                 $school->pending_transfers = (int) ($pending[$school->id] ?? 0);
+                $school->pending_takeovers = (int) ($takeovers[$school->id] ?? 0);
 
                 return $school;
             });
@@ -52,6 +56,7 @@ class SchoolManagementController extends Controller
         return view('school-management-show', [
             'school' => $school->load('organization'),
             'users' => User::where('school_id', $school->id)->where('role', '!=', 'master_user')->orderBy('name')->get(),
+            'takeoverRequests' => SchoolTakeoverRequest::with('user')->where('status', 'pending')->where('school_id', $school->id)->oldest('id')->get(),
             'handovers' => StationTransferRequest::with(['user', 'handoverUser'])->where('status', 'approved')->whereNotNull('handover_user_id')->whereNull('handover_ended_at')->where('to_school_id', $school->id)->get(),
             'reasons' => SchoolManagementService::REASONS,
             'transferRequests' => StationTransferRequest::with(['user', 'fromSchool', 'toSchool'])->where('status', 'pending')

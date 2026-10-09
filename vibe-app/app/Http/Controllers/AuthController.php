@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\AuditLog;
 use App\Models\Organization;
 use App\Models\School;
+use App\Models\SchoolTakeoverRequest;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Services\SchoolTakeoverService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class AuthController extends Controller
@@ -21,7 +24,7 @@ class AuthController extends Controller
 
     public function register()
     {
-        return view('auth.register');
+        return view('auth.register', ['vacantSchools' => app(SchoolTakeoverService::class)->vacantSchools()]);
     }
 
     public function store(Request $request)
@@ -36,6 +39,18 @@ class AuthController extends Controller
         $field = str_contains($login, '@') ? 'email' : 'username';
 
         if (! Auth::attempt([$field => $login, 'password' => $credentials['password'], 'status' => 'active'], $request->boolean('remember'))) {
+            // Someone who registered to take over a school gets a clear message instead of a generic failure.
+            $candidate = User::withoutGlobalScopes()->where($field, $login)->first();
+            if ($candidate && Hash::check($credentials['password'], $candidate->password)) {
+                $takeover = SchoolTakeoverRequest::where('user_id', $candidate->id)->latest('id')->first();
+                if ($takeover?->status === 'pending') {
+                    return back()->withErrors(['email' => 'Your registration to take over a school is waiting for the master account approval.'])->onlyInput('email');
+                }
+                if ($takeover?->status === 'declined') {
+                    return back()->withErrors(['email' => 'Your registration to take over a school was declined. Contact the system administrator.'])->onlyInput('email');
+                }
+            }
+
             return back()->withErrors(['email' => 'The provided credentials are incorrect.'])->onlyInput('email');
         }
 
@@ -58,6 +73,10 @@ class AuthController extends Controller
 
     public function storeRegistration(Request $request)
     {
+        if ($request->input('registration_type') === 'takeover') {
+            return $this->storeTakeover($request);
+        }
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'school_type' => ['nullable', 'string', 'max:100'],
@@ -152,6 +171,42 @@ class AuthController extends Controller
         return redirect()
             ->route('login')
             ->with('success', 'Pre-registration submitted. Please wait for the master account to approve and activate your school.');
+    }
+
+    /** A new person asks to take over a school that has no user; no school is created. */
+    private function storeTakeover(Request $request)
+    {
+        $data = $request->validate([
+            'takeover_school_id' => ['required', 'integer'],
+            'system_user_given_name' => ['required', 'string', 'max:100'],
+            'system_user_middle_initial' => ['nullable', 'string', 'size:1', 'alpha'],
+            'system_user_surname' => ['required', 'string', 'max:100'],
+            'system_user_username' => ['required', 'string', 'min:4', 'max:60', 'regex:/^[A-Za-z0-9._-]+$/', 'unique:users,username'],
+            'system_user_position' => ['required', 'string', 'max:255'],
+            'system_user_email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'system_user_phone' => ['required', 'string', 'max:50'],
+            'system_user_password' => ['required', 'string', 'min:8', 'confirmed'],
+            'system_user_confirmed' => ['accepted'],
+        ], [
+            'takeover_school_id.required' => 'Choose the vacant school you will take over.',
+            'system_user_confirmed.accepted' => 'Please confirm that your full name and username are final.',
+            'system_user_middle_initial.size' => 'The middle initial is one letter only, or leave it blank.',
+            'system_user_middle_initial.alpha' => 'The middle initial is one letter only, or leave it blank.',
+        ]);
+
+        $middleInitial = filled($data['system_user_middle_initial'] ?? null) ? strtoupper($data['system_user_middle_initial']).'.' : null;
+        app(SchoolTakeoverService::class)->register([
+            'name' => collect([trim($data['system_user_given_name']), $middleInitial, trim($data['system_user_surname'])])->filter()->implode(' '),
+            'username' => strtolower($data['system_user_username']),
+            'email' => $data['system_user_email'],
+            'phone' => $data['system_user_phone'],
+            'password' => $data['system_user_password'],
+            'position' => $data['system_user_position'],
+        ], (int) $data['takeover_school_id']);
+
+        return redirect()
+            ->route('login')
+            ->with('success', 'Registration submitted. The master account will review your request to take over the school and activate your account.');
     }
 
     public function destroy(Request $request)

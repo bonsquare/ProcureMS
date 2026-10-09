@@ -46,6 +46,22 @@
         @endif
 
         <form id="register-form" method="POST" action="{{ route('register.store') }}" class="grid grid-cols-1 gap-5 p-6 sm:p-8 md:grid-cols-2">@csrf<input type="hidden" name="system_user_confirmed" id="system-user-confirmed" value="">
+            <input type="hidden" name="registration_type" id="registration-type" value="{{ old('registration_type', 'new') }}">
+            <div class="grid gap-3 sm:grid-cols-2 md:col-span-2" role="radiogroup" aria-label="What are you registering?">
+                <button type="button" data-mode="new" class="reg-choice rounded-xl border-2 p-4 text-left"><span class="flex items-center gap-2 text-sm font-bold text-primary"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">add_business</span>Register a new school</span><span class="mt-1 block text-xs text-on-surface-variant">Your school is not in the system yet.</span></button>
+                <button type="button" data-mode="takeover" class="reg-choice rounded-xl border-2 p-4 text-left"><span class="flex items-center gap-2 text-sm font-bold text-primary"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">swap_horiz</span>Take over a vacant school</span><span class="mt-1 block text-xs text-on-surface-variant">The school is already here and has no user. You receive its data after the master approves.</span></button>
+            </div>
+            <style>.reg-choice { border-color: #cdd8e2; background: #fff; transition: border-color .15s, background .15s; } .reg-choice[aria-pressed="true"] { border-color: #286da8; background: #eef4fa; }</style>
+
+            <div id="takeover-fields" class="space-y-3 md:col-span-2" hidden>
+                <div class="reg-section"><span class="badge"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">swap_horiz</span></span><div><h2>1 · Vacant school</h2><p>Only active schools with no user are listed. The school keeps all its data and gives it to you once approved.</p></div></div>
+                <label class="block text-xs font-semibold text-on-surface-variant">Vacant school <span class="text-error">*</span>
+                    <select name="takeover_school_id" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"><option value="">Choose a school</option>@foreach($vacantSchools as $vacant)<option value="{{ $vacant->id }}" @selected((int) old('takeover_school_id') === $vacant->id)>{{ $vacant->name }}@if($vacant->division) · {{ $vacant->division }}@endif</option>@endforeach</select>
+                    @if($vacantSchools->isEmpty())<span class="mt-1 block font-normal">No vacant school is open right now. Register a new school instead.</span>@endif
+                </label>
+            </div>
+
+            <div id="new-school-fields" class="contents">
             <div class="reg-section md:col-span-2"><span class="badge"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">domain</span></span><div><h2>1 · School details</h2><p>These are the same details used when the master account adds a new school.</p></div></div>
 
             <label class="text-xs font-semibold text-on-surface-variant">School ID / Code<input value="System generated after submission" disabled class="mt-2 w-full cursor-not-allowed rounded border border-outline-variant/50 bg-surface-container px-3 py-2.5 text-sm font-normal text-on-surface-variant"></label>
@@ -57,6 +73,7 @@
             <label class="text-xs font-semibold text-on-surface-variant">School Email<input type="email" name="contact_email" value="{{ old('contact_email') }}" placeholder="school@example.edu.ph" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
             <label class="text-xs font-semibold text-on-surface-variant">Contact Number<input name="contact_number" value="{{ old('contact_number') }}" placeholder="Telephone or mobile" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
             <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">School Address<textarea name="address" rows="2" placeholder="Complete school address" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary">{{ old('address') }}</textarea></label>
+            </div>
 
             <div class="reg-section mt-3 md:col-span-2"><span class="badge"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">manage_accounts</span></span><div><h2>2 · System user information</h2><p>This person will manage the school after approval. The full name and username cannot be changed later.</p></div></div>
 
@@ -126,6 +143,23 @@
             check.addEventListener('change', () => { confirmButton.disabled = !check.checked; });
             document.getElementById('confirm-back').addEventListener('click', () => dialog.close());
             confirmButton.addEventListener('click', () => { flag.value = '1'; dialog.close(); form.requestSubmit(); });
+        })();
+    </script>
+    <script>
+        (() => {
+            const form = document.getElementById('register-form');
+            const type = document.getElementById('registration-type');
+            const fields = document.getElementById('new-school-fields');
+            const takeover = document.getElementById('takeover-fields');
+            const apply = () => {
+                const isTakeover = type.value === 'takeover';
+                fields.hidden = isTakeover; takeover.hidden = ! isTakeover;
+                fields.querySelectorAll('input, select, textarea').forEach((input) => { input.disabled = isTakeover; });
+                takeover.querySelectorAll('select').forEach((input) => { input.disabled = ! isTakeover; });
+                form.querySelectorAll('[data-mode]').forEach((button) => button.setAttribute('aria-pressed', button.dataset.mode === type.value ? 'true' : 'false'));
+            };
+            form.querySelectorAll('[data-mode]').forEach((button) => button.addEventListener('click', () => { type.value = button.dataset.mode; apply(); }));
+            apply();
         })();
     </script>
 </body>
