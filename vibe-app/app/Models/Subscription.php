@@ -12,7 +12,7 @@ class Subscription extends Model
 
     public const TRANSACTIONAL_STATUSES = ['trial', 'active', 'grace_period'];
 
-    protected $fillable = ['organization_id', 'school_id', 'plan', 'billing_cycle', 'amount', 'payment_status', 'status', 'starts_at', 'renews_at', 'subscription_end', 'grace_period_end', 'renewed_at', 'canceled_at'];
+    protected $fillable = ['organization_id', 'school_id', 'user_id', 'plan', 'billing_cycle', 'amount', 'payment_status', 'status', 'starts_at', 'renews_at', 'subscription_end', 'grace_period_end', 'renewed_at', 'canceled_at'];
 
     protected function casts(): array
     {

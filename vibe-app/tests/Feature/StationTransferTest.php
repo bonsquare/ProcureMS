@@ -5,12 +5,9 @@ namespace Tests\Feature;
 use App\Models\Organization;
 use App\Models\School;
 use App\Models\SchoolStaff;
-use App\Models\StationTransferRequest;
 use App\Models\Subscription;
 use App\Models\User;
-use App\Services\StationTransferService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class StationTransferTest extends TestCase
@@ -53,5 +50,25 @@ class StationTransferTest extends TestCase
 
         $this->assertSame(['Active Person'], SchoolStaff::pluck('name')->all());
         $this->assertSame(2, SchoolStaff::withoutGlobalScopes()->where('school_id', $school->id)->count());
+    }
+
+    public function test_a_users_own_subscription_wins_over_the_schools(): void
+    {
+        [$organization, $school, $user] = $this->tenant('sub-a');
+        $own = Subscription::create(['organization_id' => $organization->id, 'school_id' => $school->id, 'user_id' => $user->id, 'plan' => 'enterprise', 'billing_cycle' => 'annual', 'amount' => 0, 'payment_status' => 'paid', 'starts_at' => now()->subDays(40)]);
+
+        $this->assertSame($own->id, $user->activeSubscription()->id);
+        $this->assertSame('professional', User::factory()->create(['organization_id' => $organization->id, 'school_id' => $school->id, 'role' => 'viewer'])->activeSubscription()->plan, 'a legacy colleague without a plan keeps the school row');
+    }
+
+    public function test_registration_records_the_subscription_owner(): void
+    {
+        $this->post(route('register.store'), [
+            'name' => 'Delta Elementary School', 'system_user_given_name' => 'Dina', 'system_user_surname' => 'Cruz', 'system_user_username' => 'dina.cruz',
+            'system_user_position' => 'Principal', 'system_user_email' => 'dina@example.com', 'system_user_phone' => '09170000000',
+            'system_user_password' => 'secret-pass-1', 'system_user_password_confirmation' => 'secret-pass-1', 'system_user_confirmed' => '1',
+        ])->assertRedirect();
+
+        $this->assertSame(User::where('username', 'dina.cruz')->value('id'), Subscription::withoutGlobalScopes()->latest('id')->value('user_id'));
     }
 }

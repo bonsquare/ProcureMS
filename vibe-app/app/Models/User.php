@@ -101,11 +101,11 @@ class User extends Authenticatable
 
     public function activeSubscription(): ?Subscription
     {
-        return Subscription::withoutGlobalScopes()
-            ->where('organization_id', $this->organization_id)
-            ->latest('starts_at')
-            ->latest('id')
-            ->first();
+        $latest = fn ($query) => $query->latest('starts_at')->latest('id');
+
+        // The subscription is personal and follows the user; unowned (legacy) rows still cover the school's other users.
+        return $latest(Subscription::withoutGlobalScopes()->where('user_id', $this->id))->first()
+            ?? $latest(Subscription::withoutGlobalScopes()->where('organization_id', $this->organization_id))->first();
     }
 
     public function organization()
