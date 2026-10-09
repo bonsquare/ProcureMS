@@ -135,4 +135,20 @@ class DvJournalEntryTest extends TestCase
                 ->assertSee(route('allotment-registry'), false)->assertSee(route('cash'), false);
         }
     }
+
+    public function test_the_accounting_tab_shows_counts_search_and_the_journal_summary(): void
+    {
+        [$report, $master] = $this->ors(10000);
+        $c = $this->codes();
+        $this->actingAs($master);
+
+        $this->get(route('accounting', ['tab' => 'for_dv']))->assertOk()->assertSee('id="row-search"', false)->assertSee('Create DV')->assertSee('Journal Supplier')->assertSee('border-l-4', false);
+
+        $this->post(route('accounting.dv.store', $report), [
+            'dv_date' => now()->toDateString(), 'payee' => 'Journal Supplier', 'dv_particulars' => 'Office supplies', 'payment_mode' => 'MDS Check',
+            'journal' => [['account_code' => $c['expense'], 'debit' => '10000'], ['account_code' => $c['cash'], 'credit' => '10000']],
+        ]);
+
+        $this->get(route('accounting', ['tab' => 'with_dv']))->assertOk()->assertSee('Journal entry · 2 lines')->assertSee('Cash-Modified Disbursement System')->assertSee('Dr')->assertSee('Cr')->assertSee('DV-');
+    }
 }

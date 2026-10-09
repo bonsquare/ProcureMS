@@ -36,24 +36,104 @@
 
     <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">@foreach($metrics as [$label,$value,$icon,$tone,$money])<article class="flex items-center justify-between rounded border border-outline-variant/30 bg-white p-5"><div><p class="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">{{ $label }}</p><p class="mt-3 text-2xl font-semibold tabular-nums">{{ $money ? $peso($value) : $value }}</p></div><span class="flex h-10 w-10 items-center justify-center rounded bg-{{ $tone }}/10 text-{{ $tone }}"><span class="material-symbols-outlined">{{ $icon }}</span></span></article>@endforeach</div>
 
-    <section class="overflow-hidden rounded border border-outline-variant/30 bg-white">
-        <div class="flex flex-wrap gap-1 border-b border-outline-variant/30 p-3">@foreach($tabs as $key => $label)<a href="{{ route($section, ['tab' => $key]) }}" class="rounded px-3 py-2 text-xs font-semibold {{ $tab===$key ? 'bg-primary text-white' : 'text-on-surface-variant hover:bg-surface-high' }}">{{ $label }}@if($key!=='all')<span class="ml-1 opacity-70">{{ $counts->get($key, 0) }}</span>@endif</a>@endforeach</div>
-        <div class="overflow-x-auto"><table class="w-full min-w-[1000px] text-left text-sm"><thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant"><tr><th class="px-5 py-3">ORS / Particulars</th><th class="px-5 py-3">School</th><th class="px-5 py-3">Fund</th><th class="px-5 py-3 text-right">Amount</th><th class="px-5 py-3">{{ $isCash ? 'Voucher / Payment' : 'Status / DV' }}</th><th class="px-5 py-3 text-right">Actions</th></tr></thead><tbody class="divide-y divide-outline-variant/20">
+    @php
+        $tabMeta = [
+            'for_review' => ['pending_actions', 'bg-error text-white'], 'pending_documents' => ['folder_open', 'bg-amber-500 text-white'], 'returned' => ['undo', 'bg-error/80 text-white'],
+            'for_dv' => ['description', 'bg-secondary text-white'], 'with_dv' => ['task_alt', 'bg-primary text-white'], 'all' => ['list', 'bg-on-surface-variant text-white'],
+            'unpaid' => ['hourglass_top', 'bg-error text-white'], 'paid' => ['check_circle', 'bg-secondary text-white'],
+        ];
+        $statusIcons = ['for_review' => 'pending_actions', 'pending_documents' => 'folder_open', 'approved' => 'check_circle', 'returned' => 'undo', 'draft' => 'edit_note'];
+        $accents = ['for_review' => 'border-l-error', 'pending_documents' => 'border-l-amber-500', 'approved' => 'border-l-secondary', 'returned' => 'border-l-error/60', 'draft' => 'border-l-outline-variant'];
+    @endphp
+    <section class="overflow-hidden rounded-xl border border-outline-variant/40 bg-white shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/30 bg-surface-low/60 p-3">
+            <nav class="flex flex-wrap gap-1.5" aria-label="Views">
+                @foreach($tabs as $key => $label)
+                    @php [$tabIcon, $badge] = $tabMeta[$key] ?? ['list', 'bg-primary text-white']; $count = $key === 'all' ? null : $counts->get($key, 0); @endphp
+                    <a href="{{ route($section, ['tab' => $key]) }}" @if($tab === $key) aria-current="page" @endif class="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition {{ $tab === $key ? 'bg-primary text-white shadow' : 'bg-white text-on-surface-variant ring-1 ring-outline-variant/40 hover:bg-surface-high' }}"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">{{ $tabIcon }}</span>{{ $label }}@if($count !== null)<span class="min-w-[1.25rem] rounded-full px-1.5 py-0.5 text-center text-[10px] leading-none {{ $tab === $key ? 'bg-white/25 text-white' : ($count > 0 ? $badge : 'bg-surface-high text-on-surface-variant') }}">{{ $count }}</span>@endif</a>
+                @endforeach
+            </nav>
+            <div class="flex items-center gap-2">
+                <label class="relative"><span class="material-symbols-outlined pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[18px] text-on-surface-variant" aria-hidden="true">search</span><input id="row-search" type="search" placeholder="Search ORS, payee, school, DV…" class="w-64 rounded-lg border border-outline-variant/50 bg-white py-2 pl-9 pr-3 text-xs outline-none focus:border-primary"></label>
+                <span id="row-count" class="whitespace-nowrap text-xs text-on-surface-variant">{{ count($rows) }} shown</span>
+            </div>
+        </div>
+        <div class="overflow-x-auto"><table class="w-full min-w-[1000px] text-left text-sm"><thead class="bg-surface-low text-[11px] uppercase tracking-wider text-on-surface-variant"><tr><th class="px-5 py-3">ORS / Particulars</th><th class="px-5 py-3">School</th><th class="px-5 py-3">Fund</th><th class="px-5 py-3 text-right">Amount</th><th class="px-5 py-3">{{ $isCash ? 'Voucher / Payment' : 'Status / DV' }}</th><th class="px-5 py-3 text-right">Actions</th></tr></thead><tbody class="divide-y divide-outline-variant/20">
         @forelse($rows as $r)
-            @php $tone = $tones[$r->status] ?? 'primary'; $label = $r->ors_number ?: $r->report_number; @endphp
-            <tr class="align-top hover:bg-surface-low/60"><td class="px-5 py-3.5"><div class="font-semibold text-primary">{{ $label }}</div><div class="mt-1 text-xs text-on-surface-variant">{{ $r->purpose ?: ($r->procurementRequest?->title ?? 'General') }}</div><div class="mt-1 text-[11px] text-on-surface-variant">@if($r->procurementRequest)PR {{ $r->procurementRequest->request_number }}@else<span class="rounded bg-surface-container px-1.5 py-0.5 text-[10px] font-semibold uppercase">No PR · Direct</span>@endif</div></td>
-            <td class="px-5 py-3.5">{{ $r->school?->name }}</td><td class="px-5 py-3.5">{{ $r->source_of_fund ?: '—' }}</td><td class="px-5 py-3.5 text-right font-semibold tabular-nums">{{ $peso($r->amount) }}</td>
-            <td class="px-5 py-3.5">@if($isCash)<div class="font-semibold">DV {{ $r->dv_number }}</div><div class="text-xs text-on-surface-variant">Payee: {{ $r->payee ?: $r->school?->name }}</div>@if($r->paid_at)<div class="text-xs text-on-surface-variant">{{ $r->payment_mode }}@if($r->payment_reference) · {{ $r->payment_reference }}@endif · {{ $r->paid_at->format('M d, Y') }}</div>@else<span class="mt-1 inline-flex rounded-full bg-error/10 px-2 py-1 text-xs font-semibold text-error">Awaiting payment · {{ $r->payment_mode }}</span>@endif @else<span class="inline-flex rounded-full bg-{{ $tone }}/10 px-2 py-1 text-xs font-semibold text-{{ $tone }}">{{ \Illuminate\Support\Str::headline($r->status) }}</span>@if($r->dv_number)<div class="mt-1 text-xs font-semibold text-secondary">DV {{ $r->dv_number }}</div>@endif @if($r->accounting_remarks)<div class="mt-1 max-w-[220px] text-[11px] text-on-surface-variant">{{ $r->accounting_remarks }}</div>@endif @endif</td>
-            <td class="px-5 py-3.5 text-right"><div class="flex flex-wrap justify-end gap-1"><a href="{{ route('liquidation.print', $r) }}" target="_blank" rel="noopener" class="rounded px-2 py-1 text-xs font-semibold text-primary hover:bg-primary hover:text-white">Print ORS</a>@if($r->dv_number)<a href="{{ route('accounting.dv.print', $r) }}" target="_blank" rel="noopener" class="rounded px-2 py-1 text-xs font-semibold text-primary hover:bg-primary hover:text-white">Print DV</a>@if(!$isCash && auth()->user()->hasPermission('accounting.approve'))<form method="POST" action="{{ route('accounting.dv.options', $r) }}">@csrf @method('PATCH')<input type="hidden" name="dv_include_appropriation" value="{{ $r->dv_include_appropriation ? 0 : 1 }}"><button class="rounded px-2 py-1 text-xs font-semibold text-on-surface-variant hover:bg-surface-low" title="Show or hide the APPROPRIATION table on the printed DV">Appropriation table: {{ $r->dv_include_appropriation ? 'On' : 'Off' }}</button></form>@endif @endif
-                @if($isMasterUser && $isCash && !$r->paid_at)<button type="button" data-pay="{{ route('cash.pay', $r) }}" data-label="{{ $label }}" data-amount="{{ $peso($r->amount) }}" data-mode="{{ $r->payment_mode }}" class="rounded bg-secondary px-2.5 py-1 text-xs font-semibold text-white hover:opacity-90">Record Payment</button>@endif
-                @if($isMasterUser && !$isCash && $r->status === 'approved' && !$r->dv_number)<button type="button" data-dv="{{ route('accounting.dv.store', $r) }}" data-label="{{ $label }}" data-amount="{{ $peso($r->amount) }}" data-amount-raw="{{ number_format((float) $r->amount, 2, '.', '') }}" data-expense-code="{{ $r->chargedLine()?->account?->code ?? $r->chargedLine()?->uacs_code }}" data-payee="{{ $r->payee ?: ($r->procurementRequest?->supplier_name ?? $r->school?->name) }}" data-particulars="{{ $r->purpose ?: $r->procurementRequest?->title }}" class="rounded bg-secondary px-2.5 py-1 text-xs font-semibold text-white hover:opacity-90">Create DV</button>@endif
-                @if($isMasterUser && !$isCash && !$r->dv_number)
-                    @if($r->status !== 'approved')<form method="POST" action="{{ route('accounting.review', $r) }}">@csrf @method('PATCH')<input type="hidden" name="status" value="approved"><button class="rounded px-2 py-1 text-xs font-semibold text-secondary hover:bg-secondary hover:text-white">Approve</button></form>@endif
-                    <button type="button" data-review="{{ route('accounting.review', $r) }}" data-status="pending_documents" data-label="{{ $label }}" class="rounded px-2 py-1 text-xs font-semibold text-primary hover:bg-primary hover:text-white">Request Docs</button>
-                    <button type="button" data-review="{{ route('accounting.review', $r) }}" data-status="returned" data-label="{{ $label }}" class="rounded px-2 py-1 text-xs font-semibold text-error hover:bg-error hover:text-white">Return</button>
-                @endif</div></td></tr>
-        @empty<tr><td colspan="6" class="px-5 py-12 text-center text-on-surface-variant">{{ $isCash ? 'Nothing here. Approve ORS entries in Accounting to queue them for payment.' : 'No ORS entries in this view.' }}</td></tr>@endforelse</tbody></table></div>
+            @php
+                $tone = $tones[$r->status] ?? 'primary'; $label = $r->ors_number ?: $r->report_number;
+                $accent = $isCash ? ($r->paid_at ? 'border-l-secondary' : 'border-l-error') : ($r->dv_number ? 'border-l-primary' : ($accents[$r->status] ?? 'border-l-outline-variant'));
+                $payee = $r->payee ?: ($r->procurementRequest?->supplier_name ?? $r->school?->name);
+            @endphp
+            <tr data-row class="align-top border-l-4 {{ $accent }} hover:bg-surface-low/60">
+                <td class="px-5 py-4">
+                    <div class="flex flex-wrap items-center gap-2"><span class="font-bold text-primary">{{ $label }}</span>@if($r->procurementRequest)<span class="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">PR {{ $r->procurementRequest->request_number }}</span>@else<span class="rounded bg-surface-container px-1.5 py-0.5 text-[10px] font-bold uppercase text-on-surface-variant">No PR · Direct</span>@endif</div>
+                    <div class="mt-1 text-xs text-on-surface">{{ $r->purpose ?: ($r->procurementRequest?->title ?? 'General') }}</div>
+                    <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-on-surface-variant"><span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[13px]" aria-hidden="true">storefront</span>{{ $payee }}</span><span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[13px]" aria-hidden="true">schedule</span>{{ ($r->approved_at ?? $r->submitted_at ?? $r->created_at)?->diffForHumans() }}</span></div>
+                </td>
+                <td class="px-5 py-4 text-[13px]">{{ $r->school?->name }}</td>
+                <td class="px-5 py-4"><span class="rounded-full bg-surface-container px-2 py-0.5 text-[11px] font-semibold text-on-surface-variant">{{ $r->source_of_fund ?: '—' }}</span></td>
+                <td class="px-5 py-4 text-right text-[15px] font-bold tabular-nums">{{ $peso($r->amount) }}</td>
+                <td class="px-5 py-4">
+                    @if($isCash)
+                        <div class="font-bold">DV {{ $r->dv_number }}</div>
+                        <div class="text-xs text-on-surface-variant">Payee: {{ $payee }}</div>
+                        @if($r->paid_at)
+                            <span class="mt-1 inline-flex items-center gap-1 rounded-full bg-secondary/10 px-2.5 py-1 text-xs font-bold text-secondary"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">check_circle</span>Paid {{ $r->paid_at->format('M d, Y') }}</span>
+                            <div class="mt-1 text-xs text-on-surface-variant">{{ $r->payment_mode }}@if($r->payment_reference) · {{ $r->payment_reference }}@endif</div>
+                        @else
+                            <span class="mt-1 inline-flex items-center gap-1 rounded-full bg-error/10 px-2.5 py-1 text-xs font-bold text-error"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">hourglass_top</span>Awaiting payment · {{ $r->payment_mode }}</span>
+                        @endif
+                    @else
+                        <span class="inline-flex items-center gap-1 rounded-full bg-{{ $tone }}/10 px-2.5 py-1 text-xs font-bold text-{{ $tone }}"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">{{ $statusIcons[$r->status] ?? 'info' }}</span>{{ \Illuminate\Support\Str::headline($r->status) }}</span>
+                        @if($r->dv_number)
+                            <div class="mt-1.5 text-xs font-bold text-secondary">DV {{ $r->dv_number }}<span class="ml-1 font-normal text-on-surface-variant">· {{ $r->dv_date?->format('M d, Y') }}</span></div>
+                            @if($r->journalLines->isNotEmpty())
+                                <details class="mt-1 max-w-[300px] rounded-lg bg-surface-low text-[11px]"><summary class="flex cursor-pointer list-none items-center gap-1 px-2 py-1 font-bold text-primary"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">balance</span>Journal entry · {{ $r->journalLines->count() }} lines<span class="material-symbols-outlined ml-auto text-[14px]" aria-hidden="true">expand_more</span></summary>
+                                    <ul class="space-y-0.5 border-t border-outline-variant/30 px-2 py-1.5">@foreach($r->journalLines as $line)<li class="flex items-start justify-between gap-2"><span class="{{ $line->credit > 0 ? 'pl-3' : '' }} text-on-surface-variant"><span class="font-semibold text-on-surface">{{ $line->account_code }}</span> {{ \Illuminate\Support\Str::limit($line->account_title, 34) }}</span><span class="whitespace-nowrap tabular-nums"><span class="font-bold {{ $line->debit > 0 ? 'text-primary' : 'text-secondary' }}">{{ $line->debit > 0 ? 'Dr' : 'Cr' }}</span> {{ number_format((float) ($line->debit > 0 ? $line->debit : $line->credit), 2) }}</span></li>@endforeach</ul></details>
+                            @else
+                                <div class="mt-1 text-[11px] text-on-surface-variant">No journal entry (created before it was required)</div>
+                            @endif
+                        @endif
+                        @if($r->accounting_remarks)<div class="mt-1.5 max-w-[240px] rounded-lg border-l-2 border-amber-500 bg-amber-50 px-2 py-1 text-[11px] text-amber-900">{{ $r->accounting_remarks }}</div>@endif
+                    @endif
+                </td>
+                <td class="px-5 py-4 text-right"><div class="flex flex-wrap items-center justify-end gap-1.5">
+                    @if($isMasterUser && $isCash && ! $r->paid_at)<button type="button" data-pay="{{ route('cash.pay', $r) }}" data-label="{{ $label }}" data-amount="{{ $peso($r->amount) }}" data-mode="{{ $r->payment_mode }}" class="inline-flex items-center gap-1 rounded-lg bg-secondary px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:opacity-90"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">payments</span>Record Payment</button>@endif
+                    @if($isMasterUser && ! $isCash && $r->status === 'approved' && ! $r->dv_number)<button type="button" data-dv="{{ route('accounting.dv.store', $r) }}" data-label="{{ $label }}" data-amount="{{ $peso($r->amount) }}" data-amount-raw="{{ number_format((float) $r->amount, 2, '.', '') }}" data-expense-code="{{ $r->chargedLine()?->account?->code ?? $r->chargedLine()?->uacs_code }}" data-payee="{{ $r->payee ?: ($r->procurementRequest?->supplier_name ?? $r->school?->name) }}" data-particulars="{{ $r->purpose ?: $r->procurementRequest?->title }}" class="inline-flex items-center gap-1 rounded-lg bg-secondary px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:opacity-90"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">receipt_long</span>Create DV</button>@endif
+                    @if($isMasterUser && ! $isCash && ! $r->dv_number && $r->status !== 'approved')<form method="POST" action="{{ route('accounting.review', $r) }}">@csrf @method('PATCH')<input type="hidden" name="status" value="approved"><button class="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-primary-container"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">check</span>Approve</button></form>@endif
+                    <a href="{{ route('liquidation.print', $r) }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-primary ring-1 ring-outline-variant/50 hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">print</span>ORS</a>
+                    @if($r->dv_number)
+                        <a href="{{ route('accounting.dv.print', $r) }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-primary ring-1 ring-outline-variant/50 hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">print</span>DV</a>
+                        @if(! $isCash && auth()->user()->hasPermission('accounting.approve'))<form method="POST" action="{{ route('accounting.dv.options', $r) }}">@csrf @method('PATCH')<input type="hidden" name="dv_include_appropriation" value="{{ $r->dv_include_appropriation ? 0 : 1 }}"><button class="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-on-surface-variant ring-1 ring-outline-variant/50 hover:bg-surface-low" title="Show or hide the APPROPRIATION table on the printed DV">Appropriation table: {{ $r->dv_include_appropriation ? 'On' : 'Off' }}</button></form>@endif
+                    @endif
+                    @if($isMasterUser && ! $isCash && ! $r->dv_number)
+                        <button type="button" data-review="{{ route('accounting.review', $r) }}" data-status="pending_documents" data-label="{{ $label }}" class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-primary ring-1 ring-outline-variant/50 hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">folder_open</span>Request Docs</button>
+                        <button type="button" data-review="{{ route('accounting.review', $r) }}" data-status="returned" data-label="{{ $label }}" class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-error ring-1 ring-error/30 hover:bg-error hover:text-white"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">undo</span>Return</button>
+                    @endif
+                </div></td>
+            </tr>
+        @empty
+            <tr><td colspan="6" class="px-5 py-14 text-center text-on-surface-variant"><span class="material-symbols-outlined mb-1 block text-[34px] text-outline-variant" aria-hidden="true">inbox</span>{{ $isCash ? 'Nothing here. Approve ORS entries in Accounting to queue them for payment.' : 'No ORS entries in this view.' }}</td></tr>
+        @endforelse
+        <tr id="row-empty" hidden><td colspan="6" class="px-5 py-10 text-center text-sm text-on-surface-variant">No entry matches your search.</td></tr>
+        </tbody></table></div>
     </section>
+    <script>
+        (() => {
+            const input = document.getElementById('row-search');
+            const rows = [...document.querySelectorAll('tr[data-row]')];
+            const count = document.getElementById('row-count');
+            const empty = document.getElementById('row-empty');
+            input.addEventListener('input', () => {
+                const term = input.value.trim().toLowerCase();
+                let shown = 0;
+                rows.forEach((row) => { const match = ! term || row.textContent.toLowerCase().includes(term); row.hidden = ! match; if (match) shown++; });
+                count.textContent = shown + ' shown';
+                empty.hidden = shown > 0 || rows.length === 0;
+            });
+        })();
+    </script>
 </div></main></div>
 
 <div id="pay-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true"><div class="w-full max-w-lg rounded bg-white shadow-2xl"><div class="border-b border-outline-variant/30 px-6 py-4"><h2 class="text-lg font-semibold">Record Payment</h2><p id="pay-title" class="mt-1 text-xs text-on-surface-variant"></p></div>

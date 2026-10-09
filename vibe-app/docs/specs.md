@@ -225,7 +225,7 @@ php -d zend_extension=opcache -d opcache.enable_cli=1 -d "upload_tmp_dir=<repo>/
 
 - Why not `php artisan serve`: it does not pass `-d` settings to the real server, so opcache and `upload_tmp_dir` would be missing. Without `upload_tmp_dir` PHP may fail every upload with "unable to create a temporary file". `vibe-app/dev-server.php` is the router; it must `return` the framework router's result or static files (css, images) are served as HTML and the pages lose their design.
 - Opcache makes pages about three times faster (about 0.9 s down to 0.03 s per page here).
-- Tests: `php artisan test` (all pass at the time of writing: 161).
+- Tests: `php artisan test` (all pass at the time of writing: 163).
 
 ## 9. Station transfer
 
@@ -268,3 +268,9 @@ php -d zend_extension=opcache -d opcache.enable_cli=1 -d "upload_tmp_dir=<repo>/
 - The lines are saved in `dv_journal_lines` (account code and title as in the chart at that time) and printed in the **Accounting Entry** table of the DV (title, UACS code, debit, credit). DVs created before this change have no lines and print as before.
 - Not included: editing the entry after the DV exists, and a separate general journal page.
 - Tests: `tests/Feature/DvJournalEntryTest.php`.
+
+### Accounting page (Finance → Accounting)
+
+- Tabs are pills with an icon and a count badge (red for For Review and Awaiting payment, amber for Pending Documents, green for Ready for DV). A search box filters the rows on the page by ORS, payee, school or DV number.
+- Each row has a status-colored edge, the payee and how long ago it was approved or submitted, a status chip with icon, and for a DV the DV number and date. A DV's journal entry shows as a "Journal entry · N lines" summary that opens to the lines (Dr / Cr).
+- The main action is a filled button (Approve, Create DV, Record Payment); Print, Request Docs and Return are outlined.

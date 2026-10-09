@@ -38,7 +38,7 @@ class FinanceController extends Controller
 
     private function reports()
     {
-        return LiquidationReport::with(['school', 'procurementRequest', 'submitter'])->whereIn('school_id', $this->schoolIds());
+        return LiquidationReport::with(['school', 'procurementRequest', 'submitter', 'journalLines'])->whereIn('school_id', $this->schoolIds());
     }
 
     public function accounting(Request $request)
