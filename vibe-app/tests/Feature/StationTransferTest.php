@@ -94,19 +94,17 @@ class StationTransferTest extends TestCase
         $service->request($user, ['to_school_id' => $target->id, 'reason' => 'Again']);
     }
 
-    public function test_request_rules_master_same_school_inactive_and_occupied_destination(): void
+    public function test_request_rules_master_same_school_and_inactive_destination(): void
     {
         [, $school, $user] = $this->tenant('rule-a');
         $closed = $this->vacantSchool('rule-b');
         $closed->update(['status' => 'inactive']);
-        [, $occupied] = $this->tenant('rule-c');
         $service = app(StationTransferService::class);
 
         foreach ([
             [$this->master(), ['to_school_id' => $school->id, 'reason' => 'x']],
             [$user, ['to_school_id' => $school->id, 'reason' => 'x']],
             [$user, ['to_school_id' => $closed->id, 'reason' => 'x']],
-            [$user, ['to_school_id' => $occupied->id, 'reason' => 'x']],
             [$user, ['reason' => 'x']],
         ] as [$who, $data]) {
             try {
@@ -363,7 +361,7 @@ class StationTransferTest extends TestCase
 
         $this->actingAs($user)->get($this->transferTab())->assertOk()
             ->assertSee('Request a station transfer')->assertSee($schoolB->name)->assertSee('My school isn')
-            ->assertDontSee($busy->name);
+            ->assertSee($busy->name.' ·', false)->assertSee('needs acceptance')->assertSee('vacant');
 
         $request = $service->request($user, ['to_school_id' => $schoolB->id, 'reason' => 'Division order']);
         $this->get($this->transferTab())->assertSee('Pending')->assertSee('Division order')->assertSee('Cancel request');

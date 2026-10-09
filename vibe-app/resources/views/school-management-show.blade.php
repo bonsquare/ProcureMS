@@ -18,6 +18,13 @@
 
 <a href="{{ route('school-management') }}" class="mb-3 inline-flex items-center gap-1 text-xs font-bold text-action hover:underline"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">arrow_back</span>All schools</a>
 
+@foreach($handovers as $handover)
+    <section class="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-secondary/40 bg-secondary/5 px-5 py-3.5">
+        <div class="flex gap-3"><span class="material-symbols-outlined text-[24px] text-secondary" aria-hidden="true">supervisor_account</span><div><p class="font-bold text-secondary">Handover until {{ $handover->handover_ends_at?->format('M d, Y') }}</p><p class="text-xs text-on-surface-variant">{{ $handover->user?->name }} and {{ $handover->handoverUser?->name }} both have access to {{ $school->name }}. Then {{ $handover->handoverUser?->name }} is set inactive (Transferred).</p></div></div>
+        <form method="POST" action="{{ route('school-management.handover.end', $handover) }}" onsubmit="return confirm('End the handover now? {{ $handover->handoverUser?->name }} will be set inactive.')">@csrf<button class="rounded-lg border border-error/40 bg-white px-4 py-2 text-xs font-bold text-error hover:bg-error/10">End handover now</button></form>
+    </section>
+@endforeach
+
 @if($transferRequests->isNotEmpty())
     <section id="transfer" class="mb-5 overflow-hidden rounded-xl border-2 border-amber-300 bg-white shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3 border-b border-amber-200 bg-gradient-to-r from-amber-100 to-amber-50 px-5 py-3.5">
@@ -50,10 +57,19 @@
                         <p class="mt-1 text-base font-semibold leading-snug text-amber-950">{{ $item->reason }}</p>
                     </div>
 
+                    @if($item->review_status === 'pending')
+                        <p class="flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">hourglass_top</span>Waiting for {{ $item->destinationName() }} to accept, until {{ $item->review_expires_at?->format('M d, Y') }}. Approval unlocks when they accept.</p>
+                    @elseif($item->review_status === 'accepted')
+                        <p class="flex items-center gap-2 rounded-lg border border-secondary/40 bg-secondary/10 px-3 py-2 text-xs font-semibold text-secondary"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">handshake</span>Accepted by {{ $item->destinationName() }} on {{ $item->reviewed_at?->format('M d, Y') }}@if($item->review_note) · {{ $item->review_note }}@endif. Both users share the school for {{ \App\Services\StationTransferService::HANDOVER_DAYS }} days from that date.</p>
+                    @endif
                     <p class="flex gap-2 rounded-lg bg-surface-low px-3 py-2.5 text-xs text-on-surface-variant"><span class="material-symbols-outlined text-[16px] text-action" aria-hidden="true">info</span><span>If approved, <strong>{{ $item->fromSchool?->name }}</strong> stays active and becomes vacant. The user keeps their role and subscription, and confirms the new station at next sign-in.</span></p>
 
                     <div class="flex flex-wrap items-center gap-2 border-t border-outline-variant/30 pt-4">
-                        <form method="POST" action="{{ route('transfer-requests.approve', $item) }}" class="flex flex-1 flex-wrap gap-2">@csrf<input type="hidden" name="back" value="school"><input name="decision_note" placeholder="Note to the user (optional)" class="min-w-[200px] flex-1 rounded-lg border border-outline-variant bg-white px-3 py-2 text-xs outline-none focus:border-action"><button class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2 text-xs font-bold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">check</span>Approve</button></form>
+                        @if($item->canBeApproved())
+                            <form method="POST" action="{{ route('transfer-requests.approve', $item) }}" class="flex flex-1 flex-wrap gap-2">@csrf<input type="hidden" name="back" value="school"><input name="decision_note" placeholder="Note to the user (optional)" class="min-w-[200px] flex-1 rounded-lg border border-outline-variant bg-white px-3 py-2 text-xs outline-none focus:border-action"><button class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2 text-xs font-bold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">check</span>Approve</button></form>
+                        @else
+                            <span class="flex-1 text-xs text-on-surface-variant">Approval is locked until the destination school accepts.</span>
+                        @endif
                         <form method="POST" action="{{ route('transfer-requests.decline', $item) }}">@csrf<input type="hidden" name="back" value="school"><button class="inline-flex items-center gap-1.5 rounded-lg border border-error/40 px-5 py-2 text-xs font-bold text-error hover:bg-error/10"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">close</span>Decline</button></form>
                     </div>
                 </li>

@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\School;
+use App\Services\StationTransferService;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,6 +17,11 @@ class EnsureAccountActive
         $user = $request->user();
         if (! $user || $user->role === 'master_user' || $request->routeIs('logout')) {
             return $next($request);
+        }
+
+        // A handover that ran out ends the moment the previous user comes back, even before the daily job.
+        if (app(StationTransferService::class)->endDueHandovers($user) > 0) {
+            $user->refresh();
         }
 
         $schoolInactive = $user->school_id && School::withoutGlobalScopes()->whereKey($user->school_id)->value('status') === 'inactive';

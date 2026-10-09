@@ -22,12 +22,20 @@ class StationTransferController extends Controller
     /** What the Station transfer tab in School Settings shows for a school user. */
     public function pageData(User $user): array
     {
+        $this->transfers->expireDue();
+
         return [
+            // The destination school's user answers requests waiting for it; both users see a running handover.
+            'incoming' => StationTransferRequest::with(['user', 'fromSchool'])->where('reviewer_user_id', $user->id)->where('status', 'pending')->where('review_status', 'pending')->oldest('id')->get(),
+            'handovers' => StationTransferRequest::with(['user', 'handoverUser', 'toSchool'])->where('status', 'approved')->whereNotNull('handover_user_id')->whereNull('handover_ended_at')
+                ->where(fn ($query) => $query->where('user_id', $user->id)->orWhere('handover_user_id', $user->id))->get(),
             'requests' => StationTransferRequest::with(['fromSchool', 'toSchool', 'decider'])->where('user_id', $user->id)->latest('id')->get(),
-            // One user manages one school, so only vacant schools can be chosen.
-            'vacantSchools' => School::withoutGlobalScopes()->where('status', 'active')->where('id', '!=', $user->school_id)
-                ->whereNotExists(fn ($query) => $query->selectRaw('1')->from('users')->whereColumn('users.school_id', 'schools.id')->where(fn ($q) => $q->whereNull('users.status')->orWhere('users.status', 'active')))
-                ->orderBy('name')->get(['id', 'name', 'division', 'district']),
+            // A school that has a user must accept the request first; schools with a transfer in progress are left out.
+            'destinationSchools' => School::withoutGlobalScopes()->where('status', 'active')->where('id', '!=', $user->school_id)
+                ->get(['id', 'name', 'division', 'district'])
+                ->reject(fn (School $school) => $this->transfers->incomingInProgress($school))
+                ->each(fn (School $school) => $school->occupied = User::withoutGlobalScopes()->where('school_id', $school->id)->where('role', '!=', 'master_user')->where(fn ($q) => $q->whereNull('status')->orWhere('status', 'active'))->exists())
+                ->sortBy('name')->values(),
             'station' => School::withoutGlobalScopes()->find($user->school_id),
         ];
     }
@@ -65,6 +73,16 @@ class StationTransferController extends Controller
         return redirect()->to(route('school-settings', ['ui' => 'staff-save-v7', 'tab' => 'transfer']))->with('success', 'Transfer request cancelled.');
     }
 
+    public function review(Request $request, StationTransferRequest $transfer)
+    {
+        $data = $request->validate(['decision' => ['required', 'in:accept,decline'], 'note' => ['nullable', 'string', 'max:500']]);
+        $accept = $data['decision'] === 'accept';
+        $this->transfers->review($transfer, $request->user(), $accept, $data['note'] ?? null);
+
+        return redirect()->to(route('school-settings', ['ui' => 'staff-save-v7', 'tab' => 'transfer']))
+            ->with('success', $accept ? 'Accepted. Both of you have access to this school for '.StationTransferService::HANDOVER_DAYS.' days after the master approves.' : 'Transfer request declined.');
+    }
+
     public function confirmShow(Request $request)
     {
         $transfer = StationTransferRequest::with(['fromSchool', 'toSchool'])->where('user_id', $request->user()->id)
@@ -83,6 +101,7 @@ class StationTransferController extends Controller
     public function queue(Request $request)
     {
         abort_unless($request->user()->role === 'master_user', 403);
+        $this->transfers->expireDue();
         $with = ['user', 'fromSchool', 'toSchool', 'decider'];
 
         return view('transfer-requests', [

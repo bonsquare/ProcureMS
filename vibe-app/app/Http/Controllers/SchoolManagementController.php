@@ -6,6 +6,7 @@ use App\Models\School;
 use App\Models\StationTransferRequest;
 use App\Models\User;
 use App\Services\SchoolManagementService;
+use App\Services\StationTransferService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -45,10 +46,13 @@ class SchoolManagementController extends Controller
     public function show(Request $request, School $school)
     {
         $this->master($request);
+        app(StationTransferService::class)->expireDue();
+        app(StationTransferService::class)->endDueHandovers();
 
         return view('school-management-show', [
             'school' => $school->load('organization'),
             'users' => User::where('school_id', $school->id)->where('role', '!=', 'master_user')->orderBy('name')->get(),
+            'handovers' => StationTransferRequest::with(['user', 'handoverUser'])->where('status', 'approved')->whereNotNull('handover_user_id')->whereNull('handover_ended_at')->where('to_school_id', $school->id)->get(),
             'reasons' => SchoolManagementService::REASONS,
             'transferRequests' => StationTransferRequest::with(['user', 'fromSchool', 'toSchool'])->where('status', 'pending')
                 ->where(fn ($query) => $query->where('from_school_id', $school->id)->orWhere('to_school_id', $school->id))->oldest('id')->get(),
@@ -63,6 +67,14 @@ class SchoolManagementController extends Controller
         $this->service->setSchoolActive($school, (bool) $data['active'], $request->user());
 
         return $this->back($school->id, $school->name.' is now '.($data['active'] ? 'active' : 'inactive').'.');
+    }
+
+    public function endHandover(Request $request, StationTransferRequest $transfer): RedirectResponse
+    {
+        $this->master($request);
+        app(StationTransferService::class)->endHandoverNow($transfer, $request->user());
+
+        return $this->back($transfer->to_school_id, 'Handover ended. The previous user is now inactive.');
     }
 
     public function deactivateUser(Request $request, User $user): RedirectResponse

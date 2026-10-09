@@ -132,6 +132,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/station-transfer', [StationTransferController::class, 'index'])->name('station-transfer');
     Route::post('/station-transfer', [StationTransferController::class, 'store'])->name('station-transfer.store');
     Route::post('/station-transfer/{transfer}/cancel', [StationTransferController::class, 'cancel'])->name('station-transfer.cancel');
+    Route::post('/station-transfer/{transfer}/review', [StationTransferController::class, 'review'])->name('station-transfer.review');
     Route::get('/station-confirm', [StationTransferController::class, 'confirmShow'])->name('station.confirm');
     Route::post('/station-confirm', [StationTransferController::class, 'confirmStore'])->name('station.confirm.store');
     Route::get('/transfer-requests', [StationTransferController::class, 'queue'])->name('transfer-requests');
@@ -141,6 +142,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/school-management', [SchoolManagementController::class, 'index'])->name('school-management');
     Route::get('/school-management/{school}', [SchoolManagementController::class, 'show'])->name('school-management.show')->whereNumber('school');
     Route::post('/school-management/{school}/status', [SchoolManagementController::class, 'status'])->name('school-management.status')->whereNumber('school');
+    Route::post('/school-management/transfers/{transfer}/end-handover', [SchoolManagementController::class, 'endHandover'])->name('school-management.handover.end');
     Route::post('/school-management/users/{user}/deactivate', [SchoolManagementController::class, 'deactivateUser'])->name('school-management.users.deactivate');
     Route::post('/school-management/users/{user}/reactivate', [SchoolManagementController::class, 'reactivateUser'])->name('school-management.users.reactivate');
 });
