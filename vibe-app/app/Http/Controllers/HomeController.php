@@ -381,6 +381,7 @@ class HomeController extends Controller
     {
         $search = trim((string) request('search'));
         $status = trim((string) request('status'));
+
         return view('suppliers', [
             'suppliers' => Supplier::when(! $this->isMasterUser(), fn ($query) => $query->whereIn('school_id', $this->scopedSchoolIds()))
                 ->when($search !== '', fn ($query) => $query->where(fn ($nested) => $nested->where('business_name', 'like', "%{$search}%")->orWhere('contact_person', 'like', "%{$search}%")))
@@ -537,7 +538,7 @@ class HomeController extends Controller
         $this->assertBudgetItem($validated, (float) $amount);
         app(AppItemLinkService::class)->assertWithinApp((int) $validated['school_id'], $items);
 
-        $procurementRequest = DB::transaction(function () use ($validated, $request, $amount, $items, $budgetAllocation, $organizationId, $fiscalYear) {
+        $procurementRequest = DB::transaction(function () use ($validated, $request, $amount, $items, $budgetAllocation, $fiscalYear) {
             $requestNumber = ! empty($validated['manually_encode_pr_number'])
                 ? $validated['manual_pr_number']
                 : $this->nextPurchaseRequestNumber(true, $this->organizationIdForSchool((int) $validated['school_id']));
@@ -567,8 +568,8 @@ class HomeController extends Controller
                 'sai_number' => $validated['sai_number'] ?: null,
                 'sai_date' => $validated['sai_date'] ?: null,
                 'responsibility_center_code' => $validated['responsibility_center_code'] ?: null,
-                  'source_of_fund' => $validated['source_of_fund'],
-                  'budget_allocation_id' => $validated['budget_allocation_id'] ?? null,
+                'source_of_fund' => $validated['source_of_fund'],
+                'budget_allocation_id' => $validated['budget_allocation_id'] ?? null,
                 'master_transaction_id' => $masterTransactionId,
                 'description' => 'Itemized goods request',
                 'amount' => $amount,
@@ -577,10 +578,10 @@ class HomeController extends Controller
                 'requested_at' => $validated['request_date'],
             ]);
 
-              $this->replaceProcurementItems($procurementRequest, $items);
-              app(AppItemLinkService::class)->recordLinks($procurementRequest);
-              $procurementRequest->transaction?->update(['status' => 'procurement']);
-              $procurementRequest->transaction?->recordEvent('procurement', 'pr_created', null, 'submitted', $procurementRequest->request_number, ['procurement_request_id' => $procurementRequest->id, 'amount' => $amount]);
+            $this->replaceProcurementItems($procurementRequest, $items);
+            app(AppItemLinkService::class)->recordLinks($procurementRequest);
+            $procurementRequest->transaction?->update(['status' => 'procurement']);
+            $procurementRequest->transaction?->recordEvent('procurement', 'pr_created', null, 'submitted', $procurementRequest->request_number, ['procurement_request_id' => $procurementRequest->id, 'amount' => $amount]);
 
             return $procurementRequest;
         });

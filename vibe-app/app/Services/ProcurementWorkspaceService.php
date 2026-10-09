@@ -89,7 +89,9 @@ class ProcurementWorkspaceService
                 'missing_iar' => 'Missing IAR',
                 default => 'Missing PO and IAR',
             },
-            'tone' => match ($status) { 'complete' => 'verified', 'partial' => 'attention', default => 'neutral' },
+            'tone' => match ($status) {
+                'complete' => 'verified', 'partial' => 'attention', default => 'neutral'
+            },
             'supplier' => $purchaseOrder?->supplier_or_recipient,
             'purchase_order' => $purchaseOrder,
             'latest_receiving_document' => $iar,
