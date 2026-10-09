@@ -71,11 +71,18 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::get('/planning/sip/print', [PlanningController::class, 'printSip'])->name('planning.sip.print');
     Route::post('/planning/sip/signatories', [PlanningController::class, 'saveSipSignatories'])->middleware('permission:planning.manage')->name('planning.sip.signatories');
     Route::post('/planning/sip/{sipProject}/activities', [PlanningController::class, 'storeSipActivity'])->middleware('permission:planning.manage')->name('planning.sip.activities.store');
+    Route::put('/planning/sip/{sipProject}', [PlanningController::class, 'updateSip'])->middleware('permission:planning.manage')->name('planning.sip.update')->whereNumber('sipProject');
+    Route::delete('/planning/sip/{sipProject}', [PlanningController::class, 'destroySip'])->middleware('permission:planning.manage')->name('planning.sip.destroy')->whereNumber('sipProject');
+    Route::put('/planning/sip/activities/{sipActivity}', [PlanningController::class, 'updateSipActivity'])->middleware('permission:planning.manage')->name('planning.sip.activities.update');
     Route::delete('/planning/sip/activities/{sipActivity}', [PlanningController::class, 'destroySipActivity'])->middleware('permission:planning.manage')->name('planning.sip.activities.destroy');
     Route::post('/planning/sip/{sipProject}/link-aip', [PlanningController::class, 'linkAip'])->middleware('permission:planning.manage')->name('planning.sip.link-aip');
     Route::post('/planning/ppmp', [PlanningController::class, 'storePpmp'])->middleware('permission:planning.manage')->name('planning.ppmp.store');
+    Route::put('/planning/ppmp/{ppmpPlan}', [PlanningController::class, 'updatePpmp'])->middleware('permission:planning.manage')->name('planning.ppmp.update');
+    Route::delete('/planning/ppmp/{ppmpPlan}', [PlanningController::class, 'destroyPpmp'])->middleware('permission:planning.manage')->name('planning.ppmp.destroy');
     Route::post('/planning/ppmp/{ppmpPlan}/approve', [PlanningController::class, 'approvePpmp'])->middleware('permission:planning.manage')->name('planning.ppmp.approve');
     Route::post('/planning/app/generate', [PlanningController::class, 'generateApp'])->middleware('permission:planning.manage')->name('planning.app.generate');
+    Route::put('/planning/app/items/{appItem}', [PlanningController::class, 'updateAppItem'])->middleware('permission:planning.manage')->name('planning.app.items.update');
+    Route::delete('/planning/app/items/{appItem}', [PlanningController::class, 'destroyAppItem'])->middleware('permission:planning.manage')->name('planning.app.items.destroy');
     Route::post('/planning/app/{appPlan}/approve', [PlanningController::class, 'approveApp'])->middleware('permission:planning.manage')->name('planning.app.approve');
     Route::post('/planning/fund-sources', [PlanningController::class, 'storeFundSource'])->middleware('permission:planning.manage')->name('planning.funds.store');
     Route::post('/planning/fiscal-year', [PlanningController::class, 'setFiscalYearStatus'])->middleware('permission:planning.manage')->name('planning.fiscal-year.status');

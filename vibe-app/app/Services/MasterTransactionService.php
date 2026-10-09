@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Aip;
 use App\Models\MasterTransaction;
+use App\Models\PpmpPlan;
 use App\Models\School;
 use App\Models\User;
 
@@ -27,6 +28,19 @@ class MasterTransactionService
         $transaction->recordEvent($module, $action, null, 'planning');
 
         return $transaction;
+    }
+
+    /** Deletes a tracking record (and its events) once nothing is attached to it any more. */
+    public function discardIfUnused(?MasterTransaction $transaction): void
+    {
+        if (! $transaction || $transaction->aip()->exists() || $transaction->sipProjects()->exists() || $transaction->budgetAllocations()->exists()
+            || $transaction->procurementRequests()->exists() || $transaction->liquidationReports()->exists()
+            || PpmpPlan::withoutGlobalScopes()->where('master_transaction_id', $transaction->id)->exists()) {
+            return;
+        }
+
+        $transaction->events()->delete();
+        $transaction->delete();
     }
 
     public function forAip(Aip $aip, ?User $user = null): MasterTransaction

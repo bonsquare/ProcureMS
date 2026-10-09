@@ -2,16 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AgencySetting;
 use App\Models\Aip;
 use App\Models\AppItem;
 use App\Models\AppPlan;
+use App\Models\AuditLog;
 use App\Models\FiscalYear;
 use App\Models\FundSource;
 use App\Models\MasterTransaction;
 use App\Models\PpmpItem;
 use App\Models\PpmpPlan;
 use App\Models\School;
-use App\Models\AgencySetting;
 use App\Models\SipActivity;
 use App\Models\SipPlan;
 use App\Models\SipProject;
@@ -117,6 +118,72 @@ class PlanningController extends Controller
         });
 
         return back()->with('success', 'SIP activity removed.');
+    }
+
+    public function updateSip(Request $request, SipProject $sipProject, FiscalYearService $fiscalYears)
+    {
+        $this->authorizeManage($request);
+        abort_unless($this->schoolIds()->contains($sipProject->school_id), 403);
+        $data = $request->validate([
+            'school_year' => ['required', 'integer', 'between:2000,2100'],
+            'planning_period' => ['nullable', 'string', 'max:100'],
+            'pillar' => ['required', Rule::in(Aip::PILLARS)],
+            'kra' => ['required', 'string', 'max:255'],
+            'organizational_outcome' => ['nullable', 'string', 'max:1000'],
+            'strategy' => ['nullable', 'string', 'max:255'],
+            'five_point_agenda' => ['nullable', 'string', 'max:255'],
+            'project' => ['required', 'string', 'max:255'],
+        ]);
+        $fiscalYears->assertOpen((int) $sipProject->organization_id, (int) $sipProject->school_year);
+        $fiscalYears->assertOpen((int) $sipProject->organization_id, (int) $data['school_year']);
+        $sipProject->update($data);
+
+        return back()->with('success', 'SIP program updated.');
+    }
+
+    /** Deletes a program with its activities; refused while an AIP is linked to it. */
+    public function destroySip(Request $request, SipProject $sipProject, MasterTransactionService $transactions)
+    {
+        $this->authorizeManage($request);
+        abort_unless($this->schoolIds()->contains($sipProject->school_id), 403);
+        app(FiscalYearService::class)->assertOpen((int) $sipProject->organization_id, (int) $sipProject->school_year);
+        $this->requires(! Aip::withoutGlobalScopes()->where('sip_project_id', $sipProject->id)->exists(), 'An AIP is linked to this program. Delete that AIP, or link it to another program, first.');
+
+        $transaction = $sipProject->transaction;
+        DB::transaction(function () use ($sipProject, $transaction, $request, $transactions) {
+            AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $sipProject->school_id, 'action' => 'sip_program_deleted', 'auditable_type' => SipProject::class, 'auditable_id' => $sipProject->id, 'metadata' => ['project' => $sipProject->project, 'activities' => $sipProject->activities()->count()]]);
+            $sipProject->activities()->delete();
+            $sipProject->delete();
+            $transactions->discardIfUnused($transaction);
+        });
+
+        return back()->with('success', 'SIP program deleted.');
+    }
+
+    public function updateSipActivity(Request $request, SipActivity $sipActivity)
+    {
+        $this->authorizeManage($request);
+        $sipProject = $sipActivity->project()->firstOrFail();
+        abort_unless($this->schoolIds()->contains($sipProject->school_id), 403);
+        $data = $request->validate([
+            'activity' => ['required', 'string', 'max:1000'],
+            'physical_year1' => ['nullable', 'numeric', 'min:0'], 'physical_year2' => ['nullable', 'numeric', 'min:0'], 'physical_year3' => ['nullable', 'numeric', 'min:0'],
+            'financial_year1' => ['nullable', 'numeric', 'min:0'], 'financial_year2' => ['nullable', 'numeric', 'min:0'], 'financial_year3' => ['nullable', 'numeric', 'min:0'],
+            'source_of_fund' => ['nullable', 'string', 'max:255'],
+            'responsible_person' => ['nullable', 'string', 'max:1000'],
+            'remarks' => ['nullable', 'string', 'max:1000'],
+        ]);
+        app(FiscalYearService::class)->assertOpen((int) $sipProject->organization_id, (int) $sipProject->school_year);
+        foreach (['financial_year1', 'financial_year2', 'financial_year3'] as $column) {
+            $data[$column] = $data[$column] ?? 0;
+        }
+
+        DB::transaction(function () use ($sipActivity, $sipProject, $data) {
+            $sipActivity->update($data);
+            $this->syncSipBudget($sipProject);
+        });
+
+        return back()->with('success', 'SIP activity updated.');
     }
 
     public function saveSipSignatories(Request $request)
@@ -237,6 +304,66 @@ class PlanningController extends Controller
         return back()->with('success', 'PPMP draft saved and linked to its AIP transaction.');
     }
 
+    /** A draft PPMP can be changed; once approved it feeds the APP and stays as approved. */
+    public function updatePpmp(Request $request, PpmpPlan $ppmpPlan, FiscalYearService $fiscalYears)
+    {
+        $this->authorizeManage($request);
+        abort_unless($this->schoolIds()->contains($ppmpPlan->school_id), 403);
+        $this->requires($ppmpPlan->status !== 'approved', 'Approved plans are locked. An approved PPMP already feeds the APP.');
+        $fiscalYears->assertOpen((int) $ppmpPlan->organization_id, (int) $ppmpPlan->fiscal_year);
+
+        $item = $ppmpPlan->items()->count() === 1 ? $ppmpPlan->items()->first() : null;
+        $data = $request->validate([
+            'project_title' => ['required', 'string', 'max:255'],
+            'procurement_mode' => ['nullable', 'string', 'max:100'],
+            'procurement_schedule' => ['nullable', 'string', 'max:255'],
+            'fund_source' => ['nullable', 'string', 'max:255'],
+            'procurement_item' => [$item ? 'required' : 'nullable', 'string', 'max:255'],
+            'specifications' => ['nullable', 'string', 'max:2000'],
+            'quantity' => [$item ? 'required' : 'nullable', 'numeric', 'gt:0'],
+            'unit' => [$item ? 'required' : 'nullable', 'string', 'max:50'],
+            'estimated_unit_cost' => [$item ? 'required' : 'nullable', 'numeric', 'min:0'],
+        ]);
+        $allowedFunds = FundSource::where('organization_id', $ppmpPlan->organization_id)->where('is_active', true)->pluck('name')
+            ->merge(collect(Aip::FUNDS)->flatten())->merge($ppmpPlan->aip?->fundOptions() ?? [])->unique();
+        $this->requires(empty($data['fund_source']) || $allowedFunds->contains($data['fund_source']), 'Choose a fund source configured for this organization.');
+
+        DB::transaction(function () use ($ppmpPlan, $item, $data) {
+            $ppmpPlan->update(collect($data)->only(['project_title', 'procurement_mode', 'procurement_schedule', 'fund_source'])->all());
+            if ($item) {
+                $item->update([
+                    'procurement_item' => $data['procurement_item'],
+                    'specifications' => $data['specifications'] ?? null,
+                    'quantity' => $data['quantity'],
+                    'unit' => $data['unit'],
+                    'estimated_unit_cost' => $data['estimated_unit_cost'],
+                    'estimated_total_cost' => round((float) $data['quantity'] * (float) $data['estimated_unit_cost'], 2),
+                ]);
+            }
+            $ppmpPlan->transaction?->recordEvent('ppmp', 'draft_edited', 'draft', 'draft', $data['project_title'], ['ppmp_plan_id' => $ppmpPlan->id]);
+        });
+
+        return back()->with('success', 'PPMP draft updated.');
+    }
+
+    public function destroyPpmp(Request $request, PpmpPlan $ppmpPlan)
+    {
+        $this->authorizeManage($request);
+        abort_unless($this->schoolIds()->contains($ppmpPlan->school_id), 403);
+        $this->requires($ppmpPlan->status !== 'approved', 'Approved plans are locked. An approved PPMP already feeds the APP.');
+        app(FiscalYearService::class)->assertOpen((int) $ppmpPlan->organization_id, (int) $ppmpPlan->fiscal_year);
+        $this->requires(! AppItem::withoutGlobalScopes()->whereIn('ppmp_item_id', $ppmpPlan->items()->pluck('id'))->exists(), 'The APP already includes items of this PPMP.');
+
+        DB::transaction(function () use ($ppmpPlan, $request) {
+            AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $ppmpPlan->school_id, 'action' => 'ppmp_deleted', 'auditable_type' => PpmpPlan::class, 'auditable_id' => $ppmpPlan->id, 'metadata' => ['project_title' => $ppmpPlan->project_title, 'items' => $ppmpPlan->items()->count()]]);
+            $ppmpPlan->transaction?->recordEvent('ppmp', 'draft_deleted', 'draft', null, $ppmpPlan->project_title, ['ppmp_plan_id' => $ppmpPlan->id]);
+            $ppmpPlan->items()->delete();
+            $ppmpPlan->delete();
+        });
+
+        return back()->with('success', 'PPMP draft deleted.');
+    }
+
     public function approvePpmp(Request $request, PpmpPlan $ppmpPlan)
     {
         $this->authorizeManage($request);
@@ -298,6 +425,46 @@ class PlanningController extends Controller
         });
 
         return redirect()->route('planning', ['school_id' => $school->id, 'year' => $data['fiscal_year']])->with('success', 'APP generated from approved PPMP items.');
+    }
+
+    public function updateAppItem(Request $request, AppItem $appItem)
+    {
+        $plan = $this->editableAppItem($request, $appItem);
+        $data = $request->validate([
+            'procurement_item' => ['required', 'string', 'max:255'],
+            'specifications' => ['nullable', 'string', 'max:2000'],
+            'quantity' => ['required', 'numeric', 'gt:0'],
+            'unit' => ['required', 'string', 'max:50'],
+            'estimated_unit_cost' => ['required', 'numeric', 'min:0'],
+            'procurement_mode' => ['nullable', 'string', 'max:100'],
+            'procurement_schedule' => ['nullable', 'string', 'max:255'],
+            'fund_source' => ['nullable', 'string', 'max:255'],
+        ]);
+        $data['estimated_total_cost'] = round((float) $data['quantity'] * (float) $data['estimated_unit_cost'], 2);
+        $appItem->update($data);
+
+        return back()->with('success', 'APP item updated for FY '.$plan->fiscal_year.'.');
+    }
+
+    public function destroyAppItem(Request $request, AppItem $appItem)
+    {
+        $plan = $this->editableAppItem($request, $appItem);
+        $appItem->delete();
+
+        return back()->with('success', 'APP item removed from FY '.$plan->fiscal_year.'. Generate the APP again to bring it back.');
+    }
+
+    /** A draft APP item that no Purchase Request draws from can be changed or removed. */
+    private function editableAppItem(Request $request, AppItem $appItem): AppPlan
+    {
+        $this->authorizeManage($request);
+        $plan = $appItem->plan()->firstOrFail();
+        abort_unless($this->schoolIds()->contains($plan->school_id), 403);
+        $this->requires($plan->status !== 'approved', 'Approved plans are locked. An approved APP is the source of Purchase Requests.');
+        app(FiscalYearService::class)->assertOpen((int) $plan->organization_id, (int) $plan->fiscal_year);
+        $this->requires($appItem->requestItems()->doesntExist(), 'A Purchase Request already draws from this item.');
+
+        return $plan;
     }
 
     public function approveApp(Request $request, AppPlan $appPlan)

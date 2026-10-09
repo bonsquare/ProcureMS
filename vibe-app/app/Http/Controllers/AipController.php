@@ -229,10 +229,7 @@ class AipController extends Controller
             $aip->delete();
 
             // The tracking record of an AIP that never went anywhere goes with it.
-            if ($transaction && ! $transaction->sipProjects()->exists() && ! $transaction->budgetAllocations()->exists() && ! $transaction->procurementRequests()->exists() && ! $transaction->liquidationReports()->exists()) {
-                $transaction->events()->delete();
-                $transaction->delete();
-            }
+            app(MasterTransactionService::class)->discardIfUnused($transaction);
         });
 
         return redirect()->to(route('planning', ['school_id' => $aip->school_id, 'year' => $aip->fiscal_year]).'#aip')->with('success', 'AIP FY '.$aip->fiscal_year.' deleted.');
