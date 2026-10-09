@@ -278,7 +278,7 @@ php -d zend_extension=opcache -d opcache.enable_cli=1 -d "upload_tmp_dir=<repo>/
 
 - Why not `php artisan serve`: it does not pass `-d` settings to the real server, so opcache and `upload_tmp_dir` would be missing. Without `upload_tmp_dir` PHP may fail every upload with "unable to create a temporary file". `vibe-app/dev-server.php` is the router; it must `return` the framework router's result or static files (css, images) are served as HTML and the pages lose their design.
 - Opcache makes pages about three times faster (about 0.9 s down to 0.03 s per page here).
-- Tests: `php artisan test` (all pass at the time of writing: 181).
+- Tests: `php artisan test` (all pass at the time of writing: 189).
 
 ## 9. Station transfer
 
@@ -355,3 +355,14 @@ php -d zend_extension=opcache -d opcache.enable_cli=1 -d "upload_tmp_dir=<repo>/
 
 - Editing uses one shared window per kind of record, filled from the row's button (`data-edit-dialog`, `data-action`, `data-payload`). Deleting always asks first (`data-confirm`) and the server refuses anything the table above locks.
 - Only people with `planning.manage` see the buttons; a locked row shows why (for example "Approved plans are locked"). Tests: `tests/Feature/PlanningEditDeleteTest.php`, `tests/Feature/AipDeleteTest.php`.
+
+#### Breaking the SIP into three AIPs
+
+- A SIP covers three years. In Planning → SIP, each plan has a **Break into AIP** block with **Year 1 · FY 2026**, **Year 2 · FY 2027** and **Year 3 · FY 2028**, each showing that year's financial target, its AIP (status and an Open / Edit link) or a **Create AIP FY …** button. Only someone who manages both planning and the budget sees the button.
+- Creating it builds a **draft** AIP for that fiscal year from that year of the SIP (`SipAipService`):
+  - each SIP program becomes a KRA block (pillar, KRA, outcome, strategy, 5-point agenda, program);
+  - each SIP activity with a target in that year becomes an AIP activity with its physical target, responsible person and remarks; activities and programs with nothing in that year are left out;
+  - the year's financial target becomes the **Q1 to Q4 amounts**. **The split is even (25% each, the leftover cent in Q4) for now; the quarterly schedule (SOB) will replace it once its template is available.** The shares live in one place, `SipAipService::QUARTER_SHARES`;
+  - the SIP's source of fund names several funds, so the AIP activity's source of fund and account code are left empty (the SIP text is kept in the activity's remarks). Choose them on the AIP page before approving; the AIP cannot be approved until then.
+- It never replaces an AIP: if the school already has an AIP for that fiscal year it asks you to delete that one first. After creation the AIP is independent of the SIP.
+- The AIP list shows where it came from ("from SIP 2026-2028 · Year 1"), stored in `aips.sip_start_year` and `aips.sip_year_no`. Tests: `tests/Feature/SipToAipTest.php`.

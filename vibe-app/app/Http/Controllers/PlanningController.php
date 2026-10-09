@@ -18,6 +18,7 @@ use App\Models\SipPlan;
 use App\Models\SipProject;
 use App\Services\FiscalYearService;
 use App\Services\MasterTransactionService;
+use App\Services\SipAipService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -118,6 +119,23 @@ class PlanningController extends Controller
         });
 
         return back()->with('success', 'SIP activity removed.');
+    }
+
+    /** Breaks one year of the SIP into the draft AIP of that fiscal year. */
+    public function generateAipFromSip(Request $request, SipAipService $service)
+    {
+        $this->authorizeManage($request);
+        abort_unless($request->user()->canManageBudget(), 403, 'Only the Budget Officer or an administrator can create the AIP.');
+        $data = $request->validate([
+            'school_id' => ['required', 'integer', Rule::in($this->schoolIds()->all())],
+            'start_year' => ['required', 'integer', 'between:2000,2100'],
+            'year_no' => ['required', 'integer', 'between:1,3'],
+        ]);
+        $school = School::whereKey($data['school_id'])->firstOrFail();
+        $aip = $service->generate($school, (int) $data['start_year'], (int) $data['year_no'], $request->user());
+
+        return redirect()->to(route('planning', ['school_id' => $school->id, 'year' => $aip->fiscal_year]).'#aip')
+            ->with('success', "AIP FY {$aip->fiscal_year} created from year {$data['year_no']} of the SIP. Choose the source of fund and the account of each activity, then approve it.");
     }
 
     public function updateSip(Request $request, SipProject $sipProject, FiscalYearService $fiscalYears)
