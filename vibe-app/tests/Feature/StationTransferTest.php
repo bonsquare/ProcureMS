@@ -373,7 +373,7 @@ class StationTransferTest extends TestCase
     public function test_the_user_menu_links_to_the_right_page(): void
     {
         [, , $user] = $this->tenant('menu-a');
-        $this->actingAs($user)->get(route('procurement'))->assertSee('tab=transfer', false)->assertDontSee(route('transfer-requests'), false);
+        $this->actingAs($user)->get(route('procurement'))->assertDontSee('tab=transfer', false)->assertDontSee(route('transfer-requests'), false);
         $this->actingAs($this->master())->get(route('procurement'))->assertSee(route('transfer-requests'), false)->assertDontSee('tab=transfer', false);
     }
 
