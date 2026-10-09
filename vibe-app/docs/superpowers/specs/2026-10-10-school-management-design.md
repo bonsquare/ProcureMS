@@ -30,17 +30,15 @@ New sidebar item **School Management** (`/school-management`), visible to the ma
 
 **List.** One row per school: name, School ID, division, its user, status (Active / Inactive / Vacant), employee count, pending transfer requests. Search by name/ID and filter by status.
 
-**School detail** (`/school-management/{school}`), three sections:
+**School detail** (`/school-management/{school}`), two cards (revised: employees are not managed here):
 
-1. **School status.** Set Active or Inactive (updates the school and its organization). Inactive: its user cannot sign in and it cannot be a transfer destination.
-2. **System user.** Shows the user. "Set inactive" asks for reason, effective date and note, sets `users.status = inactive` (so the school becomes vacant). "Reactivate" is refused when the school already has another active user.
-3. **Employees.** Each employee can be set inactive (reason, date, note → `ended_at`, `end_reason`, `end_note`) and reactivated (clears them). Inactive employees are listed in a separate "Inactive" group so they stay visible to the master.
+1. **School details.** School ID, type, region, division, district, head, contact, address, registered date, status. Set the school Active or Inactive (updates the school and its organization). Inactive: its user cannot sign in and it cannot be a transfer destination.
+2. **User details.** Username, User ID, email, mobile, position, role, last sign-in, subscription. "Set user inactive" asks for reason, effective date and note, sets `users.status = inactive` (so the school becomes vacant). "Reactivate user" is refused when the school already has another active user or is inactive.
 
 ## Data
 
-- `school_staff`: add `end_reason` (string, nullable) and `end_note` (text, nullable); `ended_at` is set to the effective date.
 - `users`: add `deactivated_at`, `deactivation_reason`, `deactivation_note` (all nullable); cleared on reactivation.
-- Every action writes an `audit_logs` row (`action`: `school_set_inactive`, `school_reactivated`, `user_set_inactive`, `user_reactivated`, `employee_set_inactive`, `employee_reactivated`) with the reason in `metadata`.
+- Every action writes an `audit_logs` row (`action`: `school_set_inactive`, `school_reactivated`, `user_set_inactive`, `user_reactivated`) with the reason in `metadata`.
 
 A `SchoolManagementService` holds the rules; the controller only validates and calls it.
 
@@ -58,7 +56,7 @@ An already signed-in user who becomes inactive, or whose school becomes inactive
 
 ## Testing
 
-Feature tests: master-only access; list filters and Vacant status; school Inactive/Active (blocks sign-in and removes it from transfer destinations); user inactive → vacant, can no longer sign in, signed out on next request, reactivation rules; employee inactive/reactivate (hidden from role lookups, shown in the Inactive group); validation (reason required, future date); audit rows; subscription and school records unchanged.
+Feature tests: master-only access; list filters and Vacant status; school Inactive/Active (blocks sign-in and removes it from transfer destinations); user inactive → vacant, can no longer sign in, signed out on next request, reactivation rules; validation (reason required, future date); audit rows; subscription and school records unchanged.
 
 ## Out of scope
 

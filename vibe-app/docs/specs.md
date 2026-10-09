@@ -238,8 +238,9 @@ php -d zend_extension=opcache -d opcache.enable_cli=1 -d "upload_tmp_dir=<repo>/
 
 ## 10. School Management (master user)
 
-- Sidebar item **School Management** (`/school-management`), master user only. Lists every school with its user, status (Active, Vacant, Inactive), employee count and pending transfers; search by name or School ID and filter by status.
-- Open a school to: set the **school** Active or Inactive (also updates its organization; an inactive school cannot sign in and cannot receive a transferred user); set its **user** inactive (reason Retired, Resigned, Transferred or Other, effective date up to today, note) which makes the school vacant, or reactivate them (refused when the school is inactive or already has another active user); set **employees** inactive or reactivate them (inactive employees leave lists and role lookups and appear under Inactive employees).
+- Sidebar item **School Management** (`/school-management`), master user only. Lists every school with its user, status (Active, Vacant, Inactive) and pending transfers; search by name or School ID and filter by status.
+- Open a school to see two cards: **School details** (School ID, type, region, division, district, head, contact, address, registered date) and **User details** (username, User ID, email, mobile, position, role, last sign-in, subscription). Employees are not shown here; they stay in School Settings.
+- Actions: set the **school** Active or Inactive (also updates its organization; an inactive school cannot sign in and cannot receive a transferred user); set its **user** inactive (reason Retired, Resigned, Transferred or Other, effective date up to today, note) which makes the school vacant, or reactivate them (refused when the school is inactive or already has another active user).
 - Nothing is ever deleted. Subscriptions and all school records are untouched. Every action writes an audit log row with the reason.
 - A signed-in user who becomes inactive, or whose school becomes inactive, is signed out on the next request (`EnsureAccountActive`).
 - Code: `SchoolManagementService`, `SchoolManagementController`, tests in `tests/Feature/SchoolManagementTest.php`. Design and plan: `docs/superpowers/specs/2026-10-10-school-management-design.md`, `docs/superpowers/plans/2026-10-10-school-management.md`.

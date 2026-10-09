@@ -143,6 +143,4 @@ Route::middleware('auth')->group(function () {
     Route::post('/school-management/{school}/status', [SchoolManagementController::class, 'status'])->name('school-management.status')->whereNumber('school');
     Route::post('/school-management/users/{user}/deactivate', [SchoolManagementController::class, 'deactivateUser'])->name('school-management.users.deactivate');
     Route::post('/school-management/users/{user}/reactivate', [SchoolManagementController::class, 'reactivateUser'])->name('school-management.users.reactivate');
-    Route::post('/school-management/employees/{employee}/deactivate', [SchoolManagementController::class, 'deactivateEmployee'])->name('school-management.employees.deactivate')->whereNumber('employee');
-    Route::post('/school-management/employees/{employee}/reactivate', [SchoolManagementController::class, 'reactivateEmployee'])->name('school-management.employees.reactivate')->whereNumber('employee');
 });

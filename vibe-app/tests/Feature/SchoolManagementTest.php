@@ -190,26 +190,16 @@ class SchoolManagementTest extends TestCase
         $this->assertSame('active', $master->fresh()->status ?: 'active');
     }
 
-    public function test_employees_can_be_set_inactive_and_reactivated(): void
+    public function test_the_detail_page_shows_school_and_user_details_but_no_employees(): void
     {
-        [$organization, $school] = $this->tenant('staff');
-        $master = $this->master();
-        $keeper = SchoolStaff::create(['organization_id' => $organization->id, 'school_id' => $school->id, 'name' => 'Kept Person', 'bac_role' => 'BAC Member']);
-        $leaver = SchoolStaff::create(['organization_id' => $organization->id, 'school_id' => $school->id, 'name' => 'Leaving Person', 'bac_role' => 'BAC Chairperson']);
+        [$organization, $school, $user] = $this->tenant('detail');
+        $school->update(['division' => 'Detail Division', 'district' => 'District Nine', 'address' => '1 Main Street']);
+        SchoolStaff::create(['organization_id' => $organization->id, 'school_id' => $school->id, 'name' => 'Hidden Employee']);
 
-        $this->actingAs($master)->post(route('school-management.employees.deactivate', $leaver->id), $this->deactivation(['reason' => 'Transferred']))->assertRedirect();
-
-        $leaver = SchoolStaff::withoutGlobalScopes()->find($leaver->id);
-        $this->assertNotNull($leaver->ended_at);
-        $this->assertSame('Transferred', $leaver->end_reason);
-        $this->assertSame(['Kept Person'], SchoolStaff::pluck('name')->all());
-        $this->assertDatabaseHas('audit_logs', ['school_id' => $school->id, 'action' => 'employee_set_inactive', 'auditable_id' => $leaver->id]);
-        $this->get(route('school-management.show', $school))->assertSee('Inactive employees')->assertSee('Leaving Person')->assertSee('Transferred');
-
-        $this->post(route('school-management.employees.reactivate', $leaver->id))->assertRedirect();
-        $this->assertNull(SchoolStaff::withoutGlobalScopes()->find($leaver->id)->ended_at);
-        $this->assertEqualsCanonicalizing(['Kept Person', 'Leaving Person'], SchoolStaff::pluck('name')->all());
-        $this->assertDatabaseHas('audit_logs', ['action' => 'employee_reactivated', 'auditable_id' => $leaver->id]);
-        $this->assertNotNull($keeper->fresh());
+        $this->actingAs($this->master())->get(route('school-management.show', $school))->assertOk()
+            ->assertSee('School details')->assertSee('Detail Division')->assertSee('District Nine')->assertSee('1 Main Street')
+            ->assertSee('User details')->assertSee($user->name)->assertSee($user->email)->assertSee('Professional')
+            ->assertDontSee('Hidden Employee')->assertDontSee('Employees');
+        $this->get(route('school-management'))->assertDontSee('Employees');
     }
 }

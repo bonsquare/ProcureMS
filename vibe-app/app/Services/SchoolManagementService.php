@@ -4,12 +4,11 @@ namespace App\Services;
 
 use App\Models\AuditLog;
 use App\Models\School;
-use App\Models\SchoolStaff;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-/** Takes schools, their user and their employees out of service (and back). Nothing is ever deleted. */
+/** Takes schools and their user out of service (and back). Nothing is ever deleted. */
 class SchoolManagementService
 {
     public const REASONS = ['Retired', 'Resigned', 'Transferred', 'Other'];
@@ -65,33 +64,6 @@ class SchoolManagementService
         DB::transaction(function () use ($user, $master, $school) {
             $user->update(['status' => 'active', 'deactivated_at' => null, 'deactivation_reason' => null, 'deactivation_note' => null]);
             $this->audit($master, $school->id, 'user_reactivated', User::class, $user->id);
-        });
-    }
-
-    public function deactivateEmployee(SchoolStaff $employee, User $master, string $reason, string $effectiveDate, ?string $note): void
-    {
-        $this->assertMaster($master);
-        $this->assertReason($reason);
-        if ($employee->ended_at) {
-            $this->fail('employee', 'This employee is already inactive.');
-        }
-
-        DB::transaction(function () use ($employee, $master, $reason, $effectiveDate, $note) {
-            $employee->update(['ended_at' => $effectiveDate, 'end_reason' => $reason, 'end_note' => $note]);
-            $this->audit($master, $employee->school_id, 'employee_set_inactive', SchoolStaff::class, $employee->id, ['reason' => $reason, 'effective_date' => $effectiveDate, 'note' => $note]);
-        });
-    }
-
-    public function reactivateEmployee(SchoolStaff $employee, User $master): void
-    {
-        $this->assertMaster($master);
-        if (! $employee->ended_at) {
-            $this->fail('employee', 'This employee is already active.');
-        }
-
-        DB::transaction(function () use ($employee, $master) {
-            $employee->update(['ended_at' => null, 'end_reason' => null, 'end_note' => null]);
-            $this->audit($master, $employee->school_id, 'employee_reactivated', SchoolStaff::class, $employee->id);
         });
     }
 

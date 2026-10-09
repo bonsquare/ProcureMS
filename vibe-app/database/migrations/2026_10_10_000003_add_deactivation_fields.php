@@ -8,11 +8,6 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('school_staff', function (Blueprint $table) {
-            $table->string('end_reason', 40)->nullable();
-            $table->text('end_note')->nullable();
-        });
-
         Schema::table('users', function (Blueprint $table) {
             $table->timestamp('deactivated_at')->nullable();
             $table->string('deactivation_reason', 40)->nullable();
@@ -24,10 +19,6 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->dropColumn(['deactivated_at', 'deactivation_reason', 'deactivation_note']);
-        });
-
-        Schema::table('school_staff', function (Blueprint $table) {
-            $table->dropColumn(['end_reason', 'end_note']);
         });
     }
 };

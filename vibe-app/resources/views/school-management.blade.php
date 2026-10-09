@@ -9,7 +9,7 @@
 <header class="mb-5">
     <p class="text-[11px] font-bold uppercase tracking-[.14em] text-action">Master account</p>
     <h1 class="mt-2 text-3xl font-bold">School Management</h1>
-    <p class="mt-2 text-sm text-on-surface-variant">Every school, its user and its employees. When someone retires, resigns or transfers, set them inactive. Nothing is deleted, and everything can be reactivated.</p>
+    <p class="mt-2 text-sm text-on-surface-variant">Every school and its user. When someone retires, resigns or transfers, set them inactive. Nothing is deleted, and everything can be reactivated.</p>
 </header>
 
 <section class="overflow-hidden rounded-xl border border-outline-variant/60 bg-white">
@@ -26,9 +26,9 @@
         </form>
     </div>
     <div class="overflow-x-auto">
-        <table class="w-full min-w-[820px] text-left text-sm">
+        <table class="w-full min-w-[760px] text-left text-sm">
             <thead class="bg-surface-low text-[11px] uppercase tracking-wide text-on-surface-variant">
-                <tr><th class="px-5 py-2.5">School</th><th class="px-3 py-2.5">User</th><th class="px-3 py-2.5">Division</th><th class="px-3 py-2.5 text-center">Employees</th><th class="px-3 py-2.5 text-center">Transfers</th><th class="px-3 py-2.5">Status</th><th class="px-5 py-2.5"></th></tr>
+                <tr><th class="px-5 py-2.5">School</th><th class="px-3 py-2.5">User</th><th class="px-3 py-2.5">Division</th><th class="px-3 py-2.5 text-center">Transfers</th><th class="px-3 py-2.5">Status</th><th class="px-5 py-2.5"></th></tr>
             </thead>
             <tbody class="divide-y divide-outline-variant/30">
                 @forelse($schools as $school)
@@ -37,13 +37,12 @@
                         <td class="px-5 py-3"><p class="font-semibold">{{ $school->name }}</p><p class="text-xs text-on-surface-variant">{{ $school->code }}</p></td>
                         <td class="px-3 py-3">@if($school->manager)<p>{{ $school->manager->name }}</p><p class="text-xs text-on-surface-variant">{{ $school->manager->position ?: str($school->manager->role)->replace('_', ' ')->title() }}</p>@else<span class="text-xs text-on-surface-variant">No active user</span>@endif</td>
                         <td class="px-3 py-3 text-xs text-on-surface-variant">{{ $school->division ?: '—' }}</td>
-                        <td class="px-3 py-3 text-center tabular-nums">{{ $school->staff_count }}</td>
                         <td class="px-3 py-3 text-center">@if($school->pending_transfers)<span class="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-800">{{ $school->pending_transfers }} pending</span>@else<span class="text-xs text-on-surface-variant">—</span>@endif</td>
                         <td class="px-3 py-3"><span class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold {{ $tone }}"><span class="material-symbols-outlined text-[13px]" aria-hidden="true">{{ $icon }}</span>{{ $label }}</span></td>
                         <td class="px-5 py-3 text-right"><a href="{{ route('school-management.show', $school) }}" class="inline-flex items-center gap-1 rounded-lg border border-outline-variant px-3 py-1.5 text-xs font-bold text-primary hover:bg-surface-low">Manage<span class="material-symbols-outlined text-[15px]" aria-hidden="true">chevron_right</span></a></td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" class="px-5 py-10 text-center text-sm text-on-surface-variant">No schools match.</td></tr>
+                    <tr><td colspan="6" class="px-5 py-10 text-center text-sm text-on-surface-variant">No schools match.</td></tr>
                 @endforelse
             </tbody>
         </table>
