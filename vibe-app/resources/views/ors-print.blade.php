@@ -43,7 +43,7 @@
     $certifierName = strtoupper((string) ($budgetOfficer?->name ?? ''));
     $certifierRole = $budgetOfficer?->position ?: 'Disbursing Officer';
 @endphp
-@include('partials.official-toolbar', ['closeUrl' => route('budget')])
+@include('partials.official-toolbar', ['closeUrl' => route('budget'), 'context' => 'Obligation Request · '.$report->ors_number])
 <div class="sheet" data-official-page data-single-page data-doc="ors" data-paper="longbond"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 612 936" preserveAspectRatio="xMidYMid meet" stroke="#000" fill="none">
 <g fill="none">
 <line x1="17.39" y1="44.92" x2="17.39" y2="883.92" stroke-width="1.45"/>

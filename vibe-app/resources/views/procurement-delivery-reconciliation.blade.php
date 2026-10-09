@@ -12,7 +12,7 @@
 @include('partials.procurement-emphasis')
 </head>
 <body>
-@include('partials.official-toolbar', ['closeUrl' => route('procurement.documents', $procurementRequest)])
+@include('partials.official-toolbar', ['closeUrl' => route('procurement.documents', $procurementRequest), 'context' => 'Delivery reconciliation'])
 <main class="page" data-official-page data-doc="reconciliation" data-paper="letter">
     @php
         [$leftLogo, $rightLogo] = \App\Support\OfficialDocument::logos($procurementRequest->school, $agency);

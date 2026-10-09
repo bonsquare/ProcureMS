@@ -66,7 +66,7 @@
     $division = $school?->division ?: ($agency?->division_name ?: $agency?->division_office);
 @endphp
 
-@include('partials.official-toolbar', ['closeUrl' => route('aip.show', $aip)])
+@include('partials.official-toolbar', ['closeUrl' => route('aip.show', $aip), 'context' => 'Annual Investment Plan · FY '.$aip->fiscal_year])
 
 <main class="paper" data-official-page data-doc="aip" data-paper="longbond" data-orientation="landscape" data-margin="10">
     <header class="masthead">

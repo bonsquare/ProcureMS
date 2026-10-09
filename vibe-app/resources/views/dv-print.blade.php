@@ -39,7 +39,7 @@
     $accountantName = strtoupper((string) ($accountant?->name ?? ''));
     $accountantRole = $accountant?->position ?: '';
 @endphp
-@include('partials.official-toolbar', ['closeUrl' => route('accounting', ['tab' => 'with_dv'])])
+@include('partials.official-toolbar', ['closeUrl' => route('accounting', ['tab' => 'with_dv']), 'context' => 'Disbursement Voucher · '.$report->dv_number])
 <div class="sheet" data-official-page data-single-page data-doc="dv" data-paper="longbond"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 612 936" preserveAspectRatio="xMidYMid meet" stroke="#000" fill="none">
 <g fill="none">
 <line x1="17.33" y1="40.20" x2="17.33" y2="782.56" stroke-width="1.39"/>

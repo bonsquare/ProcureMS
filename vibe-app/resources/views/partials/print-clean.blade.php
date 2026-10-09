@@ -20,21 +20,48 @@
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; }
-    body { background: #e5e7eb; }
+    body { background: radial-gradient(1100px 360px at 50% -80px, #d3e2f2 0%, rgba(211, 226, 242, 0) 72%), #e6ebf1; }
 
     /* ---- screen toolbar: UI only, never printed ---- */
-    .official-toolbar { position: sticky; top: 0; z-index: 1000; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 8px 16px; background: #fff; border-bottom: 1px solid #c8ccd4; font: 12px Arial, Helvetica, sans-serif; color: #111; }
-    .official-toolbar label { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
-    .official-toolbar select, .official-toolbar input[type="number"] { height: 28px; padding: 0 6px; border: 1px solid #9aa0ab; border-radius: 2px; background: #fff; font: 12px Arial, Helvetica, sans-serif; color: #111; }
-    .official-toolbar input[type="number"] { width: 70px; }
-    .official-toolbar button, .official-toolbar a.btn { height: 30px; padding: 0 14px; border: 1px solid #111; border-radius: 2px; background: #fff; color: #111; font: 600 12px Arial, Helvetica, sans-serif; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
-    .official-toolbar button.primary { background: #111; color: #fff; }
-    .official-toolbar .spacer { flex: 1 1 auto; }
-    .official-toolbar .hint { color: #4b5160; font-size: 11px; }
+    .official-toolbar { position: sticky; top: 0; z-index: 1000; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding: 10px 20px; color: #fff;
+        background: linear-gradient(135deg, #0b2a66 0%, #103967 55%, #1b5088 100%); border-bottom: 3px solid #369878; box-shadow: 0 6px 20px rgba(11, 42, 102, .28);
+        font: 13px/1.3 Inter, "Segoe UI", system-ui, -apple-system, Arial, sans-serif; }
+    .official-toolbar * { box-sizing: border-box; }
+    .ot-left, .ot-controls, .ot-right { display: flex; align-items: center; gap: 12px; }
+    .ot-controls { flex: 1 1 auto; flex-wrap: wrap; justify-content: center; }
+    .ot-right { gap: 14px; margin-left: auto; }
+    .ot-divider { width: 1px; height: 30px; background: rgba(255, 255, 255, .22); }
+    .ot-title { display: flex; flex-direction: column; min-width: 0; }
+    .ot-title strong { font-size: 14px; font-weight: 700; letter-spacing: .01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+    .ot-eyebrow { font-size: 9.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #8fd5bb; }
+    .ot-custom { display: inline-flex; gap: 10px; }
+    .ot-field { display: flex; flex-direction: column; gap: 3px; margin: 0; }
+    .ot-field > span { font-size: 9.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: rgba(255, 255, 255, .65); padding-left: 2px; }
+    .official-toolbar select, .official-toolbar input[type="number"] { height: 34px; min-width: 120px; padding: 0 32px 0 12px; border: 1px solid rgba(255, 255, 255, .22); border-radius: 9px;
+        background: rgba(255, 255, 255, .1); color: #fff; font: 600 12.5px Inter, "Segoe UI", system-ui, Arial, sans-serif; outline: none; transition: background .15s, border-color .15s, box-shadow .15s; }
+    .official-toolbar select { appearance: none; -webkit-appearance: none; cursor: pointer;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat; background-position: right 11px center; }
+    .official-toolbar select option { color: #0f172a; background: #fff; }
+    .official-toolbar input[type="number"] { width: 96px; min-width: 0; padding-right: 10px; }
+    .official-toolbar select:hover, .official-toolbar input[type="number"]:hover { background-color: rgba(255, 255, 255, .17); border-color: rgba(255, 255, 255, .4); }
+    .official-toolbar select:focus-visible, .official-toolbar input[type="number"]:focus-visible { border-color: #8fd5bb; box-shadow: 0 0 0 3px rgba(143, 213, 187, .35); }
+    .ot-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 38px; padding: 0 16px; border-radius: 10px; border: 1px solid transparent;
+        font: 700 13px Inter, "Segoe UI", system-ui, Arial, sans-serif; cursor: pointer; text-decoration: none; transition: transform .12s, box-shadow .15s, background .15s; }
+    .ot-btn--ghost { color: #fff; background: rgba(255, 255, 255, .1); border-color: rgba(255, 255, 255, .25); }
+    .ot-btn--ghost:hover { background: rgba(255, 255, 255, .2); }
+    .ot-btn--primary { color: #fff; background: linear-gradient(180deg, #3fae8a, #2a7f64); box-shadow: 0 4px 14px rgba(42, 127, 100, .45), inset 0 1px 0 rgba(255, 255, 255, .25); padding: 0 20px; }
+    .ot-btn--primary:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(42, 127, 100, .55), inset 0 1px 0 rgba(255, 255, 255, .3); }
+    .ot-btn--primary:active { transform: translateY(0); }
+    .ot-btn:focus-visible { outline: 3px solid #8fd5bb; outline-offset: 2px; }
+    .ot-hint { display: inline-flex; align-items: center; gap: 7px; max-width: 250px; padding: 6px 10px; border-radius: 9px; background: rgba(255, 255, 255, .08); color: rgba(255, 255, 255, .78); font-size: 11px; line-height: 1.3; }
+    .ot-hint svg { flex: none; color: #8fd5bb; }
     .official-toolbar [hidden] { display: none !important; }
+    @media (max-width: 1180px) { .ot-hint { display: none; } }
+    @media (max-width: 820px) { .official-toolbar { padding: 10px 12px; } .ot-left, .ot-controls, .ot-right { width: 100%; } .ot-right { margin-left: 0; } .ot-btn--primary { flex: 1; } .ot-title strong { max-width: 190px; } .ot-controls { justify-content: flex-start; } }
 
     /* ---- screen preview of the sheet ---- */
-    .official-sheet { position: relative; margin: 18px auto; background: #fff; box-shadow: 0 1px 6px rgba(0, 0, 0, .28); zoom: var(--preview-zoom, 1);
+    .official-sheet { position: relative; margin: 24px auto; background: #fff; border-radius: 2px; box-shadow: 0 1px 2px rgba(15, 23, 42, .14), 0 10px 32px rgba(15, 23, 42, .2); zoom: var(--preview-zoom, 1);
         background-image: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0, rgba(0,0,0,0) calc(var(--sheet-h) - 1px), #b8bcc6 calc(var(--sheet-h) - 1px), #b8bcc6 var(--sheet-h)); }
     .official-sheet > [data-official-page] { margin-left: auto !important; margin-right: auto !important; }
     img.official-logo { object-fit: contain; }

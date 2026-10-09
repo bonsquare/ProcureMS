@@ -89,7 +89,7 @@
     ];
 @endphp
 
-@include('partials.official-toolbar', ['closeUrl' => route('planning').'#sip'])
+@include('partials.official-toolbar', ['closeUrl' => route('planning').'#sip', 'context' => 'School Improvement Plan'])
 
 <main class="paper" data-official-page data-doc="sip" data-paper="longbond" data-orientation="landscape" data-margin="10">
     <header class="masthead">
