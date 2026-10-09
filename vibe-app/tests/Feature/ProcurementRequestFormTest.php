@@ -17,6 +17,6 @@ class ProcurementRequestFormTest extends TestCase
         $o = Organization::create(['name' => 'Form Org', 'slug' => 'form-org', 'status' => 'active']);
         $s = School::create(['organization_id' => $o->id, 'code' => 'FORM', 'name' => 'Form School', 'status' => 'active']);
         $u = User::factory()->create(['organization_id' => $o->id, 'school_id' => $s->id, 'role' => 'school_admin']);
-        $this->actingAs($u)->get(route('procurement.create'))->assertOk()->assertSee('aria-label="Procurement areas"', false)->assertSee('Request details')->assertSee('Funding and linkage')->assertSee('Items')->assertSee('aria-live="polite"', false)->assertSee('Save request');
+        $this->actingAs($u)->get(route('procurement.create'))->assertOk()->assertSee('aria-label="Main navigation"', false)->assertSee('aria-label="Procurement areas"', false)->assertSee('aria-current="page"', false)->assertSee('Request details')->assertSee('Funding and linkage')->assertSee('Items')->assertSee('aria-live="polite"', false)->assertSee('Save request');
     }
 }

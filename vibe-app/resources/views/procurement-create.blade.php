@@ -1,17 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    @php $editingRequest = $editingRequest ?? null; @endphp
-    <title>{{ $editingRequest ? 'Edit Procurement Request' : 'New Procurement Request' }} · ProcureMS</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config={theme:{extend:{colors:{surface:'#faf8ff','surface-low':'#f4f3fa','primary:'#00236f','primary-container':'#1e3a8a','on-surface':'#1a1b21','on-surface-variant':'#444651','outline-variant':'#c5c5d3','error':'#ba1a1a'},fontFamily:{inter:['Inter','sans-serif']}}}};</script>
-    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet"><link rel="stylesheet" href="{{ asset('css/app.css') }}"><style>.procurement-page{max-width:1120px!important}.procurement-card{border-radius:14px!important;box-shadow:0 10px 28px rgba(20,31,56,.07)}.workflow-card{border-radius:10px!important;background:linear-gradient(135deg,#f5f8ff,#fff)!important}.workflow-card span.rounded{border-color:#c5d5f6!important;background:#fff!important}.procurement-form-card label{letter-spacing:.01em}.procurement-form-card input,.procurement-form-card select{background:#fff!important;box-shadow:0 1px 1px rgba(0,0,0,.02)}.items-card{border-radius:12px!important;background:#f8f9fc!important}.items-card>.mb-4{border-bottom:1px solid #dde3ef;padding-bottom:14px}.item-row{border-radius:10px!important;background:#fff!important;box-shadow:0 2px 7px rgba(25,39,68,.04)}.procurement-add-good{box-shadow:0 2px 5px rgba(0,35,111,.12)}@media (min-width:640px){.procurement-form-card{display:grid;grid-template-columns:1fr 1fr;gap:24px}.procurement-form-card>.rounded,.procurement-form-card>.flex{grid-column:1/-1}.procurement-form-card>div:has(#school_id),.procurement-form-card>div:has(#purpose){margin:0!important}}</style>
+@extends('layouts.procurement')
+@php $editingRequest = $editingRequest ?? null; @endphp
+@section('title', $editingRequest ? 'Edit Procurement Request' : 'New Procurement Request')
+@section('page-title', $editingRequest ? 'Edit Purchase Request' : 'New Purchase Request')
+@push('head')
+<style>.procurement-page{max-width:1120px!important}.procurement-card{border-radius:14px!important;box-shadow:0 10px 28px rgba(20,31,56,.07)}.workflow-card{border-radius:10px!important;background:linear-gradient(135deg,#f5f8ff,#fff)!important}.workflow-card span.rounded{border-color:#c5d5f6!important;background:#fff!important}.procurement-form-card label{letter-spacing:.01em}.procurement-form-card input,.procurement-form-card select{background:#fff!important;box-shadow:0 1px 1px rgba(0,0,0,.02)}.items-card{border-radius:12px!important;background:#f8f9fc!important}.items-card>.mb-4{border-bottom:1px solid #dde3ef;padding-bottom:14px}.item-row{border-radius:10px!important;background:#fff!important;box-shadow:0 2px 7px rgba(25,39,68,.04)}.procurement-add-good{box-shadow:0 2px 5px rgba(0,35,111,.12)}@media (min-width:640px){.procurement-form-card{display:grid;grid-template-columns:1fr 1fr;gap:24px}.procurement-form-card>.rounded,.procurement-form-card>.flex{grid-column:1/-1}.procurement-form-card>div:has(#school_id),.procurement-form-card>div:has(#purpose){margin:0!important}}</style>
 <style>#procurement-form label{letter-spacing:.01em}#procurement-form input,#procurement-form select{background:#fff!important;box-shadow:0 1px 1px rgba(0,0,0,.02)}#procurement-form>.rounded{border-radius:12px!important;background:#f8f9fc!important;padding:20px!important}#procurement-form>.rounded>.mb-4{border-bottom:1px solid #dde3ef;padding-bottom:14px}.item-row{border-radius:10px!important;background:#fff!important;box-shadow:0 2px 7px rgba(25,39,68,.04)}@media (min-width:640px){#procurement-form{display:grid;grid-template-columns:1fr 1fr;gap:24px}#procurement-form>.rounded,#procurement-form>.flex{grid-column:1/-1}#procurement-form>div:has(#school_id),#procurement-form>div:has(#purpose){margin:0!important}}</style>
-<link rel="stylesheet" href="{{ asset('css/procurement.css') }}">
-@include('partials.input-fixes')
-</head>
-<body class="bg-surface font-inter text-on-surface antialiased"><main class="procurement-page mx-auto min-h-screen max-w-3xl px-4 py-8 sm:px-6">@php $activeProcurementArea='requests'; @endphp @include('partials.procurement.module-tabs')<div class="mb-8 flex items-center justify-between"><div class="flex items-center gap-3"><div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-white shadow-sm"><span class="material-symbols-outlined text-[20px]">school</span></div><div><p class="font-semibold">ProcureMS</p><p class="text-xs text-on-surface-variant">Purchase request workspace</p></div></div><a href="{{ route('procurement') }}" class="flex items-center gap-1 rounded px-2 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5"><span class="material-symbols-outlined text-[17px]">arrow_back</span>Back to requests</a></div>
+@endpush
+@section('content')
+<div class="procurement-page mx-auto max-w-3xl"><a href="{{ route('procurement.requests') }}" class="mb-4 inline-flex min-h-11 items-center gap-1 text-xs font-bold text-action"><span class="material-symbols-outlined text-[17px]">arrow_back</span>Back to requests</a>
     <section class="procurement-card rounded border border-outline-variant/30 bg-white p-6 sm:p-8"><div class="mb-7"><p class="text-xs font-semibold uppercase tracking-wider text-primary">Procurement Management</p><h1 class="mt-2 text-3xl font-semibold tracking-tight">{{ $editingRequest ? 'Edit Purchase Request' : 'New Purchase Request' }}</h1><p class="mt-2 text-sm text-on-surface-variant">{{ $editingRequest ? 'Update the request information, items, and printed form spacing.' : 'Create an itemized purchase request for review and approval.' }}</p></div>
         <div class="mb-8 rounded border border-primary/20 bg-primary/5 p-4"><div class="flex items-start gap-3"><span class="material-symbols-outlined text-primary">account_tree</span><div><h2 class="text-sm font-semibold">Complete Procurement Document Workflow</h2><p class="mt-1 text-xs leading-5 text-on-surface-variant">After saving the Purchase Request, open Procurement Documents to prepare RFQ, Notice to Award, Purchase Order, Notice to Proceed, IAR, RIS, IARS, ICS, and PAR.</p><div class="mt-3 flex flex-wrap gap-1.5">@foreach(['PR','RFQ','NOA','PO','NTP','IAR','RIS','IARS','ICS','PAR'] as $step)<span class="rounded bg-white px-2 py-1 text-[10px] font-semibold text-primary ring-1 ring-primary/20">{{ $step }}</span>@endforeach</div></div></div></div>
         <form id="procurement-form" method="POST" action="{{ $editingRequest ? route('procurement.update', $editingRequest) : route('procurement.store') }}" class="space-y-6 pb-24">@csrf <div class="rounded-lg border border-outline-variant/50 bg-white p-4"><h2 class="text-sm font-bold">Request details</h2><p class="mt-1 text-xs text-on-surface-variant">Funding and linkage information, items, and official request details.</p></div> @if($editingRequest) @method('PUT') @endif
@@ -44,8 +40,7 @@
             <label class="block text-xs font-semibold text-on-surface-variant">Extra blank print rows<input name="extra_blank_rows" type="number" min="0" max="20" value="{{ old('extra_blank_rows', $editingRequest?->extra_blank_rows ?? 0) }}" class="mt-2 w-32 rounded border border-outline-variant/50 bg-surface-low px-3 py-2 text-sm font-normal outline-none focus:border-primary"><span class="mt-1 block font-normal text-on-surface-variant">Adds empty rows after “**** NOTHING FOLLOWS ****” on the printed Purchase Request.</span></label>
             <div class="flex justify-end gap-2 border-t border-outline-variant/20 pt-6"><a href="{{ route('procurement') }}" class="rounded border border-outline-variant/50 px-4 py-2.5 text-xs font-semibold hover:border-primary hover:text-primary">Cancel</a><button type="submit" class="min-h-11 rounded-lg bg-primary px-5 text-xs font-bold text-white">Save request</button></div>
         </form>
-    </section></main>
-</body>
+    </section></div>
 @php
     $initialItems = old('items');
     if ($initialItems === null && $editingRequest) {
@@ -140,4 +135,4 @@
     toggleManualNumber();
     (existingItems.length ? existingItems : [{}]).forEach(addItem);
 </script>
-</html>
+@endsection

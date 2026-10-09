@@ -502,6 +502,7 @@ class HomeController extends Controller
             'budgetItems' => $this->openBudgetItems(),
             'agency' => AgencySetting::first(),
             'nextPrNumber' => $this->nextPurchaseRequestNumber(false),
+            'activeProcurementArea' => 'requests',
         ]);
     }
 
@@ -518,6 +519,7 @@ class HomeController extends Controller
             'budgetItems' => $this->openBudgetItems(),
             'agency' => AgencySetting::first(),
             'nextPrNumber' => $this->nextPurchaseRequestNumber(false),
+            'activeProcurementArea' => 'requests',
         ]);
     }
 
