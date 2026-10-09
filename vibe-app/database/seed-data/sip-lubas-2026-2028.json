@@ -1,0 +1,2123 @@
+{
+  "school": {
+    "code": "SCH-8922",
+    "name": "Lubas Elementary School"
+  },
+  "plan": {
+    "start_year": 2026,
+    "planning_period": "2026-2028"
+  },
+  "signatories": {
+    "prepared_by_name": "Chiqueto E. Domingo",
+    "prepared_by_position": "School Head/Team Leader",
+    "recommended_by_name": "Julie B. Lumogdang, EdD",
+    "recommended_by_position": "Chief, School Governance Operation Division",
+    "approved_by_name": "Romelito G. Flores, CESO V",
+    "approved_by_position": "Schools Division Superintendent"
+  },
+  "projects": [
+    {
+      "pillar": "Access",
+      "kra": "KRA 3: Learner Formation and Development",
+      "organizational_outcome": "Percentage of School-age Children in School - Net Enrollment Rate (NER) in Elementary and 6-Year Target",
+      "strategy": "Learner Support Management",
+      "five_point_agenda": "Enhanced Governance structure to ensure efficient and supportive Education System",
+      "project": "Papel mo Kinabukasan Ko!",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Listing of pupils who are transferred to neighboring schools",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "Class Advisers, School Head, Purok Leaders, Parent Leader, Project Team",
+          "remarks": null
+        },
+        {
+          "activity": "Coordinate with the barangay Council",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "School Head, Project Team",
+          "remarks": null
+        },
+        {
+          "activity": "Crafting of Barangay Resolution",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "Chairman of Committee on Education, School Head, Project Team",
+          "remarks": null
+        },
+        {
+          "activity": "Conduct Barangay Assemblies",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "Barangay Officials, School Head, Teachers",
+          "remarks": null
+        },
+        {
+          "activity": "Signing of MOA among neighboring Barangays",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "Barangay Officials, Teachers, School Head, Project Team, Projects Monitors",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Access",
+      "kra": "KRA 3: Learner Formation and Development",
+      "organizational_outcome": "Percentage of Elementary Enrollees in a Given School Year Continue to be in School the following School Year - Retention Rate (RR)",
+      "strategy": "Learner Support Management",
+      "five_point_agenda": "Improved Learning Environment that Safeguards Students' Physical and Mental Well- Being",
+      "project": "AGAHAN MO! SAGOT KO!",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Class advisers will identify PARDOS",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "Class advisers, School Head, Project Team",
+          "remarks": null
+        },
+        {
+          "activity": "Holding a background investigation",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "Class Advisers, School Head, Project Team, DORP Coordinator",
+          "remarks": null
+        },
+        {
+          "activity": "Conduct conference with parents",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "Class Advisers, School Head, Project Team, DORP Coordinator",
+          "remarks": null
+        },
+        {
+          "activity": "Conduct home visit",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "Class Advisers, School Head, Project Team, DORP Coordinator",
+          "remarks": null
+        },
+        {
+          "activity": "Monitor the progress and achievement of the ADM pupils",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "Class Advisers, School Head, Project Team, DORP Coordinator",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Access",
+      "kra": "KRA 3: Learner Formation and Development",
+      "organizational_outcome": "Percentage of Elementary Enrollees in a Given School Year Continue to be in School the following School Year - Retention Rate (RR)",
+      "strategy": "Learner Support Management",
+      "five_point_agenda": "Improved Learning Environment that Safeguards Students' Physical and Mental Well- Being",
+      "project": "BATANG PROTEKTADO SA PAG-AARAL SIGURADO",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Preparation of specific school area suitable for covered pathway",
+          "physical": [
+            null,
+            null,
+            1.0
+          ],
+          "financial": [
+            0.0,
+            0.0,
+            500.0
+          ],
+          "responsible_person": "School Head, Teachers, PTA Officials",
+          "remarks": null
+        },
+        {
+          "activity": "Purchasing of needed materials for covered pathways",
+          "physical": [
+            null,
+            null,
+            1.0
+          ],
+          "financial": [
+            0.0,
+            0.0,
+            41000.0
+          ],
+          "responsible_person": "School Head, Teachers, PTA Officials",
+          "remarks": null
+        },
+        {
+          "activity": "Installing of 40 meters covered pathway",
+          "physical": [
+            null,
+            null,
+            1.0
+          ],
+          "financial": [
+            0.0,
+            0.0,
+            9000.0
+          ],
+          "responsible_person": "School Head, Teachers, PTA Officials",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Access",
+      "kra": "KRA 2: Teaching and Learning Delivery",
+      "organizational_outcome": "Percentage of School-age Children in School - Net Enrollment Rate (NER) in Elementary and 6-Year Target",
+      "strategy": "Instructional Support Facilities Management",
+      "five_point_agenda": "Enhanced Governance structure to ensure efficient and supportive Education System",
+      "project": "LINGKURI KO BI!",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Supplier Research",
+          "physical": [
+            null,
+            null,
+            1.0
+          ],
+          "financial": [
+            0.0,
+            0.0,
+            500.0
+          ],
+          "responsible_person": "Administrative Officer",
+          "remarks": null
+        },
+        {
+          "activity": "Purchase of Chairs",
+          "physical": [
+            null,
+            null,
+            1.0
+          ],
+          "financial": [
+            0.0,
+            0.0,
+            20000.0
+          ],
+          "responsible_person": "Administrative Officer",
+          "remarks": null
+        },
+        {
+          "activity": "Delivery and Inspection",
+          "physical": [
+            null,
+            null,
+            1.0
+          ],
+          "financial": [
+            0.0,
+            0.0,
+            500.0
+          ],
+          "responsible_person": "Administrative Officer, School Head, Procurement Officer",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Equity",
+      "kra": "KRA 2: Teaching and Learning Delivery",
+      "organizational_outcome": "Percentage of Elementary Learners in Situation of Disadvantage Continue to Participate in Basic Education and 6-Year Target",
+      "strategy": "Instructional Support Facilities Management",
+      "five_point_agenda": "Enhanced Governance structure to ensure efficient and supportive Education System",
+      "project": "School Supplies mo! Sagut ko!",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Identification of indigent learners",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            300.0,
+            300.0,
+            300.0
+          ],
+          "responsible_person": "Teachers and School Head",
+          "remarks": null
+        },
+        {
+          "activity": "Inventory of available school supplies",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            300.0,
+            300.0,
+            300.0
+          ],
+          "responsible_person": "Teachers, School Head, and Administrative Officer",
+          "remarks": null
+        },
+        {
+          "activity": "Sourcing and procurement of school supplies",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            400.0,
+            400.0,
+            400.0
+          ],
+          "responsible_person": "School Head, and Administrative Officer",
+          "remarks": null
+        },
+        {
+          "activity": "Distribution of school supplies to learners",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            10000.0,
+            10000.0,
+            10000.0
+          ],
+          "responsible_person": "Teachers and School Head",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Equity",
+      "kra": "KRA 2: Teaching and Learning Delivery",
+      "organizational_outcome": "Percentage of Elementary Learners in Situation of Disadvantage Continue to Participate in Basic Education and 6-Year Target",
+      "strategy": "Learning Resource Management and Development",
+      "five_point_agenda": "Enhanced Governance structure to ensure efficient and supportive Education System",
+      "project": "Awards System Program",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Conducts meetings to coordinate with parents and teachers",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "School Head, Teachers, PTA Officials and SPGO",
+          "remarks": null
+        },
+        {
+          "activity": "Allocate funds to purchase medals, ribbons and certificates for deserving pupils",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            50000.0,
+            50000.0,
+            50000.0
+          ],
+          "responsible_person": "School Head, Teachers, PTA Officials and SPGO",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Equity",
+      "kra": "KRA 2: Teaching and Learning Delivery",
+      "organizational_outcome": "Percentage of Elementary Learners in Situation of Disadvantage Continue to Participate in Basic Education and 6-Year Target",
+      "strategy": "Instructional Support Facilities Management",
+      "five_point_agenda": "Enhanced Governance structure to ensure efficient and supportive Education System",
+      "project": "Provision of School, Equipment and office supplies.",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Identify different school equipment and office supplies for IM's",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "School Head, Property Custodian, Disbursing Officer, Teachers and SPGO Officers, Project team",
+          "remarks": null
+        },
+        {
+          "activity": "Procurement of different school equipment and office supplies for IM's",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            120000.0,
+            120000.0,
+            120000.0
+          ],
+          "responsible_person": "School Head, Property Custodian, Disbursing Officer, Teachers and SPGO Officers, Project team",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Equity",
+      "kra": "KRA 2: Teaching and Learning Delivery",
+      "organizational_outcome": "Percentage of Elementary Learners in Situation of Disadvantage Continue to Participate in Basic Education and 6-Year Target",
+      "strategy": "Instructional Support Facilities Management",
+      "five_point_agenda": "Enhanced Governance structure to ensure efficient and supportive Education System",
+      "project": "Promotion of Gender Equality and Women Empowerment in School",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Conduct gender sensitivity training for teachers and staff",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "GAD Focal Person / School Principal",
+          "remarks": null
+        },
+        {
+          "activity": "Organize student awareness campaigns (seminars, posters, discussions)",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "GAD Committee / School Principal",
+          "remarks": null
+        },
+        {
+          "activity": "Develop and implement a gender-responsive school policy",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "School Administration",
+          "remarks": null
+        },
+        {
+          "activity": "Establish a support group for gender concerns",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "Guidance Counselor / Social Worker",
+          "remarks": null
+        },
+        {
+          "activity": "Monitor and evaluate GAD initiatives",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "GAD Committee / School Principal",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Quality",
+      "kra": "KRA 2: Teaching and Learning Delivery",
+      "organizational_outcome": "Percentage of Learners Attaining Nearly Proficient Level or Better in English and Filipino and 6-Year Target",
+      "strategy": "Curriculum Management and Standards Development",
+      "five_point_agenda": "Enhanced Governance structure to ensure efficient and supportive Education System",
+      "project": "ARAL Program (Academic Recovery and Accessible Learning)",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Prepare of Phil-IRI materials",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            200.0,
+            200.0,
+            200.0
+          ],
+          "responsible_person": "Class Advisers, Project Team",
+          "remarks": null
+        },
+        {
+          "activity": "Conduct Phil-IRI",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            200.0,
+            200.0,
+            200.0
+          ],
+          "responsible_person": "Class Advisers",
+          "remarks": null
+        },
+        {
+          "activity": "Conference with Parents of children who fall under frustration level",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            200.0,
+            200.0,
+            200.0
+          ],
+          "responsible_person": "School Head, Teachers, Project Team",
+          "remarks": null
+        },
+        {
+          "activity": "Conduct of reading remediation to identified learners",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            200.0,
+            200.0,
+            200.0
+          ],
+          "responsible_person": "Reading Teacher",
+          "remarks": null
+        },
+        {
+          "activity": "give incentives and awards to top 10 pupils",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            200.0,
+            200.0,
+            200.0
+          ],
+          "responsible_person": "Class Advisers, School Head, Project Team, Planning Team",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Quality",
+      "kra": "KRA 2: Teaching and Learning Delivery",
+      "organizational_outcome": "Percentage of Learners in Situations of Disadvantage (disaggregated by group) Achieved at least a Fixed Level of Proficiency/Mastery in Reading Literacy and 6-Year Target",
+      "strategy": "Curriculum Management and Standards Development",
+      "five_point_agenda": "Enhanced Governance structure to ensure efficient and supportive Education System",
+      "project": "Halinat Magbasa!",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Identify least learned competencies",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "School Head, Project Team",
+          "remarks": null
+        },
+        {
+          "activity": "Implement the action plan of the least learned competencies",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "School Head, Project Team",
+          "remarks": null
+        },
+        {
+          "activity": "Produce copy for worksheet",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            5000.0,
+            5000.0,
+            5000.0
+          ],
+          "responsible_person": "School Head, Teachers, Project Team",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Quality",
+      "kra": "KRA 2: Teaching and Learning Delivery",
+      "organizational_outcome": "Percentage of Elementary Learners in Situation of Disadvantage Continue to Participate in Basic Education and 6-Year Target",
+      "strategy": "Education Assessment and Research",
+      "five_point_agenda": "Enhanced Governance structure to ensure efficient and supportive Education System",
+      "project": "Unli-Kamustahan",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Teachers conference in identifying learners no longer in school",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "Class Advisers, Project Team",
+          "remarks": null
+        },
+        {
+          "activity": "Adviser-parent conference, save LNLS advocacy",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "Class Advisers",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Quality",
+      "kra": "KRA 2: Teaching and Learning Delivery",
+      "organizational_outcome": "Percentage of Learners who are Happy and Satisfied with their Basic Education Experience in Relation to the Enjoyment of their Specific Rights in School and Learning Centers and 6-Year Target",
+      "strategy": "Curriculum Management and Standards Development",
+      "five_point_agenda": "Enhanced Governance structure to ensure efficient and supportive Education System",
+      "project": "KSA Enhancement of Teachers",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Conduct Teachers Assessment",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            200.0,
+            200.0,
+            200.0
+          ],
+          "responsible_person": "School Head, Project Team",
+          "remarks": null
+        },
+        {
+          "activity": "Summarizes teacher's result",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            200.0,
+            200.0,
+            200.0
+          ],
+          "responsible_person": "School Head, Project Team",
+          "remarks": null
+        },
+        {
+          "activity": "Accomplishes teachers individual plan for professional development",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            200.0,
+            200.0,
+            200.0
+          ],
+          "responsible_person": "School Head, Teachers",
+          "remarks": null
+        },
+        {
+          "activity": "Send teachers to trainings, seminars workshops based on their identified needs",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            200.0,
+            200.0,
+            200.0
+          ],
+          "responsible_person": "School Head, Project Team",
+          "remarks": null
+        },
+        {
+          "activity": "Conduct Monitoring and evaluation",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            200.0,
+            200.0,
+            200.0
+          ],
+          "responsible_person": "School Head, Project Team",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Quality",
+      "kra": "KRA 1: School Leadership and Administration",
+      "organizational_outcome": "Percentage of Learners who are Happy and Satisfied with their Basic Education Experience in Relation to the Enjoyment of their Specific Rights in School and Learning Centers and 6-Year Target",
+      "strategy": "Organizational and Individual Development",
+      "five_point_agenda": "High-Performing Teachers",
+      "project": "Travel allowance of school head and teachers for training and seminars",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Request allocation of budget",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "School head, teachers, PTA officials and SPGO",
+          "remarks": null
+        },
+        {
+          "activity": "Attending trainings and seminars as mandated by DepEd",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            40000.0,
+            40000.0,
+            40000.0
+          ],
+          "responsible_person": "School head, teachers, PTA officials and SPGO",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Quality",
+      "kra": "KRA 3: Learner Formation and Development",
+      "organizational_outcome": "Percentage of Learners who are Happy and Satisfied with their Basic Education Experience in Relation to the Enjoyment of their Specific Rights in School and Learning Centers and 6-Year Target",
+      "strategy": "Learner Support Management",
+      "five_point_agenda": "Enhanced Governance structure to ensure efficient and supportive Education System",
+      "project": "PRESERVING HERITAGE, EMPOWERING GENERATIONS!",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Community Consultation and Planning",
+          "physical": [
+            null,
+            null,
+            1.0
+          ],
+          "financial": [
+            0.0,
+            0.0,
+            500.0
+          ],
+          "responsible_person": "IP Coordinator, Tribal Leaders",
+          "remarks": null
+        },
+        {
+          "activity": "Collection and Documentation",
+          "physical": [
+            null,
+            null,
+            1.0
+          ],
+          "financial": [
+            0.0,
+            0.0,
+            15000.0
+          ],
+          "responsible_person": "IP Coordinator",
+          "remarks": null
+        },
+        {
+          "activity": "Space Preparation and Setup",
+          "physical": [
+            null,
+            null,
+            1.0
+          ],
+          "financial": [
+            0.0,
+            0.0,
+            2000.0
+          ],
+          "responsible_person": "IP Coordinator, Parents, Skilled Worker",
+          "remarks": null
+        },
+        {
+          "activity": "Educational Displays and Materials",
+          "physical": [
+            null,
+            null,
+            1.0
+          ],
+          "financial": [
+            0.0,
+            0.0,
+            2500.0
+          ],
+          "responsible_person": "IP Coordinator, Parents, Teachers",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Well-Being",
+      "kra": "KRA 3: Learner Formation and Development",
+      "organizational_outcome": "Percentage of Learners with Improved Health Physical Fitness and 6-Year Target (ESSD /SGOD – Health Section)",
+      "strategy": "Management of clinic and health services",
+      "five_point_agenda": "Improved Learning Environment that Safeguards Students' Physical and Mental Well- Being",
+      "project": "Kalusugan mo! Ingatan Ko!",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Prepare and fill-up the Nutritional status form",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "Teachers, Health and SBFP Coordinator, School Head",
+          "remarks": null
+        },
+        {
+          "activity": "Get Height and Weight of all learners from Kinder to Grade VI",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "Teachers, Health and SBFP Coordinator, School Head",
+          "remarks": null
+        },
+        {
+          "activity": "Identify the severely wasted and wasted pupils",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "Teachers, Health and SBFP Coordinator, School Head",
+          "remarks": null
+        },
+        {
+          "activity": "Daily feeding for 120 days",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            50000.0,
+            50000.0,
+            50000.0
+          ],
+          "responsible_person": "Teachers, Health and SBFP Coordinator, School Head",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Well-Being",
+      "kra": "KRA 3: Learner Formation and Development",
+      "organizational_outcome": "Percentage of Learners with Improved Health Physical Fitness and 6-Year Target (ESSD /SGOD – Health Section)",
+      "strategy": "Management of clinic and health services",
+      "five_point_agenda": "Improved Learning Environment that Safeguards Students' Physical and Mental Well- Being",
+      "project": "School clinic for free medicine",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Conducts meetings to coordinate with parents and teachers",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "School Head, Teachers, PTA Officials and SPGO",
+          "remarks": null
+        },
+        {
+          "activity": "Allocate funds to purchase, medicines and other materials to be use for clinic services",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            10000.0,
+            10000.0,
+            10000.0
+          ],
+          "responsible_person": "School Head, Teachers, PTA Officials and SPGO",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Well-Being",
+      "kra": "KRA 4: School Operations and Management",
+      "organizational_outcome": "Percentage of Learners with Improved Health Physical Fitness and 6-Year Target (ESSD /SGOD – Health Section)",
+      "strategy": "Infrastructure Management",
+      "five_point_agenda": "Improved Learning Environment that Safeguards Students' Physical and Mental Well- Being",
+      "project": "Water is life",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Conduct inspection to identify the different materials needed for the enhancement of potable water connection",
+          "physical": [
+            1.0,
+            null,
+            null
+          ],
+          "financial": [
+            500.0,
+            0.0,
+            0.0
+          ],
+          "responsible_person": "Project team, Disbursing Officer, Bookkeeper",
+          "remarks": null
+        },
+        {
+          "activity": "Purchase of materials for the enhancement of potable water supply",
+          "physical": [
+            1.0,
+            null,
+            null
+          ],
+          "financial": [
+            9500.0,
+            0.0,
+            0.0
+          ],
+          "responsible_person": "Project team, Disbursing Officer, Bookkeeper",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Well-Being",
+      "kra": "KRA 3: Learner Formation and Development",
+      "organizational_outcome": "Percentage of Learners with Improved Health Physical Fitness and 6-Year Target (ESSD /SGOD – Health Section)",
+      "strategy": "Learner Support Management",
+      "five_point_agenda": "Enhanced Governance structure to ensure efficient and supportive Education System",
+      "project": "Improvement of Science Garden, Herbal Garden and Gulayan sa Paaralan",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Identify projects that could improve the different adopted areas",
+          "physical": [
+            1.0,
+            null,
+            null
+          ],
+          "financial": [
+            500.0,
+            0.0,
+            0.0
+          ],
+          "responsible_person": "School Head, Science, Herbal and Gulayan sa paaralan Corrdinators, Teachers, Pupils and Project Team",
+          "remarks": null
+        },
+        {
+          "activity": "Assessment of materials needed",
+          "physical": [
+            1.0,
+            null,
+            null
+          ],
+          "financial": [
+            500.0,
+            0.0,
+            0.0
+          ],
+          "responsible_person": "School Head, Science, Herbal and Gulayan sa paaralan Corrdinators, Teachers, Pupils and Project Team",
+          "remarks": null
+        },
+        {
+          "activity": "Request for allocation of fundsf for the improvement of Science Garden, Herbal Garden and Gulayan sa Paaralan",
+          "physical": [
+            1.0,
+            null,
+            null
+          ],
+          "financial": [
+            500.0,
+            0.0,
+            0.0
+          ],
+          "responsible_person": "School Head, Science, Herbal and Gulayan sa paaralan Corrdinators, Teachers, Pupils and Project Team",
+          "remarks": null
+        },
+        {
+          "activity": "Implementationw of Projects",
+          "physical": [
+            1.0,
+            null,
+            null
+          ],
+          "financial": [
+            50000.0,
+            0.0,
+            0.0
+          ],
+          "responsible_person": "School Head, Science, Herbal and Gulayan sa paaralan Corrdinators, Teachers, Pupils and Project Team",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Well-Being",
+      "kra": "KRA 3: Learner Formation and Development",
+      "organizational_outcome": "Percentage of Learners in Safe Schools and 6-Year Target",
+      "strategy": "Learner Support Management",
+      "five_point_agenda": "Enhanced Governance structure to ensure efficient and supportive Education System",
+      "project": "RENOVATE TODAY, NOURISH TOMORROW",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Site Assessment and Planning",
+          "physical": [
+            null,
+            1.0,
+            null
+          ],
+          "financial": [
+            0.0,
+            500.0,
+            0.0
+          ],
+          "responsible_person": "School Head",
+          "remarks": null
+        },
+        {
+          "activity": "Purchase Materials",
+          "physical": [
+            null,
+            1.0,
+            null
+          ],
+          "financial": [
+            0.0,
+            59500.0,
+            0.0
+          ],
+          "responsible_person": "Administrative Officer, School Head",
+          "remarks": null
+        },
+        {
+          "activity": "Structural Repairs & Painting",
+          "physical": [
+            null,
+            1.0,
+            null
+          ],
+          "financial": [
+            0.0,
+            10000.0,
+            0.0
+          ],
+          "responsible_person": "Skilled Worker",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Well-Being",
+      "kra": "KRA 4: School Operations and Management",
+      "organizational_outcome": "Percentage of Learners in Safe Schools and 6-Year Target",
+      "strategy": "Asset Management",
+      "five_point_agenda": "Improved Learning Environment that Safeguards Students' Physical and Mental Well- Being",
+      "project": "BIN IT TO WIN IT : CLEAN AND GREEN",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Purchase Trash Bins",
+          "physical": [
+            null,
+            null,
+            1.0
+          ],
+          "financial": [
+            0.0,
+            0.0,
+            30000.0
+          ],
+          "responsible_person": "Administrative Officer",
+          "remarks": null
+        },
+        {
+          "activity": "Signage and Labels",
+          "physical": [
+            null,
+            null,
+            1.0
+          ],
+          "financial": [
+            0.0,
+            0.0,
+            5000.0
+          ],
+          "responsible_person": "Teachers",
+          "remarks": null
+        },
+        {
+          "activity": "Awareness Campaign",
+          "physical": [
+            null,
+            null,
+            1.0
+          ],
+          "financial": [
+            0.0,
+            0.0,
+            4500.0
+          ],
+          "responsible_person": "Teachers, Students",
+          "remarks": null
+        },
+        {
+          "activity": "Monitoring and Maintenance",
+          "physical": [
+            null,
+            null,
+            1.0
+          ],
+          "financial": [
+            0.0,
+            0.0,
+            500.0
+          ],
+          "responsible_person": "Janitorial Staff",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Well-Being",
+      "kra": "KRA 3: Learner Formation and Development",
+      "organizational_outcome": "Percentage of Learners in Safe Schools and 6-Year Target",
+      "strategy": "Learner Support Management",
+      "five_point_agenda": "Improved Learning Environment that Safeguards Students' Physical and Mental Well- Being",
+      "project": "GREEN SPACES, HAPPY FACES",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Site Assessment and Planning",
+          "physical": [
+            null,
+            1.0,
+            null
+          ],
+          "financial": [
+            0.0,
+            500.0,
+            0.0
+          ],
+          "responsible_person": "Project Coordinator",
+          "remarks": null
+        },
+        {
+          "activity": "Playground Surface Improvement",
+          "physical": [
+            null,
+            1.0,
+            null
+          ],
+          "financial": [
+            0.0,
+            50000.0,
+            0.0
+          ],
+          "responsible_person": "Maintenance Team",
+          "remarks": null
+        },
+        {
+          "activity": "Cleanup and Final Inspection",
+          "physical": [
+            null,
+            1.0,
+            null
+          ],
+          "financial": [
+            0.0,
+            500.0,
+            0.0
+          ],
+          "responsible_person": "School Head",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Well-Being",
+      "kra": "KRA 2: Teaching and Learning Delivery",
+      "organizational_outcome": "Percentage of Kindergarten Completers Proceeded to next Key Stage in Grade 1 – Transition Rate (TR) and 6-Year Target",
+      "strategy": "Learning Resource Management and Development",
+      "five_point_agenda": "Improved Learning Environment that Safeguards Students' Physical and Mental Well- Being",
+      "project": "Where Learning Blooms: Kinder Classroom Renovation",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Needs Assessment & Planning and Design and Layout Planning",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "School Head, Disbursing Officer, and Bookkeeper",
+          "remarks": null
+        },
+        {
+          "activity": "Procurement of Materials",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "School Head, Disbursing Officer, and Bookkeeper",
+          "remarks": null
+        },
+        {
+          "activity": "Renovation Works, Furniture and Equipment Installation, and Safety and Accessibility Enhancements",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            80000.0,
+            80000.0,
+            80000.0
+          ],
+          "responsible_person": "School Head, Disbursing Officer, and Bookkeeper",
+          "remarks": null
+        },
+        {
+          "activity": "Final Inspection & Quality Check",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "School Head, Disbursing Officer, and Bookkeeper",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Well-Being",
+      "kra": "KRA 2: Teaching and Learning Delivery",
+      "organizational_outcome": "Percentage of Learners who are Happy and Satisfied with their Basic Education Experience in Relation to the Enjoyment of their Specific Rights in School and Learning Centers and 6-Year Target",
+      "strategy": "Learning Resource Management and Development",
+      "five_point_agenda": "Improved Learning Environment that Safeguards Students' Physical and Mental Well- Being",
+      "project": "Repainting of Roofing and Classrooms",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Allocate funds for repainting of roofing and classrooms",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "School Head, Disbursing Officer, and Bookkeeper",
+          "remarks": null
+        },
+        {
+          "activity": "Purchase of painting materials and labor",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            50000.0,
+            50000.0,
+            50000.0
+          ],
+          "responsible_person": "School Head, Disbursing Officer, and Bookkeeper",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Well-Being",
+      "kra": "KRA 2: Teaching and Learning Delivery",
+      "organizational_outcome": "Percentage of Learners in Safe Schools and 6-Year Target",
+      "strategy": "Learning Resource Management and Development",
+      "five_point_agenda": "Improved Learning Environment that Safeguards Students' Physical and Mental Well- Being",
+      "project": "Bright & Fresh: Lights and Ventilation Upgrade",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Stakeholder Consultation",
+          "physical": [
+            1.0,
+            null,
+            null
+          ],
+          "financial": [
+            200.0,
+            0.0,
+            0.0
+          ],
+          "responsible_person": "School Head, Disbursing Officer, and Bookkeeper",
+          "remarks": null
+        },
+        {
+          "activity": "Planning and Design",
+          "physical": [
+            1.0,
+            null,
+            null
+          ],
+          "financial": [
+            200.0,
+            0.0,
+            0.0
+          ],
+          "responsible_person": "School Head, Disbursing Officer, and Bookkeeper",
+          "remarks": null
+        },
+        {
+          "activity": "Procurement of Materials and Equipment",
+          "physical": [
+            1.0,
+            null,
+            null
+          ],
+          "financial": [
+            400.0,
+            0.0,
+            0.0
+          ],
+          "responsible_person": "School Head, Disbursing Officer, and Bookkeeper",
+          "remarks": null
+        },
+        {
+          "activity": "Installation of Lighting and Ventilation System",
+          "physical": [
+            1.0,
+            null,
+            null
+          ],
+          "financial": [
+            19000.0,
+            0.0,
+            0.0
+          ],
+          "responsible_person": "School Head, Disbursing Officer, and Bookkeeper",
+          "remarks": null
+        },
+        {
+          "activity": "Electrical and Safety Testing",
+          "physical": [
+            1.0,
+            null,
+            null
+          ],
+          "financial": [
+            200.0,
+            0.0,
+            0.0
+          ],
+          "responsible_person": "School Head, Disbursing Officer, and Bookkeeper",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Well-Being",
+      "kra": "KRA 4: School Operations and Management",
+      "organizational_outcome": "Percentage of Learners in Safe Schools and 6-Year Target",
+      "strategy": "Infrastructure Management",
+      "five_point_agenda": "Improved Learning Environment that Safeguards Students' Physical and Mental Well- Being",
+      "project": "Concrete Drainage para sa Maayos na Daloy ng Tubig",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Site Assessment, Survey, and Planning",
+          "physical": [
+            1.0,
+            null,
+            null
+          ],
+          "financial": [
+            500.0,
+            0.0,
+            0.0
+          ],
+          "responsible_person": "School Head, Project team, and PTA representative",
+          "remarks": null
+        },
+        {
+          "activity": "Procurement of Materials",
+          "physical": [
+            1.0,
+            null,
+            null
+          ],
+          "financial": [
+            500.0,
+            0.0,
+            0.0
+          ],
+          "responsible_person": "Disbursing Officer",
+          "remarks": null
+        },
+        {
+          "activity": "Excavation and Groundworks, Concrete Drainage Construction",
+          "physical": [
+            1.0,
+            null,
+            null
+          ],
+          "financial": [
+            500.0,
+            0.0,
+            0.0
+          ],
+          "responsible_person": "School Head, Disbursing Officer, and Contructor",
+          "remarks": null
+        },
+        {
+          "activity": "Site Clean-up and Restoration",
+          "physical": [
+            1.0,
+            null,
+            null
+          ],
+          "financial": [
+            35000.0,
+            0.0,
+            0.0
+          ],
+          "responsible_person": "School Head, Project team, and PTA representative",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Well-Being",
+      "kra": "KRA 4: School Operations and Management",
+      "organizational_outcome": "Percentage of Learners in Safe Schools and 6-Year Target",
+      "strategy": "Infrastructure Management",
+      "five_point_agenda": "Improved Learning Environment that Safeguards Students' Physical and Mental Well- Being",
+      "project": "Pabakod Para sa Ligtas na Paaralan",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Conduct FGD on over outsiders and stray animals",
+          "physical": [
+            null,
+            1.0,
+            null
+          ],
+          "financial": [
+            0.0,
+            500.0,
+            0.0
+          ],
+          "responsible_person": "PTA and SGC Officials, School Head, Teachers",
+          "remarks": null
+        },
+        {
+          "activity": "Identify materials needed",
+          "physical": [
+            null,
+            1.0,
+            null
+          ],
+          "financial": [
+            0.0,
+            500.0,
+            0.0
+          ],
+          "responsible_person": "PTA and SGC Officials, School Head, Teachers",
+          "remarks": null
+        },
+        {
+          "activity": "Procurement of Materials",
+          "physical": [
+            null,
+            1.0,
+            null
+          ],
+          "financial": [
+            0.0,
+            500.0,
+            0.0
+          ],
+          "responsible_person": "PTA and SGC Officials, School Head, Teachers",
+          "remarks": null
+        },
+        {
+          "activity": "Upgrading of Perimeter Fence",
+          "physical": [
+            null,
+            1.0,
+            null
+          ],
+          "financial": [
+            0.0,
+            50000.0,
+            0.0
+          ],
+          "responsible_person": "PTA and SGC Officials, School Head, Teachers",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Well-Being",
+      "kra": "KRA 4: School Operations and Management",
+      "organizational_outcome": "Percentage of Learners in Safe Schools and 6-Year Target",
+      "strategy": "Infrastructure Management",
+      "five_point_agenda": "Improved Learning Environment that Safeguards Students' Physical and Mental Well- Being",
+      "project": "STRONG GRILLS, SAFE SCHOOLS",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Measurement and Assessment",
+          "physical": [
+            null,
+            1.0,
+            null
+          ],
+          "financial": [
+            0.0,
+            500.0,
+            0.0
+          ],
+          "responsible_person": "Project Coordinator",
+          "remarks": null
+        },
+        {
+          "activity": "Purchase Window Grills",
+          "physical": [
+            null,
+            1.0,
+            null
+          ],
+          "financial": [
+            0.0,
+            50000.0,
+            0.0
+          ],
+          "responsible_person": "Administrative Officer, School Head",
+          "remarks": null
+        },
+        {
+          "activity": "Install Window Grills",
+          "physical": [
+            null,
+            1.0,
+            null
+          ],
+          "financial": [
+            0.0,
+            17500.0,
+            0.0
+          ],
+          "responsible_person": "Skilled Worker",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Well-Being",
+      "kra": "KRA 4: School Operations and Management",
+      "organizational_outcome": "Percentage of Learners in Safe Schools and 6-Year Target",
+      "strategy": "Infrastructure Management",
+      "five_point_agenda": "Improved Learning Environment that Safeguards Students' Physical and Mental Well- Being",
+      "project": "LakasEskwela: School Gym Renovation",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Site Assessment, Planning and Design and Specification Finalization",
+          "physical": [
+            1.0,
+            null,
+            null
+          ],
+          "financial": [
+            500.0,
+            0.0,
+            0.0
+          ],
+          "responsible_person": "School Head, Disbursing Officer, and Bookkeeper",
+          "remarks": null
+        },
+        {
+          "activity": "Procurement of Materials and Equipment",
+          "physical": [
+            1.0,
+            null,
+            null
+          ],
+          "financial": [
+            500.0,
+            0.0,
+            0.0
+          ],
+          "responsible_person": "School Head, Disbursing Officer, and Bookkeeper",
+          "remarks": null
+        },
+        {
+          "activity": "Site Preparation, Installation of New Flooring, Lighting and Ventilation Upgrade, and Sports Equipment Installation",
+          "physical": [
+            1.0,
+            null,
+            null
+          ],
+          "financial": [
+            80000.0,
+            0.0,
+            0.0
+          ],
+          "responsible_person": "School Head, Disbursing Officer, and Bookkeeper",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Enabling Mechanism",
+      "kra": "KRA 1: School Leadership and Administration",
+      "organizational_outcome": "Percentage of Learners in Safe Schools and 6-Year Target",
+      "strategy": "School Operations and Resource Management",
+      "five_point_agenda": "Enhanced Governance structure to ensure efficient and supportive Education System",
+      "project": "GPP + IGP: Building Foundations for Better Learning",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Needs Assessment and Baseline Survey",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "School Head, Planning Team",
+          "remarks": null
+        },
+        {
+          "activity": "Planning and Program Integration Workshop",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "School Improvement Planning Team, Department Heads, District Supervisor",
+          "remarks": null
+        },
+        {
+          "activity": "Resource Mapping and Budget Allocation",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "School Head, Finance Officer, GPP and IGP Coordinators",
+          "remarks": null
+        },
+        {
+          "activity": "Capacity Building for Staff (GPP & IGP)",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "Training and Development Coordinator, HR Officer, Master Teachers",
+          "remarks": null
+        },
+        {
+          "activity": "Infrastructure and Facilities Improvement (GPP)",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "GPP Coordinator, School Property Custodian, Maintenance Team",
+          "remarks": null
+        },
+        {
+          "activity": "Enhancement of Instructional Programs (IGP)",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "IGP Coordinator, Master Teachers, Curriculum Coordinator",
+          "remarks": null
+        },
+        {
+          "activity": "Strengthening Student Support Services",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "School Nurse, Feeding Coordinator, Discipline Officer",
+          "remarks": null
+        },
+        {
+          "activity": "Data Collection and Monitoring System Setup",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "Monitoring and Evaluation Team, ICT Coordinator",
+          "remarks": null
+        },
+        {
+          "activity": "Community and Stakeholder Engagement",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "School Head, PTA President, Community Relations Officer",
+          "remarks": null
+        },
+        {
+          "activity": "Project Monitoring and Evaluation",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "SIP Coordinator, Monitoring and Eveluation Team, District Education Program Supervisor",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Enabling Mechanism",
+      "kra": "KRA 4: School Operations and Management",
+      "organizational_outcome": "Percentage of Learners in Safe Schools and 6-Year Target",
+      "strategy": "Financial Management",
+      "five_point_agenda": "Improved Learning Environment that Safeguards Students' Physical and Mental Well- Being",
+      "project": "Kagandahan Mo! Pangalagaan Ko! (Utility Person)",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Conduct meeting in sustaining the Magbantay sa kaugtasan",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "School Head, Disbursing Officers, Magbantay sa Kaugtasan",
+          "remarks": null
+        },
+        {
+          "activity": "Preparation of memorandum of Agreement",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "School Head, Disbursing Officers, Magbantay sa Kaugtasan",
+          "remarks": null
+        },
+        {
+          "activity": "Allocate fund for magbantay sa kaugtasan",
+          "physical": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "financial": [
+            40000.0,
+            40000.0,
+            40000.0
+          ],
+          "responsible_person": "School Head, Disbursing Officers, Magbantay sa Kaugtasan",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Enabling Mechanism",
+      "kra": "KRA 1: School Leadership and Administration",
+      "organizational_outcome": "Proportion of Elementary Schools with Connection to Internet and 6- Year Target",
+      "strategy": "School Operations and Resource Management",
+      "five_point_agenda": "High-Performing Teachers",
+      "project": "Enhancement Internet Connectivity",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Call meeting between SGC, Teacher’s representative, School Head and internet Service Provider",
+          "physical": [
+            1.0,
+            null,
+            null
+          ],
+          "financial": [
+            500.0,
+            0.0,
+            0.0
+          ],
+          "responsible_person": "School Head, SGC President, Teacher’s representative, Representative of internet service provider, D.O and Bookkeeper",
+          "remarks": null
+        },
+        {
+          "activity": "Internet connection",
+          "physical": [
+            1.0,
+            null,
+            null
+          ],
+          "financial": [
+            5000.0,
+            0.0,
+            0.0
+          ],
+          "responsible_person": "School Head, SGC President, Teacher’s representative, Representative of internet service provider, D.O and Bookkeeper",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Enabling Mechanism",
+      "kra": "KRA 4: School Operations and Management",
+      "organizational_outcome": "Percentage of Learners in Safe Schools and 6-Year Target",
+      "strategy": "Financial Management",
+      "five_point_agenda": "Enhanced Governance structure to ensure efficient and supportive Education System",
+      "project": "Renewal of Fidelity Bond",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Preparation of requirements",
+          "physical": [
+            2.0,
+            2.0,
+            2.0
+          ],
+          "financial": [
+            500.0,
+            500.0,
+            500.0
+          ],
+          "responsible_person": "School Head, Disbursing Officer and Bookkeeper",
+          "remarks": null
+        },
+        {
+          "activity": "Processing the renewal of fidelity bond",
+          "physical": [
+            2.0,
+            2.0,
+            2.0
+          ],
+          "financial": [
+            16000.0,
+            16000.0,
+            16000.0
+          ],
+          "responsible_person": "School Head, Disbursing Officer and Bookkeeper",
+          "remarks": null
+        }
+      ]
+    },
+    {
+      "pillar": "Enabling Mechanism",
+      "kra": "KRA 4: School Operations and Management",
+      "organizational_outcome": "Proportion of Elementary Schools with Connection to Electricity and 6-Year Target",
+      "strategy": "Financial Management",
+      "five_point_agenda": "Enhanced Governance structure to ensure efficient and supportive Education System",
+      "project": "Payment of Internet and Electric Bill",
+      "source_of_fund": "Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE",
+      "activities": [
+        {
+          "activity": "Allocate fund for electric bills",
+          "physical": [
+            12.0,
+            12.0,
+            12.0
+          ],
+          "financial": [
+            6000.0,
+            6000.0,
+            6000.0
+          ],
+          "responsible_person": "School Head, Disbursing Officer, and Bookkeeper",
+          "remarks": null
+        },
+        {
+          "activity": "Payment of electric bill monthly",
+          "physical": [
+            12.0,
+            12.0,
+            12.0
+          ],
+          "financial": [
+            60000.0,
+            60000.0,
+            60000.0
+          ],
+          "responsible_person": "School Head, Disbursing Officer, and Bookkeeper",
+          "remarks": null
+        }
+      ]
+    }
+  ]
+}

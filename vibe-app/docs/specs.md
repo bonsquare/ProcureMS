@@ -327,3 +327,11 @@ php -d zend_extension=opcache -d opcache.enable_cli=1 -d "upload_tmp_dir=<repo>/
 - Tabs are pills with an icon and a count badge (red for For Review and Awaiting payment, amber for Pending Documents, green for Ready for DV). A search box filters the rows on the page by ORS, payee, school or DV number.
 - Each row has a status-colored edge, the payee and how long ago it was approved or submitted, a status chip with icon, and for a DV the DV number and date. A DV's journal entry shows as a "Journal entry · N lines" summary that opens to the lines (Dr / Cr).
 - The main action is a filled button (Approve, Create DV, Record Payment); Print, Request Docs and Return are outlined.
+
+## 14. Entering a School Improvement Plan from a document (`sip:import`)
+
+- The SIP module stores a plan as programs (`sip_projects`: pillar, KRA, organizational outcome, strategy, 5-point agenda, program) with activities (`sip_activities`: activity, physical targets for years 1 to 3, financial targets for years 1 to 3, source of fund, responsible person, remarks) and the three signatories (`sip_plans`). These are exactly the columns of the official SIP table.
+- A plan prepared as a document can be entered in one step: `php artisan sip:import <file.json> <school id or code>`. The JSON file holds the programs, their activities and the signatories. It refuses a school that already has that plan, so it never duplicates; delete the school's programs first to enter it again.
+- The first plan entered this way is **Lubas Elementary School, SIP FY 2026-2028** (`database/seed-data/sip-lubas-2026-2028.json`, from the school's PDF): 33 programs, 116 activities, totals of ₱766,000 (year 1), ₱802,000 (year 2) and ₱693,000 (year 3), signed by Chiqueto E. Domingo (School Head/Team Leader), Julie B. Lumogdang, EdD (Chief, School Governance Operation Division) and Romelito G. Flores, CESO V (Schools Division Superintendent).
+- The pillars are stored with the app's own names: Access, Equity, Quality, Well-Being (the PDF prints "Well-Being and Resilience") and Enabling Mechanism.
+- Print it from Planning → SIP, which uses the official template (Print preview). Tests: `tests/Feature/SipImportTest.php`.
