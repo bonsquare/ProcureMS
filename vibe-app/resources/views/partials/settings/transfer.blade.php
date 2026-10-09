@@ -23,6 +23,34 @@
                     <div><h2 class="text-base font-bold text-secondary">Request submitted</h2><p class="text-xs text-on-surface-variant">Your request to <strong class="text-on-surface">{{ $pending->destinationName() }}</strong> is being processed.</p></div>
                     <span class="ml-auto inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-[11px] font-bold text-secondary ring-1 ring-secondary/40"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">autorenew</span>In progress</span>
                 </div>
+                <div data-transfer-route class="grid items-center gap-2 px-5 pt-5 sm:grid-cols-[1fr_auto_1fr]">
+                    <div class="rounded-xl border border-outline-variant/70 bg-surface-low px-4 py-3">
+                        <p class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-on-surface-variant"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">logout</span>From</p>
+                        <p class="mt-1 flex items-center gap-2 font-bold"><span class="material-symbols-outlined text-[20px] text-on-surface-variant" aria-hidden="true">domain</span>{{ $pending->fromSchool?->name ?? $station?->name }}</p>
+                        <p class="text-xs text-on-surface-variant">{{ $pending->fromSchool?->code ?? $station?->code }}</p>
+                    </div>
+                    <div class="transfer-flow mx-auto flex h-12 w-28 items-center justify-center sm:h-10" aria-hidden="true">
+                        <span class="transfer-flow__line"></span>
+                        <span class="transfer-flow__dot"></span>
+                        <span class="material-symbols-outlined transfer-flow__head hidden text-[34px] sm:block">arrow_forward</span>
+                        <span class="material-symbols-outlined transfer-flow__head text-[30px] sm:hidden">arrow_downward</span>
+                    </div>
+                    <div class="rounded-xl border-2 border-secondary bg-secondary/10 px-4 py-3 shadow-sm">
+                        <p class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-secondary"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">login</span>To @if(! $pending->to_school_id)<span class="ml-1 rounded bg-secondary px-1.5 py-0.5 text-[9px] text-white">New school</span>@endif</p>
+                        <p class="mt-1 flex items-center gap-2 font-bold text-secondary"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">location_city</span>{{ $pending->destinationName() }}</p>
+                        <p class="text-xs text-on-surface-variant">{{ $pending->toSchool?->code ?? 'Will be registered on approval' }}</p>
+                    </div>
+                </div>
+                <style>
+                    .transfer-flow { position: relative; color: #2a7f64; }
+                    .transfer-flow__line { position: absolute; left: 0; right: 14px; top: 50%; border-top: 3px dashed currentColor; opacity: .45; }
+                    .transfer-flow__dot { position: absolute; top: 50%; left: 0; width: 10px; height: 10px; margin-top: -5px; border-radius: 999px; background: currentColor; animation: transfer-dot 1.6s ease-in-out infinite; }
+                    .transfer-flow__head { position: absolute; right: -6px; animation: transfer-nudge 1.6s ease-in-out infinite; }
+                    @keyframes transfer-dot { 0% { left: 0; opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { left: calc(100% - 22px); opacity: 0; } }
+                    @keyframes transfer-nudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(4px); } }
+                    @media (max-width: 639px) { .transfer-flow__line { left: 50%; right: auto; top: 0; bottom: 14px; border-top: 0; border-left: 3px dashed currentColor; } .transfer-flow__dot { left: 50%; margin-left: -5px; margin-top: 0; top: 0; animation-name: transfer-dot-down; } .transfer-flow__head { right: auto; left: 50%; margin-left: -15px; top: auto; bottom: -6px; } @keyframes transfer-dot-down { 0% { top: 0; opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { top: calc(100% - 22px); opacity: 0; } } }
+                    @media (prefers-reduced-motion: reduce) { .transfer-flow__dot, .transfer-flow__head { animation: none; } }
+                </style>
                 <ol class="grid gap-3 px-5 py-4 sm:grid-cols-4">
                     @foreach($track as [$label, $state, $note])
                         <li class="rounded-xl border px-3 py-2.5 {{ $state === 'current' ? 'border-secondary bg-secondary/10 ring-2 ring-secondary/20' : ($state === 'done' ? 'border-secondary/40 bg-secondary/5' : 'border-outline-variant/60 bg-surface-low') }}">

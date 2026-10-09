@@ -405,6 +405,6 @@ class StationTransferTest extends TestCase
             ->assertDontSee('School ID');
 
         app(StationTransferService::class)->request($user, ['to_school_id' => $schoolB->id, 'reason' => 'x']);
-        $this->get($this->transferTab())->assertSee('Request submitted')->assertSee('is being processed')->assertSee('No review needed')->assertSee('Master approves')->assertSee('You confirm');
+        $this->get($this->transferTab())->assertSee('Request submitted')->assertSee('data-transfer-route', false)->assertSee('track-b School')->assertSee('is being processed')->assertSee('No review needed')->assertSee('Master approves')->assertSee('You confirm');
     }
 }
