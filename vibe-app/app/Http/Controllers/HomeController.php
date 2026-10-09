@@ -354,25 +354,26 @@ class HomeController extends Controller
     {
         $receivingRequests = ProcurementRequest::with(['school', 'requester', 'documents', 'items'])
             ->whereIn('school_id', $this->scopedSchoolIds())
-            ->whereHas('documents', fn ($query) => $query->whereIn('document_type', ['purchase_order', 'inspection_acceptance_report']))
             ->latest()
             ->paginate(20)
             ->withQueryString();
 
         $receivingRequests->getCollection()->transform(function (ProcurementRequest $request) use ($workspaceService) {
-            $request->setAttribute('workspace', $workspaceService->present($request));
+            $request->setAttribute('receiving', $workspaceService->receiving($request));
 
             return $request;
         });
+        $receivingRequests->setCollection($receivingRequests->getCollection()->sortBy(fn ($request) => match ($request->receiving['status']) {
+            'partial' => 0,
+            'missing_iar', 'missing_po', 'missing_both' => 1,
+            default => 2,
+        })->values());
 
-        return view('procurement', [
-            'requests' => $this->procurementRequestRows($receivingRequests->getCollection()),
+        return view('procurement-receiving', [
             'receivingRequests' => $receivingRequests,
             'isMasterUser' => $this->isMasterUser(),
             'currentSchoolName' => $this->isMasterUser() ? null : request()->user()?->school?->name,
-            'procurementMetrics' => ['total' => $receivingRequests->total(), 'pending' => 0, 'forCanvass' => 0, 'completed' => 0, 'completedAmount' => 0],
             'activeProcurementArea' => 'receiving',
-            'attentionRequests' => collect(), 'recentRequests' => collect(),
         ]);
     }
 
@@ -1191,7 +1192,7 @@ class HomeController extends Controller
         ]);
     }
 
-    public function printDeliveryReconciliation(ProcurementRequest $procurementRequest)
+    public function printDeliveryReconciliation(ProcurementRequest $procurementRequest, ProcurementWorkspaceService $workspaceService)
     {
         $this->authorizeProcurementAccess($procurementRequest);
 
@@ -1201,30 +1202,8 @@ class HomeController extends Controller
 
         abort_unless($purchaseOrder && $iar, 404);
 
-        $receivedItems = $iar->metadata['received_items'] ?? [];
-        $poMetadata = $purchaseOrder->metadata ?? [];
-        $rows = $procurementRequest->items->map(function ($item) use ($receivedItems, $poMetadata) {
-            $poQuantity = (float) $item->quantity;
-            $receivedQuantity = $receivedItems[$item->id] ?? $poQuantity;
-            $receivedQuantity = $receivedQuantity === '' || $receivedQuantity === null ? $poQuantity : (float) $receivedQuantity;
-            $balance = max(0, $poQuantity - $receivedQuantity);
-            $unitCost = is_numeric(data_get($poMetadata, 'awarded_item_prices.'.$item->id))
-                ? (float) data_get($poMetadata, 'awarded_item_prices.'.$item->id)
-                : (float) $item->unit_price;
-
-            return [
-                'stock_no' => $item->id,
-                'description' => trim($item->name.($item->description ? ' ('.$item->description.')' : '')),
-                'unit' => $item->unit,
-                'po_quantity' => $poQuantity,
-                'received_quantity' => $receivedQuantity,
-                'balance' => $balance,
-                'unit_cost' => $unitCost,
-                'po_amount' => $poQuantity * $unitCost,
-                'received_amount' => $receivedQuantity * $unitCost,
-                'status' => $balance > 0 ? 'Partial' : 'Complete',
-            ];
-        })->values();
+        $receiving = $workspaceService->receiving($procurementRequest);
+        $rows = $receiving['rows'];
 
         return view('procurement-delivery-reconciliation', [
             'procurementRequest' => $procurementRequest,
@@ -1234,9 +1213,9 @@ class HomeController extends Controller
             'rows' => $rows,
             'partialRows' => $rows->where('status', 'Partial')->values(),
             'completeRows' => $rows->where('status', 'Complete')->values(),
-            'totalPoAmount' => $rows->sum('po_amount'),
-            'totalReceivedAmount' => $rows->sum('received_amount'),
-            'totalBalanceQuantity' => $rows->sum('balance'),
+            'totalPoAmount' => $receiving['total_po_amount'],
+            'totalReceivedAmount' => $receiving['total_received_amount'],
+            'totalBalanceQuantity' => $receiving['balance_quantity'],
         ]);
     }
 

@@ -1,0 +1,19 @@
+<div class="overflow-x-auto">
+    <table class="w-full min-w-[1080px] text-left text-xs">
+        <thead class="bg-surface-low text-on-surface-variant"><tr><th class="p-4">Request</th><th class="p-4">Supplier / latest document</th><th class="p-4 text-right">Ordered</th><th class="p-4 text-right">Received</th><th class="p-4 text-right">Balance</th><th class="p-4">Status</th><th class="p-4 text-right">Action</th></tr></thead>
+        <tbody>
+        @foreach($receivingRequests as $request)
+            @php($receiving = $request->receiving)
+            <tr class="border-b border-outline-variant/50 align-top last:border-0 {{ $receiving['status'] === 'partial' ? 'bg-attention/5' : '' }}">
+                <td class="p-4"><a class="font-bold text-primary hover:underline" href="{{ route('procurement.show', $request) }}">{{ $request->request_number }}</a><p class="mt-1 text-on-surface-variant">{{ $request->title }}</p><p class="mt-1 text-on-surface-variant">{{ $request->school?->name }}</p></td>
+                <td class="p-4"><strong>{{ $receiving['supplier'] ?: 'Supplier not recorded' }}</strong><p class="mt-1 text-on-surface-variant">{{ $receiving['latest_receiving_document']?->document_number ?: 'No receiving document' }}</p></td>
+                <td class="p-4 text-right font-semibold">{{ number_format($receiving['ordered_quantity'], 2) }}</td>
+                <td class="p-4 text-right font-semibold">{{ number_format($receiving['received_quantity'], 2) }}</td>
+                <td class="p-4 text-right font-bold {{ $receiving['balance_quantity'] > 0 ? 'text-error' : 'text-secondary' }}">{{ number_format($receiving['balance_quantity'], 2) }}</td>
+                <td class="p-4"><x-procurement.status-badge :label="$receiving['label']" :tone="$receiving['tone']" /></td>
+                <td class="p-4 text-right"><div class="flex justify-end gap-2"><a href="{{ route('procurement.documents', $request) }}" class="inline-flex min-h-11 items-center rounded-lg bg-primary px-3 font-bold text-white">{{ in_array($receiving['status'], ['partial', 'missing_iar', 'missing_po', 'missing_both']) ? 'Complete workflow' : 'Inspect documents' }}</a>@if($receiving['purchase_order'] && $receiving['latest_receiving_document'])<a href="{{ route('procurement.delivery-reconciliation', $request) }}" target="_blank" rel="noopener" class="inline-flex min-h-11 items-center rounded-lg border border-outline-variant px-3 font-bold text-primary">Reconcile</a>@endif</div></td>
+            </tr>
+        @endforeach
+        </tbody>
+    </table>
+</div>

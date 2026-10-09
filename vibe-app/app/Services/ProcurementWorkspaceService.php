@@ -36,7 +36,63 @@ class ProcurementWorkspaceService
             'stages' => $this->stages($request, $currentStage),
             'next_action' => $this->nextAction($currentStage, (string) $request->status),
             'documents' => $this->documentCompleteness($documents),
-            'delivery' => $this->deliverySummary($request, $documents),
+            'delivery' => $this->deliverySummary($request),
+        ];
+    }
+
+    public function receiving(ProcurementRequest $request): array
+    {
+        $documents = $request->relationLoaded('documents') ? $request->documents : collect();
+        $items = $request->relationLoaded('items') ? $request->items : collect();
+        $purchaseOrder = $documents->firstWhere('document_type', 'purchase_order');
+        $iar = $documents->firstWhere('document_type', 'inspection_acceptance_report');
+        $receivedItems = $iar?->metadata['received_items'] ?? [];
+        $poMetadata = $purchaseOrder?->metadata ?? [];
+
+        $rows = $items->map(function ($item) use ($iar, $receivedItems, $poMetadata) {
+            $ordered = (float) $item->quantity;
+            $received = $iar ? ($receivedItems[(string) $item->id] ?? $receivedItems[$item->id] ?? $ordered) : 0;
+            $received = $received === '' || $received === null ? $ordered : (float) $received;
+            $balance = max(0, $ordered - $received);
+            $unitCost = is_numeric(data_get($poMetadata, 'awarded_item_prices.'.$item->id))
+                ? (float) data_get($poMetadata, 'awarded_item_prices.'.$item->id)
+                : (float) $item->unit_price;
+
+            return [
+                'stock_no' => $item->id,
+                'description' => trim($item->name.($item->description ? ' ('.$item->description.')' : '')),
+                'unit' => $item->unit,
+                'po_quantity' => $ordered,
+                'received_quantity' => $received,
+                'balance' => $balance,
+                'unit_cost' => $unitCost,
+                'po_amount' => $ordered * $unitCost,
+                'received_amount' => $received * $unitCost,
+                'status' => $balance > 0 ? 'Partial' : 'Complete',
+            ];
+        })->values();
+
+        $status = ! $purchaseOrder && ! $iar ? 'missing_both' : (! $purchaseOrder ? 'missing_po' : (! $iar ? 'missing_iar' : ($rows->sum('balance') > 0 ? 'partial' : 'complete')));
+
+        return [
+            'rows' => $rows,
+            'ordered_quantity' => (float) $rows->sum('po_quantity'),
+            'received_quantity' => (float) $rows->sum('received_quantity'),
+            'balance_quantity' => (float) $rows->sum('balance'),
+            'total_po_amount' => (float) $rows->sum('po_amount'),
+            'total_received_amount' => (float) $rows->sum('received_amount'),
+            'status' => $status,
+            'label' => match ($status) {
+                'complete' => 'Delivery complete',
+                'partial' => 'Partial delivery',
+                'missing_po' => 'Missing PO',
+                'missing_iar' => 'Missing IAR',
+                default => 'Missing PO and IAR',
+            },
+            'tone' => match ($status) { 'complete' => 'verified', 'partial' => 'attention', default => 'neutral' },
+            'supplier' => $purchaseOrder?->supplier_or_recipient,
+            'purchase_order' => $purchaseOrder,
+            'latest_receiving_document' => $iar,
         ];
     }
 
@@ -145,38 +201,10 @@ class ProcurementWorkspaceService
         ];
     }
 
-    private function deliverySummary(ProcurementRequest $request, Collection $documents): array
+    private function deliverySummary(ProcurementRequest $request): array
     {
-        $items = $request->relationLoaded('items') ? $request->items : collect();
-        $iar = $documents->firstWhere('document_type', 'inspection_acceptance_report');
-        $ordered = (float) $items->sum(fn ($item) => (float) $item->quantity);
+        $summary = $this->receiving($request);
 
-        if (! $iar || $items->isEmpty()) {
-            return [
-                'ordered_quantity' => $ordered,
-                'received_quantity' => 0.0,
-                'balance_quantity' => $ordered,
-                'status' => 'not_started',
-                'label' => 'Not yet received',
-                'tone' => 'neutral',
-            ];
-        }
-
-        $receivedItems = $iar->metadata['received_items'] ?? [];
-        $received = (float) $items->sum(function ($item) use ($receivedItems) {
-            $quantity = $receivedItems[(string) $item->id] ?? $receivedItems[$item->id] ?? $item->quantity;
-
-            return $quantity === '' || $quantity === null ? (float) $item->quantity : (float) $quantity;
-        });
-        $balance = max(0.0, $ordered - $received);
-
-        return [
-            'ordered_quantity' => $ordered,
-            'received_quantity' => $received,
-            'balance_quantity' => $balance,
-            'status' => $balance > 0 ? 'partial' : 'complete',
-            'label' => $balance > 0 ? 'Partial delivery' : 'Delivery complete',
-            'tone' => $balance > 0 ? 'attention' : 'verified',
-        ];
+        return collect($summary)->only(['ordered_quantity', 'received_quantity', 'balance_quantity', 'status', 'label', 'tone'])->all();
     }
 }
