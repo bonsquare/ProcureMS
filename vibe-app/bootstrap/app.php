@@ -20,6 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => EnsurePermission::class,
             'subscription.writes' => EnsureSubscriptionAllowsWrites::class,
         ]);
+        // Behind a Cloudflare Tunnel the app is reached over plain http from this computer; trust the forwarded
+        // headers so links are https, cookies are secure and the visitor's own address is recorded.
+        $middleware->trustProxies(at: '*');
         $middleware->appendToGroup('web', EnsureAccountActive::class);
         $middleware->appendToGroup('web', EnsureStationConfirmed::class);
     })

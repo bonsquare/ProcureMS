@@ -366,3 +366,18 @@ php -d zend_extension=opcache -d opcache.enable_cli=1 -d "upload_tmp_dir=<repo>/
   - the SIP's source of fund names several funds, so the AIP activity's source of fund and account code are left empty (the SIP text is kept in the activity's remarks). Choose them on the AIP page before approving; the AIP cannot be approved until then.
 - It never replaces an AIP: if the school already has an AIP for that fiscal year it asks you to delete that one first. After creation the AIP is independent of the SIP.
 - The AIP list shows where it came from ("from SIP 2026-2028 · Year 1"), stored in `aips.sip_start_year` and `aips.sip_year_no`. Tests: `tests/Feature/SipToAipTest.php`.
+
+## 15. Putting the app online with a Cloudflare Tunnel
+
+The app runs on this computer; a Cloudflare Tunnel gives it an https address on a domain that is on Cloudflare. It is online only while this computer, the local server and the tunnel are running. Cloudflare does not run PHP, so for an always-on system the app must move to a server (Cloudflare then provides the domain, DNS and https in front of it).
+
+1. The domain is **Active** in the Cloudflare dashboard (its nameservers point to Cloudflare).
+2. Install the tunnel program once: `winget install --id Cloudflare.cloudflared`.
+3. Sign in: `cloudflared tunnel login` (a browser opens; choose the domain). Create the tunnel and its address:
+   - `cloudflared tunnel create procurems`
+   - `cloudflared tunnel route dns procurems procure.<your-domain>`
+4. Start the app server (see section 8), then the tunnel: `cloudflared tunnel run --url http://127.0.0.1:8000 procurems`.
+5. In `.env` set `APP_URL=https://procure.<your-domain>`, `APP_DEBUG=false` and `SESSION_SECURE_COOKIE=true`, then run `php artisan config:clear`. **Never leave `APP_DEBUG=true` on a public address**: it shows code and settings on every error.
+6. The app trusts the forwarded headers (`bootstrap/app.php`, `trustProxies`), so links are https and the visitor's own address is recorded. Tests: `tests/Feature/BehindCloudflareTest.php`.
+
+Good practice once it is public: protect the address with Cloudflare Access (an email one-time code) if only your own users should reach it; the registration page is public by design, so schools can pre-register.
