@@ -369,11 +369,15 @@ class HomeController extends Controller
 
     public function suppliers()
     {
+        $search = trim((string) request('search'));
+        $status = trim((string) request('status'));
         return view('suppliers', [
             'suppliers' => Supplier::when(! $this->isMasterUser(), fn ($query) => $query->whereIn('school_id', $this->scopedSchoolIds()))
-                ->latest('business_name')
-                ->get(),
+                ->when($search !== '', fn ($query) => $query->where(fn ($nested) => $nested->where('business_name', 'like', "%{$search}%")->orWhere('contact_person', 'like', "%{$search}%")))
+                ->when($status !== '', fn ($query) => $query->where('status', $status))
+                ->orderBy('business_name')->paginate(20)->withQueryString(),
             'activeProcurementArea' => 'suppliers',
+            'filtersApplied' => $search !== '' || $status !== '',
         ]);
     }
 
