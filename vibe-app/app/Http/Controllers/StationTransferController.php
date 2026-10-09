@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\School;
 use App\Models\StationTransferRequest;
+use App\Models\User;
 use App\Services\StationTransferService;
 use Illuminate\Http\Request;
 
@@ -13,18 +14,22 @@ class StationTransferController extends Controller
 
     public function index(Request $request)
     {
-        $user = $request->user();
-        abort_if($user->role === 'master_user', 403);
+        abort_if($request->user()->role === 'master_user', 403);
 
-        return view('station-transfer', [
-            'activeNavRoute' => 'school-settings',
+        return redirect()->route('school-settings', ['ui' => 'staff-save-v7', 'tab' => 'transfer']);
+    }
+
+    /** What the Station transfer tab in School Settings shows for a school user. */
+    public function pageData(User $user): array
+    {
+        return [
             'requests' => StationTransferRequest::with(['fromSchool', 'toSchool', 'decider'])->where('user_id', $user->id)->latest('id')->get(),
             // One user manages one school, so only vacant schools can be chosen.
-            'schools' => School::withoutGlobalScopes()->where('status', 'active')->where('id', '!=', $user->school_id)
+            'vacantSchools' => School::withoutGlobalScopes()->where('status', 'active')->where('id', '!=', $user->school_id)
                 ->whereNotExists(fn ($query) => $query->selectRaw('1')->from('users')->whereColumn('users.school_id', 'schools.id')->where(fn ($q) => $q->whereNull('users.status')->orWhere('users.status', 'active')))
                 ->orderBy('name')->get(['id', 'name', 'division', 'district']),
             'station' => School::withoutGlobalScopes()->find($user->school_id),
-        ]);
+        ];
     }
 
     public function store(Request $request)
@@ -50,14 +55,14 @@ class StationTransferController extends Controller
             'proposed_school' => $registered ? null : $data['new_school'],
         ]);
 
-        return redirect()->route('station-transfer')->with('success', 'Transfer request sent to the master user.');
+        return redirect()->to(route('school-settings', ['ui' => 'staff-save-v7', 'tab' => 'transfer']))->with('success', 'Transfer request sent to the master user.');
     }
 
     public function cancel(Request $request, StationTransferRequest $transfer)
     {
         $this->transfers->cancel($transfer, $request->user());
 
-        return redirect()->route('station-transfer')->with('success', 'Transfer request cancelled.');
+        return redirect()->to(route('school-settings', ['ui' => 'staff-save-v7', 'tab' => 'transfer']))->with('success', 'Transfer request cancelled.');
     }
 
     public function confirmShow(Request $request)

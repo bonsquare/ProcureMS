@@ -15,6 +15,9 @@
         'users' => ['System Users', 'manage_accounts'],
         'staff' => ['Employees & Roles', 'badge'],
     ];
+    if (! $isMasterUser) {
+        $tabs['transfer'] = ['Station Transfer', 'swap_horiz'];
+    }
     $stats = [
         ['Profile complete', $profileCompleteness.'%', $profileCompleteness >= 80 ? 'Ready for official documents' : 'Fill in the missing details', 'task_alt', $profileCompleteness >= 80 ? 'green' : 'amber', $profileCompleteness],
         ['System users', $systemUsers->count(), $activeUsers.' active', 'manage_accounts', 'blue', null],
@@ -78,6 +81,8 @@
     @include('partials.settings.users')
 @elseif($tab === 'staff')
     @include('partials.settings.staff')
+@elseif($tab === 'transfer')
+    @include('partials.settings.transfer')
 @else
     @include('partials.settings.info')
 @endif

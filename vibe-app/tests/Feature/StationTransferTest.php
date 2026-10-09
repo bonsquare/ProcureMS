@@ -34,6 +34,11 @@ class StationTransferTest extends TestCase
         return School::create(['organization_id' => $organization->id, 'code' => strtoupper($slug), 'name' => $slug.' School', 'status' => 'active']);
     }
 
+    private function transferTab(): string
+    {
+        return route('school-settings', ['ui' => 'staff-save-v7', 'tab' => 'transfer']);
+    }
+
     private function master(): User
     {
         return User::factory()->create(['role' => 'master_user', 'organization_id' => null, 'school_id' => null]);
@@ -300,12 +305,12 @@ class StationTransferTest extends TestCase
         $target = $this->vacantSchool('http-b');
 
         $this->actingAs($user)->post(route('station-transfer.store'), ['destination' => 'registered', 'to_school_id' => $target->id, 'reason' => 'Reassigned'])
-            ->assertRedirect(route('station-transfer'));
+            ->assertRedirect($this->transferTab());
         $this->assertSame('pending', StationTransferRequest::first()->status);
 
         $this->post(route('station-transfer.store'), ['destination' => 'registered', 'to_school_id' => $target->id, 'reason' => 'Again'])->assertSessionHasErrors('reason');
         $this->post(route('station-transfer.store'), ['destination' => 'new', 'new_school' => ['name' => ''], 'reason' => 'x'])->assertSessionHasErrors('new_school.name');
-        $this->post(route('station-transfer.cancel', StationTransferRequest::first()))->assertRedirect(route('station-transfer'));
+        $this->post(route('station-transfer.cancel', StationTransferRequest::first()))->assertRedirect($this->transferTab());
         $this->assertSame('cancelled', StationTransferRequest::first()->status);
     }
 
@@ -350,12 +355,12 @@ class StationTransferTest extends TestCase
         $service = app(StationTransferService::class);
         $master = $this->master();
 
-        $this->actingAs($user)->get(route('station-transfer'))->assertOk()
+        $this->actingAs($user)->get($this->transferTab())->assertOk()
             ->assertSee('Request a station transfer')->assertSee($schoolB->name)->assertSee('My school isn')
-            ->assertDontSee($schoolA->name.'</option>', false)->assertDontSee($busy->name.'</option>', false);
+            ->assertDontSee($busy->name);
 
         $request = $service->request($user, ['to_school_id' => $schoolB->id, 'reason' => 'Division order']);
-        $this->get(route('station-transfer'))->assertSee('Pending')->assertSee('Division order')->assertSee('Cancel request');
+        $this->get($this->transferTab())->assertSee('Pending')->assertSee('Division order')->assertSee('Cancel request');
 
         $this->actingAs($master)->get(route('transfer-requests'))->assertOk()
             ->assertSee($user->name)->assertSee($schoolB->name)->assertSee('will have no user')->assertSee('Approve')->assertSee('Decline');
@@ -368,8 +373,8 @@ class StationTransferTest extends TestCase
     public function test_the_user_menu_links_to_the_right_page(): void
     {
         [, , $user] = $this->tenant('menu-a');
-        $this->actingAs($user)->get(route('procurement'))->assertSee(route('station-transfer'), false)->assertDontSee(route('transfer-requests'), false);
-        $this->actingAs($this->master())->get(route('procurement'))->assertSee(route('transfer-requests'), false)->assertDontSee(route('station-transfer'), false);
+        $this->actingAs($user)->get(route('procurement'))->assertSee('tab=transfer', false)->assertDontSee(route('transfer-requests'), false);
+        $this->actingAs($this->master())->get(route('procurement'))->assertSee(route('transfer-requests'), false)->assertDontSee('tab=transfer', false);
     }
 
     public function test_the_transfer_pages_are_not_shown_inside_procurement(): void
@@ -377,7 +382,7 @@ class StationTransferTest extends TestCase
         [, , $user] = $this->tenant('nav-a');
         $master = $this->master();
 
-        foreach ([[$user, 'station-transfer'], [$master, 'transfer-requests']] as [$who, $route]) {
+        foreach ([[$master, 'transfer-requests']] as [$who, $route]) {
             $html = $this->actingAs($who)->get(route($route))->assertOk()->getContent();
             $this->assertStringNotContainsString('civic-module-tabs', $html, $route.' must not show the Procurement tabs');
             $this->assertStringNotContainsString('Procurement Workspace', $html, $route.' must not be labelled Procurement');

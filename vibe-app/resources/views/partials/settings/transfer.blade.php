@@ -1,12 +1,7 @@
-@extends('layouts.procurement')
-@section('title', 'Station transfer') @section('page-title', 'Station transfer')
-@section('workspace-label', 'Account') @section('hide-module-tabs', '1')
-@section('content')
 @php $field = 'mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm font-normal outline-none focus:border-action focus:ring-2 focus:ring-action/20'; $tones = ['pending' => 'bg-amber-100 text-amber-800', 'approved' => 'bg-secondary/10 text-secondary', 'declined' => 'bg-error/10 text-error', 'cancelled' => 'bg-surface-high text-on-surface-variant']; @endphp
-<header class="mb-6">
-    <p class="text-[11px] font-bold uppercase tracking-[.14em] text-action">Official Station</p>
-    <h1 class="mt-2 text-3xl font-bold">Station transfer</h1>
-    <p class="mt-2 text-sm text-on-surface-variant">Your current station is <strong>{{ $station?->name ?? '—' }}</strong>. If you are reassigned, ask the master user to move you. You keep your account, username, role and subscription; you will work in the new school's data and the school you leave keeps its own.</p>
+<header class="mb-4">
+    <h2 class="text-lg font-bold">Station transfer</h2>
+    <p class="mt-1 text-sm text-on-surface-variant">Your current station is <strong>{{ $station?->name ?? '—' }}</strong>. If you are reassigned, ask the master user to move you. You keep your account, username, role and subscription; you will work in the new school's data and the school you leave keeps its own.</p>
 </header>
 <div class="grid items-start gap-5 xl:grid-cols-[1fr_360px]">
     <section class="overflow-hidden rounded-xl border border-outline-variant/60 bg-white">
@@ -35,7 +30,7 @@
         <form method="POST" action="{{ route('station-transfer.store') }}" class="mt-3 space-y-3 text-xs font-bold" id="transfer-form">
             @csrf
             <label class="block">Destination<select name="destination" id="transfer-destination" class="{{ $field }}"><option value="registered" @selected(old('destination', 'registered') === 'registered')>A registered school</option><option value="new" @selected(old('destination') === 'new')>My school isn't listed</option></select></label>
-            <label class="block" data-when="registered">School <span class="font-normal text-on-surface-variant">(vacant schools only)</span><select name="to_school_id" class="{{ $field }}"><option value="">Choose a school</option>@foreach($schools as $school)<option value="{{ $school->id }}" @selected((int) old('to_school_id') === $school->id)>{{ $school->name }}</option>@endforeach</select></label>
+            <label class="block" data-when="registered">School <span class="font-normal text-on-surface-variant">(vacant schools only)</span><select name="to_school_id" class="{{ $field }}"><option value="">Choose a school</option>@foreach($vacantSchools as $school)<option value="{{ $school->id }}" @selected((int) old('to_school_id') === $school->id)>{{ $school->name }}</option>@endforeach</select></label>
             <div class="space-y-3" data-when="new">
                 <label class="block">School name<input name="new_school[name]" value="{{ old('new_school.name') }}" class="{{ $field }}"></label>
                 <label class="block">School type<input name="new_school[school_type]" value="{{ old('new_school.school_type') }}" class="{{ $field }}"></label>
@@ -57,4 +52,3 @@
         select.addEventListener('change', sync); sync();
     })();
 </script>
-@endsection

@@ -1893,7 +1893,7 @@ class HomeController extends Controller
 
         return response()->view('school-settings', [
             'agency' => $agency,
-            'tab' => in_array(request('tab'), ['info', 'users', 'staff'], true) ? request('tab') : 'info',
+            'tab' => in_array(request('tab'), $isMasterUser ? ['info', 'users', 'staff'] : ['info', 'users', 'staff', 'transfer'], true) ? request('tab') : 'info',
             'systemUsers' => $systemUsers,
             'roleCatalog' => $roleCatalog,
             'roleGroups' => SchoolStaff::ROLE_GROUPS,
@@ -1901,6 +1901,7 @@ class HomeController extends Controller
             'profileCompleteness' => (int) round($profileChecks->filter(fn ($value) => filled($value))->count() / max(1, $profileChecks->count()) * 100),
             'logoCount' => collect([$agency->department_logo_path, $agency->division_logo_path, $selectedSchool?->logo_path])->filter()->count(),
             'activeNavRoute' => 'school-settings',
+            ...(request('tab') === 'transfer' && ! $isMasterUser ? app(StationTransferController::class)->pageData(request()->user()) : []),
             'schools' => $schools,
             'selectedSchool' => $selectedSchool,
             'selectedOrganization' => $selectedOrganization,
