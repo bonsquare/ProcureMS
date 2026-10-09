@@ -18,6 +18,7 @@ When a user asks to transfer to a school that **already has an active user**, th
 | End of handover | The previous (destination) user is set inactive, reason "Transferred", and signed out. |
 | Arriving user's old school | Becomes vacant at confirmation (no change from today). |
 | Vacant destination | No review, no handover; master approves directly (today's behavior). |
+| No answer from the destination | Nothing happens. The request stays pending: no expiry, no automatic decision, and the master cannot approve it without the destination's acceptance. The requester can cancel it. |
 | Approval after the clock ran out | The previous user is set inactive immediately at approval (no overlap). |
 
 ## Rules this changes
@@ -52,6 +53,7 @@ The "destination must have no active user" rule becomes: the destination must ha
 - Only the destination's reviewer can accept/decline; a declined or cancelled request cannot be accepted.
 - Approval is refused if the review is not `accepted`/`not_required`, or if the destination now has an active user other than the reviewer.
 - If the reviewer became inactive before approval, the school is treated as vacant and the master can approve.
+- A pending review never expires and is never decided automatically.
 - Ending a handover twice does nothing.
 
 ## Testing
