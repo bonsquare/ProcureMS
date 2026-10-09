@@ -265,6 +265,7 @@ class HomeController extends Controller
             Subscription::create([
                 'organization_id' => $organization->id,
                 'school_id' => $school->id,
+                'user_id' => $systemUser->id,
                 'plan' => 'trial',
                 'billing_cycle' => 'monthly',
                 'amount' => 0,

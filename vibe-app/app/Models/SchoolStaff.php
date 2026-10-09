@@ -19,6 +19,7 @@ class SchoolStaff extends Model
         'document_role',
         'bac_role',
         'employee_no',
+        'ended_at',
     ];
 
     /** The role groups an employee can hold, each stored as a comma separated list so one person can carry several. */
@@ -37,6 +38,9 @@ class SchoolStaff extends Model
 
     protected static function booted(): void
     {
+        // Employees who left the school's station stay in the table as history but drop out of every list and role lookup.
+        static::addGlobalScope('active', fn ($query) => $query->whereNull($query->getModel()->getTable().'.ended_at'));
+
         static::created(function (self $staff) {
             if (! $staff->employee_no) {
                 $number = 'EMP-'.str_pad((string) $staff->id, 6, '0', STR_PAD_LEFT);

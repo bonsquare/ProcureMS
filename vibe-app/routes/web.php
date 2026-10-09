@@ -10,6 +10,7 @@ use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PlanningController;
 use App\Http\Controllers\SchoolSettingsController;
+use App\Http\Controllers\StationTransferController;
 use App\Http\Controllers\UnitController;
 use Illuminate\Support\Facades\Route;
 
@@ -124,4 +125,15 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::post('/school-settings/roles', [SchoolSettingsController::class, 'storeRole'])->middleware('permission:organization.settings')->name('school-settings.roles.store');
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
     Route::post('/generate', [HomeController::class, 'generate'])->name('generate');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::get('/station-transfer', [StationTransferController::class, 'index'])->name('station-transfer');
+    Route::post('/station-transfer', [StationTransferController::class, 'store'])->name('station-transfer.store');
+    Route::post('/station-transfer/{transfer}/cancel', [StationTransferController::class, 'cancel'])->name('station-transfer.cancel');
+    Route::get('/station-confirm', [StationTransferController::class, 'confirmShow'])->name('station.confirm');
+    Route::post('/station-confirm', [StationTransferController::class, 'confirmStore'])->name('station.confirm.store');
+    Route::get('/transfer-requests', [StationTransferController::class, 'queue'])->name('transfer-requests');
+    Route::post('/transfer-requests/{transfer}/approve', [StationTransferController::class, 'approve'])->name('transfer-requests.approve');
+    Route::post('/transfer-requests/{transfer}/decline', [StationTransferController::class, 'decline'])->name('transfer-requests.decline');
 });
