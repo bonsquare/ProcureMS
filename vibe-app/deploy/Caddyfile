@@ -1,0 +1,13 @@
+{
+	admin off
+	frankenphp
+	auto_https off
+	order php_server before file_server
+}
+
+# Railway terminates https; the container speaks plain http on $PORT.
+:{$PORT:8080} {
+	root * /app/public
+	encode zstd gzip
+	php_server
+}

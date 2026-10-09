@@ -381,3 +381,15 @@ The app runs on this computer; a Cloudflare Tunnel gives it an https address on 
 6. The app trusts the forwarded headers (`bootstrap/app.php`, `trustProxies`), so links are https and the visitor's own address is recorded. Tests: `tests/Feature/BehindCloudflareTest.php`.
 
 Good practice once it is public: protect the address with Cloudflare Access (an email one-time code) if only your own users should reach it; the registration page is public by design, so schools can pre-register.
+
+## 16. Deploying on Railway (always online)
+
+Files: `Dockerfile` (PHP 8.4 with FrankenPHP), `deploy/Caddyfile`, `deploy/php.ini`, `deploy/entrypoint.sh`, `.dockerignore`, `railway.json`. Run from the `vibe-app` folder (the service root directory is `vibe-app`).
+
+- **Database and files:** SQLite on a Railway **volume mounted at `/data`** (`DB_DATABASE=/data/database.sqlite`); uploaded logos live in `/data/public` (linked into `storage/app/public`). Without the volume the data is lost at every deploy; the container prints a warning if `/data` is not mounted. One replica only (SQLite).
+- **Start-up** (`entrypoint.sh`): prepare the volume, `migrate --force`, cache config, routes and views, run `schedule:work` (the daily transfer jobs) in the background, then the web server on `$PORT`. Health check: `/up`.
+- **Variables to set on the service:** `APP_KEY` (from `php artisan key:generate --show`), `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://<the address>`, `DB_CONNECTION=sqlite`, `DB_DATABASE=/data/database.sqlite`, `SESSION_DRIVER=database`, `CACHE_STORE=database`, `SESSION_SECURE_COOKIE=true`, `LOG_CHANNEL=stderr`.
+- **First master user:** `php artisan master:create you@example.com --name="Your Name"` prints a strong password once. Do **not** run `DatabaseSeeder` on a public server: it creates demo accounts with the password `password`.
+- **Domain:** add the address under the service's Networking settings; for `celsys.trade` add a CNAME in Cloudflare to the target Railway shows (and remove the tunnel record of the same name first).
+- **Updates:** deploy again with `railway up` from `vibe-app`, or connect the GitHub repository with the root directory set to `vibe-app` for automatic deploys.
+- Tests: `tests/Feature/CreateMasterUserTest.php`.
