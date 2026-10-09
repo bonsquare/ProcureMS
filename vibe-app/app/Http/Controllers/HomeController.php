@@ -324,20 +324,29 @@ class HomeController extends Controller
 
     public function procurementDocumentIndex()
     {
+        $type = trim((string) request('type'));
+        $status = trim((string) request('status'));
+        $requestSearch = trim((string) request('request'));
+        $schoolId = request('school_id');
         $documents = ProcurementDocument::with(['procurementRequest.school', 'creator'])
             ->whereHas('procurementRequest', fn ($query) => $query->whereIn('school_id', $this->scopedSchoolIds()))
+            ->when($type !== '', fn ($query) => $query->where('document_type', $type))
+            ->when($status !== '', fn ($query) => $query->where('status', $status))
+            ->when($requestSearch !== '', fn ($query) => $query->whereHas('procurementRequest', fn ($requestQuery) => $requestQuery
+                ->where(fn ($nested) => $nested->where('request_number', 'like', "%{$requestSearch}%")->orWhere('title', 'like', "%{$requestSearch}%"))))
+            ->when($this->isMasterUser() && $schoolId, fn ($query) => $query->whereHas('procurementRequest', fn ($requestQuery) => $requestQuery->where('school_id', $schoolId)))
             ->latest('document_date')
             ->paginate(20)
             ->withQueryString();
 
-        return view('procurement', [
-            'requests' => $this->procurementRequestRows($documents->getCollection()->pluck('procurementRequest')->filter()->unique('id')->values()),
+        return view('procurement-documents-index', [
             'documents' => $documents,
+            'documentTypes' => $this->procurementDocumentTypes(),
             'isMasterUser' => $this->isMasterUser(),
             'currentSchoolName' => $this->isMasterUser() ? null : request()->user()?->school?->name,
-            'procurementMetrics' => ['total' => $documents->total(), 'pending' => 0, 'forCanvass' => 0, 'completed' => 0, 'completedAmount' => 0],
             'activeProcurementArea' => 'documents',
-            'attentionRequests' => collect(), 'recentRequests' => collect(),
+            'schools' => $this->isMasterUser() ? School::where('status', 'active')->orderBy('name')->get() : collect(),
+            'filtersApplied' => $type !== '' || $status !== '' || $requestSearch !== '' || ($this->isMasterUser() && $schoolId),
         ]);
     }
 
@@ -745,7 +754,7 @@ class HomeController extends Controller
         ]);
     }
 
-    public function procurementDocuments(ProcurementRequest $procurementRequest)
+    public function procurementDocuments(ProcurementRequest $procurementRequest, ProcurementWorkspaceService $workspaceService)
     {
         $this->authorizeProcurementAccess($procurementRequest);
 
@@ -774,6 +783,8 @@ class HomeController extends Controller
             'nextDocumentNumbers' => collect($this->procurementDocumentTypes())->mapWithKeys(fn ($definition, $type) => [$type => $this->nextOfficialDocumentNumber($type, $definition['prefix'], false, (int) $procurementRequest->organization_id)]),
             'schoolStaff' => $schoolStaff,
             'inspectionOfficerName' => $inspectionOfficer?->name ?? '',
+            'workspace' => $workspaceService->present($procurementRequest),
+            'activeProcurementArea' => 'documents',
         ]);
     }
 

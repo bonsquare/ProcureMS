@@ -1,20 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Procurement Documents · {{ $procurementRequest->request_number }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config={theme:{extend:{colors:{surface:'#faf8ff','surface-low':'#f4f3fa','surface-container':'#eeedf4',primary:'#00236f','primary-container':'#1e3a8a','on-surface':'#1a1b21','on-surface-variant':'#444651',secondary:'#006c4a','outline-variant':'#c5c5d3','error':'#ba1a1a'},fontFamily:{inter:['Inter','sans-serif']}}}};</script>
-    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet"><link rel="stylesheet" href="{{ asset('css/app.css') }}">
-@include('partials.input-fixes')
-</head>
-<body class="bg-surface font-inter text-on-surface antialiased">
-<header class="sticky top-0 z-40 border-b border-outline-variant/30 bg-white/95 backdrop-blur"><div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6"><div><p class="text-xs font-semibold uppercase tracking-wider text-primary">Procurement Document Workflow</p><h1 class="mt-1 text-xl font-semibold">{{ $procurementRequest->request_number }}</h1></div><div class="flex gap-2"><a href="{{ route('procurement') }}" class="rounded border border-outline-variant/50 px-3 py-2 text-xs font-semibold hover:border-primary hover:text-primary">Back to Procurement Request</a></div></div></header>
-<main class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+@extends('layouts.procurement')
+@section('title', 'Documents · '.$procurementRequest->request_number)
+@section('page-title', $procurementRequest->request_number.' Documents')
+@section('header-actions')<a href="{{ route('procurement.show', ['procurementRequest' => $procurementRequest, 'section' => 'documents']) }}" class="inline-flex min-h-11 items-center rounded-lg border border-outline-variant px-3 text-xs font-bold text-primary">Request workspace</a>@endsection
+@section('content')
     <section class="mb-6 rounded border border-outline-variant/30 bg-white p-5"><div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><div><p class="text-xs font-semibold uppercase text-on-surface-variant">School</p><p class="mt-1 text-sm font-semibold">{{ $procurementRequest->school?->name }}</p></div><div><p class="text-xs font-semibold uppercase text-on-surface-variant">Purpose</p><p class="mt-1 text-sm font-semibold">{{ $procurementRequest->title }}</p></div><div><p class="text-xs font-semibold uppercase text-on-surface-variant">Amount</p><p class="mt-1 text-sm font-semibold">₱{{ number_format((float) $procurementRequest->amount, 2) }}</p></div><div><p class="text-xs font-semibold uppercase text-on-surface-variant">Status</p><p class="mt-1 text-sm font-semibold capitalize">{{ str($procurementRequest->status)->replace('_', ' ') }}</p></div></div></section>
     @if(session('success'))<div class="mb-5 rounded border border-secondary/30 bg-secondary/10 px-4 py-3 text-sm font-semibold text-secondary">{{ session('success') }}</div>@endif
     @if($errors->any())<div class="mb-5 rounded border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">{{ $errors->first() }}</div>@endif
-    <div class="mb-5"><h2 class="text-2xl font-semibold">Procurement Documents</h2><p class="mt-1 text-sm text-on-surface-variant">Prepare and print each document as the procurement progresses. All records remain linked to this purchase request.</p></div>
+    <div class="mb-5"><h1 class="text-2xl font-semibold">Procurement Documents</h1><p class="mt-1 text-sm text-on-surface-variant">Prepare and print each document as the procurement progresses. All records remain linked to this purchase request.</p></div>
+    <section class="mb-6 rounded-xl border border-outline-variant/60 bg-white p-5" aria-labelledby="document-checklist-title">
+        <div class="flex flex-wrap items-center justify-between gap-3"><div><h2 id="document-checklist-title" class="font-bold">Document checklist</h2><p class="mt-1 text-xs text-on-surface-variant">{{ $workspace['documents']['completed'] }} of {{ $workspace['documents']['total'] }} required workflow documents prepared.</p></div><x-procurement.status-badge :label="$workspace['documents']['is_complete'] ? 'Complete' : 'Missing requirement'" :tone="$workspace['documents']['is_complete'] ? 'verified' : 'attention'" /></div>
+        @if(!$workspace['documents']['is_complete'])<ul class="mt-4 grid gap-2 text-xs sm:grid-cols-2 lg:grid-cols-3">@foreach($workspace['documents']['missing'] as $missing)<li class="rounded-lg bg-surface-low px-3 py-2"><span class="font-bold">Missing requirement:</span> {{ $missing['label'] }}</li>@endforeach</ul>@endif
+    </section>
     @php
         $existingDocuments = $procurementRequest->documents->keyBy('document_type');
         $comparisonItems = $procurementRequest->items->map(fn ($item) => ['id' => $item->id, 'name' => $item->name, 'quantity' => (float) $item->quantity, 'unit' => $item->unit, 'unit_price' => (float) $item->unit_price, 'total' => (float) $item->total])->values();
@@ -48,8 +44,7 @@
             @endif
         </div>
     </section>
-</main>
-<div id="document-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4"><div class="max-h-[94vh] w-full max-w-5xl overflow-y-auto rounded bg-white shadow-2xl"><div class="sticky top-0 z-10 flex items-center justify-between border-b border-outline-variant/30 bg-white px-5 py-4"><div><p class="text-xs font-semibold uppercase tracking-wider text-primary">Prepare Official Document</p><h2 id="document-modal-title" class="mt-1 text-lg font-semibold"></h2></div><button id="close-document-modal" type="button" class="rounded p-2 hover:bg-primary hover:text-white"><span class="material-symbols-outlined">close</span></button></div>
+<div id="document-modal" role="dialog" aria-modal="true" aria-labelledby="document-modal-title" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4"><div class="max-h-[94vh] w-full max-w-5xl overflow-y-auto rounded bg-white shadow-2xl"><div class="sticky top-0 z-10 flex items-center justify-between border-b border-outline-variant/30 bg-white px-5 py-4"><div><p class="text-xs font-semibold uppercase tracking-wider text-primary">Prepare Official Document</p><h2 id="document-modal-title" class="mt-1 text-lg font-semibold"></h2></div><button id="close-document-modal" type="button" aria-label="Close document form" class="rounded p-2 hover:bg-primary hover:text-white"><span class="material-symbols-outlined">close</span></button></div>
     <form id="document-form" method="POST" action="{{ route('procurement.documents.store', $procurementRequest) }}" class="grid grid-cols-1 gap-4 p-5 md:grid-cols-2">@csrf<input id="document-type" type="hidden" name="document_type">
         <label id="document-date-field" class="block text-xs font-semibold text-on-surface-variant">Document Date<input id="document-date" type="date" name="document_date" required value="{{ now()->format('Y-m-d') }}" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
         <label data-non-rfq data-supplier-field data-hide-for-po data-hide-for-iar data-hide-for-ntp class="block text-xs font-semibold text-on-surface-variant">Supplier / Recipient / Custodian<input id="document-recipient" name="supplier_or_recipient" list="supplier-manager-list" placeholder="Select or enter the applicable name" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
@@ -291,8 +286,10 @@
         document.querySelectorAll('[data-bidder-price]').forEach((field) => { totals[Number(field.dataset.bidderIndex)] += (Number(field.value) || 0) * Number(field.dataset.quantity); });
         document.getElementById('bidder-total-row').innerHTML = `<tr class="bg-white font-semibold"><td colspan="3" class="border-t-2 border-primary/30 px-2 py-3 text-right text-xs">Total quotation</td>${totals.map((total) => `<td class="border-t-2 border-primary/30 px-2 py-3 text-right text-xs text-primary">₱${total.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>`).join('')}</tr>`;
     };
-    const closeModal = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); };
+    let modalTrigger = null;
+    const closeModal = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); modalTrigger?.focus(); };
     document.querySelectorAll('[data-document-type]').forEach((button) => button.addEventListener('click', () => {
+        modalTrigger = button;
         const selectedDocumentType = button.dataset.documentType;
         document.getElementById('document-type').value = selectedDocumentType;
         document.getElementById('document-modal-title').textContent = button.dataset.documentLabel;
@@ -473,6 +470,7 @@
         activeBidders = (metadata.bidders?.length ? metadata.bidders : legacyBidders(metadata)).map(normalizeBidderPrices);
         renderBidderComparison(!isAbstract);
         modal.classList.remove('hidden'); modal.classList.add('flex');
+        document.getElementById('close-document-modal').focus();
     }));
     document.getElementById('add-bidder').addEventListener('click', () => { activeBidders = readActiveBidders(); activeBidders.push({name: '', prices: {}}); renderBidderComparison(false); });
     document.getElementById('add-iars-staff').addEventListener('click', () => { iarsAssignments = readIarsAssignments(); iarsAssignments.push({staff_id:'',items:{}}); renderIarsAssignments(); });
@@ -499,6 +497,14 @@
     document.getElementById('close-document-modal').addEventListener('click', closeModal);
     document.getElementById('cancel-document-modal').addEventListener('click', closeModal);
     modal.addEventListener('click', (event) => { if (event.target === modal) closeModal(); });
+    modal.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') return closeModal();
+        if (event.key !== 'Tab') return;
+        const focusable = [...modal.querySelectorAll('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled])')].filter(element => element.offsetParent !== null);
+        if (!focusable.length) return;
+        const first = focusable[0], last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    });
 </script>
-</body>
-</html>
+@endsection
