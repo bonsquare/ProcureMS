@@ -98,7 +98,7 @@ class StationTransferController extends Controller
         $note = $request->validate(['decision_note' => ['nullable', 'string', 'max:500']])['decision_note'] ?? null;
         $this->transfers->approve($transfer, $request->user(), $note);
 
-        return redirect()->route('transfer-requests')->with('success', 'Transfer approved. The user confirms the new station at next sign-in.');
+        return $this->afterDecision($request, $transfer)->with('success', 'Transfer approved. The user confirms the new station at next sign-in.');
     }
 
     public function decline(Request $request, StationTransferRequest $transfer)
@@ -107,6 +107,14 @@ class StationTransferController extends Controller
         $note = $request->validate(['decision_note' => ['nullable', 'string', 'max:500']])['decision_note'] ?? null;
         $this->transfers->decline($transfer, $request->user(), $note);
 
-        return redirect()->route('transfer-requests')->with('success', 'Transfer request declined.');
+        return $this->afterDecision($request, $transfer)->with('success', 'Transfer request declined.');
+    }
+
+    /** Back to the school page when the decision was made there, otherwise to the request queue. */
+    private function afterDecision(Request $request, StationTransferRequest $transfer)
+    {
+        return $request->input('back') === 'school' && $transfer->from_school_id
+            ? redirect()->route('school-management.show', $transfer->from_school_id)
+            : redirect()->route('transfer-requests');
     }
 }

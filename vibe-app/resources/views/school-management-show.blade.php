@@ -18,6 +18,29 @@
 
 <a href="{{ route('school-management') }}" class="mb-3 inline-flex items-center gap-1 text-xs font-bold text-action hover:underline"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">arrow_back</span>All schools</a>
 
+@if($transferRequests->isNotEmpty())
+    <section id="transfer" class="mb-5 overflow-hidden rounded-xl border border-amber-300 bg-white">
+        <div class="flex items-center gap-3 border-b border-amber-200 bg-amber-50 px-5 py-3">
+            <span class="grid h-9 w-9 place-items-center rounded-lg bg-white text-amber-700 shadow-sm"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">swap_horiz</span></span>
+            <div><h2 class="font-bold text-amber-900">Transfer request <span class="ml-1 rounded-full bg-amber-200 px-2 py-0.5 text-xs">{{ $transferRequests->count() }}</span></h2><p class="text-xs text-amber-900/80">Waiting for your decision.</p></div>
+        </div>
+        <ul class="divide-y divide-outline-variant/30">
+            @foreach($transferRequests as $item)
+                <li class="px-5 py-4 text-sm">
+                    <p class="font-semibold">{{ $item->user?->name }} <span class="font-normal text-on-surface-variant">· {{ $item->user?->position ?: str($item->user?->role)->replace('_', ' ')->title() }}</span></p>
+                    <p class="mt-1">{{ $item->fromSchool?->name ?? '—' }} <span class="text-on-surface-variant">→</span> <strong>{{ $item->destinationName() }}</strong>@if(! $item->to_school_id) <span class="ml-1 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold uppercase text-primary">New school</span>@endif</p>
+                    <p class="mt-1 text-xs text-on-surface-variant">Requested {{ $item->requested_at?->format('M d, Y') }} · {{ $item->reason }}</p>
+                    <p class="mt-2 rounded-lg bg-surface-low px-3 py-2 text-xs text-on-surface-variant">If approved, {{ $item->fromSchool?->name }} stays active and becomes vacant. The user keeps their role and subscription, and confirms the new station at next sign-in.</p>
+                    <div class="mt-3 flex flex-wrap items-center gap-2">
+                        <form method="POST" action="{{ route('transfer-requests.approve', $item) }}" class="flex flex-1 flex-wrap gap-2">@csrf<input type="hidden" name="back" value="school"><input name="decision_note" placeholder="Note (optional)" class="min-w-[180px] flex-1 rounded-lg border border-outline-variant bg-white px-3 py-2 text-xs outline-none focus:border-action"><button class="rounded-lg bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary-container">Approve</button></form>
+                        <form method="POST" action="{{ route('transfer-requests.decline', $item) }}">@csrf<input type="hidden" name="back" value="school"><button class="rounded-lg border border-error/40 px-4 py-2 text-xs font-bold text-error hover:bg-error/10">Decline</button></form>
+                    </div>
+                </li>
+            @endforeach
+        </ul>
+    </section>
+@endif
+
 <div class="grid items-start gap-5 xl:grid-cols-2">
     {{-- School details --}}
     <section class="overflow-hidden rounded-xl border border-outline-variant/60 bg-white">
@@ -34,7 +57,7 @@
             @endforeach
         </dl>
         <div class="flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant/30 bg-surface-low px-5 py-3">
-            <p class="max-w-md text-xs text-on-surface-variant">An inactive school cannot sign in and cannot receive a transferred user. Its records are kept.@if($pendingTransfers) <strong class="text-amber-800">{{ $pendingTransfers }} transfer request pending.</strong>@endif</p>
+            <p class="max-w-md text-xs text-on-surface-variant">An inactive school cannot sign in and cannot receive a transferred user. Its records are kept.</p>
             <form method="POST" action="{{ route('school-management.status', $school) }}" onsubmit="return confirm('{{ $schoolActive ? 'Set this school inactive? Its user will be signed out.' : 'Activate this school?' }}')">@csrf<input type="hidden" name="active" value="{{ $schoolActive ? 0 : 1 }}"><button class="rounded-lg px-4 py-2 text-xs font-bold {{ $schoolActive ? 'border border-error/40 bg-white text-error hover:bg-error/10' : 'bg-primary text-white hover:bg-primary-container' }}">{{ $schoolActive ? 'Set school inactive' : 'Activate school' }}</button></form>
         </div>
     </section>

@@ -50,7 +50,8 @@ class SchoolManagementController extends Controller
             'school' => $school->load('organization'),
             'users' => User::where('school_id', $school->id)->where('role', '!=', 'master_user')->orderBy('name')->get(),
             'reasons' => SchoolManagementService::REASONS,
-            'pendingTransfers' => StationTransferRequest::where('status', 'pending')->where('from_school_id', $school->id)->count(),
+            'transferRequests' => StationTransferRequest::with(['user', 'fromSchool', 'toSchool'])->where('status', 'pending')
+                ->where(fn ($query) => $query->where('from_school_id', $school->id)->orWhere('to_school_id', $school->id))->oldest('id')->get(),
             'activeNavRoute' => 'school-management',
         ]);
     }

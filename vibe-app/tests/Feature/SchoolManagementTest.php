@@ -202,4 +202,23 @@ class SchoolManagementTest extends TestCase
             ->assertDontSee('Hidden Employee')->assertDontSee('Employees');
         $this->get(route('school-management'))->assertDontSee('Employees');
     }
+
+    public function test_the_school_page_shows_the_pending_transfer_request_with_approve_and_decline(): void
+    {
+        [, $from, $user] = $this->tenant('leaving');
+        $to = School::create(['organization_id' => Organization::create(['name' => 'dest', 'slug' => 'dest', 'status' => 'active'])->id, 'code' => 'DEST', 'name' => 'Destination School', 'status' => 'active']);
+        $master = $this->master();
+        app(StationTransferService::class)->request($user, ['to_school_id' => $to->id, 'reason' => 'Division order 12']);
+
+        foreach ([$from, $to] as $school) {
+            $this->actingAs($master)->get(route('school-management.show', $school))->assertOk()
+                ->assertSee('Transfer request')->assertSee($user->name)->assertSee('Destination School')->assertSee('Division order 12')
+                ->assertSee('Approve')->assertSee('Decline');
+        }
+        $this->get(route('school-management'))->assertSee(route('school-management.show', $from).'#transfer', false);
+
+        $request = StationTransferRequest::first();
+        $this->post(route('transfer-requests.approve', $request), ['back' => 'school'])->assertRedirect(route('school-management.show', $from));
+        $this->assertSame($to->id, $user->fresh()->school_id);
+    }
 }
