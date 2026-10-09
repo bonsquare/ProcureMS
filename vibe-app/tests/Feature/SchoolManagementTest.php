@@ -212,7 +212,7 @@ class SchoolManagementTest extends TestCase
 
         foreach ([$from, $to] as $school) {
             $this->actingAs($master)->get(route('school-management.show', $school))->assertOk()
-                ->assertSee('Transfer request')->assertSee($user->name)->assertSee('Destination School')->assertSee('Division order 12')
+                ->assertSee('Transfer request')->assertSee('Reason for transfer')->assertSee($user->name)->assertSee('Destination School')->assertSee('Division order 12')
                 ->assertSee('Approve')->assertSee('Decline');
         }
         $this->get(route('school-management'))->assertSee(route('school-management.show', $from).'#transfer', false);

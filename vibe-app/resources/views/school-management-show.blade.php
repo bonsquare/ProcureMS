@@ -19,21 +19,42 @@
 <a href="{{ route('school-management') }}" class="mb-3 inline-flex items-center gap-1 text-xs font-bold text-action hover:underline"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">arrow_back</span>All schools</a>
 
 @if($transferRequests->isNotEmpty())
-    <section id="transfer" class="mb-5 overflow-hidden rounded-xl border border-amber-300 bg-white">
-        <div class="flex items-center gap-3 border-b border-amber-200 bg-amber-50 px-5 py-3">
-            <span class="grid h-9 w-9 place-items-center rounded-lg bg-white text-amber-700 shadow-sm"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">swap_horiz</span></span>
-            <div><h2 class="font-bold text-amber-900">Transfer request <span class="ml-1 rounded-full bg-amber-200 px-2 py-0.5 text-xs">{{ $transferRequests->count() }}</span></h2><p class="text-xs text-amber-900/80">Waiting for your decision.</p></div>
+    <section id="transfer" class="mb-5 overflow-hidden rounded-xl border-2 border-amber-300 bg-white shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-amber-200 bg-gradient-to-r from-amber-100 to-amber-50 px-5 py-3.5">
+            <div class="flex items-center gap-3">
+                <span class="grid h-10 w-10 place-items-center rounded-lg bg-white text-amber-700 shadow-sm"><span class="material-symbols-outlined text-[22px]" aria-hidden="true">swap_horiz</span></span>
+                <div><h2 class="text-base font-bold text-amber-950">Transfer request <span class="ml-1 rounded-full bg-amber-300 px-2 py-0.5 text-xs">{{ $transferRequests->count() }}</span></h2><p class="text-xs text-amber-900/80">Waiting for your decision</p></div>
+            </div>
+            <span class="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-[11px] font-bold text-amber-800 ring-1 ring-amber-300"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">hourglass_top</span>Pending</span>
         </div>
         <ul class="divide-y divide-outline-variant/30">
             @foreach($transferRequests as $item)
-                <li class="px-5 py-4 text-sm">
-                    <p class="font-semibold">{{ $item->user?->name }} <span class="font-normal text-on-surface-variant">· {{ $item->user?->position ?: str($item->user?->role)->replace('_', ' ')->title() }}</span></p>
-                    <p class="mt-1">{{ $item->fromSchool?->name ?? '—' }} <span class="text-on-surface-variant">→</span> <strong>{{ $item->destinationName() }}</strong>@if(! $item->to_school_id) <span class="ml-1 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold uppercase text-primary">New school</span>@endif</p>
-                    <p class="mt-1 text-xs text-on-surface-variant">Requested {{ $item->requested_at?->format('M d, Y') }} · {{ $item->reason }}</p>
-                    <p class="mt-2 rounded-lg bg-surface-low px-3 py-2 text-xs text-on-surface-variant">If approved, {{ $item->fromSchool?->name }} stays active and becomes vacant. The user keeps their role and subscription, and confirms the new station at next sign-in.</p>
-                    <div class="mt-3 flex flex-wrap items-center gap-2">
-                        <form method="POST" action="{{ route('transfer-requests.approve', $item) }}" class="flex flex-1 flex-wrap gap-2">@csrf<input type="hidden" name="back" value="school"><input name="decision_note" placeholder="Note (optional)" class="min-w-[180px] flex-1 rounded-lg border border-outline-variant bg-white px-3 py-2 text-xs outline-none focus:border-action"><button class="rounded-lg bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary-container">Approve</button></form>
-                        <form method="POST" action="{{ route('transfer-requests.decline', $item) }}">@csrf<input type="hidden" name="back" value="school"><button class="rounded-lg border border-error/40 px-4 py-2 text-xs font-bold text-error hover:bg-error/10">Decline</button></form>
+                @php $initials = str($item->user?->name)->explode(' ')->filter()->map(fn ($part) => mb_substr($part, 0, 1))->take(2)->implode(''); @endphp
+                <li class="space-y-4 px-5 py-5 text-sm">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <span class="grid h-10 w-10 place-items-center rounded-full bg-primary text-sm font-bold text-white">{{ $initials }}</span>
+                            <div><p class="font-bold">{{ $item->user?->name }}</p><p class="text-xs text-on-surface-variant">{{ $item->user?->position ?: str($item->user?->role)->replace('_', ' ')->title() }} · {{ str($item->user?->role)->replace('_', ' ')->title() }}</p></div>
+                        </div>
+                        <p class="text-xs text-on-surface-variant">Requested <strong class="text-on-surface">{{ $item->requested_at?->format('M d, Y') }}</strong> · {{ $item->requested_at?->diffForHumans() }}</p>
+                    </div>
+
+                    <div class="grid items-center gap-3 sm:grid-cols-[1fr_auto_1fr]">
+                        <div class="rounded-xl border border-outline-variant/60 bg-surface-low px-4 py-3"><p class="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">From</p><p class="mt-0.5 font-bold">{{ $item->fromSchool?->name ?? '—' }}</p><p class="text-xs text-on-surface-variant">{{ $item->fromSchool?->code }}</p></div>
+                        <span class="material-symbols-outlined hidden text-[26px] text-action sm:block" aria-hidden="true">arrow_forward</span>
+                        <div class="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3"><p class="text-[10px] font-bold uppercase tracking-wide text-primary">To @if(! $item->to_school_id)<span class="ml-1 rounded bg-primary px-1.5 py-0.5 text-[9px] text-white">New school</span>@endif</p><p class="mt-0.5 font-bold">{{ $item->destinationName() }}</p><p class="text-xs text-on-surface-variant">{{ $item->toSchool?->code ?? 'Will be registered on approval' }}</p></div>
+                    </div>
+
+                    <div class="rounded-xl border-l-4 border-amber-500 bg-amber-50 px-4 py-3">
+                        <p class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-amber-800"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">format_quote</span>Reason for transfer</p>
+                        <p class="mt-1 text-base font-semibold leading-snug text-amber-950">{{ $item->reason }}</p>
+                    </div>
+
+                    <p class="flex gap-2 rounded-lg bg-surface-low px-3 py-2.5 text-xs text-on-surface-variant"><span class="material-symbols-outlined text-[16px] text-action" aria-hidden="true">info</span><span>If approved, <strong>{{ $item->fromSchool?->name }}</strong> stays active and becomes vacant. The user keeps their role and subscription, and confirms the new station at next sign-in.</span></p>
+
+                    <div class="flex flex-wrap items-center gap-2 border-t border-outline-variant/30 pt-4">
+                        <form method="POST" action="{{ route('transfer-requests.approve', $item) }}" class="flex flex-1 flex-wrap gap-2">@csrf<input type="hidden" name="back" value="school"><input name="decision_note" placeholder="Note to the user (optional)" class="min-w-[200px] flex-1 rounded-lg border border-outline-variant bg-white px-3 py-2 text-xs outline-none focus:border-action"><button class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2 text-xs font-bold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">check</span>Approve</button></form>
+                        <form method="POST" action="{{ route('transfer-requests.decline', $item) }}">@csrf<input type="hidden" name="back" value="school"><button class="inline-flex items-center gap-1.5 rounded-lg border border-error/40 px-5 py-2 text-xs font-bold text-error hover:bg-error/10"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">close</span>Decline</button></form>
                     </div>
                 </li>
             @endforeach
