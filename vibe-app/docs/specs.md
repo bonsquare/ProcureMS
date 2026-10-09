@@ -225,4 +225,13 @@ php -d zend_extension=opcache -d opcache.enable_cli=1 -d "upload_tmp_dir=<repo>/
 
 - Why not `php artisan serve`: it does not pass `-d` settings to the real server, so opcache and `upload_tmp_dir` would be missing. Without `upload_tmp_dir` PHP may fail every upload with "unable to create a temporary file". `vibe-app/dev-server.php` is the router; it must `return` the framework router's result or static files (css, images) are served as HTML and the pages lose their design.
 - Opcache makes pages about three times faster (about 0.9 s down to 0.03 s per page here).
-- Tests: `php artisan test` (all pass at the time of writing: 103).
+- Tests: `php artisan test` (all pass at the time of writing: 121).
+
+## 9. Station transfer
+
+- One user manages one school (the Official Station). Users cannot add other users. The subscription is personal (`subscriptions.user_id`) and goes with the user.
+- A user asks for a transfer under the user menu, Station transfer: pick a **vacant** registered school (no active user) or "My school isn't listed" with the school's details, plus a reason. One pending request at a time; it can be cancelled while pending.
+- The master user decides under the user menu, Transfer requests (`/transfer-requests`). Approving, in one database transaction: creates the school if it is new (no subscription of its own), ends the user's old employee record (kept as history, `school_staff.ended_at`), creates a new employee record at the new school with no roles, and moves the account (`organization_id`, `school_id`). The user's role, username, name and subscription do not change. The school they leave keeps all its data and becomes vacant.
+- After approval the user must confirm the new station (`/station-confirm`) before using any other page; they can only confirm or log out. Confirmation is stored on the request (`confirmed_at`).
+- School data is never copied or moved: records are scoped by the user's organization, so changing the account is enough.
+- Tests: `tests/Feature/StationTransferTest.php`. Design and plan: `docs/superpowers/specs/2026-10-09-station-transfer-design.md`, `docs/superpowers/plans/2026-10-09-station-transfer.md`.
