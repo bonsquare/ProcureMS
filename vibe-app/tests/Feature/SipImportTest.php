@@ -95,4 +95,18 @@ class SipImportTest extends TestCase
         $this->assertLessThan(strpos($html, 'Where Learning Blooms'), strpos($html, 'Papel mo Kinabukasan Ko!'), 'Access comes before Well-Being');
         $this->assertLessThan(strpos($html, 'Renewal of Fidelity Bond'), strpos($html, 'Where Learning Blooms'), 'Well-Being comes before Enabling Mechanism');
     }
+
+    public function test_the_planning_page_guides_the_flow_and_summarises_the_sip(): void
+    {
+        $school = $this->school();
+        $school->organization->update(['fiscal_year' => 2026]);
+        $master = User::factory()->create(['role' => 'master_user', 'organization_id' => null, 'school_id' => null]);
+        $this->artisan('sip:import', ['file' => base_path(self::FILE), 'school' => 'SCH-8922'])->assertSuccessful();
+
+        $this->actingAs($master)->get(route('planning', ['school_id' => $school->id, 'year' => 2026]))->assertOk()
+            ->assertSee('Plan progress')->assertSee('Next: Create the AIP for FY 2026')->assertSee('Open AIP')
+            ->assertSee('33 programs')->assertSee('116 activities')->assertSee('₱2,261,000.00')->assertSee('₱766,000.00')->assertSee('₱802,000.00')->assertSee('₱693,000.00')
+            ->assertSee('Programs per pillar')->assertSee('Enabling Mechanism')->assertSee('Well-Being')
+            ->assertSee('Step 1 · SIP')->assertSee('Step 4 · APP · FY 2026')->assertSee('Not started');
+    }
 }

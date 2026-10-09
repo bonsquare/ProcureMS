@@ -32,26 +32,123 @@
 @if($errors->any())<div class="mb-5 rounded border border-error/30 bg-error/5 px-4 py-3 text-sm text-error">{{ $errors->first() }}</div>@endif
 
 <section id="dashboard" class="mb-6">
-    <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-        @php
-            $cards = [
-                ['sip', 'flag', 'SIP', $sipProjects->count().' program(s)', $sipProjects->sum(fn ($p) => $p->activities->count()).' activities'],
-                ['aip', 'event_note', 'AIP', $aips->count().' plan(s)', $aips->where('status', 'approved')->count().' approved'],
-                ['ppmp', 'inventory_2', 'PPMP', $ppmpPlans->count().' plan(s)', $ppmpPlans->where('status', 'approved')->count().' approved'],
-                ['app', 'fact_check', 'APP · FY '.$year, ($appPlan?->items->count() ?? 0).' item(s)', $appPlan ? ucfirst($appPlan->status).' · '.$peso($appPlan->items->sum('estimated_total_cost')) : 'Not generated yet'],
-            ];
-            if (auth()->user()->hasPermission('planning.manage')) { $cards[] = ['settings', 'tune', 'Settings', $fundSources->count().' fund source(s)', 'Fiscal year controls']; }
-        @endphp
-        @foreach($cards as $n => [$key, $icon, $title, $line, $sub])
-        <button type="button" data-tab="{{ $key }}" class="group rounded border border-outline-variant/40 bg-white p-4 text-left transition hover:border-primary hover:shadow-sm">
-            <div class="flex items-center justify-between"><span class="flex h-9 w-9 items-center justify-center rounded bg-primary/10 text-primary"><span class="material-symbols-outlined text-[20px]">{{ $icon }}</span></span>@if($key !== 'settings')<span class="text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant">Step {{ $n + 1 }}</span>@endif</div>
-            <p class="mt-3 text-sm font-semibold">{{ $title }}</p>
-            <p class="mt-1 text-lg font-semibold tracking-tight">{{ $line }}</p>
-            <p class="mt-1 text-xs text-on-surface-variant">{{ $sub }}</p>
-        </button>
-        @endforeach
+    @php
+        // One line per step of the planning flow: SIP -> AIP -> PPMP -> APP, with what exists for the selected school and year.
+        $latestSipYear = $sipProjects->max('school_year');
+        $sipNow = $sipProjects->where('school_year', $latestSipYear);
+        $sipActivities = $sipNow->flatMap->activities;
+        $sipYearTotals = [$sipActivities->sum('financial_year1'), $sipActivities->sum('financial_year2'), $sipActivities->sum('financial_year3')];
+        $sipTotal = array_sum($sipYearTotals);
+        $sipPeak = max(1, max($sipYearTotals));
+        $pillarCounts = $sipNow->groupBy(fn ($p) => $p->pillar ?: 'Unassigned')->map->count();
+        $pillarTones = ['Access' => 'bg-sky-100 text-sky-800', 'Equity' => 'bg-teal-100 text-teal-800', 'Quality' => 'bg-violet-100 text-violet-800', 'Resiliency' => 'bg-orange-100 text-orange-800', 'Well-Being' => 'bg-emerald-100 text-emerald-800', 'Enabling Mechanism' => 'bg-amber-100 text-amber-800'];
+
+        $aipsYear = $aips->where('fiscal_year', $year);
+        $aipTotal = $aipsYear->sum(fn ($a) => $a->activities->sum(fn ($activity) => $activity->total));
+        $ppmpYear = $ppmpPlans->where('fiscal_year', $year);
+        $ppmpTotal = $ppmpYear->sum(fn ($plan) => $plan->items->sum('estimated_total_cost'));
+        $appTotal = $appPlan ? $appPlan->items->sum('estimated_total_cost') : 0;
+
+        // state: done (green), current (amber: started, not approved yet), todo (grey)
+        $steps = [
+            ['sip', 'flag', 'School Improvement Plan', 'SIP', $sipNow->count().' program'.($sipNow->count() === 1 ? '' : 's'), $sipActivities->count().' activities · '.$peso($sipTotal).' over 3 years', $sipNow->isNotEmpty() ? 'done' : 'todo', $sipNow->isNotEmpty() ? 'Entered' : 'Not started'],
+            ['aip', 'event_note', 'Annual Implementation Plan', 'AIP · FY '.$year, $aipsYear->count().' plan'.($aipsYear->count() === 1 ? '' : 's'), $aipsYear->where('status', 'approved')->count().' approved · '.$peso($aipTotal), $aipsYear->where('status', 'approved')->isNotEmpty() ? 'done' : ($aipsYear->isNotEmpty() ? 'current' : 'todo'), $aipsYear->where('status', 'approved')->isNotEmpty() ? 'Approved' : ($aipsYear->isNotEmpty() ? 'Awaiting approval' : 'Not started')],
+            ['ppmp', 'inventory_2', 'Project Procurement Management Plan', 'PPMP · FY '.$year, $ppmpYear->count().' plan'.($ppmpYear->count() === 1 ? '' : 's'), $ppmpYear->where('status', 'approved')->count().' approved · '.$peso($ppmpTotal), $ppmpYear->where('status', 'approved')->isNotEmpty() ? 'done' : ($ppmpYear->isNotEmpty() ? 'current' : 'todo'), $ppmpYear->where('status', 'approved')->isNotEmpty() ? 'Approved' : ($ppmpYear->isNotEmpty() ? 'Awaiting approval' : 'Not started')],
+            ['app', 'fact_check', 'Annual Procurement Plan', 'APP · FY '.$year, ($appPlan?->items->count() ?? 0).' item'.(($appPlan?->items->count() ?? 0) === 1 ? '' : 's'), $appPlan ? $peso($appTotal) : 'Not generated yet', $appPlan?->status === 'approved' ? 'done' : ($appPlan ? 'current' : 'todo'), $appPlan?->status === 'approved' ? 'Approved' : ($appPlan ? ucfirst($appPlan->status) : 'Not started')],
+        ];
+        $doneCount = collect($steps)->where(6, 'done')->count();
+        $nextStep = collect($steps)->first(fn ($step) => $step[6] !== 'done');
+        $guidance = [
+            'sip' => ['Start with the SIP', "Enter the school's programs and their activities for the three-year plan."],
+            'aip' => $aipsYear->isNotEmpty() ? ['Approve the AIP for FY '.$year, 'Approving it creates the budget allotments the PPMP and the Purchase Requests draw from.'] : ['Create the AIP for FY '.$year, 'Turn the SIP programs into the annual plan with a budget per quarter and source of fund.'],
+            'ppmp' => $ppmpYear->isNotEmpty() ? ['Approve the PPMP for FY '.$year, 'Once approved, its items feed the Annual Procurement Plan.'] : ['Prepare the PPMP for FY '.$year, 'List the items to buy for each AIP activity, with quantity and estimated cost.'],
+            'app' => $appPlan ? ['Approve the APP for FY '.$year, 'The approved APP is the source of every Purchase Request.'] : ['Generate the APP for FY '.$year, 'Collects the approved PPMP items into the Annual Procurement Plan.'],
+        ];
+        $stateStyle = [
+            'done' => ['bg-secondary/10 text-secondary', 'check_circle', 'border-secondary/40'],
+            'current' => ['bg-amber-100 text-amber-800', 'pending', 'border-amber-300'],
+            'todo' => ['bg-surface-high text-on-surface-variant', 'radio_button_unchecked', 'border-outline-variant/50'],
+        ];
+    @endphp
+
+    {{-- Progress and the next step --}}
+    <div id="planning-hint" class="mb-4 overflow-hidden rounded-xl border border-outline-variant/40 bg-white shadow-sm">
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-3 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent px-5 py-4">
+            <div class="min-w-[220px] flex-1">
+                <p class="text-[11px] font-bold uppercase tracking-wider text-primary">{{ $selectedSchool->name }} · FY {{ $year }}</p>
+                @if($nextStep)
+                    <p class="mt-1 text-lg font-semibold tracking-tight">Next: {{ $guidance[$nextStep[0]][0] }}</p>
+                    <p class="mt-0.5 text-sm text-on-surface-variant">{{ $guidance[$nextStep[0]][1] }}</p>
+                @else
+                    <p class="mt-1 text-lg font-semibold tracking-tight text-secondary">All four plans for FY {{ $year }} are approved</p>
+                    <p class="mt-0.5 text-sm text-on-surface-variant">Raise Purchase Requests from the Annual Procurement Plan.</p>
+                @endif
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="w-44">
+                    <div class="flex items-baseline justify-between text-xs font-semibold"><span class="text-on-surface-variant">Plan progress</span><span class="text-primary">{{ $doneCount }} of 4</span></div>
+                    <div class="mt-1.5 h-2 overflow-hidden rounded-full bg-surface-high" role="progressbar" aria-valuemin="0" aria-valuemax="4" aria-valuenow="{{ $doneCount }}"><div class="h-full rounded-full bg-gradient-to-r from-primary to-secondary transition-all" style="width: {{ $doneCount * 25 }}%"></div></div>
+                </div>
+                @if($nextStep)
+                    <button type="button" data-tab="{{ $nextStep[0] }}" class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-primary-container">Open {{ strtoupper($nextStep[0]) }}<span class="material-symbols-outlined text-[16px]" aria-hidden="true">arrow_forward</span></button>
+                @else
+                    <a href="{{ route('procurement') }}" class="inline-flex items-center gap-1.5 rounded-lg bg-secondary px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:opacity-90">Go to Procurement<span class="material-symbols-outlined text-[16px]" aria-hidden="true">arrow_forward</span></a>
+                @endif
+            </div>
+        </div>
     </div>
-    <p id="planning-hint" class="mt-4 rounded border border-dashed border-outline-variant/60 bg-white px-4 py-6 text-center text-sm text-on-surface-variant">Choose a module above to view its records or add a new one. Plans flow SIP, AIP, PPMP, APP; Purchase Requests are then drawn from the APP.</p>
+
+    {{-- The flow: SIP -> AIP -> PPMP -> APP --}}
+    <ol class="grid gap-3 sm:grid-cols-2 xl:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr_auto_auto] xl:items-stretch xl:gap-2">
+        @foreach($steps as $n => [$key, $icon, $title, $short, $line, $sub, $state, $stateLabel])
+            @php [$chip, $stateIcon, $edge] = $stateStyle[$state]; @endphp
+            <li class="contents">
+                <button type="button" data-tab="{{ $key }}" aria-label="{{ $title }}: {{ $stateLabel }}" class="group flex h-full flex-col rounded-xl border-2 {{ $edge }} bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary"><span class="material-symbols-outlined text-[22px]" aria-hidden="true">{{ $icon }}</span></span>
+                        <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold {{ $chip }}"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">{{ $stateIcon }}</span>{{ $stateLabel }}</span>
+                    </div>
+                    <p class="mt-3 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Step {{ $n + 1 }} · {{ $short }}</p>
+                    <p class="mt-0.5 text-sm font-semibold leading-snug">{{ $title }}</p>
+                    <p class="mt-2 text-2xl font-semibold tracking-tight text-primary">{{ $line }}</p>
+                    <p class="mt-1 text-xs text-on-surface-variant">{{ $sub }}</p>
+                </button>
+                @if($n < 3)<span class="hidden items-center justify-center text-outline-variant xl:flex" aria-hidden="true"><span class="material-symbols-outlined text-[26px]">arrow_forward</span></span>@endif
+            </li>
+        @endforeach
+        @if(auth()->user()->hasPermission('planning.manage'))
+            <li class="contents">
+                <span class="hidden w-px bg-outline-variant/40 xl:block" aria-hidden="true"></span>
+                <button type="button" data-tab="settings" class="group flex flex-col items-start justify-between rounded-xl border-2 border-dashed border-outline-variant/60 bg-surface-low/60 p-4 text-left transition hover:border-primary hover:bg-white xl:w-36">
+                    <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-on-surface-variant ring-1 ring-outline-variant/40"><span class="material-symbols-outlined text-[22px]" aria-hidden="true">tune</span></span>
+                    <span class="mt-3"><span class="block text-sm font-semibold">Settings</span><span class="mt-0.5 block text-xs text-on-surface-variant">{{ $fundSources->count() }} fund source(s) · fiscal year</span></span>
+                </button>
+            </li>
+        @endif
+    </ol>
+
+    {{-- SIP at a glance: the three-year budget and the programs per pillar --}}
+    @if($sipNow->isNotEmpty())
+        <div class="mt-4 grid gap-3 lg:grid-cols-[1.1fr_1fr]">
+            <div class="rounded-xl border border-outline-variant/40 bg-white p-4 shadow-sm">
+                <div class="flex items-baseline justify-between"><p class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">SIP financial target · {{ $latestSipYear }}-{{ $latestSipYear + 2 }}</p><p class="text-sm font-semibold text-primary">{{ $peso($sipTotal) }}</p></div>
+                <div class="mt-3 grid grid-cols-3 gap-3">
+                    @foreach($sipYearTotals as $i => $amount)
+                        <div><div class="flex h-20 items-end rounded-lg bg-surface-low px-2"><div class="w-full rounded-t bg-gradient-to-t from-primary to-action" style="height: {{ max(6, round($amount / $sipPeak * 100)) }}%" title="{{ $peso($amount) }}"></div></div><p class="mt-1.5 text-center text-[11px] font-bold text-on-surface-variant">Year {{ $i + 1 }}<span class="block text-xs font-semibold text-on-surface">{{ $peso($amount) }}</span></p></div>
+                    @endforeach
+                </div>
+            </div>
+            <div class="rounded-xl border border-outline-variant/40 bg-white p-4 shadow-sm">
+                <p class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Programs per pillar</p>
+                <div class="mt-3 flex flex-wrap gap-2">
+                    @foreach($pillarCounts as $pillar => $count)
+                        <span class="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold {{ $pillarTones[$pillar] ?? 'bg-surface-high text-on-surface-variant' }}">{{ $pillar }}<span class="rounded-full bg-white/70 px-1.5 text-[11px]">{{ $count }}</span></span>
+                    @endforeach
+                </div>
+                <p class="mt-3 text-xs text-on-surface-variant">{{ $sipNow->count() }} programs · {{ $sipActivities->count() }} activities. Open the SIP to add, edit or print.</p>
+            </div>
+        </div>
+    @endif
 </section>
 
 <div data-panel="sip" class="hidden">
@@ -241,6 +338,7 @@
             tab.classList.toggle('border-primary', on);
             tab.classList.toggle('ring-2', on);
             tab.classList.toggle('ring-primary/30', on);
+            tab.setAttribute('aria-pressed', on ? 'true' : 'false');
         });
         hint.classList.toggle('hidden', Boolean(name));
         store.set(name);
