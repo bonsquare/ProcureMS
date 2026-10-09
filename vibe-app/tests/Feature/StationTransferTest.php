@@ -231,7 +231,7 @@ class StationTransferTest extends TestCase
 
     public function test_a_user_without_an_employee_record_can_still_be_moved(): void
     {
-        [, , $user] = $this->tenant('noemp-a');
+        [$orgA, $schoolA, $user] = $this->tenant('noemp-a');
         $schoolB = $this->vacantSchool('noemp-b');
         $master = $this->master();
         $this->actingAs($master);
@@ -241,6 +241,12 @@ class StationTransferTest extends TestCase
 
         $this->assertSame($schoolB->id, $user->fresh()->school_id);
         $this->assertSame(1, SchoolStaff::withoutGlobalScopes()->where('school_id', $schoolB->id)->where('name', $user->name)->count());
+
+        // The school they left has no employees and no user, but it stays active; it is only vacant.
+        $this->assertSame('active', $schoolA->fresh()->status);
+        $this->assertSame('active', $orgA->fresh()->status);
+        $this->actingAs($master)->get(route('school-management', ['status' => 'vacant']))->assertSee($schoolA->name);
+        $this->get(route('school-management', ['status' => 'inactive']))->assertDontSee($schoolA->name);
     }
 
     public function test_decline_and_cancel(): void
