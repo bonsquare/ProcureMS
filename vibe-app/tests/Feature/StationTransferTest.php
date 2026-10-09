@@ -293,4 +293,82 @@ class StationTransferTest extends TestCase
         $this->assertFalse($service->confirm($user->fresh()));
         $this->assertNotNull(StationTransferRequest::first()->confirmed_at);
     }
+
+    public function test_a_user_submits_a_request_over_http(): void
+    {
+        [, , $user] = $this->tenant('http-a');
+        $target = $this->vacantSchool('http-b');
+
+        $this->actingAs($user)->post(route('station-transfer.store'), ['destination' => 'registered', 'to_school_id' => $target->id, 'reason' => 'Reassigned'])
+            ->assertRedirect(route('station-transfer'));
+        $this->assertSame('pending', StationTransferRequest::first()->status);
+
+        $this->post(route('station-transfer.store'), ['destination' => 'registered', 'to_school_id' => $target->id, 'reason' => 'Again'])->assertSessionHasErrors('reason');
+        $this->post(route('station-transfer.store'), ['destination' => 'new', 'new_school' => ['name' => ''], 'reason' => 'x'])->assertSessionHasErrors('new_school.name');
+        $this->post(route('station-transfer.cancel', StationTransferRequest::first()))->assertRedirect(route('station-transfer'));
+        $this->assertSame('cancelled', StationTransferRequest::first()->status);
+    }
+
+    public function test_only_the_master_can_see_and_decide_requests(): void
+    {
+        [, , $user] = $this->tenant('perm-a');
+        $target = $this->vacantSchool('perm-b');
+        $request = app(StationTransferService::class)->request($user, ['to_school_id' => $target->id, 'reason' => 'x']);
+
+        $this->actingAs($user)->get(route('transfer-requests'))->assertForbidden();
+        $this->post(route('transfer-requests.approve', $request))->assertForbidden();
+        $this->post(route('transfer-requests.decline', $request))->assertForbidden();
+
+        $this->actingAs($this->master())->post(route('transfer-requests.approve', $request), ['decision_note' => 'ok'])->assertRedirect(route('transfer-requests'));
+        $this->assertSame($target->id, $user->fresh()->school_id);
+    }
+
+    public function test_an_unconfirmed_user_is_sent_to_the_confirmation_page_but_can_log_out(): void
+    {
+        [, , $user] = $this->tenant('mid-a');
+        $target = $this->vacantSchool('mid-b');
+        $master = $this->master();
+        $this->actingAs($master);
+        $service = app(StationTransferService::class);
+        $service->approve($service->request($user, ['to_school_id' => $target->id, 'reason' => 'x']), $master);
+
+        $this->actingAs($user->fresh());
+        $this->get(route('home'))->assertRedirect(route('station.confirm'));
+        $this->get(route('procurement'))->assertRedirect(route('station.confirm'));
+        $this->get(route('station.confirm'))->assertOk()->assertSee($target->name);
+        $this->post(route('logout'))->assertRedirect();
+
+        $this->actingAs($user->fresh())->post(route('station.confirm.store'))->assertRedirect(route('home'));
+        $this->get(route('home'))->assertOk();
+    }
+
+    public function test_the_screens_show_the_right_content(): void
+    {
+        [, $schoolA, $user] = $this->tenant('ui-a');
+        [, $busy] = $this->tenant('ui-busy');
+        $schoolB = $this->vacantSchool('ui-b');
+        $service = app(StationTransferService::class);
+        $master = $this->master();
+
+        $this->actingAs($user)->get(route('station-transfer'))->assertOk()
+            ->assertSee('Request a station transfer')->assertSee($schoolB->name)->assertSee('My school isn')
+            ->assertDontSee($schoolA->name.'</option>', false)->assertDontSee($busy->name.'</option>', false);
+
+        $request = $service->request($user, ['to_school_id' => $schoolB->id, 'reason' => 'Division order']);
+        $this->get(route('station-transfer'))->assertSee('Pending')->assertSee('Division order')->assertSee('Cancel request');
+
+        $this->actingAs($master)->get(route('transfer-requests'))->assertOk()
+            ->assertSee($user->name)->assertSee($schoolB->name)->assertSee('will have no user')->assertSee('Approve')->assertSee('Decline');
+
+        $service->approve($request, $master, 'Welcome aboard');
+        $this->actingAs($master)->get(route('transfer-requests'))->assertSee('Approved')->assertSee('Welcome aboard');
+        $this->actingAs($user->fresh())->get(route('station.confirm'))->assertOk()->assertSee('Confirm your new station')->assertSee($schoolA->name)->assertSee($schoolB->name)->assertSee('School Admin');
+    }
+
+    public function test_the_user_menu_links_to_the_right_page(): void
+    {
+        [, , $user] = $this->tenant('menu-a');
+        $this->actingAs($user)->get(route('procurement'))->assertSee(route('station-transfer'), false)->assertDontSee(route('transfer-requests'), false);
+        $this->actingAs($this->master())->get(route('procurement'))->assertSee(route('transfer-requests'), false)->assertDontSee(route('station-transfer'), false);
+    }
 }

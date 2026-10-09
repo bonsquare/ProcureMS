@@ -65,6 +65,12 @@
                         </div>
                         <a role="menuitem" href="{{ route('school-settings') }}" class="mt-1 flex items-center gap-2 rounded-lg px-3 py-2 font-semibold hover:bg-surface-low"><span class="material-symbols-outlined text-[17px]" aria-hidden="true">settings</span>School Settings</a>
                         @if($menuUser?->role === 'master_user')
+                            @php $pendingTransfers = \App\Models\StationTransferRequest::where('status', 'pending')->count(); @endphp
+                            <a role="menuitem" href="{{ route('transfer-requests') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 font-semibold hover:bg-surface-low"><span class="material-symbols-outlined text-[17px]" aria-hidden="true">swap_horiz</span>Transfer requests @if($pendingTransfers)<span class="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">{{ $pendingTransfers }}</span>@endif</a>
+                        @else
+                            <a role="menuitem" href="{{ route('station-transfer') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 font-semibold hover:bg-surface-low"><span class="material-symbols-outlined text-[17px]" aria-hidden="true">swap_horiz</span>Station transfer</a>
+                        @endif
+                        @if($menuUser?->role === 'master_user')
                             <a role="menuitem" href="{{ route('user-management') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 font-semibold hover:bg-surface-low"><span class="material-symbols-outlined text-[17px]" aria-hidden="true">manage_accounts</span>User Management</a>
                         @endif
                         <form method="POST" action="{{ route('logout') }}">@csrf<button type="submit" role="menuitem" class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left font-semibold hover:bg-error/10 hover:text-error"><span class="material-symbols-outlined text-[17px]" aria-hidden="true">logout</span>Sign out</button></form>

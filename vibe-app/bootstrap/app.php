@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsurePermission;
+use App\Http\Middleware\EnsureStationConfirmed;
 use App\Http\Middleware\EnsureSubscriptionAllowsWrites;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -18,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => EnsurePermission::class,
             'subscription.writes' => EnsureSubscriptionAllowsWrites::class,
         ]);
+        $middleware->appendToGroup('web', EnsureStationConfirmed::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
