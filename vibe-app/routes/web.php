@@ -116,7 +116,6 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::post('/school-settings/schools/{school}/approve', [HomeController::class, 'approveSchoolRegistration'])->name('school-settings.school.approve');
     Route::post('/school-settings/staff', [HomeController::class, 'updateSchoolStaff'])->middleware('permission:organization.settings')->name('school-settings.staff');
     Route::post('/school-settings/staff/add', [HomeController::class, 'addSchoolStaff'])->middleware('permission:organization.settings')->name('school-settings.staff.add');
-    Route::post('/school-settings/users', [SchoolSettingsController::class, 'storeUser'])->middleware('permission:organization.settings')->name('school-settings.users.store');
     Route::put('/school-settings/users/{user}', [SchoolSettingsController::class, 'updateUser'])->middleware('permission:organization.settings')->name('school-settings.users.update');
     Route::put('/school-settings/users/{user}/password', [SchoolSettingsController::class, 'changePassword'])->middleware('permission:organization.settings')->name('school-settings.users.password');
     Route::post('/school-settings/employees', [SchoolSettingsController::class, 'storeStaff'])->middleware('permission:organization.settings')->name('school-settings.employees.store');

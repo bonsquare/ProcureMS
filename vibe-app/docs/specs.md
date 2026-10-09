@@ -183,7 +183,7 @@ Each section is locked until **Edit** is pressed, then **Cancel** and **Save** (
 
 ### 5.2 System Users
 
-- Table: name, email, User ID and username, position, **official station (the school)**, system role, last sign-in, password date, status. Add user, Edit, Password.
+- Table: name, email, User ID and username, position, **official station (the school)**, system role, last sign-in, password date, status. Edit, Password. Users cannot be added here: one user manages one school.
 - **Full name and username never change** after the account exists (read-only on screen and ignored by the server, even for the master user).
 - **Only the master user changes a role.** A school administrator adds people as Viewer and cannot assign `school_admin`; role changes sent by a non-master are ignored. Nobody changes their own role or status.
 - Changing your own password needs the current password; an administrator can set another user's password. An inactive account cannot sign in. Sign-in accepts the email address or the username. User IDs look like `USR-000009`.

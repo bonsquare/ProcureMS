@@ -12,6 +12,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -126,18 +127,15 @@ class SchoolSettingsTest extends TestCase
         $this->get(route('school-settings', ['ui' => 'staff-save-v7', 'school_id' => $school->id, 'tab' => 'staff']))->assertOk()->assertSee('Records Custodian');
     }
 
-    public function test_system_users_can_be_added_edited_and_given_a_new_password(): void
+    public function test_system_users_can_be_edited_and_given_a_new_password(): void
     {
         [$organization, $school, $admin] = $this->tenant('settings-e');
 
-        $this->actingAs($admin)->post(route('school-settings.users.store'), [
-            'school_id' => $school->id, 'name' => 'Ana Reyes', 'username' => 'ana.reyes', 'email' => 'ana@example.com', 'position' => 'Cashier',
-            'role' => 'cashier', 'password' => 'secret-pass-1', 'password_confirmation' => 'secret-pass-1',
-        ])->assertRedirect();
-        $ana = User::where('email', 'ana@example.com')->firstOrFail();
-        $this->assertSame($school->id, $ana->school_id);
-        $this->assertSame('ana.reyes', $ana->username);
+        // Users cannot be added from School Settings: one user manages one school.
+        $this->assertFalse(Route::has('school-settings.users.store'));
+        $ana = User::factory()->create(['organization_id' => $organization->id, 'school_id' => $school->id, 'role' => 'cashier', 'username' => 'ana.reyes', 'email' => 'ana@example.com', 'name' => 'Ana Reyes']);
         $this->assertMatchesRegularExpression('/^USR-\d{6}$/', $ana->user_code);
+        $this->actingAs($admin);
 
         $this->put(route('school-settings.users.update', $ana), ['school_id' => $school->id, 'name' => 'Ana R. Reyes', 'username' => 'ana.reyes', 'email' => 'ana@example.com', 'position' => 'Senior Cashier', 'role' => 'cashier', 'status' => 'inactive'])->assertRedirect();
         $this->assertSame('inactive', $ana->fresh()->status);
@@ -148,9 +146,6 @@ class SchoolSettingsTest extends TestCase
 
         // Own password needs the current one.
         $this->put(route('school-settings.users.password', $admin), ['school_id' => $school->id, 'password' => 'another-pass-1', 'password_confirmation' => 'another-pass-1'])->assertSessionHasErrors('current_password');
-
-        // A school administrator cannot hand out the school_admin role.
-        $this->post(route('school-settings.users.store'), ['school_id' => $school->id, 'name' => 'Bo', 'username' => 'bo', 'email' => 'bo@example.com', 'role' => 'school_admin', 'password' => 'secret-pass-1', 'password_confirmation' => 'secret-pass-1'])->assertSessionHasErrors('role');
     }
 
     public function test_sign_in_accepts_a_username_and_blocks_inactive_accounts(): void
@@ -228,14 +223,10 @@ class SchoolSettingsTest extends TestCase
         $this->assertSame('fixed.name', $worker->username);
         $this->assertSame('cashier', $worker->role);
 
-        // New users added by a school administrator start as viewers whatever is posted.
-        $this->post(route('school-settings.users.store'), ['school_id' => $school->id, 'name' => 'New Hire', 'username' => 'new.hire', 'email' => 'hire@example.com', 'role' => 'approver', 'password' => 'secret-pass-1', 'password_confirmation' => 'secret-pass-1'])->assertRedirect();
-        $this->assertSame('viewer', User::where('username', 'new.hire')->value('role'));
-
         // The page says so, and shows each person's official station (the school).
         $this->get(route('school-settings', ['ui' => 'staff-save-v7', 'school_id' => $school->id, 'tab' => 'users']))->assertOk()
             ->assertSee('cannot be changed')->assertSee('master user only')->assertSee('Official station')->assertSee($school->name)
-            ->assertSee('Only the master user can change a role');
+            ->assertDontSee('Add user');
 
         // The master user does change the role, but still never the username.
         $master = User::factory()->create(['role' => 'master_user', 'organization_id' => null, 'school_id' => null]);

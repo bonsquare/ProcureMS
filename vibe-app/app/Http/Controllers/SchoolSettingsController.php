@@ -16,35 +16,6 @@ use Illuminate\Validation\Rule;
  */
 class SchoolSettingsController extends Controller
 {
-    public function storeUser(Request $request): RedirectResponse
-    {
-        $school = $this->school($request);
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:60', 'regex:/^[A-Za-z0-9._-]+$/', Rule::unique('users', 'username')],
-            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
-            'position' => ['nullable', 'string', 'max:255'],
-            'office' => ['nullable', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:50'],
-            'role' => [$request->user()->role === 'master_user' ? 'required' : 'nullable', Rule::in($this->assignableRoles($request))],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-        ]);
-        // Roles are the master user's decision; a school's own admin adds people with the least access.
-        $data['role'] = $request->user()->role === 'master_user' ? $data['role'] : 'viewer';
-
-        $user = User::create([
-            ...$data,
-            'username' => strtolower($data['username']),
-            'organization_id' => $school->organization_id,
-            'school_id' => $school->id,
-            'status' => 'active',
-            'password_changed_at' => now(),
-        ]);
-        $this->audit($school, 'created_system_user', $user);
-
-        return $this->back($school, 'users', 'System user '.$user->name.' added ('.$user->user_code.').');
-    }
-
     public function updateUser(Request $request, User $user): RedirectResponse
     {
         $school = $this->school($request, $user->school_id);

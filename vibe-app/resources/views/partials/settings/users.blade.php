@@ -8,8 +8,7 @@
 
 <section class="overflow-hidden rounded-xl border border-outline-variant/60 bg-white">
     <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/40 bg-[#eef4fa] px-5 py-3">
-        <div><h2 class="font-bold text-primary">System users</h2><p class="text-xs text-on-surface-variant">People who sign in to ProcureMS for {{ $selectedSchool->name }}.</p></div>
-        <button type="button" data-open="user-add" class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[17px]" aria-hidden="true">person_add</span>Add user</button>
+        <div><h2 class="font-bold text-primary">System users</h2><p class="text-xs text-on-surface-variant">The person who manages {{ $selectedSchool->name }}. One user manages one school.</p></div>
     </div>
     @if($systemUsers->isEmpty())
         <div class="p-10 text-center text-sm text-on-surface-variant">No system users yet.</div>
@@ -43,32 +42,6 @@
     $dialog = 'w-[min(34rem,94vw)] rounded-2xl border border-outline-variant/60 bg-white p-0 shadow-2xl backdrop:bg-black/40';
     $field = 'mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm font-normal outline-none focus:border-action focus:ring-2 focus:ring-action/20';
 @endphp
-
-{{-- Add user --}}
-<dialog id="user-add" class="{{ $dialog }}">
-    <form method="POST" action="{{ route('school-settings.users.store') }}" class="p-5">
-        @csrf
-        <input type="hidden" name="school_id" value="{{ $selectedSchool->id }}">
-        <div class="mb-4 flex items-start justify-between"><div><h3 class="text-lg font-bold">Add system user</h3><p class="text-xs text-on-surface-variant">A User ID is generated automatically.</p></div><button type="button" data-close class="rounded-lg p-1 hover:bg-surface-container" aria-label="Close"><span class="material-symbols-outlined">close</span></button></div>
-        <div class="grid gap-3 sm:grid-cols-2">
-            <label class="block text-xs font-bold sm:col-span-2">Full name<input name="name" required class="{{ $field }}"></label>
-            <label class="block text-xs font-bold">Username<input name="username" required pattern="[A-Za-z0-9._-]+" class="{{ $field }}"></label>
-            <label class="block text-xs font-bold">Email<input type="email" name="email" required class="{{ $field }}"></label>
-            <label class="block text-xs font-bold">Position<input name="position" placeholder="e.g. Administrative Officer II" class="{{ $field }}"></label>
-            <label class="block text-xs font-bold">Official station <span class="font-normal text-on-surface-variant">(the school)</span><input value="{{ $selectedSchool->name }}" readonly tabindex="-1" class="{{ $field }} bg-surface-low font-semibold text-on-surface-variant"></label>
-            <label class="block text-xs font-bold">Office / section<input name="office" class="{{ $field }}"></label>
-            <label class="block text-xs font-bold">Mobile number<input name="phone" class="{{ $field }}"></label>
-            @if($isMasterUser)
-                <label class="block text-xs font-bold">System role<select name="role" required class="{{ $field }}">@foreach($assignableRoles as $key => $label)<option value="{{ $key }}" @selected($key === 'viewer')>{{ $label }}</option>@endforeach</select></label>
-            @else
-                <p class="rounded-lg bg-surface-low px-3 py-2 text-xs text-on-surface-variant sm:col-span-2"><span class="font-bold text-on-surface">System role:</span> new users start as Viewer. Only the master user can change a role.</p>
-            @endif
-            <label class="block text-xs font-bold">Password<input type="password" name="password" required minlength="8" autocomplete="new-password" class="{{ $field }}"></label>
-            <label class="block text-xs font-bold">Confirm password<input type="password" name="password_confirmation" required minlength="8" autocomplete="new-password" class="{{ $field }}"></label>
-        </div>
-        <div class="mt-5 flex justify-end gap-2"><button type="button" data-close class="rounded-lg border border-outline-variant px-4 py-2 text-xs font-bold">Cancel</button><button class="rounded-lg bg-primary px-5 py-2 text-xs font-bold text-white">Add user</button></div>
-    </form>
-</dialog>
 
 {{-- Edit user --}}
 <dialog id="user-edit" class="{{ $dialog }}">
