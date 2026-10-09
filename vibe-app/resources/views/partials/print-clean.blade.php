@@ -23,42 +23,48 @@
     body { background: radial-gradient(1100px 360px at 50% -80px, #d3e2f2 0%, rgba(211, 226, 242, 0) 72%), #e6ebf1; }
 
     /* ---- screen toolbar: UI only, never printed ---- */
-    .official-toolbar { position: sticky; top: 0; z-index: 1000; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding: 10px 20px; color: #fff;
-        background: linear-gradient(135deg, #0b2a66 0%, #103967 55%, #1b5088 100%); border-bottom: 3px solid #369878; box-shadow: 0 6px 20px rgba(11, 42, 102, .28);
+    .official-toolbar { position: sticky; top: 0; z-index: 1000; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 18px; color: #fff;
+        background: linear-gradient(135deg, #0b2a66 0%, #103967 55%, #1b5088 100%); border-bottom: 3px solid #369878; box-shadow: 0 4px 16px rgba(11, 42, 102, .25);
         font: 13px/1.3 Inter, "Segoe UI", system-ui, -apple-system, Arial, sans-serif; }
     .official-toolbar * { box-sizing: border-box; }
-    .ot-left, .ot-controls, .ot-right { display: flex; align-items: center; gap: 12px; }
-    .ot-controls { flex: 1 1 auto; flex-wrap: wrap; justify-content: center; }
-    .ot-right { gap: 14px; margin-left: auto; }
-    .ot-divider { width: 1px; height: 30px; background: rgba(255, 255, 255, .22); }
+    .ot-left, .ot-right { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .ot-divider { width: 1px; height: 28px; background: rgba(255, 255, 255, .22); }
     .ot-title { display: flex; flex-direction: column; min-width: 0; }
-    .ot-title strong { font-size: 14px; font-weight: 700; letter-spacing: .01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+    .ot-title strong { font-size: 14px; font-weight: 700; letter-spacing: .01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 46vw; }
     .ot-eyebrow { font-size: 9.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #8fd5bb; }
-    .ot-custom { display: inline-flex; gap: 10px; }
-    .ot-field { display: flex; flex-direction: column; gap: 3px; margin: 0; }
-    .ot-field > span { font-size: 9.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: rgba(255, 255, 255, .65); padding-left: 2px; }
-    .official-toolbar select, .official-toolbar input[type="number"] { height: 34px; min-width: 120px; padding: 0 32px 0 12px; border: 1px solid rgba(255, 255, 255, .22); border-radius: 9px;
-        background: rgba(255, 255, 255, .1); color: #fff; font: 600 12.5px Inter, "Segoe UI", system-ui, Arial, sans-serif; outline: none; transition: background .15s, border-color .15s, box-shadow .15s; }
-    .official-toolbar select { appearance: none; -webkit-appearance: none; cursor: pointer;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-        background-repeat: no-repeat; background-position: right 11px center; }
-    .official-toolbar select option { color: #0f172a; background: #fff; }
-    .official-toolbar input[type="number"] { width: 96px; min-width: 0; padding-right: 10px; }
-    .official-toolbar select:hover, .official-toolbar input[type="number"]:hover { background-color: rgba(255, 255, 255, .17); border-color: rgba(255, 255, 255, .4); }
-    .official-toolbar select:focus-visible, .official-toolbar input[type="number"]:focus-visible { border-color: #8fd5bb; box-shadow: 0 0 0 3px rgba(143, 213, 187, .35); }
     .ot-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 38px; padding: 0 16px; border-radius: 10px; border: 1px solid transparent;
-        font: 700 13px Inter, "Segoe UI", system-ui, Arial, sans-serif; cursor: pointer; text-decoration: none; transition: transform .12s, box-shadow .15s, background .15s; }
-    .ot-btn--ghost { color: #fff; background: rgba(255, 255, 255, .1); border-color: rgba(255, 255, 255, .25); }
-    .ot-btn--ghost:hover { background: rgba(255, 255, 255, .2); }
+        font: 700 13px Inter, "Segoe UI", system-ui, Arial, sans-serif; cursor: pointer; text-decoration: none; list-style: none; transition: transform .12s, box-shadow .15s, background .15s; }
+    .ot-btn--ghost, .ot-btn--icon { color: #fff; background: rgba(255, 255, 255, .1); border-color: rgba(255, 255, 255, .25); }
+    .ot-btn--ghost:hover, .ot-btn--icon:hover { background: rgba(255, 255, 255, .2); }
+    .ot-btn--icon { width: 38px; padding: 0; }
     .ot-btn--primary { color: #fff; background: linear-gradient(180deg, #3fae8a, #2a7f64); box-shadow: 0 4px 14px rgba(42, 127, 100, .45), inset 0 1px 0 rgba(255, 255, 255, .25); padding: 0 20px; }
     .ot-btn--primary:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(42, 127, 100, .55), inset 0 1px 0 rgba(255, 255, 255, .3); }
     .ot-btn--primary:active { transform: translateY(0); }
     .ot-btn:focus-visible { outline: 3px solid #8fd5bb; outline-offset: 2px; }
-    .ot-hint { display: inline-flex; align-items: center; gap: 7px; max-width: 250px; padding: 6px 10px; border-radius: 9px; background: rgba(255, 255, 255, .08); color: rgba(255, 255, 255, .78); font-size: 11px; line-height: 1.3; }
-    .ot-hint svg { flex: none; color: #8fd5bb; }
+
+    /* page setup popover: paper size, orientation, zoom (hidden until the gear is clicked) */
+    .ot-setup { position: relative; }
+    .ot-setup > summary::-webkit-details-marker { display: none; }
+    .ot-setup[open] > summary { background: rgba(255, 255, 255, .24); }
+    .ot-pop { position: absolute; right: 0; top: calc(100% + 10px); width: 320px; padding: 14px 16px 12px; border-radius: 14px; background: #fff; color: #0f172a; border: 1px solid #dbe4ec; box-shadow: 0 18px 44px rgba(15, 23, 42, .28); z-index: 5; }
+    .ot-pop__title { margin: 0 0 10px; font-size: 13px; font-weight: 800; color: #103967; }
+    .ot-fields { display: flex; flex-direction: column; gap: 10px; }
+    .ot-row, .ot-custom { display: flex; gap: 10px; }
+    .ot-row > .ot-field, .ot-custom > .ot-field { flex: 1; }
+    .ot-field { display: flex; flex-direction: column; gap: 4px; margin: 0; }
+    .ot-field > span { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #536273; }
+    .ot-pop select, .ot-pop input[type="number"] { width: 100%; height: 36px; padding: 0 30px 0 10px; border: 1px solid #cbd7e1; border-radius: 9px; background-color: #f4f7fa; color: #0f172a;
+        font: 600 12.5px Inter, "Segoe UI", system-ui, Arial, sans-serif; outline: none; transition: border-color .15s, box-shadow .15s, background .15s; }
+    .ot-pop select { appearance: none; -webkit-appearance: none; cursor: pointer;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23103967' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat; background-position: right 11px center; }
+    .ot-pop input[type="number"] { padding-right: 10px; }
+    .ot-pop select:hover, .ot-pop input[type="number"]:hover { background-color: #eaf0f6; }
+    .ot-pop select:focus-visible, .ot-pop input[type="number"]:focus-visible { border-color: #286da8; box-shadow: 0 0 0 3px rgba(40, 109, 168, .2); background-color: #fff; }
+    .ot-pop__hint { display: flex; gap: 6px; margin: 12px 0 0; padding-top: 10px; border-top: 1px solid #e3eaf1; font-size: 11px; line-height: 1.35; color: #536273; }
+    .ot-pop__hint svg { flex: none; margin-top: 1px; color: #286da8; }
     .official-toolbar [hidden] { display: none !important; }
-    @media (max-width: 1180px) { .ot-hint { display: none; } }
-    @media (max-width: 820px) { .official-toolbar { padding: 10px 12px; } .ot-left, .ot-controls, .ot-right { width: 100%; } .ot-right { margin-left: 0; } .ot-btn--primary { flex: 1; } .ot-title strong { max-width: 190px; } .ot-controls { justify-content: flex-start; } }
+    @media (max-width: 560px) { .official-toolbar { padding: 8px 10px; } .ot-divider, .ot-eyebrow { display: none; } .ot-btn--primary { padding: 0 14px; } .ot-title strong { max-width: 32vw; } .ot-pop { right: -4px; width: min(320px, 92vw); } }
 
     /* ---- screen preview of the sheet ---- */
     .official-sheet { position: relative; margin: 24px auto; background: #fff; border-radius: 2px; box-shadow: 0 1px 2px rgba(15, 23, 42, .14), 0 10px 32px rgba(15, 23, 42, .2); zoom: var(--preview-zoom, 1);
