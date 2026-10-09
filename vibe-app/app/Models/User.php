@@ -11,14 +11,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role', 'organization_id', 'school_id', 'position', 'office', 'procurement_role', 'bac_role', 'username', 'user_code', 'phone', 'status', 'last_login_at', 'password_changed_at'])]
+#[Fillable(['name', 'email', 'password', 'role', 'organization_id', 'school_id', 'position', 'office', 'procurement_role', 'bac_role', 'username', 'user_code', 'phone', 'status', 'last_login_at', 'password_changed_at', 'deactivated_at', 'deactivation_reason', 'deactivation_note'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use BelongsToOrganization, HasFactory, Notifiable;
 
-    protected $fillable = ['name', 'email', 'password', 'role', 'organization_id', 'school_id', 'position', 'office', 'procurement_role', 'bac_role', 'username', 'user_code', 'phone', 'status', 'last_login_at', 'password_changed_at'];
+    protected $fillable = ['name', 'email', 'password', 'role', 'organization_id', 'school_id', 'position', 'office', 'procurement_role', 'bac_role', 'username', 'user_code', 'phone', 'status', 'last_login_at', 'password_changed_at', 'deactivated_at', 'deactivation_reason', 'deactivation_note'];
 
     protected static function booted(): void
     {
@@ -140,6 +140,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'last_login_at' => 'datetime',
             'password_changed_at' => 'datetime',
+            'deactivated_at' => 'datetime',
         ];
     }
 }

@@ -14,6 +14,9 @@
         $navigation[] = ['icon' => 'group', 'label' => 'User Management', 'route' => 'user-management'];
         $navigation[] = ['icon' => 'card_membership', 'label' => 'Subscriptions', 'route' => 'subscriptions'];
     }
+    if ($isMasterUser) {
+        $navigation[] = ['icon' => 'domain', 'label' => 'School Management', 'route' => 'school-management'];
+    }
     $navigation[] = ['icon' => 'settings', 'label' => 'School Settings', 'route' => 'school-settings'];
 @endphp
 <aside id="civic-navigation" class="civic-nav" aria-label="Main navigation">

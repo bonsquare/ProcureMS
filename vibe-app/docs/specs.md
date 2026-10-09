@@ -225,7 +225,7 @@ php -d zend_extension=opcache -d opcache.enable_cli=1 -d "upload_tmp_dir=<repo>/
 
 - Why not `php artisan serve`: it does not pass `-d` settings to the real server, so opcache and `upload_tmp_dir` would be missing. Without `upload_tmp_dir` PHP may fail every upload with "unable to create a temporary file". `vibe-app/dev-server.php` is the router; it must `return` the framework router's result or static files (css, images) are served as HTML and the pages lose their design.
 - Opcache makes pages about three times faster (about 0.9 s down to 0.03 s per page here).
-- Tests: `php artisan test` (all pass at the time of writing: 121).
+- Tests: `php artisan test` (all pass at the time of writing: 132).
 
 ## 9. Station transfer
 
@@ -235,3 +235,11 @@ php -d zend_extension=opcache -d opcache.enable_cli=1 -d "upload_tmp_dir=<repo>/
 - After approval the user must confirm the new station (`/station-confirm`) before using any other page; they can only confirm or log out. Confirmation is stored on the request (`confirmed_at`).
 - School data is never copied or moved: records are scoped by the user's organization, so changing the account is enough.
 - Tests: `tests/Feature/StationTransferTest.php`. Design and plan: `docs/superpowers/specs/2026-10-09-station-transfer-design.md`, `docs/superpowers/plans/2026-10-09-station-transfer.md`.
+
+## 10. School Management (master user)
+
+- Sidebar item **School Management** (`/school-management`), master user only. Lists every school with its user, status (Active, Vacant, Inactive), employee count and pending transfers; search by name or School ID and filter by status.
+- Open a school to: set the **school** Active or Inactive (also updates its organization; an inactive school cannot sign in and cannot receive a transferred user); set its **user** inactive (reason Retired, Resigned, Transferred or Other, effective date up to today, note) which makes the school vacant, or reactivate them (refused when the school is inactive or already has another active user); set **employees** inactive or reactivate them (inactive employees leave lists and role lookups and appear under Inactive employees).
+- Nothing is ever deleted. Subscriptions and all school records are untouched. Every action writes an audit log row with the reason.
+- A signed-in user who becomes inactive, or whose school becomes inactive, is signed out on the next request (`EnsureAccountActive`).
+- Code: `SchoolManagementService`, `SchoolManagementController`, tests in `tests/Feature/SchoolManagementTest.php`. Design and plan: `docs/superpowers/specs/2026-10-10-school-management-design.md`, `docs/superpowers/plans/2026-10-10-school-management.md`.

@@ -20,6 +20,8 @@ class SchoolStaff extends Model
         'bac_role',
         'employee_no',
         'ended_at',
+        'end_reason',
+        'end_note',
     ];
 
     /** The role groups an employee can hold, each stored as a comma separated list so one person can carry several. */
@@ -48,6 +50,11 @@ class SchoolStaff extends Model
                 $staff->forceFill(['employee_no' => $number])->syncOriginal();
             }
         });
+    }
+
+    protected function casts(): array
+    {
+        return ['ended_at' => 'datetime'];
     }
 
     /** @return array<int, string> */

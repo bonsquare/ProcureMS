@@ -9,6 +9,7 @@ use App\Http\Controllers\ChartOfAccountController;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PlanningController;
+use App\Http\Controllers\SchoolManagementController;
 use App\Http\Controllers\SchoolSettingsController;
 use App\Http\Controllers\StationTransferController;
 use App\Http\Controllers\UnitController;
@@ -136,4 +137,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/transfer-requests', [StationTransferController::class, 'queue'])->name('transfer-requests');
     Route::post('/transfer-requests/{transfer}/approve', [StationTransferController::class, 'approve'])->name('transfer-requests.approve');
     Route::post('/transfer-requests/{transfer}/decline', [StationTransferController::class, 'decline'])->name('transfer-requests.decline');
+
+    Route::get('/school-management', [SchoolManagementController::class, 'index'])->name('school-management');
+    Route::get('/school-management/{school}', [SchoolManagementController::class, 'show'])->name('school-management.show')->whereNumber('school');
+    Route::post('/school-management/{school}/status', [SchoolManagementController::class, 'status'])->name('school-management.status')->whereNumber('school');
+    Route::post('/school-management/users/{user}/deactivate', [SchoolManagementController::class, 'deactivateUser'])->name('school-management.users.deactivate');
+    Route::post('/school-management/users/{user}/reactivate', [SchoolManagementController::class, 'reactivateUser'])->name('school-management.users.reactivate');
+    Route::post('/school-management/employees/{employee}/deactivate', [SchoolManagementController::class, 'deactivateEmployee'])->name('school-management.employees.deactivate')->whereNumber('employee');
+    Route::post('/school-management/employees/{employee}/reactivate', [SchoolManagementController::class, 'reactivateEmployee'])->name('school-management.employees.reactivate')->whereNumber('employee');
 });
