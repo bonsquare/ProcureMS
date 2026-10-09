@@ -1,0 +1,42 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Organization;
+use App\Models\ProcurementDocument;
+use App\Models\ProcurementRequest;
+use App\Models\School;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class ProcurementOfficialToolbarTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_procurement_previews_use_an_accessible_screen_only_toolbar_with_context(): void
+    {
+        $organization = Organization::create(['name' => 'Org', 'slug' => 'org']);
+        $school = School::create(['organization_id' => $organization->id, 'code' => 'SCH', 'name' => 'Sample School']);
+        $user = User::factory()->create(['role' => 'school_admin', 'organization_id' => $organization->id, 'school_id' => $school->id]);
+        $request = ProcurementRequest::create([
+            'organization_id' => $organization->id, 'school_id' => $school->id, 'requested_by' => $user->id,
+            'request_number' => 'PR-2026-010', 'title' => 'Civic supplies', 'amount' => 100, 'status' => 'approved',
+        ]);
+        $document = ProcurementDocument::create([
+            'organization_id' => $organization->id, 'procurement_request_id' => $request->id, 'created_by' => $user->id,
+            'document_type' => 'purchase_order', 'document_number' => 'PO-2026-010', 'document_date' => now(), 'status' => 'prepared',
+            'metadata' => ['delivery_schedule' => ''],
+        ]);
+
+        foreach ([route('procurement.print', $request), route('procurement.documents.print', [$request, $document])] as $url) {
+            $this->actingAs($user)->get($url)->assertOk()
+                ->assertSee('role="toolbar"', false)
+                ->assertSee('aria-label="Official document actions"', false)
+                ->assertSee('aria-label="Close official document preview"', false)
+                ->assertSee('aria-label="Print or save official document as PDF"', false)
+                ->assertSee('PR-2026-010')
+                ->assertSee('.official-toolbar, .no-print { display: none !important; }', false);
+        }
+    }
+}

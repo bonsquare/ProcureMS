@@ -63,7 +63,7 @@
 @include('partials.print-clean')
 </head>
 <body>
-    @include('partials.official-toolbar', ['closeUrl' => route('procurement')])
+    @include('partials.official-toolbar', ['closeUrl' => route('procurement.show', $procurementRequest), 'context' => 'Purchase Request · '.$procurementRequest->request_number])
     @php
         [$leftLogo, $rightLogo] = \App\Support\OfficialDocument::logos($procurementRequest->school, $agency);
     @endphp

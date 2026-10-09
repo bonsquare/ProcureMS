@@ -11,7 +11,7 @@
 @include('partials.print-clean')
 </head>
 <body>
-@include('partials.official-toolbar', ['closeUrl' => route('procurement.documents', $procurementRequest)])
+@include('partials.official-toolbar', ['closeUrl' => route('procurement.documents', $procurementRequest), 'context' => $documentDefinition['short'].' · '.$document->document_number.' · '.$procurementRequest->request_number])
 @php
     // Each official form keeps its normal paper; the toolbar lets the user choose another.
     $paperByDocument = [
