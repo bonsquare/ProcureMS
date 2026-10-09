@@ -64,6 +64,7 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::get('/aip/{aip}', [AipController::class, 'show'])->name('aip.show')->whereNumber('aip');
     Route::get('/aip/{aip}/print', [AipController::class, 'print'])->name('aip.print')->whereNumber('aip');
     Route::put('/aip/{aip}', [AipController::class, 'update'])->name('aip.update')->whereNumber('aip');
+    Route::delete('/aip/{aip}', [AipController::class, 'destroy'])->name('aip.destroy')->whereNumber('aip');
     Route::post('/aip/{aip}/approve', [AipController::class, 'approve'])->name('aip.approve')->whereNumber('aip');
     Route::get('/planning', [PlanningController::class, 'index'])->name('planning');
     Route::post('/planning/sip', [PlanningController::class, 'storeSip'])->middleware('permission:planning.manage')->name('planning.sip.store');

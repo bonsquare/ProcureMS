@@ -10,6 +10,7 @@ use App\Models\AuditLog;
 use App\Models\BudgetAllocation;
 use App\Models\ChartOfAccount;
 use App\Models\FundSource;
+use App\Models\PpmpPlan;
 use App\Models\School;
 use App\Services\BudgetService;
 use App\Services\DocumentNumberService;
@@ -206,6 +207,35 @@ class AipController extends Controller
         $this->markRevised($aip);
 
         return redirect()->route('aip.show', $aip)->with('success', 'KRA and its activities updated.');
+    }
+
+    /** Deletes a draft AIP that nothing was built on. An approved AIP already created budget allotments, so it stays. */
+    public function destroy(Aip $aip)
+    {
+        $this->authorizeManage();
+        $this->authorizeAip($aip);
+        $this->fiscalYears->assertOpen((int) $aip->organization_id, (int) $aip->fiscal_year);
+
+        if ($aip->status !== 'draft') {
+            throw ValidationException::withMessages(['aip' => 'Only a draft AIP can be deleted. This one was already approved, so budget allotments follow it.']);
+        }
+        if (PpmpPlan::withoutGlobalScopes()->where('aip_id', $aip->id)->exists() || BudgetAllocation::withoutGlobalScopes()->where('aip_id', $aip->id)->exists()) {
+            throw ValidationException::withMessages(['aip' => 'This AIP has a PPMP or budget built on it. Remove those first.']);
+        }
+
+        $transaction = $aip->transaction;
+        DB::transaction(function () use ($aip, $transaction) {
+            AuditLog::create(['user_id' => request()->user()->id, 'school_id' => $aip->school_id, 'action' => 'aip_deleted', 'auditable_type' => Aip::class, 'auditable_id' => $aip->id, 'metadata' => ['fiscal_year' => $aip->fiscal_year, 'activities' => $aip->activities()->count()]]);
+            $aip->delete();
+
+            // The tracking record of an AIP that never went anywhere goes with it.
+            if ($transaction && ! $transaction->sipProjects()->exists() && ! $transaction->budgetAllocations()->exists() && ! $transaction->procurementRequests()->exists() && ! $transaction->liquidationReports()->exists()) {
+                $transaction->events()->delete();
+                $transaction->delete();
+            }
+        });
+
+        return redirect()->to(route('planning', ['school_id' => $aip->school_id, 'year' => $aip->fiscal_year]).'#aip')->with('success', 'AIP FY '.$aip->fiscal_year.' deleted.');
     }
 
     public function destroyKra(Aip $aip, AipKra $kra)

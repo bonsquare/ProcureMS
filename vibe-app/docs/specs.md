@@ -278,7 +278,7 @@ php -d zend_extension=opcache -d opcache.enable_cli=1 -d "upload_tmp_dir=<repo>/
 
 - Why not `php artisan serve`: it does not pass `-d` settings to the real server, so opcache and `upload_tmp_dir` would be missing. Without `upload_tmp_dir` PHP may fail every upload with "unable to create a temporary file". `vibe-app/dev-server.php` is the router; it must `return` the framework router's result or static files (css, images) are served as HTML and the pages lose their design.
 - Opcache makes pages about three times faster (about 0.9 s down to 0.03 s per page here).
-- Tests: `php artisan test` (all pass at the time of writing: 169).
+- Tests: `php artisan test` (all pass at the time of writing: 174).
 
 ## 9. Station transfer
 
@@ -341,3 +341,4 @@ php -d zend_extension=opcache -d opcache.enable_cli=1 -d "upload_tmp_dir=<repo>/
 - The top of the page is a guided flow, not four plain cards: a **progress and next-step** panel (plan progress "N of 4", the next thing to do for the selected school and fiscal year, and a button that opens that plan), then the four steps **SIP → AIP → PPMP → APP** as connected cards. Each card shows the step number, its figure (programs, plans, items), its amounts, and a status chip: **done** (green: SIP entered, or AIP / PPMP / APP approved), **awaiting approval** (amber: started, not approved) or **not started** (grey). Settings stays at the end as a dashed tile.
 - When the school has a SIP, two summaries follow: the SIP financial target by year (Year 1, 2, 3 bars with the three-year total) and the programs per pillar as colored chips.
 - Clicking a card or the button opens that plan's panel below, as before (the cards are the tabs; the address keeps `#sip`, `#aip`, and so on).
+- **Deleting an AIP** (Planning → AIP, next to Open and Print): allowed only for a **draft** AIP with no PPMP and no budget built on it, and only for someone who manages the budget. It asks for confirmation, removes the AIP with its KRAs and activities, removes its tracking record when nothing else uses it, and writes an audit entry. An approved or revised AIP cannot be deleted (budget allotments follow it); the Delete link is greyed with an explanation. Tests: `tests/Feature/AipDeleteTest.php`.
