@@ -22,6 +22,7 @@ class ProcurementOverviewTest extends TestCase
         $this->actingAs($user)->get(route('procurement'))
             ->assertOk()
             ->assertSee('Procurement overview')
+            ->assertSee('Create Purchase Request')->assertDontSee('class="hidden sm:inline">Create Purchase Request', false)
             ->assertSee('Pending approval')
             ->assertSee('Needs approval')
             ->assertSee('Recent activity')

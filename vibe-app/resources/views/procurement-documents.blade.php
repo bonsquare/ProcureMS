@@ -2,6 +2,7 @@
 @section('title', 'Documents · '.$procurementRequest->request_number)
 @section('page-title', $procurementRequest->request_number.' Documents')
 @section('header-actions')<a href="{{ route('procurement.show', ['procurementRequest' => $procurementRequest, 'section' => 'documents']) }}" class="inline-flex min-h-11 items-center rounded-lg border border-outline-variant px-3 text-xs font-bold text-primary">Request workspace</a>@endsection
+@section('flash-handled', '1')
 @section('content')
     <section class="mb-6 rounded border border-outline-variant/30 bg-white p-5"><div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><div><p class="text-xs font-semibold uppercase text-on-surface-variant">School</p><p class="mt-1 text-sm font-semibold">{{ $procurementRequest->school?->name }}</p></div><div><p class="text-xs font-semibold uppercase text-on-surface-variant">Purpose</p><p class="mt-1 text-sm font-semibold">{{ $procurementRequest->title }}</p></div><div><p class="text-xs font-semibold uppercase text-on-surface-variant">Amount</p><p class="mt-1 text-sm font-semibold">₱{{ number_format((float) $procurementRequest->amount, 2) }}</p></div><div><p class="text-xs font-semibold uppercase text-on-surface-variant">Status</p><p class="mt-1 text-sm font-semibold capitalize">{{ str($procurementRequest->status)->replace('_', ' ') }}</p></div></div></section>
     @if(session('success'))<div class="mb-5 rounded border border-secondary/30 bg-secondary/10 px-4 py-3 text-sm font-semibold text-secondary">{{ session('success') }}</div>@endif
@@ -22,12 +23,18 @@
         })->values();
         $hasDeliveryReconciliationData = $existingDocuments->has('purchase_order') && $existingDocuments->has('inspection_acceptance_report');
     @endphp
+    <nav class="mb-4 inline-flex rounded-xl border border-outline-variant/60 bg-white p-1 text-xs font-bold" aria-label="Document stage">
+        <a href="{{ route('procurement.documents', $procurementRequest) }}" @if($stage !== 'receiving') aria-current="page" @endif class="flex items-center gap-1.5 rounded-lg px-4 py-2 {{ $stage !== 'receiving' ? 'bg-primary text-white' : 'text-primary hover:bg-surface-low' }}"><span class="material-symbols-outlined text-[17px]" aria-hidden="true">request_quote</span>Procurement documents</a>
+        <a href="{{ route('procurement.documents', [$procurementRequest, 'stage' => 'receiving']) }}" @if($stage === 'receiving') aria-current="page" @endif class="flex items-center gap-1.5 rounded-lg px-4 py-2 {{ $stage === 'receiving' ? 'bg-primary text-white' : 'text-primary hover:bg-surface-low' }}"><span class="material-symbols-outlined text-[17px]" aria-hidden="true">inventory_2</span>Receiving documents</a>
+    </nav>
     <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <article class="flex min-h-52 flex-col justify-between rounded border border-outline-variant/40 bg-white p-5 hover:border-primary"><div><div class="mb-4 flex items-center justify-between"><span class="flex h-10 w-10 items-center justify-center rounded bg-primary/10 text-primary"><span class="material-symbols-outlined">description</span></span><span class="rounded-full bg-secondary/10 px-2 py-1 text-xs font-semibold text-secondary">Prepared</span></div><p class="text-xs font-semibold uppercase tracking-wider text-primary">PR</p><h3 class="mt-1 text-lg font-semibold">Purchase Request</h3><p class="mt-2 text-xs text-on-surface-variant">{{ $procurementRequest->request_number }} · {{ ($procurementRequest->requested_at ?? $procurementRequest->created_at)->format('M d, Y') }}</p></div><div class="mt-5 flex gap-2"><a href="{{ route('procurement.print', $procurementRequest) }}" target="_blank" rel="noopener" class="flex flex-1 items-center justify-center gap-1 rounded bg-primary px-3 py-2.5 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[16px]">print</span>View &amp; Print</a><a href="{{ route('procurement.edit', $procurementRequest) }}" class="rounded border border-outline-variant/50 px-3 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Edit</a></div></article>
+        @if($stage !== 'receiving')
+        <article class="doc-card doc-card--saved flex min-h-52 flex-col justify-between rounded border border-outline-variant/40 bg-white p-5 hover:border-primary"><div><div class="mb-4 flex items-center justify-between"><span class="flex h-10 w-10 items-center justify-center rounded bg-primary/10 text-primary"><span class="material-symbols-outlined">description</span></span><span class="rounded-full bg-secondary/10 px-2 py-1 text-xs font-semibold text-secondary">Prepared</span></div><p class="text-xs font-semibold uppercase tracking-wider text-primary">PR</p><h3 class="mt-1 text-lg font-semibold">Purchase Request</h3><p class="mt-2 text-xs text-on-surface-variant">{{ $procurementRequest->request_number }} · {{ ($procurementRequest->requested_at ?? $procurementRequest->created_at)->format('M d, Y') }}</p></div><div class="mt-5 flex gap-2"><a href="{{ route('procurement.print', $procurementRequest) }}" target="_blank" rel="noopener" class="flex flex-1 items-center justify-center gap-1 rounded bg-primary px-3 py-2.5 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[16px]">print</span>View &amp; Print</a><a href="{{ route('procurement.edit', $procurementRequest) }}" class="rounded border border-outline-variant/50 px-3 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Edit</a></div></article>
+        @endif
         @foreach($documentTypes as $typeKey => $definition)
             @php $saved = $existingDocuments->get($typeKey); @endphp
             @php($comingSoon = $typeKey === 'property_acknowledgement_receipt')
-            <article class="flex min-h-52 flex-col justify-between rounded border p-5 {{ $comingSoon ? 'border-outline-variant/30 bg-surface-container/60 text-on-surface-variant grayscale' : 'border-outline-variant/40 bg-white hover:border-primary' }}"><div><div class="mb-4 flex items-center justify-between"><span class="flex h-10 w-10 items-center justify-center rounded {{ $comingSoon ? 'bg-outline-variant/30 text-on-surface-variant' : 'bg-primary/10 text-primary' }}"><span class="material-symbols-outlined">{{ $comingSoon ? 'lock' : $definition['icon'] }}</span></span><span class="rounded-full px-2 py-1 text-xs font-semibold {{ $comingSoon ? 'bg-outline-variant/30 text-on-surface-variant' : ($saved ? 'bg-secondary/10 text-secondary' : 'bg-surface-container text-on-surface-variant') }}">{{ $comingSoon ? 'Coming soon' : ($saved ? 'Prepared' : 'Not prepared') }}</span></div><p class="text-xs font-semibold uppercase tracking-wider {{ $comingSoon ? 'text-on-surface-variant' : 'text-primary' }}">{{ $definition['short'] }}</p><h3 class="mt-1 text-lg font-semibold">{{ $definition['label'] }}</h3>@if($comingSoon)<p class="mt-2 text-xs leading-5">Official template not yet available.</p>@elseif($saved)<p class="mt-2 text-xs text-on-surface-variant">{{ $saved->document_number }} · {{ $saved->document_date->format('M d, Y') }}</p>@else<p class="mt-2 text-xs leading-5 text-on-surface-variant">Create this document using the purchase request’s school, purpose, items, and amount.</p>@endif</div><div class="mt-5 flex gap-2">@if($comingSoon)<span class="flex w-full items-center justify-center gap-2 rounded border border-outline-variant/40 bg-surface-container px-3 py-2.5 text-xs font-semibold text-on-surface-variant"><span class="material-symbols-outlined text-[16px]">lock</span>Template coming soon</span>@elseif($saved)<a href="{{ route('procurement.documents.print', [$procurementRequest, $saved]) }}" target="_blank" rel="noopener" class="flex flex-1 items-center justify-center gap-1 rounded bg-primary px-3 py-2.5 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[16px]">print</span>View &amp; Print</a><button type="button" data-document-type="{{ $typeKey }}" data-document-label="{{ $definition['label'] }}" data-document-date="{{ $saved->document_date->format('Y-m-d') }}" data-recipient="{{ $saved->supplier_or_recipient }}" data-notes="{{ $saved->notes }}" class="rounded border border-outline-variant/50 px-3 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Edit</button>@else<button type="button" data-document-type="{{ $typeKey }}" data-document-label="{{ $definition['label'] }}" class="w-full rounded bg-primary px-3 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Create Document</button>@endif</div></article>
+            <article class="doc-card {{ $comingSoon ? 'doc-card--soon' : ($saved ? 'doc-card--saved' : 'doc-card--missing') }} flex min-h-52 flex-col justify-between rounded border p-5 {{ $comingSoon ? 'border-outline-variant/30 bg-surface-container/60 text-on-surface-variant grayscale' : 'border-outline-variant/40 bg-white hover:border-primary' }}"><div><div class="mb-4 flex items-center justify-between"><span class="flex h-10 w-10 items-center justify-center rounded {{ $comingSoon ? 'bg-outline-variant/30 text-on-surface-variant' : 'bg-primary/10 text-primary' }}"><span class="material-symbols-outlined">{{ $comingSoon ? 'lock' : $definition['icon'] }}</span></span><span class="rounded-full px-2 py-1 text-xs font-semibold {{ $comingSoon ? 'bg-outline-variant/30 text-on-surface-variant' : ($saved ? 'bg-secondary/10 text-secondary' : 'bg-error/10 text-error') }}">{{ $comingSoon ? 'Coming soon' : ($saved ? 'Prepared' : 'Not prepared') }}</span></div><p class="text-xs font-semibold uppercase tracking-wider {{ $comingSoon ? 'text-on-surface-variant' : 'text-primary' }}">{{ $definition['short'] }}</p><h3 class="mt-1 text-lg font-semibold">{{ $definition['label'] }}</h3>@if($comingSoon)<p class="mt-2 text-xs leading-5">Official template not yet available.</p>@elseif($saved)<p class="mt-2 text-xs text-on-surface-variant">{{ $saved->document_number }} · {{ $saved->document_date->format('M d, Y') }}</p>@else<p class="mt-2 text-xs leading-5 text-on-surface-variant">Create this document using the purchase request’s school, purpose, items, and amount.</p>@endif</div><div class="mt-5 flex gap-2">@if($comingSoon)<span class="flex w-full items-center justify-center gap-2 rounded border border-outline-variant/40 bg-surface-container px-3 py-2.5 text-xs font-semibold text-on-surface-variant"><span class="material-symbols-outlined text-[16px]">lock</span>Template coming soon</span>@elseif($saved)<a href="{{ route('procurement.documents.print', [$procurementRequest, $saved]) }}" target="_blank" rel="noopener" class="flex flex-1 items-center justify-center gap-1 rounded bg-primary px-3 py-2.5 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[16px]">print</span>View &amp; Print</a><button type="button" data-document-type="{{ $typeKey }}" data-document-label="{{ $definition['label'] }}" data-document-date="{{ $saved->document_date->format('Y-m-d') }}" data-recipient="{{ $saved->supplier_or_recipient }}" data-notes="{{ $saved->notes }}" class="rounded border border-outline-variant/50 px-3 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Edit</button>@elseif(! empty($locks[$typeKey]))<span class="flex w-full items-center justify-center gap-2 rounded border border-outline-variant/40 bg-surface-container px-3 py-2.5 text-center text-xs font-semibold text-on-surface-variant" title="{{ $locks[$typeKey] }}"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">lock</span>{{ $locks[$typeKey] }}</span>@else<button type="button" data-document-type="{{ $typeKey }}" data-document-label="{{ $definition['label'] }}" class="w-full rounded bg-primary px-3 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Create Document</button>@endif</div></article>
         @endforeach
     </div>
     <section class="mt-6 rounded border border-outline-variant/40 bg-white p-5">
@@ -44,7 +51,8 @@
             @endif
         </div>
     </section>
-<div id="document-modal" role="dialog" aria-modal="true" aria-labelledby="document-modal-title" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4"><div class="max-h-[94vh] w-full max-w-5xl overflow-y-auto rounded bg-white shadow-2xl"><div class="sticky top-0 z-10 flex items-center justify-between border-b border-outline-variant/30 bg-white px-5 py-4"><div><p class="text-xs font-semibold uppercase tracking-wider text-primary">Prepare Official Document</p><h2 id="document-modal-title" class="mt-1 text-lg font-semibold"></h2></div><button id="close-document-modal" type="button" aria-label="Close document form" class="rounded p-2 hover:bg-primary hover:text-white"><span class="material-symbols-outlined">close</span></button></div>
+<div id="document-modal" role="dialog" aria-modal="true" aria-labelledby="document-modal-title" class="fixed inset-0 z-[80] hidden items-center justify-center bg-black/50 p-3"><div id="document-modal-card" class="flex max-h-[96vh] w-full max-w-[1500px] flex-col overflow-hidden rounded bg-white shadow-2xl"><div class="z-10 flex shrink-0 items-center justify-between border-b border-outline-variant/30 bg-white px-5 py-4"><div><p class="text-xs font-semibold uppercase tracking-wider text-primary">Prepare Official Document</p><h2 id="document-modal-title" class="mt-1 text-lg font-semibold"></h2></div><button id="close-document-modal" type="button" aria-label="Close document form" class="rounded p-2 hover:bg-primary hover:text-white"><span class="material-symbols-outlined">close</span></button></div>
+<div id="doc-split"><aside id="doc-preview-pane" aria-label="Document preview"><div id="doc-preview-bar"><span>Document (updates as you edit)</span><span class="flex items-center gap-3"><small id="doc-preview-status">Updates as you type</small><select id="doc-preview-zoom" aria-label="Preview zoom" class="rounded border border-outline-variant/60 bg-white px-2 py-1 text-xs font-semibold"><option value="fit">Fit width</option><option value="0.5">50%</option><option value="0.75">75%</option><option value="1">100%</option></select></span></div><iframe id="doc-preview-frame" title="Official document preview"></iframe></aside><div id="doc-form-pane">
     <form id="document-form" method="POST" action="{{ route('procurement.documents.store', $procurementRequest) }}" class="grid grid-cols-1 gap-4 p-5 md:grid-cols-2">@csrf<input id="document-type" type="hidden" name="document_type">
         <label id="document-date-field" class="block text-xs font-semibold text-on-surface-variant">Document Date<input id="document-date" type="date" name="document_date" required value="{{ now()->format('Y-m-d') }}" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
         <label data-non-rfq data-supplier-field data-hide-for-po data-hide-for-iar data-hide-for-ntp class="block text-xs font-semibold text-on-surface-variant">Supplier / Recipient / Custodian<input id="document-recipient" name="supplier_or_recipient" list="supplier-manager-list" placeholder="Select or enter the applicable name" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
@@ -105,7 +113,13 @@
         <label data-po-only class="hidden block text-xs font-semibold text-on-surface-variant md:col-span-2">Extra Blank Rows<input data-meta type="number" min="0" max="20" name="extra_blank_rows" value="0" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
         <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-4 md:col-span-2"><button id="cancel-document-modal" type="button" class="rounded border border-outline-variant/50 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Cancel</button><button type="submit" class="rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Save Official Document</button></div>
     </form>
-</div></div>
+</div></div></div></div>
+<style>
+    @media(min-width:768px){#document-modal{left:15rem}#document-modal[data-iars-modal="true"]>div{width:100%!important}}
+    #doc-split{display:flex;flex-direction:row-reverse;min-height:0;flex:1}#doc-preview-pane{display:flex;min-width:0;flex:1 1 55%;flex-direction:column;background:#d9dee5;border-left:1px solid #cbd7e1}#doc-preview-bar{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:#fff;border-bottom:1px solid #cbd7e1;font-size:12px;font-weight:700;color:#103967}#doc-preview-bar small{font-weight:400;color:#536273}#doc-preview-frame{width:100%;flex:1;min-height:60vh;border:0;background:#d9dee5}#doc-form-pane{flex:0 0 min(40%,580px);min-width:0;overflow-y:auto}#document-form{zoom:.92;grid-template-columns:minmax(0,1fr)!important}#document-form>*{grid-column:1/-1!important}
+    #document-modal[data-iars-modal="true"] #doc-form-pane{flex:0 0 55%}#document-modal[data-iars-modal="true"] #document-form{zoom:.75}
+    @media(max-width:1023px){#doc-split{flex-direction:column-reverse;overflow-y:auto}#doc-preview-pane{flex:none}#doc-preview-frame{min-height:55vh}#doc-form-pane{flex:none;overflow:visible}}
+</style>
 <style>
     #document-modal[data-iars-modal="true"]{padding:2vh 2vw}#document-modal[data-iars-modal="true"]>div{width:96vw;max-width:none;max-height:96vh}#document-modal[data-iars-modal="true"]>div>div:first-child{padding:8px 14px}#document-modal[data-iars-modal="true"] #document-modal-title{font-size:16px;line-height:1.2}#document-modal[data-iars-modal="true"] form{gap:8px;padding:10px;grid-template-columns:260px minmax(0,1fr)}#document-modal[data-iars-modal="true"] #document-date{margin-top:4px;padding:6px 8px;font-size:12px}#document-modal[data-iars-modal="true"] #iars-assignments{padding:14px}#document-modal[data-iars-modal="true"] #iars-assignments p{line-height:1.25}#document-modal[data-iars-modal="true"] form>div:last-child button{padding:8px 12px;font-size:12px}.iars-control{padding:5px 8px}#document-form[data-rfq-active="true"] [data-non-rfq],#document-form[data-rfq-active="true"] [data-abstract-only],#document-form[data-rfq-active="true"] [data-award-only],#document-form[data-rfq-active="true"] [data-extra-rows-only],#document-form[data-rfq-active="true"] [data-ntp-only],#document-form[data-rfq-active="true"] [data-iar-only],#document-form[data-rfq-active="true"] [data-iar-received-only],#document-form[data-abstract-active="true"] [data-non-rfq],#document-form[data-abstract-active="true"] [data-supplier-field],#document-form[data-abstract-active="true"] [data-extra-rows-only],#document-form[data-abstract-active="true"] [data-ntp-only],#document-form[data-abstract-active="true"] [data-iar-only],#document-form[data-abstract-active="true"] [data-iar-received-only],#document-form[data-abstract-active="true"] #document-notes-field{display:none!important}
     .iars-distribution-table{width:max-content;min-width:100%;font-size:12px}.iars-distribution-table th{position:sticky;top:0;z-index:3;background:#f8fafc;border-bottom:1px solid #d9deea;color:#1f2937;line-height:1.15}.iars-distribution-table td{border-bottom:1px solid #e5e7eb}.iars-sticky-cell{position:sticky;left:0;z-index:4;min-width:230px;background:inherit}.iars-item-head{min-width:96px;max-width:112px;padding:10px 8px;text-align:center;white-space:normal;overflow-wrap:anywhere}.iars-distribution-table tfoot td{border-top:1px solid #d9deea}#iars-assignment-rows select,#iars-assignment-rows input{font-size:12px;line-height:1.2}#iars-assignments:fullscreen{width:100vw;height:100vh;max-width:none;overflow:auto;border:0;border-radius:0;padding:14px;background:#f7f9fc}#document-modal[data-iars-modal="true"] #iars-assignment-rows{max-height:calc(96vh - 210px);overflow:auto}#document-form[data-noa-active="true"] [data-non-rfq],#document-form[data-noa-active="true"] [data-supplier-field],#document-form[data-noa-active="true"] [data-extra-rows-only],#document-form[data-noa-active="true"] #document-notes-field,#document-form[data-ntp-active="true"] [data-non-rfq],#document-form[data-ntp-active="true"] [data-supplier-field],#document-form[data-ntp-active="true"] [data-extra-rows-only],#document-form[data-ntp-active="true"] #document-notes-field,#document-form[data-iar-active="true"] [data-non-rfq],#document-form[data-iar-active="true"] [data-supplier-field],#document-form[data-iar-active="true"] #document-notes-field,#document-form[data-ris-active="true"] [data-non-rfq],#document-form[data-ris-active="true"] [data-supplier-field],#document-form[data-ris-active="true"] [data-ntp-only],#document-form[data-ris-active="true"] [data-iar-only],#document-form[data-ris-active="true"] [data-iar-received-only],#document-form[data-ris-active="true"] #document-notes-field,#document-form[data-iars-active="true"] #document-date-field,#document-form[data-iars-active="true"] #document-number-section,#document-form[data-iars-active="true"] [data-non-rfq],#document-form[data-iars-active="true"] [data-supplier-field],#document-form[data-iars-active="true"] [data-extra-rows-only],#document-form[data-iars-active="true"] [data-ntp-only],#document-form[data-iars-active="true"] [data-iar-only],#document-form[data-iars-active="true"] [data-iar-received-only],#document-form[data-iars-active="true"] #document-notes-field{display:none!important}
@@ -248,18 +262,19 @@
             const itemBadges = issuedItems.length
                 ? issuedItems.map(item => `<span class="rounded bg-white px-2 py-1 text-[11px] font-semibold text-on-surface shadow-sm">${escapeHtml(item.name)}: ${item.issued} ${escapeHtml(item.unit || '')}</span>`).join('')
                 : '<span class="text-xs text-on-surface-variant">No issued items encoded for this staff member.</span>';
-            return `<div class="rounded-lg border border-outline-variant/40 bg-white p-3 shadow-sm">
-                <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                        <p class="text-sm font-semibold text-on-surface">${escapeHtml(staff?.name || 'Unnamed staff')}</p>
-                        <p class="mt-0.5 text-xs text-on-surface-variant">${escapeHtml(staff?.position || 'No designation')}</p>
+            return `<li class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 px-3 py-2.5">
+                <div class="flex min-w-0 items-center gap-3">
+                    <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">${index + 1}</span>
+                    <div class="min-w-0">
+                        <p class="truncate text-sm font-semibold text-on-surface">${escapeHtml(staff?.name || 'Unnamed staff')}</p>
+                        <p class="truncate text-xs text-on-surface-variant">${escapeHtml(staff?.position || 'No designation')}</p>
                     </div>
-                    <div class="rounded bg-primary/10 px-3 py-1 text-xs font-bold text-primary">${escapeHtml(risBaseNumber(baseNumber))}-${String(index + 1).padStart(3, '0')}</div>
                 </div>
-                <div class="mt-3 flex flex-wrap gap-1.5">${itemBadges}</div>
-            </div>`;
+                <div class="flex flex-wrap items-center gap-1.5">${itemBadges}</div>
+                <span class="shrink-0 rounded bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">${escapeHtml(risBaseNumber(baseNumber))}-${String(index + 1).padStart(3, '0')}</span>
+            </li>`;
         }).join('');
-        content.innerHTML = `<div class="grid gap-3 md:grid-cols-2">${rows}</div>`;
+        content.innerHTML = `<ul class="divide-y divide-outline-variant/40 overflow-hidden rounded-lg border border-outline-variant/40 bg-white">${rows}</ul>`;
     };
     const readActiveBidders = () => activeBidders.map((bidder, index) => ({
         name: document.querySelector(`[name="bidders[${index}][name]"]`)?.value || '',
@@ -506,5 +521,58 @@
         if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
         else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     });
+    // Live preview: the left pane renders the real official document from the current form values (nothing is saved).
+    (() => {
+        const form = document.getElementById('document-form');
+        const frame = document.getElementById('doc-preview-frame');
+        const status = document.getElementById('doc-preview-status');
+        const previewUrl = @json(route('procurement.documents.preview', $procurementRequest));
+        let timer = null; let controller = null;
+        const hideChrome = '<style>.official-toolbar{display:none!important}body{background:#d9dee5!important}.official-sheet{zoom:var(--pz,1)!important;margin-top:12px!important;margin-bottom:12px!important}</style>';
+        const zoomSelect = document.getElementById('doc-preview-zoom');
+        const applyZoom = () => {
+            const doc = frame.contentDocument;
+            const sheet = doc && doc.querySelector('.official-sheet, [data-official-page]');
+            if (!sheet) return;
+            let zoom = parseFloat(zoomSelect.value);
+            if (zoomSelect.value === 'fit') {
+                doc.documentElement.style.setProperty('--pz', 1);
+                const box = sheet.getBoundingClientRect();
+                const byWidth = (frame.clientWidth - 48) / (Math.max(sheet.scrollWidth, box.width) || 1);
+                zoom = Math.min(0.72, Math.max(0.3, byWidth));
+            }
+            doc.documentElement.style.setProperty('--pz', zoom);
+        };
+        frame.addEventListener('load', () => setTimeout(applyZoom, 350));
+        zoomSelect.addEventListener('change', applyZoom);
+        const refresh = async () => {
+            if (modal.classList.contains('hidden')) return;
+            if (controller) controller.abort();
+            controller = new AbortController();
+            status.textContent = 'Updating preview...';
+            try {
+                const response = await fetch(previewUrl, { method: 'POST', body: new FormData(form), signal: controller.signal, headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' } });
+                const html = await response.text();
+                frame.srcdoc = /<head[^>]*>/i.test(html) ? html.replace(/(<head[^>]*>)/i, '$1' + hideChrome) : hideChrome + html;
+                status.textContent = response.ok ? 'Updates as you type' : 'Preview unavailable';
+            } catch (error) { if (error.name !== 'AbortError') status.textContent = 'Preview unavailable'; }
+        };
+        const schedule = () => { clearTimeout(timer); timer = setTimeout(refresh, 1000); };
+        // Widen the form pane automatically when the form needs more room (bidder tables, distribution lists); reset for each document.
+        const pane = document.getElementById('doc-form-pane');
+        const split = document.getElementById('doc-split');
+        const fitPane = () => {
+            if (window.innerWidth < 1024 || modal.classList.contains('hidden')) return;
+            pane.style.flexBasis = '';
+            const overflow = pane.scrollWidth - pane.clientWidth;
+            if (overflow > 4) pane.style.flexBasis = Math.min(pane.clientWidth + overflow + 24, split.clientWidth * 0.62) + 'px';
+        };
+        new MutationObserver(() => requestAnimationFrame(fitPane)).observe(form, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'hidden', 'style'] });
+        window.addEventListener('resize', fitPane);
+        document.querySelectorAll('[data-document-type]').forEach((button) => button.addEventListener('click', () => setTimeout(fitPane, 150)));
+        form.addEventListener('input', schedule);
+        form.addEventListener('change', schedule);
+        document.querySelectorAll('[data-document-type]').forEach((button) => button.addEventListener('click', () => { frame.srcdoc = ''; setTimeout(refresh, 400); }));
+    })();
 </script>
 @endsection

@@ -31,6 +31,7 @@ class ProcurementReceivingWorkspaceTest extends TestCase
         $response = $this->actingAs($user)->get(route('procurement.receiving'));
 
         $response->assertOk()->assertViewIs('procurement-receiving')
+            ->assertSee('civic-mobile-cards', false)
             ->assertSeeInOrder(['PR-PARTIAL', 'PR-COMPLETE'])
             ->assertSee('Partial delivery')->assertSee('Delivery complete')
             ->assertSee('Missing PO and IAR')->assertSee('PR-MISSING')

@@ -11,14 +11,33 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role', 'organization_id', 'school_id', 'position', 'office', 'procurement_role', 'bac_role'])]
+#[Fillable(['name', 'email', 'password', 'role', 'organization_id', 'school_id', 'position', 'office', 'procurement_role', 'bac_role', 'username', 'user_code', 'phone', 'status', 'last_login_at', 'password_changed_at'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use BelongsToOrganization, HasFactory, Notifiable;
 
-    protected $fillable = ['name', 'email', 'password', 'role', 'organization_id', 'school_id', 'position', 'office', 'procurement_role', 'bac_role'];
+    protected $fillable = ['name', 'email', 'password', 'role', 'organization_id', 'school_id', 'position', 'office', 'procurement_role', 'bac_role', 'username', 'user_code', 'phone', 'status', 'last_login_at', 'password_changed_at'];
+
+    protected static function booted(): void
+    {
+        // Every account gets a readable User ID (and a username to sign in with) the moment it is created.
+        static::created(function (self $user) {
+            $updates = [];
+            if (! $user->user_code) {
+                $updates['user_code'] = 'USR-'.str_pad((string) $user->id, 6, '0', STR_PAD_LEFT);
+            }
+            if (! $user->username) {
+                $base = preg_replace('/[^a-z0-9._-]/', '', strtolower(strstr((string) $user->email, '@', true) ?: 'user'.$user->id)) ?: 'user'.$user->id;
+                $updates['username'] = static::withoutGlobalScopes()->where('username', $base)->exists() ? $base.$user->id : $base;
+            }
+            if ($updates) {
+                static::withoutGlobalScopes()->whereKey($user->id)->update($updates);
+                $user->forceFill($updates)->syncOriginal();
+            }
+        });
+    }
 
     /** Budget roles: Super Admin = master_user; school_admin keeps full access to its school. */
     public const ROLES = [
@@ -119,6 +138,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'last_login_at' => 'datetime',
+            'password_changed_at' => 'datetime',
         ];
     }
 }

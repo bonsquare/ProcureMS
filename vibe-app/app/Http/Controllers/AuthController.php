@@ -27,11 +27,15 @@ class AuthController extends Controller
     public function store(Request $request)
     {
         $credentials = $request->validate([
-            'email' => ['required', 'email'],
+            'email' => ['required', 'string', 'max:255'],
             'password' => ['required', 'string'],
         ]);
 
-        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+        // The sign-in field accepts the email address or the username.
+        $login = trim($credentials['email']);
+        $field = str_contains($login, '@') ? 'email' : 'username';
+
+        if (! Auth::attempt([$field => $login, 'password' => $credentials['password'], 'status' => 'active'], $request->boolean('remember'))) {
             return back()->withErrors(['email' => 'The provided credentials are incorrect.'])->onlyInput('email');
         }
 
@@ -47,6 +51,7 @@ class AuthController extends Controller
         }
 
         $request->session()->regenerate();
+        $user->forceFill(['last_login_at' => now()])->saveQuietly();
 
         return redirect()->intended(route('home'));
     }
@@ -62,9 +67,19 @@ class AuthController extends Controller
             'address' => ['nullable', 'string', 'max:1000'],
             'contact_email' => ['nullable', 'email', 'max:255'],
             'contact_number' => ['nullable', 'string', 'max:50'],
-            'system_user_name' => ['required', 'string', 'max:255'],
+            'system_user_given_name' => ['required', 'string', 'max:100'],
+            'system_user_middle_initial' => ['nullable', 'string', 'size:1', 'alpha'],
+            'system_user_surname' => ['required', 'string', 'max:100'],
+            'system_user_username' => ['required', 'string', 'min:4', 'max:60', 'regex:/^[A-Za-z0-9._-]+$/', 'unique:users,username'],
+            'system_user_position' => ['required', 'string', 'max:255'],
             'system_user_email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'system_user_phone' => ['required', 'string', 'max:50'],
             'system_user_password' => ['required', 'string', 'min:8', 'confirmed'],
+            'system_user_confirmed' => ['accepted'],
+        ], [
+            'system_user_confirmed.accepted' => 'Please confirm that your full name and username are final.',
+            'system_user_middle_initial.size' => 'The middle initial is one letter only, or leave it blank.',
+            'system_user_middle_initial.alpha' => 'The middle initial is one letter only, or leave it blank.',
         ]);
 
         DB::transaction(function () use ($data) {
@@ -76,10 +91,16 @@ class AuthController extends Controller
             ]);
             $organization->update(['organization_code' => sprintf('ORG-%06d', $organization->id)]);
             $schoolData = collect($data)->except([
-                'system_user_name',
+                'system_user_given_name',
+                'system_user_middle_initial',
+                'system_user_surname',
+                'system_user_username',
+                'system_user_position',
                 'system_user_email',
+                'system_user_phone',
                 'system_user_password',
                 'system_user_password_confirmation',
+                'system_user_confirmed',
             ])->all();
             $schoolData['status'] = 'inactive';
             $schoolData['organization_id'] = $organization->id;
@@ -91,14 +112,18 @@ class AuthController extends Controller
 
             $school = School::create($schoolData);
 
+            // The first user of a school is always its administrator; the form does not offer a role.
+            $middleInitial = filled($data['system_user_middle_initial'] ?? null) ? strtoupper($data['system_user_middle_initial']).'.' : null;
             $systemUser = User::create([
-                'name' => $data['system_user_name'],
+                'name' => collect([trim($data['system_user_given_name']), $middleInitial, trim($data['system_user_surname'])])->filter()->implode(' '),
+                'username' => strtolower($data['system_user_username']),
                 'email' => $data['system_user_email'],
+                'phone' => $data['system_user_phone'],
                 'password' => $data['system_user_password'],
                 'role' => 'school_admin',
                 'organization_id' => $organization->id,
                 'school_id' => $school->id,
-                'position' => 'School Administrator',
+                'position' => $data['system_user_position'],
             ]);
 
             Subscription::create([

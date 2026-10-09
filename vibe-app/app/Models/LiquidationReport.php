@@ -11,11 +11,11 @@ class LiquidationReport extends Model
 {
     use BelongsToOrganization, HasFactory;
 
-    protected $fillable = ['organization_id', 'school_id', 'master_transaction_id', 'procurement_request_id', 'submitted_by', 'report_number', 'ors_number', 'source_of_fund', 'payee', 'payee_address', 'payee_tin', 'responsibility_center_code', 'purpose', 'amount', 'status', 'notes', 'accounting_remarks', 'dv_number', 'dv_date', 'dv_particulars', 'payment_mode', 'payment_reference', 'paid_at', 'paid_by', 'submitted_at', 'approved_at', 'budget_allocation_id'];
+    protected $fillable = ['dv_include_appropriation', 'organization_id', 'school_id', 'master_transaction_id', 'procurement_request_id', 'submitted_by', 'report_number', 'ors_number', 'source_of_fund', 'payee', 'payee_address', 'payee_tin', 'responsibility_center_code', 'purpose', 'amount', 'status', 'notes', 'accounting_remarks', 'dv_number', 'dv_date', 'dv_particulars', 'payment_mode', 'payment_reference', 'paid_at', 'paid_by', 'submitted_at', 'approved_at', 'budget_allocation_id'];
 
     protected function casts(): array
     {
-        return ['amount' => 'decimal:2', 'paid_at' => 'date', 'dv_date' => 'date', 'submitted_at' => 'datetime', 'approved_at' => 'datetime'];
+        return ['amount' => 'decimal:2', 'paid_at' => 'date', 'dv_date' => 'date', 'dv_include_appropriation' => 'boolean', 'submitted_at' => 'datetime', 'approved_at' => 'datetime'];
     }
 
     public function school()

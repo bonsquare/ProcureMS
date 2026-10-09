@@ -24,7 +24,7 @@
     }
 @endphp
 <style>
-.ris-page{width:215.9mm;min-height:330.2mm;padding:8mm 10mm;font-family:Arial,sans-serif;font-size:10pt;color:#111}.ris-wrap{border:1px solid #111}.ris-title{height:21mm;text-align:center;padding-top:8mm;font-size:14pt;font-weight:700}.ris-appendix{text-align:right;padding:3mm 2mm 0;font-size:9pt}.ris-table{width:100%;border-collapse:collapse;table-layout:fixed}.ris-table td,.ris-table th{border:1px solid #111;padding:3px 4px;vertical-align:middle}.ris-table .center{text-align:center}.ris-lines{height:18mm;padding:2mm}.ris-item td{height:9mm}.ris-empty td{height:9mm}.ris-purpose td{height:12mm;vertical-align:top;padding-top:4px;line-height:1.3}.ris-sign td{height:7mm}.ris-signature td{height:22mm;vertical-align:bottom}.ris-name{font-weight:700;text-align:center}.ris-role{text-align:center}.ris-break{page-break-after:always}@media print{.ris-page{margin:0;width:215.9mm;min-height:330.2mm;box-shadow:none}.ris-break{page-break-after:always}}
+.ris-page{width:215.9mm;min-height:330.2mm;padding:8mm 10mm;font-family:Arial,sans-serif;font-size:10pt;color:#111}.ris-wrap{border:1px solid #111}.ris-title{height:21mm;text-align:center;padding-top:8mm;font-size:14pt;font-weight:700}.ris-appendix{text-align:right;padding:3mm 2mm 0;font-size:9pt}.ris-table{width:100%;border-collapse:collapse;table-layout:fixed}.ris-table td,.ris-table th{border:1px solid #111;padding:3px 4px;vertical-align:middle}.ris-table .center{text-align:center}.ris-lines{height:20mm;padding:2mm;line-height:1.85;vertical-align:middle}.ris-item td{height:9mm}.ris-empty td{height:9mm}.ris-purpose td{height:12mm;vertical-align:top;padding-top:4px;line-height:1.3}.ris-sign td{height:7mm}.ris-signature td{height:22mm;vertical-align:bottom}.ris-name{font-weight:700;text-align:center;white-space:nowrap;overflow:hidden;padding-left:3px;padding-right:3px}.ris-sign td.ris-name{height:11mm}.ris-sign td.ris-role{white-space:normal}.ris-role{text-align:center}.ris-break{page-break-after:always}@media print{.ris-page{margin:0;width:215.9mm;min-height:330.2mm;box-shadow:none}.ris-break{page-break-after:always}}
 </style>
 @foreach($iarsAssignments as $assignmentIndex => $assignment)
     @php
@@ -110,3 +110,21 @@
         </div>
     </main>
 @endforeach
+<script>
+    // Printed names stay on one line: the font shrinks (down to about 6pt) only as far as each name needs.
+    (() => {
+        const fit = () => document.querySelectorAll('.ris-name').forEach((cell) => {
+            cell.style.fontSize = '';
+            cell.style.whiteSpace = '';
+            let size = parseFloat(getComputedStyle(cell).fontSize);
+            const floor = 8;
+            while (cell.scrollWidth > cell.clientWidth + 1 && size > floor) { size -= 0.5; cell.style.fontSize = size + 'px'; }
+            // A name too long even at the smallest size wraps onto a second line instead of being cut off.
+            if (cell.scrollWidth > cell.clientWidth + 1) { cell.style.whiteSpace = 'normal'; }
+        });
+        document.addEventListener('DOMContentLoaded', fit);
+        window.addEventListener('load', fit);
+        window.addEventListener('beforeprint', fit);
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+    })();
+</script>

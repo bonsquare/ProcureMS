@@ -75,14 +75,23 @@ class SaasFoundationTest extends TestCase
         $this->post(route('register.store'), [
             'name' => 'New Test School',
             'school_type' => 'Elementary',
-            'system_user_name' => 'Test Administrator',
+            'system_user_given_name' => 'Test', 'system_user_middle_initial' => 'q', 'system_user_surname' => 'Administrator',
+            'system_user_username' => 'Test.Admin', 'system_user_position' => 'School Head', 'system_user_phone' => '09171234567',
             'system_user_email' => 'new-school@example.test',
             'system_user_password' => 'password123',
             'system_user_password_confirmation' => 'password123',
+            'system_user_confirmed' => '1',
         ])->assertRedirect(route('login'));
 
         $user = User::withoutGlobalScopes()->where('email', 'new-school@example.test')->firstOrFail();
         $organization = Organization::findOrFail($user->organization_id);
+
+        // The name is assembled from its parts, the username is stored in lower case, and the role is automatic.
+        $this->assertSame('Test Q. Administrator', $user->name);
+        $this->assertSame('test.admin', $user->username);
+        $this->assertSame('school_admin', $user->role);
+        $this->assertSame('School Head', $user->position);
+        $this->assertSame('09171234567', $user->phone);
 
         $this->assertMatchesRegularExpression('/^ORG-\d{6}$/', $organization->organization_code);
         $this->assertDatabaseHas('subscriptions', [
@@ -90,6 +99,22 @@ class SaasFoundationTest extends TestCase
             'status' => 'trial',
             'plan' => 'trial',
         ]);
+    }
+
+    public function test_pre_registration_needs_the_final_name_confirmation_and_a_one_letter_initial(): void
+    {
+        $base = [
+            'name' => 'Another School', 'system_user_given_name' => 'Ana', 'system_user_surname' => 'Reyes', 'system_user_username' => 'ana.reyes2',
+            'system_user_position' => 'Principal', 'system_user_phone' => '0917', 'system_user_email' => 'ana2@example.test',
+            'system_user_password' => 'password123', 'system_user_password_confirmation' => 'password123',
+        ];
+
+        $this->post(route('register.store'), $base)->assertSessionHasErrors('system_user_confirmed');
+        $this->post(route('register.store'), $base + ['system_user_confirmed' => '1', 'system_user_middle_initial' => 'DC'])->assertSessionHasErrors('system_user_middle_initial');
+        $this->post(route('register.store'), $base + ['system_user_confirmed' => '1', 'system_user_middle_initial' => ''])->assertRedirect(route('login'));
+        $this->assertSame('Ana Reyes', User::withoutGlobalScopes()->where('email', 'ana2@example.test')->value('name'));
+        $this->get(route('register'))->assertOk()->assertSee('Given Name')->assertSee('Middle Initial')->assertSee('Surname')->assertSee('Username')->assertSee('cannot be changed')
+            ->assertDontSee('System Role')->assertDontSee('School Administrator');
     }
 
     private function tenant(string $subscriptionStatus, string $role = 'school_admin'): array

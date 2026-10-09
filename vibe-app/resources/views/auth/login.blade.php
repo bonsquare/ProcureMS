@@ -15,7 +15,7 @@
         @if(session('success'))<div class="mt-5 rounded border border-secondary/30 bg-secondary/10 px-4 py-3 text-sm font-medium text-secondary">{{ session('success') }}</div>@endif
         <form id="login-form" method="POST" action="{{ route('login.store') }}" class="mt-8 space-y-5">@csrf
             <div><label for="email" class="text-xs font-semibold text-on-surface-variant">Email address</label><input id="email" name="email" type="email" value="{{ old('email') }}" required autofocus class="mt-2 w-full rounded border border-outline-variant/50 bg-surface px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10">@error('email')<p class="mt-1 text-xs text-error">{{ $message }}</p>@enderror</div>
-            <div><label for="password" class="text-xs font-semibold text-on-surface-variant">Password</label><input id="password" name="password" type="password" required class="mt-2 w-full rounded border border-outline-variant/50 bg-surface px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10">@error('password')<p class="mt-1 text-xs text-error">{{ $message }}</p>@enderror</div>
+            <div><label for="password" class="text-xs font-semibold text-on-surface-variant">Password</label><div class="relative mt-2"><input id="password" name="password" type="password" required class="w-full rounded border border-outline-variant/50 bg-surface py-2.5 pl-3 pr-11 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"><button type="button" id="toggle-password" aria-label="Show password" aria-pressed="false" class="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-r text-on-surface-variant hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">visibility</span></button></div>@error('password')<p class="mt-1 text-xs text-error">{{ $message }}</p>@enderror</div>
             <label class="flex items-center gap-2 text-xs text-on-surface-variant"><input type="checkbox" name="remember" value="1" class="h-4 w-4 accent-primary">Remember me</label>
             <button id="sign-in-button" type="submit" class="flex w-full items-center justify-center gap-2 rounded bg-primary px-4 py-3 text-sm font-semibold text-white hover:bg-primary-container"><span class="button-label">Sign in</span><span class="button-spinner hidden h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden="true"></span></button>
         </form>
@@ -33,6 +33,18 @@
         button.querySelector('.button-label').textContent = 'Signing in';
         button.querySelector('.button-spinner').classList.remove('hidden');
     });
+    (() => {
+        const input = document.getElementById('password');
+        const toggle = document.getElementById('toggle-password');
+        if (!input || !toggle) return;
+        toggle.addEventListener('click', () => {
+            const show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            toggle.setAttribute('aria-pressed', show ? 'true' : 'false');
+            toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+            toggle.firstElementChild.textContent = show ? 'visibility_off' : 'visibility';
+        });
+    })();
 </script>
 </body>
 </html>

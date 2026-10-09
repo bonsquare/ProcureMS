@@ -9,6 +9,8 @@ use App\Http\Controllers\ChartOfAccountController;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PlanningController;
+use App\Http\Controllers\SchoolSettingsController;
+use App\Http\Controllers\UnitController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -25,19 +27,27 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::post('/schools', [HomeController::class, 'storeSchool'])->name('schools.store');
     Route::get('/procurement', [HomeController::class, 'procurement'])->name('procurement');
     Route::get('/procurement/suppliers', [HomeController::class, 'suppliers'])->name('suppliers');
+    Route::get('/procurement/suppliers/create', [HomeController::class, 'createSupplier'])->middleware('permission:supplier.manage')->name('suppliers.create');
+    Route::get('/procurement/suppliers/{supplier}/edit', [HomeController::class, 'editSupplier'])->middleware('permission:supplier.manage')->whereNumber('supplier')->name('suppliers.edit');
     Route::post('/procurement/suppliers', [HomeController::class, 'storeSupplier'])->middleware('permission:supplier.manage')->name('suppliers.store');
     Route::put('/procurement/suppliers/{supplier}', [HomeController::class, 'updateSupplier'])->middleware('permission:supplier.manage')->name('suppliers.update');
+    Route::get('/procurement/units', [UnitController::class, 'index'])->name('units.index');
+    Route::post('/procurement/units', [UnitController::class, 'store'])->middleware('permission:supplier.manage')->name('units.store');
+    Route::delete('/procurement/units/{unit}', [UnitController::class, 'destroy'])->middleware('permission:supplier.manage')->name('units.destroy');
     Route::get('/procurement/create', [HomeController::class, 'createProcurement'])->name('procurement.create');
     Route::get('/procurement/requests', [HomeController::class, 'procurementRequests'])->name('procurement.requests');
     Route::get('/procurement/documents', [HomeController::class, 'procurementDocumentIndex'])->name('procurement.documents.index');
     Route::get('/procurement/receiving', [HomeController::class, 'procurementReceiving'])->name('procurement.receiving');
+    Route::post('/procurement/preview', [HomeController::class, 'previewProcurement'])->name('procurement.preview');
     Route::post('/procurement', [HomeController::class, 'storeProcurement'])->middleware('permission:procurement.create')->name('procurement.store');
     Route::get('/procurement/{procurementRequest}', [HomeController::class, 'showProcurement'])->whereNumber('procurementRequest')->name('procurement.show');
     Route::get('/procurement/{procurementRequest}/edit', [HomeController::class, 'editProcurement'])->name('procurement.edit');
     Route::put('/procurement/{procurementRequest}', [HomeController::class, 'updateProcurement'])->middleware('permission:procurement.edit')->name('procurement.update');
+    Route::patch('/procurement/{procurementRequest}/status', [HomeController::class, 'updateProcurementStatus'])->name('procurement.status');
     Route::get('/procurement/{procurementRequest}/print', [HomeController::class, 'printProcurement'])->name('procurement.print');
     Route::get('/procurement/{procurementRequest}/documents', [HomeController::class, 'procurementDocuments'])->name('procurement.documents');
     Route::post('/procurement/{procurementRequest}/documents', [HomeController::class, 'storeProcurementDocument'])->middleware('permission:procurement.edit')->name('procurement.documents.store');
+    Route::post('/procurement/{procurementRequest}/documents/preview', [HomeController::class, 'previewProcurementDocument'])->middleware('permission:procurement.edit')->name('procurement.documents.preview');
     Route::get('/procurement/{procurementRequest}/documents/{procurementDocument}/print', [HomeController::class, 'printProcurementDocument'])->name('procurement.documents.print');
     Route::get('/procurement/{procurementRequest}/delivery-reconciliation', [HomeController::class, 'printDeliveryReconciliation'])->name('procurement.delivery-reconciliation');
     Route::get('/liquidation', [HomeController::class, 'liquidation'])->name('liquidation');
@@ -90,6 +100,7 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::delete('/accounting/chart-of-accounts/{chartOfAccount}', [ChartOfAccountController::class, 'destroy'])->middleware('permission:accounting.manage')->name('chart-of-accounts.destroy');
     Route::patch('/accounting/{liquidationReport}', [FinanceController::class, 'review'])->middleware('permission:accounting.approve')->name('accounting.review');
     Route::post('/accounting/{liquidationReport}/dv', [FinanceController::class, 'createDv'])->middleware('permission:accounting.approve')->name('accounting.dv.store');
+    Route::patch('/accounting/{liquidationReport}/dv-options', [FinanceController::class, 'updateDvOptions'])->middleware('permission:accounting.approve')->name('accounting.dv.options');
     Route::get('/accounting/{liquidationReport}/dv-print', [FinanceController::class, 'printDv'])->name('accounting.dv.print');
     Route::get('/cash', [FinanceController::class, 'cash'])->name('cash');
     Route::post('/cash/{liquidationReport}/pay', [FinanceController::class, 'pay'])->middleware('permission:cash.pay')->name('cash.pay');
@@ -105,6 +116,13 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::post('/school-settings/schools/{school}/approve', [HomeController::class, 'approveSchoolRegistration'])->name('school-settings.school.approve');
     Route::post('/school-settings/staff', [HomeController::class, 'updateSchoolStaff'])->middleware('permission:organization.settings')->name('school-settings.staff');
     Route::post('/school-settings/staff/add', [HomeController::class, 'addSchoolStaff'])->middleware('permission:organization.settings')->name('school-settings.staff.add');
+    Route::post('/school-settings/users', [SchoolSettingsController::class, 'storeUser'])->middleware('permission:organization.settings')->name('school-settings.users.store');
+    Route::put('/school-settings/users/{user}', [SchoolSettingsController::class, 'updateUser'])->middleware('permission:organization.settings')->name('school-settings.users.update');
+    Route::put('/school-settings/users/{user}/password', [SchoolSettingsController::class, 'changePassword'])->middleware('permission:organization.settings')->name('school-settings.users.password');
+    Route::post('/school-settings/employees', [SchoolSettingsController::class, 'storeStaff'])->middleware('permission:organization.settings')->name('school-settings.employees.store');
+    Route::put('/school-settings/employees/{staff}', [SchoolSettingsController::class, 'updateStaff'])->middleware('permission:organization.settings')->name('school-settings.employees.update');
+    Route::delete('/school-settings/employees/{staff}', [SchoolSettingsController::class, 'destroyStaff'])->middleware('permission:organization.settings')->name('school-settings.employees.destroy');
+    Route::post('/school-settings/roles', [SchoolSettingsController::class, 'storeRole'])->middleware('permission:organization.settings')->name('school-settings.roles.store');
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
     Route::post('/generate', [HomeController::class, 'generate'])->name('generate');
 });

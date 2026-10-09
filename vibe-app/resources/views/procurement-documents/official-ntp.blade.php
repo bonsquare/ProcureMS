@@ -26,7 +26,7 @@
     .ntp-recipient .supplier-name,.ntp-recipient .supplier-address{font-style:italic}
     .ntp-salutation{margin-bottom:17px}
     .ntp-message{margin:0 0 14px;text-align:justify;line-height:1.65}
-    .ntp-message .intro{display:inline-block;padding-left:7mm}
+    .ntp-message .intro{display:inline}
     .ntp-signature{width:48%;margin:35px 10% 0 auto;text-align:center}
     .ntp-signature .name{margin-top:50px;font-weight:700;font-style:italic;text-decoration:underline;text-transform:uppercase}
     .ntp-conforme{margin-top:67px}

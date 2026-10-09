@@ -23,8 +23,10 @@ class ProcurementWorkspaceServiceTest extends TestCase
             'abstract starts award' => ['approved', ['abstract_of_bids_quotation'], 'award', 'Record award'],
             'notice starts award' => ['approved', ['notice_to_award'], 'award', 'Record award'],
             'purchase order starts ordering' => ['approved', ['purchase_order'], 'purchase_order', 'Prepare receiving'],
+            'notice to proceed belongs to the award' => ['approved', ['notice_to_award', 'notice_to_proceed'], 'award', 'Record award'],
             'inspection report starts receiving' => ['approved', ['purchase_order', 'inspection_acceptance_report'], 'receiving', 'Reconcile delivery'],
-            'completed request' => ['completed', ['purchase_order', 'inspection_acceptance_report'], 'complete', 'Review completed record'],
+            'completed request' => ['completed', ['request_for_quotation', 'abstract_of_bids_quotation', 'notice_to_award', 'notice_to_proceed', 'purchase_order', 'inspection_acceptance_report', 'inventory_acknowledgement_receipt_supplies', 'requisition_issuance_slip'], 'complete', 'Review completed record'],
+            'completed in status only, documents missing' => ['completed', ['purchase_order', 'inspection_acceptance_report'], 'receiving', 'Reconcile delivery'],
         ];
     }
 
@@ -91,9 +93,9 @@ class ProcurementWorkspaceServiceTest extends TestCase
         );
 
         $this->assertSame(4, $workspace['documents']['completed']);
-        $this->assertSame(6, $workspace['documents']['total']);
+        $this->assertSame(8, $workspace['documents']['total']);
         $this->assertSame(
-            ['notice_to_proceed', 'inspection_acceptance_report'],
+            ['notice_to_proceed', 'inspection_acceptance_report', 'inventory_acknowledgement_receipt_supplies', 'requisition_issuance_slip'],
             array_column($workspace['documents']['missing'], 'type'),
         );
     }

@@ -1,167 +1,117 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>School Settings · ProcureMS</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config={theme:{extend:{colors:{surface:'#faf8ff','surface-low':'#f4f3fa','primary:'#00236f','primary-container':'#1e3a8a','on-surface':'#1a1b21','on-surface-variant':'#444651','secondary':'#006c4a','outline-variant':'#c5c5d3','error':'#ba1a1a'},fontFamily:{inter:['Inter','sans-serif']}}}};</script>
-    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet"><link rel="stylesheet" href="{{ asset('css/app.css') }}"><style>#settings-sidebar{display:flex!important;position:fixed!important;left:0!important;top:0!important;bottom:0!important;width:288px!important;flex-direction:column!important;background:#00236f!important;color:#fff!important;z-index:9999!important;padding:24px 16px!important}#settings-sidebar a{color:rgba(255,255,255,.82)!important}#settings-sidebar a:hover,#settings-sidebar a.bg-primary-container{background:#1e3a8a!important;color:#fff!important}#settings-shell{padding-left:288px!important}#settings-topbar{left:288px!important}button,input[type="submit"],input[type="button"],input[type="file"]::file-selector-button{transition:background-color .15s,color .15s,border-color .15s!important}button:hover,input[type="submit"]:hover,input[type="button"]:hover,input[type="file"]::file-selector-button:hover{background:#00236f!important;color:#fff!important;border-color:#00236f!important}</style>
-@include('partials.input-fixes')
-</head>
-<body class="bg-surface font-inter text-on-surface antialiased">
-@php $isMasterUser = $isMasterUser ?? auth()->user()?->role === 'master_user'; @endphp
-<aside id="settings-sidebar" style="display:flex;position:fixed;left:0;top:0;bottom:0;width:288px;flex-direction:column;background:#00236f;color:#fff;z-index:9999;padding:24px 16px;"><div class="mb-8 flex items-center gap-3 px-2"><div class="flex h-8 w-8 items-center justify-center rounded bg-secondary"><span class="material-symbols-outlined text-[20px]">school</span></div><span class="text-xl font-semibold">ProcureMS</span></div><nav class="flex-1 space-y-1" aria-label="Main navigation">
-    @php
-        $navigation=[['icon'=>'dashboard','label'=>'Dashboard','route'=>'home'],['icon'=>'shopping_cart','label'=>'Procurement','route'=>'procurement'],['icon'=>'receipt_long','label'=>'Liquidation','route'=>'liquidation'],['icon'=>'folder','label'=>'Google Drive','route'=>'google-drive'],['icon'=>'bar_chart','label'=>'Reports','route'=>'reports']]; if (auth()->user()?->hasPermission('planning.view') || auth()->user()?->hasPermission('planning.manage')) { array_splice($navigation, 3, 0, [['icon'=>'account_tree','label'=>'Planning','route'=>'planning']]); }
-        if ($isMasterUser) {
-            $navigation[] = ['icon'=>'group','label'=>'User Management','route'=>'user-management'];
-            $navigation[] = ['icon'=>'card_membership','label'=>'Subscriptions','route'=>'subscriptions'];
-        }
-        $navigation[] = ['icon'=>'settings','label'=>'School Settings','route'=>'school-settings','active'=>true];
-    @endphp
-    @foreach($navigation as $item)<a href="{{ route($item['route']) }}" class="flex items-center rounded px-3 py-2.5 text-sm {{ ($item['active'] ?? false) ? 'bg-primary-container font-semibold text-white' : 'text-white/80 hover:bg-primary-container hover:text-white' }}"><span class="material-symbols-outlined mr-3 text-[20px]">{{ $item['icon'] }}</span>{{ $item['label'] }}</a> @if(($item['label'] ?? '') === 'Dashboard')<details class="group"><summary class="flex cursor-pointer list-none items-center rounded px-3 py-2.5 text-sm text-white/80 hover:bg-primary-container hover:text-white"><span class="material-symbols-outlined mr-3 text-[20px]">account_balance_wallet</span><span class="flex-1">Finance</span><span class="material-symbols-outlined text-[18px] transition-transform group-open:rotate-180">expand_more</span></summary><div class="mt-1 space-y-1"><a href="{{ route('budget') }}" class="ml-8 flex items-center rounded px-3 py-2 text-sm text-white/75 hover:bg-primary-container hover:text-white"><span class="material-symbols-outlined mr-2 text-[17px]">account_balance</span>Budget</a><a href="{{ route('accounting') }}" class="ml-8 flex items-center rounded px-3 py-2 text-sm text-white/75 hover:bg-primary-container hover:text-white"><span class="material-symbols-outlined mr-2 text-[17px]">request_quote</span>Accounting</a><a href="{{ route('chart-of-accounts') }}" class="ml-8 flex items-center rounded px-3 py-2 text-sm text-white/75 hover:bg-primary-container hover:text-white"><span class="material-symbols-outlined mr-2 text-[17px]">list_alt</span>Chart of Accounts</a><a href="{{ route('allotment-registry') }}" class="ml-8 flex items-center rounded px-3 py-2 text-sm text-white/75 hover:bg-primary-container hover:text-white"><span class="material-symbols-outlined mr-2 text-[17px]">menu_book</span>Allotment Registry</a><a href="{{ route('cash') }}" class="ml-8 flex items-center rounded px-3 py-2 text-sm text-white/75 hover:bg-primary-container hover:text-white"><span class="material-symbols-outlined mr-2 text-[17px]">payments</span>Cash</a></div></details>@endif @endforeach
-</nav><div class="border-t border-white/15 pt-4 text-xs text-white/60"><p>Multi-School Procurement System</p><p class="mt-1">v1.0 · All systems operational</p></div></aside>
-<div id="settings-shell" style="padding-left:288px;"><header id="settings-topbar" class="fixed right-0 top-0 z-40 flex h-16 items-center justify-between border-b border-outline-variant/30 bg-surface/95 px-6 backdrop-blur" style="left:288px;"><span class="text-sm font-semibold text-on-surface-variant">System Configuration</span><div class="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white"><span class="material-symbols-outlined text-[18px]">person</span></div></header>
-<main class="min-h-screen bg-surface px-4 pb-16 pt-24 md:px-6 lg:px-8"><div class="mx-auto max-w-[1400px]">
-    @php $selectedSchool = $selectedSchool ?? null; @endphp
-    <div class="mb-8 flex flex-col justify-between gap-4 xl:flex-row xl:items-end"><div><div class="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-on-surface-variant"><span class="material-symbols-outlined text-[16px]">settings</span><span class="font-semibold text-primary">Organization Configuration</span></div><h1 class="text-[28px] font-semibold leading-9 tracking-tight">School Settings</h1><p class="mt-1 text-[15px] leading-6 text-on-surface-variant">Manage agency identity, school information, staff assignments, and procurement responsibilities.</p></div>@if($isMasterUser)<form method="GET" action="{{ route('school-settings') }}" class="rounded border border-outline-variant/30 bg-white p-3"><input type="hidden" name="ui" value="staff-save-v7"><label class="text-xs font-semibold text-on-surface-variant">School Filter<select name="school_id" onchange="this.form.submit()" class="mt-2 w-full min-w-[260px] rounded border border-outline-variant/50 bg-surface-low px-3 py-2 text-xs outline-none focus:border-primary"><option value="" @selected(!$selectedSchool)>Master management view</option>@foreach($schools as $school)<option value="{{ $school->id }}" @selected($selectedSchool?->id === $school->id)>{{ $school->name }} ({{ $school->code }})</option>@endforeach</select></label></form>@endif</div>
-    @if(session('success'))<div class="mb-5 rounded border border-secondary/30 bg-secondary/5 px-4 py-3 text-sm text-secondary">{{ session('success') }}</div>@endif
-    @if($errors->any())<div class="mb-5 rounded border border-error/30 bg-error/5 px-4 py-3 text-sm text-error">Please review the highlighted settings and try again.</div>@endif
+@extends('layouts.procurement')
+@section('title', 'School Settings')
+@section('page-title', 'School Settings')
+@section('hide-module-tabs', '1')
+@section('flash-handled', '1')
+@section('content')
+@php
+    $selectedSchool = $selectedSchool ?? null;
+    $selectedSchoolId = $selectedSchool?->id;
+    $employeeRoleCount = $staff->sum(fn ($member) => collect(array_keys($roleGroups))->sum(fn ($group) => count($member->rolesFor($group))));
+    $bacMembers = $staff->filter(fn ($member) => count($member->rolesFor('bac_role')) > 0)->count();
+    $activeUsers = $systemUsers->where('status', 'active')->count();
+    $tabs = [
+        'info' => ['School Information', 'domain'],
+        'users' => ['System Users', 'manage_accounts'],
+        'staff' => ['Employees & Roles', 'badge'],
+    ];
+    $stats = [
+        ['Profile complete', $profileCompleteness.'%', $profileCompleteness >= 80 ? 'Ready for official documents' : 'Fill in the missing details', 'task_alt', $profileCompleteness >= 80 ? 'green' : 'amber', $profileCompleteness],
+        ['System users', $systemUsers->count(), $activeUsers.' active', 'manage_accounts', 'blue', null],
+        ['Employees', $staff->count(), $bacMembers.' in the BAC', 'badge', 'blue', null],
+        ['Roles assigned', $employeeRoleCount, 'BAC, procurement and document roles', 'verified_user', 'green', null],
+        ['Logos set', $logoCount.' of 3', 'Agency, division and school', 'image', $logoCount === 3 ? 'green' : 'amber', null],
+    ];
+    $palette = ['blue' => ['#e2edf7', '#286da8'], 'green' => ['#ddf0e8', '#2a7f64'], 'amber' => ['#fff0dc', '#b46f1f']];
+    $input = 'mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm font-normal outline-none focus:border-action focus:ring-2 focus:ring-action/20';
+    $readonly = 'mt-1 w-full rounded-lg border border-outline-variant bg-surface-low px-3 py-2 text-sm font-semibold text-on-surface-variant';
+    $logoUrl = fn (?string $path) => $path && \Illuminate\Support\Facades\Storage::disk('public')->exists($path) ? asset('storage/'.$path) : null;
+    $tabUrl = fn (string $key) => route('school-settings', array_filter(['ui' => 'staff-save-v7', 'school_id' => $selectedSchoolId, 'tab' => $key]));
+@endphp
+
+<header class="mb-4 flex flex-wrap items-end justify-between gap-3">
+    <div>
+        <p class="text-[11px] font-bold uppercase tracking-[.14em] text-action">Organization configuration</p>
+        <h1 class="mt-1 font-bold">School Settings</h1>
+        <p class="mt-1 text-sm text-on-surface-variant">{{ $selectedSchool?->name ?? 'Choose a school to manage' }} · agency identity, system users and who does what.</p>
+    </div>
     @if($isMasterUser)
-    <section class="mb-5 overflow-hidden rounded border border-outline-variant/30 bg-white">
-        <div class="flex flex-col justify-between gap-3 bg-primary px-5 py-4 text-white sm:flex-row sm:items-center">
-            <div><h2 class="text-lg font-semibold">Pre-registrations for Approval</h2><p class="mt-1 text-xs text-white/75">Schools submitted from the public register page appear here until approved.</p></div>
-            <span class="rounded bg-white/15 px-3 py-1 text-xs font-semibold">{{ $pendingPreRegistrations->count() }} Pending</span>
-        </div>
-        <div class="divide-y divide-outline-variant/20">
-            @forelse($pendingPreRegistrations as $pendingSchool)
-                @php $pendingUser = $pendingSchool->users->first(); @endphp
-                <div class="grid gap-4 px-5 py-4 md:grid-cols-[1fr_auto] md:items-center">
-                    <div>
-                        <div class="flex flex-wrap items-center gap-2"><h3 class="font-semibold">{{ $pendingSchool->name }}</h3><span class="rounded bg-error/10 px-2 py-1 text-[11px] font-semibold text-error">Pending approval</span></div>
-                        <p class="mt-1 text-xs text-on-surface-variant">{{ $pendingSchool->code }} · {{ $pendingSchool->division ?: 'Division not set' }} · {{ $pendingSchool->address ?: 'Address not set' }}</p>
-                        <p class="mt-2 text-xs text-on-surface-variant">Initial admin: <span class="font-semibold text-on-surface">{{ $pendingUser?->name ?? 'Not set' }}</span> {{ $pendingUser?->email ? '('.$pendingUser->email.')' : '' }}</p>
-                    </div>
-                    <div class="flex flex-wrap gap-2 md:justify-end">
-                        <a href="{{ route('school-settings', ['ui' => 'staff-save-v7', 'school_id' => $pendingSchool->id]) }}" class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Review Details</a>
-                        <form method="POST" action="{{ route('school-settings.school.approve', $pendingSchool) }}">@csrf<button type="submit" class="rounded bg-secondary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary">Approve & Activate</button></form>
-                    </div>
-                </div>
-            @empty
-                <div class="px-5 py-8 text-center text-sm text-on-surface-variant">No pending pre-registrations.</div>
-            @endforelse
-        </div>
-    </section>
-    @endif
-    @if($selectedOrganization)
-    @php $numbering = $selectedOrganization->numbering_preferences ?? []; @endphp
-    <section class="mb-5 rounded border border-outline-variant/30 bg-white p-5 sm:p-6">
-        <div class="mb-5 flex items-center justify-between"><div><h2 class="text-lg font-semibold">Organization Defaults</h2><p class="mt-1 text-xs text-on-surface-variant">Fiscal year, default fund, and tenant-specific document numbering.</p></div><span class="material-symbols-outlined text-on-surface-variant">tune</span></div>
-        <form method="POST" action="{{ route('school-settings.organization') }}" class="grid grid-cols-1 gap-4 md:grid-cols-3">@csrf
-            <input type="hidden" name="organization_id" value="{{ $selectedOrganization->id }}">
-            <label class="text-xs font-semibold text-on-surface-variant">Organization Code<input name="organization_code" required value="{{ old('organization_code', $selectedOrganization->organization_code) }}" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal"></label>
-            <label class="text-xs font-semibold text-on-surface-variant">Fiscal Year<input type="number" name="fiscal_year" min="2000" max="2100" required value="{{ old('fiscal_year', $selectedOrganization->fiscal_year ?? now()->year) }}" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal"></label>
-            <label class="text-xs font-semibold text-on-surface-variant">Default Fund Source<input name="default_fund_source" value="{{ old('default_fund_source', $selectedOrganization->default_fund_source) }}" placeholder="e.g. MOOE" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal"></label>
-            <label class="text-xs font-semibold text-on-surface-variant">PR Prefix<input name="pr_prefix" required value="{{ old('pr_prefix', $numbering['purchase_request'] ?? 'PR') }}" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal uppercase"></label>
-            <label class="text-xs font-semibold text-on-surface-variant">ORS Prefix<input name="ors_prefix" required value="{{ old('ors_prefix', $numbering['obligation_request'] ?? 'ORS') }}" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal uppercase"></label>
-            <label class="text-xs font-semibold text-on-surface-variant">DV Prefix<input name="dv_prefix" required value="{{ old('dv_prefix', $numbering['disbursement_voucher'] ?? 'DV') }}" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal uppercase"></label>
-            <div class="md:col-span-3"><button type="submit" class="rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white">Save Organization Defaults</button></div>
+        <form method="GET" action="{{ route('school-settings') }}" class="rounded-xl border border-outline-variant/60 bg-white p-2.5">
+            <input type="hidden" name="ui" value="staff-save-v7"><input type="hidden" name="tab" value="{{ $tab }}">
+            <label class="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant">School
+                <select name="school_id" onchange="this.form.submit()" class="ml-2 rounded-lg border border-outline-variant bg-white px-2.5 py-1.5 text-xs font-semibold normal-case tracking-normal text-on-surface">
+                    <option value="">Select a school</option>
+                    @foreach($schools as $school)<option value="{{ $school->id }}" @selected($selectedSchoolId === $school->id)>{{ $school->name }}</option>@endforeach
+                </select>
+            </label>
         </form>
-    </section>
     @endif
-    <section class="mb-5 rounded border border-outline-variant/30 bg-white p-5 sm:p-6"><div class="mb-5 flex items-center justify-between"><div><h2 class="text-lg font-semibold">Agency / Department</h2><p class="mt-1 text-xs text-on-surface-variant">Manage the organization identity and district information used in official records and document headers.</p></div><span class="material-symbols-outlined text-on-surface-variant">account_balance</span></div>
-        <form id="department-details-form" data-editable-form method="POST" action="{{ route('school-settings.agency') }}" enctype="multipart/form-data" class="grid grid-cols-1 gap-4 md:grid-cols-2">@csrf<input type="hidden" name="school_id" value="{{ request('school_id') }}">
-            <div class="rounded border border-primary/15 bg-surface-low p-4 md:col-span-2">
-                <div class="mb-4 border-b border-outline-variant/30 pb-3"><h3 class="text-sm font-semibold text-primary">Agency / Department details</h3><p class="mt-1 text-xs text-on-surface-variant">General agency identity, department information, contact details, and primary logo.</p></div>
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <label class="text-xs font-semibold text-on-surface-variant">Republic / First Header Line<input name="republic_name" value="{{ old('republic_name', $agency->republic_name) }}" placeholder="e.g. Republic of the Philippines" class="mt-2 w-full rounded border border-outline-variant/50 bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
-                    <label class="text-xs font-semibold text-on-surface-variant">Department / Agency<input name="department_name" required value="{{ old('department_name', $agency->department_name) }}" placeholder="e.g. Department of Education" class="mt-2 w-full rounded border border-outline-variant/50 bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
-                    <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Office Address<textarea name="address" rows="2" placeholder="Enter agency office address" class="mt-2 w-full rounded border border-outline-variant/50 bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-primary">{{ old('address', $agency->address ?? '') }}</textarea></label>
-                    <label class="text-xs font-semibold text-on-surface-variant">Email<input type="email" name="email" value="{{ old('email', $agency->email ?? '') }}" placeholder="Enter agency email" class="mt-2 w-full rounded border border-outline-variant/50 bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
-                    <label class="text-xs font-semibold text-on-surface-variant">Telephone / Mobile<input name="phone" value="{{ old('phone', $agency->phone ?? '') }}" placeholder="Enter agency contact number" class="mt-2 w-full rounded border border-outline-variant/50 bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
-                    <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Department Logo
-                        @if($agency->department_logo_path)<img src="{{ asset('storage/'.$agency->department_logo_path) }}" alt="Current department logo" class="mt-2 h-16 w-16 rounded border border-outline-variant/40 bg-white object-contain p-1">@endif
-                        <input type="file" name="department_logo" accept="image/*" class="mt-2 block w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-xs font-normal">
-                    </label>
-                </div>
+</header>
+
+@if(session('success'))<div role="status" class="civic-alert civic-alert--success">{{ session('success') }}</div>@endif
+@if($errors->any())<div role="alert" class="civic-alert" style="border-color:#e4b4b7;background:#f8e2e4;color:#8a2f35"><strong>Please fix the following:</strong><ul class="mt-1 list-disc pl-5 text-xs">@foreach($errors->all() as $message)<li>{{ $message }}</li>@endforeach</ul></div>@endif
+
+<section class="mb-4 grid grid-cols-2 gap-3 xl:grid-cols-5" aria-label="Settings overview">
+    @foreach($stats as [$label, $value, $note, $icon, $tone, $bar])
+        @php [$soft, $strong] = $palette[$tone]; @endphp
+        <div class="relative overflow-hidden rounded-xl border border-outline-variant/50 bg-white p-3.5 pl-4">
+            <span class="absolute inset-y-0 left-0 w-1" style="background:{{ $strong }}" aria-hidden="true"></span>
+            <div class="flex items-start justify-between gap-2">
+                <div class="min-w-0"><p class="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">{{ $label }}</p><p class="mt-1 text-xl font-bold leading-none text-primary">{{ $value }}</p></div>
+                <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg" style="background:{{ $soft }};color:{{ $strong }}"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">{{ $icon }}</span></span>
             </div>
-            <div class="rounded border border-primary/15 bg-surface-low p-4 md:col-span-2">
-                <div class="mb-4 border-b border-outline-variant/30 pb-3"><h3 class="text-sm font-semibold text-primary">District details</h3><p class="mt-1 text-xs text-on-surface-variant">Region, division, district, office, and district logo information used for official references.</p></div>
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <label class="text-xs font-semibold text-on-surface-variant">Region<input name="region_name" value="{{ old('region_name', $agency->region_name) }}" placeholder="Enter region" class="mt-2 w-full rounded border border-outline-variant/50 bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
-                    <label class="text-xs font-semibold text-on-surface-variant">Schools Division Office<input name="division_office" value="{{ old('division_office', $agency->division_office) }}" placeholder="Enter schools division office" class="mt-2 w-full rounded border border-outline-variant/50 bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
-                    <label class="text-xs font-semibold text-on-surface-variant">District<input name="district_name" value="{{ old('district_name', $agency->district_name) }}" placeholder="Enter district" class="mt-2 w-full rounded border border-outline-variant/50 bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
-                    <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Division Address<textarea name="division_address" rows="2" placeholder="Enter division address" class="mt-2 w-full rounded border border-outline-variant/50 bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-primary">{{ old('division_address', $agency->division_address ?? '') }}</textarea></label>
-                    <label class="text-xs font-semibold text-on-surface-variant">Office / Section<input name="office_section" value="{{ old('office_section', $agency->office_section) }}" placeholder="Enter office or section" class="mt-2 w-full rounded border border-outline-variant/50 bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
-                    <label class="text-xs font-semibold text-on-surface-variant">Schools Division Logo
-                        @if($agency->division_logo_path)<img src="{{ asset('storage/'.$agency->division_logo_path) }}" alt="Current division logo" class="mt-2 h-16 w-16 rounded border border-outline-variant/40 bg-white object-contain p-1">@endif
-                        <input type="file" name="division_logo" accept="image/*" class="mt-2 block w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-xs font-normal">
-                    </label>
-                </div>
-            </div>
-            <div class="flex flex-wrap justify-start gap-2 border-t border-outline-variant/20 pt-4 md:col-span-2"><button type="button" data-edit-button="department-details-form" class="rounded border border-outline-variant/50 px-4 py-2.5 text-xs font-semibold transition-colors hover:border-primary hover:bg-primary hover:text-white">Edit</button><input type="submit" data-update-button="department-details-form" value="Update Department Details" style="display:inline-block!important;visibility:visible!important;opacity:1!important;background:#fff!important;color:#111!important;border:1px solid #c5c5d3!important;border-radius:4px!important;padding:10px 16px!important;font-size:12px!important;font-weight:600!important;cursor:pointer!important;"></div>
-        </form>
-    </section>
-    <section class="mb-5 rounded border border-outline-variant/30 bg-white p-5 sm:p-6"><div class="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center"><div><h2 class="text-lg font-semibold">School details</h2><p class="mt-1 text-xs text-on-surface-variant">{{ $isMasterUser ? 'School-specific settings appear after selecting a school from the top filter.' : 'Maintain your school’s identity, classification, address, and contact details.' }}</p></div>@if($selectedSchool)<span class="rounded bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">{{ $selectedSchool->name }} ({{ $selectedSchool->code }})</span>@endif</div>
-        @if($selectedSchool)<form id="in-school-details-form" data-editable-form method="POST" action="{{ route('school-settings.school') }}" enctype="multipart/form-data" class="grid grid-cols-1 gap-4 md:grid-cols-2">@csrf<input type="hidden" name="school_id" value="{{ $selectedSchool->id }}"><input type="hidden" name="region" value="{{ $selectedSchool->region }}"><input type="hidden" name="division" value="{{ $selectedSchool->division }}"><input type="hidden" name="district" value="{{ $selectedSchool->district }}">
-            <label class="text-xs font-semibold text-on-surface-variant">School ID / Code<input name="code" required value="{{ old('code', $selectedSchool->code) }}" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
-            <div class="hidden md:block" aria-hidden="true"></div>
-            <label class="text-xs font-semibold text-on-surface-variant">School Name<input name="name" required value="{{ old('name', $selectedSchool->name) }}" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
-            <label class="text-xs font-semibold text-on-surface-variant">School Type<select name="school_type" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"><option value="">Select type</option><option @selected(old('school_type', $selectedSchool->school_type) === 'Elementary')>Elementary</option><option @selected(old('school_type', $selectedSchool->school_type) === 'Secondary')>Secondary</option><option @selected(old('school_type', $selectedSchool->school_type) === 'Integrated')>Integrated</option><option @selected(old('school_type', $selectedSchool->school_type) === 'Higher Education')>Higher Education</option></select></label>
-            <label class="text-xs font-semibold text-on-surface-variant">School Email<input type="email" name="contact_email" value="{{ old('contact_email', $selectedSchool->contact_email) }}" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
-            <label class="text-xs font-semibold text-on-surface-variant">School Contact Number<input name="contact_number" value="{{ old('contact_number', $selectedSchool->contact_number) }}" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
-            <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">School Address<textarea name="address" rows="2" placeholder="Enter the complete school address" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary">{{ old('address', $selectedSchool->address) }}</textarea></label>
-            @if($isMasterUser)<label class="text-xs font-semibold text-on-surface-variant">Approval Status<select name="status" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"><option value="active" @selected(old('status', $selectedSchool->status) === 'active')>Active / Approved</option><option value="inactive" @selected(old('status', $selectedSchool->status) === 'inactive')>Inactive / Pending</option></select></label>@endif
-            <label class="text-xs font-semibold text-on-surface-variant">School Logo
-                @if($selectedSchool->logo_path)<img src="{{ asset('storage/'.$selectedSchool->logo_path) }}" alt="Current school logo" class="mt-2 h-16 w-16 rounded border border-outline-variant/40 bg-white object-contain p-1">@endif
-                <input type="file" name="school_logo" accept="image/*" class="mt-2 block w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2 text-xs font-normal">
-            </label><div class="flex flex-wrap items-end justify-start gap-2"><button type="button" data-edit-button="in-school-details-form" class="rounded border border-outline-variant/50 px-4 py-2.5 text-xs font-semibold transition-colors hover:border-primary hover:bg-primary hover:text-white">Edit</button><input type="submit" data-update-button="in-school-details-form" value="Update School Details" style="display:inline-block!important;visibility:visible!important;opacity:1!important;background:#fff!important;color:#111!important;border:1px solid #c5c5d3!important;border-radius:4px!important;padding:10px 16px!important;font-size:12px!important;font-weight:600!important;cursor:pointer!important;"></div>
-        </form>@elseif($isMasterUser)<div class="rounded border border-dashed border-outline-variant/60 bg-surface-low p-6 text-center"><span class="material-symbols-outlined text-3xl text-primary">manage_accounts</span><h3 class="mt-2 text-sm font-semibold">No school selected</h3><p class="mt-1 text-xs text-on-surface-variant">Choose a school from the filter above to edit school details and staff roles. Master account settings remain in the agency and management sections.</p></div>@endif
-    </section>
-    @if($selectedSchool)
-    <section class="rounded border border-outline-variant/30 bg-white p-5 sm:p-6"><div class="mb-5 flex items-center justify-between"><div><h2 class="text-lg font-semibold">School Staff &amp; Procurement / BAC Roles</h2><p class="mt-1 text-xs text-on-surface-variant">Assign each staff member’s position, procurement responsibility, and BAC role.</p></div><span class="material-symbols-outlined text-on-surface-variant">groups</span></div>
-        <form method="POST" action="{{ route('school-settings.staff.add') }}" class="mb-6 rounded border border-outline-variant/30 bg-surface-low p-4">@csrf
-            <input type="hidden" name="school_id" value="{{ $selectedSchool?->id }}"><div class="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h3 class="text-sm font-semibold">Add Staff / Employee</h3><p class="mt-1 text-xs text-on-surface-variant">Staff records are for this school only. They do not receive login credentials.</p></div><button type="button" id="add-another-staff" class="rounded border border-primary px-3 py-2 text-xs font-semibold text-primary hover:bg-primary hover:text-white">+ Add Another Staff</button></div>
-            <div id="new-staff-rows" class="space-y-3"><div class="new-staff-row grid grid-cols-1 gap-3 rounded border border-outline-variant/30 bg-white p-3 md:grid-cols-6"><input name="new_staff[0][name]" required placeholder="Staff / employee name" class="rounded border border-outline-variant/50 bg-white px-3 py-2 text-xs outline-none focus:border-primary"><input name="new_staff[0][position]" placeholder="Designation / position" class="rounded border border-outline-variant/50 bg-white px-3 py-2 text-xs outline-none focus:border-primary"><select name="new_staff[0][procurement_role]" class="rounded border border-outline-variant/50 bg-white px-2 py-2 text-xs outline-none focus:border-primary"><option value="">Procurement Role</option><option>Requesting Officer</option><option>Procurement Officer</option><option>Approver</option><option>Canvasser</option></select><input name="new_staff[0][document_role]" placeholder="Additional roles, separated by commas" class="rounded border border-outline-variant/50 bg-white px-2 py-2 text-xs outline-none focus:border-primary"><select name="new_staff[0][bac_role]" class="min-w-0 rounded border border-outline-variant/50 bg-white px-2 py-2 text-xs outline-none focus:border-primary"><option value="">BAC Role</option><option>BAC Chairperson</option><option>BAC Vice Chairperson</option><option>BAC Member</option><option>BAC Secretariat</option><option>Technical Working Group</option></select><button type="button" class="remove-new-staff hidden rounded border border-error/40 px-2 text-xs text-error">Remove</button></div></div>
-            <div class="mt-4 flex justify-end"><button id="save-all-staff" type="submit" class="rounded px-4 py-2.5 text-xs font-semibold" style="display:inline-flex!important;visibility:visible!important;opacity:1!important;align-items:center!important;justify-content:center!important;background:#00236f!important;color:#fff!important;border:1px solid #00236f!important;cursor:pointer!important;">Save All Staff</button></div>
-        </form>
-        <form id="school-staff-form" data-editable-form method="POST" action="{{ route('school-settings.staff') }}">@csrf<input type="hidden" name="school_id" value="{{ $selectedSchool?->id }}"><div id="staff-list" class="scroll-mt-24 overflow-x-auto"><h3 class="mb-3 text-sm font-semibold">Staff / Employee List</h3><p class="mb-2 text-xs text-on-surface-variant">You may list more than one document role, separated by commas.</p><table class="w-full min-w-[920px] border-collapse text-left text-xs"><thead class="bg-surface-low uppercase tracking-wider text-on-surface-variant"><tr><th class="px-3 py-3 font-semibold">Staff / Employee</th><th class="px-3 py-3 font-semibold">Designation</th><th class="px-3 py-3 font-semibold">Procurement Role</th><th class="px-3 py-3 font-semibold">Additional Document Roles</th><th class="px-3 py-3 font-semibold">BAC Role</th></tr></thead><tbody class="divide-y divide-outline-variant/20">@forelse($staff as $member)<tr><td class="px-3 py-3 font-semibold">{{ $member->name }}</td><td class="px-3 py-3"><input name="staff[{{ $member->id }}][position]" value="{{ $member->position }}" placeholder="e.g. Principal, Teacher-in-Charge" class="w-full rounded border border-outline-variant/50 bg-surface-low px-2 py-2 outline-none focus:border-primary"></td><td class="px-3 py-3"><select name="staff[{{ $member->id }}][procurement_role]" class="w-full rounded border border-outline-variant/50 bg-surface-low px-2 py-2 outline-none focus:border-primary"><option value="">Not assigned</option><option @selected($member->procurement_role === 'Requesting Officer')>Requesting Officer</option><option @selected($member->procurement_role === 'Procurement Officer')>Procurement Officer</option><option @selected($member->procurement_role === 'Approver')>Approver</option><option @selected($member->procurement_role === 'Canvasser')>Canvasser</option></select></td><td class="px-3 py-3"><input name="staff[{{ $member->id }}][document_role]" value="{{ $member->document_role }}" placeholder="e.g. Property Custodian, Bookkeeper" class="w-full rounded border border-outline-variant/50 bg-surface-low px-2 py-2 outline-none focus:border-primary"></td><td class="px-3 py-3"><select name="staff[{{ $member->id }}][bac_role]" class="w-full rounded border border-outline-variant/50 bg-surface-low px-2 py-2 outline-none focus:border-primary"><option value="">Not assigned</option><option @selected($member->bac_role === 'BAC Chairperson')>BAC Chairperson</option><option @selected($member->bac_role === 'BAC Vice Chairperson')>BAC Vice Chairperson</option><option @selected($member->bac_role === 'BAC Member')>BAC Member</option><option @selected($member->bac_role === 'BAC Secretariat')>BAC Secretariat</option><option @selected($member->bac_role === 'Technical Working Group')>Technical Working Group</option></select></td></tr>@empty<tr><td colspan="5" class="px-3 py-8 text-center text-on-surface-variant">No staff or employee records have been added for this school.</td></tr>@endforelse</tbody></table></div><div class="mt-5 flex flex-wrap justify-start gap-2 border-t border-outline-variant/20 pt-4"><button type="button" data-edit-button="school-staff-form" class="rounded border border-outline-variant/50 px-4 py-2.5 text-xs font-semibold transition-colors hover:border-primary hover:bg-primary hover:text-white">Edit Staff</button><input type="submit" data-update-button="school-staff-form" value="Update Staff Roles" style="display:inline-block!important;visibility:visible!important;opacity:1!important;background:#fff!important;color:#111!important;border:1px solid #c5c5d3!important;border-radius:4px!important;padding:10px 16px!important;font-size:12px!important;font-weight:600!important;cursor:pointer!important;"></div></form>
-    </section>
-    @endif
-</div></main></div>
+            @if($bar !== null)<div class="mt-2.5 h-1.5 overflow-hidden rounded-full bg-surface-container"><div class="h-full rounded-full" style="width:{{ $bar }}%;background:{{ $strong }}"></div></div>@endif
+            <p class="mt-2 truncate text-[11px] text-on-surface-variant">{{ $note }}</p>
+        </div>
+    @endforeach
+</section>
+
+<nav class="civic-module-tabs" aria-label="School settings sections">
+    @foreach($tabs as $key => [$label, $icon])
+        <a href="{{ $tabUrl($key) }}" @if($tab === $key) aria-current="page" @endif class="civic-module-tab {{ $tab === $key ? 'civic-module-tab--active' : '' }}"><span class="material-symbols-outlined" aria-hidden="true">{{ $icon }}</span><span>{{ $label }}</span></a>
+    @endforeach
+</nav>
+
+@if(! $selectedSchool)
+    <div class="rounded-xl border border-outline-variant/60 bg-white p-10 text-center text-sm text-on-surface-variant">Choose a school above to manage its information, users and employees.</div>
+@elseif($tab === 'users')
+    @include('partials.settings.users')
+@elseif($tab === 'staff')
+    @include('partials.settings.staff')
+@else
+    @include('partials.settings.info')
+@endif
+
 <script>
-    document.querySelectorAll('[data-update-button]').forEach((button) => {
-        ['background', 'color', 'border'].forEach((property) => button.style.removeProperty(property));
-        button.classList.add('hover:bg-primary', 'hover:text-white', 'hover:border-primary');
+    // Native dialogs: any button with data-open opens the dialog with that id, data-close closes it.
+    document.addEventListener('click', (event) => {
+        const opener = event.target.closest('[data-open]');
+        if (opener) { document.getElementById(opener.dataset.open)?.showModal(); return; }
+        const closer = event.target.closest('[data-close]');
+        if (closer) { closer.closest('dialog')?.close(); return; }
+        if (event.target instanceof HTMLDialogElement) { event.target.close(); }
     });
-    const sidePanel = document.querySelector('aside');
-    if (sidePanel) { sidePanel.classList.remove('hidden'); sidePanel.style.display = 'flex'; }
-    const pageShell = document.querySelector('body > div');
-    if (pageShell) pageShell.style.paddingLeft = '18rem';
-    const topBar = document.querySelector('header.fixed');
-    if (topBar) topBar.style.left = '18rem';
-    const staffRows = document.getElementById('new-staff-rows');
-    let nextStaffIndex = 1;
-    document.getElementById('add-another-staff')?.addEventListener('click', () => {
-        const index = nextStaffIndex++;
-        const row = staffRows.firstElementChild.cloneNode(true);
-        row.querySelectorAll('input, select').forEach((field) => {
-            field.name = field.name.replace(/new_staff\[\d+\]/, `new_staff[${index}]`);
-            if (field.tagName === 'SELECT') field.selectedIndex = 0; else field.value = '';
-        });
-        const remove = row.querySelector('.remove-new-staff');
-        remove.classList.remove('hidden');
-        remove.addEventListener('click', () => row.remove());
-        staffRows.appendChild(row);
-    });
-    document.querySelectorAll('[data-editable-form]').forEach((form) => {
-        const update = document.querySelector(`[data-update-button="${form.id}"]`);
-        if (update) update.style.opacity = '1';
-        form.querySelector(`[data-edit-button="${form.id}"]`)?.addEventListener('click', () => {
-            form.querySelector('input:not([type="hidden"]), textarea, select')?.focus();
-        });
-    });
+    // Logo previews before saving, with the file details and a check of the 2 MB / image-type limits.
+    document.querySelectorAll('input[type=file][data-preview]').forEach((input) => input.addEventListener('change', () => {
+        const target = document.getElementById(input.dataset.preview);
+        const note = document.querySelector('[data-logo-info="' + input.dataset.preview + '"]');
+        const file = input.files && input.files[0];
+        if (!target || !note) return;
+        const reset = () => { note.textContent = note.dataset.default; note.classList.remove('text-error'); };
+        const reject = (message) => { input.value = ''; note.textContent = message; note.classList.add('text-error'); };
+        if (!file) { reset(); return; }
+        if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type)) { reject('Not accepted: use a PNG, JPG, WebP or GIF image.'); return; }
+        if (file.size > 2 * 1024 * 1024) { reject('Too large (' + (file.size / 1048576).toFixed(1) + ' MB). The limit is 2 MB.'); return; }
+        const url = URL.createObjectURL(file);
+        const image = new Image();
+        image.onload = () => {
+            target.innerHTML = '<img src="' + url + '" alt="" class="h-full w-full object-contain">';
+            const small = image.naturalWidth < 300 || image.naturalHeight < 300;
+            note.classList.toggle('text-error', false);
+            note.textContent = file.name + ' · ' + (file.size >= 1048576 ? (file.size / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(file.size / 1024)) + ' KB') + ' · ' + image.naturalWidth + ' × ' + image.naturalHeight + ' px' + (small ? ' (small: it may print blurry)' : '') + ' · new, not saved yet';
+        };
+        image.onerror = () => reject('This file could not be read as an image.');
+        image.src = url;
+    }));
 </script>
-@include('partials.profile-menu')
-</body>
-</html>
+@endsection

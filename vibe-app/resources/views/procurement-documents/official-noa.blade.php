@@ -26,7 +26,7 @@
     .noa-recipient .supplier-name,.noa-recipient .supplier-address{font-style:italic}
     .noa-salutation{margin-bottom:17px}
     .noa-message{margin:0;text-align:justify;line-height:1.65}
-    .noa-message .intro{display:inline-block;padding-left:7mm}
+    .noa-message .intro{display:inline}
     .noa-award-amount{font-weight:700;font-style:italic;text-decoration:underline}
     .noa-signature{width:48%;margin:35px 10% 0 auto;text-align:center}
     .noa-signature .name{margin-top:50px;font-weight:700;font-style:italic;text-decoration:underline;text-transform:uppercase}

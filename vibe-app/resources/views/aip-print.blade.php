@@ -14,13 +14,13 @@
         .masthead img { position: absolute; top: 0; height: 84px; width: auto; }
         .masthead .left { left: 6%; } .masthead .right { right: 6%; }
         .masthead .small { font-size: 11px; }
-        .masthead .dept { font-size: 18px; margin: 4px 0 6px; line-height: 1.4; }
+        .masthead .dept { font-size: 18px; font-weight: bold; margin: 4px 0 6px; line-height: 1.4; }
         .masthead .region { font-weight: bold; font-size: 11px; }
         .masthead .division { font-weight: bold; font-size: 11px; text-transform: uppercase; }
 
         .doc-title { text-align: center; margin: 6px 0 26px; line-height: 1.6; }
         .doc-title h1 { margin: 0; font-size: 18px; letter-spacing: .8px; }
-        .doc-title .fy { margin: 6px 0; font-size: 12.5px; letter-spacing: .4px; }
+        .doc-title .fy { margin: 6px 0; font-size: 12.5px; letter-spacing: .4px; font-weight: bold; }
         .doc-title .school { margin: 4px 0 0; font-size: 13.5px; font-weight: bold; text-transform: uppercase; }
 
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }

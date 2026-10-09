@@ -9,6 +9,7 @@
     </style>
 @include('partials.input-fixes')
 @include('partials.print-clean')
+@include('partials.procurement-emphasis')
 </head>
 <body>
 @include('partials.official-toolbar', ['closeUrl' => route('procurement.documents', $procurementRequest)])

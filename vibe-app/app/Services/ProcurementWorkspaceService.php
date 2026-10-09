@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ProcurementDocument;
 use App\Models\ProcurementRequest;
 use Illuminate\Support\Collection;
 
@@ -17,14 +18,90 @@ class ProcurementWorkspaceService
         'complete' => 'Complete',
     ];
 
-    private const REQUIRED_DOCUMENTS = [
+    /** The required documents in the order they are prepared. */
+    public const REQUIRED_DOCUMENTS = [
         'request_for_quotation' => 'Request for Quotation',
         'abstract_of_bids_quotation' => 'Abstract of Bids or Quotation',
         'notice_to_award' => 'Notice to Award',
         'notice_to_proceed' => 'Notice to Proceed',
         'purchase_order' => 'Purchase Order',
         'inspection_acceptance_report' => 'Inspection and Acceptance Report',
+        'inventory_acknowledgement_receipt_supplies' => 'Inventory and Acknowledgement Receipt of Supplies',
+        'requisition_issuance_slip' => 'Requisition and Issuance Slip',
     ];
+
+    /** Prepared only when needed; they never hold up completion. */
+    public const OPTIONAL_DOCUMENTS = [
+        'inventory_custodian_slip' => 'Inventory Custodian Slip',
+        'property_acknowledgement_receipt' => 'Property Acknowledgement Receipt',
+    ];
+
+    /** Each document can be prepared only after the one before it. */
+    public const PREREQUISITES = [
+        'abstract_of_bids_quotation' => 'request_for_quotation',
+        'notice_to_award' => 'abstract_of_bids_quotation',
+        'notice_to_proceed' => 'notice_to_award',
+        'purchase_order' => 'notice_to_proceed',
+        'inspection_acceptance_report' => 'purchase_order',
+        'inventory_acknowledgement_receipt_supplies' => 'inspection_acceptance_report',
+        'requisition_issuance_slip' => 'inventory_acknowledgement_receipt_supplies',
+        'inventory_custodian_slip' => 'requisition_issuance_slip',
+        'property_acknowledgement_receipt' => 'requisition_issuance_slip',
+    ];
+
+    /** Documents prepared once the delivery arrives; they live under the Receiving tab. */
+    public const RECEIVING_DOCUMENT_TYPES = [
+        'inspection_acceptance_report',
+        'inventory_acknowledgement_receipt_supplies',
+        'requisition_issuance_slip',
+        'inventory_custodian_slip',
+        'property_acknowledgement_receipt',
+    ];
+
+    /**
+     * The single source of truth for where a request stands: its stage and its document progress.
+     * Every list that shows "stage" or "progress" must read this, never compute its own.
+     *
+     * @return array{stage: string, stage_label: string, steps_done: int, steps_total: int, delivered: bool}
+     */
+    public function summary(ProcurementRequest $request): array
+    {
+        $documents = $request->relationLoaded('documents') ? $request->documents : $request->documents()->get();
+        $stage = $this->currentStage($request, $documents);
+        $completeness = $this->documentCompleteness($documents);
+
+        return [
+            'stage' => $stage,
+            'stage_label' => self::STAGES[$stage],
+            'steps_done' => $completeness['completed'],
+            'steps_total' => $completeness['total'],
+            'delivered' => $stage === 'complete',
+        ];
+    }
+
+    /**
+     * Why a document cannot be prepared yet, or null when it can. Order: approved request, then the document before it.
+     *
+     * @param  Collection<int, ProcurementDocument>|null  $documents
+     */
+    public function blockedReason(ProcurementRequest $request, string $type, ?Collection $documents = null): ?string
+    {
+        if (! in_array((string) $request->status, ['approved', 'for_canvass', 'completed'], true)) {
+            return 'Approve the purchase request first.';
+        }
+
+        $required = self::PREREQUISITES[$type] ?? null;
+        if ($required === null) {
+            return null;
+        }
+
+        $documents ??= $request->documents()->get();
+        if ($documents->contains('document_type', $required)) {
+            return null;
+        }
+
+        return 'Prepare the '.(self::REQUIRED_DOCUMENTS[$required] ?? self::OPTIONAL_DOCUMENTS[$required] ?? 'previous document').' first.';
+    }
 
     public function present(ProcurementRequest $request): array
     {
@@ -103,11 +180,12 @@ class ProcurementWorkspaceService
         $status = (string) $request->status;
         $types = $documents->pluck('document_type');
 
-        if ($status === 'completed') {
+        // A request only counts as complete once every required document exists; a status flipped early is not enough.
+        if ($status === 'completed' && $this->documentCompleteness($documents)['is_complete']) {
             return 'complete';
         }
 
-        if ($types->contains('inspection_acceptance_report') || $types->contains('inventory_acknowledgement_receipt_supplies')) {
+        if ($types->intersect(['inspection_acceptance_report', 'inventory_acknowledgement_receipt_supplies', 'requisition_issuance_slip'])->isNotEmpty()) {
             return 'receiving';
         }
 

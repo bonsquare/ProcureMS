@@ -23,7 +23,7 @@
     </div>
     <nav class="flex-1 space-y-1">
         @foreach($navigation as $item)
-            @php $active = ($item['route'] === 'procurement'); @endphp
+            @php $active = ($item['route'] === ($activeNavRoute ?? 'procurement')); @endphp
             <a href="{{ route($item['route']) }}" @if($active) aria-current="page" @endif class="civic-nav-link {{ $active ? 'civic-nav-link--active' : '' }}">
                 <span class="material-symbols-outlined text-[20px]" aria-hidden="true">{{ $item['icon'] }}</span><span>{{ $item['label'] }}</span>
             </a>

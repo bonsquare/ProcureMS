@@ -146,7 +146,9 @@ class FinanceController extends Controller
             'payee' => ['required', 'string', 'max:255'],
             'dv_particulars' => ['required', 'string', 'max:255'],
             'payment_mode' => ['required', Rule::in(self::PAYMENT_MODES)],
+            'dv_include_appropriation' => ['nullable', 'boolean'],
         ]);
+        $data['dv_include_appropriation'] = (bool) ($data['dv_include_appropriation'] ?? false);
 
         $data['dv_number'] ??= app(DocumentNumberService::class)
             ->next((int) $liquidationReport->organization_id, 'disbursement_voucher', 'DV');
@@ -155,6 +157,17 @@ class FinanceController extends Controller
         AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $liquidationReport->school_id, 'action' => 'dv_created', 'auditable_type' => LiquidationReport::class, 'auditable_id' => $liquidationReport->id, 'metadata' => ['dv' => $data['dv_number'], 'ors' => $liquidationReport->ors_number]]);
 
         return redirect()->route('accounting', ['tab' => 'with_dv'])->with('success', "DV {$data['dv_number']} created for {$liquidationReport->ors_number}. It is now queued in Cash for payment.");
+    }
+
+    /** Turn the optional APPROPRIATION table of the printed DV on or off (off by default). */
+    public function updateDvOptions(Request $request, LiquidationReport $liquidationReport)
+    {
+        abort_unless($request->user()->hasPermission('accounting.approve') && $this->schoolIds()->contains($liquidationReport->school_id), 403);
+        abort_unless($liquidationReport->dv_number, 422, 'Create the DV first.');
+        $data = $request->validate(['dv_include_appropriation' => ['required', 'boolean']]);
+        $liquidationReport->update(['dv_include_appropriation' => (bool) $data['dv_include_appropriation']]);
+
+        return back()->with('success', 'DV '.$liquidationReport->dv_number.': appropriation table '.($liquidationReport->dv_include_appropriation ? 'will be printed' : 'removed from the print').'.');
     }
 
     public function printDv(LiquidationReport $liquidationReport)

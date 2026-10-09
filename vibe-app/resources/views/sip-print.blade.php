@@ -18,7 +18,7 @@
 
         .doc-title { text-align: center; margin: 6px 0 12px; line-height: 1.45; }
         .doc-title h1 { margin: 0; font-family: Arial, Helvetica, sans-serif; font-size: 11px; letter-spacing: .3px; }
-        .doc-title .fy { margin: 2px 0; font-size: 11px; }
+        .doc-title .fy { margin: 2px 0; font-size: 11px; font-weight: bold; }
         .doc-title .school { margin: 2px 0 0; font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: bold; text-transform: uppercase; }
 
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }

@@ -9,18 +9,23 @@ use App\Models\LiquidationReport;
 use App\Models\Organization;
 use App\Models\ProcurementDocument;
 use App\Models\ProcurementRequest;
+use App\Models\ProcurementRequestItem;
 use App\Models\School;
 use App\Models\SchoolStaff;
+use App\Models\StaffRoleOption;
 use App\Models\Subscription;
 use App\Models\Supplier;
+use App\Models\Unit;
 use App\Models\User;
 use App\Services\AppItemLinkService;
 use App\Services\BudgetService;
+use App\Services\DashboardKpiService;
 use App\Services\DocumentNumberService;
 use App\Services\FiscalYearService;
 use App\Services\MasterTransactionService;
 use App\Services\ProcurementWorkspaceService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -47,6 +52,25 @@ class HomeController extends Controller
         return Schema::hasColumn('schools', 'organization_id') && $user?->organization_id
             ? School::query()->where('organization_id', $user->organization_id)->pluck('id')
             : School::query()->whereKey($user?->school_id)->pluck('id');
+    }
+
+    private function selectedProcurementSchoolId(): ?int
+    {
+        if (! $this->isMasterUser()) {
+            return null;
+        }
+
+        $schoolId = request()->integer('school_id');
+
+        return $schoolId && School::query()->whereKey($schoolId)->exists() ? $schoolId : null;
+    }
+
+    private function procurementSchoolFilterViewData(?int $schoolId): array
+    {
+        return [
+            'schools' => $this->isMasterUser() ? School::where('status', 'active')->orderBy('name')->get() : collect(),
+            'selectedSchoolId' => $schoolId,
+        ];
     }
 
     private function authorizeSchoolAccess(?int $schoolId): void
@@ -110,7 +134,36 @@ class HomeController extends Controller
                 ->get(),
             'pendingProcurements' => ProcurementRequest::whereIn('school_id', $schoolIds)->whereIn('status', ['submitted', 'pending_approval'])->count(),
             'isMasterUser' => $this->isMasterUser($user),
+            'kpi' => app(DashboardKpiService::class)->forSchools($schoolIds),
+            'systemKpi' => $this->systemKpi($user, $schoolIds, $pendingPreRegistrations),
+            'currentSchool' => $this->isMasterUser($user) ? null : $schools->first(),
         ]);
+    }
+
+    /**
+     * Health and workload figures for the System Master dashboard strip.
+     *
+     * @return array<string, mixed>
+     */
+    private function systemKpi(?User $user, $schoolIds, $pendingPreRegistrations): array
+    {
+        $startedAt = microtime(true);
+        try {
+            DB::select('select 1');
+            $database = 'Connected';
+            $databaseNote = round((microtime(true) - $startedAt) * 1000).' ms response';
+        } catch (\Throwable) {
+            $database = 'Unavailable';
+            $databaseNote = 'Check the database connection';
+        }
+
+        return [
+            'database' => $database,
+            'database_note' => $databaseNote,
+            'storage' => is_writable(storage_path()) ? 'Ready' : 'Needs attention',
+            'tasks' => ProcurementRequest::whereIn('school_id', $schoolIds)->whereIn('status', ['submitted', 'pending_approval'])->count() + $pendingPreRegistrations->count(),
+            'audit_today' => AuditLog::when(! $this->isMasterUser($user), fn ($query) => $query->whereIn('school_id', $schoolIds))->where('created_at', '>=', now()->subDay())->count(),
+        ];
     }
 
     public function dashboardDiagnostics()
@@ -237,8 +290,10 @@ class HomeController extends Controller
     public function procurement(ProcurementWorkspaceService $workspaceService)
     {
         $user = request()->user();
+        $schoolId = $this->selectedProcurementSchoolId();
         $procurementRequests = ProcurementRequest::with('school', 'requester', 'liquidationReports', 'transaction', 'documents', 'items')
             ->whereIn('school_id', $this->scopedSchoolIds())
+            ->when($schoolId, fn ($query) => $query->where('school_id', $schoolId))
             ->latest()
             ->get();
 
@@ -274,6 +329,8 @@ class HomeController extends Controller
             'procurementRequests' => $procurementRequests,
             'attentionRequests' => $procurementRequests->whereIn('status', ['submitted', 'pending_approval', 'returned', 'for_canvass'])->take(5),
             'recentRequests' => $procurementRequests->take(6),
+            'showProcurementSchoolFilter' => $this->isMasterUser(),
+            ...$this->procurementSchoolFilterViewData($schoolId),
         ]);
     }
 
@@ -281,7 +338,7 @@ class HomeController extends Controller
     {
         $search = trim((string) request('search'));
         $status = trim((string) request('status'));
-        $schoolId = request()->integer('school_id');
+        $schoolId = $this->selectedProcurementSchoolId();
         $procurementRequests = ProcurementRequest::with(['school', 'requester', 'liquidationReports', 'transaction', 'documents', 'items'])
             ->whereIn('school_id', $this->scopedSchoolIds())
             ->when($search !== '', fn ($builder) => $builder->where(fn ($nested) => $nested->where('request_number', 'like', "%{$search}%")->orWhere('title', 'like', "%{$search}%")))
@@ -302,8 +359,8 @@ class HomeController extends Controller
             'isMasterUser' => $this->isMasterUser(),
             'currentSchoolName' => $this->isMasterUser() ? null : request()->user()?->school?->name,
             'activeProcurementArea' => 'requests',
-            'schools' => $this->isMasterUser() ? School::where('status', 'active')->orderBy('name')->get() : collect(),
             'filtersApplied' => $search !== '' || $status !== '' || ($this->isMasterUser() && $schoolId),
+            ...$this->procurementSchoolFilterViewData($schoolId),
         ]);
     }
 
@@ -322,13 +379,13 @@ class HomeController extends Controller
         ]);
     }
 
-    public function procurementDocumentIndex()
+    public function procurementDocumentIndex(ProcurementWorkspaceService $workspaceService)
     {
         $type = trim((string) request('type'));
         $status = trim((string) request('status'));
         $requestSearch = trim((string) request('request'));
-        $schoolId = request('school_id');
-        $documents = ProcurementDocument::with(['procurementRequest.school', 'creator'])
+        $schoolId = $this->selectedProcurementSchoolId();
+        $documents = ProcurementDocument::with(['procurementRequest.school', 'procurementRequest.documents', 'creator'])
             ->whereHas('procurementRequest', fn ($query) => $query->whereIn('school_id', $this->scopedSchoolIds()))
             ->when($type !== '', fn ($query) => $query->where('document_type', $type))
             ->when($status !== '', fn ($query) => $query->where('status', $status))
@@ -339,21 +396,27 @@ class HomeController extends Controller
             ->paginate(20)
             ->withQueryString();
 
+        $documents->getCollection()->each(function (ProcurementDocument $document) use ($workspaceService) {
+            $document->procurementRequest->setAttribute('workflow', $workspaceService->summary($document->procurementRequest));
+        });
+
         return view('procurement-documents-index', [
             'documents' => $documents,
             'documentTypes' => $this->procurementDocumentTypes(),
             'isMasterUser' => $this->isMasterUser(),
             'currentSchoolName' => $this->isMasterUser() ? null : request()->user()?->school?->name,
             'activeProcurementArea' => 'documents',
-            'schools' => $this->isMasterUser() ? School::where('status', 'active')->orderBy('name')->get() : collect(),
             'filtersApplied' => $type !== '' || $status !== '' || $requestSearch !== '' || ($this->isMasterUser() && $schoolId),
+            ...$this->procurementSchoolFilterViewData($schoolId),
         ]);
     }
 
     public function procurementReceiving(ProcurementWorkspaceService $workspaceService)
     {
+        $schoolId = $this->selectedProcurementSchoolId();
         $receivingRequests = ProcurementRequest::with(['school', 'requester', 'documents', 'items'])
             ->whereIn('school_id', $this->scopedSchoolIds())
+            ->when($schoolId, fn ($query) => $query->where('school_id', $schoolId))
             ->latest()
             ->paginate(20)
             ->withQueryString();
@@ -374,6 +437,8 @@ class HomeController extends Controller
             'isMasterUser' => $this->isMasterUser(),
             'currentSchoolName' => $this->isMasterUser() ? null : request()->user()?->school?->name,
             'activeProcurementArea' => 'receiving',
+            'showProcurementSchoolFilter' => $this->isMasterUser(),
+            ...$this->procurementSchoolFilterViewData($schoolId),
         ]);
     }
 
@@ -381,14 +446,20 @@ class HomeController extends Controller
     {
         $search = trim((string) request('search'));
         $status = trim((string) request('status'));
+        $schoolId = $this->selectedProcurementSchoolId();
 
         return view('suppliers', [
-            'suppliers' => Supplier::when(! $this->isMasterUser(), fn ($query) => $query->whereIn('school_id', $this->scopedSchoolIds()))
-                ->when($search !== '', fn ($query) => $query->where(fn ($nested) => $nested->where('business_name', 'like', "%{$search}%")->orWhere('contact_person', 'like', "%{$search}%")))
+            'suppliers' => Supplier::with('school')
+                ->when(! $this->isMasterUser(), fn ($query) => $query->whereIn('school_id', $this->scopedSchoolIds()))
+                ->when($schoolId, fn ($query) => $query->where('school_id', $schoolId))
+                ->when($search !== '', fn ($query) => $query->where(fn ($nested) => $nested->where('business_name', 'like', "%{$search}%")->orWhere('contact_person', 'like', "%{$search}%")->orWhere('tin', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%")->orWhere('phone', 'like', "%{$search}%")))
                 ->when($status !== '', fn ($query) => $query->where('status', $status))
                 ->orderBy('business_name')->paginate(20)->withQueryString(),
+            'isMasterUser' => $this->isMasterUser(),
             'activeProcurementArea' => 'suppliers',
-            'filtersApplied' => $search !== '' || $status !== '',
+            'filtersApplied' => $search !== '' || $status !== '' || ($this->isMasterUser() && $schoolId),
+            'showProcurementSchoolFilter' => $this->isMasterUser(),
+            ...$this->procurementSchoolFilterViewData($schoolId),
         ]);
     }
 
@@ -414,15 +485,7 @@ class HomeController extends Controller
 
     public function storeSupplier(Request $request)
     {
-        $data = $request->validate($this->supplierRules());
-        if (! $this->isMasterUser()) {
-            $data['school_id'] = $request->user()?->school_id;
-        }
-        $data['has_company_owner'] = $request->boolean('has_company_owner');
-        if (! $data['has_company_owner']) {
-            $data = array_merge($data, ['owner_salutation' => null, 'owner_given_name' => null, 'owner_middle_initial' => null, 'owner_last_name' => null]);
-        }
-        Supplier::create($data + ['status' => 'active']);
+        Supplier::create($this->supplierData($request) + ['status' => 'active']);
 
         return redirect()->route('suppliers')->with('success', 'Supplier saved successfully.');
     }
@@ -431,15 +494,7 @@ class HomeController extends Controller
     {
         $this->authorizeSchoolAccess($supplier->school_id);
 
-        $data = $request->validate($this->supplierRules());
-        if (! $this->isMasterUser()) {
-            $data['school_id'] = $request->user()?->school_id;
-        }
-        $data['has_company_owner'] = $request->boolean('has_company_owner');
-        if (! $data['has_company_owner']) {
-            $data = array_merge($data, ['owner_salutation' => null, 'owner_given_name' => null, 'owner_middle_initial' => null, 'owner_last_name' => null]);
-        }
-        $supplier->update($data);
+        $supplier->update($this->supplierData($request, $supplier));
 
         return redirect()->route('suppliers')->with('success', 'Supplier details updated successfully.');
     }
@@ -450,7 +505,7 @@ class HomeController extends Controller
             'business_name' => ['required', 'string', 'max:255'],
             'addressee' => ['nullable', 'string', 'max:255'],
             'has_company_owner' => ['nullable', 'boolean'],
-            'owner_salutation' => ['nullable', Rule::in(['Mr.', 'Mrs.', 'Atty.'])],
+            'owner_salutation' => ['nullable', Rule::in(['Mr.', 'Mrs.', 'Ms.', 'Atty.', 'Engr.', 'Dr.'])],
             'owner_given_name' => ['nullable', 'string', 'max:100'],
             'owner_middle_initial' => ['nullable', 'string', 'max:10'],
             'owner_last_name' => ['nullable', 'string', 'max:100'],
@@ -465,6 +520,78 @@ class HomeController extends Controller
             'philgeps_no' => ['nullable', 'string', 'max:150'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'status' => ['nullable', Rule::in(['active', 'inactive'])],
+            'school_id' => ['nullable', 'integer', 'exists:schools,id'],
+            'business_type' => ['nullable', Rule::in(['Sole Proprietorship', 'Partnership', 'Corporation', 'Cooperative', 'Others'])],
+            'line_of_business' => ['nullable', 'string', 'max:255'],
+            'contact_position' => ['nullable', 'string', 'max:150'],
+            'alt_phone' => ['nullable', 'string', 'max:80'],
+            'website' => ['nullable', 'string', 'max:255'],
+            'address_street' => ['nullable', 'string', 'max:255'],
+            'address_barangay' => ['nullable', 'string', 'max:150'],
+            'address_city' => ['nullable', 'string', 'max:150'],
+            'address_province' => ['nullable', 'string', 'max:150'],
+            'address_zip' => ['nullable', 'string', 'max:20'],
+            'dti_registration_no' => ['nullable', 'string', 'max:150'],
+            'sec_registration_no' => ['nullable', 'string', 'max:150'],
+            'cda_registration_no' => ['nullable', 'string', 'max:150'],
+            'bir_registration_no' => ['nullable', 'string', 'max:150'],
+            'business_permit_expiry' => ['nullable', 'date'],
+            'philgeps_expiry' => ['nullable', 'date'],
+            'payment_method' => ['nullable', Rule::in(['Check', 'Bank transfer', 'Cash', 'Others'])],
+            'bank_name' => ['nullable', 'string', 'max:150'],
+            'bank_branch' => ['nullable', 'string', 'max:150'],
+            'bank_account_name' => ['nullable', 'string', 'max:150'],
+            'bank_account_number' => ['nullable', 'string', 'max:80'],
+        ];
+    }
+
+    /**
+     * Normalises the supplier form: the school is fixed for school users, owner fields only apply when the
+     * company has an owner, and the complete address is built from its parts when they are filled in.
+     */
+    private function supplierData(Request $request, ?Supplier $supplier = null): array
+    {
+        $data = $request->validate($this->supplierRules());
+        if (! $this->isMasterUser()) {
+            $data['school_id'] = $request->user()?->school_id;
+        } elseif (! $request->has('school_id')) {
+            unset($data['school_id']);
+        }
+        $this->authorizeSchoolAccess(isset($data['school_id']) ? (int) $data['school_id'] : null);
+
+        $data['has_company_owner'] = $request->boolean('has_company_owner');
+        if (! $data['has_company_owner']) {
+            $data = array_merge($data, ['owner_salutation' => null, 'owner_given_name' => null, 'owner_middle_initial' => null, 'owner_last_name' => null]);
+        }
+
+        $parts = collect([$data['address_street'] ?? null, $data['address_barangay'] ?? null, $data['address_city'] ?? null, $data['address_province'] ?? null, $data['address_zip'] ?? null])
+            ->map(fn ($part) => trim((string) $part))->filter();
+        if ($parts->isNotEmpty() && trim((string) ($data['business_address'] ?? '')) === '') {
+            $data['business_address'] = $parts->implode(', ');
+        }
+
+        return $data;
+    }
+
+    public function createSupplier()
+    {
+        return view('supplier-form', $this->supplierFormData(new Supplier(['status' => 'active', 'tax_type' => 'vat', 'has_company_owner' => true])));
+    }
+
+    public function editSupplier(Supplier $supplier)
+    {
+        $this->authorizeSchoolAccess($supplier->school_id);
+
+        return view('supplier-form', $this->supplierFormData($supplier));
+    }
+
+    private function supplierFormData(Supplier $supplier): array
+    {
+        return [
+            'supplier' => $supplier,
+            'schools' => School::where('status', 'active')->whereIn('id', $this->scopedSchoolIds())->orderBy('name')->get(),
+            'isMasterUser' => $this->isMasterUser(),
+            'activeProcurementArea' => 'suppliers',
         ];
     }
 
@@ -502,6 +629,7 @@ class HomeController extends Controller
             'budgetItems' => $this->openBudgetItems(),
             'agency' => AgencySetting::first(),
             'nextPrNumber' => $this->nextPurchaseRequestNumber(false),
+            'unitOptions' => Unit::options(),
             'activeProcurementArea' => 'requests',
         ]);
     }
@@ -515,6 +643,7 @@ class HomeController extends Controller
         return view('procurement-create', [
             'schools' => School::where('status', 'active')->whereIn('id', $this->scopedSchoolIds())->orderBy('name')->get(),
             'editingRequest' => $procurementRequest,
+            'unitOptions' => Unit::options(),
             'appItems' => $this->appItemOptions($procurementRequest->id),
             'budgetItems' => $this->openBudgetItems(),
             'agency' => AgencySetting::first(),
@@ -645,6 +774,60 @@ class HomeController extends Controller
             ->with('success', 'Procurement request updated successfully.');
     }
 
+    public function updateProcurementStatus(Request $request, ProcurementRequest $procurementRequest, ProcurementWorkspaceService $workspaceService)
+    {
+        $this->authorizeProcurementAccess($procurementRequest);
+        $validated = $request->validate([
+            'status' => ['required', Rule::in(['pending_approval', 'approved', 'returned', 'rejected', 'for_canvass', 'completed'])],
+        ]);
+        $nextStatus = $validated['status'];
+        $approvalDecision = in_array($nextStatus, ['approved', 'returned', 'rejected'], true);
+
+        abort_unless(
+            $approvalDecision
+                ? $request->user()->hasPermission('procurement.approve')
+                : ($request->user()->hasPermission('procurement.edit') || $request->user()->hasPermission('procurement.create')),
+            403,
+            'Your role cannot perform this procurement action.',
+        );
+
+        $allowedTransitions = [
+            'draft' => ['pending_approval'],
+            'returned' => ['pending_approval'],
+            'submitted' => ['approved', 'returned', 'rejected'],
+            'pending_approval' => ['approved', 'returned', 'rejected'],
+            'approved' => ['for_canvass', 'completed'],
+            'for_canvass' => ['completed'],
+        ];
+        abort_unless(in_array($nextStatus, $allowedTransitions[$procurementRequest->status] ?? [], true), 422, 'This procurement action is not available from the current status.');
+
+        if ($nextStatus === 'completed') {
+            $missing = collect($workspaceService->present($procurementRequest->load('documents'))['documents']['missing'] ?? [])->pluck('label');
+            if ($missing->isNotEmpty()) {
+                return redirect()->route('procurement.show', $procurementRequest)
+                    ->with('error', 'Cannot mark complete yet. Still required: '.$missing->implode(', ').'.');
+            }
+        }
+
+        $previousStatus = $procurementRequest->status;
+        $procurementRequest->update([
+            'status' => $nextStatus,
+            'approved_at' => $nextStatus === 'approved' ? now() : null,
+        ]);
+        $procurementRequest->transaction?->recordEvent(
+            'procurement',
+            'pr_'.$nextStatus,
+            $previousStatus,
+            $nextStatus,
+            $procurementRequest->request_number,
+            ['procurement_request_id' => $procurementRequest->id],
+        );
+
+        // Starting the canvass goes straight to the documents where the quotations are prepared.
+        return redirect()->route($nextStatus === 'for_canvass' ? 'procurement.documents' : 'procurement.show', $procurementRequest)
+            ->with('success', 'Procurement request status updated to '.str($nextStatus)->replace('_', ' ')->title().'.');
+    }
+
     /**
      * Every charge must name a budget line once the school has budgeted for the year; the line must
      * match the school and fund and have room for the amount (annual and quarterly).
@@ -695,7 +878,7 @@ class HomeController extends Controller
             'budget_allocation_id' => ['nullable', 'integer', 'exists:budget_allocations,id'],
             'manually_encode_pr_number' => ['nullable', 'boolean'],
             'manual_pr_number' => ['nullable', 'required_if:manually_encode_pr_number,1', 'string', 'max:50', 'regex:/^PR-\d{4}-\d{3,}$/', Rule::unique('procurement_requests', 'request_number')->where('organization_id', $organizationId)->ignore($request->route('procurementRequest'))],
-            'extra_blank_rows' => ['nullable', 'integer', 'min:0', 'max:20'],
+            'extra_blank_rows' => ['nullable', 'integer', 'min:0', 'max:100'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.app_item_id' => ['nullable', 'integer'],
             'items.*.name' => ['required', 'string', 'max:255'],
@@ -732,12 +915,83 @@ class HomeController extends Controller
         $this->authorizeProcurementAccess($procurementRequest);
 
         $procurementRequest->load(['school', 'requester', 'items', 'documents']);
+
+        return $this->procurementPrintView($procurementRequest);
+    }
+
+    /**
+     * Live preview for the Purchase Request form: builds the request in memory from the form values and
+     * renders the official PR page. Nothing is validated strictly and nothing is saved.
+     */
+    public function previewProcurement(Request $request)
+    {
+        abort_unless($request->user()->canCreateProcurement(), 403, 'Your role can only view procurement records.');
+
+        $schoolId = (int) ($request->input('school_id') ?: $request->user()->school_id);
+        $school = $schoolId ? School::find($schoolId) : null;
+        if ($school) {
+            $this->authorizeSchoolAccess($school->id);
+        }
+        $editing = $request->filled('editing_id') ? ProcurementRequest::find($request->input('editing_id')) : null;
+        if ($editing) {
+            $this->authorizeProcurementAccess($editing);
+        }
+
+        $items = collect($request->input('items', []))
+            ->filter(fn ($row) => is_array($row) && trim((string) ($row['name'] ?? '')) !== '')
+            ->map(function (array $row) {
+                $quantity = is_numeric($row['quantity'] ?? null) ? (float) $row['quantity'] : 0;
+                $unitPrice = is_numeric($row['unit_price'] ?? null) ? (float) $row['unit_price'] : 0;
+
+                return (new ProcurementRequestItem)->forceFill([
+                    'name' => (string) $row['name'],
+                    'description' => $row['description'] ?? null,
+                    'unit' => (string) ($row['unit'] ?? ''),
+                    'quantity' => $quantity,
+                    'unit_price' => $unitPrice,
+                    'total' => $quantity * $unitPrice,
+                ]);
+            })->values();
+
+        $requestNumber = $request->boolean('manually_encode_pr_number') && $request->filled('manual_pr_number')
+            ? (string) $request->input('manual_pr_number')
+            : ($editing?->request_number ?? $this->nextPurchaseRequestNumber(false, $school ? $this->organizationIdForSchool($school->id) : null));
+        $requestDate = $request->filled('request_date') ? Carbon::parse($request->input('request_date')) : now();
+
+        $procurementRequest = (new ProcurementRequest)->forceFill([
+            'id' => $editing?->id ?? 0,
+            'school_id' => $school?->id,
+            'request_number' => $requestNumber,
+            'title' => (string) $request->input('purpose', ''),
+            'transaction_description' => $request->input('transaction_description') ?: null,
+            'entity_name' => $request->input('entity_name') ?: null,
+            'department_name' => $request->input('department_name') ?: null,
+            'section' => $request->input('section') ?: null,
+            'sai_number' => $request->input('sai_number') ?: null,
+            'sai_date' => $request->filled('sai_date') ? $request->input('sai_date') : null,
+            'responsibility_center_code' => $request->input('responsibility_center_code') ?: null,
+            'source_of_fund' => $request->input('source_of_fund') ?: null,
+            'extra_blank_rows' => max(0, min(100, (int) $request->input('extra_blank_rows', 0))),
+            'amount' => $items->sum('total'),
+            'status' => 'draft',
+            'requested_at' => $requestDate,
+        ]);
+        $procurementRequest->setRelation('school', $school);
+        $procurementRequest->setRelation('requester', $request->user());
+        $procurementRequest->setRelation('items', $items);
+        $procurementRequest->setRelation('documents', collect());
+
+        return $this->procurementPrintView($procurementRequest);
+    }
+
+    private function procurementPrintView(ProcurementRequest $procurementRequest)
+    {
         $staff = SchoolStaff::where('school_id', $procurementRequest->school_id)->get();
         $rfqMetadata = $procurementRequest->documents->firstWhere('document_type', 'request_for_quotation')?->metadata ?? [];
         $transactionDescription = $procurementRequest->transaction_description ?: data_get($rfqMetadata, 'transaction_description');
-        $requestingOfficer = $staff->firstWhere('procurement_role', 'Requesting Officer')
-            ?? $staff->firstWhere('procurement_role', 'Procurement Officer');
-        $approver = $staff->firstWhere('procurement_role', 'Approver')
+        $requestingOfficer = $staff->first(fn ($member) => $member->hasRole('procurement_role', 'Requesting Officer'))
+            ?? $staff->first(fn ($member) => $member->hasRole('procurement_role', 'Procurement Officer'));
+        $approver = $staff->first(fn ($member) => $member->hasRole('procurement_role', 'Approver'))
             ?? $staff->first(fn ($member) => str_contains(strtolower((string) $member->position), 'school head'));
         $agency = AgencySetting::first() ?? new AgencySetting;
 
@@ -769,9 +1023,16 @@ class HomeController extends Controller
         $inspectionOfficer = $schoolStaff->first(fn ($member) => str_contains(strtolower((string) $member->document_role), 'inspection officer'))
             ?? $schoolStaff->first(fn ($member) => str_contains(strtolower((string) $member->position), 'inspection'));
 
+        $stage = request('stage') === 'receiving' ? 'receiving' : 'procurement';
+
         return view('procurement-documents', [
             'procurementRequest' => $procurementRequest,
-            'documentTypes' => $this->procurementDocumentTypes(),
+            'stage' => $stage,
+            'documentTypes' => collect($this->procurementDocumentTypes())
+                ->filter(fn ($definition, $type) => in_array($type, ProcurementWorkspaceService::RECEIVING_DOCUMENT_TYPES, true) === ($stage === 'receiving'))
+                ->all(),
+            'allDocumentTypes' => $this->procurementDocumentTypes(),
+            'locks' => collect($this->procurementDocumentTypes())->keys()->mapWithKeys(fn ($type) => [$type => $workspaceService->blockedReason($procurementRequest, $type, $procurementRequest->documents)])->all(),
             'suppliers' => Supplier::where('status', 'active')
                 ->where('school_id', $procurementRequest->school_id)
                 ->orderBy('business_name')
@@ -857,6 +1118,10 @@ class HomeController extends Controller
         ]);
 
         $type = $types[$data['document_type']];
+        $blocked = app(ProcurementWorkspaceService::class)->blockedReason($procurementRequest, $data['document_type']);
+        if ($blocked && ! $procurementRequest->documents()->where('document_type', $data['document_type'])->exists()) {
+            return back()->withErrors(['document_type' => $blocked])->withInput();
+        }
         $awardMetadata = [];
         $linkedDocumentMetadata = [];
         if ($data['document_type'] === 'inventory_acknowledgement_receipt_supplies') {
@@ -889,16 +1154,18 @@ class HomeController extends Controller
                 }
             }
         }
-        if ($data['document_type'] === 'notice_to_proceed') {
-            $purchaseOrder = $procurementRequest->documents()
-                ->where('document_type', 'purchase_order')
+        if ($data['document_type'] === 'purchase_order') {
+            // The Notice to Proceed comes first and sets the delivery terms ("within N days of receipt of the NTP");
+            // the Purchase Order picks up whatever it was not given explicitly.
+            $noticeToProceed = $procurementRequest->documents()
+                ->where('document_type', 'notice_to_proceed')
                 ->first();
 
-            if ($purchaseOrder) {
-                $poMetadata = $purchaseOrder->metadata ?? [];
+            if ($noticeToProceed) {
+                $ntpMetadata = $noticeToProceed->metadata ?? [];
                 foreach (['mode_of_procurement', 'delivery_term', 'payment_term', 'delivery_days', 'source_of_fund'] as $field) {
-                    if (array_key_exists($field, $poMetadata) && $poMetadata[$field] !== null && $poMetadata[$field] !== '') {
-                        $data[$field] = $poMetadata[$field];
+                    if (($data[$field] ?? '') === '' && ! empty($ntpMetadata[$field])) {
+                        $data[$field] = $ntpMetadata[$field];
                     }
                 }
             }
@@ -1085,8 +1352,41 @@ class HomeController extends Controller
             'auditable_id' => $document->id,
         ]);
 
-        return redirect()->route('procurement.documents', $procurementRequest)
-            ->with('success', $type['label'].' saved successfully.');
+        return redirect()->route('procurement.documents', array_filter([
+            'procurementRequest' => $procurementRequest,
+            'stage' => in_array($data['document_type'], ProcurementWorkspaceService::RECEIVING_DOCUMENT_TYPES, true) ? 'receiving' : null,
+        ]))->with('success', $type['label'].' saved successfully.');
+    }
+
+    /**
+     * Live preview for the document form: runs the real save inside a transaction, renders the official
+     * print page from the result, then rolls everything back so nothing is stored.
+     */
+    public function previewProcurementDocument(Request $request, ProcurementRequest $procurementRequest)
+    {
+        $this->authorizeProcurementAccess($procurementRequest);
+
+        DB::beginTransaction();
+        try {
+            $this->storeProcurementDocument($request, $procurementRequest);
+            $saved = session()->has('success');
+            $errors = session('errors');
+            session()->forget(['success', 'errors', '_old_input']);
+
+            if (! $saved) {
+                $messages = $errors ? collect($errors->all())->unique()->values()->all() : ['The form is incomplete.'];
+
+                return response()->view('procurement-document-preview-error', ['messages' => $messages]);
+            }
+
+            $document = $procurementRequest->documents()->where('document_type', $request->input('document_type'))->firstOrFail();
+
+            return response($this->printProcurementDocument($procurementRequest, $document)->render());
+        } catch (ValidationException $e) {
+            return response()->view('procurement-document-preview-error', ['messages' => collect($e->errors())->flatten()->all()]);
+        } finally {
+            DB::rollBack();
+        }
     }
 
     private function nextPurchaseOrderNumber(bool $lock = true, ?int $organizationId = null): string
@@ -1163,10 +1463,10 @@ class HomeController extends Controller
         $purchaseOrder = $procurementRequest->documents()->where('document_type', 'purchase_order')->first();
         $inspectionAcceptanceReport = $procurementRequest->documents()->where('document_type', 'inspection_acceptance_report')->first();
         $inventoryAcknowledgementReceipt = $procurementRequest->documents()->where('document_type', 'inventory_acknowledgement_receipt_supplies')->first();
-        $requestingOfficer = $staff->firstWhere('procurement_role', 'Requesting Officer');
-        $procurementOfficer = $staff->firstWhere('procurement_role', 'Procurement Officer');
-        $approver = $staff->firstWhere('procurement_role', 'Approver');
-        $canvasser = $staff->firstWhere('procurement_role', 'Canvasser');
+        $requestingOfficer = $staff->first(fn ($member) => $member->hasRole('procurement_role', 'Requesting Officer'));
+        $procurementOfficer = $staff->first(fn ($member) => $member->hasRole('procurement_role', 'Procurement Officer'));
+        $approver = $staff->first(fn ($member) => $member->hasRole('procurement_role', 'Approver'));
+        $canvasser = $staff->first(fn ($member) => $member->hasRole('procurement_role', 'Canvasser'));
 
         return view('procurement-document-print', [
             'procurementRequest' => $procurementRequest,
@@ -1183,10 +1483,10 @@ class HomeController extends Controller
             'procurementOfficer' => $procurementOfficer,
             'approver' => $approver,
             'canvasser' => $canvasser,
-            'bacChair' => $staff->firstWhere('bac_role', 'BAC Chairperson'),
-            'bacViceChair' => $staff->firstWhere('bac_role', 'BAC Vice Chairperson'),
-            'bacSecretariat' => $staff->firstWhere('bac_role', 'BAC Secretariat'),
-            'bacMembers' => $staff->where('bac_role', 'BAC Member')->values(),
+            'bacChair' => $staff->first(fn ($member) => $member->hasRole('bac_role', 'BAC Chairperson')),
+            'bacViceChair' => $staff->first(fn ($member) => $member->hasRole('bac_role', 'BAC Vice Chairperson')),
+            'bacSecretariat' => $staff->first(fn ($member) => $member->hasRole('bac_role', 'BAC Secretariat')),
+            'bacMembers' => $staff->filter(fn ($member) => $member->hasRole('bac_role', 'BAC Member'))->values(),
             'disbursingOfficer' => $staff->first(fn ($user) => str_contains(strtolower((string) $user->document_role), 'disbursing officer')) ?? $staff->first(fn ($user) => str_contains(strtolower((string) $user->position), 'disbursing')),
             'inspectionOfficer' => $staff->first(fn ($user) => str_contains(strtolower((string) $user->document_role), 'inspection officer')) ?? $staff->first(fn ($user) => str_contains(strtolower((string) $user->position), 'inspection')),
             'propertyOfficer' => $staff->first(fn ($user) => str_contains(strtolower((string) $user->document_role), 'property custodian')) ?? $staff->first(fn ($user) => str_contains(strtolower((string) $user->position), 'property')),
@@ -1536,7 +1836,12 @@ class HomeController extends Controller
     {
         abort_unless($this->isMasterUser(), 403);
 
-        return view('subscriptions');
+        return view('subscriptions', [
+            'pendingPreRegistrations' => School::with(['users' => fn ($query) => $query->oldest()])
+                ->where('status', 'inactive')
+                ->orderBy('created_at')
+                ->get(),
+        ]);
     }
 
     public function schoolSettings()
@@ -1561,14 +1866,44 @@ class HomeController extends Controller
         $selectedOrganization = $selectedSchool?->organization
             ?? (! $isMasterUser ? request()->user()->organization : null);
 
+        $staff = $selectedSchool
+            ? SchoolStaff::with('school')->where('school_id', $selectedSchool->id)->orderBy('name')->get()
+            : collect();
+        $systemUsers = $selectedSchool
+            ? User::where('school_id', $selectedSchool->id)->orderBy('name')->get()
+            : collect();
+        $customRoles = $selectedSchool
+            ? StaffRoleOption::where('organization_id', $selectedSchool->organization_id)->orderBy('name')->get()->groupBy('role_group')
+            : collect();
+        $roleCatalog = collect(SchoolStaff::DEFAULT_ROLES)->map(fn ($roles, $group) => collect($roles)
+            ->merge($customRoles->get($group, collect())->pluck('name'))
+            // a role already held by someone stays selectable even if it was typed in by hand before this page existed
+            ->merge($staff->flatMap(fn ($member) => $member->rolesFor($group)))
+            ->unique(fn ($role) => mb_strtolower($role))->values()->all())->all();
+        // The record of the school being edited: a master user sees every organization, so a bare first() picked the wrong one.
+        $agency = ($selectedSchool
+            ? AgencySetting::withoutGlobalScopes()->where('organization_id', $selectedSchool->organization_id)->first()
+            : null) ?? new AgencySetting;
+        $profileChecks = collect([
+            $agency->department_name, $agency->region_name, $agency->division_office, $agency->district_name, $agency->district_head,
+            $selectedSchool?->name, $selectedSchool?->address, $selectedSchool?->school_head, $selectedSchool?->contact_email, $selectedSchool?->contact_number,
+            $agency->department_logo_path, $agency->division_logo_path, $selectedSchool?->logo_path,
+        ]);
+
         return response()->view('school-settings', [
-            'agency' => AgencySetting::first() ?? new AgencySetting,
+            'agency' => $agency,
+            'tab' => in_array(request('tab'), ['info', 'users', 'staff'], true) ? request('tab') : 'info',
+            'systemUsers' => $systemUsers,
+            'roleCatalog' => $roleCatalog,
+            'roleGroups' => SchoolStaff::ROLE_GROUPS,
+            'assignableRoles' => collect(User::ROLES)->when(! $isMasterUser, fn ($roles) => $roles->except('school_admin'))->all(),
+            'profileCompleteness' => (int) round($profileChecks->filter(fn ($value) => filled($value))->count() / max(1, $profileChecks->count()) * 100),
+            'logoCount' => collect([$agency->department_logo_path, $agency->division_logo_path, $selectedSchool?->logo_path])->filter()->count(),
+            'activeNavRoute' => 'school-settings',
             'schools' => $schools,
             'selectedSchool' => $selectedSchool,
             'selectedOrganization' => $selectedOrganization,
-            'staff' => $selectedSchool
-                ? SchoolStaff::with('school')->where('school_id', $selectedSchool->id)->orderBy('name')->get()
-                : collect(),
+            'staff' => $staff,
             'isMasterUser' => $isMasterUser,
             'pendingPreRegistrations' => $isMasterUser
                 ? School::with(['users' => fn ($query) => $query->oldest()])->where('status', 'inactive')->orderBy('created_at')->get()
@@ -1616,10 +1951,16 @@ class HomeController extends Controller
 
     public function updateAgencySettings(Request $request)
     {
+        $logoMessages = [];
+        foreach (['department_logo' => 'agency logo', 'division_logo' => 'division office logo', 'district_logo' => 'district logo', 'school_logo' => 'school logo'] as $field => $label) {
+            $logoMessages[$field.'.mimes'] = 'The '.$label.' must be a PNG, JPG, WebP or GIF image.';
+            $logoMessages[$field.'.max'] = 'The '.$label.' is too large. The limit is 2 MB.';
+            $logoMessages[$field.'.uploaded'] = 'The '.$label.' could not be uploaded. Try a file under 2 MB.';
+        }
         $data = $request->validate([
             'republic_name' => ['nullable', 'string', 'max:255'],
             'agency_name' => ['nullable', 'string', 'max:255'],
-            'department_name' => ['required', 'string', 'max:255'],
+            'department_name' => ['sometimes', 'required', 'string', 'max:255'],
             'region_name' => ['nullable', 'string', 'max:255'],
             'division_office' => ['nullable', 'string', 'max:255'],
             'division_name' => ['nullable', 'string', 'max:255'],
@@ -1631,16 +1972,26 @@ class HomeController extends Controller
             'phone' => ['nullable', 'string', 'max:50'],
             'head_name' => ['nullable', 'string', 'max:255'],
             'school_id' => ['nullable', 'exists:schools,id'],
-            'department_logo' => ['nullable', 'image', 'max:2048'],
-            'division_logo' => ['nullable', 'image', 'max:2048'],
-        ]);
+            'department_logo' => ['nullable', 'mimes:png,jpg,jpeg,webp,gif', 'max:2048'],
+            'division_logo' => ['nullable', 'mimes:png,jpg,jpeg,webp,gif', 'max:2048'],
+            'district_address' => ['nullable', 'string', 'max:1000'],
+            'district_head' => ['nullable', 'string', 'max:255'],
+            'district_email' => ['nullable', 'email', 'max:255'],
+            'division_email' => ['nullable', 'email', 'max:255'],
+            'division_phone' => ['nullable', 'string', 'max:50'],
+            'district_phone' => ['nullable', 'string', 'max:50'],
+            'district_logo' => ['nullable', 'mimes:png,jpg,jpeg,webp,gif', 'max:2048'],
+        ], $logoMessages);
         if ($request->hasFile('department_logo')) {
             $data['department_logo_path'] = $request->file('department_logo')->store('logos', 'public');
         }
         if ($request->hasFile('division_logo')) {
             $data['division_logo_path'] = $request->file('division_logo')->store('logos', 'public');
         }
-        unset($data['department_logo'], $data['division_logo']);
+        if ($request->hasFile('district_logo')) {
+            $data['district_logo_path'] = $request->file('district_logo')->store('logos', 'public');
+        }
+        unset($data['department_logo'], $data['division_logo'], $data['district_logo']);
         $organizationId = $request->user()?->organization_id;
         if ($this->isMasterUser() && ! empty($data['school_id'])) {
             $organizationId = School::withoutGlobalScopes()->findOrFail($data['school_id'])->organization_id;
@@ -1656,10 +2007,15 @@ class HomeController extends Controller
 
     public function updateSchoolDetails(Request $request)
     {
+        $logoMessages = [];
+        foreach (['department_logo' => 'agency logo', 'division_logo' => 'division office logo', 'district_logo' => 'district logo', 'school_logo' => 'school logo'] as $field => $label) {
+            $logoMessages[$field.'.mimes'] = 'The '.$label.' must be a PNG, JPG, WebP or GIF image.';
+            $logoMessages[$field.'.max'] = 'The '.$label.' is too large. The limit is 2 MB.';
+            $logoMessages[$field.'.uploaded'] = 'The '.$label.' could not be uploaded. Try a file under 2 MB.';
+        }
         $data = $request->validate([
             'school_id' => ['required', 'exists:schools,id'],
             'name' => ['required', 'string', 'max:255'],
-            'code' => ['required', 'string', 'max:50'],
             'address' => ['nullable', 'string', 'max:1000'],
             'region' => ['nullable', 'string', 'max:255'],
             'division' => ['nullable', 'string', 'max:255'],
@@ -1669,8 +2025,8 @@ class HomeController extends Controller
             'contact_email' => ['nullable', 'email', 'max:255'],
             'contact_number' => ['nullable', 'string', 'max:50'],
             'status' => ['nullable', 'in:active,inactive'],
-            'school_logo' => ['nullable', 'image', 'max:2048'],
-        ]);
+            'school_logo' => ['nullable', 'mimes:png,jpg,jpeg,webp,gif', 'max:2048'],
+        ], $logoMessages);
         $this->authorizeSchoolAccess((int) $data['school_id']);
         if (! $this->isMasterUser()) {
             unset($data['status']);
@@ -1702,7 +2058,11 @@ class HomeController extends Controller
             'metadata' => ['school_code' => $school->code],
         ]);
 
-        $redirectRoute = request('redirect_to') === 'dashboard' ? 'home' : 'school-settings';
+        $redirectRoute = match (request('redirect_to')) {
+            'dashboard' => 'home',
+            'subscriptions' => 'subscriptions',
+            default => 'school-settings',
+        };
         $redirectParameters = $redirectRoute === 'school-settings' ? ['ui' => 'staff-save-v7', 'school_id' => $school->id] : [];
 
         return redirect()
