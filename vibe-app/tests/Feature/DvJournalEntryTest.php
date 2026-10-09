@@ -124,4 +124,15 @@ class DvJournalEntryTest extends TestCase
             ->assertSee('Journal entry')->assertSee('Debit')->assertSee('Credit')->assertSee('id="journal-rows"', false)
             ->assertSee('data-amount-raw="12500.00"', false)->assertSee('Cash-Modified Disbursement System (MDS), Regular');
     }
+
+    public function test_the_finance_menu_is_in_the_sidebar_of_every_page(): void
+    {
+        [, $master] = $this->ors(100);
+
+        foreach (['procurement', 'school-settings', 'school-management', 'transfer-requests'] as $page) {
+            $this->actingAs($master)->get(route($page, $page === 'school-settings' ? ['ui' => 'staff-save-v7'] : []))->assertOk()
+                ->assertSee('Finance')->assertSee(route('budget'), false)->assertSee(route('accounting'), false)->assertSee(route('chart-of-accounts'), false)
+                ->assertSee(route('allotment-registry'), false)->assertSee(route('cash'), false);
+        }
+    }
 }

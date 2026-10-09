@@ -30,6 +30,9 @@
             <a href="{{ route($item['route']) }}" @if($active) aria-current="page" @endif class="civic-nav-link {{ $active ? 'civic-nav-link--active' : '' }}">
                 <span class="material-symbols-outlined text-[20px]" aria-hidden="true">{{ $item['icon'] }}</span><span>{{ $item['label'] }}</span>
             </a>
+            @if($item['route'] === 'home')
+                @include('partials.finance-nav')
+            @endif
         @endforeach
     </nav>
     <div class="border-t border-white/15 px-2 pt-4 text-[11px] leading-5 text-white/55">Multi-School Procurement System<br>Secure operational workspace</div>
