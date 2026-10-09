@@ -7,6 +7,34 @@
 
 <div class="grid items-start gap-5 xl:grid-cols-[1fr_380px]">
     <div class="space-y-5">
+        @if($pending)
+            @php
+                $reviewDone = in_array($pending->review_status, ['accepted', 'not_required'], true);
+                $track = [
+                    ['Request submitted', 'done', $pending->requested_at?->format('M d, Y')],
+                    [$pending->review_status === 'not_required' ? 'No review needed' : 'School accepts', $pending->review_status === 'not_required' ? 'skipped' : ($reviewDone ? 'done' : 'current'), $pending->review_status === 'pending' ? 'Answer due '.$pending->review_expires_at?->format('M d') : ($reviewDone && $pending->review_status === 'accepted' ? 'Accepted '.$pending->reviewed_at?->format('M d') : 'Vacant school')],
+                    ['Master approves', $reviewDone ? 'current' : 'todo', $reviewDone ? 'In progress' : 'After acceptance'],
+                    ['You confirm', 'todo', 'At next sign-in'],
+                ];
+            @endphp
+            <section class="overflow-hidden rounded-xl border-2 border-secondary/50 bg-white shadow-sm" aria-live="polite">
+                <div class="flex flex-wrap items-center gap-3 border-b border-secondary/30 bg-gradient-to-r from-secondary/15 to-secondary/5 px-5 py-3.5">
+                    <span class="relative grid h-10 w-10 place-items-center rounded-full bg-secondary text-white shadow"><span class="material-symbols-outlined text-[22px]" aria-hidden="true">task_alt</span><span class="absolute -right-0.5 -top-0.5 h-3 w-3 animate-ping rounded-full bg-secondary/60"></span></span>
+                    <div><h2 class="text-base font-bold text-secondary">Request submitted</h2><p class="text-xs text-on-surface-variant">Your request to <strong class="text-on-surface">{{ $pending->destinationName() }}</strong> is being processed.</p></div>
+                    <span class="ml-auto inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-[11px] font-bold text-secondary ring-1 ring-secondary/40"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">autorenew</span>In progress</span>
+                </div>
+                <ol class="grid gap-3 px-5 py-4 sm:grid-cols-4">
+                    @foreach($track as [$label, $state, $note])
+                        <li class="rounded-xl border px-3 py-2.5 {{ $state === 'current' ? 'border-secondary bg-secondary/10 ring-2 ring-secondary/20' : ($state === 'done' ? 'border-secondary/40 bg-secondary/5' : 'border-outline-variant/60 bg-surface-low') }}">
+                            <p class="flex items-center gap-1.5 text-xs font-bold {{ $state === 'todo' ? 'text-on-surface-variant' : 'text-secondary' }}"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">{{ $state === 'done' ? 'check_circle' : ($state === 'current' ? 'pending' : ($state === 'skipped' ? 'remove_circle' : 'radio_button_unchecked')) }}</span>{{ $label }}</p>
+                            <p class="mt-0.5 text-[11px] text-on-surface-variant">{{ $note }}</p>
+                        </li>
+                    @endforeach
+                </ol>
+                <p class="border-t border-secondary/20 bg-surface-low px-5 py-2.5 text-xs text-on-surface-variant">@if($pending->review_status === 'pending')Waiting for {{ $pending->destinationName() }} to accept. If nobody answers by {{ $pending->review_expires_at?->format('M d, Y') }} the request closes and you can send a new one.@else Waiting for the master user to approve. You will confirm the new station the next time you sign in.@endif</p>
+            </section>
+        @endif
+
         @foreach($incoming as $item)
             <section class="overflow-hidden rounded-xl border-2 border-amber-300 bg-white shadow-sm">
                 <div class="flex flex-wrap items-center justify-between gap-2 border-b border-amber-200 bg-gradient-to-r from-amber-100 to-amber-50 px-5 py-3">
@@ -36,13 +64,18 @@
         <section class="overflow-hidden rounded-xl border border-outline-variant/60 bg-white">
             <div class="flex items-center gap-3 border-b border-outline-variant/40 bg-[#eef4fa] px-5 py-3">
                 <span class="grid h-9 w-9 place-items-center rounded-lg bg-white text-primary shadow-sm"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">location_on</span></span>
-                <div class="min-w-0"><p class="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Current Official Station</p><h2 class="truncate font-bold text-primary">{{ $station?->name ?? '—' }}</h2></div>
+                <div class="min-w-0"><p class="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Current Official Station</p><h2 class="truncate font-bold text-primary">{{ $station?->name ?? '—' }} <span class="ml-1 text-xs font-semibold text-on-surface-variant">{{ $station?->code }}</span></h2></div>
                 @if($pending)<span class="ml-auto inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-bold text-amber-800"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">hourglass_top</span>Request pending</span>@endif
             </div>
-            <dl class="grid gap-x-6 gap-y-2 px-5 py-4 text-xs sm:grid-cols-3">
-                <div><dt class="font-bold uppercase tracking-wide text-on-surface-variant">School ID</dt><dd class="mt-0.5 text-sm font-semibold">{{ $station?->code ?? '—' }}</dd></div>
-                <div><dt class="font-bold uppercase tracking-wide text-on-surface-variant">Division</dt><dd class="mt-0.5 text-sm font-semibold">{{ $station?->division ?: '—' }}</dd></div>
-                <div><dt class="font-bold uppercase tracking-wide text-on-surface-variant">District</dt><dd class="mt-0.5 text-sm font-semibold">{{ $station?->district ?: '—' }}</dd></div>
+            @php $me = auth()->user(); @endphp
+            <div class="px-5 pt-4"><p class="text-[10px] font-bold uppercase tracking-wide text-action">Staff information</p></div>
+            <dl class="grid gap-x-6 gap-y-3 px-5 pb-4 pt-2 text-xs sm:grid-cols-2 lg:grid-cols-3">
+                <div><dt class="font-bold uppercase tracking-wide text-on-surface-variant">Full name</dt><dd class="mt-0.5 text-sm font-semibold">{{ $me->name }}</dd></div>
+                <div><dt class="font-bold uppercase tracking-wide text-on-surface-variant">Position</dt><dd class="mt-0.5 text-sm font-semibold">{{ $me->position ?: '—' }}</dd></div>
+                <div><dt class="font-bold uppercase tracking-wide text-on-surface-variant">User ID</dt><dd class="mt-0.5 text-sm font-semibold">{{ $me->user_code ?: '—' }}</dd></div>
+                <div><dt class="font-bold uppercase tracking-wide text-on-surface-variant">System role</dt><dd class="mt-0.5 text-sm font-semibold">{{ str($me->role)->replace('_', ' ')->title() }}</dd></div>
+                <div><dt class="font-bold uppercase tracking-wide text-on-surface-variant">Email</dt><dd class="mt-0.5 break-all text-sm font-semibold">{{ $me->email }}</dd></div>
+                <div><dt class="font-bold uppercase tracking-wide text-on-surface-variant">Mobile number</dt><dd class="mt-0.5 text-sm font-semibold">{{ $me->phone ?: '—' }}</dd></div>
             </dl>
             <p class="border-t border-outline-variant/30 bg-surface-low px-5 py-2.5 text-xs text-on-surface-variant">If you are reassigned, ask the master user to move you. You keep your account, username, role and subscription. You will work in the new school's data, and the school you leave keeps its own.</p>
         </section>

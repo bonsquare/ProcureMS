@@ -393,4 +393,18 @@ class StationTransferTest extends TestCase
             $this->assertMatchesRegularExpression('/aria-current="page"[^>]*>\s*<span[^>]*>settings<\/span>/', $html, $route.' highlights School Settings, not Procurement');
         }
     }
+
+    public function test_a_submitted_request_is_highlighted_and_the_tab_shows_the_staff_information(): void
+    {
+        [, , $user] = $this->tenant('track-a');
+        $user->update(['position' => 'Administrative Officer II', 'phone' => '09171234567']);
+        $schoolB = $this->vacantSchool('track-b');
+
+        $this->actingAs($user)->get($this->transferTab())->assertOk()->assertDontSee('Request submitted')
+            ->assertSee('Staff information')->assertSee($user->name)->assertSee('Administrative Officer II')->assertSee($user->user_code)->assertSee('09171234567')->assertSee($user->email)
+            ->assertDontSee('School ID');
+
+        app(StationTransferService::class)->request($user, ['to_school_id' => $schoolB->id, 'reason' => 'x']);
+        $this->get($this->transferTab())->assertSee('Request submitted')->assertSee('is being processed')->assertSee('No review needed')->assertSee('Master approves')->assertSee('You confirm');
+    }
 }

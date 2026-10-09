@@ -186,4 +186,13 @@ class VacantSchoolTakeoverTest extends TestCase
         $this->assertSame($school->id, User::where('username', 'nina.lopez')->value('school_id'));
         $this->assertNotNull($outsider->fresh());
     }
+
+    public function test_the_register_page_uses_a_checkbox_for_a_vacant_school(): void
+    {
+        $this->school('boxed');
+
+        $this->get(route('register'))->assertOk()->assertSee('id="vacant-toggle"', false)->assertSee('type="checkbox"', false)
+            ->assertSee('fill in only your own information')->assertSee('register a new school and fill in everything')
+            ->assertSee('name="takeover_school_id"', false)->assertSee('name="name"', false);
+    }
 }

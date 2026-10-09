@@ -47,11 +47,11 @@
 
         <form id="register-form" method="POST" action="{{ route('register.store') }}" class="grid grid-cols-1 gap-5 p-6 sm:p-8 md:grid-cols-2">@csrf<input type="hidden" name="system_user_confirmed" id="system-user-confirmed" value="">
             <input type="hidden" name="registration_type" id="registration-type" value="{{ old('registration_type', 'new') }}">
-            <div class="grid gap-3 sm:grid-cols-2 md:col-span-2" role="radiogroup" aria-label="What are you registering?">
-                <button type="button" data-mode="new" class="reg-choice rounded-xl border-2 p-4 text-left"><span class="flex items-center gap-2 text-sm font-bold text-primary"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">add_business</span>Register a new school</span><span class="mt-1 block text-xs text-on-surface-variant">Your school is not in the system yet.</span></button>
-                <button type="button" data-mode="takeover" class="reg-choice rounded-xl border-2 p-4 text-left"><span class="flex items-center gap-2 text-sm font-bold text-primary"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">swap_horiz</span>Take over a vacant school</span><span class="mt-1 block text-xs text-on-surface-variant">The school is already here and has no user. You receive its data after the master approves.</span></button>
-            </div>
-            <style>.reg-choice { border-color: #cdd8e2; background: #fff; transition: border-color .15s, background .15s; } .reg-choice[aria-pressed="true"] { border-color: #286da8; background: #eef4fa; }</style>
+            <label for="vacant-toggle" class="reg-vacant flex cursor-pointer items-start gap-3 rounded-xl border-2 p-4 md:col-span-2">
+                <input type="checkbox" id="vacant-toggle" class="mt-1 h-5 w-5 shrink-0 accent-[#103967]">
+                <span><span class="flex items-center gap-2 text-sm font-bold text-primary"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">swap_horiz</span>Take over a vacant school</span><span class="mt-1 block text-xs text-on-surface-variant">Tick this if your school is already registered and has no user. You then fill in only your own information, and receive the school's data after the master approves. Leave it unticked to register a new school and fill in everything.</span></span>
+            </label>
+            <style>.reg-vacant { border-color: #cdd8e2; background: #fff; transition: border-color .15s, background .15s; } .reg-vacant:has(input:checked) { border-color: #286da8; background: #eef4fa; }</style>
 
             <div id="takeover-fields" class="space-y-3 md:col-span-2" hidden>
                 <div class="reg-section"><span class="badge"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">swap_horiz</span></span><div><h2>1 · Vacant school</h2><p>Only active schools with no user are listed. The school keeps all its data and gives it to you once approved.</p></div></div>
@@ -111,54 +111,19 @@
     </dialog>
     <script>
         (() => {
-            const form = document.getElementById('register-form');
-            const dialog = document.getElementById('identity-confirm');
-            const check = document.getElementById('confirm-final');
-            const confirmButton = document.getElementById('confirm-submit');
-            const flag = document.getElementById('system-user-confirmed');
-            const tidy = (value) => value.trim().replace(/\s+/g, ' ');
-            const part = (name) => tidy(form.elements[name].value);
-            const fullName = () => [part('system_user_given_name'), part('system_user_middle_initial').toUpperCase().replace(/^(.)$/, '$1.'), part('system_user_surname')].filter(Boolean).join(' ');
-
-            form.elements.system_user_username.addEventListener('input', (event) => { event.target.value = event.target.value.toLowerCase(); });
-            form.elements.system_user_middle_initial.addEventListener('input', (event) => { event.target.value = event.target.value.replace(/[^A-Za-z]/g, '').slice(0, 1).toUpperCase(); });
-
-            form.addEventListener('submit', (event) => {
-                if (flag.value === '1') {
-                    const button = document.getElementById('register-button');
-                    button.disabled = true;
-                    button.classList.add('cursor-wait', 'opacity-80');
-                    button.querySelector('.button-label').textContent = 'Submitting';
-                    button.querySelector('.button-spinner').classList.remove('hidden');
-                    return;
-                }
-                event.preventDefault();
-                if (!form.reportValidity()) return;
-                document.getElementById('confirm-fullname').textContent = fullName();
-                document.getElementById('confirm-username').textContent = form.elements.system_user_username.value.trim();
-                check.checked = false;
-                confirmButton.disabled = true;
-                dialog.showModal();
-            });
-            check.addEventListener('change', () => { confirmButton.disabled = !check.checked; });
-            document.getElementById('confirm-back').addEventListener('click', () => dialog.close());
-            confirmButton.addEventListener('click', () => { flag.value = '1'; dialog.close(); form.requestSubmit(); });
-        })();
-    </script>
-    <script>
-        (() => {
-            const form = document.getElementById('register-form');
             const type = document.getElementById('registration-type');
+            const toggle = document.getElementById('vacant-toggle');
             const fields = document.getElementById('new-school-fields');
             const takeover = document.getElementById('takeover-fields');
             const apply = () => {
-                const isTakeover = type.value === 'takeover';
+                const isTakeover = toggle.checked;
+                type.value = isTakeover ? 'takeover' : 'new';
                 fields.hidden = isTakeover; takeover.hidden = ! isTakeover;
                 fields.querySelectorAll('input, select, textarea').forEach((input) => { input.disabled = isTakeover; });
                 takeover.querySelectorAll('select').forEach((input) => { input.disabled = ! isTakeover; });
-                form.querySelectorAll('[data-mode]').forEach((button) => button.setAttribute('aria-pressed', button.dataset.mode === type.value ? 'true' : 'false'));
             };
-            form.querySelectorAll('[data-mode]').forEach((button) => button.addEventListener('click', () => { type.value = button.dataset.mode; apply(); }));
+            toggle.checked = type.value === 'takeover';
+            toggle.addEventListener('change', apply);
             apply();
         })();
     </script>
