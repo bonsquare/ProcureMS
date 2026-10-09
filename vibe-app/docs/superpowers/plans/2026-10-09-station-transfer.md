@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** A school user can ask the master user to move them to another Official Station (a registered school or a school not yet registered); on approval the same account works in the destination school's data after the user confirms the new station.
+**Goal:** A school user (one user manages one school, with a personal subscription) can ask the master user to move them to another Official Station (a vacant registered school or a school not yet registered); on approval the same account and the same subscription work in the destination school's data after the user confirms the new station.
 
-**Architecture:** One new table (`station_transfer_requests`) and one service (`StationTransferService`) that holds every rule and runs the approval in a single DB transaction. The tenancy scope (`BelongsToOrganization`) already filters by `users.organization_id`, so moving the account (`organization_id` + `school_id`) is what changes the visible data; no school data is copied or moved. A small web-group middleware sends a user with an unconfirmed approved transfer to a confirmation page.
+**Architecture:** One new table (`station_transfer_requests`) and one service (`StationTransferService`) that holds every rule and runs the approval in a single DB transaction. The tenancy scope (`BelongsToOrganization`) already filters by `users.organization_id`, so moving the account (`organization_id` + `school_id`) is what changes the visible data; no school data is copied or moved. Subscriptions become personal (`subscriptions.user_id`), so they go with the user. A small web-group middleware sends a user with an unconfirmed approved transfer to a confirmation page.
 
 **Tech Stack:** Laravel 13, PHP 8.4, SQLite, Blade + Tailwind (CDN), PHPUnit (`php artisan test`).
 
@@ -17,11 +17,15 @@
 3. **No unique-school-ID check.** School codes are auto-generated (`SCH-xxxx`) and cannot collide.
 4. **Master queue is its own page** (`/transfer-requests`, linked from the user menu with a pending count). The Subscriptions page is a static mock-up with no tab structure.
 5. **Staff history uses `school_staff.ended_at`** (no status column existed). Ended rows are hidden by a global scope so every existing staff query keeps working unchanged.
-6. **Subscriptions are per organization.** After the move, the user falls under the destination school's subscription (a school created on approval gets a 30-day trial, as in pre-registration). The spec's "subscription" wording means the user's account, not the old school's plan.
+6. **Subscriptions were per organization; they become personal** (`subscriptions.user_id`, Task 2), as agreed with the user: the plan goes with the person and a school created on approval gets no trial.
+8. **Destination must be vacant** (one user per school) and the "last admin" warning becomes "this school will have no user"; `losesLastAdmin()` is not built.
+9. **The "Add user" feature in School Settings was already removed** (commit 9fafac7) because one user manages one school.
 7. **The employee record is matched to the user by name and school** (`school_staff` has no `user_id`). If no match exists, nothing is ended and a new record is still created.
 
 ## Global Constraints
 
+- The subscription is personal and is never changed, copied or replaced by a transfer.
+- Destination must be a school with no active user; a school created on approval gets no subscription.
 - Username, full name, user code, password, `role` and `status` of the user never change on transfer (only `organization_id` and `school_id`).
 - School data is never copied or moved; the old school keeps all of its records.
 - Only the master user (`role = master_user`) approves or declines. A master user cannot request a transfer.
@@ -35,6 +39,7 @@
 
 - Approve clicked twice (double submit): second call must fail with "already decided" and create no second staff record.
 - User deactivated between request and approval: approval is blocked, nothing changes.
+- Destination gets a user between request and approval: approval is refused and nothing moves.
 - User has no matching employee record at the old school: approval still works.
 - Failure after the new school is created (inside the transaction): the school, staff, and user move are all rolled back.
 - User with an unconfirmed approved transfer opens any other page (or posts): redirected to the confirmation page, but can still log out.
@@ -44,9 +49,11 @@
 | File | Responsibility |
 |---|---|
 | `database/migrations/2026_10_10_000001_create_station_transfer_requests.php` | New table + `school_staff.ended_at` |
+| `database/migrations/2026_10_10_000002_add_owner_to_subscriptions.php` | `subscriptions.user_id` + backfill |
 | `app/Models/StationTransferRequest.php` | Model, relations, status helpers |
 | `app/Models/SchoolStaff.php` (modify) | `ended_at` fillable + `active` global scope |
-| `app/Services/StationTransferService.php` | request / cancel / decline / approve / confirm / sole-admin warning |
+| `app/Services/StationTransferService.php` | request / cancel / decline / approve / confirm |
+| `app/Models/User.php`, `AuthController.php`, `HomeController.php` (modify) | Personal `activeSubscription()`; new subscriptions record their owner |
 | `app/Http/Middleware/EnsureStationConfirmed.php` | Redirect unconfirmed users to the confirmation page |
 | `app/Http/Controllers/StationTransferController.php` | User page, master queue, confirm page |
 | `resources/views/station-transfer.blade.php`, `transfer-requests.blade.php`, `station-confirm.blade.php` | The three screens |
@@ -77,7 +84,6 @@ use App\Models\Organization;
 use App\Models\School;
 use App\Models\SchoolStaff;
 use App\Models\StationTransferRequest;
-use App\Models\Subscription;
 use App\Models\User;
 use App\Services\StationTransferService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -96,6 +102,13 @@ class StationTransferTest extends TestCase
         $user = User::factory()->create(['organization_id' => $organization->id, 'school_id' => $school->id, 'role' => $role]);
 
         return [$organization, $school, $user];
+    }
+
+    private function vacantSchool(string $slug): School
+    {
+        $organization = Organization::create(['name' => $slug, 'slug' => $slug, 'status' => 'active']);
+
+        return School::create(['organization_id' => $organization->id, 'code' => strtoupper($slug), 'name' => $slug.' School', 'status' => 'active']);
     }
 
     private function master(): User
@@ -251,7 +264,104 @@ git commit -m "feat: add station transfer request table and ended-staff scope"
 
 ---
 
-### Task 2: StationTransferService (all rules)
+### Task 2: Personal subscriptions
+
+**Files:**
+- Create: `database/migrations/2026_10_10_000002_add_owner_to_subscriptions.php`
+- Modify: `app/Models/Subscription.php`, `app/Models/User.php` (`activeSubscription()`), `app/Http/Controllers/AuthController.php` (`storeRegistration`), `app/Http/Controllers/HomeController.php` (`storeSchool`)
+- Test: `tests/Feature/StationTransferTest.php`
+
+**Interfaces:**
+- Produces: `subscriptions.user_id` (nullable owner); `Subscription` fillable includes `user_id`; `User::activeSubscription()` returns the user's own latest subscription, else (legacy, unowned) the latest subscription of the user's organization.
+
+- [ ] **Step 1: Write the failing tests** (append to the test class):
+
+```php
+    public function test_a_users_own_subscription_wins_over_the_schools(): void
+    {
+        [$organization, $school, $user] = $this->tenant('sub-a');
+        $own = Subscription::create(['organization_id' => $organization->id, 'school_id' => $school->id, 'user_id' => $user->id, 'plan' => 'enterprise', 'billing_cycle' => 'annual', 'amount' => 0, 'payment_status' => 'paid', 'starts_at' => now()->subDays(40), 'ends_at' => now()->addYear()]);
+
+        $this->assertSame($own->id, $user->activeSubscription()->id);
+        $this->assertSame('professional', User::factory()->create(['organization_id' => $organization->id, 'school_id' => $school->id, 'role' => 'viewer'])->activeSubscription()->plan, 'a legacy colleague without a plan keeps the school row');
+    }
+
+    public function test_registration_records_the_subscription_owner(): void
+    {
+        $this->post(route('register.store'), [
+            'name' => 'Delta Elementary School', 'system_user_given_name' => 'Dina', 'system_user_surname' => 'Cruz', 'system_user_username' => 'dina.cruz',
+            'system_user_position' => 'Principal', 'system_user_email' => 'dina@example.com', 'system_user_phone' => '09170000000',
+            'system_user_password' => 'secret-pass-1', 'system_user_password_confirmation' => 'secret-pass-1', 'system_user_confirmed' => '1',
+        ])->assertRedirect();
+
+        $this->assertSame(User::where('username', 'dina.cruz')->value('id'), Subscription::withoutGlobalScopes()->latest('id')->value('user_id'));
+    }
+```
+
+- [ ] **Step 2: Run to verify they fail** — `php artisan test --filter=StationTransferTest` → FAIL (`user_id` column).
+
+- [ ] **Step 3: Migration**
+
+```php
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('subscriptions', function (Blueprint $table) {
+            $table->foreignId('user_id')->nullable()->after('school_id')->constrained()->nullOnDelete();
+        });
+
+        // Until now a subscription belonged to the school; give each one to the person who manages it.
+        DB::table('subscriptions')->whereNull('user_id')->orderBy('id')->each(function ($subscription) {
+            $owner = DB::table('users')->where('organization_id', $subscription->organization_id)->where('role', '!=', 'master_user')
+                ->orderByRaw("role = 'school_admin' desc")->orderBy('id')->value('id');
+            if ($owner) {
+                DB::table('subscriptions')->where('id', $subscription->id)->update(['user_id' => $owner]);
+            }
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('subscriptions', function (Blueprint $table) {
+            $table->dropConstrainedForeignId('user_id');
+        });
+    }
+};
+```
+
+- [ ] **Step 4: Models and creators**
+  - `app/Models/Subscription.php`: add `'user_id'` to `$fillable`.
+  - `app/Models/User.php`: replace the body of `activeSubscription()` with:
+
+```php
+        $latest = fn ($query) => $query->latest('starts_at')->latest('id');
+
+        // The subscription is personal and follows the user; unowned (legacy) rows still cover the school's other users.
+        return $latest(Subscription::withoutGlobalScopes()->where('user_id', $this->id))->first()
+            ?? $latest(Subscription::withoutGlobalScopes()->where('organization_id', $this->organization_id))->first();
+```
+  - `AuthController::storeRegistration` and `HomeController::storeSchool`: in the `Subscription::create([...])` call add `'user_id' => $systemUser->id,` after `'school_id' => $school->id,`.
+
+- [ ] **Step 5: Run tests** — `php artisan test --filter="StationTransferTest|SaasFoundationTest|SchoolSettingsTest"` → PASS. Pint the changed files.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add database/migrations/2026_10_10_000002_add_owner_to_subscriptions.php app/Models/Subscription.php app/Models/User.php app/Http/Controllers/AuthController.php app/Http/Controllers/HomeController.php tests/Feature/StationTransferTest.php
+git commit -m "feat: make subscriptions personal (owned by the user)"
+```
+
+---
+
+### Task 3: StationTransferService (all rules)
 
 **Files:**
 - Create: `app/Services/StationTransferService.php`
@@ -260,12 +370,11 @@ git commit -m "feat: add station transfer request table and ended-staff scope"
 **Interfaces:**
 - Consumes: `StationTransferRequest`, `SchoolStaff` ended scope (Task 1).
 - Produces (all on `App\Services\StationTransferService`):
-  - `request(User $user, array $data): StationTransferRequest` — `$data` keys: `reason` (string), and either `to_school_id` (int) or `proposed_school` (array with at least `name`). Throws `ValidationException` for: master user, inactive user, pending request exists, destination equals current school, destination not an active school.
+  - `request(User $user, array $data): StationTransferRequest` — `$data` keys: `reason` (string), and either `to_school_id` (int) or `proposed_school` (array with at least `name`). Throws `ValidationException` for: master user, inactive user, pending request exists, destination equals current school, destination not an active school, destination already has an active user.
   - `cancel(StationTransferRequest $request, User $actor): void` — owner only, pending only.
   - `decline(StationTransferRequest $request, User $master, ?string $note = null): void`
   - `approve(StationTransferRequest $request, User $master, ?string $note = null): StationTransferRequest`
   - `confirm(User $user): bool` — sets `confirmed_at` on the user's oldest unconfirmed approved request; returns whether one existed.
-  - `losesLastAdmin(StationTransferRequest $request): bool`
 
 - [ ] **Step 1: Write the failing tests** — append inside the test class:
 
@@ -273,7 +382,7 @@ git commit -m "feat: add station transfer request table and ended-staff scope"
     public function test_a_user_can_request_and_a_second_pending_request_is_refused(): void
     {
         [, , $user] = $this->tenant('req-a');
-        [, $target] = $this->tenant('req-b');
+        $target = $this->vacantSchool('req-b');
         $service = app(StationTransferService::class);
 
         $request = $service->request($user, ['to_school_id' => $target->id, 'reason' => 'Reassigned']);
@@ -287,14 +396,16 @@ git commit -m "feat: add station transfer request table and ended-staff scope"
     public function test_request_rules_master_same_school_and_inactive_destination(): void
     {
         [, $school, $user] = $this->tenant('rule-a');
-        [, $closed] = $this->tenant('rule-b');
+        $closed = $this->vacantSchool('rule-b');
         $closed->update(['status' => 'inactive']);
+        [, $occupied] = $this->tenant('rule-c');
         $service = app(StationTransferService::class);
 
         foreach ([
             [$this->master(), ['to_school_id' => $school->id, 'reason' => 'x']],
             [$user, ['to_school_id' => $school->id, 'reason' => 'x']],
             [$user, ['to_school_id' => $closed->id, 'reason' => 'x']],
+            [$user, ['to_school_id' => $occupied->id, 'reason' => 'x']],
             [$user, ['reason' => 'x']],
         ] as [$who, $data]) {
             try {
@@ -310,10 +421,12 @@ git commit -m "feat: add station transfer request table and ended-staff scope"
     public function test_approving_to_a_registered_school_moves_the_account_and_keeps_the_old_school_untouched(): void
     {
         [$orgA, $schoolA, $user] = $this->tenant('alpha');
-        [$orgB, $schoolB] = $this->tenant('bravo');
+        $schoolB = $this->vacantSchool('bravo');
+        $orgB = $schoolB->organization;
         $this->staff($orgA, $schoolA, $user->name, ['position' => 'AO II', 'bac_role' => 'BAC Member']);
         $this->staff($orgA, $schoolA, 'Old Clerk');
         $this->staff($orgB, $schoolB, 'New Clerk');
+        $subscription = Subscription::create(['organization_id' => $orgA->id, 'school_id' => $schoolA->id, 'user_id' => $user->id, 'plan' => 'enterprise', 'billing_cycle' => 'annual', 'amount' => 0, 'payment_status' => 'paid', 'starts_at' => now(), 'ends_at' => now()->addYear()]);
         $master = $this->master();
         $this->actingAs($master);
         $service = app(StationTransferService::class);
@@ -323,6 +436,8 @@ git commit -m "feat: add station transfer request table and ended-staff scope"
         $user->refresh();
         $this->assertSame([$orgB->id, $schoolB->id], [$user->organization_id, $user->school_id]);
         $this->assertSame('school_admin', $user->role);
+        $this->assertSame($subscription->id, $user->activeSubscription()->id);
+        $this->assertFalse(Subscription::withoutGlobalScopes()->where('school_id', $schoolB->id)->exists(), 'a transfer creates no subscription');
         $this->assertSame('approved', $request->status);
         $this->assertSame($master->id, $request->decided_by);
         $this->assertNull($request->confirmed_at);
@@ -358,13 +473,13 @@ git commit -m "feat: add station transfer request table and ended-staff scope"
         $this->assertSame($school->id, $request->fresh()->to_school_id);
         $this->assertSame($school->id, $user->fresh()->school_id);
         $this->assertSame($school->organization_id, $user->fresh()->organization_id);
-        $this->assertSame('trial', Subscription::withoutGlobalScopes()->where('school_id', $school->id)->value('plan'));
+        $this->assertNull(Subscription::withoutGlobalScopes()->where('school_id', $school->id)->first(), 'the plan comes from the user, not the school');
     }
 
     public function test_approving_twice_or_for_an_inactive_user_changes_nothing(): void
     {
         [$orgA, $schoolA, $user] = $this->tenant('twice-a');
-        [, $schoolB] = $this->tenant('twice-b');
+        $schoolB = $this->vacantSchool('twice-b');
         $master = $this->master();
         $this->actingAs($master);
         $service = app(StationTransferService::class);
@@ -416,7 +531,7 @@ git commit -m "feat: add station transfer request table and ended-staff scope"
     public function test_a_user_without_an_employee_record_can_still_be_moved(): void
     {
         [, , $user] = $this->tenant('noemp-a');
-        [, $schoolB] = $this->tenant('noemp-b');
+        $schoolB = $this->vacantSchool('noemp-b');
         $master = $this->master();
         $this->actingAs($master);
         $service = app(StationTransferService::class);
@@ -427,28 +542,22 @@ git commit -m "feat: add station transfer request table and ended-staff scope"
         $this->assertSame(1, SchoolStaff::withoutGlobalScopes()->where('school_id', $schoolB->id)->where('name', $user->name)->count());
     }
 
-    public function test_decline_cancel_and_the_last_admin_warning(): void
+    public function test_decline_and_cancel(): void
     {
-        [, $schoolA, $admin] = $this->tenant('warn-a');
-        [, , $viewer] = $this->tenant('warn-v', 'viewer');
-        [, $schoolB] = $this->tenant('warn-b');
-        $second = User::factory()->create(['organization_id' => $schoolA->organization_id, 'school_id' => $schoolA->id, 'role' => 'school_admin']);
+        [, $schoolA, $admin] = $this->tenant('dec-a');
+        [, , $other] = $this->tenant('dec-v', 'viewer');
+        $schoolB = $this->vacantSchool('dec-b');
         $master = $this->master();
         $service = app(StationTransferService::class);
 
-        $withBackup = $service->request($admin, ['to_school_id' => $schoolB->id, 'reason' => 'x']);
-        $this->assertFalse($service->losesLastAdmin($withBackup));
-        $second->update(['status' => 'inactive']);
-        $this->assertTrue($service->losesLastAdmin($withBackup));
-        $this->assertFalse($service->losesLastAdmin($service->request($viewer, ['to_school_id' => $schoolB->id, 'reason' => 'x'])));
-
-        $service->decline($withBackup, $master, 'Not now');
-        $this->assertSame('declined', $withBackup->fresh()->status);
+        $declined = $service->request($admin, ['to_school_id' => $schoolB->id, 'reason' => 'x']);
+        $service->decline($declined, $master, 'Not now');
+        $this->assertSame('declined', $declined->fresh()->status);
         $this->assertSame($schoolA->id, $admin->fresh()->school_id);
 
         $again = $service->request($admin, ['to_school_id' => $schoolB->id, 'reason' => 'y']);
         try {
-            $service->cancel($again, $viewer);
+            $service->cancel($again, $other);
             $this->fail('Only the owner may cancel.');
         } catch (ValidationException) {
             $service->cancel($again, $admin);
@@ -456,10 +565,29 @@ git commit -m "feat: add station transfer request table and ended-staff scope"
         }
     }
 
+    public function test_a_destination_that_gets_a_user_before_approval_is_refused(): void
+    {
+        [, $schoolA, $user] = $this->tenant('taken-a');
+        $schoolB = $this->vacantSchool('taken-b');
+        $master = $this->master();
+        $this->actingAs($master);
+        $service = app(StationTransferService::class);
+        $request = $service->request($user, ['to_school_id' => $schoolB->id, 'reason' => 'x']);
+        User::factory()->create(['organization_id' => $schoolB->organization_id, 'school_id' => $schoolB->id, 'role' => 'school_admin']);
+
+        try {
+            $service->approve($request, $master);
+            $this->fail('A school with a user cannot receive another one.');
+        } catch (ValidationException) {
+            $this->assertSame($schoolA->id, $user->fresh()->school_id);
+            $this->assertSame('pending', $request->fresh()->status);
+        }
+    }
+
     public function test_confirm_sets_the_timestamp_once(): void
     {
         [, , $user] = $this->tenant('conf-a');
-        [, $schoolB] = $this->tenant('conf-b');
+        $schoolB = $this->vacantSchool('conf-b');
         $master = $this->master();
         $this->actingAs($master);
         $service = app(StationTransferService::class);
@@ -521,6 +649,9 @@ class StationTransferService
             if ((int) $target->id === (int) $user->school_id) {
                 $this->fail('to_school_id', 'That is already your Official Station.');
             }
+            if ($this->hasActiveUser($target)) {
+                $this->fail('to_school_id', 'That school already has a user. Only a vacant school can be chosen.');
+            }
         } elseif (filled($data['proposed_school']['name'] ?? null)) {
             $proposed = array_intersect_key($data['proposed_school'], array_flip(self::SCHOOL_FIELDS));
         } else {
@@ -578,6 +709,9 @@ class StationTransferService
             if ((int) $target->id === (int) $user->school_id) {
                 $this->fail('request', 'The user is already at that school.');
             }
+            if ($this->hasActiveUser($target)) {
+                $this->fail('request', 'That school now has a user. A school can only have one.');
+            }
 
             $fromSchoolId = $user->school_id;
             SchoolStaff::withoutGlobalScopes()
@@ -617,20 +751,6 @@ class StationTransferService
         return (bool) $request;
     }
 
-    /** True when the requester is an admin and no other active admin would remain at the school they leave. */
-    public function losesLastAdmin(StationTransferRequest $request): bool
-    {
-        $user = $request->user;
-        if (! $user || $user->role !== 'school_admin') {
-            return false;
-        }
-
-        return User::withoutGlobalScopes()
-            ->where('school_id', $user->school_id)->where('role', 'school_admin')->where('id', '!=', $user->id)
-            ->where(fn ($query) => $query->whereNull('status')->orWhere('status', 'active'))
-            ->doesntExist();
-    }
-
     private function createSchool(array $proposed): School
     {
         $organization = Organization::create([
@@ -648,19 +768,13 @@ class StationTransferService
 
         $school = School::create([...array_intersect_key($proposed, array_flip(self::SCHOOL_FIELDS)), 'organization_id' => $organization->id, 'code' => $code, 'status' => 'active']);
 
-        Subscription::create([
-            'organization_id' => $organization->id,
-            'school_id' => $school->id,
-            'plan' => 'trial',
-            'billing_cycle' => 'monthly',
-            'amount' => 0,
-            'payment_status' => 'pending',
-            'status' => 'trial',
-            'starts_at' => now(),
-            'subscription_end' => now()->addDays(30),
-        ]);
-
         return $school;
+    }
+
+    private function hasActiveUser(School $school): bool
+    {
+        return User::withoutGlobalScopes()->where('school_id', $school->id)
+            ->where(fn ($query) => $query->whereNull('status')->orWhere('status', 'active'))->exists();
     }
 
     private function isActive(User $user): bool
@@ -694,7 +808,7 @@ git commit -m "feat: add station transfer service with transactional approval"
 
 ---
 
-### Task 3: Middleware, routes and controller
+### Task 4: Middleware, routes and controller
 
 **Files:**
 - Create: `app/Http/Middleware/EnsureStationConfirmed.php`
@@ -703,8 +817,8 @@ git commit -m "feat: add station transfer service with transactional approval"
 - Test: `tests/Feature/StationTransferTest.php`
 
 **Interfaces:**
-- Consumes: `StationTransferService` (Task 2).
-- Produces routes (all `auth` middleware): `station-transfer` (GET), `station-transfer.store` (POST), `station-transfer.cancel` (POST `{transfer}`), `station.confirm` (GET), `station.confirm.store` (POST), `transfer-requests` (GET, master), `transfer-requests.approve` / `transfer-requests.decline` (POST `{transfer}`, master). Views used (created in Task 4): `station-transfer`, `station-confirm`, `transfer-requests`.
+- Consumes: `StationTransferService` (Task 3).
+- Produces routes (all `auth` middleware): `station-transfer` (GET), `station-transfer.store` (POST), `station-transfer.cancel` (POST `{transfer}`), `station.confirm` (GET), `station.confirm.store` (POST), `transfer-requests` (GET, master), `transfer-requests.approve` / `transfer-requests.decline` (POST `{transfer}`, master). Views used (created in Task 5): `station-transfer`, `station-confirm`, `transfer-requests`.
 
 - [ ] **Step 1: Write the failing tests** — append to the test class:
 
@@ -712,7 +826,7 @@ git commit -m "feat: add station transfer service with transactional approval"
     public function test_a_user_submits_a_request_over_http(): void
     {
         [, , $user] = $this->tenant('http-a');
-        [, $target] = $this->tenant('http-b');
+        $target = $this->vacantSchool('http-b');
 
         $this->actingAs($user)->post(route('station-transfer.store'), ['destination' => 'registered', 'to_school_id' => $target->id, 'reason' => 'Reassigned'])
             ->assertRedirect(route('station-transfer'));
@@ -727,7 +841,7 @@ git commit -m "feat: add station transfer service with transactional approval"
     public function test_only_the_master_can_see_and_decide_requests(): void
     {
         [, , $user] = $this->tenant('perm-a');
-        [, $target] = $this->tenant('perm-b');
+        $target = $this->vacantSchool('perm-b');
         $request = app(StationTransferService::class)->request($user, ['to_school_id' => $target->id, 'reason' => 'x']);
 
         $this->actingAs($user)->get(route('transfer-requests'))->assertForbidden();
@@ -741,7 +855,7 @@ git commit -m "feat: add station transfer service with transactional approval"
     public function test_an_unconfirmed_user_is_sent_to_the_confirmation_page_but_can_log_out(): void
     {
         [, , $user] = $this->tenant('mid-a');
-        [, $target] = $this->tenant('mid-b');
+        $target = $this->vacantSchool('mid-b');
         $master = $this->master();
         $this->actingAs($master);
         $service = app(StationTransferService::class);
@@ -813,7 +927,10 @@ class StationTransferController extends Controller
 
         return view('station-transfer', [
             'requests' => StationTransferRequest::with(['fromSchool', 'toSchool', 'decider'])->where('user_id', $user->id)->latest('id')->get(),
-            'schools' => School::withoutGlobalScopes()->where('status', 'active')->where('id', '!=', $user->school_id)->orderBy('name')->get(['id', 'name', 'division', 'district']),
+            // One user manages one school, so only vacant schools can be chosen.
+            'schools' => School::withoutGlobalScopes()->where('status', 'active')->where('id', '!=', $user->school_id)
+                ->whereNotExists(fn ($query) => $query->selectRaw('1')->from('users')->whereColumn('users.school_id', 'schools.id')->where(fn ($q) => $q->whereNull('users.status')->orWhere('users.status', 'active')))
+                ->orderBy('name')->get(['id', 'name', 'division', 'district']),
             'station' => $user->school()->withoutGlobalScopes()->first(),
         ]);
     }
@@ -874,7 +991,6 @@ class StationTransferController extends Controller
         return view('transfer-requests', [
             'pending' => StationTransferRequest::with($with)->where('status', 'pending')->oldest('id')->get(),
             'history' => StationTransferRequest::with($with)->where('status', '!=', 'pending')->latest('id')->limit(50)->get(),
-            'transfers' => $this->transfers,
         ]);
     }
 
@@ -915,7 +1031,7 @@ Route::middleware('auth')->group(function () {
 
 Place this group after the closing `});` of the existing `['auth','subscription.writes']` group (the `/logout` and `/generate` routes sit inside that group; do not move them).
 
-- [ ] **Step 6: Create minimal placeholder-free views now** so the tests render: Task 4 supplies the final markup. For this task create the three view files with only `@extends('layouts.procurement')` + `@section('content')` + the name of the page and the data the tests assert (`{{ $transfer->toSchool->name }}` in `station-confirm`). Task 4 replaces their content entirely.
+- [ ] **Step 6: Create minimal placeholder-free views now** so the tests render: Task 5 supplies the final markup. For this task create the three view files with only `@extends('layouts.procurement')` + `@section('content')` + the name of the page and the data the tests assert (`{{ $transfer->toSchool->name }}` in `station-confirm`). Task 5 replaces their content entirely.
 
 ```blade
 {{-- resources/views/station-confirm.blade.php --}}
@@ -926,7 +1042,7 @@ Place this group after the closing `});` of the existing `['auth','subscription.
 <p>{{ $transfer->toSchool->name }}</p>
 @endsection
 ```
-`station-transfer.blade.php` and `transfer-requests.blade.php`: same shape with titles "Station transfer" / "Transfer requests" and `<p>placeholder</p>` removed in Task 4.
+`station-transfer.blade.php` and `transfer-requests.blade.php`: same shape with titles "Station transfer" / "Transfer requests" and `<p>placeholder</p>` removed in Task 5.
 
 - [ ] **Step 7: Run tests** — `php artisan test --filter=StationTransferTest` → PASS. Run Pint on the new PHP files.
 
@@ -939,14 +1055,14 @@ git commit -m "feat: add station transfer routes, controller and confirmation mi
 
 ---
 
-### Task 4: The three screens and the menu links
+### Task 5: The three screens and the menu links
 
 **Files:**
 - Modify (replace content): `resources/views/station-transfer.blade.php`, `resources/views/transfer-requests.blade.php`, `resources/views/station-confirm.blade.php`
 - Modify: `resources/views/layouts/procurement.blade.php` (user menu)
 - Test: `tests/Feature/StationTransferTest.php`
 
-**Interfaces:** Consumes the controller view data from Task 3 (`requests`, `schools`, `station`; `pending`, `history`, `transfers`; `transfer`, `user`).
+**Interfaces:** Consumes the controller view data from Task 4 (`requests`, `schools`, `station`; `pending`, `history`; `transfer`, `user`).
 
 - [ ] **Step 1: Write the failing tests** — append:
 
@@ -954,7 +1070,7 @@ git commit -m "feat: add station transfer routes, controller and confirmation mi
     public function test_the_screens_show_the_right_content(): void
     {
         [$orgA, $schoolA, $user] = $this->tenant('ui-a');
-        [, $schoolB] = $this->tenant('ui-b');
+        $schoolB = $this->vacantSchool('ui-b');
         $service = app(StationTransferService::class);
         $master = $this->master();
 
@@ -965,7 +1081,7 @@ git commit -m "feat: add station transfer routes, controller and confirmation mi
         $this->get(route('station-transfer'))->assertSee('Pending')->assertSee('Division order')->assertSee('Cancel request');
 
         $this->actingAs($master)->get(route('transfer-requests'))->assertOk()
-            ->assertSee($user->name)->assertSee($schoolB->name)->assertSee('no admin')->assertSee('Approve')->assertSee('Decline');
+            ->assertSee($user->name)->assertSee($schoolB->name)->assertSee('will have no user')->assertSee('Approve')->assertSee('Decline');
 
         $service->approve($request, $master, 'Welcome aboard');
         $this->actingAs($master)->get(route('transfer-requests'))->assertSee('Approved')->assertSee('Welcome aboard');
@@ -1066,8 +1182,8 @@ git commit -m "feat: add station transfer routes, controller and confirmation mi
                 <p class="font-semibold">{{ $item->user?->name }} <span class="font-normal text-on-surface-variant">· {{ str($item->user?->role)->replace('_', ' ')->title() }}</span></p>
                 <p class="mt-1">{{ $item->fromSchool?->name ?? '—' }} <span class="text-on-surface-variant">→</span> <strong>{{ $item->destinationName() }}</strong>@if(! $item->to_school_id) <span class="ml-1 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold uppercase text-primary">New school</span>@endif</p>
                 <p class="mt-1 text-xs text-on-surface-variant">Requested {{ $item->requested_at?->format('M d, Y') }} · {{ $item->reason }}</p>
-                @if($transfers->losesLastAdmin($item))<p class="mt-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900"><strong>Warning:</strong> {{ $item->fromSchool?->name }} will have no admin after this transfer. It keeps all its data; assign another admin later.</p>@endif
-                @if(! $item->to_school_id)<p class="mt-2 rounded-lg bg-surface-low px-3 py-2 text-xs text-on-surface-variant">Approving registers <strong>{{ $item->proposed_school['name'] ?? '' }}</strong> as a new school with a 30-day trial.</p>@endif
+                <p class="mt-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900"><strong>Note:</strong> {{ $item->fromSchool?->name }} will have no user after this transfer. It keeps all its data and waits for its next user. The user's subscription goes with them.</p>
+                @if(! $item->to_school_id)<p class="mt-2 rounded-lg bg-surface-low px-3 py-2 text-xs text-on-surface-variant">Approving registers <strong>{{ $item->proposed_school['name'] ?? '' }}</strong> as a new school. It has no plan of its own; the user's plan applies.</p>@endif
                 <p class="mt-2 text-xs text-on-surface-variant">On approval: their employee record at {{ $item->fromSchool?->name }} is ended (kept as history), a new record with no roles is created at the new school, and their system role stays <strong>{{ str($item->user?->role)->replace('_', ' ')->title() }}</strong>.</p>
                 <div class="mt-3 flex flex-wrap items-center gap-2">
                     <form method="POST" action="{{ route('transfer-requests.approve', $item) }}" class="flex flex-1 flex-wrap gap-2">@csrf<input name="decision_note" placeholder="Note (optional)" class="{{ $field }} min-w-[180px] flex-1"><button class="rounded-lg bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary-container">Approve</button></form>
@@ -1144,14 +1260,14 @@ git commit -m "feat: add station transfer, master queue and confirmation screens
 
 ---
 
-### Task 5: Docs and final targeted verification
+### Task 6: Docs and final targeted verification
 
 **Files:**
 - Modify: `docs/specs.md`, `docs/superpowers/specs/2026-10-09-station-transfer-design.md`
 
-- [ ] **Step 1: Update the design spec** — in `docs/superpowers/specs/2026-10-09-station-transfer-design.md` replace the `users.station_confirmed_at` bullet and the "copy the employee number" text with the deviations 1–2 from the top of this plan, add a "Deviations" note for items 3–7, and change "Transfer requests tab" to "Transfer requests page (`/transfer-requests`)".
+- [ ] **Step 1: Check the design spec** — `docs/superpowers/specs/2026-10-09-station-transfer-design.md` was already revised for personal subscriptions and vacant schools; confirm it matches what was built and add a short "Deviations" note for items 1–3 and 5–7 at the top of this plan.
 
-- [ ] **Step 2: Add a short "Station transfer" section to `docs/specs.md`** (after the last numbered section; match its heading style): who can request, what approval does (account moves, old employee record ended, new one created without roles, role kept), the confirmation step, the routes `station-transfer`, `station.confirm`, `transfer-requests`, and that school data is never copied.
+- [ ] **Step 2: Add a short "Station transfer" section to `docs/specs.md`** (after the last numbered section; match its heading style): one user manages one school; the subscription is personal and goes with the user; only vacant schools can be chosen; what approval does (account moves, old employee record ended, new one created without roles, role kept); the confirmation step; the routes `station-transfer`, `station.confirm`, `transfer-requests`; school data is never copied.
 
 - [ ] **Step 3: Run the affected suites**
 
