@@ -371,4 +371,17 @@ class StationTransferTest extends TestCase
         $this->actingAs($user)->get(route('procurement'))->assertSee(route('station-transfer'), false)->assertDontSee(route('transfer-requests'), false);
         $this->actingAs($this->master())->get(route('procurement'))->assertSee(route('transfer-requests'), false)->assertDontSee(route('station-transfer'), false);
     }
+
+    public function test_the_transfer_pages_are_not_shown_inside_procurement(): void
+    {
+        [, , $user] = $this->tenant('nav-a');
+        $master = $this->master();
+
+        foreach ([[$user, 'station-transfer'], [$master, 'transfer-requests']] as [$who, $route]) {
+            $html = $this->actingAs($who)->get(route($route))->assertOk()->getContent();
+            $this->assertStringNotContainsString('civic-module-tabs', $html, $route.' must not show the Procurement tabs');
+            $this->assertStringNotContainsString('Procurement Workspace', $html, $route.' must not be labelled Procurement');
+            $this->assertMatchesRegularExpression('/aria-current="page"[^>]*>\s*<span[^>]*>settings<\/span>/', $html, $route.' highlights School Settings, not Procurement');
+        }
+    }
 }

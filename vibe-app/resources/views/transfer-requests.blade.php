@@ -1,5 +1,6 @@
 @extends('layouts.procurement')
 @section('title', 'Transfer requests') @section('page-title', 'Transfer requests')
+@section('workspace-label', 'Account') @section('hide-module-tabs', '1')
 @section('content')
 @php $field = 'w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-xs outline-none focus:border-action'; $tones = ['approved' => 'bg-secondary/10 text-secondary', 'declined' => 'bg-error/10 text-error', 'cancelled' => 'bg-surface-high text-on-surface-variant']; @endphp
 <header class="mb-6">

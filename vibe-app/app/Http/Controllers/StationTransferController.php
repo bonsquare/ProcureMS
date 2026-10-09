@@ -17,6 +17,7 @@ class StationTransferController extends Controller
         abort_if($user->role === 'master_user', 403);
 
         return view('station-transfer', [
+            'activeNavRoute' => 'school-settings',
             'requests' => StationTransferRequest::with(['fromSchool', 'toSchool', 'decider'])->where('user_id', $user->id)->latest('id')->get(),
             // One user manages one school, so only vacant schools can be chosen.
             'schools' => School::withoutGlobalScopes()->where('status', 'active')->where('id', '!=', $user->school_id)
@@ -64,7 +65,7 @@ class StationTransferController extends Controller
         $transfer = StationTransferRequest::with(['fromSchool', 'toSchool'])->where('user_id', $request->user()->id)
             ->where('status', 'approved')->whereNull('confirmed_at')->oldest('id')->first();
 
-        return $transfer ? view('station-confirm', ['transfer' => $transfer, 'user' => $request->user()]) : redirect()->route('home');
+        return $transfer ? view('station-confirm', ['transfer' => $transfer, 'user' => $request->user(), 'activeNavRoute' => 'school-settings']) : redirect()->route('home');
     }
 
     public function confirmStore(Request $request)
@@ -80,6 +81,7 @@ class StationTransferController extends Controller
         $with = ['user', 'fromSchool', 'toSchool', 'decider'];
 
         return view('transfer-requests', [
+            'activeNavRoute' => 'school-settings',
             'pending' => StationTransferRequest::with($with)->where('status', 'pending')->oldest('id')->get(),
             'history' => StationTransferRequest::with($with)->where('status', '!=', 'pending')->latest('id')->limit(50)->get(),
         ]);

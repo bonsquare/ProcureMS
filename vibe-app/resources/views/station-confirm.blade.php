@@ -1,6 +1,6 @@
 @extends('layouts.procurement')
 @section('title', 'Confirm station') @section('page-title', 'Confirm station')
-@section('hide-module-tabs', '1')
+@section('workspace-label', 'Account') @section('hide-module-tabs', '1')
 @section('content')
 <div class="mx-auto mt-6 max-w-xl rounded-xl border border-outline-variant/60 bg-white p-6 text-center">
     <span class="material-symbols-outlined text-[40px] text-secondary" aria-hidden="true">swap_horiz</span>

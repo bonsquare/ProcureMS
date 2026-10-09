@@ -27,7 +27,7 @@
                     <span class="material-symbols-outlined" aria-hidden="true">menu</span>
                 </button>
                 <div class="min-w-0">
-                    <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-action">Procurement Workspace</p>
+                    <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-action">@yield('workspace-label', 'Procurement Workspace')</p>
                     <p class="truncate text-sm font-semibold text-on-surface">@yield('page-title', 'Overview')</p>
                 </div>
             </div>
