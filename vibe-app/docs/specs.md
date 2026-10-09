@@ -74,10 +74,63 @@ The Obligation Request and Status (COA Appendix 11) and the Disbursement Voucher
 
 ### 1.6 Print controls and preview
 
-- Controls are UI only and sit outside the document: Close, Paper Size, Custom width and height, Orientation, Zoom, Print / Save as PDF, and a short context label (for example `RFQ · RFQ-2026-001 · PR-2026-011`). They never print.
-- The preview shows a grey desk, a page shadow, and page guides. All of it disappears in print: white background, black text, official borders, no shadow, no controls.
-- Source: `partials/official-toolbar.blade.php` (markup; one copy for every document, do not write document-specific toolbars) and `partials/print-clean.blade.php` (styles and behavior). The owner's earlier "Close and Print only" toolbar is **not** in force; the paper-size toolbar was restored on 2026-10-09.
+- The preview bar is UI only and sits outside the document. It never prints. It shows only what is needed to read the document: **Close**, the document title, a **page setup** gear, and **Print / Save as PDF**. Paper size, orientation and zoom live in the page setup popover so the document keeps the space (decided 2026-10-10, after the first redesign showed everything in one row and was "too much information").
+- The preview shows a soft desk, a page shadow, and page guides. All of it disappears in print: white background, black text, official borders, no shadow, no bar.
+- One copy for every document (PR, RFQ, ABQ, NOA, NTP, PO, IAR, IARS, RIS, ICS, PAR, ORS, DV, AIP, SIP, delivery reconciliation): do not write document-specific toolbars. The title comes from the `context` value passed when the partial is included, for example `@include('partials.official-toolbar', ['closeUrl' => ..., 'context' => 'Disbursement Voucher · '.$report->dv_number])`. Without it the bar says "Official document".
+- Source: `resources/views/partials/official-toolbar.blade.php` (markup and the small popover script) and `resources/views/partials/print-clean.blade.php` (all styles, the print rules and the paper/zoom behavior).
 - The browser print is authoritative.
+
+#### 1.6a Print preview UI: layout and how to change it
+
+Layout (screen only):
+
+```
+[ <- Close | PRINT PREVIEW            ]                    [ gear ] [ printer  Print / Save as PDF ]
+[           Disbursement Voucher · DV-2026-0001            ]
+                                                            └─ gear opens "Page setup": Paper Size,
+                                                               (Width/Height when Custom), Orientation,
+                                                               Zoom, and the print-dialog tip
+```
+
+| Part | Markup (`official-toolbar.blade.php`) | Style class (`print-clean.blade.php`) |
+|---|---|---|
+| Bar | `.official-toolbar.no-print` (`role="toolbar"`) | `.official-toolbar` |
+| Close button | `a.ot-btn.ot-btn--ghost` | `.ot-btn--ghost` |
+| Title and label | `.ot-title`, `.ot-eyebrow` ("Print preview") | `.ot-title`, `.ot-eyebrow` |
+| Gear button | `details.ot-setup > summary.ot-btn--icon` | `.ot-setup`, `.ot-btn--icon` |
+| Page setup popover | `.ot-pop` with `.ot-fields`, `.ot-row`, `.ot-custom`, `.ot-pop__hint` | `.ot-pop*`, `.ot-field` |
+| Print button | `button#op-print.ot-btn--primary` | `.ot-btn--primary` |
+
+Look and feel (change these first):
+
+| What | Where | Current value |
+|---|---|---|
+| Bar background | `.official-toolbar` `background` | gradient `#0b2a66` to `#103967` to `#1b5088` |
+| Bar accent line | `.official-toolbar` `border-bottom` | `3px solid #369878` |
+| Bar height | `.official-toolbar` `padding`, `.ot-btn` `height` | `8px 18px`, buttons `38px` |
+| Print button colors | `.ot-btn--primary` `background` and shadow | green gradient `#3fae8a` to `#2a7f64` |
+| Ghost and gear buttons | `.ot-btn--ghost`, `.ot-btn--icon` | `rgba(255,255,255,.1)` with a light border |
+| Popover | `.ot-pop` | white card, width `320px`, radius `14px`, soft shadow |
+| Fields in the popover | `.ot-pop select`, `.ot-pop input[type="number"]` | height `36px`, radius `9px`, background `#f4f7fa` |
+| Desk behind the page | `body` `background` | soft blue glow on `#e6ebf1` |
+| Page shadow | `.official-sheet` `box-shadow` | two layers, `0 10px 32px` at 20% |
+| Font | `.official-toolbar` `font` | Inter, then Segoe UI, system-ui |
+
+Common changes:
+
+- **Show Paper Size, Orientation and Zoom in the bar again:** move the `.ot-fields` block out of the `<details class="ot-setup">` into `.ot-right` (before the gear), and remove the `<details>` wrapper. The ids must stay.
+- **Remove the gear completely:** delete the `<details class="ot-setup">` block. The settings then default to the document's own paper and Fit width, and the paper cannot be changed.
+- **Change the title:** pass `'context' => '...'` where the partial is included.
+- **Change the colors:** edit the hex values above; the brand colors are primary `#103967`, action `#286da8`, secondary `#369878`.
+- **Add a button:** add an `a` or `button` with class `ot-btn ot-btn--ghost` inside `.ot-right` (before `#op-print`).
+
+Rules that must keep working:
+
+- Element ids used by the preview script: `op-paper`, `op-orientation`, `op-zoom`, `op-width`, `op-height`, `op-custom`, `op-print`. Do not rename them.
+- The bar must stay `class="official-toolbar no-print"` and the print CSS must keep `.official-toolbar, .no-print { display: none !important; }`.
+- The labels "Paper Size" and "Orientation", and the text "Print / Save as PDF" and "Long Bond", are asserted by tests (`ProcurementOfficialToolbarTest`, `OfficialPrintTest`). If you rename them, update the tests.
+- Only styles inside the toolbar and `.official-sheet` screen rules change the preview; the `@media print` rules decide what is printed and should not be touched for a visual change.
+- The preview iframes on the Documents page and the PR form hide the bar with a small injected style; keep the `.official-toolbar` class name.
 
 ### 1.7 Pagination
 
