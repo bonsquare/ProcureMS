@@ -228,6 +228,14 @@
 <text x="329.3" y="235.0" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($rc, 80, 9.2) }}">{{ $rc }}</text>
 <text x="591.2" y="242.6" text-anchor="end" font-family="'Times New Roman',Times,serif" font-size="10.2">₱{{ $amount }}</text>
 <text x="591.2" y="351.4" text-anchor="end" font-family="'Times New Roman',Times,serif" font-size="10.2" font-weight="bold">₱{{ $amount }}</text>
+{{-- Accounting Entry: the double-entry journal saved with the DV (account title, UACS code, debit, credit) --}}
+@foreach($report->journalLines as $line)
+@php $rowY = 459 + $loop->index * 9.6; @endphp
+<text x="22" y="{{ $rowY }}" font-family="'Times New Roman',Times,serif" font-size="7.4" dx="{{ $line->credit > 0 ? 8 : 0 }}">{{ \Illuminate\Support\Str::limit($line->account_title, 64) }}</text>
+<text x="354" y="{{ $rowY }}" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="7.6">{{ $line->account_code }}</text>
+<text x="492" y="{{ $rowY }}" text-anchor="end" font-family="'Times New Roman',Times,serif" font-size="7.6">{{ $line->debit > 0 ? number_format((float) $line->debit, 2) : '' }}</text>
+<text x="591.2" y="{{ $rowY }}" text-anchor="end" font-family="'Times New Roman',Times,serif" font-size="7.6">{{ $line->credit > 0 ? number_format((float) $line->credit, 2) : '' }}</text>
+@endforeach
 <!-- A. certified -->
 <text x="294.6" y="404.8" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($headName, 190, 10.2) }}" font-weight="bold">{{ $headName }}</text>
 <text x="294.6" y="417.3" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($headRole, 190, 10.2) }}">{{ $headRole }}</text>

@@ -44,6 +44,12 @@ class LiquidationReport extends Model
         return $this->budgetAllocation ?? $this->procurementRequest?->budgetAllocation;
     }
 
+    /** The double-entry journal of the DV, in print order. */
+    public function journalLines()
+    {
+        return $this->hasMany(DvJournalLine::class)->orderBy('line_no');
+    }
+
     public function submitter()
     {
         return $this->belongsTo(User::class, 'submitted_by');

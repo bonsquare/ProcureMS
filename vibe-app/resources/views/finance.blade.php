@@ -46,7 +46,7 @@
             <td class="px-5 py-3.5">@if($isCash)<div class="font-semibold">DV {{ $r->dv_number }}</div><div class="text-xs text-on-surface-variant">Payee: {{ $r->payee ?: $r->school?->name }}</div>@if($r->paid_at)<div class="text-xs text-on-surface-variant">{{ $r->payment_mode }}@if($r->payment_reference) · {{ $r->payment_reference }}@endif · {{ $r->paid_at->format('M d, Y') }}</div>@else<span class="mt-1 inline-flex rounded-full bg-error/10 px-2 py-1 text-xs font-semibold text-error">Awaiting payment · {{ $r->payment_mode }}</span>@endif @else<span class="inline-flex rounded-full bg-{{ $tone }}/10 px-2 py-1 text-xs font-semibold text-{{ $tone }}">{{ \Illuminate\Support\Str::headline($r->status) }}</span>@if($r->dv_number)<div class="mt-1 text-xs font-semibold text-secondary">DV {{ $r->dv_number }}</div>@endif @if($r->accounting_remarks)<div class="mt-1 max-w-[220px] text-[11px] text-on-surface-variant">{{ $r->accounting_remarks }}</div>@endif @endif</td>
             <td class="px-5 py-3.5 text-right"><div class="flex flex-wrap justify-end gap-1"><a href="{{ route('liquidation.print', $r) }}" target="_blank" rel="noopener" class="rounded px-2 py-1 text-xs font-semibold text-primary hover:bg-primary hover:text-white">Print ORS</a>@if($r->dv_number)<a href="{{ route('accounting.dv.print', $r) }}" target="_blank" rel="noopener" class="rounded px-2 py-1 text-xs font-semibold text-primary hover:bg-primary hover:text-white">Print DV</a>@if(!$isCash && auth()->user()->hasPermission('accounting.approve'))<form method="POST" action="{{ route('accounting.dv.options', $r) }}">@csrf @method('PATCH')<input type="hidden" name="dv_include_appropriation" value="{{ $r->dv_include_appropriation ? 0 : 1 }}"><button class="rounded px-2 py-1 text-xs font-semibold text-on-surface-variant hover:bg-surface-low" title="Show or hide the APPROPRIATION table on the printed DV">Appropriation table: {{ $r->dv_include_appropriation ? 'On' : 'Off' }}</button></form>@endif @endif
                 @if($isMasterUser && $isCash && !$r->paid_at)<button type="button" data-pay="{{ route('cash.pay', $r) }}" data-label="{{ $label }}" data-amount="{{ $peso($r->amount) }}" data-mode="{{ $r->payment_mode }}" class="rounded bg-secondary px-2.5 py-1 text-xs font-semibold text-white hover:opacity-90">Record Payment</button>@endif
-                @if($isMasterUser && !$isCash && $r->status === 'approved' && !$r->dv_number)<button type="button" data-dv="{{ route('accounting.dv.store', $r) }}" data-label="{{ $label }}" data-amount="{{ $peso($r->amount) }}" data-payee="{{ $r->payee ?: ($r->procurementRequest?->supplier_name ?? $r->school?->name) }}" data-particulars="{{ $r->purpose ?: $r->procurementRequest?->title }}" class="rounded bg-secondary px-2.5 py-1 text-xs font-semibold text-white hover:opacity-90">Create DV</button>@endif
+                @if($isMasterUser && !$isCash && $r->status === 'approved' && !$r->dv_number)<button type="button" data-dv="{{ route('accounting.dv.store', $r) }}" data-label="{{ $label }}" data-amount="{{ $peso($r->amount) }}" data-amount-raw="{{ number_format((float) $r->amount, 2, '.', '') }}" data-expense-code="{{ $r->chargedLine()?->account?->code ?? $r->chargedLine()?->uacs_code }}" data-payee="{{ $r->payee ?: ($r->procurementRequest?->supplier_name ?? $r->school?->name) }}" data-particulars="{{ $r->purpose ?: $r->procurementRequest?->title }}" class="rounded bg-secondary px-2.5 py-1 text-xs font-semibold text-white hover:opacity-90">Create DV</button>@endif
                 @if($isMasterUser && !$isCash && !$r->dv_number)
                     @if($r->status !== 'approved')<form method="POST" action="{{ route('accounting.review', $r) }}">@csrf @method('PATCH')<input type="hidden" name="status" value="approved"><button class="rounded px-2 py-1 text-xs font-semibold text-secondary hover:bg-secondary hover:text-white">Approve</button></form>@endif
                     <button type="button" data-review="{{ route('accounting.review', $r) }}" data-status="pending_documents" data-label="{{ $label }}" class="rounded px-2 py-1 text-xs font-semibold text-primary hover:bg-primary hover:text-white">Request Docs</button>
@@ -63,15 +63,28 @@
         <label class="text-xs font-semibold text-on-surface-variant">Date Paid <span class="text-error">*</span><input type="date" name="paid_at" required max="{{ now()->toDateString() }}" value="{{ now()->toDateString() }}" class="{{ $inputClass }}"></label>
         <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-4 md:col-span-2"><button type="button" data-close class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Cancel</button><button class="rounded bg-secondary px-4 py-2.5 text-xs font-semibold text-white">Confirm Payment</button></div></form></div></div>
 
-<div id="dv-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true"><div class="w-full max-w-xl rounded bg-white shadow-2xl"><div class="border-b border-outline-variant/30 px-6 py-4"><h2 class="text-lg font-semibold">Create Disbursement Voucher</h2><p id="dv-title" class="mt-1 text-xs text-on-surface-variant"></p></div>
+<div id="dv-modal" class="fixed inset-0 z-[100] hidden items-center justify-center overflow-y-auto bg-black/50 p-4" role="dialog" aria-modal="true"><div class="my-auto w-full max-w-3xl rounded bg-white shadow-2xl"><div class="border-b border-outline-variant/30 px-6 py-4"><h2 class="text-lg font-semibold">Create Disbursement Voucher</h2><p id="dv-title" class="mt-1 text-xs text-on-surface-variant"></p></div>
     <form id="dv-form" method="POST" class="grid grid-cols-1 gap-4 p-6 md:grid-cols-2">@csrf
         <label class="text-xs font-semibold text-on-surface-variant">DV Number <span class="text-error">*</span><input name="dv_number" required value="{{ old('dv_number', $nextDv ?? '') }}" class="{{ $inputClass }}"></label>
         <label class="text-xs font-semibold text-on-surface-variant">DV Date <span class="text-error">*</span><input type="date" name="dv_date" required max="{{ now()->toDateString() }}" value="{{ now()->toDateString() }}" class="{{ $inputClass }}"></label>
         <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Payee <span class="text-error">*</span><input name="payee" id="dv-payee" required maxlength="255" class="{{ $inputClass }}"></label>
         <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Particulars <span class="text-error">*</span><input name="dv_particulars" id="dv-particulars" required maxlength="255" class="{{ $inputClass }}"></label>
         <label class="text-xs font-semibold text-on-surface-variant">Mode of Payment <span class="text-error">*</span><select name="payment_mode" required class="{{ $inputClass }}"><option>MDS Check</option><option>Commercial Check</option><option>ADA</option><option>Others</option></select></label>
+        <div id="journal-box" class="rounded-xl border border-outline-variant/50 bg-surface-low/50 p-3 md:col-span-2">
+            <div class="mb-2 flex flex-wrap items-start justify-between gap-2">
+                <div><p class="text-sm font-bold text-on-surface">Journal entry <span class="font-normal text-on-surface-variant">(double entry)</span></p><p class="text-[11px] font-normal text-on-surface-variant">Total debit must equal total credit and the DV amount. Up to {{ \App\Http\Controllers\FinanceController::JOURNAL_MAX_LINES }} lines fit the printed DV.</p></div>
+                <span id="journal-badge" class="rounded-full bg-surface-high px-3 py-1 text-[11px] font-bold text-on-surface-variant">Add the entry</span>
+            </div>
+            <div class="mb-1 hidden grid-cols-[1fr_8rem_8rem_2rem] gap-2 text-[10px] font-bold uppercase tracking-wide text-on-surface-variant sm:grid"><span>Account (UACS code · title)</span><span class="text-right">Debit</span><span class="text-right">Credit</span><span></span></div>
+            <div id="journal-rows" class="space-y-2"></div>
+            <div class="mt-2 flex flex-wrap items-center justify-between gap-2">
+                <button type="button" id="journal-add" class="inline-flex items-center gap-1 rounded border border-outline-variant/60 bg-white px-3 py-1.5 text-xs font-semibold text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">add</span>Add line</button>
+                <p class="text-xs text-on-surface-variant">Total debit <strong id="journal-debit" class="text-on-surface">0.00</strong> · Total credit <strong id="journal-credit" class="text-on-surface">0.00</strong></p>
+            </div>
+            <select id="journal-options" hidden aria-hidden="true"><option value="">Choose an account…</option>@foreach($journalAccounts as $category => $accounts)<optgroup label="{{ $category }}">@foreach($accounts as $account)<option value="{{ $account['code'] }}">{{ $account['code'] }} · {{ $account['title'] }}</option>@endforeach</optgroup>@endforeach</select>
+        </div>
         <label class="flex items-start gap-2 text-xs font-semibold text-on-surface-variant md:col-span-2"><input type="checkbox" name="dv_include_appropriation" value="1" @checked(old('dv_include_appropriation')) class="mt-0.5 h-4 w-4 rounded border-outline-variant"><span>Add the APPROPRIATION table to the printed DV<span class="block font-normal">Columns: Appropriation, P/A/P, OR No., Amount, Expense Code. Left unchecked, the DV prints without it.</span></span></label>
-        <div class="flex items-end justify-end gap-2 md:col-span-2"><button type="button" data-close class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Cancel</button><button class="rounded bg-secondary px-4 py-2.5 text-xs font-semibold text-white">Create DV</button></div></form></div></div>
+        <div class="flex items-end justify-end gap-2 md:col-span-2"><button type="button" data-close class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Cancel</button><button id="dv-submit" class="rounded bg-secondary px-4 py-2.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40">Create DV</button></div></form></div></div>
 
 <div id="review-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true"><div class="w-full max-w-lg rounded bg-white shadow-2xl"><div class="border-b border-outline-variant/30 px-6 py-4"><h2 id="review-heading" class="text-lg font-semibold"></h2><p id="review-title" class="mt-1 text-xs text-on-surface-variant"></p></div>
     <form id="review-form" method="POST" class="grid gap-4 p-6">@csrf @method('PATCH')<input type="hidden" name="status" id="review-status">
@@ -88,6 +101,7 @@
         document.getElementById('dv-title').textContent = b.dataset.label + ' · ' + b.dataset.amount;
         document.getElementById('dv-payee').value = b.dataset.payee || '';
         document.getElementById('dv-particulars').value = b.dataset.particulars || '';
+        if (window.journalOpen) window.journalOpen(b);
         show(dvModal);
     }));
     document.querySelectorAll('[data-pay]').forEach((b) => b.addEventListener('click', () => {
@@ -104,6 +118,102 @@
         show(reviewModal);
     }));
     [payModal, reviewModal, dvModal].forEach((m) => { m.addEventListener('click', (e) => { if (e.target === m) hide(m); }); m.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => hide(m))); });
+</script>
+<script>
+    // Double-entry journal of the DV: lines of account + debit or credit that must balance and equal the DV amount.
+    (() => {
+        const MAX = {{ \App\Http\Controllers\FinanceController::JOURNAL_MAX_LINES }};
+        const MDS = '1010404000';
+        const form = document.getElementById('dv-form');
+        const rows = document.getElementById('journal-rows');
+        const options = document.getElementById('journal-options');
+        const badge = document.getElementById('journal-badge');
+        const submit = document.getElementById('dv-submit');
+        const field = 'w-full rounded border border-outline-variant/50 bg-white px-2.5 py-2 text-sm font-normal outline-none focus:border-primary';
+        let amount = 0;
+        const cents = (value) => Math.round((parseFloat(value) || 0) * 100);
+        const peso = (value) => (value / 100).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const hasOption = (code) => code && [...options.options].some((option) => option.value === code);
+
+        const renumber = () => rows.querySelectorAll('.journal-row').forEach((row, index) => {
+            row.querySelector('select').name = `journal[${index}][account_code]`;
+            row.querySelector('[data-side=debit]').name = `journal[${index}][debit]`;
+            row.querySelector('[data-side=credit]').name = `journal[${index}][credit]`;
+        });
+
+        const refresh = () => {
+            const lines = [...rows.querySelectorAll('.journal-row')];
+            let debit = 0; let credit = 0; let complete = lines.length >= 2;
+            lines.forEach((row) => {
+                const d = cents(row.querySelector('[data-side=debit]').value);
+                const c = cents(row.querySelector('[data-side=credit]').value);
+                debit += d; credit += c;
+                if (! row.querySelector('select').value || (d > 0) === (c > 0)) complete = false;
+            });
+            document.getElementById('journal-debit').textContent = peso(debit);
+            document.getElementById('journal-credit').textContent = peso(credit);
+            const balanced = debit === credit && debit === amount;
+            const ok = complete && balanced;
+            let text = 'Balanced'; let tone = 'bg-secondary/15 text-secondary';
+            if (debit !== credit) { text = 'Out of balance by ₱' + peso(Math.abs(debit - credit)); tone = 'bg-error/10 text-error'; }
+            else if (debit !== amount) { text = 'Entry must total ₱' + peso(amount); tone = 'bg-error/10 text-error'; }
+            else if (! complete) { text = 'Complete every line'; tone = 'bg-amber-100 text-amber-800'; }
+            badge.textContent = text;
+            badge.className = 'rounded-full px-3 py-1 text-[11px] font-bold ' + tone;
+            submit.disabled = ! ok;
+            document.getElementById('journal-add').disabled = lines.length >= MAX;
+            document.getElementById('journal-add').classList.toggle('opacity-40', lines.length >= MAX);
+        };
+
+        const addRow = (code = '', debit = '', credit = '', auto = false) => {
+            if (rows.children.length >= MAX) return null;
+            const row = document.createElement('div');
+            row.className = 'journal-row grid grid-cols-1 gap-2 sm:grid-cols-[1fr_8rem_8rem_2rem]';
+            if (auto) row.dataset.auto = '1';
+            const select = options.cloneNode(true);
+            select.removeAttribute('id'); select.removeAttribute('aria-hidden'); select.hidden = false; select.className = field; select.required = true;
+            const amountInput = (side, value) => {
+                const input = document.createElement('input');
+                input.type = 'number'; input.step = '0.01'; input.min = '0'; input.placeholder = side === 'debit' ? 'Debit' : 'Credit';
+                input.className = field + ' text-right tabular-nums'; input.dataset.side = side; input.value = value;
+                return input;
+            };
+            const debitInput = amountInput('debit', debit); const creditInput = amountInput('credit', credit);
+            const remove = document.createElement('button');
+            remove.type = 'button'; remove.title = 'Remove line'; remove.setAttribute('aria-label', 'Remove line');
+            remove.className = 'grid h-9 w-8 place-items-center rounded text-on-surface-variant hover:bg-error/10 hover:text-error';
+            remove.innerHTML = '<span class="material-symbols-outlined text-[18px]" aria-hidden="true">delete</span>';
+            row.append(select, debitInput, creditInput, remove);
+            rows.append(row);
+            select.value = hasOption(code) ? code : '';
+            select.addEventListener('change', () => { delete row.dataset.auto; refresh(); });
+            debitInput.addEventListener('input', () => { if (debitInput.value) creditInput.value = ''; refresh(); });
+            creditInput.addEventListener('input', () => { if (creditInput.value) debitInput.value = ''; refresh(); });
+            remove.addEventListener('click', () => { row.remove(); renumber(); refresh(); });
+            renumber(); refresh();
+            return row;
+        };
+
+        const creditAccountFor = (mode) => (mode === 'MDS Check' || mode === 'ADA') ? MDS : '';
+
+        window.journalOpen = (button) => {
+            rows.innerHTML = '';
+            amount = cents(button.dataset.amountRaw);
+            const total = (amount / 100).toFixed(2);
+            addRow(button.dataset.expenseCode || '', total, '');
+            addRow(creditAccountFor(form.querySelector('[name=payment_mode]').value), '', total, true);
+        };
+
+        form.querySelector('[name=payment_mode]').addEventListener('change', (event) => {
+            const auto = rows.querySelector('.journal-row[data-auto]');
+            if (! auto) return;
+            const code = creditAccountFor(event.target.value);
+            auto.querySelector('select').value = hasOption(code) ? code : '';
+            refresh();
+        });
+        document.getElementById('journal-add').addEventListener('click', () => addRow());
+        form.addEventListener('submit', (event) => { refresh(); if (submit.disabled) event.preventDefault(); });
+    })();
 </script>
 </body>
 </html>

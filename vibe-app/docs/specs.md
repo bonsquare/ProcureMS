@@ -225,7 +225,7 @@ php -d zend_extension=opcache -d opcache.enable_cli=1 -d "upload_tmp_dir=<repo>/
 
 - Why not `php artisan serve`: it does not pass `-d` settings to the real server, so opcache and `upload_tmp_dir` would be missing. Without `upload_tmp_dir` PHP may fail every upload with "unable to create a temporary file". `vibe-app/dev-server.php` is the router; it must `return` the framework router's result or static files (css, images) are served as HTML and the pages lose their design.
 - Opcache makes pages about three times faster (about 0.9 s down to 0.03 s per page here).
-- Tests: `php artisan test` (all pass at the time of writing: 154).
+- Tests: `php artisan test` (all pass at the time of writing: 161).
 
 ## 9. Station transfer
 
@@ -259,3 +259,12 @@ php -d zend_extension=opcache -d opcache.enable_cli=1 -d "upload_tmp_dir=<repo>/
 - The person is created as `pending` with no school: they cannot sign in (they see "waiting for the master account approval") or see any school data.
 - The master reviews a **Takeover request** card on that school page in School Management (and a badge in the list). Approve gives the person the school, its data, the school_admin role, an employee record and their own 30-day trial subscription. Decline keeps them out.
 - Design: `docs/superpowers/specs/2026-10-10-vacant-school-takeover-design.md`. Tests: `tests/Feature/VacantSchoolTakeoverTest.php`.
+
+## 13. Journal entry (double entry) on the Disbursement Voucher
+
+- The **Create DV** window has a **Journal entry** table: each line is an account (from the Chart of Accounts, shown as UACS code and title) with a debit or a credit. It starts with two suggested lines for the ORS amount: **debit** the expense account of the budget line the ORS is charged to, and **credit** Cash - MDS, Regular for an MDS Check or ADA (left blank for other payment modes, so the accountant picks the bank account). Lines can be added (up to 4, which is what fits the printed form) and removed.
+- A badge shows **Balanced**, **Out of balance by P...** or **Entry must total P...**, and **Create DV** stays disabled until total debit equals total credit and the DV amount.
+- The server checks the same rules: at least 2 lines, a known account on every line, each line is a debit or a credit (not both, not neither), total debit = total credit = the ORS amount. Nothing is saved otherwise.
+- The lines are saved in `dv_journal_lines` (account code and title as in the chart at that time) and printed in the **Accounting Entry** table of the DV (title, UACS code, debit, credit). DVs created before this change have no lines and print as before.
+- Not included: editing the entry after the DV exists, and a separate general journal page.
+- Tests: `tests/Feature/DvJournalEntryTest.php`.

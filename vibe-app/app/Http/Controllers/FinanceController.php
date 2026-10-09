@@ -4,16 +4,23 @@ namespace App\Http\Controllers;
 
 use App\Models\AgencySetting;
 use App\Models\AuditLog;
+use App\Models\ChartOfAccount;
+use App\Models\DvJournalLine;
 use App\Models\LiquidationReport;
 use App\Models\School;
 use App\Models\SchoolStaff;
 use App\Services\DocumentNumberService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class FinanceController extends Controller
 {
     public const PAYMENT_MODES = ['MDS Check', 'Commercial Check', 'ADA', 'Others'];
+
+    /** The Accounting Entry table of the printed DV has room for this many lines. */
+    public const JOURNAL_MAX_LINES = 4;
 
     private function isMaster(): bool
     {
@@ -50,6 +57,7 @@ class FinanceController extends Controller
             'isMasterUser' => $this->isMaster(),
             'counts' => $counts,
             'nextDv' => $this->nextDvNumber(),
+            'journalAccounts' => $this->journalAccountOptions(),
             'rows' => match ($tab) {
                 'all' => $all->sortByDesc('created_at'),
                 'for_dv' => $forDv->sortByDesc('approved_at'),
@@ -147,16 +155,86 @@ class FinanceController extends Controller
             'dv_particulars' => ['required', 'string', 'max:255'],
             'payment_mode' => ['required', Rule::in(self::PAYMENT_MODES)],
             'dv_include_appropriation' => ['nullable', 'boolean'],
+            'journal' => ['required', 'array', 'min:2', 'max:'.self::JOURNAL_MAX_LINES],
+            'journal.*.account_code' => ['required', 'string', 'max:50'],
+            'journal.*.debit' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
+            'journal.*.credit' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
+        ], [
+            'journal.required' => 'Add the journal entry: at least one debit and one credit line.',
+            'journal.min' => 'The journal entry needs at least two lines (a debit and a credit).',
+            'journal.max' => 'The DV has room for '.self::JOURNAL_MAX_LINES.' accounting entry lines.',
         ]);
+        $lines = $this->journalLines($data['journal'], $liquidationReport);
+        unset($data['journal']);
         $data['dv_include_appropriation'] = (bool) ($data['dv_include_appropriation'] ?? false);
 
         $data['dv_number'] ??= app(DocumentNumberService::class)
             ->next((int) $liquidationReport->organization_id, 'disbursement_voucher', 'DV');
-        $liquidationReport->update($data);
+        DB::transaction(function () use ($liquidationReport, $data, $lines) {
+            $liquidationReport->update($data);
+            foreach ($lines as $number => $line) {
+                DvJournalLine::create($line + ['organization_id' => $liquidationReport->organization_id, 'liquidation_report_id' => $liquidationReport->id, 'line_no' => $number + 1]);
+            }
+        });
         $liquidationReport->transaction?->recordEvent('accounting', 'dv_created', null, 'ready_for_payment', $data['dv_number'], ['dv_date' => $data['dv_date']]);
         AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $liquidationReport->school_id, 'action' => 'dv_created', 'auditable_type' => LiquidationReport::class, 'auditable_id' => $liquidationReport->id, 'metadata' => ['dv' => $data['dv_number'], 'ors' => $liquidationReport->ors_number]]);
 
         return redirect()->route('accounting', ['tab' => 'with_dv'])->with('success', "DV {$data['dv_number']} created for {$liquidationReport->ors_number}. It is now queued in Cash for payment.");
+    }
+
+    /** Accounts offered in the journal entry, grouped like the chart: assets and liabilities first, then the expenses. */
+    private function journalAccountOptions()
+    {
+        $accounts = ChartOfAccount::query()->orderBy('code')->get(['code', 'title', 'category']);
+        if ($accounts->isEmpty()) {
+            $accounts = collect(ChartOfAccount::standardAccounts())->map(fn (array $account) => (object) $account)->sortBy('code');
+        }
+        $order = ['Assets' => 0, 'Liabilities' => 1, 'Equity' => 2];
+
+        return $accounts->unique('code')->groupBy('category')
+            ->sortBy(fn ($items, $category) => ($order[$category] ?? 3).'-'.$category)
+            ->map(fn ($items) => $items->map(fn ($account) => ['code' => $account->code, 'title' => $account->title])->values());
+    }
+
+    /**
+     * Checks the double entry of a DV and returns the lines to save: every account is in the chart of accounts, each line is
+     * a debit or a credit, and total debit equals total credit equals the DV amount.
+     *
+     * @param  array<int, array<string, mixed>>  $journal
+     * @return array<int, array{account_code: string, account_title: string, debit: string, credit: string}>
+     */
+    private function journalLines(array $journal, LiquidationReport $report): array
+    {
+        ChartOfAccount::ensureDefaults($report->organization_id);
+        $titles = ChartOfAccount::withoutGlobalScopes()->where('organization_id', $report->organization_id)
+            ->whereIn('code', collect($journal)->pluck('account_code')->all())->pluck('title', 'code');
+
+        $cents = fn ($value) => (int) round(((float) ($value ?: 0)) * 100);
+        $lines = [];
+        $debit = $credit = 0;
+        foreach (array_values($journal) as $number => $line) {
+            $position = $number + 1;
+            $code = (string) $line['account_code'];
+            if (! $titles->has($code)) {
+                throw ValidationException::withMessages(['journal' => "Line {$position}: choose an account from the Chart of Accounts."]);
+            }
+            $d = $cents($line['debit'] ?? 0);
+            $c = $cents($line['credit'] ?? 0);
+            if (($d > 0) === ($c > 0)) {
+                throw ValidationException::withMessages(['journal' => "Line {$position}: enter either a debit or a credit amount, not both and not neither."]);
+            }
+            $debit += $d;
+            $credit += $c;
+            $lines[] = ['account_code' => $code, 'account_title' => $titles[$code], 'debit' => number_format($d / 100, 2, '.', ''), 'credit' => number_format($c / 100, 2, '.', '')];
+        }
+        if ($debit !== $credit) {
+            throw ValidationException::withMessages(['journal' => 'The journal entry is out of balance: total debit '.number_format($debit / 100, 2).' and total credit '.number_format($credit / 100, 2).' must be equal.']);
+        }
+        if ($debit !== $cents($report->amount)) {
+            throw ValidationException::withMessages(['journal' => 'The entry totals '.number_format($debit / 100, 2).' but the DV amount is '.number_format((float) $report->amount, 2).'.']);
+        }
+
+        return $lines;
     }
 
     /** Turn the optional APPROPRIATION table of the printed DV on or off (off by default). */
