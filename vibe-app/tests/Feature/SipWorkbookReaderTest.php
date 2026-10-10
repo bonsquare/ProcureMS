@@ -229,4 +229,20 @@ class SipWorkbookReaderTest extends TestCase
         $this->assertSame(['ANA HEAD', 'BEN CHIEF', 'CY SUPER'], [$result['plan']['signatories']['prepared_by_name'], $result['plan']['signatories']['recommended_by_name'], $result['plan']['signatories']['approved_by_name']]);
         $this->assertSame('Schools Division Superintendent', $result['plan']['signatories']['approved_by_position']);
     }
+
+    public function test_a_zip_that_inflates_far_beyond_the_limit_is_refused(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'bomb').'.xlsx';
+        $zip = new \ZipArchive;
+        $zip->open($path, \ZipArchive::CREATE);
+        $zip->addFromString('xl/workbook.xml', '<workbook/>');
+        $zip->addFromString('xl/worksheets/sheet1.xml', str_repeat('a', 13 * 1024 * 1024));
+        $zip->close();
+        $this->assertLessThan(200000, filesize($path));
+
+        $result = $this->read($path);
+
+        $this->assertSame([], $result['plan']['projects']);
+        $this->assertTrue(collect($this->errors($result))->contains(fn ($i) => str_contains($i['message'], 'too large')));
+    }
 }

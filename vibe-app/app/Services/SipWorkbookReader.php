@@ -13,7 +13,8 @@ class SipWorkbookReader
 {
     public const MAX_DATA_ROWS = 5000;
 
-    private const MAX_SHEET_BYTES = 31457280;
+    /** 12 MB of sheet XML: PHP's memory_limit is 256 MB and parsing XML takes several times the size of the text. */
+    private const MAX_SHEET_BYTES = 12582912;
 
     private const MAX_RAW_ROWS = 20000;
 
