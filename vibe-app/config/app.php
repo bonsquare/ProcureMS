@@ -16,6 +16,12 @@ return [
     'name' => env('APP_NAME', 'Laravel'),
 
     /*
+     * The demo copy of the system (a separate deployment): shows the demo accounts on the sign-in page
+     * and gives the master a button that resets the data. Never turn this on for the live system.
+     */
+    'demo' => (bool) env('DEMO_MODE', false),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------

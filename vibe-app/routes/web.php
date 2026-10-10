@@ -7,6 +7,7 @@ use App\Http\Controllers\BackupController;
 use App\Http\Controllers\BudgetAllocationController;
 use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\ChartOfAccountController;
+use App\Http\Controllers\DemoController;
 use App\Http\Controllers\DriveFileController;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\GoogleDriveController;
@@ -136,6 +137,7 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::post('/drive-files', [DriveFileController::class, 'store'])->middleware('drive.connected')->name('drive-files.store');
     Route::delete('/drive-files/{driveFile}', [DriveFileController::class, 'destroy'])->whereNumber('driveFile')->name('drive-files.destroy');
     Route::get('/reports', [HomeController::class, 'reports'])->name('reports');
+    Route::post('/demo/reset', [DemoController::class, 'reset'])->name('demo.reset');
     Route::get('/user-management', [UserDirectoryController::class, 'index'])->name('user-management');
     Route::post('/user-management/users', [UserDirectoryController::class, 'store'])->name('user-management.users.store');
     Route::get('/user-management/users/{user}', [UserDirectoryController::class, 'show'])->name('user-management.users.show')->whereNumber('user');

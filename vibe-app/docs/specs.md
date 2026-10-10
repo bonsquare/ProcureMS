@@ -462,3 +462,11 @@ Design: `docs/superpowers/specs/2026-10-10-sub-master-design.md`.
 - `station_transfer_requests.kind` (`transfer`, `official_station`, `other`) and `subject` (the typed request). Only `transfer` goes through the destination school's acceptance and the handover. `other` has nothing to move: approving it is the master's answer and needs no confirmation.
 - The status, the 3-step guide, My requests and the master's Official Station Management queue are worded for any request. Only transfers appear in School Management.
 - One pending request per user, whatever its type. Tests: `GenericRequestTest`, `StationTransferTest`.
+
+## 21. Demo copy for client presentations
+
+- The demo is a **separate deployment** with its own database (a Railway `demo` environment), never the live system. `DEMO_MODE=true` turns it on (`config('app.demo')`); it is off everywhere else.
+- In demo mode the sign-in page lists the demo accounts, and the master sees **Reset demo data** in User Management → Master User. It wipes the database and loads `DatabaseSeeder` + `DemoShowcaseSeeder` again, then signs everybody out. The same reset is `php artisan demo:reset --force`; both refuse to run when `DEMO_MODE` is off.
+- A new empty demo database loads the demo data by itself on first start (`deploy/entrypoint.sh`, `demo:reset --if-empty`).
+- Demo accounts (all `password`): master `admin@procurems.test`, Sub-master `submaster@procurems.test`, school admin `orong.rms@gmail.com` (Test School, with the full planning, procurement, budget and liquidation sample), plus an admin for each of the other seeded schools. The showcase adds two vacant schools, a new registrant waiting for an Official Station, and one open request of each kind (transfer, Official Station, Other).
+- `DatabaseSeeder` no longer mutes model events, which had broken the AIP approval in `PlanningDemoSeeder` and skipped user codes. Tests: `DemoModeTest`.

@@ -17,6 +17,11 @@ ln -s /data/public storage/app/public
 php artisan storage:link --force
 
 php artisan migrate --force
+
+# The demo copy (DEMO_MODE=true) loads its demo data the first time it starts.
+if [ "$DEMO_MODE" = "true" ]; then
+    php artisan demo:reset --if-empty --force
+fi
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache

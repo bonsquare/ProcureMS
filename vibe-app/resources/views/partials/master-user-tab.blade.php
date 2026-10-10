@@ -32,3 +32,12 @@
 @if(auth()->user()->isMaster())
     @include('partials.master-user-subs')
 @endif
+@if(config('app.demo') && auth()->user()->isMaster())
+    <section class="mt-4 max-w-5xl rounded border border-error/30 bg-white p-5">
+        <h2 class="text-lg font-semibold">Demo data</h2>
+        <p class="mt-1 text-xs text-on-surface-variant">This is the demo copy of the system. Reset puts all data back to the starting demo schools, users and requests, and signs everybody out. It cannot be undone.</p>
+        <form method="POST" action="{{ route('demo.reset') }}" class="mt-4" onsubmit="return confirm('Erase everything in this demo and start again?')">@csrf
+            <button class="inline-flex items-center gap-2 rounded bg-error px-4 py-2.5 text-xs font-semibold text-white hover:opacity-90"><span class="material-symbols-outlined text-[18px]">restart_alt</span>Reset demo data</button>
+        </form>
+    </section>
+@endif
