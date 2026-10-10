@@ -6,7 +6,6 @@ use App\Models\Aip;
 use App\Models\AppItem;
 use App\Models\AppPlan;
 use App\Models\Organization;
-use App\Models\PpmpItem;
 use App\Models\PpmpPlan;
 use App\Models\School;
 use App\Models\SipActivity;
@@ -107,32 +106,6 @@ class PlanningEditDeleteTest extends TestCase
         $this->put(route('planning.sip.activities.update', $activity), ['activity' => ''])->assertSessionHasErrors('activity');
     }
 
-    public function test_a_draft_ppmp_can_be_edited_and_deleted_but_an_approved_one_is_locked(): void
-    {
-        [$organization, $school, $master] = $this->world();
-        $draft = $this->ppmp($organization, $school);
-        $approved = $this->ppmp($organization, $school, 'approved');
-        $this->actingAs($master);
-
-        $this->put(route('planning.ppmp.update', $draft), [
-            'project_title' => 'New PPMP', 'procurement_mode' => 'Shopping', 'procurement_schedule' => 'Q2', 'fund_source' => 'SEF',
-            'procurement_item' => 'Long bond paper', 'specifications' => 'Legal', 'quantity' => 20, 'unit' => 'ream', 'estimated_unit_cost' => 300,
-        ])->assertRedirect();
-        $draft->refresh();
-        $item = $draft->items->first();
-        $this->assertSame(['New PPMP', 'Shopping', 'Q2', 'SEF'], [$draft->project_title, $draft->procurement_mode, $draft->procurement_schedule, $draft->fund_source]);
-        $this->assertSame(['Long bond paper', 20.0, 6000.0], [$item->procurement_item, (float) $item->quantity, (float) $item->estimated_total_cost]);
-
-        $this->put(route('planning.ppmp.update', $approved), ['project_title' => 'Changed', 'procurement_item' => 'x', 'quantity' => 1, 'unit' => 'pc', 'estimated_unit_cost' => 1])->assertSessionHasErrors('planning');
-        $this->delete(route('planning.ppmp.destroy', $approved))->assertSessionHasErrors('planning');
-        $this->assertSame('Old PPMP', $approved->fresh()->project_title);
-
-        $this->delete(route('planning.ppmp.destroy', $draft))->assertRedirect();
-        $this->assertNull(PpmpPlan::withoutGlobalScopes()->find($draft->id));
-        $this->assertSame(0, PpmpItem::withoutGlobalScopes()->where('ppmp_plan_id', $draft->id)->count());
-        $this->assertDatabaseHas('audit_logs', ['school_id' => $school->id, 'action' => 'ppmp_deleted', 'auditable_id' => $draft->id]);
-    }
-
     public function test_a_draft_app_item_can_be_edited_and_removed_but_an_approved_app_is_locked(): void
     {
         [$organization, $school, $master] = $this->world();
@@ -160,14 +133,11 @@ class PlanningEditDeleteTest extends TestCase
     {
         [$organization, $school, , $viewer] = $this->world();
         $sip = $this->sip($organization, $school);
-        $plan = $this->ppmp($organization, $school);
         $this->actingAs($viewer);
 
         $this->put(route('planning.sip.update', $sip), ['school_year' => 2026, 'pillar' => 'Access', 'kra' => 'x', 'project' => 'y'])->assertForbidden();
         $this->delete(route('planning.sip.destroy', $sip))->assertForbidden();
         $this->put(route('planning.sip.activities.update', $sip->activities->first()), ['activity' => 'x'])->assertForbidden();
-        $this->put(route('planning.ppmp.update', $plan), ['project_title' => 'x'])->assertForbidden();
-        $this->delete(route('planning.ppmp.destroy', $plan))->assertForbidden();
         $this->assertSame('Old program name', $sip->fresh()->project);
     }
 
@@ -175,8 +145,6 @@ class PlanningEditDeleteTest extends TestCase
     {
         [$organization, $school, $master] = $this->world();
         $sip = $this->sip($organization, $school);
-        $draft = $this->ppmp($organization, $school);
-        $this->ppmp($organization, $school, 'approved');
         $this->app($organization, $school);
 
         $html = $this->actingAs($master)->get(route('planning', ['school_id' => $school->id, 'year' => 2026]))->assertOk()->getContent();
@@ -184,9 +152,6 @@ class PlanningEditDeleteTest extends TestCase
         $this->assertStringContainsString('data-edit-sip', $html);
         $this->assertStringContainsString('data-edit-activity', $html);
         $this->assertStringContainsString(route('planning.sip.destroy', $sip), $html);
-        $this->assertStringContainsString(route('planning.ppmp.destroy', $draft), $html);
-        $this->assertSame(1, substr_count($html, 'data-edit-ppmp'), 'only the draft PPMP can be edited');
         $this->assertStringContainsString('data-edit-app-item', $html);
-        $this->assertStringContainsString('Approved plans are locked', $html);
     }
 }

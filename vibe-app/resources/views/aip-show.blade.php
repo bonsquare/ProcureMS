@@ -27,7 +27,7 @@
         <a href="{{ route('aip.print', $aip) }}" target="_blank" rel="noopener" class="rounded border border-outline-variant/60 bg-white px-4 py-2.5 text-xs font-semibold hover:bg-surface-low">Print AIP</a>
         @if($canManage)
             <a href="{{ route('aip.kras.create', $aip) }}" class="rounded border border-primary px-4 py-2.5 text-xs font-semibold text-primary hover:bg-primary hover:text-white">+ Add KRA and Activities</a>
-            <form method="POST" action="{{ route('aip.approve', $aip) }}" onsubmit="return confirm('Approve this AIP? It is used for reports and to start a PPMP. It does not touch the Budget.')">@csrf<button class="rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">{{ $aip->status === 'approved' ? 'Approved' : 'Approve AIP' }}</button></form>
+            <form method="POST" action="{{ route('aip.approve', $aip) }}" onsubmit="return confirm('Approve this AIP? It is used for reports and to start an SOB. It does not touch the Budget.')">@csrf<button class="rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">{{ $aip->status === 'approved' ? 'Approved' : 'Approve AIP' }}</button></form>
         @endif
     </div>
 </div>

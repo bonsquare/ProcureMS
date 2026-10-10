@@ -7,7 +7,7 @@
 <div class="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
     <div>
         <h1 class="text-[28px] font-semibold leading-9 tracking-tight">Annual Implementation Plan</h1>
-        <p class="mt-1 text-[15px] leading-6 text-on-surface-variant">The school's yearly activities and financial targets per quarter and source of fund. An approved AIP is used for reports and to start a PPMP.</p>
+        <p class="mt-1 text-[15px] leading-6 text-on-surface-variant">The school's yearly activities and financial targets per quarter and source of fund. An approved AIP is used for reports and to start an SOB.</p>
     </div>
     @if($canManage)
         <form method="POST" action="{{ route('aip.store') }}" class="flex flex-wrap items-center gap-2">

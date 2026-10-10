@@ -271,7 +271,7 @@
 
 <div data-panel="aip" class="hidden">
 <section id="aip" class="mb-6 rounded border border-outline-variant/30 bg-white">
-    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 px-5 py-4"><div><h2 class="font-semibold">Annual Implementation Plan</h2><p class="mt-1 text-xs text-on-surface-variant">Yearly activities and financial targets per quarter and fund. An approved AIP is used for reports and to start a PPMP.</p></div>
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 px-5 py-4"><div><h2 class="font-semibold">Annual Implementation Plan</h2><p class="mt-1 text-xs text-on-surface-variant">Yearly activities and financial targets per quarter and fund. An approved AIP is used for reports and to start an SOB.</p></div>
         @if(auth()->user()->canManageBudget())
         <button type="button" data-toggle-form="aip" class="rounded bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-primary-container">+ New AIP</button>
         <form data-form="aip" data-display="flex" method="POST" action="{{ route('aip.store') }}" class="hidden w-full flex-wrap items-center justify-end gap-2 border-t border-outline-variant/20 pt-3">@csrf
@@ -285,10 +285,10 @@
         @forelse($aips as $aip)
         <tr><td class="px-5 py-3 font-semibold">FY {{ $aip->fiscal_year }}</td><td class="px-4 py-3 text-right tabular-nums">{{ $aip->activities->count() }}</td><td class="px-4 py-3 text-right font-semibold tabular-nums">{{ $peso($aip->activities->sum(fn ($a) => $a->total)) }}</td><td class="px-4 py-3">@if($aip->sip_start_year)<span class="font-semibold text-primary">from SIP {{ $aip->sip_start_year }}-{{ $aip->sip_start_year + 2 }} · Year {{ $aip->sip_year_no }}</span>@else{{ $aip->sipProject?->project ?: '—' }}@endif</td><td class="px-4 py-3"><span class="rounded-full px-2 py-1 text-[11px] font-semibold {{ $aip->status === 'approved' ? 'bg-secondary/10 text-secondary' : 'bg-amber-100 text-amber-800' }}">{{ \Illuminate\Support\Str::headline($aip->status) }}</span></td><td class="px-5 py-3 text-right font-semibold"><a href="{{ route('aip.show', $aip) }}" class="text-primary hover:underline">Open / Edit</a> · <a href="{{ route('aip.print', $aip) }}" target="_blank" rel="noopener" class="text-primary hover:underline">Print</a>
             @if(auth()->user()->canManageBudget())
-                @if($aip->status === 'draft' && $ppmpPlans->where('aip_id', $aip->id)->isEmpty() && $sobPlans->where('aip_id', $aip->id)->isEmpty())
+                @if($aip->status === 'draft' && ! in_array($aip->id, $legacyPpmpAipIds) && $sobPlans->where('aip_id', $aip->id)->isEmpty())
                     · <form method="POST" action="{{ route('aip.destroy', $aip) }}" class="inline" data-delete-aip onsubmit="return confirm('Delete the AIP for FY {{ $aip->fiscal_year }}? Its KRAs and activities are removed. This cannot be undone.')">@csrf @method('DELETE')<button class="font-semibold text-error hover:underline">Delete</button></form>
                 @else
-                    · <span class="cursor-not-allowed font-semibold text-on-surface-variant/50" title="Only a draft AIP with no SOB, PPMP or budget built on it can be deleted.">Delete</span>
+                    · <span class="cursor-not-allowed font-semibold text-on-surface-variant/50" title="Only a draft AIP with nothing built on it (an SOB or a budget) can be deleted.">Delete</span>
                 @endif
             @endif</td></tr>
         @empty<tr><td colspan="6" class="px-5 py-8 text-center text-on-surface-variant">No AIP for this school yet.@if(auth()->user()->canManageBudget()) Enter the fiscal year and click New AIP.@endif</td></tr>@endforelse
@@ -328,40 +328,6 @@
         @endforeach
     </div>
 </section>
-</div>
-
-<div data-panel="ppmp" class="hidden">
-<section class="mb-6 rounded border border-outline-variant/30 bg-white">
-    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 px-5 py-4"><div><h2 class="font-semibold">PPMP</h2><p class="mt-1 text-xs text-on-surface-variant">Draft each item against an approved AIP; approve the plan before adding it to APP.</p></div>@if(auth()->user()->hasPermission('planning.manage'))<button type="button" data-toggle-form="ppmp" class="rounded bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-primary-container">+ New PPMP Item</button>@endif</div>
-    @if(auth()->user()->hasPermission('planning.manage'))
-    <form data-form="ppmp" data-display="grid" method="POST" action="{{ route('planning.ppmp.store') }}" class="hidden gap-3 border-b border-outline-variant/20 bg-surface-low/60 p-5 md:grid-cols-3">@csrf
-        <label class="text-xs font-semibold md:col-span-1">Approved AIP<select required name="aip_id" class="{{ $inputClass }}"><option value="">Select AIP</option>@foreach($aips->where('status', 'approved') as $aip)<option value="{{ $aip->id }}">FY {{ $aip->fiscal_year }} · {{ $aip->entity }}</option>@endforeach</select></label>
-        <label class="text-xs font-semibold md:col-span-2">Project Title<input name="project_title" required maxlength="255" class="{{ $inputClass }}"></label>
-        <label class="text-xs font-semibold">Procurement Item<input name="procurement_item" required maxlength="255" class="{{ $inputClass }}"></label>
-        <label class="text-xs font-semibold">Specifications<input name="specifications" maxlength="2000" class="{{ $inputClass }}"></label>
-        <label class="text-xs font-semibold">Fund Source<select name="fund_source" class="{{ $inputClass }}"><option value="">Select fund source</option>@foreach($fundOptions as $fund)<option value="{{ $fund }}">{{ $fund }}</option>@endforeach</select></label>
-        <label class="text-xs font-semibold">Quantity<input type="number" name="quantity" required min="0.01" step="0.01" value="1" class="{{ $inputClass }}"></label>
-        <label class="text-xs font-semibold">Unit<input name="unit" required maxlength="50" value="lot" class="{{ $inputClass }}"></label>
-        <label class="text-xs font-semibold">Estimated Unit Cost<input type="number" name="estimated_unit_cost" required min="0" step="0.01" class="{{ $inputClass }}"></label>
-        <label class="text-xs font-semibold">Procurement Mode<input name="procurement_mode" maxlength="100" placeholder="e.g. Small Value Procurement" class="{{ $inputClass }}"></label>
-        <label class="text-xs font-semibold">Schedule<input name="procurement_schedule" maxlength="255" placeholder="e.g. Q1" class="{{ $inputClass }}"></label>
-        <div class="self-end"><button class="rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white">Save PPMP Draft</button></div>
-    </form>
-    @endif
-    <div class="divide-y divide-outline-variant/20">
-        @forelse($ppmpPlans as $plan)<div class="flex flex-wrap items-center justify-between gap-3 px-5 py-4"><div><div class="flex flex-wrap items-center gap-2"><h3 class="text-sm font-semibold">{{ $plan->project_title }}</h3><span class="rounded px-2 py-1 text-[10px] {{ $plan->status === 'approved' ? 'bg-secondary/10 text-secondary' : 'bg-surface-low text-on-surface-variant' }}">{{ ucfirst($plan->status) }}</span></div><p class="mt-1 text-xs text-on-surface-variant">FY {{ $plan->fiscal_year }} · {{ $plan->items->count() }} item(s) · {{ $peso($plan->items->sum('estimated_total_cost')) }}</p></div><div class="flex gap-3">@if($plan->transaction)<a href="{{ route('transactions.show', $plan->transaction) }}" class="self-center text-xs font-semibold text-primary underline">{{ $plan->transaction->transaction_number }}</a>@endif @if(auth()->user()->hasPermission('planning.manage') && $plan->status !== 'approved')<form method="POST" action="{{ route('planning.ppmp.approve', $plan) }}">@csrf<button class="rounded bg-secondary px-3 py-2 text-xs font-semibold text-white">Approve PPMP</button></form>@endif
-            @if(auth()->user()->hasPermission('planning.manage'))
-                @if($plan->status !== 'approved')
-                    @php $planItem = $plan->items->count() === 1 ? $plan->items->first() : null; @endphp
-                    <button type="button" data-edit-ppmp data-edit-dialog="dlg-ppmp" data-action="{{ route('planning.ppmp.update', $plan) }}" data-payload="{{ json_encode($plan->only(['project_title', 'procurement_mode', 'procurement_schedule', 'fund_source']) + ['single_item' => (bool) $planItem] + ($planItem ? $planItem->only(['procurement_item', 'specifications', 'quantity', 'unit', 'estimated_unit_cost']) : [])) }}" class="inline-flex items-center gap-1 rounded border border-outline-variant/60 bg-white px-3 py-2 text-xs font-semibold text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">edit</span>Edit</button>
-                    <form method="POST" action="{{ route('planning.ppmp.destroy', $plan) }}" data-confirm="Delete the PPMP draft '{{ $plan->project_title }}' and its items? This cannot be undone.">@csrf @method('DELETE')<button class="inline-flex items-center gap-1 rounded border border-error/40 bg-white px-3 py-2 text-xs font-semibold text-error hover:bg-error/10"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">delete</span>Delete</button></form>
-                @else
-                    <span class="self-center text-[11px] font-semibold text-on-surface-variant/60" title="Approved plans are locked. An approved PPMP already feeds the APP.">Approved plans are locked</span>
-                @endif
-            @endif</div></div>@empty<div class="px-5 py-7 text-center text-sm text-on-surface-variant">No PPMP records yet.</div>@endforelse
-    </div>
-</section>
-
 </div>
 
 <div data-panel="app" class="hidden">

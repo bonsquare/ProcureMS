@@ -8,7 +8,6 @@ use App\Models\AipKra;
 use App\Models\AppPlan;
 use App\Models\ChartOfAccount;
 use App\Models\Organization;
-use App\Models\PpmpPlan;
 use App\Models\School;
 use App\Models\SipProject;
 use App\Models\SobPlan;
@@ -33,20 +32,6 @@ class PlanningFlowTest extends TestCase
         ]);
 
         return [$organization, $school, $user];
-    }
-
-    private function ppmpPayload(Aip $aip, array $overrides = []): array
-    {
-        return $overrides + [
-            'aip_id' => $aip->id,
-            'project_title' => 'Office supplies',
-            'procurement_mode' => 'Small Value Procurement',
-            'fund_source' => 'MOOE',
-            'procurement_item' => 'Bond paper',
-            'quantity' => 10,
-            'unit' => 'ream',
-            'estimated_unit_cost' => 250,
-        ];
     }
 
     public function test_sip_to_app_happy_path_keeps_master_transaction_links(): void
@@ -92,16 +77,6 @@ class PlanningFlowTest extends TestCase
         $this->assertSame('approved', $app->fresh()->status);
     }
 
-    public function test_ppmp_requires_an_approved_aip(): void
-    {
-        [$organization, $school, $user] = $this->tenant('alpha');
-        $this->actingAs($user);
-        $aip = Aip::create(['organization_id' => $organization->id, 'school_id' => $school->id, 'fiscal_year' => 2026, 'status' => 'draft']);
-
-        $this->post(route('planning.ppmp.store'), $this->ppmpPayload($aip))->assertSessionHasErrors('planning');
-        $this->assertSame(0, PpmpPlan::count());
-    }
-
     public function test_closed_fiscal_year_blocks_planning_writes(): void
     {
         [$organization, $school, $user] = $this->tenant('alpha');
@@ -130,14 +105,15 @@ class PlanningFlowTest extends TestCase
         [$orgB, $schoolB, $userB] = $this->tenant('bravo');
         $aipB = Aip::create(['organization_id' => $orgB->id, 'school_id' => $schoolB->id, 'fiscal_year' => 2026, 'status' => 'approved']);
         $this->actingAs($userB);
-        $this->post(route('planning.ppmp.store'), $this->ppmpPayload($aipB))->assertSessionHasNoErrors();
-        $ppmpB = PpmpPlan::withoutGlobalScopes()->firstOrFail();
+        $this->post(route('planning.sob.store'), ['school_id' => $schoolB->id, 'fiscal_year' => 2026, 'quarter' => 1, 'fund_source' => 'MOOE'])->assertSessionHasNoErrors();
+        $sobB = SobPlan::withoutGlobalScopes()->firstOrFail();
 
         $this->actingAs($userA);
-        $this->post(route('planning.ppmp.store'), $this->ppmpPayload($aipB))->assertNotFound();
-        $this->post(route('planning.ppmp.approve', $ppmpB))->assertNotFound();
+        $this->post(route('planning.sob.store'), ['school_id' => $schoolB->id, 'fiscal_year' => 2026, 'quarter' => 2, 'fund_source' => 'MOOE'])->assertSessionHasErrors('school_id');
+        $this->post(route('planning.sob.approve', $sobB))->assertNotFound();
         $this->post(route('planning.app.generate'), ['school_id' => $schoolB->id, 'fiscal_year' => 2026])->assertSessionHasErrors('school_id');
-        $this->assertSame('draft', $ppmpB->fresh()->status);
+        $this->assertSame('draft', $sobB->fresh()->status);
+        $this->assertSame(1, SobPlan::withoutGlobalScopes()->count());
     }
 
     public function test_aip_list_lives_on_the_planning_page(): void

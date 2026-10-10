@@ -10,7 +10,7 @@ class SubMasterAccess
 {
     /** Work areas, with the permission families each one grants. */
     public const WORK_AREAS = [
-        'planning' => 'Planning (SIP, AIP, PPMP, APP)',
+        'planning' => 'Planning (SIP, AIP, SOB, APP)',
         'budget' => 'Budget',
         'procurement' => 'Procurement',
         'suppliers' => 'Suppliers and units',

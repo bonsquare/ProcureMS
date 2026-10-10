@@ -35,26 +35,6 @@
     </form>
 </dialog>
 
-{{-- PPMP draft --}}
-<dialog id="dlg-ppmp" class="{{ $dialog }}">
-    <form method="POST" class="grid gap-3 p-5 sm:grid-cols-2">@csrf @method('PUT')
-        <h3 class="text-lg font-bold sm:col-span-2">Edit PPMP draft</h3>
-        <label class="text-xs font-semibold sm:col-span-2">Project title<input required name="project_title" maxlength="255" class="{{ $field }}"></label>
-        <label class="text-xs font-semibold">Procurement mode<input name="procurement_mode" maxlength="100" class="{{ $field }}"></label>
-        <label class="text-xs font-semibold">Schedule<input name="procurement_schedule" maxlength="255" class="{{ $field }}"></label>
-        <label class="text-xs font-semibold sm:col-span-2">Fund source<select name="fund_source" class="{{ $field }}"><option value="">Select fund source</option>@foreach($fundOptions as $fund)<option value="{{ $fund }}">{{ $fund }}</option>@endforeach</select></label>
-        <div class="grid gap-3 sm:col-span-2 sm:grid-cols-2" data-ppmp-item>
-            <p class="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant sm:col-span-2">Item</p>
-            <label class="text-xs font-semibold sm:col-span-2">Procurement item<input name="procurement_item" maxlength="255" class="{{ $field }}"></label>
-            <label class="text-xs font-semibold sm:col-span-2">Specifications<input name="specifications" maxlength="2000" class="{{ $field }}"></label>
-            <label class="text-xs font-semibold">Quantity<input type="number" name="quantity" min="0.01" step="0.01" class="{{ $field }}"></label>
-            <label class="text-xs font-semibold">Unit<input name="unit" maxlength="50" class="{{ $field }}"></label>
-            <label class="text-xs font-semibold">Estimated unit cost<input type="number" name="estimated_unit_cost" min="0" step="0.01" class="{{ $field }}"></label>
-        </div>
-        {!! $actions !!}
-    </form>
-</dialog>
-
 {{-- APP item --}}
 <dialog id="dlg-app-item" class="{{ $dialog }}">
     <form method="POST" class="grid gap-3 p-5 sm:grid-cols-2">@csrf @method('PUT')
@@ -83,13 +63,6 @@
                 if (! element.name || ['_token', '_method'].includes(element.name)) return;
                 element.value = data[element.name] ?? '';
             });
-            const itemBox = dialog.querySelector('[data-ppmp-item]');
-            if (itemBox) {
-                const single = data.single_item === true;
-                itemBox.hidden = ! single;
-                itemBox.querySelectorAll('input').forEach((input) => { input.disabled = ! single; });
-                ['procurement_item', 'quantity', 'unit', 'estimated_unit_cost'].forEach((name) => { form.elements[name].required = single; });
-            }
             dialog.showModal();
         }));
         document.addEventListener('click', (event) => {

@@ -15,7 +15,7 @@ class SubMasterDeleteGuardTest extends TestCase
 
     private const DELETE_ROUTES = [
         'chart-of-accounts.destroy', 'aip.destroy', 'aip.kras.destroy', 'budget.allocation.destroy', 'planning.app.items.destroy',
-        'planning.ppmp.destroy', 'planning.sip.activities.destroy', 'planning.sip.destroy', 'units.destroy', 'school-settings.employees.destroy',
+        'planning.sob.destroy', 'planning.sob.items.destroy', 'planning.sip.activities.destroy', 'planning.sip.destroy', 'units.destroy', 'school-settings.employees.destroy',
     ];
 
     private function url(string $name): string

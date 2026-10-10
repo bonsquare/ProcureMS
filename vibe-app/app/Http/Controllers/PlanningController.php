@@ -50,7 +50,8 @@ class PlanningController extends Controller
             'sipPlans' => SipPlan::where('school_id', $selectedSchool->id)->get()->keyBy('start_year'),
             'aips' => Aip::with(['sipProject', 'activities'])->where('school_id', $selectedSchool->id)->orderByDesc('fiscal_year')->get(),
             'sobPlans' => SobPlan::with('items')->where('school_id', $selectedSchool->id)->orderBy('fiscal_year')->orderBy('quarter')->get(),
-            'ppmpPlans' => PpmpPlan::with(['items', 'aip', 'transaction'])->where('school_id', $selectedSchool->id)->orderByDesc('fiscal_year')->latest('id')->get(),
+            // Older PPMPs stay in the database; they only keep their AIP from being deleted.
+            'legacyPpmpAipIds' => PpmpPlan::where('school_id', $selectedSchool->id)->pluck('aip_id')->all(),
             'appPlan' => AppPlan::with(['items.ppmpItem.plan.transaction.procurementRequests', 'items.sobItem.plan.transaction.procurementRequests', 'items.requestItems.procurementRequest'])->where('school_id', $selectedSchool->id)->where('fiscal_year', $year)->first(),
             'fundSources' => FundSource::where('organization_id', $selectedSchool->organization_id)->orderBy('name')->get(),
             'fundOptions' => FundSource::where('organization_id', $selectedSchool->organization_id)->where('is_active', true)->orderBy('name')->pluck('name')->merge(collect(Aip::FUNDS)->flatten())->unique()->sort()->values(),
@@ -265,137 +266,6 @@ class PlanningController extends Controller
         });
 
         return back()->with('success', 'SIP linked to the AIP transaction.');
-    }
-
-    public function storePpmp(Request $request, MasterTransactionService $transactions, FiscalYearService $fiscalYears)
-    {
-        $this->authorizeManage($request);
-        $data = $request->validate([
-            'aip_id' => ['required', 'integer', Rule::exists('aips', 'id')],
-            'project_title' => ['required', 'string', 'max:255'],
-            'procurement_mode' => ['nullable', 'string', 'max:100'],
-            'procurement_schedule' => ['nullable', 'string', 'max:255'],
-            'fund_source' => ['nullable', 'string', 'max:255'],
-            'procurement_item' => ['required', 'string', 'max:255'],
-            'specifications' => ['nullable', 'string', 'max:2000'],
-            'quantity' => ['required', 'numeric', 'gt:0'],
-            'unit' => ['required', 'string', 'max:50'],
-            'estimated_unit_cost' => ['required', 'numeric', 'min:0'],
-        ]);
-        $aip = Aip::with('school')->whereIn('school_id', $this->schoolIds())->findOrFail($data['aip_id']);
-        $this->authorizeManage($request);
-        $allowedFunds = FundSource::where('organization_id', $aip->organization_id)
-            ->where('is_active', true)
-            ->pluck('name')
-            ->merge($aip->fundOptions())
-            ->unique();
-        if (! empty($data['fund_source']) && ! $allowedFunds->contains($data['fund_source'])) {
-            throw ValidationException::withMessages(['fund_source' => 'Choose a fund source configured for this organization.']);
-        }
-        $this->requires($aip->status === 'approved', 'Approve the AIP before preparing its PPMP.');
-        $fiscalYears->assertOpen((int) $aip->organization_id, (int) $aip->fiscal_year);
-        $transaction = $transactions->forAip($aip, $request->user());
-        $total = round((float) $data['quantity'] * (float) $data['estimated_unit_cost'], 2);
-
-        DB::transaction(function () use ($data, $aip, $transaction, $request, $total) {
-            $plan = PpmpPlan::create([
-                'school_id' => $aip->school_id,
-                'aip_id' => $aip->id,
-                'master_transaction_id' => $transaction->id,
-                'fiscal_year' => $aip->fiscal_year,
-                'project_title' => $data['project_title'],
-                'procurement_mode' => $data['procurement_mode'] ?? null,
-                'procurement_schedule' => $data['procurement_schedule'] ?? null,
-                'fund_source' => $data['fund_source'] ?? null,
-                'created_by' => $request->user()->id,
-            ]);
-            $plan->items()->create([
-                'organization_id' => $aip->organization_id,
-                'procurement_item' => $data['procurement_item'],
-                'specifications' => $data['specifications'] ?? null,
-                'quantity' => $data['quantity'],
-                'unit' => $data['unit'],
-                'estimated_unit_cost' => $data['estimated_unit_cost'],
-                'estimated_total_cost' => $total,
-            ]);
-            $transaction->recordEvent('ppmp', 'draft_created', null, 'draft', $data['project_title'], ['ppmp_plan_id' => $plan->id, 'estimated_total' => $total]);
-        });
-
-        return back()->with('success', 'PPMP draft saved and linked to its AIP transaction.');
-    }
-
-    /** A draft PPMP can be changed; once approved it feeds the APP and stays as approved. */
-    public function updatePpmp(Request $request, PpmpPlan $ppmpPlan, FiscalYearService $fiscalYears)
-    {
-        $this->authorizeManage($request);
-        abort_unless($this->schoolIds()->contains($ppmpPlan->school_id), 403);
-        $this->requires($ppmpPlan->status !== 'approved', 'Approved plans are locked. An approved PPMP already feeds the APP.');
-        $fiscalYears->assertOpen((int) $ppmpPlan->organization_id, (int) $ppmpPlan->fiscal_year);
-
-        $item = $ppmpPlan->items()->count() === 1 ? $ppmpPlan->items()->first() : null;
-        $data = $request->validate([
-            'project_title' => ['required', 'string', 'max:255'],
-            'procurement_mode' => ['nullable', 'string', 'max:100'],
-            'procurement_schedule' => ['nullable', 'string', 'max:255'],
-            'fund_source' => ['nullable', 'string', 'max:255'],
-            'procurement_item' => [$item ? 'required' : 'nullable', 'string', 'max:255'],
-            'specifications' => ['nullable', 'string', 'max:2000'],
-            'quantity' => [$item ? 'required' : 'nullable', 'numeric', 'gt:0'],
-            'unit' => [$item ? 'required' : 'nullable', 'string', 'max:50'],
-            'estimated_unit_cost' => [$item ? 'required' : 'nullable', 'numeric', 'min:0'],
-        ]);
-        $allowedFunds = FundSource::where('organization_id', $ppmpPlan->organization_id)->where('is_active', true)->pluck('name')
-            ->merge(collect(Aip::FUNDS)->flatten())->merge($ppmpPlan->aip?->fundOptions() ?? [])->unique();
-        $this->requires(empty($data['fund_source']) || $allowedFunds->contains($data['fund_source']), 'Choose a fund source configured for this organization.');
-
-        DB::transaction(function () use ($ppmpPlan, $item, $data) {
-            $ppmpPlan->update(collect($data)->only(['project_title', 'procurement_mode', 'procurement_schedule', 'fund_source'])->all());
-            if ($item) {
-                $item->update([
-                    'procurement_item' => $data['procurement_item'],
-                    'specifications' => $data['specifications'] ?? null,
-                    'quantity' => $data['quantity'],
-                    'unit' => $data['unit'],
-                    'estimated_unit_cost' => $data['estimated_unit_cost'],
-                    'estimated_total_cost' => round((float) $data['quantity'] * (float) $data['estimated_unit_cost'], 2),
-                ]);
-            }
-            $ppmpPlan->transaction?->recordEvent('ppmp', 'draft_edited', 'draft', 'draft', $data['project_title'], ['ppmp_plan_id' => $ppmpPlan->id]);
-        });
-
-        return back()->with('success', 'PPMP draft updated.');
-    }
-
-    public function destroyPpmp(Request $request, PpmpPlan $ppmpPlan)
-    {
-        $this->authorizeManage($request);
-        abort_unless($this->schoolIds()->contains($ppmpPlan->school_id), 403);
-        $this->requires($ppmpPlan->status !== 'approved', 'Approved plans are locked. An approved PPMP already feeds the APP.');
-        app(FiscalYearService::class)->assertOpen((int) $ppmpPlan->organization_id, (int) $ppmpPlan->fiscal_year);
-        $this->requires(! AppItem::withoutGlobalScopes()->whereIn('ppmp_item_id', $ppmpPlan->items()->pluck('id'))->exists(), 'The APP already includes items of this PPMP.');
-
-        DB::transaction(function () use ($ppmpPlan, $request) {
-            AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $ppmpPlan->school_id, 'action' => 'ppmp_deleted', 'auditable_type' => PpmpPlan::class, 'auditable_id' => $ppmpPlan->id, 'metadata' => ['project_title' => $ppmpPlan->project_title, 'items' => $ppmpPlan->items()->count()]]);
-            $ppmpPlan->transaction?->recordEvent('ppmp', 'draft_deleted', 'draft', null, $ppmpPlan->project_title, ['ppmp_plan_id' => $ppmpPlan->id]);
-            $ppmpPlan->items()->delete();
-            $ppmpPlan->delete();
-        });
-
-        return back()->with('success', 'PPMP draft deleted.');
-    }
-
-    public function approvePpmp(Request $request, PpmpPlan $ppmpPlan)
-    {
-        $this->authorizeManage($request);
-        abort_unless($this->schoolIds()->contains($ppmpPlan->school_id), 403);
-        $this->requires(! ($ppmpPlan->items()->doesntExist()), 'Add at least one PPMP item before approval.');
-        app(FiscalYearService::class)->assertOpen((int) $ppmpPlan->organization_id, (int) $ppmpPlan->fiscal_year);
-        $oldStatus = $ppmpPlan->status;
-        $ppmpPlan->update(['status' => 'approved']);
-        $ppmpPlan->transaction?->update(['status' => 'procurement_planning']);
-        $ppmpPlan->transaction?->recordEvent('ppmp', 'approved', $oldStatus, 'approved', $ppmpPlan->project_title);
-
-        return back()->with('success', 'PPMP approved and available for APP generation.');
     }
 
     public function generateApp(Request $request)

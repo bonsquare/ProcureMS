@@ -324,7 +324,7 @@ class AipController extends Controller
     }
 
     /**
-     * Approve the AIP. An approved AIP is used for reports and to start a PPMP; it is not connected to the Budget,
+     * Approve the AIP. An approved AIP is used for reports and to start an SOB; it is not connected to the Budget,
      * so approving creates no allotment and asks for no source of fund or account code.
      */
     public function approve(Request $request, Aip $aip)
