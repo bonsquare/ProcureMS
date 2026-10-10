@@ -1,4 +1,9 @@
 {{-- A show/hide eye on every password field of the page, so a typed password can be checked before it is saved. --}}
+<style>
+    /* The app draws its own eye; hide the browser's built-in one (Edge/Chrome) so the two do not overlap. */
+    input[type=password]::-ms-reveal, input[type=password]::-ms-clear { display: none; }
+    input[type=password]::-webkit-credentials-auto-fill-button { visibility: hidden; position: absolute; right: 0; }
+</style>
 <script data-password-toggle-script>
     (() => {
         const eye = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
@@ -6,6 +11,8 @@
 
         const enhance = (input) => {
             if (input.dataset.passwordToggle) return;
+            // A page that already draws its own eye next to the field keeps it; adding another would overlap.
+            if (input.parentNode.querySelector('button[aria-label$="password"]')) return;
             input.dataset.passwordToggle = '1';
             const wrapper = document.createElement('span');
             wrapper.style.cssText = 'position:relative;display:block';
