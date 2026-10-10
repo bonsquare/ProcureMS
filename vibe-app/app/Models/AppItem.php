@@ -9,7 +9,7 @@ class AppItem extends Model
 {
     use BelongsToOrganization;
 
-    protected $fillable = ['organization_id', 'app_plan_id', 'ppmp_item_id', 'procurement_item', 'specifications', 'quantity', 'unit', 'estimated_unit_cost', 'estimated_total_cost', 'procurement_mode', 'procurement_schedule', 'fund_source', 'status'];
+    protected $fillable = ['organization_id', 'app_plan_id', 'ppmp_item_id', 'sob_item_id', 'procurement_item', 'specifications', 'quantity', 'unit', 'estimated_unit_cost', 'estimated_total_cost', 'procurement_mode', 'procurement_schedule', 'fund_source', 'status'];
 
     protected function casts(): array
     {
@@ -19,6 +19,11 @@ class AppItem extends Model
     public function plan()
     {
         return $this->belongsTo(AppPlan::class, 'app_plan_id');
+    }
+
+    public function sobItem()
+    {
+        return $this->belongsTo(SobItem::class);
     }
 
     public function ppmpItem()
