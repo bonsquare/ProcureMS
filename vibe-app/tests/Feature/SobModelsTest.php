@@ -92,4 +92,13 @@ class SobModelsTest extends TestCase
         $this->assertSame(0, SobPlan::count());
         $this->assertSame(1, SobPlan::withoutGlobalScopes()->count());
     }
+
+    public function test_an_activity_used_by_an_sob_line_cannot_be_deleted_at_the_database_level(): void
+    {
+        $fx = SobFixture::make();
+        $this->item($fx, $this->plan($fx), 100);
+
+        $this->expectException(QueryException::class);
+        $fx['activities'][0]->delete();
+    }
 }

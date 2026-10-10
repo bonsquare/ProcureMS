@@ -34,7 +34,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('organization_id')->constrained()->cascadeOnDelete();
             $table->foreignId('sob_plan_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('aip_activity_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('aip_activity_id')->constrained()->restrictOnDelete();
             $table->foreignId('chart_of_account_id')->constrained()->restrictOnDelete();
             $table->string('particulars');
             $table->decimal('frequency', 12, 2)->default(1);

@@ -12,6 +12,7 @@ use App\Models\ChartOfAccount;
 use App\Models\FundSource;
 use App\Models\PpmpPlan;
 use App\Models\School;
+use App\Models\SobItem;
 use App\Models\SobPlan;
 use App\Services\FiscalYearService;
 use App\Services\MasterTransactionService;
@@ -111,6 +112,9 @@ class AipController extends Controller
         ]);
         $yearChanged = isset($data['fiscal_year']) && (int) $data['fiscal_year'] !== (int) $aip->fiscal_year;
         $this->fiscalYears->assertOpen((int) $aip->organization_id, (int) ($data['fiscal_year'] ?? $aip->fiscal_year));
+        if ($yearChanged && SobPlan::withoutGlobalScopes()->where('aip_id', $aip->id)->exists()) {
+            throw ValidationException::withMessages(['fiscal_year' => 'This AIP already has an SOB, so its fiscal year can no longer be changed.']);
+        }
         $aip->update($data);
         if ($yearChanged) {
             // Allotments created from this AIP follow its fiscal year.
@@ -185,6 +189,8 @@ class AipController extends Controller
         abort_unless($kra->aip_id === $aip->id, 404);
         $this->fiscalYears->assertOpen((int) $aip->organization_id, (int) $aip->fiscal_year);
         [$kraData, $activities] = $this->validatedKraForm($request, $aip);
+        $submitted = collect($activities)->pluck('id')->filter()->map(fn ($id) => (int) $id)->all();
+        $this->refuseWhenAnSobUses($kra->activities()->whereNotIn('id', $submitted)->pluck('id')->all());
 
         DB::transaction(function () use ($aip, $kra, $kraData, $activities) {
             $kra->update($kraData);
@@ -239,10 +245,19 @@ class AipController extends Controller
         $this->authorizeAip($aip);
         abort_unless($kra->aip_id === $aip->id, 404);
         $this->fiscalYears->assertOpen((int) $aip->organization_id, (int) $aip->fiscal_year);
+        $this->refuseWhenAnSobUses($kra->activities()->pluck('id')->all());
         $kra->delete();
         $this->markRevised($aip);
 
         return back()->with('success', 'KRA and its activities removed.');
+    }
+
+    /** An approved SOB (and the APP and Purchase Requests built on it) must not lose lines because an AIP activity was removed. */
+    private function refuseWhenAnSobUses(array $activityIds): void
+    {
+        if ($activityIds !== [] && SobItem::withoutGlobalScopes()->whereIn('aip_activity_id', $activityIds)->exists()) {
+            throw ValidationException::withMessages(['aip' => 'An SOB already uses this activity. Remove its items from the SOB first.']);
+        }
     }
 
     /** Once approved, any change needs a new approval before allotments follow it. */
