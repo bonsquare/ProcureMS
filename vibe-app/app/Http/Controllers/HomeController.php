@@ -1105,7 +1105,7 @@ class HomeController extends Controller
             'mode_of_procurement' => ['nullable', 'string', 'max:100'],
             'delivery_term' => ['nullable', 'string', 'max:255'],
             'payment_term' => ['nullable', 'string', 'max:255'],
-            'delivery_days' => ['nullable', 'integer', 'min:1', 'max:365'],
+            'delivery_days' => ['nullable', 'integer', 'min:1', 'max:365', Rule::requiredIf(fn () => $request->input('document_type') === 'notice_to_proceed' && in_array($request->input('template_variant'), ['mooe', 'thirty_days'], true))],
             'deadline_date' => ['nullable', 'date'],
             'source_of_fund' => ['nullable', 'string', 'max:255'],
             'place_of_delivery' => ['nullable', 'string', 'max:255'],
@@ -1152,6 +1152,8 @@ class HomeController extends Controller
             'ics_items.*.quantity' => ['nullable', 'numeric', 'min:0'],
             'ics_items.*.inventory_item_number' => ['nullable', 'string', 'max:255'],
             'ics_items.*.useful_life' => ['nullable', 'string', 'max:255'],
+        ], [
+            'delivery_days.required' => 'Type the number of calendar days for delivery on the Notice to Proceed.',
         ]);
 
         $type = $types[$data['document_type']];

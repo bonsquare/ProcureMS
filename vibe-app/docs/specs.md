@@ -177,7 +177,7 @@ Source of truth: `App\Services\ProcurementWorkspaceService`. Every list, card, r
 PR (approved) -> **RFQ -> Abstract -> NOA -> NTP -> PO** -> receiving: **IAR -> IARS -> RIS** -> optional **ICS** and **PAR** (only when needed; they never hold up completion).
 
 - Eight required steps: RFQ, Abstract, NOA, NTP, PO, IAR, IARS, RIS. Progress reads "x of 8 steps".
-- The NTP comes before the PO because the PO says "within N days of receipt of the NTP". The PO picks up the delivery terms (days, delivery term, payment term, mode, fund) from the NTP when it is not given its own.
+- The NTP comes before the PO because the PO says "within N days of receipt of the NTP". The PO picks up the delivery terms (days, delivery term, payment term, mode, fund) from the NTP when it is not given its own. The number of calendar days is typed by hand on the NTP (no default; required for the MOOE wording, not used by the scheduled-delivery wording); the PO form shows it read only. The NTP never reads from a PO.
 - A document can be prepared only after the PR is approved and the document before it exists (`ProcurementWorkspaceService::PREREQUISITES`, `blockedReason()`). The Procurement Documents page shows a locked card with the reason; the server enforces it on save and in the live preview.
 - IAR, IARS, RIS, ICS, and PAR live under **Receiving** (`?stage=receiving`, tab "Receiving documents"); the Receiving tab links straight there. The first five documents live on the normal Procurement Documents page.
 

@@ -83,7 +83,7 @@
             <div id="ris-summary-content" class="space-y-3"></div>
         </section>
         <section data-po-only class="hidden rounded-lg border border-secondary/25 bg-secondary/5 p-4 md:col-span-2"><p class="mb-4 border-b border-secondary/20 pb-3 text-sm font-semibold text-secondary">Supplier details</p><div class="grid grid-cols-1 gap-4 md:grid-cols-2"><label class="block text-xs font-semibold text-on-surface-variant md:col-span-2">Supplier<input id="po-supplier-name" type="text" readonly class="mt-2 w-full rounded border border-outline-variant/50 bg-white px-3 py-2.5 text-sm font-normal text-on-surface-variant outline-none"></label><label class="block text-xs font-semibold text-on-surface-variant">Supplier Address<input data-meta name="supplier_address" placeholder="Supplier business address" class="mt-2 w-full rounded border border-outline-variant/50 bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label><label class="block text-xs font-semibold text-on-surface-variant">TIN<input data-meta name="tin" placeholder="Supplier TIN" class="mt-2 w-full rounded border border-outline-variant/50 bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label></div></section>
-        <section data-po-only class="hidden rounded-lg border border-outline-variant/40 bg-white p-4 md:col-span-2"><p class="mb-4 border-b border-outline-variant/30 pb-3 text-sm font-semibold text-primary">Delivery and payment details</p><div class="grid grid-cols-1 gap-4 md:grid-cols-2"><label class="block text-xs font-semibold text-on-surface-variant">Mode of Procurement<input data-meta name="mode_of_procurement" value="SVP" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label><label class="block text-xs font-semibold text-on-surface-variant">Place of Delivery<input data-meta name="place_of_delivery" placeholder="Delivery location" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label><label class="block text-xs font-semibold text-on-surface-variant md:col-span-2">Date of Delivery<input data-meta name="delivery_schedule" placeholder="e.g. Within 30 calendar days from receipt of the Notice to Proceed" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label><label class="block text-xs font-semibold text-on-surface-variant">Delivery Term<input data-meta name="delivery_term" value="Pick-Up" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label><label class="block text-xs font-semibold text-on-surface-variant">Payment Term<input data-meta name="payment_term" value="30 days" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label></div></section>
+        <section data-po-only class="hidden rounded-lg border border-outline-variant/40 bg-white p-4 md:col-span-2"><p class="mb-4 border-b border-outline-variant/30 pb-3 text-sm font-semibold text-primary">Delivery and payment details</p><div class="grid grid-cols-1 gap-4 md:grid-cols-2"><p data-po-days class="text-xs text-on-surface-variant md:col-span-2"></p><label class="block text-xs font-semibold text-on-surface-variant">Mode of Procurement<input data-meta name="mode_of_procurement" value="SVP" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label><label class="block text-xs font-semibold text-on-surface-variant">Place of Delivery<input data-meta name="place_of_delivery" placeholder="Delivery location" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label><label class="block text-xs font-semibold text-on-surface-variant md:col-span-2">Date of Delivery<input data-meta name="delivery_schedule" placeholder="e.g. Within 30 calendar days from receipt of the Notice to Proceed" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label><label class="block text-xs font-semibold text-on-surface-variant">Delivery Term<input data-meta name="delivery_term" value="Pick-Up" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label><label class="block text-xs font-semibold text-on-surface-variant">Payment Term<input data-meta name="payment_term" value="30 days" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label></div></section>
         <section id="rfq-details-panel" data-rfq-only class="hidden rounded-lg border border-primary/20 bg-surface-low/50 p-5 md:col-span-2"><div class="mb-5 flex items-start gap-3 border-b border-outline-variant/30 pb-4"><span class="material-symbols-outlined rounded bg-primary/10 p-2 text-primary">request_quote</span><div><p class="text-sm font-semibold text-primary">RFQ details</p><p class="mt-1 text-xs text-on-surface-variant">Supplier information is optional. Complete it only when preparing an RFQ for a specific supplier.</p></div></div><div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <label data-rfq-only class="hidden text-xs font-semibold text-on-surface-variant">Company / Business Name <span class="font-normal">(optional)</span><input data-meta name="business_name" placeholder="Leave blank for general canvassing" class="mt-2 w-full rounded border border-outline-variant/50 bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
         <label data-rfq-only class="hidden text-xs font-semibold text-on-surface-variant">Address <span class="font-normal">(optional)</span><input data-meta name="business_address" placeholder="Leave blank for general canvassing" class="mt-2 w-full rounded border border-outline-variant/50 bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
@@ -105,6 +105,7 @@
         <label data-non-rfq data-hide-for-iar data-hide-for-ntp data-hide-for-po class="block text-xs font-semibold text-on-surface-variant">Delivery Days<input data-meta type="number" min="1" max="365" name="delivery_days" value="30" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
         <label data-non-rfq data-hide-for-iar data-hide-for-ntp data-hide-for-po class="block text-xs font-semibold text-on-surface-variant">Source of Fund<input data-meta name="source_of_fund" value="MOOE" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
         <label data-ntp-only class="hidden block text-xs font-semibold text-on-surface-variant md:col-span-2">NTP Template<select data-meta name="template_variant" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"><option value="mooe">MOOE - complete delivery within 30 calendar days</option><option value="sbfp">SBFP - follow scheduled delivery periods</option></select><span class="mt-1 block font-normal text-on-surface-variant">Select the official Notice to Proceed wording to print.</span></label>
+        <label data-ntp-only data-ntp-days class="hidden block text-xs font-semibold text-on-surface-variant">Number of calendar days to complete delivery<input data-meta type="number" min="1" max="365" name="delivery_days" placeholder="Type the number of days" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"><span class="mt-1 block font-normal text-on-surface-variant">Typed in by hand. Printed on the Notice to Proceed and carried to the Purchase Order.</span></label>
         <div data-ntp-status class="hidden rounded border border-primary/20 bg-primary/5 px-3 py-3 text-xs text-on-surface-variant"><span class="font-semibold text-primary">PO delivery reference:</span> <span id="ntp-po-delivery-status"></span></div>
         <label data-extra-rows-only data-hide-for-po class="hidden block text-xs font-semibold text-on-surface-variant">Manual blank item rows<input data-meta type="number" min="0" max="6" name="extra_blank_rows" value="0" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"><span class="mt-1 block font-normal text-on-surface-variant">Add up to six empty bordered rows to the printed IAR or RIS.</span></label>
         <label data-iar-only data-iar-input class="hidden block text-xs font-semibold text-on-surface-variant">Inspection Officer / Committee Name<input data-meta name="inspection_officer_name" list="school-staff-list" placeholder="Select or enter the inspection officer name" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
@@ -153,6 +154,20 @@
     const bidderPriceTable = document.getElementById('bidder-price-table');
     let activeBidders = [];
     let pendingBidderDraft = null;
+    // The days box shows only for the Notice to Proceed wording that counts days (MOOE); the scheduled-delivery wording has none.
+    const syncNtpDays = () => {
+        const wrapper = document.querySelector('[data-ntp-days]');
+        const form = document.getElementById('document-form');
+        if (!wrapper || !form) return;
+        const input = wrapper.querySelector('input');
+        const counts = form.dataset.ntpActive === 'true' && form.elements.template_variant?.value === 'mooe';
+        wrapper.classList.toggle('hidden', !counts);
+        input.disabled = !counts;
+        input.required = counts;
+        // The general Delivery Days box is not used on the Notice to Proceed; only this one is posted.
+        const general = form.querySelector('input[name="delivery_days"]:not([data-ntp-days] input)');
+        if (general && form.dataset.ntpActive === 'true') general.disabled = true;
+    };
     const bidderDraftKey = 'abstractBidderDraft.{{ $procurementRequest->id }}';
     let iarsAssignments = [];
     let iarReceivedItems = {};
@@ -431,18 +446,17 @@
         if (isNtp && metadata.template_variant === 'thirty_days') metadata.template_variant = 'mooe';
         if (isNtp && metadata.template_variant === 'scheduled_delivery') metadata.template_variant = 'sbfp';
         if (isNtp) {
-            const purchaseOrderMetadata = savedMetadata.purchase_order;
-            const poDeliveryStatus = document.getElementById('ntp-po-delivery-status');
-            if (purchaseOrderMetadata) {
-                ['mode_of_procurement', 'delivery_term', 'payment_term', 'delivery_days', 'source_of_fund'].forEach((field) => {
-                    if (purchaseOrderMetadata[field] !== undefined && purchaseOrderMetadata[field] !== '') metadata[field] = purchaseOrderMetadata[field];
-                });
-                poDeliveryStatus.textContent = 'Delivery term, payment term, delivery days, mode of procurement, and source of fund are copied from the saved Purchase Order.';
-            } else {
-                poDeliveryStatus.textContent = 'Save a Purchase Order first to use its delivery information on this NTP.';
-            }
+            // The Notice to Proceed comes first: its days are typed by hand (never a default) and the Purchase Order reads them.
+            if (!savedMetadata.notice_to_proceed || savedMetadata.notice_to_proceed.delivery_days === undefined) metadata.delivery_days = '';
+            document.getElementById('ntp-po-delivery-status').textContent = 'The Purchase Order will use these delivery days.';
+        }
+        const poDays = document.querySelector('[data-po-days]');
+        if (isPo && poDays) {
+            const ntpDays = savedMetadata.notice_to_proceed?.delivery_days;
+            poDays.textContent = ntpDays ? `Delivery days from the Notice to Proceed: ${ntpDays} calendar days.` : 'The Notice to Proceed gives the delivery days.';
         }
         document.querySelectorAll('[data-meta]').forEach((field) => { field.value = metadata[field.name] ?? ''; });
+        syncNtpDays();
         const documentCode = documentCodes[button.dataset.documentType];
         const savedDocumentNumber = savedDocumentNumbers[button.dataset.documentType] || '';
         const validDocumentNumber = new RegExp(`^${documentCode}-\\d{4}-\\d{3,}$`).test(savedDocumentNumber);
@@ -494,6 +508,7 @@
     document.getElementById('add-supplier-link')?.addEventListener('click', () => {
         try { sessionStorage.setItem(bidderDraftKey, JSON.stringify(readActiveBidders())); } catch (error) { /* a private window may refuse storage; the draft is a convenience */ }
     });
+    document.getElementById('document-form').addEventListener('change', (event) => { if (event.target.name === 'template_variant') syncNtpDays(); });
     document.getElementById('add-bidder').addEventListener('click', () => { activeBidders = readActiveBidders(); activeBidders.push({name: '', prices: {}}); renderBidderComparison(false); });
     document.getElementById('add-iars-staff').addEventListener('click', () => { iarsAssignments = readIarsAssignments(); iarsAssignments.push({staff_id:'',items:{}}); renderIarsAssignments(); });
     document.getElementById('fullscreen-iars').addEventListener('click', () => document.getElementById('iars-assignments').requestFullscreen?.());
