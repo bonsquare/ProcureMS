@@ -60,7 +60,7 @@
         $nextStep = collect($steps)->first(fn ($step) => $step[6] !== 'done');
         $guidance = [
             'sip' => ['Start with the SIP', "Enter the school's programs and their activities for the three-year plan."],
-            'aip' => $aipsYear->isNotEmpty() ? ['Approve the AIP for FY '.$year, 'Approving it creates the budget allotments the PPMP and the Purchase Requests draw from.'] : ['Create the AIP for FY '.$year, 'Turn the SIP programs into the annual plan with a budget per quarter and source of fund.'],
+            'aip' => $aipsYear->isNotEmpty() ? ['Approve the AIP for FY '.$year, 'Approving it lets you start the PPMP. The AIP is for reports and is not connected to the Budget.'] : ['Create the AIP for FY '.$year, 'Turn the SIP programs into the annual plan with a budget per quarter and source of fund.'],
             'ppmp' => $ppmpYear->isNotEmpty() ? ['Approve the PPMP for FY '.$year, 'Once approved, its items feed the Annual Procurement Plan.'] : ['Prepare the PPMP for FY '.$year, 'List the items to buy for each AIP activity, with quantity and estimated cost.'],
             'app' => $appPlan ? ['Approve the APP for FY '.$year, 'The approved APP is the source of every Purchase Request.'] : ['Generate the APP for FY '.$year, 'Collects the approved PPMP items into the Annual Procurement Plan.'],
         ];
@@ -271,7 +271,7 @@
 
 <div data-panel="aip" class="hidden">
 <section id="aip" class="mb-6 rounded border border-outline-variant/30 bg-white">
-    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 px-5 py-4"><div><h2 class="font-semibold">Annual Implementation Plan</h2><p class="mt-1 text-xs text-on-surface-variant">Yearly activities and financial targets per quarter and fund. An approved AIP creates the budget allotments. <a href="{{ route('allotment-registry') }}" class="font-semibold text-primary hover:underline">Allotment Registry →</a></p></div>
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 px-5 py-4"><div><h2 class="font-semibold">Annual Implementation Plan</h2><p class="mt-1 text-xs text-on-surface-variant">Yearly activities and financial targets per quarter and fund. An approved AIP is used for reports and to start a PPMP.</p></div>
         @if(auth()->user()->canManageBudget())
         <button type="button" data-toggle-form="aip" class="rounded bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-primary-container">+ New AIP</button>
         <form data-form="aip" data-display="flex" method="POST" action="{{ route('aip.store') }}" class="hidden w-full flex-wrap items-center justify-end gap-2 border-t border-outline-variant/20 pt-3">@csrf

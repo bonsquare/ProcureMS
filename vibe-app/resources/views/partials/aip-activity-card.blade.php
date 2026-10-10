@@ -35,7 +35,7 @@
             <input data-fund-other value="{{ !$knownFund ? $fund : '' }}" placeholder="Specify source of fund" class="{{ $field }} {{ !$knownFund && $fund ? '' : 'hidden' }}">
             <input type="hidden" data-fund-value name="{{ $name('source_of_fund') }}" value="{{ $fund }}">
         </div>
-        <label class="{{ $label }}">Account Code (needed to create the allotment)
+        <label class="{{ $label }}">Account Code (optional)
             <select name="{{ $name('chart_of_account_id') }}" class="{{ $field }}">
                 <option value="">Select account code</option>
                 @foreach($accounts->groupBy('category') as $category => $group)

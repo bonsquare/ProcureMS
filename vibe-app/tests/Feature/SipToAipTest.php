@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Aip;
 use App\Models\AipActivity;
 use App\Models\AipKra;
+use App\Models\BudgetAllocation;
 use App\Models\Organization;
 use App\Models\School;
 use App\Models\SipActivity;
@@ -130,7 +131,7 @@ class SipToAipTest extends TestCase
         $this->assertSame(0, Aip::withoutGlobalScopes()->count());
     }
 
-    public function test_the_generated_aip_opens_and_cannot_be_approved_until_accounts_are_chosen(): void
+    public function test_the_generated_aip_opens_and_can_be_approved_without_accounts_and_creates_no_allotments(): void
     {
         [$school, $master] = $this->lubas();
         $this->actingAs($master);
@@ -138,8 +139,9 @@ class SipToAipTest extends TestCase
         $aip = Aip::withoutGlobalScopes()->first();
 
         $this->get(route('aip.show', $aip))->assertOk()->assertSee('Papel mo Kinabukasan Ko!');
-        $this->post(route('aip.approve', $aip))->assertSessionHasErrors('aip');
-        $this->assertSame('draft', $aip->fresh()->status);
+        $this->post(route('aip.approve', $aip))->assertSessionHasNoErrors();
+        $this->assertSame('approved', $aip->fresh()->status);
+        $this->assertSame(0, BudgetAllocation::withoutGlobalScopes()->count());
     }
 
     public function test_the_planning_page_shows_the_three_years_and_where_each_aip_came_from(): void

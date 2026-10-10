@@ -12,19 +12,16 @@ use App\Models\ChartOfAccount;
 use App\Models\FundSource;
 use App\Models\PpmpPlan;
 use App\Models\School;
-use App\Services\BudgetService;
-use App\Services\DocumentNumberService;
 use App\Services\FiscalYearService;
 use App\Services\MasterTransactionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class AipController extends Controller
 {
-    public function __construct(private BudgetService $budget, private FiscalYearService $fiscalYears, private MasterTransactionService $transactions) {}
+    public function __construct(private FiscalYearService $fiscalYears, private MasterTransactionService $transactions) {}
 
     private function schoolIds()
     {
@@ -209,7 +206,7 @@ class AipController extends Controller
         return redirect()->route('aip.show', $aip)->with('success', 'KRA and its activities updated.');
     }
 
-    /** Deletes a draft AIP that nothing was built on. An approved AIP already created budget allotments, so it stays. */
+    /** Deletes a draft AIP that nothing was built on. An approved AIP stays. */
     public function destroy(Aip $aip)
     {
         $this->authorizeManage();
@@ -217,7 +214,7 @@ class AipController extends Controller
         $this->fiscalYears->assertOpen((int) $aip->organization_id, (int) $aip->fiscal_year);
 
         if ($aip->status !== 'draft') {
-            throw ValidationException::withMessages(['aip' => 'Only a draft AIP can be deleted. This one was already approved, so budget allotments follow it.']);
+            throw ValidationException::withMessages(['aip' => 'Only a draft AIP can be deleted. This one was already approved.']);
         }
         if (PpmpPlan::withoutGlobalScopes()->where('aip_id', $aip->id)->exists() || BudgetAllocation::withoutGlobalScopes()->where('aip_id', $aip->id)->exists()) {
             throw ValidationException::withMessages(['aip' => 'This AIP has a PPMP or budget built on it. Remove those first.']);
@@ -326,67 +323,28 @@ class AipController extends Controller
     }
 
     /**
-     * Turn the AIP's financial targets into budget allotments: one line per source of fund,
-     * account code and program, with the quarterly amounts added up.
+     * Approve the AIP. An approved AIP is used for reports and to start a PPMP; it is not connected to the Budget,
+     * so approving creates no allotment and asks for no source of fund or account code.
      */
     public function approve(Request $request, Aip $aip)
     {
         $this->authorizeManage();
         $this->authorizeAip($aip);
         $this->fiscalYears->assertOpen((int) $aip->organization_id, (int) $aip->fiscal_year);
-        $aip->load(['school', 'activities.account', 'activities.kra']);
 
-        $funded = $aip->activities->filter(fn ($a) => $a->total > 0);
-        $incomplete = $funded->filter(fn ($a) => ! $a->source_of_fund || ! $a->chart_of_account_id);
-        if ($funded->isEmpty()) {
-            throw ValidationException::withMessages(['aip' => 'Add at least one activity with a financial target before approving.']);
+        if ($aip->status === 'approved') {
+            return back()->with('success', 'This AIP is already approved.');
         }
-        if ($incomplete->isNotEmpty()) {
-            throw ValidationException::withMessages(['aip' => sprintf('%s still need%s a source of fund and an account code (e.g. "%s").', $incomplete->count() === 1 ? '1 funded activity' : $incomplete->count().' funded activities', $incomplete->count() === 1 ? 's' : '', Str::limit($incomplete->first()->activity, 50))]);
+        if (! $aip->activities()->exists()) {
+            throw ValidationException::withMessages(['aip' => 'Add at least one activity before approving.']);
         }
 
         $transaction = $this->transactions->forAip($aip, $request->user());
-
-        $groups = $funded->groupBy(fn ($a) => $a->source_of_fund.'|'.$a->chart_of_account_id.'|'.$a->kra?->program);
-        $created = $updated = 0;
-
-        foreach ($groups as $group) {
-            $first = $group->first();
-            $totals = ['q1_amount' => $group->sum('q1_amount'), 'q2_amount' => $group->sum('q2_amount'), 'q3_amount' => $group->sum('q3_amount'), 'q4_amount' => $group->sum('q4_amount')];
-            $amount = array_sum($totals);
-
-            $line = BudgetAllocation::where('aip_id', $aip->id)->where('source_of_fund', $first->source_of_fund)->where('chart_of_account_id', $first->chart_of_account_id)->where(fn ($q) => $first->kra?->program ? $q->where('program', $first->kra->program) : $q->whereNull('program'))->first();
-            if ($line) {
-                $row = $this->budget->matrix(collect([$line]))->first();
-                if ($amount + 0.001 < $row['obligated']) {
-                    throw ValidationException::withMessages(['aip' => sprintf('"%s" (%s) is already obligated ₱%s, which is more than the AIP now allots (₱%s).', $first->kra?->program, $first->source_of_fund, number_format($row['obligated'], 2), number_format($amount, 2))]);
-                }
-                $line->update($totals + ['amount' => $amount, 'master_transaction_id' => $transaction->id]);
-                $updated++;
-            } else {
-                BudgetAllocation::create($totals + [
-                    'aip_id' => $aip->id, 'school_id' => $aip->school_id, 'master_transaction_id' => $transaction->id, 'office' => $aip->school->name, 'fiscal_year' => $aip->fiscal_year,
-                    'start_date' => $aip->fiscal_year.'-01-01', 'end_date' => $aip->fiscal_year.'-12-31',
-                    'source_of_fund' => $first->source_of_fund, 'program' => $first->kra?->program, 'chart_of_account_id' => $first->chart_of_account_id,
-                    'uacs_code' => $first->account->code, 'particulars' => $first->account->title, 'amount' => $amount, 'created_by' => $request->user()->id,
-                    'budget_ref_no' => $this->nextReference($aip->fiscal_year, (int) $aip->organization_id), 'remarks' => 'From AIP FY '.$aip->fiscal_year,
-                ]);
-                $created++;
-            }
-        }
-
         $previousStatus = $aip->status;
         $aip->update(['status' => 'approved', 'approved_at' => now()]);
-        $transaction->update(['status' => 'budget']);
-        $transaction->recordEvent('aip', 'approved', $previousStatus, 'approved', null, ['created_allocations' => $created, 'updated_allocations' => $updated]);
-        AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $aip->school_id, 'action' => 'aip_approved', 'auditable_type' => Aip::class, 'auditable_id' => $aip->id, 'metadata' => ['created' => $created, 'updated' => $updated]]);
+        $transaction->recordEvent('aip', 'approved', $previousStatus, 'approved');
+        AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $aip->school_id, 'action' => 'aip_approved', 'auditable_type' => Aip::class, 'auditable_id' => $aip->id]);
 
-        return back()->with('success', "AIP approved. Allotments created: {$created}, updated: {$updated}. See the Allotment Registry.");
-    }
-
-    private function nextReference(int $year, int $organizationId): string
-    {
-        return app(DocumentNumberService::class)
-            ->next($organizationId, 'budget_allocation', 'BA', $year);
+        return back()->with('success', 'AIP approved.');
     }
 }
