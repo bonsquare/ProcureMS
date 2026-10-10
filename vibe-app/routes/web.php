@@ -83,6 +83,7 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::get('/planning/sip/print', [PlanningController::class, 'printSip'])->name('planning.sip.print');
     Route::post('/planning/sob', [SobController::class, 'store'])->middleware('permission:planning.manage')->name('planning.sob.store');
     Route::get('/planning/sob/{sobPlan}', [SobController::class, 'show'])->name('planning.sob.show')->whereNumber('sobPlan');
+    Route::get('/planning/sob/{sobPlan}/print', [SobController::class, 'print'])->name('planning.sob.print')->whereNumber('sobPlan');
     Route::put('/planning/sob/{sobPlan}', [SobController::class, 'update'])->middleware('permission:planning.manage')->name('planning.sob.update')->whereNumber('sobPlan');
     Route::delete('/planning/sob/{sobPlan}', [SobController::class, 'destroy'])->middleware('permission:planning.manage')->name('planning.sob.destroy')->whereNumber('sobPlan');
     Route::post('/planning/sob/{sobPlan}/approve', [SobController::class, 'approve'])->middleware('permission:planning.manage')->name('planning.sob.approve')->whereNumber('sobPlan');

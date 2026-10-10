@@ -19,7 +19,7 @@
             <h1 class="text-2xl font-bold">School Operating Budget · {{ $plan->quarterLabel() }}</h1>
             <p class="mt-1 text-sm text-on-surface-variant">{{ $plan->school?->name }} · FY {{ $plan->fiscal_year }} · {{ $plan->fund_source }}</p>
         </div>
-        <span class="rounded-full px-3 py-1 text-xs font-bold {{ $draft ? 'bg-amber-100 text-amber-800' : 'bg-secondary/10 text-secondary' }}">{{ $draft ? 'Draft' : 'Approved' }}</span>
+        <div class="flex items-center gap-2"><a href="{{ route('planning.sob.print', $plan) }}" target="_blank" rel="noopener" class="rounded border border-primary px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary hover:text-white">Print</a><span class="rounded-full px-3 py-1 text-xs font-bold {{ $draft ? 'bg-amber-100 text-amber-800' : 'bg-secondary/10 text-secondary' }}">{{ $draft ? 'Draft' : 'Approved' }}</span></div>
     </div>
 </div>
 @if(session('success'))<div class="mb-4 rounded border border-secondary/30 bg-secondary/5 px-4 py-3 text-sm text-secondary">{{ session('success') }}</div>@endif

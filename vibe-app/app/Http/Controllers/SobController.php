@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AgencySetting;
 use App\Models\ChartOfAccount;
 use App\Models\School;
 use App\Models\SobItem;
@@ -45,6 +46,21 @@ class SobController extends Controller
             'over' => $over,
             'accounts' => ChartOfAccount::where('organization_id', $sobPlan->organization_id)->orderBy('code')->get(),
             'canManage' => $request->user()->hasPermission('planning.manage'),
+        ]);
+    }
+
+    public function print(Request $request, SobPlan $sobPlan): View
+    {
+        abort_unless($request->user()->hasPermission('planning.view') || $request->user()->hasPermission('planning.manage'), 403);
+        $this->scoped($request, $sobPlan);
+        $sobPlan->load('school');
+
+        return view('sob-print', [
+            'plan' => $sobPlan,
+            'school' => $sobPlan->school,
+            'agency' => AgencySetting::first(),
+            'grouped' => $this->sob->grouped($sobPlan),
+            'summary' => $this->sob->summaryByAccount($sobPlan),
         ]);
     }
 
