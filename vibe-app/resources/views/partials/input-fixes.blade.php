@@ -9,3 +9,4 @@
 </script>
 
 @include('partials.password-toggle')
+@include('partials.searchable-select')
