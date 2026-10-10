@@ -38,6 +38,9 @@ class AuthController extends Controller
         // The sign-in field accepts the email address or the username.
         $login = trim($credentials['email']);
         $field = str_contains($login, '@') ? 'email' : 'username';
+        if ($field === 'username') {
+            $login = strtolower($login);
+        }
 
         if (! Auth::attempt([$field => $login, 'password' => $credentials['password'], 'status' => 'active'], $request->boolean('remember'))) {
             // Someone who registered to take over a school gets a clear message instead of a generic failure.
