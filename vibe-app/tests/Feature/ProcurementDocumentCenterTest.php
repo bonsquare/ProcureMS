@@ -119,6 +119,21 @@ class ProcurementDocumentCenterTest extends TestCase
         $page->assertSee('RFQ-2026-001')->assertDontSee('999')->assertDontSee('+1 more');
     }
 
+    public function test_document_lists_show_the_notice_to_proceed_before_the_purchase_order(): void
+    {
+        [$organization, $school, $user] = $this->tenant('Alpha');
+        $request = $this->procurementRequest($organization, $school, $user, 'ALPHA-PR-001');
+        $position = fn (array $types, string $type) => array_search($type, array_keys($types), true);
+
+        $center = $this->actingAs($user)->get(route('procurement.documents.index'))->assertOk()->viewData('documentTypes');
+        $page = $this->get(route('procurement.documents', $request))->assertOk()->viewData('documentTypes');
+
+        foreach ([$center, $page] as $types) {
+            $this->assertLessThan($position($types, 'notice_to_proceed'), $position($types, 'notice_to_award'));
+            $this->assertLessThan($position($types, 'purchase_order'), $position($types, 'notice_to_proceed'));
+        }
+    }
+
     private function tenant(string $name): array
     {
         $organization = Organization::create(['name' => "$name Organization", 'slug' => strtolower($name).'-organization', 'status' => 'active']);
