@@ -76,6 +76,49 @@ class ProcurementDocumentCenterTest extends TestCase
             ->assertSee('aria-modal="true"', false);
     }
 
+    public function test_a_request_with_several_documents_is_listed_once_with_its_latest_document(): void
+    {
+        [$organization, $school, $user] = $this->tenant('Alpha');
+        $request = $this->procurementRequest($organization, $school, $user, 'ALPHA-PR-001');
+        $rfq = $this->document($organization, $request, $user, 'request_for_quotation', 'RFQ-2026-001');
+        $abstract = $this->document($organization, $request, $user, 'abstract_of_bids_quotation', 'ABQ-2026-001');
+        $rfq->forceFill(['updated_at' => now()->subDay()])->saveQuietly();
+        $abstract->forceFill(['updated_at' => now()])->saveQuietly();
+        $other = $this->procurementRequest($organization, $school, $user, 'ALPHA-PR-002');
+        $this->document($organization, $other, $user, 'purchase_order', 'PO-2026-001');
+
+        $page = $this->actingAs($user)->get(route('procurement.documents.index'))->assertOk();
+        $this->assertSame(2, $page->viewData('documents')->total());
+        $page->assertSee('ABQ-2026-001')->assertDontSee('RFQ-2026-001')->assertSee('+1 more')->assertSee('PO-2026-001');
+    }
+
+    public function test_the_document_type_filter_shows_the_matching_document_of_each_request(): void
+    {
+        [$organization, $school, $user] = $this->tenant('Alpha');
+        $request = $this->procurementRequest($organization, $school, $user, 'ALPHA-PR-001');
+        $this->document($organization, $request, $user, 'request_for_quotation', 'RFQ-2026-001');
+        $abstract = $this->document($organization, $request, $user, 'abstract_of_bids_quotation', 'ABQ-2026-001');
+        $abstract->forceFill(['updated_at' => now()->addDay()])->saveQuietly();
+
+        $this->actingAs($user)->get(route('procurement.documents.index', ['type' => 'request_for_quotation']))->assertOk()
+            ->assertSee('RFQ-2026-001')->assertDontSee('ABQ-2026-001');
+    }
+
+    public function test_listing_by_request_keeps_each_school_apart(): void
+    {
+        [$organization, $school, $user] = $this->tenant('Alpha');
+        [$otherOrganization, $otherSchool, $otherUser] = $this->tenant('Beta');
+        $request = $this->procurementRequest($organization, $school, $user, 'ALPHA-PR-001');
+        $otherRequest = $this->procurementRequest($otherOrganization, $otherSchool, $otherUser, 'BETA-PR-001');
+        $this->document($organization, $request, $user, 'request_for_quotation', 'RFQ-2026-001');
+        $this->document($otherOrganization, $otherRequest, $otherUser, 'request_for_quotation', 'RFQ-2026-999');
+        $this->document($otherOrganization, $otherRequest, $otherUser, 'abstract_of_bids_quotation', 'ABQ-2026-999');
+
+        $page = $this->actingAs($user)->get(route('procurement.documents.index'))->assertOk();
+        $this->assertSame(1, $page->viewData('documents')->total());
+        $page->assertSee('RFQ-2026-001')->assertDontSee('999')->assertDontSee('+1 more');
+    }
+
     private function tenant(string $name): array
     {
         $organization = Organization::create(['name' => "$name Organization", 'slug' => strtolower($name).'-organization', 'status' => 'active']);

@@ -405,6 +405,9 @@ class HomeController extends Controller
             ->when($requestSearch !== '', fn ($query) => $query->whereHas('procurementRequest', fn ($requestQuery) => $requestQuery
                 ->where(fn ($nested) => $nested->where('request_number', 'like', "%{$requestSearch}%")->orWhere('title', 'like', "%{$requestSearch}%"))))
             ->when($this->isMasterUser() && $schoolId, fn ($query) => $query->whereHas('procurementRequest', fn ($requestQuery) => $requestQuery->where('school_id', $schoolId)))
+            // One row per request: its most recently updated document among those that match the filters.
+            ->whereRaw('procurement_documents.id = (select d.id from procurement_documents d where d.procurement_request_id = procurement_documents.procurement_request_id'
+                .($type !== '' ? ' and d.document_type = ?' : '').($status !== '' ? ' and d.status = ?' : '').' order by d.updated_at desc, d.id desc limit 1)', array_values(array_filter([$type, $status], fn ($value) => $value !== '')))
             ->latest('document_date')
             ->paginate(20)
             ->withQueryString();
