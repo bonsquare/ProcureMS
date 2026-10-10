@@ -135,7 +135,9 @@ class SchoolSettingsTest extends TestCase
         $this->assertFalse(Route::has('school-settings.users.store'));
         $ana = User::factory()->create(['organization_id' => $organization->id, 'school_id' => $school->id, 'role' => 'cashier', 'username' => 'ana.reyes', 'email' => 'ana@example.com', 'name' => 'Ana Reyes']);
         $this->assertMatchesRegularExpression('/^USR-\d{6}$/', $ana->user_code);
-        $this->actingAs($admin);
+        // A school user cannot change another account; only the master does.
+        $this->actingAs($admin)->put(route('school-settings.users.update', $ana), ['school_id' => $school->id, 'email' => 'ana@example.com', 'status' => 'inactive'])->assertForbidden();
+        $this->actingAs(User::factory()->create(['role' => 'master_user', 'organization_id' => null, 'school_id' => null]));
 
         $this->put(route('school-settings.users.update', $ana), ['school_id' => $school->id, 'name' => 'Ana R. Reyes', 'username' => 'ana.reyes', 'email' => 'ana@example.com', 'position' => 'Senior Cashier', 'role' => 'cashier', 'status' => 'inactive'])->assertRedirect();
         $this->assertSame('inactive', $ana->fresh()->status);
@@ -145,7 +147,7 @@ class SchoolSettingsTest extends TestCase
         $this->assertTrue(Hash::check('brand-new-pass', $ana->fresh()->password));
 
         // Own password needs the current one.
-        $this->put(route('school-settings.users.password', $admin), ['school_id' => $school->id, 'password' => 'another-pass-1', 'password_confirmation' => 'another-pass-1'])->assertSessionHasErrors('current_password');
+        $this->actingAs($admin)->put(route('school-settings.users.password', $admin), ['school_id' => $school->id, 'password' => 'another-pass-1', 'password_confirmation' => 'another-pass-1'])->assertSessionHasErrors('current_password');
     }
 
     public function test_sign_in_accepts_a_username_and_blocks_inactive_accounts(): void
@@ -212,16 +214,18 @@ class SchoolSettingsTest extends TestCase
         [, $school, $admin] = $this->tenant('settings-l');
         $worker = User::factory()->create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'role' => 'cashier', 'username' => 'fixed.name']);
 
-        // A school administrator can edit the details but neither the username nor the role.
-        $this->actingAs($admin)->put(route('school-settings.users.update', $worker), [
-            'school_id' => $school->id, 'name' => 'Renamed Worker', 'username' => 'sneaky.change', 'email' => $worker->email, 'position' => 'Senior Cashier',
+        // A school administrator edits only their own details, and never the username or the role; other accounts are view only.
+        $admin->update(['username' => 'admin.fixed']);
+        $this->actingAs($admin)->put(route('school-settings.users.update', $admin), [
+            'school_id' => $school->id, 'name' => 'Renamed Admin', 'username' => 'sneaky.change', 'email' => $admin->email, 'position' => 'Senior Cashier',
             'role' => 'approver', 'status' => 'active',
         ])->assertRedirect();
-        $worker->refresh();
-        $this->assertNotSame('Renamed Worker', $worker->name, 'the full name never changes');
-        $this->assertSame('Senior Cashier', $worker->position);
-        $this->assertSame('fixed.name', $worker->username);
-        $this->assertSame('cashier', $worker->role);
+        $admin->refresh();
+        $this->assertNotSame('Renamed Admin', $admin->name, 'the full name never changes');
+        $this->assertSame('Senior Cashier', $admin->position);
+        $this->assertSame('admin.fixed', $admin->username);
+        $this->assertSame('school_admin', $admin->role);
+        $this->actingAs($admin)->put(route('school-settings.users.update', $worker), ['school_id' => $school->id, 'email' => $worker->email, 'status' => 'active'])->assertForbidden();
 
         // The page says so, and shows each person's official station (the school).
         $this->get(route('school-settings', ['ui' => 'staff-save-v7', 'school_id' => $school->id, 'tab' => 'users']))->assertOk()

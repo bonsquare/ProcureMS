@@ -10,7 +10,7 @@ class EnsureSubscriptionAllowsWrites
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->isMethodSafe() || $request->routeIs('logout') || $request->user()?->role === 'master_user') {
+        if ($request->isMethodSafe() || $request->routeIs('logout', 'master-user.update', 'master-user.password') || $request->user()?->seesAllSchools()) {
             return $next($request);
         }
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnforceSubMasterLimits;
 use App\Http\Middleware\EnsureAccountActive;
 use App\Http\Middleware\EnsureDriveConnected;
 use App\Http\Middleware\EnsurePermission;
@@ -10,6 +11,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -29,6 +31,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('web', EnsureAccountActive::class);
         $middleware->appendToGroup('web', EnsureStationConfirmed::class);
         $middleware->appendToGroup('web', ShowDriveReconnectBanner::class);
+        // The Sub-master limits must run before route-model binding, so a refusal never depends on the record existing.
+        $middleware->appendToGroup('web', EnforceSubMasterLimits::class);
+        $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: EnforceSubMasterLimits::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

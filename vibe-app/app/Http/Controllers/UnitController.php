@@ -14,7 +14,7 @@ class UnitController extends Controller
         return view('procurement-units', [
             'defaultUnits' => Unit::DEFAULTS,
             'customUnits' => Unit::query()->orderBy('name')->get(),
-            'isMasterUser' => request()->user()->role === 'master_user',
+            'isMasterUser' => request()->user()->seesAllSchools(),
             'activeProcurementArea' => 'units',
         ]);
     }

@@ -16,7 +16,7 @@
         'staff' => ['Employees & Roles', 'badge'],
     ];
     if (! $isMasterUser) {
-        $tabs['transfer'] = ['Station Transfer', 'swap_horiz'];
+        $tabs['transfer'] = ['Official Station Management', 'swap_horiz'];
     }
     $stats = [
         ['Profile complete', $profileCompleteness.'%', $profileCompleteness >= 80 ? 'Ready for official documents' : 'Fill in the missing details', 'task_alt', $profileCompleteness >= 80 ? 'green' : 'amber', $profileCompleteness],

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class StationTransferRequest extends Model
 {
     protected $fillable = [
-        'user_id', 'from_school_id', 'from_organization_id', 'to_school_id', 'proposed_school', 'reason',
+        'user_id', 'kind', 'subject', 'from_school_id', 'from_organization_id', 'to_school_id', 'proposed_school', 'reason',
         'status', 'requested_at', 'decided_by', 'decided_at', 'decision_note', 'confirmed_at',
         'review_status', 'reviewer_user_id', 'reviewed_at', 'review_note', 'review_expires_at', 'expired_at',
         'handover_ends_at', 'handover_user_id', 'handover_ended_at',
@@ -75,8 +75,20 @@ class StationTransferRequest extends Model
         return $this->status === 'pending';
     }
 
+    public const KINDS = ['transfer' => 'Transfer', 'official_station' => 'Official Station', 'other' => 'Other'];
+
+    public function isTransfer(): bool
+    {
+        return ($this->kind ?: 'transfer') === 'transfer';
+    }
+
+    /** What the request is about: the school it asks for, or the typed subject. */
     public function destinationName(): string
     {
-        return $this->toSchool?->name ?? ($this->proposed_school['name'] ?? '—');
+        return match ($this->kind) {
+            'official_station' => $this->toSchool?->name ?? 'an Official Station',
+            'other' => $this->subject ?: 'Other request',
+            default => $this->toSchool?->name ?? ($this->proposed_school['name'] ?? '—'),
+        };
     }
 }

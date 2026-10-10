@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Aip;
 use App\Models\BudgetAllocation;
 use App\Models\LiquidationReport;
 use App\Models\ProcurementRequest;
 use App\Models\School;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 /**
  * Registry of Allotments, Obligations and Disbursements (RAOD): per fund and account code, the
@@ -18,7 +20,7 @@ class AllotmentRegistryController extends Controller
     {
         $user = request()->user();
 
-        return $user->role === 'master_user' || $user->organization_id
+        return $user->seesAllSchools() || $user->organization_id
             ? School::query()->pluck('id')
             : School::query()->whereKey($user->school_id)->pluck('id');
     }
@@ -53,13 +55,13 @@ class AllotmentRegistryController extends Controller
             'schools' => School::whereIn('id', $schoolIds)->orderBy('name')->get(),
             'selectedSchoolId' => $schoolId,
             'fund' => $fund,
-            'funds' => BudgetAllocation::whereIn('school_id', $schoolIds)->distinct()->pluck('source_of_fund')->merge(collect(\App\Models\Aip::FUNDS)->flatten()->reject(fn ($fund) => $fund === 'Others'))->unique()->sort()->values(),
+            'funds' => BudgetAllocation::whereIn('school_id', $schoolIds)->distinct()->pluck('source_of_fund')->merge(collect(Aip::FUNDS)->flatten()->reject(fn ($fund) => $fund === 'Others'))->unique()->sort()->values(),
         ]);
     }
 
     private function quarterOf(?\DateTimeInterface $date): int
     {
-        return $date ? \Illuminate\Support\Carbon::instance($date)->quarter : 0;
+        return $date ? Carbon::instance($date)->quarter : 0;
     }
 
     private function buildLine(BudgetAllocation $line, int $quarter): array
@@ -83,13 +85,13 @@ class AllotmentRegistryController extends Controller
             ]);
             if ($ors->paid_at) {
                 $entries->push([
-                    'date' => $ors->paid_at, 'type' => 'Disbursement', 'ref' => trim(($ors->dv_number ? 'DV ' . $ors->dv_number : '') . ' ' . $ors->payment_reference), 'payee' => $ors->payee,
+                    'date' => $ors->paid_at, 'type' => 'Disbursement', 'ref' => trim(($ors->dv_number ? 'DV '.$ors->dv_number : '').' '.$ors->payment_reference), 'payee' => $ors->payee,
                     'particulars' => $ors->dv_particulars ?: $ors->purpose, 'allotment' => 0.0, 'obligation' => 0.0, 'disbursement' => (float) $ors->amount, 'quarter' => $this->quarterOf($ors->paid_at),
                 ]);
             }
         }
 
-        $entries = $entries->filter(fn ($e) => $e['type'] === 'Allotment' || !$quarter || $e['quarter'] === $quarter)
+        $entries = $entries->filter(fn ($e) => $e['type'] === 'Allotment' || ! $quarter || $e['quarter'] === $quarter)
             ->sortBy(fn ($e) => [$e['type'] === 'Allotment' ? 0 : 1, $e['date']?->copy()->startOfDay()->timestamp ?? 0, $e['type'] === 'Disbursement' ? 1 : 0, $e['date']?->timestamp ?? 0])->values();
 
         $allotted = $obligated = $disbursed = 0.0;

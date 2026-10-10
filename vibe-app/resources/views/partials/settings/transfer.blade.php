@@ -2,7 +2,7 @@
     $field = 'mt-1 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm font-normal outline-none focus:border-action focus:ring-2 focus:ring-action/20';
     $tones = ['pending' => ['bg-amber-100 text-amber-800', 'hourglass_top'], 'approved' => ['bg-secondary/10 text-secondary', 'check_circle'], 'declined' => ['bg-error/10 text-error', 'cancel'], 'cancelled' => ['bg-surface-high text-on-surface-variant', 'block'], 'expired' => ['bg-surface-high text-on-surface-variant', 'timer_off']];
     $pending = $requests->firstWhere('status', 'pending');
-    $steps = [['edit_note', 'Send a request', 'Choose a school, or enter a new one, and say why.'], ['handshake', 'School accepts', 'A school that has a user must accept within 5 days.'], ['verified_user', 'Master approves', 'Then you confirm the new station at next sign-in.']];
+    $steps = [['edit_note', 'Send a request', 'Choose the type of request and say why.'], ['handshake', 'Review', 'A transfer to a school that has a user must be accepted by that school within 5 days.'], ['verified_user', 'Master decides', 'The master user approves or declines. A new station is confirmed at next sign-in.']];
 @endphp
 
 <div class="grid items-start gap-5 xl:grid-cols-[1fr_380px]">
@@ -16,13 +16,17 @@
                     ['Master approves', $reviewDone ? 'current' : 'todo', $reviewDone ? 'In progress' : 'After acceptance'],
                     ['You confirm', 'todo', 'At next sign-in'],
                 ];
+                if (! $pending->isTransfer()) {
+                    $track = [['Request submitted', 'done', $pending->requested_at?->format('M d, Y')], ['Master decides', 'current', 'In progress'], ['Done', 'todo', $pending->kind === 'official_station' ? 'You confirm the new station at next sign-in' : 'You are told the answer here']];
+                }
             @endphp
             <section class="overflow-hidden rounded-xl border-2 border-secondary/50 bg-white shadow-sm" aria-live="polite">
                 <div class="flex flex-wrap items-center gap-3 border-b border-secondary/30 bg-gradient-to-r from-secondary/15 to-secondary/5 px-5 py-3.5">
                     <span class="relative grid h-10 w-10 place-items-center rounded-full bg-secondary text-white shadow"><span class="material-symbols-outlined text-[22px]" aria-hidden="true">task_alt</span><span class="absolute -right-0.5 -top-0.5 h-3 w-3 animate-ping rounded-full bg-secondary/60"></span></span>
-                    <div><h2 class="text-base font-bold text-secondary">Request submitted</h2><p class="text-xs text-on-surface-variant">Your request to <strong class="text-on-surface">{{ $pending->destinationName() }}</strong> is being processed.</p></div>
+                    <div><h2 class="text-base font-bold text-secondary">Request submitted</h2><p class="text-xs text-on-surface-variant">@if($pending->kind === 'other')Your request <strong class="text-on-surface">{{ $pending->destinationName() }}</strong>@else Your request to <strong class="text-on-surface">{{ $pending->destinationName() }}</strong>@endif is being processed.</p></div>
                     <span class="ml-auto inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-[11px] font-bold text-secondary ring-1 ring-secondary/40"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">autorenew</span>In progress</span>
                 </div>
+                @if($pending->isTransfer())
                 <div data-transfer-route class="grid items-center gap-2 px-5 pt-5 sm:grid-cols-[1fr_auto_1fr]">
                     <div class="rounded-xl border border-outline-variant/70 bg-surface-low px-4 py-3">
                         <p class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-on-surface-variant"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">logout</span>From</p>
@@ -41,6 +45,7 @@
                         <p class="text-xs text-on-surface-variant">{{ $pending->toSchool?->code ?? 'Will be registered on approval' }}</p>
                     </div>
                 </div>
+                @endif
                 <style>
                     .transfer-flow { position: relative; color: #2a7f64; }
                     .transfer-flow__line { position: absolute; left: 0; right: 14px; top: 50%; border-top: 3px dashed currentColor; opacity: .45; }
@@ -51,7 +56,7 @@
                     @media (max-width: 639px) { .transfer-flow__line { left: 50%; right: auto; top: 0; bottom: 14px; border-top: 0; border-left: 3px dashed currentColor; } .transfer-flow__dot { left: 50%; margin-left: -5px; margin-top: 0; top: 0; animation-name: transfer-dot-down; } .transfer-flow__head { right: auto; left: 50%; margin-left: -15px; top: auto; bottom: -6px; } @keyframes transfer-dot-down { 0% { top: 0; opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { top: calc(100% - 22px); opacity: 0; } } }
                     @media (prefers-reduced-motion: reduce) { .transfer-flow__dot, .transfer-flow__head { animation: none; } }
                 </style>
-                <ol class="grid gap-3 px-5 py-4 sm:grid-cols-4">
+                <ol class="grid gap-3 px-5 py-4 {{ $pending->isTransfer() ? 'sm:grid-cols-4' : 'sm:grid-cols-3' }}">
                     @foreach($track as [$label, $state, $note])
                         <li class="rounded-xl border px-3 py-2.5 {{ $state === 'current' ? 'border-secondary bg-secondary/10 ring-2 ring-secondary/20' : ($state === 'done' ? 'border-secondary/40 bg-secondary/5' : 'border-outline-variant/60 bg-surface-low') }}">
                             <p class="flex items-center gap-1.5 text-xs font-bold {{ $state === 'todo' ? 'text-on-surface-variant' : 'text-secondary' }}"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">{{ $state === 'done' ? 'check_circle' : ($state === 'current' ? 'pending' : ($state === 'skipped' ? 'remove_circle' : 'radio_button_unchecked')) }}</span>{{ $label }}</p>
@@ -59,7 +64,7 @@
                         </li>
                     @endforeach
                 </ol>
-                <p class="border-t border-secondary/20 bg-surface-low px-5 py-2.5 text-xs text-on-surface-variant">@if($pending->review_status === 'pending')Waiting for {{ $pending->destinationName() }} to accept. If nobody answers by {{ $pending->review_expires_at?->format('M d, Y') }} the request closes and you can send a new one.@else Waiting for the master user to approve. You will confirm the new station the next time you sign in.@endif</p>
+                <p class="border-t border-secondary/20 bg-surface-low px-5 py-2.5 text-xs text-on-surface-variant">@if(! $pending->isTransfer())Waiting for the master user to decide.@elseif($pending->review_status === 'pending')Waiting for {{ $pending->destinationName() }} to accept. If nobody answers by {{ $pending->review_expires_at?->format('M d, Y') }} the request closes and you can send a new one.@else Waiting for the master user to approve. You will confirm the new station the next time you sign in.@endif</p>
             </section>
         @endif
 
@@ -124,7 +129,7 @@
                     @php [$tone, $toneIcon] = $tones[$item->status] ?? $tones['cancelled']; @endphp
                     <li class="px-5 py-3.5 text-sm">
                         <div class="flex flex-wrap items-center justify-between gap-2">
-                            <p class="font-semibold">{{ $item->fromSchool?->name ?? '—' }} <span class="text-on-surface-variant">→</span> {{ $item->destinationName() }}@if(! $item->to_school_id) <span class="ml-1 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold uppercase text-primary">New school</span>@endif</p>
+                            <p class="font-semibold">@if($item->isTransfer()){{ $item->fromSchool?->name ?? '—' }} <span class="text-on-surface-variant">→</span> {{ $item->destinationName() }}@else<span class="mr-1 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold uppercase text-primary">{{ \App\Models\StationTransferRequest::KINDS[$item->kind] ?? 'Request' }}</span>{{ $item->kind === 'official_station' ? ($item->toSchool?->name ?? 'Master chooses the school') : $item->destinationName() }}@endif @if($item->isTransfer() && ! $item->to_school_id) <span class="ml-1 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold uppercase text-primary">New school</span>@endif</p>
                             <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold {{ $tone }}"><span class="material-symbols-outlined text-[13px]" aria-hidden="true">{{ $toneIcon }}</span>{{ ucfirst($item->status) }}</span>
                         </div>
                         <p class="mt-1 text-xs text-on-surface-variant">Requested {{ $item->requested_at?->format('M d, Y') }}@if($item->decided_at) · decided {{ $item->decided_at->format('M d, Y') }}@endif · {{ $item->reason }}</p>
@@ -143,22 +148,24 @@
                         @endif
                     </li>
                 @empty
-                    <li class="px-5 py-10 text-center text-sm text-on-surface-variant"><span class="material-symbols-outlined mb-1 block text-[32px] text-outline-variant" aria-hidden="true">swap_horiz</span>You have not sent a transfer request.</li>
+                    <li class="px-5 py-10 text-center text-sm text-on-surface-variant"><span class="material-symbols-outlined mb-1 block text-[32px] text-outline-variant" aria-hidden="true">swap_horiz</span>You have not sent a request.</li>
                 @endforelse
             </ul>
         </section>
     </div>
 
     <section class="rounded-xl border border-outline-variant/60 bg-white xl:sticky xl:top-4">
-        <div class="border-b border-outline-variant/40 bg-[#eef4fa] px-5 py-3"><h2 class="font-bold text-primary">Request a station transfer</h2></div>
+        <div class="border-b border-outline-variant/40 bg-[#eef4fa] px-5 py-3"><h2 class="font-bold text-primary">Make a request</h2></div>
         <div class="p-5">
             @if($errors->any())<div class="mb-3 rounded-lg border border-error/30 bg-error/10 px-3 py-2 text-xs text-error">{{ $errors->first() }}</div>@endif
             @if($pending)
-                <p class="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5 text-xs text-amber-900">You already have a pending request to <strong>{{ $pending->destinationName() }}</strong>. Cancel it first if you want to send a different one.</p>
+                <p class="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5 text-xs text-amber-900">You already have a pending request (<strong>{{ $pending->destinationName() }}</strong>). Cancel it first if you want to send a different one.</p>
             @else
                 <form method="POST" action="{{ route('station-transfer.store') }}" class="space-y-3 text-xs font-bold" id="transfer-form">
                     @csrf
-                    <label class="block">Destination<select name="destination" id="transfer-destination" class="{{ $field }}"><option value="registered" @selected(old('destination', 'registered') === 'registered')>A registered school</option><option value="new" @selected(old('destination') === 'new')>My school isn't listed</option></select></label>
+                    <label class="block">Request type<select name="destination" id="transfer-destination" class="{{ $field }}"><option value="registered" @selected(old('destination', 'registered') === 'registered')>A registered school</option><option value="new" @selected(old('destination') === 'new')>My school isn't listed</option><option value="official_station" @selected(old('destination') === 'official_station')>Request to Official Station</option><option value="other" @selected(old('destination') === 'other')>Other</option></select></label>
+                    <p data-when="official_station" class="rounded-lg bg-surface-low px-3 py-2 font-normal text-on-surface-variant">You do not choose the school. The master user picks your Official Station when approving, and you confirm it at your next sign-in.</p>
+                    <label class="block" data-when="other">Request <span class="font-normal text-on-surface-variant">(type what you are asking for)</span><input name="subject" maxlength="255" value="{{ old('subject') }}" class="{{ $field }}" placeholder="e.g. Change of position or office"></label>
                     <label class="block" data-when="registered">School <span class="font-normal text-on-surface-variant">(a school with a user must accept first)</span><select name="to_school_id" class="{{ $field }}"><option value="">Choose a school</option>@foreach($destinationSchools as $school)<option value="{{ $school->id }}" @selected((int) old('to_school_id') === $school->id)>{{ $school->name }}@if($school->division) · {{ $school->division }}@endif @if($school->occupied)· needs acceptance @else· vacant @endif</option>@endforeach</select>
                         @if($destinationSchools->isEmpty())<span class="mt-1 block font-normal text-on-surface-variant">No other school is open for a transfer. Choose "My school isn't listed".</span>@endif</label>
                     <div class="space-y-3" data-when="new">
@@ -170,7 +177,7 @@
                         <div class="grid grid-cols-2 gap-3"><label class="block">School email<input type="email" name="new_school[contact_email]" value="{{ old('new_school.contact_email') }}" class="{{ $field }}"></label><label class="block">Contact number<input name="new_school[contact_number]" value="{{ old('new_school.contact_number') }}" class="{{ $field }}"></label></div>
                         <p class="rounded-lg bg-surface-low px-3 py-2 font-normal text-on-surface-variant">The master user registers this school when approving your request.</p>
                     </div>
-                    <label class="block">Reason<textarea name="reason" rows="3" required placeholder="e.g. Reassigned by the Division Office, effective next month" class="{{ $field }}">{{ old('reason') }}</textarea></label>
+                    <label class="block">Reason / details<textarea name="reason" rows="3" required placeholder="e.g. Reassigned by the Division Office, effective next month" class="{{ $field }}">{{ old('reason') }}</textarea></label>
                     <button class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">send</span>Send request</button>
                 </form>
                 <script>

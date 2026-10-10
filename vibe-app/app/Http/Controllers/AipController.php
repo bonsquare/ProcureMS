@@ -30,7 +30,7 @@ class AipController extends Controller
     {
         $user = request()->user();
 
-        return $user->role === 'master_user' || $user->organization_id
+        return $user->seesAllSchools() || $user->organization_id
             ? School::query()->pluck('id')
             : School::query()->whereKey($user->school_id)->pluck('id');
     }
@@ -263,7 +263,7 @@ class AipController extends Controller
         ChartOfAccount::ensureDefaults($user->organization_id);
 
         return ChartOfAccount::query()
-            ->when($user->role === 'master_user' && ! $user->organization_id, fn ($q) => $q->whereNull('organization_id'))
+            ->when($user->seesAllSchools() && ! $user->organization_id, fn ($q) => $q->whereNull('organization_id'))
             ->where('category', '!=', 'Revenue')->orderBy('code')->get();
     }
 

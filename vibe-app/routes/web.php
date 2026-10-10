@@ -17,7 +17,9 @@ use App\Http\Controllers\SchoolManagementController;
 use App\Http\Controllers\SchoolSettingsController;
 use App\Http\Controllers\SchoolTakeoverController;
 use App\Http\Controllers\StationTransferController;
+use App\Http\Controllers\SubMasterController;
 use App\Http\Controllers\UnitController;
+use App\Http\Controllers\UserDirectoryController;
 use Illuminate\Support\Facades\Route;
 
 // Public: the privacy policy that Google requires for the Drive connection, readable without signing in.
@@ -134,9 +136,20 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::post('/drive-files', [DriveFileController::class, 'store'])->middleware('drive.connected')->name('drive-files.store');
     Route::delete('/drive-files/{driveFile}', [DriveFileController::class, 'destroy'])->whereNumber('driveFile')->name('drive-files.destroy');
     Route::get('/reports', [HomeController::class, 'reports'])->name('reports');
-    Route::get('/user-management', [HomeController::class, 'userManagement'])->name('user-management');
+    Route::get('/user-management', [UserDirectoryController::class, 'index'])->name('user-management');
+    Route::post('/user-management/users', [UserDirectoryController::class, 'store'])->name('user-management.users.store');
+    Route::get('/user-management/users/{user}', [UserDirectoryController::class, 'show'])->name('user-management.users.show')->whereNumber('user');
+    Route::put('/user-management/users/{user}', [UserDirectoryController::class, 'update'])->name('user-management.users.update')->whereNumber('user');
+    Route::put('/user-management/users/{user}/password', [UserDirectoryController::class, 'password'])->name('user-management.users.password')->whereNumber('user');
+    Route::post('/user-management/users/{user}/deactivate', [UserDirectoryController::class, 'deactivate'])->name('user-management.users.deactivate')->whereNumber('user');
+    Route::post('/user-management/users/{user}/reactivate', [UserDirectoryController::class, 'reactivate'])->name('user-management.users.reactivate')->whereNumber('user');
+    Route::get('/audit-logs', [UserDirectoryController::class, 'auditLog'])->name('audit-logs.index');
     Route::put('/user-management/master-user', [MasterUserController::class, 'update'])->name('master-user.update');
     Route::put('/user-management/master-user/password', [MasterUserController::class, 'password'])->name('master-user.password');
+    Route::post('/user-management/sub-masters', [SubMasterController::class, 'store'])->name('master-user.sub-masters.store');
+    Route::put('/user-management/sub-masters/{user}', [SubMasterController::class, 'update'])->name('master-user.sub-masters.update')->whereNumber('user');
+    Route::put('/user-management/sub-masters/{user}/password', [SubMasterController::class, 'password'])->name('master-user.sub-masters.password')->whereNumber('user');
+    Route::put('/user-management/sub-masters/{user}/status', [SubMasterController::class, 'status'])->name('master-user.sub-masters.status')->whereNumber('user');
     Route::get('/subscriptions', [HomeController::class, 'subscriptions'])->name('subscriptions');
     Route::get('/school-settings', [HomeController::class, 'schoolSettings'])->name('school-settings');
     Route::post('/school-settings/organization', [HomeController::class, 'updateOrganizationSettings'])->middleware('permission:organization.settings')->name('school-settings.organization');

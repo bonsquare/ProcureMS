@@ -15,8 +15,13 @@ class EnsureAccountActive
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
-        if (! $user || $user->role === 'master_user' || $request->routeIs('logout')) {
+        if (! $user || $user->isMaster() || $request->routeIs('logout')) {
             return $next($request);
+        }
+
+        // A Sub-master has no school and no handover; only a deactivated account ends the session.
+        if ($user->isSubMaster()) {
+            return $user->status === 'inactive' ? $this->signOut($request) : $next($request);
         }
 
         // A handover that ran out ends the moment the previous user comes back, even before the daily job.
@@ -26,13 +31,18 @@ class EnsureAccountActive
 
         $schoolInactive = $user->school_id && School::withoutGlobalScopes()->whereKey($user->school_id)->value('status') === 'inactive';
         if ($user->status === 'inactive' || $schoolInactive) {
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-
-            return redirect()->route('login')->withErrors(['email' => 'This account is no longer active. Contact the system administrator.']);
+            return $this->signOut($request);
         }
 
         return $next($request);
+    }
+
+    private function signOut(Request $request): Response
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login')->withErrors(['email' => 'This account is no longer active. Contact the system administrator.']);
     }
 }

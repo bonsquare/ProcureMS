@@ -30,9 +30,9 @@ class SchoolManagementService
 
     public function deactivateUser(User $user, User $master, string $reason, string $effectiveDate, ?string $note): void
     {
-        $this->assertMaster($master);
+        $this->assertUserManager($master);
         $this->assertReason($reason);
-        if ($user->role === 'master_user') {
+        if ($user->seesAllSchools()) {
             $this->fail('user', 'The master account cannot be set inactive here.');
         }
         if (! $this->isActive($user)) {
@@ -47,7 +47,7 @@ class SchoolManagementService
 
     public function reactivateUser(User $user, User $master): void
     {
-        $this->assertMaster($master);
+        $this->assertUserManager($master);
         if ($this->isActive($user)) {
             $this->fail('user', 'This user is already active.');
         }
@@ -79,7 +79,13 @@ class SchoolManagementService
 
     private function assertMaster(User $user): void
     {
-        abort_unless($user->role === 'master_user', 403);
+        abort_unless($user->hasAccess('schools'), 403);
+    }
+
+    /** The Users tab and School Management both manage accounts. */
+    private function assertUserManager(User $user): void
+    {
+        abort_unless($user->hasAccess('schools') || $user->hasAccess('users'), 403);
     }
 
     private function assertReason(string $reason): void

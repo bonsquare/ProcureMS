@@ -35,7 +35,7 @@
             <div class="relative flex items-center gap-3"><div class="flex h-11 w-11 items-center justify-center rounded-xl bg-secondary shadow-lg shadow-black/20"><span class="material-symbols-outlined">school</span></div><div><p class="text-xl font-bold leading-tight">ProcureMS</p><p class="text-xs text-white/70">School Pre-registration</p></div></div>
             <h1 class="relative mt-6 text-3xl font-bold tracking-tight">Pre-register your school</h1>
             <p class="relative mt-2 max-w-2xl text-sm leading-6 text-white/80">Encode the school details and the person who will manage the school. The account is available after the master account reviews and activates the school.</p>
-            <div class="relative mt-5 flex flex-wrap gap-2"><span class="reg-step"><b>1</b>School details</span><span class="reg-step"><b>2</b>System user</span><span class="reg-step"><b>3</b>Master approval</span></div>
+            <div class="relative mt-5 flex flex-wrap gap-2"><span class="reg-step"><b>1</b>School Details</span><span class="reg-step"><b>2</b>System User Information</span><span class="reg-step"><b>3</b>Master Approval</span></div>
         </div>
 
         @if($errors->any())
@@ -54,15 +54,14 @@
             <style>.reg-vacant { border-color: #cdd8e2; background: #fff; transition: border-color .15s, background .15s; } .reg-vacant:has(input:checked) { border-color: #286da8; background: #eef4fa; }</style>
 
             <div id="takeover-fields" class="space-y-3 md:col-span-2" hidden>
-                <div class="reg-section"><span class="badge"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">swap_horiz</span></span><div><h2>1 · Vacant school</h2><p>Only active schools with no user are listed. The school keeps all its data and gives it to you once approved.</p></div></div>
-                <label class="block text-xs font-semibold text-on-surface-variant">Vacant school <span class="text-error">*</span>
-                    <select name="takeover_school_id" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"><option value="">Choose a school</option>@foreach($vacantSchools as $vacant)<option value="{{ $vacant->id }}" @selected((int) old('takeover_school_id') === $vacant->id)>{{ $vacant->name }}@if($vacant->division) · {{ $vacant->division }}@endif</option>@endforeach</select>
-                    @if($vacantSchools->isEmpty())<span class="mt-1 block font-normal">No vacant school is open right now. Register a new school instead.</span>@endif
+                <div class="reg-section"><span class="badge"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">swap_horiz</span></span><div><h2>1 &middot; Official Station Request</h2><p>You do not choose a school here. Fill in only your own information below and send your request. The master account assigns your Official Station, the school you will manage, when it approves you.</p></div></div>
+                <label class="block text-xs font-semibold text-on-surface-variant">Which school do you manage? <span class="font-normal">(optional, helps the master)</span>
+                    <textarea name="takeover_note" rows="2" maxlength="500" placeholder="School name and division, if you want to tell the master" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary">{{ old('takeover_note') }}</textarea>
                 </label>
             </div>
 
             <div id="new-school-fields" class="contents">
-            <div class="reg-section md:col-span-2"><span class="badge"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">domain</span></span><div><h2>1 · School details</h2><p>These are the same details used when the master account adds a new school.</p></div></div>
+            <div class="reg-section md:col-span-2"><span class="badge"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">domain</span></span><div><h2>1 · School Details</h2><p>These are the same details used when the master account adds a new school.</p></div></div>
 
             <label class="text-xs font-semibold text-on-surface-variant">School ID / Code<input value="System generated after submission" disabled class="mt-2 w-full cursor-not-allowed rounded border border-outline-variant/50 bg-surface-container px-3 py-2.5 text-sm font-normal text-on-surface-variant"></label>
             <label class="text-xs font-semibold text-on-surface-variant">School Name <span class="text-error">*</span><input name="name" required value="{{ old('name') }}" placeholder="Official school name" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
@@ -75,11 +74,11 @@
             <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">School Address<textarea name="address" rows="2" placeholder="Complete school address" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary">{{ old('address') }}</textarea></label>
             </div>
 
-            <div class="reg-section mt-3 md:col-span-2"><span class="badge"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">manage_accounts</span></span><div><h2>2 · System user information</h2><p>This person will manage the school after approval. The full name and username cannot be changed later.</p></div></div>
+            <div class="reg-section mt-3 md:col-span-2"><span class="badge"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">manage_accounts</span></span><div><h2>2 · System User Information</h2><p>This person will manage the school after approval. The full name and username cannot be changed later.</p></div></div>
 
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_5.5rem_1fr] md:col-span-2">
+            <div class="grid grid-cols-1 items-end gap-4 sm:grid-cols-[1fr_9rem_1fr] md:col-span-2">
                 <label class="text-xs font-semibold text-on-surface-variant">Given Name <span class="text-error">*</span><input name="system_user_given_name" required maxlength="100" autocomplete="given-name" value="{{ old('system_user_given_name') }}" placeholder="e.g. Maria" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary" data-name-part></label>
-                <label class="text-xs font-semibold text-on-surface-variant">Middle Initial <span class="font-normal">(optional)</span><input name="system_user_middle_initial" maxlength="1" pattern="[A-Za-z]" autocomplete="off" value="{{ old('system_user_middle_initial') }}" placeholder="D" title="One letter, or leave blank" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary text-center uppercase" data-name-part></label>
+                <label class="text-xs font-semibold text-on-surface-variant"><span class="whitespace-nowrap">Middle Initial <span class="font-normal">(optional)</span></span><input name="system_user_middle_initial" maxlength="1" pattern="[A-Za-z]" autocomplete="off" value="{{ old('system_user_middle_initial') }}" placeholder="D" title="One letter, or leave blank" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary text-center uppercase" data-name-part></label>
                 <label class="text-xs font-semibold text-on-surface-variant">Surname <span class="text-error">*</span><input name="system_user_surname" required maxlength="100" autocomplete="family-name" value="{{ old('system_user_surname') }}" placeholder="e.g. Santos" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary" data-name-part></label>
             </div>
             <label class="text-xs font-semibold text-on-surface-variant">Username <span class="text-error">*</span><input name="system_user_username" required minlength="4" maxlength="60" pattern="[A-Za-z0-9._-]+" autocomplete="username" value="{{ old('system_user_username') }}" placeholder="Letters, numbers, . _ -" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary lowercase" data-username></label>
@@ -119,8 +118,10 @@
                 const isTakeover = toggle.checked;
                 type.value = isTakeover ? 'takeover' : 'new';
                 fields.hidden = isTakeover; takeover.hidden = ! isTakeover;
+                // The school fields use display: contents, which ignores the hidden attribute.
+                fields.style.display = isTakeover ? 'none' : '';
                 fields.querySelectorAll('input, select, textarea').forEach((input) => { input.disabled = isTakeover; });
-                takeover.querySelectorAll('select').forEach((input) => { input.disabled = ! isTakeover; });
+                takeover.querySelectorAll('select, textarea, input').forEach((input) => { input.disabled = ! isTakeover; });
             };
             toggle.checked = type.value === 'takeover';
             toggle.addEventListener('change', apply);

@@ -46,7 +46,7 @@ class HomeController extends Controller
     {
         $user ??= request()->user();
 
-        return $user?->role === 'master_user';
+        return $user?->seesAllSchools();
     }
 
     private function scopedSchoolIds(?User $user = null)
@@ -191,6 +191,8 @@ class HomeController extends Controller
 
     public function exportAuditLogs()
     {
+        abort_if(request()->user()->isSubMaster() && ! request()->user()->hasAccess('users'), 403);
+
         $logs = AuditLog::with(['user', 'school'])
             ->when(! $this->isMasterUser(), fn ($query) => $query->whereIn('school_id', $this->scopedSchoolIds()))
             ->latest()
@@ -217,7 +219,7 @@ class HomeController extends Controller
 
     public function storeSchool(Request $request)
     {
-        abort_unless($this->isMasterUser(), 403);
+        abort_unless(request()->user()?->hasAccess('schools'), 403);
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -1777,7 +1779,7 @@ class HomeController extends Controller
 
     public function updateLiquidationStatus(Request $request, LiquidationReport $liquidationReport)
     {
-        abort_unless($this->isMasterUser(), 403);
+        abort_unless(request()->user()?->hasAccess('liquidation'), 403);
         $this->authorizeLiquidationAccess($liquidationReport);
 
         $data = $request->validate([
@@ -1798,13 +1800,6 @@ class HomeController extends Controller
         return view('reports');
     }
 
-    public function userManagement()
-    {
-        abort_unless($this->isMasterUser(), 403);
-
-        return view('user-management', ['tab' => request('tab') === 'master-user' ? 'master-user' : 'users']);
-    }
-
     /** The newest failed backup, unless a backup succeeded after it. */
     private function lastBackupFailure(): ?BackupRun
     {
@@ -1816,7 +1811,7 @@ class HomeController extends Controller
 
     public function subscriptions()
     {
-        abort_unless($this->isMasterUser(), 403);
+        abort_unless(request()->user()?->hasAccess('subscriptions'), 403);
 
         return view('subscriptions', [
             'pendingPreRegistrations' => School::with(['users' => fn ($query) => $query->oldest()])
@@ -2069,7 +2064,7 @@ class HomeController extends Controller
         ], $logoMessages);
         $data = PlaceNames::snapFields($data, ['region' => 'region', 'division' => 'division', 'district' => 'district']);
         $this->authorizeSchoolAccess((int) $data['school_id']);
-        if (! $this->isMasterUser()) {
+        if (! $request->user()->hasAccess('schools')) {
             unset($data['status']);
         }
         $school = School::findOrFail($data['school_id']);
@@ -2086,7 +2081,7 @@ class HomeController extends Controller
 
     public function approveSchoolRegistration(School $school)
     {
-        abort_unless($this->isMasterUser(), 403);
+        abort_unless(request()->user()?->hasAccess('schools'), 403);
 
         $school->update(['status' => 'active']);
         $school->organization?->update(['status' => 'active']);

@@ -22,19 +22,39 @@ class StationTransferService
 
     private const SCHOOL_FIELDS = ['name', 'school_type', 'region', 'division', 'district', 'address', 'contact_email', 'contact_number'];
 
-    /** @param array{reason: string, to_school_id?: int|null, proposed_school?: array<string, mixed>|null} $data */
+    /** @param array{reason: string, kind?: string, subject?: string|null, to_school_id?: int|null, proposed_school?: array<string, mixed>|null} $data */
     public function request(User $user, array $data): StationTransferRequest
     {
         $this->expireDue();
 
-        if ($user->role === 'master_user') {
+        if ($user->seesAllSchools()) {
             $this->fail('reason', 'The master user has no Official Station to transfer from.');
         }
         if (! $this->isActive($user)) {
             $this->fail('reason', 'Your account is not active.');
         }
         if (StationTransferRequest::where('user_id', $user->id)->where('status', 'pending')->exists()) {
-            $this->fail('reason', 'You already have a pending transfer request. Cancel it first to send a new one.');
+            $this->fail('reason', 'You already have a pending request. Cancel it first to send a new one.');
+        }
+
+        $kind = $data['kind'] ?? 'transfer';
+        if ($kind !== 'transfer') {
+            if ($kind === 'other' && blank($data['subject'] ?? null)) {
+                $this->fail('subject', 'Type what you are asking for.');
+            }
+
+            // The master decides; there is no destination school to ask.
+            return StationTransferRequest::create([
+                'user_id' => $user->id,
+                'kind' => $kind,
+                'subject' => $kind === 'other' ? $data['subject'] : null,
+                'from_school_id' => $user->school_id,
+                'from_organization_id' => $user->organization_id,
+                'reason' => $data['reason'],
+                'status' => 'pending',
+                'requested_at' => now(),
+                'review_status' => 'not_required',
+            ]);
         }
 
         $toSchoolId = $data['to_school_id'] ?? null;
@@ -125,12 +145,12 @@ class StationTransferService
         $request->update(['status' => 'declined', 'decided_by' => $master->id, 'decided_at' => now(), 'decision_note' => $note]);
     }
 
-    public function approve(StationTransferRequest $request, User $master, ?string $note = null): StationTransferRequest
+    public function approve(StationTransferRequest $request, User $master, ?string $note = null, ?int $schoolId = null): StationTransferRequest
     {
         $this->assertMaster($master);
         $this->expireDue();
 
-        return DB::transaction(function () use ($request, $master, $note) {
+        return DB::transaction(function () use ($request, $master, $note, $schoolId) {
             $request = StationTransferRequest::lockForUpdate()->findOrFail($request->id);
             if ($request->status === 'expired') {
                 $this->fail('request', 'This request expired because the destination school did not answer in '.self::REVIEW_DAYS.' days. The user can send a new one.');
@@ -144,6 +164,24 @@ class StationTransferService
             $user = User::withoutGlobalScopes()->findOrFail($request->user_id);
             if (! $this->isActive($user)) {
                 $this->fail('request', "The user's account is not active. Reactivate it before approving.");
+            }
+
+            // A typed request has nothing to move; approving it is the master's answer, and there is nothing to confirm.
+            if ($request->kind === 'other') {
+                $request->update(['status' => 'approved', 'decided_by' => $master->id, 'decided_at' => now(), 'decision_note' => $note, 'confirmed_at' => now()]);
+                $this->audit($master->id, $user->school_id, 'approved_user_request', User::class, $user->id, ['request_id' => $request->id, 'subject' => $request->subject]);
+
+                return $request->refresh();
+            }
+
+            if ($request->kind === 'official_station') {
+                if (! $schoolId) {
+                    $this->fail('school_id', 'Choose the Official Station, the school this person will manage.');
+                }
+                if (! app(SchoolTakeoverService::class)->vacantSchools()->contains('id', $schoolId)) {
+                    $this->fail('school_id', 'Choose a school that is open for a new user.');
+                }
+                $request->to_school_id = $schoolId;
             }
 
             $target = $request->to_school_id
@@ -266,7 +304,7 @@ class StationTransferService
     /** @return Collection<int, User> */
     private function activeUsersOf(School $school)
     {
-        return User::withoutGlobalScopes()->where('school_id', $school->id)->where('role', '!=', 'master_user')
+        return User::withoutGlobalScopes()->where('school_id', $school->id)->whereNotIn('role', User::MASTER_ROLES)
             ->where(fn ($query) => $query->whereNull('status')->orWhere('status', 'active'))->get();
     }
 
@@ -282,7 +320,7 @@ class StationTransferService
 
     private function assertMaster(User $user): void
     {
-        abort_unless($user->role === 'master_user', 403);
+        abort_unless($user->hasAccess('transfers'), 403);
     }
 
     private function fail(string $field, string $message): never

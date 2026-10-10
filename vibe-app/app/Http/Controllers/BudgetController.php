@@ -6,6 +6,7 @@ use App\Models\BudgetAllocation;
 use App\Models\LiquidationReport;
 use App\Models\ProcurementRequest;
 use App\Models\School;
+use App\Services\BudgetService;
 use Illuminate\Http\Request;
 
 class BudgetController extends Controller
@@ -14,7 +15,7 @@ class BudgetController extends Controller
     {
         $user = request()->user();
 
-        return $user->role === 'master_user' || $user->organization_id
+        return $user->seesAllSchools() || $user->organization_id
             ? School::query()->pluck('id')
             : School::query()->whereKey($user->school_id)->pluck('id');
     }
@@ -34,7 +35,7 @@ class BudgetController extends Controller
         $directOrs = LiquidationReport::whereNull('procurement_request_id')->whereYear('created_at', $year)->tap($schoolFilter)->get();
 
         // Utilization per school + fund source.
-        $lines = $allocations->groupBy(fn ($a) => $a->school_id . '|' . $a->source_of_fund)->map(function ($group) use ($obligations, $directOrs) {
+        $lines = $allocations->groupBy(fn ($a) => $a->school_id.'|'.$a->source_of_fund)->map(function ($group) use ($obligations, $directOrs) {
             $first = $group->first();
             $matching = $obligations->where('school_id', $first->school_id)->where('source_of_fund', $first->source_of_fund);
             $direct = $directOrs->where('school_id', $first->school_id)->where('source_of_fund', $first->source_of_fund);
@@ -54,7 +55,7 @@ class BudgetController extends Controller
             ];
         })->values();
 
-        $isUnbudgeted = fn ($r) => !$allocations->contains(fn ($a) => $a->school_id === $r->school_id && $a->source_of_fund === $r->source_of_fund);
+        $isUnbudgeted = fn ($r) => ! $allocations->contains(fn ($a) => $a->school_id === $r->school_id && $a->source_of_fund === $r->source_of_fund);
         $unbudgeted = $obligations->filter($isUnbudgeted)->sum('amount') + $directOrs->filter($isUnbudgeted)->sum('amount');
 
         $transactions = $obligations->map(fn ($r) => ['date' => $r->created_at, 'type' => 'PR', 'ref' => $r->request_number, 'description' => $r->title, 'school_id' => $r->school_id, 'fund' => $r->source_of_fund, 'amount' => $r->amount, 'status' => $r->status, 'url' => route('procurement.edit', $r)])
@@ -66,10 +67,10 @@ class BudgetController extends Controller
 
         return view('budget', [
             'nextOrsNumber' => LiquidationReport::nextOrsNumber(),
-            'budgetItems' => app(\App\Services\BudgetService::class)->withAvailability(BudgetAllocation::whereIn('school_id', $schoolIds)->whereNull('closed_at')->where('fiscal_year', $year)->orderBy('particulars')->get()),
+            'budgetItems' => app(BudgetService::class)->withAvailability(BudgetAllocation::whereIn('school_id', $schoolIds)->whereNull('closed_at')->where('fiscal_year', $year)->orderBy('particulars')->get()),
             'orsList' => $orsList,
             'availableProcurements' => $availableProcurements,
-            'isMasterUser' => request()->user()->role === 'master_user',
+            'isMasterUser' => request()->user()->seesAllSchools(),
             'transactions' => $transactions,
             'schoolNames' => $schools->pluck('name', 'id'),
             'schools' => $schools,
@@ -88,7 +89,7 @@ class BudgetController extends Controller
     }
 
     /** Live availability lookup used by the PR and ORS forms. */
-    public function balance(Request $request, \App\Services\BudgetService $budget)
+    public function balance(Request $request, BudgetService $budget)
     {
         $schoolId = (int) $request->query('school_id');
         abort_unless($this->schoolIds()->contains($schoolId), 403);

@@ -19,12 +19,12 @@
 </head>
 <body class="bg-surface font-inter text-on-surface antialiased">
     @php
-        $isMasterUser = $isMasterUser ?? auth()->user()?->role === 'master_user';
+        $isMasterUser = $isMasterUser ?? auth()->user()?->seesAllSchools();
         $currentSchool = $schools->first();
         $pendingPreRegistrations = $pendingPreRegistrations ?? collect();
     @endphp
     <aside id="dashboard-sidebar" class="fixed inset-y-0 left-0 z-50 hidden w-72 flex-col bg-primary px-4 py-6 text-white md:flex">
-        <div class="mb-8 flex items-center gap-3 px-2"><div class="flex h-8 w-8 items-center justify-center rounded bg-secondary"><span class="material-symbols-outlined text-[20px]">school</span></div><span class="text-xl font-semibold">ProcureMS</span></div>
+        <div class="mb-8 flex items-center gap-3 px-2"><div class="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-white"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">account_balance</span></div><div><p class="text-lg font-bold tracking-tight">ProcureMS</p><p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/55">Civic Operations</p></div></div>
         <nav class="flex-1 space-y-1" aria-label="Main navigation">
             @php
                 $navigation = [
@@ -39,7 +39,8 @@
                 }
                 if ($isMasterUser) {
                     $navigation[] = ['icon' => 'group', 'label' => 'User Management', 'route' => 'user-management'];
-                    $navigation[] = ['icon' => 'card_membership', 'label' => 'Subscriptions', 'route' => 'subscriptions'];
+                    if (auth()->user()->hasAccess('subscriptions')) $navigation[] = ['icon' => 'card_membership', 'label' => 'Subscriptions', 'route' => 'subscriptions'];
+                    if (auth()->user()->hasAccess('schools')) $navigation[] = ['icon' => 'domain', 'label' => 'School Management', 'route' => 'school-management'];
                 }
                 $navigation[] = ['icon' => 'settings', 'label' => 'School Settings', 'route' => 'school-settings'];
             @endphp
@@ -57,7 +58,7 @@
                 @endif
             @endforeach
         </nav>
-        <div class="border-t border-white/15 pt-4 text-xs text-white/60"><p>Multi-School Procurement System</p><p class="mt-1">v1.0 · All systems operational</p></div>
+        <div class="border-t border-white/15 pt-4 text-xs text-white/60"><p>Multi-School Procurement System</p><p class="mt-1">Secure operational workspace</p></div>
     </aside>
 
     <div class="md:pl-72">

@@ -14,13 +14,19 @@ class MasterUserController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $user = $this->master($request);
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'min:4', 'max:60', 'regex:/^[A-Za-z0-9._-]+$/', Rule::unique('users', 'username')->ignore($user->id)],
+        $rules = [
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'phone' => ['nullable', 'string', 'max:50'],
             'position' => ['nullable', 'string', 'max:255'],
-        ], [
+        ];
+        // The master always may; a Sub-master only with the 'edit_own_name' switch. Otherwise both stay as they are.
+        if ($this->canRename($user)) {
+            $rules += [
+                'name' => ['required', 'string', 'max:255'],
+                'username' => ['required', 'string', 'min:4', 'max:60', 'regex:/^[A-Za-z0-9._-]+$/', Rule::unique('users', 'username')->ignore($user->id)],
+            ];
+        }
+        $data = $request->validate($rules, [
             'username.regex' => 'The username can only have letters, numbers, dots, dashes and underscores.',
             'username.unique' => 'That username is already used by another account.',
             'email.unique' => 'That e-mail address is already used by another account.',
@@ -52,11 +58,17 @@ class MasterUserController extends Controller
         return redirect()->route('user-management', ['tab' => 'master-user'])->with('success', 'Your password was changed.');
     }
 
+    /** The signed-in master or Sub-master, for their own account only. */
     private function master(Request $request): User
     {
-        abort_unless($request->user()?->role === 'master_user', 403);
+        abort_unless($request->user()?->isAnyMaster(), 403);
 
         return $request->user();
+    }
+
+    private function canRename(User $user): bool
+    {
+        return $user->isMaster() || $user->hasAccess('edit_own_name');
     }
 
     /** @param  array<string, mixed>  $metadata */
