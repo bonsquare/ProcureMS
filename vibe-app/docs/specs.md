@@ -2,6 +2,13 @@
 
 Standing specifications for the whole system. They apply to every existing and future module. Product rules and phase order are in `CLAUDE.md` and `docs/PROCUREMS_CLAUDE_HANDOFF.md`. Last reviewed 2026-10-09.
 
+> **PROTECTED DOCUMENT. Nothing in this file is changed without the owner's permission.**
+> - This file is the owner's standing decision record. No person, assistant or tool may edit, reword, reorder, shorten, delete or add to it on its own initiative, including "small" fixes, typo fixes and tidy-ups.
+> - To change it: describe the exact change in the conversation (which section, old text, new text) and wait for the owner's explicit yes to that change. A yes to a feature or a code change is **not** permission to edit this file. A yes to one edit is not permission for another.
+> - New work is recorded here only after the owner has asked for it to be recorded.
+> - If the code or a request contradicts something written here, stop and ask the owner. Do not change the specification to match the code, and do not change the code against the specification.
+> - Every approved change gets its own commit whose message says `specs:` and what changed.
+
 Contents: 1 Official documents (presentation and printing) · 2 Procurement workflow · 3 Supplier directory · 4 Dashboards · 5 School Settings · 6 Pre-registration · 7 Screen design standards · 8 Local development.
 
 ## 1. Official documents: presentation and printing

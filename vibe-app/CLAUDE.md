@@ -192,7 +192,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 
 ## Specifications
 
-Standing specifications (official documents, procurement workflow and document order, supplier directory, dashboards, School Settings, pre-registration, screen design standards, local development) are in `docs/specs.md`. Follow them for every existing and future module. Official documents use the shared print engine with its paper-size toolbar (Close, Paper Size, Orientation, Zoom, Print / Save as PDF); see docs/specs.md sections 1.5 and 1.6.
+**`docs/specs.md` is a protected document: never edit it without the owner's explicit permission for that exact change (see the notice at the top of the file). A yes to a feature is not permission to edit it; if code and specification disagree, stop and ask.** Standing specifications (official documents, procurement workflow and document order, supplier directory, dashboards, School Settings, pre-registration, screen design standards, local development) are in `docs/specs.md`. Follow them for every existing and future module. Official documents use the shared print engine with its paper-size toolbar (Close, Paper Size, Orientation, Zoom, Print / Save as PDF); see docs/specs.md sections 1.5 and 1.6.
 
 ## Required phase order
 
