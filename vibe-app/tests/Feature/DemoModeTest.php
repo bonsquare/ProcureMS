@@ -43,10 +43,10 @@ class DemoModeTest extends TestCase
     public function test_the_demo_login_page_lists_the_accounts_only_in_demo_mode(): void
     {
         config(['app.demo' => true]);
-        $this->get(route('login'))->assertOk()->assertSee('admin@procurems.test')->assertSee('submaster@procurems.test');
+        $this->get(route('login'))->assertOk()->assertSee('orong.rms@gmail.com')->assertDontSee('admin@procurems.test')->assertDontSee('submaster@procurems.test');
 
         config(['app.demo' => false]);
-        $this->get(route('login'))->assertOk()->assertDontSee('submaster@procurems.test');
+        $this->get(route('login'))->assertOk()->assertDontSee('orong.rms@gmail.com');
     }
 
     public function test_the_reset_button_is_for_the_master_in_demo_mode_only(): void
