@@ -51,7 +51,7 @@
             @endif
         </div>
     </section>
-<div id="document-modal" role="dialog" aria-modal="true" aria-labelledby="document-modal-title" class="fixed inset-0 z-[80] hidden items-center justify-center bg-black/50 p-3"><div id="document-modal-card" class="flex max-h-[96vh] w-full max-w-[1500px] flex-col overflow-hidden rounded bg-white shadow-2xl"><div class="z-10 flex shrink-0 items-center justify-between border-b border-outline-variant/30 bg-white px-5 py-4"><div><p class="text-xs font-semibold uppercase tracking-wider text-primary">Prepare Official Document</p><h2 id="document-modal-title" class="mt-1 text-lg font-semibold"></h2></div><button id="close-document-modal" type="button" aria-label="Close document form" class="rounded p-2 hover:bg-primary hover:text-white"><span class="material-symbols-outlined">close</span></button></div>
+<div id="document-modal" @if($autoOpen) data-auto-open="{{ $autoOpen }}" @endif role="dialog" aria-modal="true" aria-labelledby="document-modal-title" class="fixed inset-0 z-[80] hidden items-center justify-center bg-black/50 p-3"><div id="document-modal-card" class="flex max-h-[96vh] w-full max-w-[1500px] flex-col overflow-hidden rounded bg-white shadow-2xl"><div class="z-10 flex shrink-0 items-center justify-between border-b border-outline-variant/30 bg-white px-5 py-4"><div><p class="text-xs font-semibold uppercase tracking-wider text-primary">Prepare Official Document</p><h2 id="document-modal-title" class="mt-1 text-lg font-semibold"></h2></div><button id="close-document-modal" type="button" aria-label="Close document form" class="rounded p-2 hover:bg-primary hover:text-white"><span class="material-symbols-outlined">close</span></button></div>
 <div id="doc-split"><aside id="doc-preview-pane" aria-label="Document preview"><div id="doc-preview-bar"><span>Document (updates as you edit)</span><span class="flex items-center gap-3"><small id="doc-preview-status">Updates as you type</small><select id="doc-preview-zoom" aria-label="Preview zoom" class="rounded border border-outline-variant/60 bg-white px-2 py-1 text-xs font-semibold"><option value="fit">Fit width</option><option value="0.5">50%</option><option value="0.75">75%</option><option value="1">100%</option></select></span></div><iframe id="doc-preview-frame" title="Official document preview"></iframe></aside><div id="doc-form-pane">
     <form id="document-form" method="POST" action="{{ route('procurement.documents.store', $procurementRequest) }}" class="grid grid-cols-1 gap-4 p-5 md:grid-cols-2">@csrf<input id="document-type" type="hidden" name="document_type">
         <label id="document-date-field" class="block text-xs font-semibold text-on-surface-variant">Document Date<input id="document-date" type="date" name="document_date" required value="{{ now()->format('Y-m-d') }}" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
@@ -97,7 +97,7 @@
         <label data-rfq-only class="hidden text-xs font-semibold text-on-surface-variant">Time of Opening<input data-meta type="time" name="time_opening" class="mt-2 w-full rounded border border-outline-variant/50 bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
         <label data-rfq-only class="hidden text-xs font-semibold text-on-surface-variant md:col-span-2">Terms of Payment<input data-meta name="terms_of_payment" placeholder="Enter the applicable payment terms" class="mt-2 w-full rounded border border-outline-variant/50 bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
         </div></section>
-        <div id="abstract-bidders" data-abstract-only class="hidden rounded border border-primary/20 bg-primary/5 p-4 md:order-1 md:col-span-2"><div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-start"><div><p class="text-sm font-semibold text-primary">Supplier price comparison</p><p class="mt-1 text-xs text-on-surface-variant">Choose each company, then enter its quoted unit price. Blank values mean no response.</p></div><div class="rounded bg-white px-3 py-2 text-right"><p class="text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant">Approved Budget (ABC)</p><p class="mt-1 text-sm font-bold text-primary">₱{{ number_format((float) $procurementRequest->amount, 2) }}</p></div></div><div id="bidder-company-row" class="mt-4 grid gap-3 md:grid-cols-3"></div><div class="mt-3 flex justify-end"><button id="add-bidder" type="button" class="rounded border border-primary/40 bg-white px-3 py-2 text-xs font-semibold text-primary hover:bg-primary hover:text-white"><span class="material-symbols-outlined mr-1 align-middle text-[16px]">add</span>Add bidder</button></div><div class="mt-4 overflow-x-auto"><table id="bidder-price-table" class="w-full border-collapse text-xs"></table></div></div>
+        <div id="abstract-bidders" data-abstract-only class="hidden rounded border border-primary/20 bg-primary/5 p-4 md:order-1 md:col-span-2"><div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-start"><div><p class="text-sm font-semibold text-primary">Supplier price comparison</p><p class="mt-1 text-xs text-on-surface-variant">Choose each company, then enter its quoted unit price. Blank values mean no response.</p></div><div class="rounded bg-white px-3 py-2 text-right"><p class="text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant">Approved Budget (ABC)</p><p class="mt-1 text-sm font-bold text-primary">₱{{ number_format((float) $procurementRequest->amount, 2) }}</p></div></div><div id="bidder-company-row" class="mt-4 grid gap-3 md:grid-cols-3"></div><div class="mt-3 flex flex-wrap items-center justify-end gap-2">@if(auth()->user()->hasPermission('supplier.manage'))<a id="add-supplier-link" href="{{ route('suppliers.create', ['return_to' => 'abstract', 'return_request' => $procurementRequest->id]) }}" class="rounded border border-outline-variant bg-white px-3 py-2 text-xs font-semibold text-on-surface hover:bg-surface-container"><span class="material-symbols-outlined mr-1 align-middle text-[16px]">domain_add</span>Add supplier in Supplier Management</a>@else<span class="text-xs text-on-surface-variant">Ask a user who manages suppliers to add a missing company.</span>@endif<button id="add-bidder" type="button" class="rounded border border-primary/40 bg-white px-3 py-2 text-xs font-semibold text-primary hover:bg-primary hover:text-white"><span class="material-symbols-outlined mr-1 align-middle text-[16px]">add</span>Add bidder</button></div><div class="mt-4 overflow-x-auto"><table id="bidder-price-table" class="w-full border-collapse text-xs"></table></div></div>
         <label data-non-rfq data-hide-for-iar data-hide-for-ntp data-hide-for-po class="block text-xs font-semibold text-on-surface-variant">TIN<input data-meta name="tin" placeholder="Supplier TIN" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
         <label data-non-rfq data-hide-for-iar data-hide-for-ntp data-hide-for-po class="block text-xs font-semibold text-on-surface-variant">Mode of Procurement<input data-meta name="mode_of_procurement" value="SVP" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
         <label data-non-rfq data-hide-for-iar data-hide-for-ntp data-hide-for-po class="block text-xs font-semibold text-on-surface-variant">Delivery Term<input data-meta name="delivery_term" value="Pick-Up" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
@@ -152,6 +152,8 @@
     const bidderCompanyRow = document.getElementById('bidder-company-row');
     const bidderPriceTable = document.getElementById('bidder-price-table');
     let activeBidders = [];
+    let pendingBidderDraft = null;
+    const bidderDraftKey = 'abstractBidderDraft.{{ $procurementRequest->id }}';
     let iarsAssignments = [];
     let iarReceivedItems = {};
     let icsItems = {};
@@ -483,10 +485,15 @@
         }
         if (!isRfq && !isAwardDocument) applySupplierManagerDetails();
         activeBidders = (metadata.bidders?.length ? metadata.bidders : legacyBidders(metadata)).map(normalizeBidderPrices);
+        if (isAbstract && pendingBidderDraft) { activeBidders = pendingBidderDraft; pendingBidderDraft = null; }
         renderBidderComparison(!isAbstract);
         modal.classList.remove('hidden'); modal.classList.add('flex');
         document.getElementById('close-document-modal').focus();
     }));
+    // Going to Supplier Management to add a company must not lose the companies and prices typed so far.
+    document.getElementById('add-supplier-link')?.addEventListener('click', () => {
+        try { sessionStorage.setItem(bidderDraftKey, JSON.stringify(readActiveBidders())); } catch (error) { /* a private window may refuse storage; the draft is a convenience */ }
+    });
     document.getElementById('add-bidder').addEventListener('click', () => { activeBidders = readActiveBidders(); activeBidders.push({name: '', prices: {}}); renderBidderComparison(false); });
     document.getElementById('add-iars-staff').addEventListener('click', () => { iarsAssignments = readIarsAssignments(); iarsAssignments.push({staff_id:'',items:{}}); renderIarsAssignments(); });
     document.getElementById('fullscreen-iars').addEventListener('click', () => document.getElementById('iars-assignments').requestFullscreen?.());
@@ -545,19 +552,37 @@
         };
         frame.addEventListener('load', () => setTimeout(applyZoom, 350));
         zoomSelect.addEventListener('change', applyZoom);
-        const refresh = async () => {
+        // A preview that fails because the server was restarting or the connection dropped is tried again by itself,
+        // and a failure that stays says why and can be retried with one click.
+        const retryDelays = [1500, 4000];
+        const refresh = async (attempt = 0) => {
             if (modal.classList.contains('hidden')) return;
             if (controller) controller.abort();
             controller = new AbortController();
-            status.textContent = 'Updating preview...';
+            status.onclick = null; status.style.cursor = ''; status.style.textDecoration = '';
+            status.textContent = attempt ? 'Updating preview... (trying again)' : 'Updating preview...';
+            let reason = 'no connection to the server';
             try {
                 const response = await fetch(previewUrl, { method: 'POST', body: new FormData(form), signal: controller.signal, headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' } });
                 const html = await response.text();
-                frame.srcdoc = /<head[^>]*>/i.test(html) ? html.replace(/(<head[^>]*>)/i, '$1' + hideChrome) : hideChrome + html;
-                status.textContent = response.ok ? 'Updates as you type' : 'Preview unavailable';
-            } catch (error) { if (error.name !== 'AbortError') status.textContent = 'Preview unavailable'; }
+                if (response.ok || (response.status < 500 && response.status !== 419)) {
+                    frame.srcdoc = /<head[^>]*>/i.test(html) ? html.replace(/(<head[^>]*>)/i, '$1' + hideChrome) : hideChrome + html;
+                    status.textContent = response.ok ? 'Updates as you type' : 'Preview unavailable (HTTP ' + response.status + ')';
+                    return;
+                }
+                reason = response.status === 419 ? 'your session expired, reload the page' : 'server error ' + response.status;
+                if (response.status === 419) { attempt = retryDelays.length; }
+            } catch (error) { if (error.name === 'AbortError') return; }
+            if (attempt < retryDelays.length) {
+                const wait = retryDelays[attempt];
+                timer = setTimeout(() => refresh(attempt + 1), wait);
+                return;
+            }
+            status.textContent = 'Preview unavailable: ' + reason + '. Click to retry';
+            status.style.cursor = 'pointer'; status.style.textDecoration = 'underline';
+            status.onclick = () => refresh();
         };
-        const schedule = () => { clearTimeout(timer); timer = setTimeout(refresh, 1000); };
+        const schedule = () => { clearTimeout(timer); timer = setTimeout(() => refresh(), 1000); };
         // Widen the form pane automatically when the form needs more room (bidder tables, distribution lists); reset for each document.
         const pane = document.getElementById('doc-form-pane');
         const split = document.getElementById('doc-split');
@@ -572,7 +597,17 @@
         document.querySelectorAll('[data-document-type]').forEach((button) => button.addEventListener('click', () => setTimeout(fitPane, 150)));
         form.addEventListener('input', schedule);
         form.addEventListener('change', schedule);
-        document.querySelectorAll('[data-document-type]').forEach((button) => button.addEventListener('click', () => { frame.srcdoc = ''; setTimeout(refresh, 400); }));
+        document.querySelectorAll('[data-document-type]').forEach((button) => button.addEventListener('click', () => { frame.srcdoc = ''; setTimeout(() => refresh(), 400); }));
+    })();
+    // Back from Supplier Management: open the abstract again, with the entries that were typed before leaving.
+    (() => {
+        const target = modal.dataset.autoOpen;
+        if (!target) return;
+        try {
+            const saved = sessionStorage.getItem(bidderDraftKey);
+            if (saved) { pendingBidderDraft = JSON.parse(saved).map(normalizeBidderPrices); sessionStorage.removeItem(bidderDraftKey); }
+        } catch (error) { pendingBidderDraft = null; }
+        document.querySelector(`[data-document-type="${target}"]`)?.click();
     })();
 </script>
 @endsection

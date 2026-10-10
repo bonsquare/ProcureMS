@@ -498,7 +498,12 @@ class HomeController extends Controller
 
     public function storeSupplier(Request $request)
     {
-        Supplier::create($this->supplierData($request) + ['status' => 'active']);
+        $supplier = Supplier::create($this->supplierData($request) + ['status' => 'active']);
+
+        if ($abstractReturn = $this->abstractReturnRequest($request)) {
+            return redirect()->route('procurement.documents', [$abstractReturn, 'open' => 'abstract_of_bids_quotation'])
+                ->with('success', $supplier->business_name.' saved. Choose it in the Abstract of Bids.');
+        }
 
         return redirect()->route('suppliers')->with('success', 'Supplier saved successfully.');
     }
@@ -586,9 +591,24 @@ class HomeController extends Controller
         return $data;
     }
 
-    public function createSupplier()
+    public function createSupplier(Request $request)
     {
-        return view('supplier-form', $this->supplierFormData(new Supplier(['status' => 'active', 'tax_type' => 'vat', 'has_company_owner' => true])));
+        $abstractReturn = $this->abstractReturnRequest($request);
+        // Coming from an abstract, the new supplier belongs to that request's school so it shows up in the abstract's company list.
+        $supplier = new Supplier(['status' => 'active', 'tax_type' => 'vat', 'has_company_owner' => true, 'school_id' => $abstractReturn?->school_id]);
+
+        return view('supplier-form', $this->supplierFormData($supplier) + ['abstractReturn' => $abstractReturn]);
+    }
+
+    /** The request whose Abstract of Bids sent the user to Supplier Management, if the link is genuine and the user may open it. */
+    private function abstractReturnRequest(Request $request): ?ProcurementRequest
+    {
+        if ($request->input('return_to') !== 'abstract' || ! ctype_digit((string) $request->input('return_request'))) {
+            return null;
+        }
+        $procurementRequest = ProcurementRequest::find((int) $request->input('return_request'));
+
+        return $procurementRequest && $this->scopedSchoolIds()->contains($procurementRequest->school_id) ? $procurementRequest : null;
     }
 
     public function editSupplier(Supplier $supplier)
@@ -1041,6 +1061,7 @@ class HomeController extends Controller
         return view('procurement-documents', [
             'procurementRequest' => $procurementRequest,
             'stage' => $stage,
+            'autoOpen' => request('open') === 'abstract_of_bids_quotation' ? 'abstract_of_bids_quotation' : null,
             'documentTypes' => collect($this->procurementDocumentTypes())
                 ->filter(fn ($definition, $type) => in_array($type, ProcurementWorkspaceService::RECEIVING_DOCUMENT_TYPES, true) === ($stage === 'receiving'))
                 ->all(),

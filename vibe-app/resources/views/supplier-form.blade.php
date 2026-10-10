@@ -9,7 +9,12 @@
     $field = fn ($name) => $errors->has($name) ? '<span class="mt-1 block text-xs font-normal text-error">'.e($errors->first($name)).'</span>' : '';
 @endphp
 <div class="mx-auto max-w-6xl">
+@php $abstractBack = isset($abstractReturn) && $abstractReturn ? route('procurement.documents', [$abstractReturn, 'open' => 'abstract_of_bids_quotation']) : null; @endphp
+@if($abstractBack)
+<a href="{{ $abstractBack }}" class="mb-4 inline-flex min-h-10 items-center gap-2 rounded-lg bg-primary px-4 text-xs font-bold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]">arrow_back</span>Back to Abstract of Bids<span class="font-normal opacity-80">· {{ $abstractReturn->request_number }}</span></a>
+@else
 <a href="{{ route('suppliers') }}" class="mb-4 inline-flex items-center gap-1 text-xs font-bold text-action"><span class="material-symbols-outlined text-[17px]">arrow_back</span>Back to suppliers</a>
+@endif
 <header class="mb-5">
     <p class="text-[11px] font-bold uppercase tracking-[.14em] text-action">Supplier manager</p>
     <h1 class="mt-2 text-3xl font-bold">{{ $editing ? 'Edit supplier' : 'Add supplier' }}</h1>
@@ -18,6 +23,7 @@
 @if($errors->any())<div role="alert" class="civic-alert" style="border-color:#e4b4b7;background:#f8e2e4;color:#8a2f35">Please check the highlighted fields below.</div>@endif
 <form method="POST" action="{{ $editing ? route('suppliers.update', $supplier) : route('suppliers.store') }}" class="space-y-4">
     @csrf
+    @if($abstractBack)<input type="hidden" name="return_to" value="abstract"><input type="hidden" name="return_request" value="{{ $abstractReturn->id }}">@endif
     @if($editing) @method('PUT') @endif
 
     <div class="grid items-start gap-4 lg:grid-cols-2"><div class="space-y-4">
@@ -102,7 +108,7 @@
     </section>
     </div></div>
     <div class="sticky bottom-0 z-10 -mx-1 flex justify-end gap-2 border-t border-outline-variant/50 bg-white/95 px-1 py-3 backdrop-blur">
-        <a href="{{ route('suppliers') }}" class="inline-flex min-h-10 items-center rounded-lg border border-outline-variant px-4 text-xs font-bold">Cancel</a>
+        <a href="{{ $abstractBack ?? route('suppliers') }}" class="inline-flex min-h-10 items-center rounded-lg border border-outline-variant px-4 text-xs font-bold">Cancel</a>
         <button class="min-h-10 rounded-lg bg-primary px-5 text-xs font-bold text-white">{{ $editing ? 'Save changes' : 'Save supplier' }}</button>
     </div>
 </form>
