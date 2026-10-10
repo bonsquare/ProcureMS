@@ -137,6 +137,7 @@ Rules that must keep working:
 - Avoid splitting signature blocks, approval and certification sections, summary totals, the header, and small tables (`break-inside: avoid`).
 - Long tables continue across pages and repeat their column headings (`thead { display: table-header-group }`).
 - No unexpected blank pages, no clipped content, no overlapping text.
+- **The page filler never exceeds the real page.** A form page is stretched to the paper chosen in the toolbar (`min-height`, set by the print engine). In print that height is capped to the real page height (`.official-fill`, `100vh`), so a printer that falls back to a shorter paper (A4 instead of Legal) never prints an empty page after every form page. If the dialog paper differs from the toolbar paper the content can still run onto an extra page; pick the printer's real paper in the toolbar first.
 - Keep enough blank space for physical signatures. Do not compress signature blocks to fit a page.
 - Do not add a footer, page numbers, or document metadata unless the form specification allows it.
 
@@ -185,7 +186,7 @@ PR (approved) -> **RFQ -> Abstract -> NOA -> NTP -> PO** -> receiving: **IAR -> 
 
 - Stages: Request, Approval, Canvass, Award (Abstract, NOA, NTP), Purchase Order, Receiving (IAR, IARS, RIS), Complete.
 - A request is **Complete** only when its status is `completed` **and** all eight required documents exist. A status flipped early does not make a stage complete. "Mark complete" appears only when the documents are complete and is refused by the server otherwise.
-- Document Center: one **Process** button per row (opens that request's documents, or the Receiving documents for a receiving document) and an eye icon beside the progress to open the document. Progress chip: **On processing** until the request is Complete, then **Delivered**; with "x of 8 steps".
+- Document Center: **one row per request**, showing its most recently updated document (among those that match the Document type and Status filters) with a "+N more" badge when the request has other documents; paging counts requests. One **Process** button per row (opens that request's documents, or the Receiving documents for a receiving document) and an eye icon beside the progress to open the document shown. Progress chip: **On processing** until the request is Complete, then **Delivered**; with "x of 8 steps".
 - Request page: one box holds **Next action** and the button that fits the **stage** (Start canvass only at Canvass; Open documents at Award and Purchase Order and Complete; Open receiving documents at Receiving; Mark complete when allowed). Start canvass sends the user straight to the documents.
 
 ### 2.4 Documents page
@@ -193,10 +194,12 @@ PR (approved) -> **RFQ -> Abstract -> NOA -> NTP -> PO** -> receiving: **IAR -> 
 - Cards are colored by state: prepared green, not prepared light red, coming soon grey. The PR card is always prepared.
 - The document form opens as a split view: form on the left, the real document on the right (2.5). The modal starts to the right of the sidebar and widens by itself when a form needs room (bidder tables, IARS distribution).
 - The RIS generation summary is a list: number, staff name and position, issued items, RIS number.
+- **Abstract of Bids, a missing company:** the form has "Add supplier in Supplier Management" (users with `supplier.manage` only). It opens `suppliers.create?return_to=abstract&return_request={id}`, which shows a **Back to Abstract of Bids** button (and Cancel returns there); saving returns to `/procurement/{id}/documents?open=abstract_of_bids_quotation`, which reopens the abstract with the new supplier (saved under that request's school) in the company list. The companies and prices typed before leaving are kept in `sessionStorage` and restored. The return target is checked server side (digits only, a request the user may open); anything else is ignored.
+- **Notice to Proceed days:** typed by hand in "Number of calendar days to complete delivery" (no default, 1 to 365). Required by the server for the MOOE wording (`template_variant` `mooe`/`thirty_days`), hidden for the scheduled-delivery wording (SBFP). The NTP never reads from a Purchase Order. The PO form shows the NTP's days read only, and the server copies the NTP's delivery terms to the PO when the PO has none.
 
 ### 2.5 Live document preview
 
-`POST /procurement/{request}/documents/preview` runs the real save inside a transaction, renders the print page, and rolls back. It reuses every validation and rule of saving, so it can never disagree with the saved document. It debounces input (1 s) and offers fit-width and 50 / 75 / 100% zoom.
+`POST /procurement/{request}/documents/preview` runs the real save inside a transaction, renders the print page, and rolls back. It reuses every validation and rule of saving, so it can never disagree with the saved document. It debounces input (1 s) and offers fit-width and 50 / 75 / 100% zoom. A preview that fails (server restarting, dropped connection, HTTP 5xx) is retried twice by itself (1.5 s, 4 s); a failure that stays says why ("server error 503", "no connection to the server", "your session expired, reload the page") and the message can be clicked to retry. A 419 is not retried.
 
 ### 2.6 Dashboards of work
 
@@ -240,13 +243,15 @@ Each section is locked until **Edit** is pressed, then **Cancel** and **Save** (
 - **Full name and username never change** after the account exists (read-only on screen and ignored by the server, even for the master user).
 - **Master User tab** (`/user-management?tab=master-user`, master user only): the master edits their own account (full name, username, e-mail, phone, position; unique e-mail and username) and changes their password (current password required, at least 12 characters, different from the current one). Role and status are not part of this form. Written to the audit log (`master_profile_updated`, `master_password_changed`). The master user may change their own name and username; for other accounts the rule below still applies. Tests: `tests/Feature/MasterUserTabTest.php`.
 - **Only the master user changes a role.** A school administrator adds people as Viewer and cannot assign `school_admin`; role changes sent by a non-master are ignored. Nobody changes their own role or status.
-- Changing your own password needs the current password; an administrator can set another user's password. An inactive account cannot sign in. Sign-in accepts the email address or the username. User IDs look like `USR-000009`.
+- Changing your own password needs the current password; an administrator can set another user's password. An inactive account cannot sign in. Sign-in accepts the email address or the username: the box is a plain text field labelled "Email or username" (a type=email field made the browser refuse a username), and a username is matched in lower case like it is stored. User IDs look like `USR-000009`.
 
 ### 5.3 Employees and roles
 
 - Employees (not necessarily system users) with a position (for example Administrative Officer II) and an auto employee number (`EMP-000012`).
 - One person holds many roles in three groups: **BAC** (Chairperson, Vice Chairperson, Secretariat, Member, TWG Member, Observer), **Procurement** (Requesting Officer, Procurement Officer, Approver, Canvasser, Supply Officer), **Documents** (Disbursing Officer, Inspection Officer, Property Custodian, Accountant, Budget Officer, Cashier). A school adds its own role to any group.
 - Roles are stored comma separated in `bac_role`, `procurement_role`, `document_role`; always read them through `SchoolStaff::hasRole()` / `rolesFor()`, never with `=`.
+- **Add employee** and **Employee roles** (edit) dialogs both carry "Need a role that is not listed?": the role is added in the background (`school-settings.roles.store`, JSON when requested), appears ticked in the chosen group of both dialogs, and nothing typed is lost. Buttons: **Add employee** and **Update employee**.
+- **Status Active / Inactive** (`school_staff.is_active`, default active; set in both dialogs). An inactive employee stays in the list (greyed, "Inactive" badge) and can be switched back on, but is left out of the signatory lookups for documents (`SchoolStaff::active()` in the procurement and liquidation document pages). This is separate from `ended_at` (left the station, hidden everywhere).
 
 ### 5.4 Logos
 
@@ -257,6 +262,8 @@ Each section is locked until **Edit** is pressed, then **Cancel** and **Save** (
 
 - The first person of a school is entered as Given Name, Middle Initial (one letter or blank), Surname, Username, Position, Email, Contact Number, Password; the full name is assembled ("Maria D. Santos"). The role (School Administrator) is automatic and not shown.
 - Before submitting, a dialog shows the full name and username as **final and cannot be changed** and needs a tick; the server requires the confirmation too.
+- The dialog opens from a script on the page (`#identity-confirm`): submit is held until the browser's own validation passes, the dialog shows the assembled full name and the lower-case username, "Confirm and submit" stays disabled until the tick, "Go back and edit" closes it without losing anything, and confirming sets `system_user_confirmed` and sends the form. Without that script the server refused every registration.
+- **Privacy Policy:** a short plain-English policy (what is collected, why, where it is kept, consent) sits above Submit with a required checkbox `privacy_accepted`, for new-school and takeover registrations alike; the server refuses either without it. The server's date and time and the policy version are saved on the user (`users.privacy_accepted_at`, `users.privacy_policy_version`, `User::PRIVACY_POLICY_VERSION`, currently `2026-10`) and in the pre-registration audit entry. Change the version whenever the policy text changes. Existing users keep a blank value.
 
 ## 7. Screen design standards
 
@@ -267,6 +274,7 @@ Each section is locked until **Edit** is pressed, then **Cancel** and **Save** (
 - **Forms:** numbered section cards, one calm field style, sticky action bar; field values are normal weight, labels bold.
 - **Account menu:** the round user icon opens name, email, role, school, School Settings, User Management (master), Sign out.
 - **Flash messages:** one per page; a page that prints its own declares `@section('flash-handled')`.
+- **Show/hide password eye:** `partials/password-toggle.blade.php` adds one eye to every password field. It skips a field that already has its own eye next to it (the sign-in page), and hides the browser's built-in reveal button (`::-ms-reveal`), so two eyes never overlap.
 - Blade pitfall: a directive glued to the one before it (`@endif@if(`) is not compiled. Put a space or newline between them.
 
 ## 8. Local development
