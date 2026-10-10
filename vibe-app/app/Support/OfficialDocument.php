@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\AgencySetting;
 use App\Models\School;
+use App\Models\SharedLogo;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -22,9 +23,12 @@ class OfficialDocument
      */
     public static function logos(?School $school, ?AgencySetting $agency): array
     {
-        $left = self::publicUrl($agency?->department_logo_path)
+        $left = self::publicUrl(SharedLogo::department()?->path)
+            ?? self::publicUrl($agency?->department_logo_path)
             ?? (is_file(public_path('images/official-deped-logo.png')) ? asset('images/official-deped-logo.png') : null);
-        $right = self::publicUrl($school?->logo_path) ?? self::publicUrl($agency?->division_logo_path);
+        $right = self::publicUrl($school?->logo_path)
+            ?? self::publicUrl(SharedLogo::forDivision($school, $agency)?->path)
+            ?? self::publicUrl($agency?->division_logo_path);
 
         return [$left, $right];
     }

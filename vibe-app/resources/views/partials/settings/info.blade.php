@@ -23,7 +23,7 @@
 
         return basename($path).' · '.($size >= 1048576 ? round($size / 1048576, 1).' MB' : max(1, round($size / 1024)).' KB').($dimensions ? ' · '.$dimensions[0].' × '.$dimensions[1].' px' : '');
     };
-    $logoBlock = function (string $id, string $name, string $label, ?string $path) use ($logoUrl, $logoInfo) {
+    $logoBlock = function (string $id, string $name, string $label, ?string $path, bool $shared = false) use ($logoUrl, $logoInfo, $isMasterUser) {
         $url = $logoUrl($path);
         $preview = $url ? '<img src="'.e($url).'" alt="'.e($label).'" class="h-full w-full object-contain">' : '<span class="material-symbols-outlined text-[34px]" aria-hidden="true">image</span>';
         $info = $logoInfo($path) ?? 'No logo uploaded yet';
@@ -34,7 +34,7 @@
         return '<div class="w-full"><p class="text-xs font-bold">'.e($label).'</p>'
             .'<div id="'.$id.'" class="mt-1 grid h-32 w-full place-items-center overflow-hidden rounded-xl border border-dashed border-outline-variant bg-surface-low text-on-surface-variant">'.$preview.'</div>'
             .'<p data-logo-info="'.$id.'" title="'.e($info).'" class="mt-1.5 min-h-[2.25rem] break-words text-[11px] font-semibold leading-snug text-on-surface-variant" data-default="'.e($info).'">'.e($info).'</p>'
-            .'<label class="block cursor-pointer rounded-lg border border-primary/40 px-2 py-1.5 text-center text-[11px] font-bold text-primary hover:bg-primary hover:text-white">'.($url ? 'Change logo' : 'Upload logo').'<input type="file" name="'.$name.'" accept="image/png,image/jpeg,image/webp,image/gif" data-preview="'.$id.'" class="sr-only"></label>'
+            .(($shared && $url && ! $isMasterUser) ? '<p class="rounded-lg bg-surface-low px-2 py-1.5 text-center text-[10.5px] font-semibold leading-snug text-on-surface-variant">Shared logo. Only the master user can change it.</p>' : '<label class="block cursor-pointer rounded-lg border border-primary/40 px-2 py-1.5 text-center text-[11px] font-bold text-primary hover:bg-primary hover:text-white">'.($url ? 'Change logo' : 'Upload logo').'<input type="file" name="'.$name.'" accept="image/png,image/jpeg,image/webp,image/gif" data-preview="'.$id.'" class="sr-only"></label>')
             .'<div class="mt-2 rounded-lg border border-outline-variant/50 bg-surface-low/70 p-2"><p class="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Logo requirements</p><ul class="mt-1 space-y-1 text-[10.5px] leading-snug text-on-surface-variant">'.$rows.'</ul></div></div>';
     };
     $filled = fn (array $values) => collect($values)->contains(fn ($value) => filled($value));
@@ -59,7 +59,7 @@
             <section class="{{ $card }}">
                 {!! $heading('account_balance', 'Public Header', 'Printed at the top of every official document.') !!}
                 <fieldset class="mt-4 grid gap-4 sm:grid-cols-[168px_1fr]" @disabled($editingSection !== 'header')>
-                    {!! $logoBlock('logo-agency', 'department_logo', 'Agency / Department logo', $agency->department_logo_path) !!}
+                    {!! $logoBlock('logo-agency', 'department_logo', 'Agency / Department logo', $sharedDepartmentLogo?->path ?? $agency->department_logo_path, true) !!}
                     <div class="grid gap-3 sm:grid-cols-2">
                         <label class="block text-xs font-bold sm:col-span-2">Republic name<input name="republic_name" value="{{ old('republic_name', $agency->republic_name ?: 'Republic of the Philippines') }}" class="{{ $input }}"></label>
                         <label class="block text-xs font-bold sm:col-span-2">Department / Agency<input name="department_name" required value="{{ old('department_name', $agency->department_name ?: 'Department of Education') }}" class="{{ $input }}"></label>
@@ -78,17 +78,17 @@
             <section class="{{ $card }}">
                 {!! $heading('apartment', 'Division Office Details', 'The schools division and district office this school reports to.') !!}
                 <fieldset class="mt-4 grid gap-4 sm:grid-cols-[168px_1fr]" @disabled($editingSection !== 'division')>
-                    {!! $logoBlock('logo-division', 'division_logo', 'Division office logo', $agency->division_logo_path) !!}
+                    {!! $logoBlock('logo-division', 'division_logo', 'Division office logo', $sharedDivisionLogo?->path ?? $agency->division_logo_path, true) !!}
                     <div class="grid gap-3 sm:grid-cols-2">
-                        <label class="block text-xs font-bold sm:col-span-2">Region<input name="region_name" value="{{ old('region_name', $agency->region_name) }}" placeholder="e.g. Region XII" class="{{ $input }}"></label>
-                        <label class="block text-xs font-bold sm:col-span-2">School Division Office<input name="division_office" value="{{ old('division_office', $agency->division_office) }}" placeholder="e.g. Schools Division Office of Cotabato" class="{{ $input }}"></label>
+                        <label class="block text-xs font-bold sm:col-span-2">Region<input name="region_name" list="place-regions" autocomplete="off" value="{{ old('region_name', $agency->region_name) }}" placeholder="e.g. Region XII" class="{{ $input }}"></label>
+                        <label class="block text-xs font-bold sm:col-span-2">School Division Office<input name="division_office" list="place-divisions" autocomplete="off" value="{{ old('division_office', $agency->division_office) }}" placeholder="e.g. Schools Division Office of Cotabato" class="{{ $input }}"></label>
                         <label class="block text-xs font-bold sm:col-span-2">Division address<input name="division_address" value="{{ old('division_address', $agency->division_address) }}" class="{{ $input }}"></label>
                         <label class="block text-xs font-bold">Email<input type="email" name="division_email" value="{{ old('division_email', $agency->division_email) }}" class="{{ $input }}"></label>
                         <label class="block text-xs font-bold">Contact number<input name="division_phone" value="{{ old('division_phone', $agency->division_phone) }}" class="{{ $input }}"></label>
 
                         <div class="my-1 flex items-center gap-3 sm:col-span-2" role="separator" aria-label="District Office"><span class="h-px flex-1 bg-outline-variant/60"></span><span class="text-[10px] font-bold uppercase tracking-[.14em] text-on-surface-variant">District Office</span><span class="h-px flex-1 bg-outline-variant/60"></span></div>
 
-                        <label class="block text-xs font-bold sm:col-span-2">District Office<input name="district_name" value="{{ old('district_name', $agency->district_name) }}" placeholder="e.g. District III" class="{{ $input }}"></label>
+                        <label class="block text-xs font-bold sm:col-span-2">District Office<input name="district_name" list="place-districts" autocomplete="off" value="{{ old('district_name', $agency->district_name) }}" placeholder="e.g. District III" class="{{ $input }}"></label>
                         <label class="block text-xs font-bold sm:col-span-2">District address<input name="district_address" value="{{ old('district_address', $agency->district_address) }}" class="{{ $input }}"></label>
                         <label class="block text-xs font-bold">Email<input type="email" name="district_email" value="{{ old('district_email', $agency->district_email) }}" class="{{ $input }}"></label>
                         <label class="block text-xs font-bold">Contact no.<input name="district_phone" value="{{ old('district_phone', $agency->district_phone) }}" class="{{ $input }}"></label>
@@ -131,3 +131,4 @@
         form.querySelector('[data-cancel]')?.addEventListener('click', () => { window.location.href = window.location.pathname + window.location.search; });
     });
 </script>
+@include('partials.place-suggestions')
