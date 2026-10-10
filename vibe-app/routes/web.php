@@ -11,6 +11,7 @@ use App\Http\Controllers\DriveFileController;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\GoogleDriveController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\MasterUserController;
 use App\Http\Controllers\PlanningController;
 use App\Http\Controllers\SchoolManagementController;
 use App\Http\Controllers\SchoolSettingsController;
@@ -134,6 +135,8 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::delete('/drive-files/{driveFile}', [DriveFileController::class, 'destroy'])->whereNumber('driveFile')->name('drive-files.destroy');
     Route::get('/reports', [HomeController::class, 'reports'])->name('reports');
     Route::get('/user-management', [HomeController::class, 'userManagement'])->name('user-management');
+    Route::put('/user-management/master-user', [MasterUserController::class, 'update'])->name('master-user.update');
+    Route::put('/user-management/master-user/password', [MasterUserController::class, 'password'])->name('master-user.password');
     Route::get('/subscriptions', [HomeController::class, 'subscriptions'])->name('subscriptions');
     Route::get('/school-settings', [HomeController::class, 'schoolSettings'])->name('school-settings');
     Route::post('/school-settings/organization', [HomeController::class, 'updateOrganizationSettings'])->middleware('permission:organization.settings')->name('school-settings.organization');

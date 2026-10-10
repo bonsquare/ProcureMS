@@ -1802,7 +1802,7 @@ class HomeController extends Controller
     {
         abort_unless($this->isMasterUser(), 403);
 
-        return view('user-management');
+        return view('user-management', ['tab' => request('tab') === 'master-user' ? 'master-user' : 'users']);
     }
 
     /** The newest failed backup, unless a backup succeeded after it. */

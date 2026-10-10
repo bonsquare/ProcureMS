@@ -238,6 +238,7 @@ Each section is locked until **Edit** is pressed, then **Cancel** and **Save** (
 
 - Table: name, email, User ID and username, position, **official station (the school)**, system role, last sign-in, password date, status. Edit, Password. Users cannot be added here: one user manages one school.
 - **Full name and username never change** after the account exists (read-only on screen and ignored by the server, even for the master user).
+- **Master User tab** (`/user-management?tab=master-user`, master user only): the master edits their own account (full name, username, e-mail, phone, position; unique e-mail and username) and changes their password (current password required, at least 12 characters, different from the current one). Role and status are not part of this form. Written to the audit log (`master_profile_updated`, `master_password_changed`). The master user may change their own name and username; for other accounts the rule below still applies. Tests: `tests/Feature/MasterUserTabTest.php`.
 - **Only the master user changes a role.** A school administrator adds people as Viewer and cannot assign `school_admin`; role changes sent by a non-master are ignored. Nobody changes their own role or status.
 - Changing your own password needs the current password; an administrator can set another user's password. An inactive account cannot sign in. Sign-in accepts the email address or the username. User IDs look like `USR-000009`.
 
