@@ -160,7 +160,12 @@
 <section class="mb-6 rounded border border-outline-variant/30 bg-white">
     <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 px-5 py-4">
         <div><h2 class="font-semibold">School Improvement Plan (SIP)</h2><p class="mt-1 text-xs text-on-surface-variant">Three-year plan: each program lists its activities with Year 1-3 physical and financial targets. Print it on the official SIP form.</p></div>
-        @if(auth()->user()->hasPermission('planning.manage'))<button type="button" data-toggle-form="sip" class="rounded bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-primary-container">+ Add SIP Program</button>@endif
+        @if(auth()->user()->hasPermission('planning.manage'))
+        <div class="flex flex-wrap items-center gap-2">
+            <form method="POST" action="{{ route('planning.sip.import.preview') }}" enctype="multipart/form-data" class="inline-flex">@csrf<input type="hidden" name="school_id" value="{{ $selectedSchool->id }}"><label class="cursor-pointer rounded border border-primary px-4 py-2 text-xs font-semibold text-primary hover:bg-primary hover:text-white" title="Upload the school's SIP Excel file (.xlsx), check it, then confirm"><span class="material-symbols-outlined mr-1 align-middle text-[16px]">upload_file</span>Import from Excel<input type="file" name="file" accept=".xlsx" class="sr-only" onchange="this.form.submit()"></label></form>
+            <button type="button" data-toggle-form="sip" class="rounded bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-primary-container">+ Add SIP Program</button>
+        </div>
+        @endif
     </div>
     @if(auth()->user()->hasPermission('planning.manage'))
     <form data-form="sip" data-display="grid" method="POST" action="{{ route('planning.sip.store') }}" class="hidden gap-3 border-b border-outline-variant/20 bg-surface-low/60 p-5 sm:grid-cols-2 lg:grid-cols-3">@csrf

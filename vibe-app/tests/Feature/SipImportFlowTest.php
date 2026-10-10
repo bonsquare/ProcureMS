@@ -251,4 +251,34 @@ class SipImportFlowTest extends TestCase
         $this->delete(route('planning.sip.destroy', $project))->assertRedirect();
         $this->assertNull(SipProject::withoutGlobalScopes()->find($project->id));
     }
+
+    public function test_the_sip_panel_offers_import_to_planning_managers_only(): void
+    {
+        [$school, $user] = $this->tenant();
+        $viewer = User::factory()->create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'role' => 'school_staff']);
+
+        $this->actingAs($user)->get(route('planning', ['school_id' => $school->id]))->assertOk()
+            ->assertSee('Import from Excel')->assertSee(route('planning.sip.import.preview'), false)->assertSee('accept=".xlsx"', false);
+
+        $page = $this->actingAs($viewer)->get(route('planning', ['school_id' => $school->id]));
+        if ($page->getStatusCode() === 200) {
+            $page->assertDontSee('Import from Excel');
+        } else {
+            $this->assertContains($page->getStatusCode(), [302, 403]);
+        }
+    }
+
+    public function test_the_preview_page_carries_the_plan_the_issues_and_the_confirm_form(): void
+    {
+        [$school, $user] = $this->tenant();
+        $response = $this->upload($user, $school, ['B18' => 'Banana']);
+        $other = $this->get($response->headers->get('Location'))->assertOk();
+
+        $other->assertSee('id="sip-plan"', false)->assertSee('name="payload"', false)->assertSee('name="_token"', false)
+            ->assertSee('id="sip-import-confirm"', false)->assertSee('id="sip-programs"', false)->assertSee('id="sip-import-totals"', false)
+            ->assertSee('Excel row 18')->assertSee('Banana');
+
+        $named = $this->upload($user, $school, ['B10' => 'SOME OTHER SCHOOL']);
+        $this->get($named->headers->get('Location'))->assertSee('SOME OTHER SCHOOL')->assertSee('you are importing into');
+    }
 }
