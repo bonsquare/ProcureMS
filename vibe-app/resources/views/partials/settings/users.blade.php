@@ -27,8 +27,12 @@
                             <td class="px-4 py-2.5 text-on-surface-variant">{{ $user->last_login_at ? $user->last_login_at->diffForHumans() : 'Never' }}<p class="text-[11px]">Password: {{ $user->password_changed_at ? $user->password_changed_at->format('M d, Y') : 'never changed' }}</p></td>
                             <td class="px-4 py-2.5"><span class="rounded-full px-2.5 py-1 text-[11px] font-bold {{ ($user->status ?: 'active') === 'active' ? 'bg-secondary/10 text-secondary' : 'bg-outline-variant/40 text-on-surface-variant' }}">{{ str($user->status ?: 'active')->title() }}</span></td>
                             <td class="px-4 py-2.5"><div class="flex justify-end gap-1.5">
+                                @if(auth()->user()->seesAllSchools() || $user->is(auth()->user()))
                                 <button type="button" data-user-edit="{{ $user->id }}" class="inline-flex h-8 items-center gap-1 rounded-lg border border-primary/40 px-2.5 text-[11px] font-bold text-primary hover:bg-primary hover:text-white" aria-label="Edit {{ $user->name }}"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">edit</span>Edit</button>
                                 <button type="button" data-user-password="{{ $user->id }}" class="inline-flex h-8 items-center gap-1 rounded-lg border border-outline-variant px-2.5 text-[11px] font-bold text-on-surface-variant hover:bg-surface-container" aria-label="Change password for {{ $user->name }}"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">key</span>Password</button>
+                                @else
+                                <span class="inline-flex h-8 items-center gap-1 rounded-lg bg-surface-container px-2.5 text-[11px] font-bold text-on-surface-variant" title="Only the owner of this account or the master user can change it."><span class="material-symbols-outlined text-[16px]" aria-hidden="true">lock</span>View only</span>
+                                @endif
                             </div></td>
                         </tr>
                     @endforeach

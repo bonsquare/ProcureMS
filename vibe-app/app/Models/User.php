@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Models\Concerns\BelongsToOrganization;
+use App\Support\SubMasterAccess;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -91,23 +92,82 @@ class User extends Authenticatable
         return $this->hasPermission('liquidation.create');
     }
 
-    public function hasPermission(string $permission): bool
+    /** Both roles that work across every school. */
+    public const MASTER_ROLES = ['master_user', 'sub_master'];
+
+    public function isMaster(): bool
     {
-        if ($this->role === 'master_user') {
+        return $this->role === 'master_user';
+    }
+
+    public function isSubMaster(): bool
+    {
+        return $this->role === 'sub_master';
+    }
+
+    /** The master sees all schools; so does a Sub-master with at least one area on. Nobody else does. */
+    public function seesAllSchools(): bool
+    {
+        if ($this->isMaster()) {
             return true;
         }
 
-        foreach (config('permissions.roles.'.$this->role, []) as $granted) {
-            if ($granted === '*' || $granted === $permission) {
-                return true;
-            }
+        return $this->isSubMaster() && array_intersect(SubMasterAccess::sanitize($this->access), SubMasterAccess::defaults()) !== [];
+    }
 
-            if (str_ends_with($granted, '.*') && str_starts_with($permission, substr($granted, 0, -1))) {
+    /** The account forms (details, password) belong to every master and Sub-master, whatever their checklist. */
+    public function isAnyMaster(): bool
+    {
+        return in_array($this->role, self::MASTER_ROLES, true);
+    }
+
+    /** The master has every access; a Sub-master has what is on its checklist; nobody else has any. */
+    public function hasAccess(string $key): bool
+    {
+        if ($this->isMaster()) {
+            return true;
+        }
+
+        return $this->isSubMaster() && in_array($key, SubMasterAccess::sanitize($this->access), true);
+    }
+
+    public function hasPermission(string $permission): bool
+    {
+        if ($this->isMaster()) {
+            return true;
+        }
+
+        foreach ($this->grantedPermissions() as $granted) {
+            if ($this->permissionMatches($granted, $permission)) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    /** @return list<string> */
+    private function grantedPermissions(): array
+    {
+        if (! $this->isSubMaster()) {
+            return config('permissions.roles.'.$this->role, []);
+        }
+
+        $granted = ['dashboard.view', 'reports.view'];
+        foreach (SubMasterAccess::sanitize($this->access) as $key) {
+            $granted = [...$granted, ...SubMasterAccess::families($key)];
+        }
+
+        return $granted;
+    }
+
+    private function permissionMatches(string $granted, string $permission): bool
+    {
+        if ($granted === '*' || $granted === $permission) {
+            return true;
+        }
+
+        return str_ends_with($granted, '.*') && str_starts_with($permission, substr($granted, 0, -1));
     }
 
     public function activeSubscription(): ?Subscription
@@ -152,6 +212,7 @@ class User extends Authenticatable
             'last_login_at' => 'datetime',
             'password_changed_at' => 'datetime',
             'deactivated_at' => 'datetime',
+            'access' => 'array',
         ];
     }
 }

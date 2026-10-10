@@ -85,3 +85,9 @@ main th{font-size:.68rem!important}
 .civic-stage-copy small{font-size:.64rem}
 .civic-stage--complete .civic-stage-copy small{color:#2a7f64;font-weight:700}
 .civic-stage--current .civic-stage-copy small{color:#286da8;font-weight:700}
+
+/* Sidebar: the menu scrolls inside the sidebar, so a long menu never pushes the footer or the last items off the screen. */
+.civic-nav > nav { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, .35) transparent; }
+.civic-nav > nav::-webkit-scrollbar { width: 6px; }
+.civic-nav > nav::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, .35); border-radius: 999px; }
+.civic-nav > :not(nav) { flex-shrink: 0; }

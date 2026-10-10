@@ -12,7 +12,7 @@ class EnsureStationConfirmed
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
-        if (! $user || $user->role === 'master_user' || $request->routeIs('station.confirm', 'station.confirm.store', 'logout')) {
+        if (! $user || $user->seesAllSchools() || $request->routeIs('station.confirm', 'station.confirm.store', 'logout')) {
             return $next($request);
         }
 

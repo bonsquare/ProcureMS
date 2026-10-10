@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\User;
+use App\Support\SubMasterAccess;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -31,6 +32,18 @@ class UserFactory extends Factory
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
         ];
+    }
+
+    /** A Sub-master with the given access checklist (the default 13 areas when null). */
+    public function subMaster(?array $access = null): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'sub_master',
+            'status' => 'active',
+            'organization_id' => null,
+            'school_id' => null,
+            'access' => $access ?? SubMasterAccess::defaults(),
+        ]);
     }
 
     /**

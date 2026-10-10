@@ -4,9 +4,11 @@ namespace App\Models\Concerns;
 
 use App\Models\Aip;
 use App\Models\AipKra;
+use App\Models\AuditLog;
 use App\Models\Organization;
 use App\Models\ProcurementRequest;
 use App\Models\School;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 
@@ -17,7 +19,7 @@ trait BelongsToOrganization
         static::addGlobalScope('organization', function ($query) {
             $user = Auth::hasUser() ? Auth::user() : null;
             $table = $query->getModel()->getTable();
-            if ($user && $user->role !== 'master_user' && Schema::hasColumn($table, 'organization_id')) {
+            if ($user && ! $user->seesAllSchools() && Schema::hasColumn($table, 'organization_id')) {
                 // A tenant user without an organization must never fall back to an
                 // unscoped query. Returning no rows is safer than leaking data.
                 if (! $user->organization_id) {
@@ -60,7 +62,15 @@ trait BelongsToOrganization
             }
 
             $user = Auth::user();
-            if (! $user || $user->role === 'master_user') {
+            if (! $user || $user->seesAllSchools()) {
+                return;
+            }
+
+            // A Sub-master with no area on still keeps their own account and the audit trail of their own actions.
+            if ($user->isAnyMaster() && (
+                ($model instanceof User && $model->is($user))
+                || ($model instanceof AuditLog && (int) $model->user_id === (int) $user->id)
+            )) {
                 return;
             }
 

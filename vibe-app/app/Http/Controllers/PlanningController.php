@@ -551,7 +551,7 @@ class PlanningController extends Controller
     {
         $user = request()->user();
 
-        return $user->role === 'master_user' || $user->organization_id
+        return $user->seesAllSchools() || $user->organization_id
             ? School::query()->pluck('id')
             : School::query()->whereKey($user->school_id)->pluck('id');
     }

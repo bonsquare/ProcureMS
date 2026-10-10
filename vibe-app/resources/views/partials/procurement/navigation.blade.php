@@ -1,5 +1,5 @@
 @php
-    $isMasterUser = auth()->user()?->role === 'master_user';
+    $isMasterUser = auth()->user()?->seesAllSchools();
     $navigation = [
         ['icon' => 'dashboard', 'label' => 'Dashboard', 'route' => 'home'],
         ['icon' => 'shopping_cart', 'label' => 'Procurement', 'route' => 'procurement'],
@@ -12,9 +12,9 @@
     }
     if ($isMasterUser) {
         $navigation[] = ['icon' => 'group', 'label' => 'User Management', 'route' => 'user-management'];
-        $navigation[] = ['icon' => 'card_membership', 'label' => 'Subscriptions', 'route' => 'subscriptions'];
+        if (auth()->user()->hasAccess('subscriptions')) $navigation[] = ['icon' => 'card_membership', 'label' => 'Subscriptions', 'route' => 'subscriptions'];
     }
-    if ($isMasterUser) {
+    if ($isMasterUser && auth()->user()->hasAccess('schools')) {
         $navigation[] = ['icon' => 'domain', 'label' => 'School Management', 'route' => 'school-management'];
     }
     $navigation[] = ['icon' => 'settings', 'label' => 'School Settings', 'route' => 'school-settings'];

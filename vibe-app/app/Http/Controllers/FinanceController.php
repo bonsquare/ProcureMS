@@ -24,7 +24,7 @@ class FinanceController extends Controller
 
     private function isMaster(): bool
     {
-        return request()->user()->role === 'master_user';
+        return request()->user()->seesAllSchools();
     }
 
     private function schoolIds()

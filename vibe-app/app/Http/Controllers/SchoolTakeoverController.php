@@ -14,15 +14,17 @@ class SchoolTakeoverController extends Controller
 
     public function approve(Request $request, SchoolTakeoverRequest $takeover): RedirectResponse
     {
-        abort_unless($request->user()?->role === 'master_user', 403);
-        $this->takeovers->approve($takeover, $request->user(), $this->note($request));
+        abort_unless($request->user()?->hasAccess('transfers'), 403);
+        $data = $request->validate(['decision_note' => ['nullable', 'string', 'max:500'], 'school_id' => ['nullable', 'integer']]);
+        $this->takeovers->approve($takeover, $request->user(), $data['decision_note'] ?? null, isset($data['school_id']) ? (int) $data['school_id'] : null);
+        $takeover->refresh();
 
         return $this->back($takeover, $takeover->user?->name.' now manages '.$takeover->school?->name.'.');
     }
 
     public function decline(Request $request, SchoolTakeoverRequest $takeover): RedirectResponse
     {
-        abort_unless($request->user()?->role === 'master_user', 403);
+        abort_unless($request->user()?->hasAccess('transfers'), 403);
         $this->takeovers->decline($takeover, $request->user(), $this->note($request));
 
         return $this->back($takeover, 'Takeover request declined.');
@@ -35,6 +37,6 @@ class SchoolTakeoverController extends Controller
 
     private function back(SchoolTakeoverRequest $takeover, string $message): RedirectResponse
     {
-        return redirect()->route('school-management.show', $takeover->school_id)->with('success', $message);
+        return redirect()->route('transfer-requests')->with('success', $message);
     }
 }

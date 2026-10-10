@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\School;
+use App\Models\SchoolTakeoverRequest;
 use App\Models\StationTransferRequest;
 use App\Models\User;
+use App\Services\SchoolTakeoverService;
 use App\Services\StationTransferService;
 use Illuminate\Http\Request;
 
@@ -14,7 +16,7 @@ class StationTransferController extends Controller
 
     public function index(Request $request)
     {
-        abort_if($request->user()->role === 'master_user', 403);
+        abort_if($request->user()->seesAllSchools(), 403);
 
         return redirect()->route('school-settings', ['ui' => 'staff-save-v7', 'tab' => 'transfer']);
     }
@@ -34,7 +36,7 @@ class StationTransferController extends Controller
             'destinationSchools' => School::withoutGlobalScopes()->where('status', 'active')->where('id', '!=', $user->school_id)
                 ->get(['id', 'name', 'division', 'district'])
                 ->reject(fn (School $school) => $this->transfers->incomingInProgress($school))
-                ->each(fn (School $school) => $school->occupied = User::withoutGlobalScopes()->where('school_id', $school->id)->where('role', '!=', 'master_user')->where(fn ($q) => $q->whereNull('status')->orWhere('status', 'active'))->exists())
+                ->each(fn (School $school) => $school->occupied = User::withoutGlobalScopes()->where('school_id', $school->id)->whereNotIn('role', User::MASTER_ROLES)->where(fn ($q) => $q->whereNull('status')->orWhere('status', 'active'))->exists())
                 ->sortBy('name')->values(),
             'station' => School::withoutGlobalScopes()->find($user->school_id),
         ];
@@ -43,7 +45,8 @@ class StationTransferController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'destination' => ['required', 'in:registered,new'],
+            'destination' => ['required', 'in:registered,new,official_station,other'],
+            'subject' => ['required_if:destination,other', 'nullable', 'string', 'max:255'],
             'to_school_id' => ['required_if:destination,registered', 'nullable', 'integer'],
             'new_school.name' => ['required_if:destination,new', 'nullable', 'string', 'max:255'],
             'new_school.school_type' => ['nullable', 'string', 'max:100'],
@@ -58,19 +61,21 @@ class StationTransferController extends Controller
 
         $registered = $data['destination'] === 'registered';
         $this->transfers->request($request->user(), [
+            'kind' => in_array($data['destination'], ['official_station', 'other'], true) ? $data['destination'] : 'transfer',
+            'subject' => $data['subject'] ?? null,
             'reason' => $data['reason'],
             'to_school_id' => $registered ? (int) $data['to_school_id'] : null,
-            'proposed_school' => $registered ? null : $data['new_school'],
+            'proposed_school' => $registered ? null : ($data['new_school'] ?? null),
         ]);
 
-        return redirect()->to(route('school-settings', ['ui' => 'staff-save-v7', 'tab' => 'transfer']))->with('success', 'Transfer request sent to the master user.');
+        return redirect()->to(route('school-settings', ['ui' => 'staff-save-v7', 'tab' => 'transfer']))->with('success', 'Request sent to the master user.');
     }
 
     public function cancel(Request $request, StationTransferRequest $transfer)
     {
         $this->transfers->cancel($transfer, $request->user());
 
-        return redirect()->to(route('school-settings', ['ui' => 'staff-save-v7', 'tab' => 'transfer']))->with('success', 'Transfer request cancelled.');
+        return redirect()->to(route('school-settings', ['ui' => 'staff-save-v7', 'tab' => 'transfer']))->with('success', 'Request cancelled.');
     }
 
     public function review(Request $request, StationTransferRequest $transfer)
@@ -100,12 +105,15 @@ class StationTransferController extends Controller
 
     public function queue(Request $request)
     {
-        abort_unless($request->user()->role === 'master_user', 403);
+        abort_unless($request->user()->hasAccess('transfers'), 403);
         $this->transfers->expireDue();
         $with = ['user', 'fromSchool', 'toSchool', 'decider'];
 
         return view('transfer-requests', [
             'activeNavRoute' => 'school-settings',
+            'takeoverQueue' => app(SchoolTakeoverService::class)->waitingForSchool(),
+            'vacantSchools' => app(SchoolTakeoverService::class)->vacantSchools(),
+            'takeoverHistory' => SchoolTakeoverRequest::with(['user', 'school', 'decider'])->where('status', '!=', 'pending')->latest('decided_at')->latest('id')->limit(50)->get(),
             'pending' => StationTransferRequest::with($with)->where('status', 'pending')->oldest('id')->get(),
             'history' => StationTransferRequest::with($with)->where('status', '!=', 'pending')->latest('id')->limit(50)->get(),
         ]);
@@ -113,20 +121,20 @@ class StationTransferController extends Controller
 
     public function approve(Request $request, StationTransferRequest $transfer)
     {
-        abort_unless($request->user()->role === 'master_user', 403);
-        $note = $request->validate(['decision_note' => ['nullable', 'string', 'max:500']])['decision_note'] ?? null;
-        $this->transfers->approve($transfer, $request->user(), $note);
+        abort_unless($request->user()->hasAccess('transfers'), 403);
+        $data = $request->validate(['decision_note' => ['nullable', 'string', 'max:500'], 'school_id' => ['nullable', 'integer']]);
+        $this->transfers->approve($transfer, $request->user(), $data['decision_note'] ?? null, isset($data['school_id']) ? (int) $data['school_id'] : null);
 
-        return $this->afterDecision($request, $transfer)->with('success', 'Transfer approved. The user confirms the new station at next sign-in.');
+        return $this->afterDecision($request, $transfer)->with('success', $transfer->refresh()->kind === 'other' ? 'Request approved.' : 'Approved. The user confirms the new station at next sign-in.');
     }
 
     public function decline(Request $request, StationTransferRequest $transfer)
     {
-        abort_unless($request->user()->role === 'master_user', 403);
+        abort_unless($request->user()->hasAccess('transfers'), 403);
         $note = $request->validate(['decision_note' => ['nullable', 'string', 'max:500']])['decision_note'] ?? null;
         $this->transfers->decline($transfer, $request->user(), $note);
 
-        return $this->afterDecision($request, $transfer)->with('success', 'Transfer request declined.');
+        return $this->afterDecision($request, $transfer)->with('success', 'Request declined.');
     }
 
     /** Back to the school page when the decision was made there, otherwise to the request queue. */

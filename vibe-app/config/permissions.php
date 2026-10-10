@@ -1,5 +1,7 @@
 <?php
 
+// The master_user has every permission. A sub_master gets the permission families of the work areas on its
+// checklist (see App\Support\SubMasterAccess), plus dashboard.view and reports.view.
 return [
     'roles' => [
         'school_admin' => ['*'],

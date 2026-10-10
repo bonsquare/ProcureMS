@@ -25,7 +25,7 @@ class AuthController extends Controller
 
     public function register()
     {
-        return view('auth.register', ['vacantSchools' => app(SchoolTakeoverService::class)->vacantSchools()]);
+        return view('auth.register');
     }
 
     public function store(Request $request)
@@ -56,7 +56,7 @@ class AuthController extends Controller
         }
 
         $user = $request->user();
-        if ($user?->role !== 'master_user' && $user?->school?->status !== 'active') {
+        if (! $user?->seesAllSchools() && $user?->school?->status !== 'active') {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
@@ -179,7 +179,7 @@ class AuthController extends Controller
     private function storeTakeover(Request $request)
     {
         $data = $request->validate([
-            'takeover_school_id' => ['required', 'integer'],
+            'takeover_note' => ['nullable', 'string', 'max:500'],
             'system_user_given_name' => ['required', 'string', 'max:100'],
             'system_user_middle_initial' => ['nullable', 'string', 'size:1', 'alpha'],
             'system_user_surname' => ['required', 'string', 'max:100'],
@@ -190,7 +190,6 @@ class AuthController extends Controller
             'system_user_password' => ['required', 'string', 'min:8', 'confirmed'],
             'system_user_confirmed' => ['accepted'],
         ], [
-            'takeover_school_id.required' => 'Choose the vacant school you will take over.',
             'system_user_confirmed.accepted' => 'Please confirm that your full name and username are final.',
             'system_user_middle_initial.size' => 'The middle initial is one letter only, or leave it blank.',
             'system_user_middle_initial.alpha' => 'The middle initial is one letter only, or leave it blank.',
@@ -204,11 +203,11 @@ class AuthController extends Controller
             'phone' => $data['system_user_phone'],
             'password' => $data['system_user_password'],
             'position' => $data['system_user_position'],
-        ], (int) $data['takeover_school_id']);
+        ], $data['takeover_note'] ?? null);
 
         return redirect()
             ->route('login')
-            ->with('success', 'Registration submitted. The master account will review your request to take over the school and activate your account.');
+            ->with('success', 'Registration submitted. The master account will review your request, assign your Official Station and activate your account.');
     }
 
     public function destroy(Request $request)

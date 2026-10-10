@@ -18,8 +18,10 @@ class SchoolSettingsController extends Controller
 {
     public function updateUser(Request $request, User $user): RedirectResponse
     {
+        $this->refuseMasterTargets($user);
+        $this->refuseOtherAccounts($request, $user);
         $school = $this->school($request, $user->school_id);
-        $isMaster = $request->user()->role === 'master_user';
+        $isMaster = $request->user()->seesAllSchools();
         $data = $request->validate([
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'position' => ['nullable', 'string', 'max:255'],
@@ -48,6 +50,8 @@ class SchoolSettingsController extends Controller
 
     public function changePassword(Request $request, User $user): RedirectResponse
     {
+        $this->refuseMasterTargets($user);
+        $this->refuseOtherAccounts($request, $user);
         $school = $this->school($request, $user->school_id);
         $rules = ['password' => ['required', 'string', 'min:8', 'confirmed']];
         if ($user->is($request->user())) {
@@ -127,12 +131,24 @@ class SchoolSettingsController extends Controller
     }
 
     /** The school being edited, which the signed-in user must be allowed to manage. */
+    /** The master and the Sub-masters are managed only in the Master User tab, never through a school's user list. */
+    private function refuseMasterTargets(User $user): void
+    {
+        abort_if(in_array($user->role, User::MASTER_ROLES, true), 403, 'Master accounts are managed in the Master User tab.');
+    }
+
+    /** A school's own user can change only their own account here; other accounts are view only. The master and Sub-masters manage all. */
+    private function refuseOtherAccounts(Request $request, User $user): void
+    {
+        abort_unless($request->user()->seesAllSchools() || $user->is($request->user()), 403, 'You can only change your own account.');
+    }
+
     private function school(Request $request, ?int $schoolId = null): School
     {
         $schoolId ??= (int) $request->input('school_id');
         $user = $request->user();
         abort_unless($schoolId, 422, 'Choose a school first.');
-        if ($user->role !== 'master_user') {
+        if (! $user->seesAllSchools()) {
             abort_unless((int) $user->school_id === $schoolId, 404);
         }
 
@@ -143,7 +159,7 @@ class SchoolSettingsController extends Controller
     private function assignableRoles(Request $request, ?User $target = null): array
     {
         $roles = array_keys(User::ROLES);
-        if ($request->user()->role !== 'master_user' && ! ($target && $target->role === 'school_admin')) {
+        if (! $request->user()->seesAllSchools() && ! ($target && $target->role === 'school_admin')) {
             $roles = array_values(array_diff($roles, ['school_admin']));
         }
 

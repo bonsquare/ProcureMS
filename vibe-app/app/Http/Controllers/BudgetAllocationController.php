@@ -14,6 +14,7 @@ use App\Services\DocumentNumberService;
 use App\Services\FiscalYearService;
 use App\Services\MasterTransactionService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -40,7 +41,7 @@ class BudgetAllocationController extends Controller
     {
         $user = request()->user();
 
-        return $user->role === 'master_user' || $user->organization_id
+        return $user->seesAllSchools() || $user->organization_id
             ? School::query()->pluck('id')
             : School::query()->whereKey($user->school_id)->pluck('id');
     }
@@ -63,7 +64,7 @@ class BudgetAllocationController extends Controller
         ChartOfAccount::ensureDefaults($user->organization_id);
 
         return ChartOfAccount::query()
-            ->when($user->role === 'master_user' && ! $user->organization_id, fn ($q) => $q->whereNull('organization_id'))
+            ->when($user->seesAllSchools() && ! $user->organization_id, fn ($q) => $q->whereNull('organization_id'))
             ->orderBy('code')->get();
     }
 
@@ -170,7 +171,7 @@ class BudgetAllocationController extends Controller
         $data = $this->validated($request);
         $organizationId = (int) School::withoutGlobalScopes()->whereKey($data['school_id'])->value('organization_id');
         app(FiscalYearService::class)->assertOpen($organizationId, (int) $data['fiscal_year']);
-        $item = \Illuminate\Support\Facades\DB::transaction(function () use ($data, $request, $organizationId) {
+        $item = DB::transaction(function () use ($data, $request, $organizationId) {
             $transaction = app(MasterTransactionService::class)->create(
                 School::findOrFail($data['school_id']),
                 (int) $data['fiscal_year'],

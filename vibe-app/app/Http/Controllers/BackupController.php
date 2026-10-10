@@ -61,6 +61,6 @@ class BackupController extends Controller
 
     private function authorizeMaster(Request $request): void
     {
-        abort_unless($request->user()?->role === 'master_user', 403);
+        abort_unless($request->user()?->hasAccess('backup'), 403);
     }
 }

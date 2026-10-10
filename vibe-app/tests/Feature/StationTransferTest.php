@@ -360,7 +360,7 @@ class StationTransferTest extends TestCase
         $master = $this->master();
 
         $this->actingAs($user)->get($this->transferTab())->assertOk()
-            ->assertSee('Request a station transfer')->assertSee($schoolB->name)->assertSee('My school isn')
+            ->assertSee('Make a request')->assertSee($schoolB->name)->assertSee('My school isn')
             ->assertSee($busy->name.' ·', false)->assertSee('needs acceptance')->assertSee('vacant');
 
         $request = $service->request($user, ['to_school_id' => $schoolB->id, 'reason' => 'Division order']);

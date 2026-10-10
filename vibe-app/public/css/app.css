@@ -2,3 +2,19 @@
 html { min-width: 320px; }
 button, select, input { font: inherit; }
 .procurement-add-good:hover { background-color: #00236f !important; color: #ffffff !important; }
+
+/* Sidebar: the menu scrolls inside the sidebar, so a long menu never pushes the footer or the last items off the screen. */
+aside.fixed.inset-y-0 > nav { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, .35) transparent; }
+aside.fixed.inset-y-0 > nav::-webkit-scrollbar { width: 6px; }
+aside.fixed.inset-y-0 > nav::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, .35); border-radius: 999px; }
+aside.fixed.inset-y-0 > :not(nav) { flex-shrink: 0; }
+
+/* Sidebar look shared with the Procurement pages (civic navigation): paler navy, 15rem wide, same links. */
+aside.fixed.inset-y-0.w-72 { width: 15rem !important; background: #103967 !important; }
+@media (min-width: 768px) {
+  .md\:pl-72 { padding-left: 15rem !important; }
+  header.md\:left-72 { left: 15rem !important; }
+}
+aside.fixed.inset-y-0 > nav a, aside.fixed.inset-y-0 > nav summary { min-height: 44px; border-radius: .55rem; padding: .65rem .75rem; font-size: .875rem; font-weight: 500; color: #ffffffc9; }
+aside.fixed.inset-y-0 > nav a:hover, aside.fixed.inset-y-0 > nav summary:hover { background: #ffffff12 !important; color: #fff; }
+aside.fixed.inset-y-0 > nav a.bg-primary-container { background: #ffffff18 !important; color: #fff; font-weight: 700; box-shadow: inset 3px 0 0 #55c79e; }
