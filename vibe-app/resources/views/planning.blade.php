@@ -2,7 +2,7 @@
 
 @section('title', 'Planning')
 @section('section', 'Planning')
-@section('crumb', 'SIP · AIP · PPMP · APP')
+@section('crumb', 'SIP · AIP · SOB · APP')
 
 @section('content')
 @php
@@ -13,7 +13,7 @@
     <div>
         <div class="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary"><span class="material-symbols-outlined text-base">account_tree</span> Integrated School Planning</div>
         <h1 class="text-3xl font-semibold tracking-tight">Planning & Procurement Programs</h1>
-        <p class="mt-1 text-sm text-on-surface-variant">Connect SIP priorities to AIP funding, PPMP procurement, APP approval, and transaction history.</p>
+        <p class="mt-1 text-sm text-on-surface-variant">Connect SIP priorities to AIP funding, the quarterly School Operating Budget, APP approval, and transaction history.</p>
     </div>
     <form method="GET" action="{{ route('planning') }}" class="flex flex-wrap gap-2 rounded border border-outline-variant/40 bg-white p-3">
         <label class="text-xs font-semibold text-on-surface-variant">School
@@ -33,7 +33,7 @@
 
 <section id="dashboard" class="mb-6">
     @php
-        // One line per step of the planning flow: SIP -> AIP -> PPMP -> APP, with what exists for the selected school and year.
+        // One line per step of the planning flow: SIP -> AIP -> SOB -> APP, with what exists for the selected school and year.
         $latestSipYear = $sipProjects->max('school_year');
         $sipNow = $sipProjects->where('school_year', $latestSipYear);
         $sipActivities = $sipNow->flatMap->activities;
@@ -45,24 +45,24 @@
 
         $aipsYear = $aips->where('fiscal_year', $year);
         $aipTotal = $aipsYear->sum(fn ($a) => $a->activities->sum(fn ($activity) => $activity->total));
-        $ppmpYear = $ppmpPlans->where('fiscal_year', $year);
-        $ppmpTotal = $ppmpYear->sum(fn ($plan) => $plan->items->sum('estimated_total_cost'));
+        $sobYear = $sobPlans->where('fiscal_year', $year);
+        $sobTotal = $sobYear->sum(fn ($plan) => $plan->items->sum('amount'));
         $appTotal = $appPlan ? $appPlan->items->sum('estimated_total_cost') : 0;
 
         // state: done (green), current (amber: started, not approved yet), todo (grey)
         $steps = [
             ['sip', 'flag', 'School Improvement Plan', 'SIP', $sipNow->count().' program'.($sipNow->count() === 1 ? '' : 's'), $sipActivities->count().' activities · '.$peso($sipTotal).' over 3 years', $sipNow->isNotEmpty() ? 'done' : 'todo', $sipNow->isNotEmpty() ? 'Entered' : 'Not started'],
             ['aip', 'event_note', 'Annual Implementation Plan', 'AIP · FY '.$year, $aipsYear->count().' plan'.($aipsYear->count() === 1 ? '' : 's'), $aipsYear->where('status', 'approved')->count().' approved · '.$peso($aipTotal), $aipsYear->where('status', 'approved')->isNotEmpty() ? 'done' : ($aipsYear->isNotEmpty() ? 'current' : 'todo'), $aipsYear->where('status', 'approved')->isNotEmpty() ? 'Approved' : ($aipsYear->isNotEmpty() ? 'Awaiting approval' : 'Not started')],
-            ['ppmp', 'inventory_2', 'Project Procurement Management Plan', 'PPMP · FY '.$year, $ppmpYear->count().' plan'.($ppmpYear->count() === 1 ? '' : 's'), $ppmpYear->where('status', 'approved')->count().' approved · '.$peso($ppmpTotal), $ppmpYear->where('status', 'approved')->isNotEmpty() ? 'done' : ($ppmpYear->isNotEmpty() ? 'current' : 'todo'), $ppmpYear->where('status', 'approved')->isNotEmpty() ? 'Approved' : ($ppmpYear->isNotEmpty() ? 'Awaiting approval' : 'Not started')],
+            ['sob', 'account_balance_wallet', 'School Operating Budget', 'SOB · FY '.$year, $sobYear->count().' quarter'.($sobYear->count() === 1 ? '' : 's'), $sobYear->where('status', 'approved')->count().' approved · '.$peso($sobTotal), $sobYear->where('status', 'approved')->isNotEmpty() ? 'done' : ($sobYear->isNotEmpty() ? 'current' : 'todo'), $sobYear->where('status', 'approved')->isNotEmpty() ? 'Approved' : ($sobYear->isNotEmpty() ? 'Awaiting approval' : 'Not started')],
             ['app', 'fact_check', 'Annual Procurement Plan', 'APP · FY '.$year, ($appPlan?->items->count() ?? 0).' item'.(($appPlan?->items->count() ?? 0) === 1 ? '' : 's'), $appPlan ? $peso($appTotal) : 'Not generated yet', $appPlan?->status === 'approved' ? 'done' : ($appPlan ? 'current' : 'todo'), $appPlan?->status === 'approved' ? 'Approved' : ($appPlan ? ucfirst($appPlan->status) : 'Not started')],
         ];
         $doneCount = collect($steps)->where(6, 'done')->count();
         $nextStep = collect($steps)->first(fn ($step) => $step[6] !== 'done');
         $guidance = [
             'sip' => ['Start with the SIP', "Enter the school's programs and their activities for the three-year plan."],
-            'aip' => $aipsYear->isNotEmpty() ? ['Approve the AIP for FY '.$year, 'Approving it lets you start the PPMP. The AIP is for reports and is not connected to the Budget.'] : ['Create the AIP for FY '.$year, 'Turn the SIP programs into the annual plan with a budget per quarter and source of fund.'],
-            'ppmp' => $ppmpYear->isNotEmpty() ? ['Approve the PPMP for FY '.$year, 'Once approved, its items feed the Annual Procurement Plan.'] : ['Prepare the PPMP for FY '.$year, 'List the items to buy for each AIP activity, with quantity and estimated cost.'],
-            'app' => $appPlan ? ['Approve the APP for FY '.$year, 'The approved APP is the source of every Purchase Request.'] : ['Generate the APP for FY '.$year, 'Collects the approved PPMP items into the Annual Procurement Plan.'],
+            'aip' => $aipsYear->isNotEmpty() ? ['Approve the AIP for FY '.$year, 'Approving it lets you start the SOB. The AIP is for reports and is not connected to the Budget.'] : ['Create the AIP for FY '.$year, 'Turn the SIP programs into the annual plan with a budget per quarter and source of fund.'],
+            'sob' => $sobYear->isNotEmpty() ? ['Approve the SOB for FY '.$year, 'Each approved quarter creates its Budget allotments and feeds the Annual Procurement Plan.'] : ['Prepare the SOB for FY '.$year, 'For each quarter, pick the AIP activities that have an actual budget and add their items.'],
+            'app' => $appPlan ? ['Approve the APP for FY '.$year, 'The approved APP is the source of every Purchase Request.'] : ['Generate the APP for FY '.$year, 'Collects the items of the approved SOBs into the Annual Procurement Plan.'],
         ];
         $stateStyle = [
             'done' => ['bg-secondary/10 text-secondary', 'check_circle', 'border-secondary/40'],
@@ -98,7 +98,7 @@
         </div>
     </div>
 
-    {{-- The flow: SIP -> AIP -> PPMP -> APP --}}
+    {{-- The flow: SIP -> AIP -> SOB -> APP --}}
     <ol class="grid gap-3 sm:grid-cols-2 xl:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr_auto_auto] xl:items-stretch xl:gap-2">
         @foreach($steps as $n => [$key, $icon, $title, $short, $line, $sub, $state, $stateLabel])
             @php [$chip, $stateIcon, $edge] = $stateStyle[$state]; @endphp
@@ -295,6 +295,39 @@
     </tbody></table></div>
 </section>
 
+</div>
+
+<div data-panel="sob" class="hidden">
+<section class="mb-6 rounded border border-outline-variant/30 bg-white">
+    <div class="border-b border-outline-variant/20 px-5 py-4"><h2 class="font-semibold">School Operating Budget (SOB) · FY {{ $year }}</h2><p class="mt-1 text-xs text-on-surface-variant">One SOB for each quarter. Pick the AIP activities that have an actual budget in the quarter and add their items. Approving a quarter creates its Budget allotments.</p></div>
+    @php $aipApproved = $aips->where('fiscal_year', $year)->where('status', 'approved')->isNotEmpty(); @endphp
+    @unless($aipApproved)<div class="border-b border-outline-variant/20 bg-amber-50 px-5 py-3 text-xs text-amber-900">Approve the AIP for FY {{ $year }} first. The SOB is built from it.</div>@endunless
+    <div class="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-4">
+        @foreach(\App\Models\SobPlan::QUARTERS as $quarter => $quarterLabel)
+            @php $quarterPlans = $sobYear->where('quarter', $quarter); @endphp
+            <div class="flex flex-col rounded-lg border border-outline-variant/40 p-4">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-primary">{{ $quarterLabel }}</h3>
+                @forelse($quarterPlans as $sob)
+                    <div class="mt-3 rounded border border-outline-variant/30 bg-surface-low/50 p-3">
+                        <div class="flex items-center justify-between gap-2"><span class="text-sm font-semibold">{{ $sob->fund_source }}</span><span class="rounded-full px-2 py-0.5 text-[10px] font-bold {{ $sob->status === 'approved' ? 'bg-secondary/10 text-secondary' : 'bg-amber-100 text-amber-800' }}">{{ $sob->status === 'approved' ? 'Approved' : 'Draft' }}</span></div>
+                        <p class="mt-1 text-lg font-semibold text-primary">{{ $peso($sob->items->sum('amount')) }}</p>
+                        <p class="text-xs text-on-surface-variant">{{ $sob->items->count() }} item{{ $sob->items->count() === 1 ? '' : 's' }}</p>
+                        <a href="{{ route('planning.sob.show', $sob) }}" class="mt-2 inline-block rounded border border-primary px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary hover:text-white">Open</a>
+                    </div>
+                @empty
+                    <p class="mt-3 text-xs text-on-surface-variant">Not started.</p>
+                @endforelse
+                @if(auth()->user()->hasPermission('planning.manage') && $aipApproved)
+                    <form method="POST" action="{{ route('planning.sob.store') }}" class="mt-3 space-y-2">@csrf
+                        <input type="hidden" name="school_id" value="{{ $selectedSchool->id }}"><input type="hidden" name="fiscal_year" value="{{ $year }}"><input type="hidden" name="quarter" value="{{ $quarter }}">
+                        <label class="block text-[11px] font-semibold text-on-surface-variant">Fund<input name="fund_source" value="MOOE" maxlength="100" class="{{ $inputClass }}"></label>
+                        <button class="w-full rounded bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary-container">Create SOB</button>
+                    </form>
+                @endif
+            </div>
+        @endforeach
+    </div>
+</section>
 </div>
 
 <div data-panel="ppmp" class="hidden">

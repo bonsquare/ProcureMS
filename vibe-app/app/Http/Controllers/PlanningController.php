@@ -16,6 +16,7 @@ use App\Models\School;
 use App\Models\SipActivity;
 use App\Models\SipPlan;
 use App\Models\SipProject;
+use App\Models\SobPlan;
 use App\Services\FiscalYearService;
 use App\Services\MasterTransactionService;
 use App\Services\SipAipService;
@@ -48,6 +49,7 @@ class PlanningController extends Controller
             'sipProjects' => SipProject::with(['transaction', 'activities'])->where('school_id', $selectedSchool->id)->orderByDesc('school_year')->latest('id')->get(),
             'sipPlans' => SipPlan::where('school_id', $selectedSchool->id)->get()->keyBy('start_year'),
             'aips' => Aip::with(['sipProject', 'activities'])->where('school_id', $selectedSchool->id)->orderByDesc('fiscal_year')->get(),
+            'sobPlans' => SobPlan::with('items')->where('school_id', $selectedSchool->id)->orderBy('fiscal_year')->orderBy('quarter')->get(),
             'ppmpPlans' => PpmpPlan::with(['items', 'aip', 'transaction'])->where('school_id', $selectedSchool->id)->orderByDesc('fiscal_year')->latest('id')->get(),
             'appPlan' => AppPlan::with(['items.ppmpItem.plan.transaction.procurementRequests', 'items.requestItems.procurementRequest'])->where('school_id', $selectedSchool->id)->where('fiscal_year', $year)->first(),
             'fundSources' => FundSource::where('organization_id', $selectedSchool->organization_id)->orderBy('name')->get(),
