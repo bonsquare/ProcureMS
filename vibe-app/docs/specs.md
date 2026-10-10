@@ -238,6 +238,7 @@ Each section is locked until **Edit** is pressed, then **Cancel** and **Save** (
 
 - Table: name, email, User ID and username, position, **official station (the school)**, system role, last sign-in, password date, status. Edit, Password. Users cannot be added here: one user manages one school.
 - **Full name and username never change** after the account exists (read-only on screen and ignored by the server, even for the master user).
+- **Master User tab** (`/user-management?tab=master-user`, master user only): the master edits their own account (full name, username, e-mail, phone, position; unique e-mail and username) and changes their password (current password required, at least 12 characters, different from the current one). Role and status are not part of this form. Written to the audit log (`master_profile_updated`, `master_password_changed`). The master user may change their own name and username; for other accounts the rule below still applies. Tests: `tests/Feature/MasterUserTabTest.php`.
 - **Only the master user changes a role.** A school administrator adds people as Viewer and cannot assign `school_admin`; role changes sent by a non-master are ignored. Nobody changes their own role or status.
 - Changing your own password needs the current password; an administrator can set another user's password. An inactive account cannot sign in. Sign-in accepts the email address or the username. User IDs look like `USR-000009`.
 
@@ -401,3 +402,30 @@ Files: `Dockerfile` (PHP 8.4 with FrankenPHP), `deploy/Caddyfile`, `deploy/php.i
 - **Logs:** `railway logs` (and `railway logs --build`). **Variables:** `railway variables --kv`.
 - **Run a command on the server** (for example `master:create`): `railway ssh` needs an SSH key registered with Railway (`railway ssh keys add`); register a key, run the command, and remove the key again.
 - The first deploy ran the migrations by itself (`entrypoint.sh`); every later deploy runs new migrations the same way.
+
+## 17. Shared logos, Google Drive and database backup
+
+Design: `docs/superpowers/specs/2026-10-10-google-drive-and-shared-logos-design.md`.
+
+### Shared logos
+- The **department (DepEd) logo is one for the whole system** and the **division logo is one per division**, kept in `shared_logos` on the Railway volume (`public/logos`). The school logo stays one per school. The district has no logo of its own.
+- A school's division is its own profile first, then the agency record (`division_name`, then `division_office`), written as `region|division` in lower case with spaces collapsed (`SharedLogo::keyForSchool`). A blank division has no shared logo.
+- The first upload of a shared logo sets it for everyone. **Replacing an existing one is for the master user only**; a school admin sees it read-only ("Shared logo. Only the master user can change it.").
+- `OfficialDocument::logos()` order: left = shared department logo, the agency's own old logo, the DepEd seal; right = the school's logo, the shared division logo, the agency's old division logo. Tests: `tests/Feature/SharedLogoTest.php`.
+
+- **Place names:** while typing a Region, Division or District (pre-registration, School Settings, add school) the names already in the system are suggested (`App\Support\PlaceNames`, a `<datalist>`; names only, never school or user details). On save a name that differs only in case or spacing takes the system's spelling, and a region written in numbers becomes Roman ("Region 7", "region 07", "7" give "Region VII"; "4a" gives "Region IV-A"). The shared division logo key uses the same rule. Tests: `tests/Feature/PlaceNamesTest.php`.
+
+### Google Drive (one user, one Drive)
+- Every user connects **their own** Google Drive on `/google-drive` (OAuth, scope `drive.file` only: the app sees just the folders and files it created). Tokens are stored encrypted in `google_drive_connections`. The app creates `ProcMS` with `Backup`, `Logo` and `Files` and recreates them if they are deleted.
+- **Files are private to their owner.** `/drive-files` lists, uploads (up to 20 MB), opens in Drive and deletes the signed-in user's own files; nobody else, not even the master user or a school admin, can see them. A user who wants to show a file e-mails it.
+- **Uploads are blocked until the user is connected** (`drive.connected` middleware, redirect with "Connect your Google Drive before uploading files."; JSON gets 409). If Google revokes access the status becomes `needs_reconnect` and a banner on every page asks to reconnect. Logo uploads are never blocked; a connected user also gets a best-effort copy of the logo in `ProcMS/Logo`.
+- No Google package is used: `App\Services\GoogleDriveService` calls Google with the Laravel HTTP client. Tests fake Google (`tests/Concerns/FakesGoogleDrive.php`).
+- **Railway variables:** `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI=https://procms.celsys.trade/google-drive/callback`. Never put them in the repository or in chat.
+- **Google Cloud setup (once):** create a project, enable the Google Drive API, create an OAuth client of type *Web application* with that redirect address, and set the consent screen to **In production** (in Testing mode tokens expire after 7 days and only 100 test users are allowed; `drive.file` needs no Google review).
+
+### Database backup (master user only)
+- `/backup`: **Backup now** and a history (date, manual or automatic, file, size, status, who downloaded it and when). A backup is a consistent SQLite copy (`VACUUM INTO`) uploaded to the master user's `ProcMS/Backup` as `procms-YYYY-MM-DD-HHMM.sqlite`; **Download** fetches the stored file from Drive and logs the download.
+- `php artisan backup:database` runs **every day at 12:00 midnight Philippine time** (`Asia/Manila`; the app itself runs on UTC) through the scheduler that `deploy/entrypoint.sh` starts. The latest 30 automatic backups are kept in Drive, older ones are deleted there (their history rows stay). A failed run is recorded with its error and the master dashboard shows a warning until a later backup succeeds.
+- A backup file larger than 40 MB is recorded as a failed run (the upload is built in memory); resumable upload is the next step if the database ever grows that big. Download uses the Drive of the master who made the backup.
+- The file contains every school's data, so it is never given to anyone but the master user. Only SQLite is supported; any other database records a failed run.
+- Tests: `tests/Feature/DatabaseBackupTest.php`, `DatabaseBackupCopyTest.php` (the real copy), `DriveFilesTest.php`, `DriveGateTest.php`, `GoogleDriveConnectionTest.php`.

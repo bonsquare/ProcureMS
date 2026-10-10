@@ -3,11 +3,15 @@
 use App\Http\Controllers\AipController;
 use App\Http\Controllers\AllotmentRegistryController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BackupController;
 use App\Http\Controllers\BudgetAllocationController;
 use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\ChartOfAccountController;
+use App\Http\Controllers\DriveFileController;
 use App\Http\Controllers\FinanceController;
+use App\Http\Controllers\GoogleDriveController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\MasterUserController;
 use App\Http\Controllers\PlanningController;
 use App\Http\Controllers\SchoolManagementController;
 use App\Http\Controllers\SchoolSettingsController;
@@ -15,6 +19,9 @@ use App\Http\Controllers\SchoolTakeoverController;
 use App\Http\Controllers\StationTransferController;
 use App\Http\Controllers\UnitController;
 use Illuminate\Support\Facades\Route;
+
+// Public: the privacy policy that Google requires for the Drive connection, readable without signing in.
+Route::view('/privacy', 'privacy')->name('privacy');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'create'])->name('login');
@@ -116,10 +123,20 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::get('/accounting/{liquidationReport}/dv-print', [FinanceController::class, 'printDv'])->name('accounting.dv.print');
     Route::get('/cash', [FinanceController::class, 'cash'])->name('cash');
     Route::post('/cash/{liquidationReport}/pay', [FinanceController::class, 'pay'])->middleware('permission:cash.pay')->name('cash.pay');
-    Route::get('/google-drive', [HomeController::class, 'googleDrive'])->name('google-drive');
-    Route::post('/google-drive/settings', [HomeController::class, 'updateGoogleDriveSettings'])->middleware('permission:organization.settings')->name('google-drive.settings');
+    Route::get('/google-drive', [GoogleDriveController::class, 'show'])->name('google-drive');
+    Route::get('/google-drive/connect', [GoogleDriveController::class, 'redirect'])->name('google-drive.redirect');
+    Route::get('/google-drive/callback', [GoogleDriveController::class, 'callback'])->name('google-drive.callback');
+    Route::delete('/google-drive', [GoogleDriveController::class, 'disconnect'])->name('google-drive.disconnect');
+    Route::get('/backup', [BackupController::class, 'index'])->name('backup.index');
+    Route::post('/backup', [BackupController::class, 'run'])->name('backup.run');
+    Route::get('/backup/{backupRun}/download', [BackupController::class, 'download'])->whereNumber('backupRun')->name('backup.download');
+    Route::get('/drive-files', [DriveFileController::class, 'index'])->name('drive-files.index');
+    Route::post('/drive-files', [DriveFileController::class, 'store'])->middleware('drive.connected')->name('drive-files.store');
+    Route::delete('/drive-files/{driveFile}', [DriveFileController::class, 'destroy'])->whereNumber('driveFile')->name('drive-files.destroy');
     Route::get('/reports', [HomeController::class, 'reports'])->name('reports');
     Route::get('/user-management', [HomeController::class, 'userManagement'])->name('user-management');
+    Route::put('/user-management/master-user', [MasterUserController::class, 'update'])->name('master-user.update');
+    Route::put('/user-management/master-user/password', [MasterUserController::class, 'password'])->name('master-user.password');
     Route::get('/subscriptions', [HomeController::class, 'subscriptions'])->name('subscriptions');
     Route::get('/school-settings', [HomeController::class, 'schoolSettings'])->name('school-settings');
     Route::post('/school-settings/organization', [HomeController::class, 'updateOrganizationSettings'])->middleware('permission:organization.settings')->name('school-settings.organization');

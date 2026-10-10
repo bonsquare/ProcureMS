@@ -7,3 +7,5 @@
     document.addEventListener('wheel', (event) => { const field = document.activeElement; if (field && field.type === 'number' && field === event.target) field.blur(); }, { passive: true });
     document.addEventListener('keydown', (event) => { if ((event.key === 'ArrowUp' || event.key === 'ArrowDown') && event.target.type === 'number') event.preventDefault(); });
 </script>
+
+@include('partials.password-toggle')

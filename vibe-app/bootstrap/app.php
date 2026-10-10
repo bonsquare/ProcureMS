@@ -1,9 +1,11 @@
 <?php
 
 use App\Http\Middleware\EnsureAccountActive;
+use App\Http\Middleware\EnsureDriveConnected;
 use App\Http\Middleware\EnsurePermission;
 use App\Http\Middleware\EnsureStationConfirmed;
 use App\Http\Middleware\EnsureSubscriptionAllowsWrites;
+use App\Http\Middleware\ShowDriveReconnectBanner;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -18,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'permission' => EnsurePermission::class,
+            'drive.connected' => EnsureDriveConnected::class,
             'subscription.writes' => EnsureSubscriptionAllowsWrites::class,
         ]);
         // Behind a Cloudflare Tunnel the app is reached over plain http from this computer; trust the forwarded
@@ -25,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
         $middleware->appendToGroup('web', EnsureAccountActive::class);
         $middleware->appendToGroup('web', EnsureStationConfirmed::class);
+        $middleware->appendToGroup('web', ShowDriveReconnectBanner::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

@@ -9,6 +9,7 @@ use App\Models\SchoolTakeoverRequest;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Services\SchoolTakeoverService;
+use App\Support\PlaceNames;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -100,6 +101,7 @@ class AuthController extends Controller
             'system_user_middle_initial.size' => 'The middle initial is one letter only, or leave it blank.',
             'system_user_middle_initial.alpha' => 'The middle initial is one letter only, or leave it blank.',
         ]);
+        $data = PlaceNames::snapFields($data, ['region' => 'region', 'division' => 'division', 'district' => 'district']);
 
         DB::transaction(function () use ($data) {
             $organization = Organization::create([

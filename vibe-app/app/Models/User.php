@@ -8,6 +8,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -37,6 +38,16 @@ class User extends Authenticatable
                 $user->forceFill($updates)->syncOriginal();
             }
         });
+    }
+
+    public function driveConnection(): HasOne
+    {
+        return $this->hasOne(GoogleDriveConnection::class);
+    }
+
+    public function driveIsConnected(): bool
+    {
+        return (bool) $this->driveConnection?->isConnected();
     }
 
     /** Budget roles: Super Admin = master_user; school_admin keeps full access to its school. */

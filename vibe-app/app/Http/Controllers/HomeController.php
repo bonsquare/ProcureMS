@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AgencySetting;
 use App\Models\AuditLog;
+use App\Models\BackupRun;
 use App\Models\BudgetAllocation;
 use App\Models\LiquidationReport;
 use App\Models\Organization;
@@ -12,6 +13,7 @@ use App\Models\ProcurementRequest;
 use App\Models\ProcurementRequestItem;
 use App\Models\School;
 use App\Models\SchoolStaff;
+use App\Models\SharedLogo;
 use App\Models\StaffRoleOption;
 use App\Models\Subscription;
 use App\Models\Supplier;
@@ -22,15 +24,21 @@ use App\Services\BudgetService;
 use App\Services\DashboardKpiService;
 use App\Services\DocumentNumberService;
 use App\Services\FiscalYearService;
+use App\Services\GoogleDriveService;
 use App\Services\MasterTransactionService;
 use App\Services\ProcurementWorkspaceService;
+use App\Support\PlaceNames;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class HomeController extends Controller
 {
@@ -137,6 +145,7 @@ class HomeController extends Controller
             'kpi' => app(DashboardKpiService::class)->forSchools($schoolIds),
             'systemKpi' => $this->systemKpi($user, $schoolIds, $pendingPreRegistrations),
             'currentSchool' => $this->isMasterUser($user) ? null : $schools->first(),
+            'lastBackupFailure' => $this->isMasterUser($user) ? $this->lastBackupFailure() : null,
         ]);
     }
 
@@ -152,7 +161,7 @@ class HomeController extends Controller
             DB::select('select 1');
             $database = 'Connected';
             $databaseNote = round((microtime(true) - $startedAt) * 1000).' ms response';
-        } catch (\Throwable) {
+        } catch (Throwable) {
             $database = 'Unavailable';
             $databaseNote = 'Check the database connection';
         }
@@ -225,6 +234,7 @@ class HomeController extends Controller
             'system_user_role' => ['required', 'in:'.implode(',', array_keys(User::ROLES))],
             'system_user_password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
+        $data = PlaceNames::snapFields($data, ['region' => 'region', 'division' => 'division', 'district' => 'district']);
 
         $actorId = $request->user()?->id;
 
@@ -1783,44 +1793,6 @@ class HomeController extends Controller
         return back()->with('success', "{$liquidationReport->report_number} status updated.");
     }
 
-    public function googleDrive()
-    {
-        return view('google-drive', [
-            'agency' => AgencySetting::first() ?? new AgencySetting,
-        ]);
-    }
-
-    public function updateGoogleDriveSettings(Request $request)
-    {
-        $data = $request->validate([
-            'google_drive_folder_name' => ['nullable', 'string', 'max:255'],
-            'google_drive_folder_id' => ['nullable', 'string', 'max:255'],
-            'google_drive_folder_url' => ['nullable', 'url', 'max:1000'],
-        ]);
-
-        $folderId = trim($data['google_drive_folder_id'] ?? '');
-        $folderUrl = trim($data['google_drive_folder_url'] ?? '');
-        if (! $folderId && $folderUrl && preg_match('~/folders/([^/?#]+)~', $folderUrl, $matches)) {
-            $folderId = $matches[1];
-        }
-
-        $organizationId = $request->user()?->organization_id;
-        $agency = AgencySetting::first() ?? new AgencySetting;
-        $agency->fill([
-            'google_drive_enabled' => (bool) ($folderId || $folderUrl),
-            'google_drive_folder_name' => $data['google_drive_folder_name'] ?: 'ProcureMS Shared Drive',
-            'google_drive_folder_id' => $folderId ?: null,
-            'google_drive_folder_url' => $folderUrl ?: null,
-            'google_drive_connected_at' => now(),
-        ]);
-        if (Schema::hasColumn('agency_settings', 'organization_id') && ! $agency->organization_id) {
-            $agency->organization_id = $organizationId;
-        }
-        $agency->save();
-
-        return back()->with('success', 'Google Drive settings saved.');
-    }
-
     public function reports()
     {
         return view('reports');
@@ -1830,7 +1802,16 @@ class HomeController extends Controller
     {
         abort_unless($this->isMasterUser(), 403);
 
-        return view('user-management');
+        return view('user-management', ['tab' => request('tab') === 'master-user' ? 'master-user' : 'users']);
+    }
+
+    /** The newest failed backup, unless a backup succeeded after it. */
+    private function lastBackupFailure(): ?BackupRun
+    {
+        $failed = BackupRun::where('status', BackupRun::FAILED)->latest()->latest('id')->first();
+        $succeededSince = $failed && BackupRun::where('status', BackupRun::SUCCESS)->where('created_at', '>', $failed->created_at)->exists();
+
+        return $failed && ! $succeededSince ? $failed : null;
     }
 
     public function subscriptions()
@@ -1885,21 +1866,25 @@ class HomeController extends Controller
         $agency = ($selectedSchool
             ? AgencySetting::withoutGlobalScopes()->where('organization_id', $selectedSchool->organization_id)->first()
             : null) ?? new AgencySetting;
+        $sharedDepartmentLogo = SharedLogo::department();
+        $sharedDivisionLogo = SharedLogo::forDivision($selectedSchool, $agency);
         $profileChecks = collect([
             $agency->department_name, $agency->region_name, $agency->division_office, $agency->district_name, $agency->district_head,
             $selectedSchool?->name, $selectedSchool?->address, $selectedSchool?->school_head, $selectedSchool?->contact_email, $selectedSchool?->contact_number,
-            $agency->department_logo_path, $agency->division_logo_path, $selectedSchool?->logo_path,
+            $sharedDepartmentLogo?->path ?? $agency->department_logo_path, $sharedDivisionLogo?->path ?? $agency->division_logo_path, $selectedSchool?->logo_path,
         ]);
 
         return response()->view('school-settings', [
             'agency' => $agency,
+            'sharedDepartmentLogo' => $sharedDepartmentLogo,
+            'sharedDivisionLogo' => $sharedDivisionLogo,
             'tab' => in_array(request('tab'), $isMasterUser ? ['info', 'users', 'staff'] : ['info', 'users', 'staff', 'transfer'], true) ? request('tab') : 'info',
             'systemUsers' => $systemUsers,
             'roleCatalog' => $roleCatalog,
             'roleGroups' => SchoolStaff::ROLE_GROUPS,
             'assignableRoles' => collect(User::ROLES)->when(! $isMasterUser, fn ($roles) => $roles->except('school_admin'))->all(),
             'profileCompleteness' => (int) round($profileChecks->filter(fn ($value) => filled($value))->count() / max(1, $profileChecks->count()) * 100),
-            'logoCount' => collect([$agency->department_logo_path, $agency->division_logo_path, $selectedSchool?->logo_path])->filter()->count(),
+            'logoCount' => collect([$sharedDepartmentLogo?->path ?? $agency->department_logo_path, $sharedDivisionLogo?->path ?? $agency->division_logo_path, $selectedSchool?->logo_path])->filter()->count(),
             'activeNavRoute' => 'school-settings',
             ...(request('tab') === 'transfer' && ! $isMasterUser ? app(StationTransferController::class)->pageData(request()->user()) : []),
             'schools' => $schools,
@@ -1951,6 +1936,60 @@ class HomeController extends Controller
         return back()->with('success', 'Organization defaults and numbering preferences saved.');
     }
 
+    /** A best-effort copy of a logo in the uploader's own Drive (ProcMS / Logo). A saved logo never fails because of Drive. */
+    private function archiveLogoToDrive(?User $user, UploadedFile $file): void
+    {
+        $connection = $user?->driveConnection;
+        if (! $connection?->isConnected()) {
+            return;
+        }
+
+        try {
+            app(GoogleDriveService::class)->upload($connection, 'Logo', basename($file->getClientOriginalName()), $file->get(), $file->getMimeType() ?: 'image/png');
+        } catch (Throwable $exception) {
+            Log::warning('A logo was not copied to Google Drive: '.$exception->getMessage());
+        }
+    }
+
+    /**
+     * The department logo is one for the whole system and the division logo is one per division, so both are kept in
+     * shared_logos. The first upload sets it; replacing one that exists is for the master user only.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function storeSharedLogos(Request $request, array $data, ?School $school, ?int $organizationId): void
+    {
+        $stored = AgencySetting::withoutGlobalScopes()->where('organization_id', $organizationId)->first();
+        $candidate = new AgencySetting([
+            'region_name' => $data['region_name'] ?? $stored?->region_name,
+            'division_name' => $data['division_name'] ?? $stored?->division_name,
+            'division_office' => $data['division_office'] ?? $stored?->division_office,
+        ]);
+        $uploads = collect([
+            'department_logo' => ['department', SharedLogo::DEPARTMENT_KEY, 'agency logo'],
+            'division_logo' => ['division', SharedLogo::keyForSchool($school, $candidate), 'division office logo'],
+        ])->filter(fn ($upload, $field) => $request->hasFile($field));
+
+        foreach ($uploads as $field => [$kind, $key, $label]) {
+            if ($key === null) {
+                throw ValidationException::withMessages([$field => 'Enter the division office before uploading its logo, so every school of that division can share it.']);
+            }
+            abort_if(SharedLogo::where('kind', $kind)->where('key', $key)->exists() && ! $this->isMasterUser(), 403, "The {$label} is shared by every school; only the master user can replace it.");
+        }
+
+        foreach ($uploads as $field => [$kind, $key]) {
+            $path = $request->file($field)->store('logos', 'public');
+            $this->archiveLogoToDrive($request->user(), $request->file($field));
+            $existing = SharedLogo::where('kind', $kind)->where('key', $key)->first();
+            if ($existing) {
+                Storage::disk('public')->delete($existing->path);
+                $existing->update(['path' => $path, 'uploaded_by' => $request->user()?->id]);
+            } else {
+                SharedLogo::create(['kind' => $kind, 'key' => $key, 'path' => $path, 'uploaded_by' => $request->user()?->id]);
+            }
+        }
+    }
+
     public function updateAgencySettings(Request $request)
     {
         $logoMessages = [];
@@ -1984,21 +2023,20 @@ class HomeController extends Controller
             'district_phone' => ['nullable', 'string', 'max:50'],
             'district_logo' => ['nullable', 'mimes:png,jpg,jpeg,webp,gif', 'max:2048'],
         ], $logoMessages);
-        if ($request->hasFile('department_logo')) {
-            $data['department_logo_path'] = $request->file('department_logo')->store('logos', 'public');
+        $data = PlaceNames::snapFields($data, ['region_name' => 'region', 'division_office' => 'division', 'division_name' => 'division', 'district_name' => 'district']);
+        $organizationId = $request->user()?->organization_id;
+        $school = $request->user()?->school;
+        if (! empty($data['school_id'])) {
+            $this->authorizeSchoolAccess((int) $data['school_id']);
+            $school = School::withoutGlobalScopes()->findOrFail($data['school_id']);
+            $organizationId = $this->isMasterUser() ? $school->organization_id : $organizationId;
         }
-        if ($request->hasFile('division_logo')) {
-            $data['division_logo_path'] = $request->file('division_logo')->store('logos', 'public');
-        }
+        $this->storeSharedLogos($request, $data, $school, $organizationId);
         if ($request->hasFile('district_logo')) {
             $data['district_logo_path'] = $request->file('district_logo')->store('logos', 'public');
+            $this->archiveLogoToDrive($request->user(), $request->file('district_logo'));
         }
-        unset($data['department_logo'], $data['division_logo'], $data['district_logo']);
-        $organizationId = $request->user()?->organization_id;
-        if ($this->isMasterUser() && ! empty($data['school_id'])) {
-            $organizationId = School::withoutGlobalScopes()->findOrFail($data['school_id'])->organization_id;
-        }
-        unset($data['school_id']);
+        unset($data['department_logo'], $data['division_logo'], $data['district_logo'], $data['school_id']);
         AgencySetting::updateOrCreate(
             ['organization_id' => $organizationId],
             $data + ['organization_id' => $organizationId]
@@ -2029,6 +2067,7 @@ class HomeController extends Controller
             'status' => ['nullable', 'in:active,inactive'],
             'school_logo' => ['nullable', 'mimes:png,jpg,jpeg,webp,gif', 'max:2048'],
         ], $logoMessages);
+        $data = PlaceNames::snapFields($data, ['region' => 'region', 'division' => 'division', 'district' => 'district']);
         $this->authorizeSchoolAccess((int) $data['school_id']);
         if (! $this->isMasterUser()) {
             unset($data['status']);
@@ -2037,6 +2076,7 @@ class HomeController extends Controller
         unset($data['school_id']);
         if ($request->hasFile('school_logo')) {
             $data['logo_path'] = $request->file('school_logo')->store('logos', 'public');
+            $this->archiveLogoToDrive($request->user(), $request->file('school_logo'));
         }
         unset($data['school_logo']);
         $school->update($data);

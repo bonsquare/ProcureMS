@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Drive · ProcureMS</title>
+    <title>Database Backup · ProcureMS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>tailwind.config={theme:{extend:{colors:{surface:'#faf8ff','surface-low':'#f4f3fa','surface-container':'#eeedf4','surface-high':'#e9e7ef',primary:'#00236f','primary-container':'#1e3a8a','on-surface':'#1a1b21','on-surface-variant':'#444651',secondary:'#006c4a','outline-variant':'#c5c5d3',error:'#ba1a1a'},fontFamily:{inter:['Inter','sans-serif']}}}};</script>
     <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet"><link rel="stylesheet" href="{{ asset('css/app.css') }}">
@@ -17,36 +17,41 @@
     <div class="md:pl-72"><header class="fixed left-0 right-0 top-0 z-40 flex h-16 items-center justify-between border-b border-outline-variant/30 bg-surface/95 px-4 backdrop-blur md:left-72 md:px-6"><div class="flex items-center gap-3"><button class="rounded p-2 text-on-surface-variant md:hidden" aria-label="Open navigation"><span class="material-symbols-outlined">menu</span></button><span class="text-sm font-semibold text-on-surface-variant">Document Workspace</span></div><div class="flex items-center gap-4"><button class="relative rounded p-1 text-on-surface-variant" aria-label="Notifications"><span class="material-symbols-outlined text-[21px]">notifications</span><span class="absolute right-0 top-0 h-2 w-2 rounded-full bg-error"></span></button><div class="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white"><span class="material-symbols-outlined text-[18px]">person</span></div></div></header>
 
     <main class="min-h-screen bg-surface px-4 pb-16 pt-24 md:px-6 lg:px-8">
-        <div class="mb-6"><div class="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-on-surface-variant"><span class="material-symbols-outlined text-[16px]">folder</span><span class="font-semibold text-primary">Your files</span></div><h1 class="text-3xl font-semibold tracking-tight">Google Drive</h1><p class="mt-1 max-w-2xl text-sm text-on-surface-variant">Connect your own Google Drive. Files you upload to ProcMS are kept in your Drive, in a folder only you can open. Nobody else in the system can see them.</p></div>
+        <div class="mb-6"><div class="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-on-surface-variant"><span class="material-symbols-outlined text-[16px]">backup</span><span class="font-semibold text-primary">System master</span></div><h1 class="text-3xl font-semibold tracking-tight">Database Backup</h1><p class="mt-1 max-w-2xl text-sm text-on-surface-variant">A copy of the whole database is saved to your Google Drive (ProcMS / Backup) every midnight, Philippine time, and whenever you press Backup now. The file contains the data of every school, so keep it private.</p></div>
         @if(session('success'))<div class="mb-5 rounded border border-secondary/30 bg-secondary/5 px-4 py-3 text-sm text-secondary">{{ session('success') }}</div>@endif
         @if(session('error'))<div class="mb-5 rounded border border-error/30 bg-error/5 px-4 py-3 text-sm text-error">{{ session('error') }}</div>@endif
 
-        @php
-            $connected = $connection?->isConnected();
-            $needsReconnect = $connection && ! $connected;
-        @endphp
-        <section class="max-w-3xl rounded border border-outline-variant/30 bg-white p-6">
-            <div class="flex items-start gap-4">
-                <span class="material-symbols-outlined text-4xl {{ $connected ? 'text-secondary' : ($needsReconnect ? 'text-error' : 'text-on-surface-variant') }}">{{ $connected ? 'cloud_done' : ($needsReconnect ? 'cloud_off' : 'cloud') }}</span>
-                <div class="min-w-0 flex-1">
-                    <h2 class="text-lg font-semibold">{{ $connected ? 'Connected' : ($needsReconnect ? 'Connection needs to be renewed' : 'Not connected') }}</h2>
-                    @if($connection)
-                        <p class="mt-1 text-sm text-on-surface-variant">Google account: <span class="font-semibold text-on-surface">{{ $connection->google_email ?: 'unknown' }}</span></p>
-                        <p class="mt-1 text-xs text-on-surface-variant">Connected {{ $connection->connected_at?->format('M d, Y') }}. Folder: ProcMS, with Backup, Logo and Files inside.</p>
-                    @else
-                        <p class="mt-1 text-sm text-on-surface-variant">You must connect your Google Drive before you can upload files. ProcMS only sees the folders and files it creates itself, never the rest of your Drive.</p>
-                    @endif
-                    @unless($configured)<p class="mt-3 rounded border border-error/30 bg-error/5 px-3 py-2 text-xs text-error">Google Drive is not set up on this server yet. Ask the system administrator.</p>@endunless
-                    <div class="mt-5 flex flex-wrap gap-3">
-                        <a href="{{ route('drive-files.index') }}" class="inline-flex items-center gap-2 rounded border border-primary/40 px-4 py-2.5 text-xs font-semibold text-primary hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[18px]">folder_open</span>My Drive Files</a>
-                        @if(auth()->user()->role === 'master_user')<a href="{{ route('backup.index') }}" class="inline-flex items-center gap-2 rounded border border-primary/40 px-4 py-2.5 text-xs font-semibold text-primary hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[18px]">backup</span>Database Backup</a>@endif
-                        @if($configured)<a href="{{ route('google-drive.redirect') }}" class="inline-flex items-center gap-2 rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]">link</span>{{ $needsReconnect ? 'Reconnect Google Drive' : ($connected ? 'Connect a different account' : 'Connect Google Drive') }}</a>@endif
-                        @if($connection)
-                            <form method="POST" action="{{ route('google-drive.disconnect') }}" onsubmit="return confirm('Disconnect Google Drive? Your files stay in your Drive.')">@csrf @method('DELETE')<button class="inline-flex items-center gap-2 rounded border border-outline-variant px-4 py-2.5 text-xs font-semibold hover:bg-surface-container"><span class="material-symbols-outlined text-[18px]">link_off</span>Disconnect</button></form>
-                        @endif
-                    </div>
-                </div>
-            </div>
+        <section class="mb-6 max-w-5xl rounded border border-outline-variant/30 bg-white p-5">
+            @if($connection?->isConnected())
+                <form method="POST" action="{{ route('backup.run') }}" class="flex flex-wrap items-center gap-4">@csrf
+                    <button class="inline-flex items-center gap-2 rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]">cloud_upload</span>Backup now</button>
+                    <p class="text-xs text-on-surface-variant">Saves to {{ $connection->google_email ?: 'your Google Drive' }}.</p>
+                </form>
+            @else
+                <div class="flex items-start gap-3"><span class="material-symbols-outlined text-error">cloud_off</span><div><h2 class="font-semibold">Connect your Google Drive first</h2><p class="mt-1 text-sm text-on-surface-variant">Backups are saved to the master user's Google Drive.</p><a href="{{ route('google-drive') }}" class="mt-3 inline-flex items-center gap-2 rounded bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-primary-container">Go to Google Drive</a></div></div>
+            @endif
+        </section>
+
+        <section class="max-w-5xl overflow-x-auto rounded border border-outline-variant/30 bg-white">
+            <div class="border-b border-outline-variant/30 p-5"><h2 class="text-lg font-semibold">History</h2></div>
+            <table class="w-full min-w-[640px] text-left text-sm">
+                <thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant"><tr><th class="px-5 py-3">Date</th><th class="px-3 py-3">Type</th><th class="px-3 py-3">File</th><th class="px-3 py-3">Size</th><th class="px-3 py-3">Status</th><th class="px-3 py-3">Downloaded by</th><th class="px-5 py-3"></th></tr></thead>
+                <tbody>
+                @forelse($runs as $run)
+                    <tr class="border-t border-outline-variant/20 align-top">
+                        <td class="whitespace-nowrap px-5 py-3">{{ $run->created_at->timezone('Asia/Manila')->format('M d, Y g:i A') }}</td>
+                        <td class="px-3 py-3 capitalize">{{ $run->type }}</td>
+                        <td class="px-3 py-3">{{ $run->file_name ?: '—' }}</td>
+                        <td class="whitespace-nowrap px-3 py-3">{{ $run->size ? ($run->size >= 1048576 ? round($run->size / 1048576, 1).' MB' : max(1, round($run->size / 1024)).' KB') : '—' }}</td>
+                        <td class="px-3 py-3">@if($run->status === 'success')<span class="font-semibold text-secondary">Saved</span>@else<span class="font-semibold text-error">Failed</span><p class="mt-1 max-w-xs text-xs text-on-surface-variant">{{ $run->error }}</p>@endif</td>
+                        <td class="px-3 py-3 text-xs">@forelse($run->downloads as $download)<p>{{ $download->user?->name ?? 'Unknown' }} · {{ $download->created_at->timezone('Asia/Manila')->format('M d, Y g:i A') }}</p>@empty<span class="text-on-surface-variant">Not downloaded</span>@endforelse</td>
+                        <td class="px-5 py-3 text-right">@if($run->isDownloadable())<a href="{{ route('backup.download', $run->id) }}" class="rounded border border-primary/40 px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary hover:text-white">Download</a>@endif</td>
+                    </tr>
+                @empty
+                    <tr><td colspan="7" class="px-5 py-6 text-on-surface-variant">No backups yet.</td></tr>
+                @endforelse
+                </tbody>
+            </table>
         </section>
     </div></main></div>
 @include('partials.profile-menu')
