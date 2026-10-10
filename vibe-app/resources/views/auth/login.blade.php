@@ -23,7 +23,9 @@
             <p class="text-xs text-on-surface-variant">New school or office?</p>
             <a href="{{ route('register') }}" class="mt-2 inline-flex w-full items-center justify-center gap-2 rounded border border-primary px-4 py-2.5 text-sm font-semibold text-primary hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[18px]">app_registration</span>Pre-register school</a>
         </div>
+        @if(app()->environment('local'))
         <p class="mt-6 border-t border-outline-variant/20 pt-5 text-xs text-on-surface-variant">Demo Master Admin: <span class="font-semibold">admin@procurems.test</span> / <span class="font-semibold">password</span></p>
+        @endif
     </main>
 <script>
     document.getElementById('login-form').addEventListener('submit', () => {
