@@ -310,7 +310,14 @@ class HomeController extends Controller
             ->latest()
             ->get();
 
-        $procurementRequests->each(fn (ProcurementRequest $request) => $request->setAttribute('workspace', $workspaceService->present($request)));
+        // Stage and progress always come from the workspace service (the same source as the Document Center), never from the raw status.
+        $procurementRequests->each(function (ProcurementRequest $request) use ($workspaceService) {
+            $request->setAttribute('workspace', $workspaceService->present($request));
+            $request->setAttribute('workflow', $workspaceService->summary($request));
+            // Every required document exists but nobody has pressed Mark complete yet.
+            $request->setAttribute('ready_to_complete', in_array($request->status, ['approved', 'for_canvass'], true) && empty($request->workspace['documents']['missing']));
+        });
+        $stageOf = fn (ProcurementRequest $request) => $request->workflow['stage'];
 
         $requests = $procurementRequests->map(fn (ProcurementRequest $request) => [
             'record_id' => $request->id,
@@ -333,14 +340,14 @@ class HomeController extends Controller
             'currentSchoolName' => $this->isMasterUser($user) ? null : $user?->school?->name,
             'procurementMetrics' => [
                 'total' => $procurementRequests->count(),
-                'pending' => $procurementRequests->whereIn('status', ['submitted', 'pending_approval'])->count(),
-                'forCanvass' => $procurementRequests->whereIn('status', ['for_canvass', 'submitted'])->count(),
-                'completed' => $procurementRequests->whereIn('status', ['approved', 'completed'])->count(),
-                'completedAmount' => $procurementRequests->whereIn('status', ['approved', 'completed'])->sum('amount'),
+                'pending' => $procurementRequests->filter(fn ($request) => $stageOf($request) === 'approval')->count(),
+                'forCanvass' => $procurementRequests->filter(fn ($request) => $stageOf($request) === 'canvass')->count(),
+                'completed' => $procurementRequests->filter(fn ($request) => $stageOf($request) === 'complete')->count(),
+                'completedAmount' => $procurementRequests->filter(fn ($request) => $stageOf($request) === 'complete')->sum('amount'),
             ],
             'activeProcurementArea' => 'overview',
             'procurementRequests' => $procurementRequests,
-            'attentionRequests' => $procurementRequests->whereIn('status', ['submitted', 'pending_approval', 'returned', 'for_canvass'])->take(5),
+            'attentionRequests' => $procurementRequests->filter(fn ($request) => $request->ready_to_complete || $request->status === 'returned' || in_array($stageOf($request), ['approval', 'canvass', 'award', 'purchase_order'], true))->take(5),
             'recentRequests' => $procurementRequests->take(6),
             'showProcurementSchoolFilter' => $this->isMasterUser(),
             ...$this->procurementSchoolFilterViewData($schoolId),
