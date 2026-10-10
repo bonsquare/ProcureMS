@@ -17,6 +17,7 @@ use App\Http\Controllers\PlanningController;
 use App\Http\Controllers\SchoolManagementController;
 use App\Http\Controllers\SchoolSettingsController;
 use App\Http\Controllers\SchoolTakeoverController;
+use App\Http\Controllers\SipImportController;
 use App\Http\Controllers\StationTransferController;
 use App\Http\Controllers\SubMasterController;
 use App\Http\Controllers\UnitController;
@@ -79,6 +80,9 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::get('/planning', [PlanningController::class, 'index'])->name('planning');
     Route::post('/planning/sip', [PlanningController::class, 'storeSip'])->middleware('permission:planning.manage')->name('planning.sip.store');
     Route::get('/planning/sip/print', [PlanningController::class, 'printSip'])->name('planning.sip.print');
+    Route::post('/planning/sip/import', [SipImportController::class, 'preview'])->middleware('permission:planning.manage')->name('planning.sip.import.preview');
+    Route::get('/planning/sip/import/{token}', [SipImportController::class, 'show'])->middleware('permission:planning.manage')->name('planning.sip.import.show');
+    Route::post('/planning/sip/import/{token}', [SipImportController::class, 'store'])->middleware('permission:planning.manage')->name('planning.sip.import.store');
     Route::post('/planning/sip/generate-aip', [PlanningController::class, 'generateAipFromSip'])->middleware('permission:planning.manage')->name('planning.sip.generate-aip');
     Route::post('/planning/sip/signatories', [PlanningController::class, 'saveSipSignatories'])->middleware('permission:planning.manage')->name('planning.sip.signatories');
     Route::post('/planning/sip/{sipProject}/activities', [PlanningController::class, 'storeSipActivity'])->middleware('permission:planning.manage')->name('planning.sip.activities.store');
