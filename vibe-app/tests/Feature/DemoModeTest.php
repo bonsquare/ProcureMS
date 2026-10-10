@@ -49,6 +49,20 @@ class DemoModeTest extends TestCase
         $this->get(route('login'))->assertOk()->assertDontSee('demo@gmail.com');
     }
 
+    public function test_the_demo_resets_itself_every_midnight_only_in_demo_mode(): void
+    {
+        $event = collect(app(\Illuminate\Console\Scheduling\Schedule::class)->events())->first(fn ($event) => str_contains($event->command, 'demo:reset'));
+
+        $this->assertNotNull($event);
+        $this->assertSame('0 0 * * *', $event->expression);
+        $this->assertSame('Asia/Manila', (string) $event->timezone);
+
+        config(['app.demo' => false]);
+        $this->assertFalse($event->filtersPass($this->app));
+        config(['app.demo' => true]);
+        $this->assertTrue($event->filtersPass($this->app));
+    }
+
     public function test_the_reset_button_is_for_the_master_in_demo_mode_only(): void
     {
         $master = User::factory()->create(['role' => 'master_user']);
