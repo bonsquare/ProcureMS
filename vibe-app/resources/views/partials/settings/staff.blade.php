@@ -5,7 +5,7 @@
         'document_role' => ['#ddf0e8', '#2a7f64', 'description'],
     ];
     $staffData = $staff->mapWithKeys(fn ($member) => [$member->id => [
-        'name' => $member->name, 'position' => $member->position, 'code' => $member->employee_no,
+        'name' => $member->name, 'position' => $member->position, 'code' => $member->employee_no, 'active' => (bool) $member->is_active,
         'roles' => collect(array_keys($roleGroups))->mapWithKeys(fn ($group) => [$group => $member->rolesFor($group)])->all(),
     ]]);
     $dialog = 'w-[min(46rem,95vw)] rounded-2xl border border-outline-variant/60 bg-white p-0 shadow-2xl backdrop:bg-black/40';
@@ -29,10 +29,10 @@
         <ul class="divide-y divide-outline-variant/40">
             @foreach($staff as $member)
                 @php $initials = collect(preg_split('/\s+/', trim($member->name)))->filter()->take(2)->map(fn ($part) => strtoupper(mb_substr($part, 0, 1)))->implode(''); @endphp
-                <li class="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 px-5 py-3.5 hover:bg-surface-low/40">
+                <li class="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 px-5 py-3.5 hover:bg-surface-low/40 {{ $member->is_active ? '' : 'bg-surface-low/60 opacity-75' }}">
                     <div class="flex min-w-[15rem] items-center gap-3">
                         <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-white">{{ $initials }}</span>
-                        <div class="min-w-0"><p class="truncate font-bold">{{ $member->name }}</p><p class="truncate text-xs text-on-surface-variant">{{ $member->position ?: 'No position' }} · {{ $member->employee_no }}</p></div>
+                        <div class="min-w-0"><p class="truncate font-bold">{{ $member->name }}@unless($member->is_active) <span class="ml-1 rounded-full bg-slate-200 px-2 py-0.5 align-middle text-[10px] font-bold uppercase tracking-wide text-slate-600">Inactive</span>@endunless</p><p class="truncate text-xs text-on-surface-variant">{{ $member->position ?: 'No position' }} · {{ $member->employee_no }}</p></div>
                     </div>
                     <div class="flex min-w-[12rem] flex-1 flex-wrap items-center gap-1.5">
                         @php $any = false; @endphp
@@ -70,6 +70,8 @@
 
         return $html.'</div>';
     };
+    $statusSelect = fn (string $id) => '<label class="block text-xs font-bold">Status<select name="is_active" id="'.$id.'" class="'.$field.'"><option value="1">Active</option><option value="0">Inactive</option></select></label>';
+    $roleBox = fn (string $target) => '<div class="border-t border-outline-variant/40 bg-surface-low/60 px-5 py-3.5" data-role-box="'.$target.'"><p class="text-xs font-bold">Need a role that is not listed?</p><div class="mt-2 flex flex-wrap items-center gap-2"><select data-role-group class="rounded-lg border border-outline-variant bg-white px-2.5 py-2 text-xs">'.collect($roleGroups)->map(fn ($label, $group) => '<option value="'.e($group).'">'.e($label).'</option>')->implode('').'</select><input data-role-name maxlength="100" placeholder="New role name" class="min-w-[10rem] flex-1 rounded-lg border border-outline-variant bg-white px-3 py-2 text-xs outline-none focus:border-action"><button type="button" data-role-add class="inline-flex items-center gap-1 rounded-lg border border-primary px-3 py-2 text-xs font-bold text-primary hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">add</span>Add role</button></div><p data-role-message class="mt-1.5 text-[11px] text-on-surface-variant" aria-live="polite">The new role is added to the list above and ticked for this employee. Nothing you typed is lost.</p></div>';
 @endphp
 
 <dialog id="staff-add" class="{{ $dialog }}">
@@ -80,11 +82,13 @@
         <div class="grid gap-3 sm:grid-cols-2">
             <label class="block text-xs font-bold">Full name<input name="name" required class="{{ $field }}"></label>
             <label class="block text-xs font-bold">Position<input name="position" placeholder="e.g. Administrative Officer II" class="{{ $field }}"></label>
+            {!! $statusSelect('staff-add-status') !!}
         </div>
         <p class="mb-2 mt-4 text-xs font-bold">Roles</p>
         {!! $roleChecklist('add') !!}
         <div class="mt-5 flex justify-end gap-2"><button type="button" data-close class="rounded-lg border border-outline-variant px-4 py-2 text-xs font-bold">Cancel</button><button class="rounded-lg bg-primary px-5 py-2 text-xs font-bold text-white">Add employee</button></div>
     </form>
+    {!! $roleBox('staff-add') !!}
 </dialog>
 
 <dialog id="staff-edit" class="{{ $dialog }}">
@@ -95,24 +99,14 @@
         <div class="grid gap-3 sm:grid-cols-2">
             <label class="block text-xs font-bold">Full name<input name="name" required class="{{ $field }}"></label>
             <label class="block text-xs font-bold">Position<input name="position" class="{{ $field }}"></label>
+            {!! $statusSelect('staff-edit-status') !!}
         </div>
         <p class="mb-2 mt-4 text-xs font-bold">Tick every role this person holds</p>
         {!! $roleChecklist('edit') !!}
-        <div class="mt-5 flex justify-end gap-2"><button type="button" data-close class="rounded-lg border border-outline-variant px-4 py-2 text-xs font-bold">Cancel</button><button class="rounded-lg bg-primary px-5 py-2 text-xs font-bold text-white">Save employee</button></div>
+        <div class="mt-5 flex justify-end gap-2"><button type="button" data-close class="rounded-lg border border-outline-variant px-4 py-2 text-xs font-bold">Cancel</button><button class="rounded-lg bg-primary px-5 py-2 text-xs font-bold text-white">Update employee</button></div>
     </form>
 
-    {{-- A role the lists do not have yet --}}
-    <form method="POST" action="{{ route('school-settings.roles.store') }}" class="border-t border-outline-variant/40 bg-surface-low/60 px-5 py-3.5">
-        @csrf
-        <input type="hidden" name="school_id" value="{{ $selectedSchool->id }}">
-        <p class="text-xs font-bold">Need a role that is not listed?</p>
-        <div class="mt-2 flex flex-wrap items-center gap-2">
-            <select name="role_group" class="rounded-lg border border-outline-variant bg-white px-2.5 py-2 text-xs">@foreach($roleGroups as $group => $label)<option value="{{ $group }}">{{ $label }}</option>@endforeach</select>
-            <input name="name" required maxlength="100" placeholder="New role name" class="min-w-[10rem] flex-1 rounded-lg border border-outline-variant bg-white px-3 py-2 text-xs outline-none focus:border-action">
-            <button class="inline-flex items-center gap-1 rounded-lg border border-primary px-3 py-2 text-xs font-bold text-primary hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">add</span>Add role</button>
-        </div>
-        <p class="mt-1.5 text-[11px] text-on-surface-variant">Save your changes first, then add the new role. The page reloads when a role is added.</p>
-    </form>
+    {!! $roleBox('staff-edit') !!}
 </dialog>
 
 <script>
@@ -124,6 +118,7 @@
             form.action = updateUrl.replace('__ID__', id);
             form.elements.name.value = member.name || '';
             form.elements.position.value = member.position || '';
+            form.elements.is_active.value = member.active ? '1' : '0';
             document.getElementById('staff-edit-code').textContent = member.code || '';
             form.querySelectorAll('input[type=checkbox]').forEach((box) => {
                 const group = box.closest('[data-group]').dataset.group;
@@ -131,5 +126,45 @@
             });
             document.getElementById('staff-edit').showModal();
         }));
+
+        // A missing role is added in the background: the dialog keeps what was typed and the role appears ticked.
+        const rolesUrl = @json(route('school-settings.roles.store'));
+        const schoolId = @json($selectedSchool->id);
+        const token = document.querySelector('meta[name=csrf-token]')?.content || document.querySelector('#staff-add input[name=_token]')?.value;
+        document.querySelectorAll('[data-role-box]').forEach((panel) => {
+            const dialog = document.getElementById(panel.dataset.roleBox);
+            const message = panel.querySelector('[data-role-message]');
+            const name = panel.querySelector('[data-role-name]');
+            const add = panel.querySelector('[data-role-add]');
+            const submit = async () => {
+                const group = panel.querySelector('[data-role-group]').value;
+                if (! name.value.trim()) { message.textContent = 'Type the new role name first.'; return; }
+                add.disabled = true;
+                try {
+                    const body = new FormData();
+                    body.append('school_id', schoolId); body.append('role_group', group); body.append('name', name.value.trim());
+                    const response = await fetch(rolesUrl, { method: 'POST', body, headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': token } });
+                    const data = await response.json();
+                    if (! response.ok) { message.textContent = data.errors?.name?.[0] || data.message || 'The role could not be added.'; return; }
+                    document.querySelectorAll('dialog [data-group="' + data.role_group + '"]').forEach((list) => {
+                        const label = document.createElement('label');
+                        label.className = 'flex cursor-pointer items-center gap-2 text-xs font-medium';
+                        const tick = document.createElement('input');
+                        tick.type = 'checkbox'; tick.name = 'roles[' + data.role_group + '][]'; tick.value = data.name; tick.className = 'h-4 w-4 rounded border-outline-variant';
+                        tick.checked = list.closest('dialog') === dialog;
+                        label.append(tick, ' ' + data.name);
+                        list.append(label);
+                    });
+                    message.textContent = 'Role "' + data.name + '" added and ticked.';
+                    name.value = '';
+                } catch (error) {
+                    message.textContent = 'The role could not be added. Check your connection and try again.';
+                } finally {
+                    add.disabled = false;
+                }
+            };
+            add.addEventListener('click', submit);
+            name.addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); submit(); } });
+        });
     })();
 </script>

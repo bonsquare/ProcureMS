@@ -252,7 +252,7 @@ class FinanceController extends Controller
     {
         abort_unless($this->schoolIds()->contains($liquidationReport->school_id) && $liquidationReport->dv_number, 404);
         $liquidationReport->load(['school', 'procurementRequest']);
-        $staff = SchoolStaff::where('school_id', $liquidationReport->school_id)->get();
+        $staff = SchoolStaff::active()->where('school_id', $liquidationReport->school_id)->get();
         $find = fn (string $needle) => $staff->first(fn ($m) => str_contains(strtolower($m->document_role.' '.$m->position), $needle));
 
         return view('dv-print', [

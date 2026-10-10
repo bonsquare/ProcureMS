@@ -20,6 +20,7 @@ class SchoolStaff extends Model
         'bac_role',
         'employee_no',
         'ended_at',
+        'is_active',
     ];
 
     /** The role groups an employee can hold, each stored as a comma separated list so one person can carry several. */
@@ -52,7 +53,13 @@ class SchoolStaff extends Model
 
     protected function casts(): array
     {
-        return ['ended_at' => 'datetime'];
+        return ['ended_at' => 'datetime', 'is_active' => 'boolean'];
+    }
+
+    /** Employees marked active; an inactive one stays in the school's list but is not offered as a signatory. */
+    public function scopeActive($query)
+    {
+        return $query->where($query->getModel()->getTable().'.is_active', true);
     }
 
     /** @return array<int, string> */

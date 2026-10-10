@@ -7,9 +7,11 @@ use App\Models\School;
 use App\Models\SchoolStaff;
 use App\Models\StaffRoleOption;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 /**
  * The people side of School Settings: the system users of a school, its employees and the roles they hold.
@@ -71,12 +73,13 @@ class SchoolSettingsController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'position' => ['nullable', 'string', 'max:255'],
+            'is_active' => ['nullable', 'boolean'],
             'roles' => ['nullable', 'array'],
             'roles.*' => ['nullable', 'array'],
             'roles.*.*' => ['string', 'max:100'],
         ]);
 
-        $staff = new SchoolStaff(['name' => $data['name'], 'position' => $data['position'] ?? null, 'school_id' => $school->id, 'organization_id' => $school->organization_id]);
+        $staff = new SchoolStaff(['name' => $data['name'], 'position' => $data['position'] ?? null, 'is_active' => $data['is_active'] ?? true, 'school_id' => $school->id, 'organization_id' => $school->organization_id]);
         $this->applyRoles($staff, $data['roles'] ?? []);
         $staff->save();
 
@@ -89,6 +92,7 @@ class SchoolSettingsController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'position' => ['nullable', 'string', 'max:255'],
+            'is_active' => ['nullable', 'boolean'],
             'roles' => ['nullable', 'array'],
             'roles.*' => ['nullable', 'array'],
             'roles.*.*' => ['string', 'max:100'],
@@ -96,6 +100,7 @@ class SchoolSettingsController extends Controller
 
         $staff->name = $data['name'];
         $staff->position = $data['position'] ?? null;
+        $staff->is_active = $data['is_active'] ?? $staff->is_active;
         $this->applyRoles($staff, $data['roles'] ?? []);
         $staff->save();
 
@@ -111,7 +116,7 @@ class SchoolSettingsController extends Controller
         return $this->back($school, 'staff', $name.' removed from the employee list.');
     }
 
-    public function storeRole(Request $request): RedirectResponse
+    public function storeRole(Request $request): RedirectResponse|JsonResponse
     {
         $school = $this->school($request);
         $data = $request->validate([
@@ -122,10 +127,19 @@ class SchoolSettingsController extends Controller
         $existing = collect(SchoolStaff::DEFAULT_ROLES[$data['role_group']])
             ->merge(StaffRoleOption::where('role_group', $data['role_group'])->where('organization_id', $school->organization_id)->pluck('name'));
         if ($existing->contains(fn ($role) => mb_strtolower($role) === mb_strtolower($name))) {
+            if ($request->expectsJson()) {
+                throw ValidationException::withMessages(['name' => '"'.$name.'" is already a '.SchoolStaff::ROLE_GROUPS[$data['role_group']].' role.']);
+            }
+
             return $this->back($school, 'staff', '"'.$name.'" is already a '.SchoolStaff::ROLE_GROUPS[$data['role_group']].' role.');
         }
 
         StaffRoleOption::create(['organization_id' => $school->organization_id, 'role_group' => $data['role_group'], 'name' => $name]);
+
+        // The employee dialogs add a role in the background so what was typed in the form is kept.
+        if ($request->expectsJson()) {
+            return response()->json(['added' => true, 'role_group' => $data['role_group'], 'name' => $name]);
+        }
 
         return $this->back($school, 'staff', 'Role "'.$name.'" added to '.SchoolStaff::ROLE_GROUPS[$data['role_group']].' roles.');
     }

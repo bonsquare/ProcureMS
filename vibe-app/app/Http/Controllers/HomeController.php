@@ -999,7 +999,7 @@ class HomeController extends Controller
 
     private function procurementPrintView(ProcurementRequest $procurementRequest)
     {
-        $staff = SchoolStaff::where('school_id', $procurementRequest->school_id)->get();
+        $staff = SchoolStaff::active()->where('school_id', $procurementRequest->school_id)->get();
         $rfqMetadata = $procurementRequest->documents->firstWhere('document_type', 'request_for_quotation')?->metadata ?? [];
         $transactionDescription = $procurementRequest->transaction_description ?: data_get($rfqMetadata, 'transaction_description');
         $requestingOfficer = $staff->first(fn ($member) => $member->hasRole('procurement_role', 'Requesting Officer'))
@@ -1030,7 +1030,7 @@ class HomeController extends Controller
         $this->authorizeProcurementAccess($procurementRequest);
 
         $procurementRequest->load(['school', 'requester', 'items', 'documents.creator']);
-        $schoolStaff = SchoolStaff::where('school_id', $procurementRequest->school_id)
+        $schoolStaff = SchoolStaff::active()->where('school_id', $procurementRequest->school_id)
             ->orderBy('name')
             ->get(['id', 'name', 'position', 'document_role']);
         $inspectionOfficer = $schoolStaff->first(fn ($member) => str_contains(strtolower((string) $member->document_role), 'inspection officer'))
@@ -1471,7 +1471,7 @@ class HomeController extends Controller
         $this->authorizeProcurementAccess($procurementRequest);
         abort_unless($procurementDocument->procurement_request_id === $procurementRequest->id, 404);
         $procurementRequest->load(['school', 'requester', 'items']);
-        $staff = SchoolStaff::where('school_id', $procurementRequest->school_id)->get();
+        $staff = SchoolStaff::active()->where('school_id', $procurementRequest->school_id)->get();
         $awardAmount = (float) data_get($procurementDocument->metadata, 'winning_bid_amount', $procurementRequest->amount);
         $purchaseOrder = $procurementRequest->documents()->where('document_type', 'purchase_order')->first();
         $inspectionAcceptanceReport = $procurementRequest->documents()->where('document_type', 'inspection_acceptance_report')->first();
@@ -1490,7 +1490,7 @@ class HomeController extends Controller
             'documentDefinition' => $this->procurementDocumentTypes()[$procurementDocument->document_type],
             'agency' => AgencySetting::first(),
             'staff' => $staff,
-            'iarsStaff' => SchoolStaff::orderBy('name')->get(),
+            'iarsStaff' => SchoolStaff::active()->orderBy('name')->get(),
             'schoolHead' => $staff->first(fn ($member) => str_contains(strtolower((string) $member->position), 'school head')) ?? $approver,
             'requestingOfficer' => $requestingOfficer,
             'procurementOfficer' => $procurementOfficer,
@@ -1766,7 +1766,7 @@ class HomeController extends Controller
     {
         $this->authorizeLiquidationAccess($liquidationReport);
         $liquidationReport->load(['school', 'procurementRequest', 'submitter']);
-        $staff = SchoolStaff::where('school_id', $liquidationReport->school_id)->get();
+        $staff = SchoolStaff::active()->where('school_id', $liquidationReport->school_id)->get();
         $find = fn (string $needle) => $staff->first(fn ($m) => str_contains(strtolower($m->document_role.' '.$m->position), $needle));
 
         return view('ors-print', [
