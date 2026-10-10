@@ -40,7 +40,7 @@ class VacantSchoolTakeoverTest extends TestCase
             'registration_type' => 'takeover',
             'system_user_given_name' => 'Nina', 'system_user_middle_initial' => 'R', 'system_user_surname' => 'Lopez', 'system_user_username' => 'nina.lopez',
             'system_user_position' => 'Administrative Officer', 'system_user_email' => 'nina@example.com', 'system_user_phone' => '09170000001',
-            'system_user_password' => 'secret-pass-1', 'system_user_password_confirmation' => 'secret-pass-1', 'system_user_confirmed' => '1',
+            'system_user_password' => 'secret-pass-1', 'system_user_password_confirmation' => 'secret-pass-1', 'system_user_confirmed' => '1', 'privacy_accepted' => '1',
             ...$extra,
         ];
     }

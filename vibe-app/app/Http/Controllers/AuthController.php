@@ -96,14 +96,18 @@ class AuthController extends Controller
             'system_user_phone' => ['required', 'string', 'max:50'],
             'system_user_password' => ['required', 'string', 'min:8', 'confirmed'],
             'system_user_confirmed' => ['accepted'],
+            'privacy_accepted' => ['accepted'],
         ], [
             'system_user_confirmed.accepted' => 'Please confirm that your full name and username are final.',
+            'privacy_accepted.accepted' => 'Please read and accept the Privacy Policy to register.',
             'system_user_middle_initial.size' => 'The middle initial is one letter only, or leave it blank.',
             'system_user_middle_initial.alpha' => 'The middle initial is one letter only, or leave it blank.',
         ]);
         $data = PlaceNames::snapFields($data, ['region' => 'region', 'division' => 'division', 'district' => 'district']);
 
-        DB::transaction(function () use ($data) {
+        $acceptedAt = now();
+
+        DB::transaction(function () use ($data, $acceptedAt) {
             $organization = Organization::create([
                 'name' => $data['name'],
                 'slug' => 'org-'.Str::lower(Str::random(12)),
@@ -122,6 +126,7 @@ class AuthController extends Controller
                 'system_user_password',
                 'system_user_password_confirmation',
                 'system_user_confirmed',
+                'privacy_accepted',
             ])->all();
             $schoolData['status'] = 'inactive';
             $schoolData['organization_id'] = $organization->id;
@@ -145,6 +150,8 @@ class AuthController extends Controller
                 'organization_id' => $organization->id,
                 'school_id' => $school->id,
                 'position' => $data['system_user_position'],
+                'privacy_accepted_at' => $acceptedAt,
+                'privacy_policy_version' => User::PRIVACY_POLICY_VERSION,
             ]);
 
             Subscription::create([
@@ -166,7 +173,7 @@ class AuthController extends Controller
                 'action' => 'submitted_school_pre_registration',
                 'auditable_type' => School::class,
                 'auditable_id' => $school->id,
-                'metadata' => ['system_user_id' => $systemUser->id],
+                'metadata' => ['system_user_id' => $systemUser->id, 'privacy_accepted_at' => $acceptedAt->toDateTimeString(), 'privacy_policy_version' => User::PRIVACY_POLICY_VERSION],
             ]);
         });
 
@@ -189,8 +196,10 @@ class AuthController extends Controller
             'system_user_phone' => ['required', 'string', 'max:50'],
             'system_user_password' => ['required', 'string', 'min:8', 'confirmed'],
             'system_user_confirmed' => ['accepted'],
+            'privacy_accepted' => ['accepted'],
         ], [
             'system_user_confirmed.accepted' => 'Please confirm that your full name and username are final.',
+            'privacy_accepted.accepted' => 'Please read and accept the Privacy Policy to register.',
             'system_user_middle_initial.size' => 'The middle initial is one letter only, or leave it blank.',
             'system_user_middle_initial.alpha' => 'The middle initial is one letter only, or leave it blank.',
         ]);
@@ -203,6 +212,8 @@ class AuthController extends Controller
             'phone' => $data['system_user_phone'],
             'password' => $data['system_user_password'],
             'position' => $data['system_user_position'],
+            'privacy_accepted_at' => now(),
+            'privacy_policy_version' => User::PRIVACY_POLICY_VERSION,
         ], $data['takeover_note'] ?? null);
 
         return redirect()

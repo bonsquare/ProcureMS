@@ -80,7 +80,7 @@ class SaasFoundationTest extends TestCase
             'system_user_email' => 'new-school@example.test',
             'system_user_password' => 'password123',
             'system_user_password_confirmation' => 'password123',
-            'system_user_confirmed' => '1',
+            'system_user_confirmed' => '1', 'privacy_accepted' => '1',
         ])->assertRedirect(route('login'));
 
         $user = User::withoutGlobalScopes()->where('email', 'new-school@example.test')->firstOrFail();
@@ -110,8 +110,8 @@ class SaasFoundationTest extends TestCase
         ];
 
         $this->post(route('register.store'), $base)->assertSessionHasErrors('system_user_confirmed');
-        $this->post(route('register.store'), $base + ['system_user_confirmed' => '1', 'system_user_middle_initial' => 'DC'])->assertSessionHasErrors('system_user_middle_initial');
-        $this->post(route('register.store'), $base + ['system_user_confirmed' => '1', 'system_user_middle_initial' => ''])->assertRedirect(route('login'));
+        $this->post(route('register.store'), $base + ['system_user_confirmed' => '1', 'privacy_accepted' => '1', 'system_user_middle_initial' => 'DC'])->assertSessionHasErrors('system_user_middle_initial');
+        $this->post(route('register.store'), $base + ['system_user_confirmed' => '1', 'privacy_accepted' => '1', 'system_user_middle_initial' => ''])->assertRedirect(route('login'));
         $this->assertSame('Ana Reyes', User::withoutGlobalScopes()->where('email', 'ana2@example.test')->value('name'));
         $this->get(route('register'))->assertOk()->assertSee('Given Name')->assertSee('Middle Initial')->assertSee('Surname')->assertSee('Username')->assertSee('cannot be changed')
             ->assertDontSee('System Role')->assertDontSee('School Administrator');

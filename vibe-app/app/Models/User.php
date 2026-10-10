@@ -20,7 +20,10 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use BelongsToOrganization, HasFactory, Notifiable;
 
-    protected $fillable = ['name', 'email', 'password', 'role', 'organization_id', 'school_id', 'position', 'office', 'procurement_role', 'bac_role', 'username', 'user_code', 'phone', 'status', 'last_login_at', 'password_changed_at', 'deactivated_at', 'deactivation_reason', 'deactivation_note'];
+    /** Version of the Privacy Policy text shown on the registration form; change it when the text changes. */
+    public const PRIVACY_POLICY_VERSION = '2026-10';
+
+    protected $fillable = ['name', 'email', 'password', 'role', 'organization_id', 'school_id', 'position', 'office', 'procurement_role', 'bac_role', 'username', 'user_code', 'phone', 'status', 'last_login_at', 'password_changed_at', 'deactivated_at', 'deactivation_reason', 'deactivation_note', 'privacy_accepted_at', 'privacy_policy_version'];
 
     protected static function booted(): void
     {
@@ -213,6 +216,7 @@ class User extends Authenticatable
             'password_changed_at' => 'datetime',
             'deactivated_at' => 'datetime',
             'access' => 'array',
+            'privacy_accepted_at' => 'datetime',
         ];
     }
 }

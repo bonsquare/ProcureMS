@@ -88,6 +88,17 @@
             <label class="text-xs font-semibold text-on-surface-variant">Password <span class="text-error">*</span><input type="password" name="system_user_password" required minlength="8" autocomplete="new-password" placeholder="Minimum 8 characters" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
             <label class="text-xs font-semibold text-on-surface-variant">Confirm Password <span class="text-error">*</span><input type="password" name="system_user_password_confirmation" required minlength="8" autocomplete="new-password" placeholder="Repeat password" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
 
+            <section id="privacy-policy" class="rounded-xl border border-outline-variant/60 bg-surface-low p-4 md:col-span-2" aria-labelledby="privacy-title">
+                <h2 id="privacy-title" class="flex items-center gap-2 text-sm font-bold text-primary"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">shield_lock</span>Privacy Policy</h2>
+                <div class="mt-2 max-h-40 space-y-2 overflow-y-auto pr-1 text-xs leading-5 text-on-surface-variant">
+                    <p><b>What we collect.</b> The information you enter on this form: your full name, username, position, e-mail address, contact number, password (stored only in scrambled form), and, when you register a new school, the school's name, type, address and contact details.</p>
+                    <p><b>Why we collect it.</b> To identify you, review your registration, create your account and run your school's procurement, budget and liquidation records.</p>
+                    <p><b>Where it is kept.</b> Your information is saved in this system's database. It is seen only by your school's authorized users and the system's master administrators, and it is not sold or shared with others.</p>
+                    <p><b>Your consent.</b> By ticking the box below, you agree that your information may be collected and saved in the database, and the system records the date and time you accepted this Privacy Policy. You may ask the master administrator to correct your information or to stop using your account.</p>
+                </div>
+                <label class="mt-3 flex items-start gap-2 text-sm font-semibold text-on-surface"><input type="checkbox" name="privacy_accepted" id="privacy-accepted" value="1" required @checked(old('privacy_accepted')) class="mt-0.5 h-4 w-4 shrink-0 rounded border-outline-variant"><span>I have read and accept the Privacy Policy, and I agree that my information may be collected and saved in the database.</span></label>
+            </section>
+
             <div class="reg-actions flex flex-col-reverse gap-3 md:col-span-2 sm:flex-row sm:items-center sm:justify-between">
                 <a href="{{ route('login') }}" class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-outline-variant px-4 py-2.5 text-sm font-semibold text-primary hover:bg-surface-container"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_back</span>Back to login</a>
                 <button id="register-button" type="submit" class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-primary/25 hover:bg-primary-container"><span class="button-label">Submit pre-registration</span><span class="button-spinner hidden h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden="true"></span></button>
@@ -126,6 +137,36 @@
             toggle.checked = type.value === 'takeover';
             toggle.addEventListener('change', apply);
             apply();
+
+            // Before the registration is sent, show the name and username for a last check.
+            const form = document.getElementById('register-form');
+            const dialog = document.getElementById('identity-confirm');
+            const final = document.getElementById('confirm-final');
+            const confirmButton = document.getElementById('confirm-submit');
+            const field = (name) => form.elements[name]?.value.trim() ?? '';
+            let confirmed = false;
+            form.addEventListener('submit', (event) => {
+                if (confirmed) { return; }
+                event.preventDefault();
+                const initial = field('system_user_middle_initial').toUpperCase();
+                document.getElementById('confirm-fullname').textContent = [field('system_user_given_name'), initial ? initial + '.' : '', field('system_user_surname')].filter(Boolean).join(' ');
+                document.getElementById('confirm-username').textContent = field('system_user_username').toLowerCase();
+                final.checked = false;
+                confirmButton.disabled = true;
+                dialog.showModal();
+            });
+            final.addEventListener('change', () => { confirmButton.disabled = ! final.checked; });
+            document.getElementById('confirm-back').addEventListener('click', () => dialog.close());
+            confirmButton.addEventListener('click', () => {
+                if (! final.checked) { return; }
+                document.getElementById('system-user-confirmed').value = '1';
+                confirmed = true;
+                dialog.close();
+                const submit = document.getElementById('register-button');
+                submit.disabled = true;
+                submit.querySelector('.button-spinner')?.classList.remove('hidden');
+                form.requestSubmit();
+            });
         })();
     </script>
 @include('partials.place-suggestions')

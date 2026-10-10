@@ -74,7 +74,7 @@ class StationTransferTest extends TestCase
         $this->post(route('register.store'), [
             'name' => 'Delta Elementary School', 'system_user_given_name' => 'Dina', 'system_user_surname' => 'Cruz', 'system_user_username' => 'dina.cruz',
             'system_user_position' => 'Principal', 'system_user_email' => 'dina@example.com', 'system_user_phone' => '09170000000',
-            'system_user_password' => 'secret-pass-1', 'system_user_password_confirmation' => 'secret-pass-1', 'system_user_confirmed' => '1',
+            'system_user_password' => 'secret-pass-1', 'system_user_password_confirmation' => 'secret-pass-1', 'system_user_confirmed' => '1', 'privacy_accepted' => '1',
         ])->assertRedirect();
 
         $this->assertSame(User::where('username', 'dina.cruz')->value('id'), Subscription::withoutGlobalScopes()->latest('id')->value('user_id'));
