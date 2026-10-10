@@ -14,12 +14,14 @@ class DemoController extends Controller
         abort_unless(config('app.demo'), 404);
         abort_unless($request->user()?->isMaster(), 403);
 
+        // Built first: running the artisan commands inside the request resets the app's idea of its own address.
+        $login = route('login');
         $demo->reset();
 
         // Every account was recreated, so the old session is of no use.
         $request->session()->flush();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login')->with('status', 'Demo data was reset. Sign in again.');
+        return redirect()->to($login)->with('status', 'Demo data was reset. Sign in again.');
     }
 }
