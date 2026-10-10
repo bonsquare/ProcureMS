@@ -44,6 +44,18 @@ class OfficialPrintTest extends TestCase
         }
     }
 
+    public function test_a_form_page_is_never_taller_than_the_paper_the_printer_really_uses(): void
+    {
+        [$organization, $school, $user] = $this->tenant();
+        $aip = Aip::create(['organization_id' => $organization->id, 'school_id' => $school->id, 'fiscal_year' => 2026]);
+
+        // The page filler is sized for the paper chosen in the toolbar; when the printer falls back to a shorter
+        // paper (A4 instead of Legal) a filler taller than the real page printed one blank page after every page.
+        $this->actingAs($user)->get(route('aip.print', $aip))->assertOk()
+            ->assertSee('.official-fill { min-height: min(var(--fill-h), calc((100vh - 3px) / var(--fill-zoom, 1))) !important; }', false)
+            ->assertSee("classList.add('official-fill')", false);
+    }
+
     public function test_a_school_without_a_logo_prints_a_blank_logo_area_not_another_schools_logo(): void
     {
         [, $school, $user] = $this->tenant();

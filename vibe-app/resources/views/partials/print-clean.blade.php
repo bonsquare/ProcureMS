@@ -79,6 +79,9 @@
         .official-sheet { margin: 0 !important; padding: 0 !important; width: auto !important; min-height: 0 !important; zoom: 1 !important; background: #fff !important; background-image: none !important; box-shadow: none !important; border-radius: 0 !important; break-after: page; page-break-after: always; }
         .official-sheet:last-of-type { break-after: auto; page-break-after: auto; }
         [data-official-page] { box-shadow: none !important; border-radius: 0 !important; margin-top: 0 !important; margin-bottom: 0 !important; }
+        /* The filler is sized for the paper chosen in the toolbar. If the printer uses a shorter paper, 100vh is the real
+           page height, so the filler never pushes a blank page after every form page. */
+        .official-fill { min-height: min(var(--fill-h), calc((100vh - 3px) / var(--fill-zoom, 1))) !important; }
         thead { display: table-header-group; }
         tfoot { display: table-footer-group; }
         tr, img, svg, .signature, .signatures, .signature-block, [class*="signator"], [class*="approval"], [class*="certif"], [class*="summary"] { break-inside: avoid; page-break-inside: avoid; }
@@ -186,7 +189,13 @@
                 result.forEach(function (r) {
                     var availableH = (ph - 2 * marginY) * MM - 3;
                     r.item.page.style.zoom = r.zoom;
-                    r.item.fills.forEach(function (node) { node.style.minHeight = Math.max(0, availableH / r.zoom) + 'px'; });
+                    r.item.fills.forEach(function (node) {
+                        var fillH = Math.max(0, availableH / r.zoom) + 'px';
+                        node.classList.add('official-fill');
+                        node.style.setProperty('--fill-h', fillH);
+                        node.style.setProperty('--fill-zoom', r.zoom);
+                        node.style.minHeight = fillH;
+                    });
                     if (paged) { r.item.tops.forEach(function (node, index) { node.style.breakBefore = index ? 'page' : ''; }); }
                     r.item.sheet.style.minHeight = ph + 'mm';
                     r.item.sheet.style.padding = marginY + 'mm ' + marginX + 'mm';
