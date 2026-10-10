@@ -28,7 +28,7 @@
         @endif
         @if(config('app.demo'))
         {{-- A client sees only the school administrator; the master and Sub-master demo accounts are not advertised. --}}
-        <p class="mt-6 border-t border-outline-variant/20 pt-5 text-xs text-on-surface-variant">Demo School Admin: <span class="font-semibold">orong.rms@gmail.com</span> / <span class="font-semibold">password</span></p>
+        <p class="mt-6 border-t border-outline-variant/20 pt-5 text-xs text-on-surface-variant">Demo School Admin: <span class="font-semibold">demo@gmail.com</span> / <span class="font-semibold">password</span></p>
         @endif
     </main>
 <script>

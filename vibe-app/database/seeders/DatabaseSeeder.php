@@ -54,7 +54,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($schools as $school) {
             $email = $school->code === 'SCH-TEST'
-                ? 'orong.rms@gmail.com'
+                ? 'demo@gmail.com'
                 : 'admin@'.strtolower(str_replace(' ', '', $school->name)).'.test';
 
             $user = User::updateOrCreate(
