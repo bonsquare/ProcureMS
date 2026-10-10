@@ -3,11 +3,15 @@
 namespace Tests\Feature;
 
 use App\Models\Aip;
+use App\Models\AipActivity;
+use App\Models\AipKra;
 use App\Models\AppPlan;
+use App\Models\ChartOfAccount;
 use App\Models\Organization;
 use App\Models\PpmpPlan;
 use App\Models\School;
 use App\Models\SipProject;
+use App\Models\SobPlan;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Services\FiscalYearService;
@@ -61,15 +65,20 @@ class PlanningFlowTest extends TestCase
         $this->assertSame($sip->id, $aip->fresh()->sip_project_id);
         $this->assertNotNull($aip->fresh()->master_transaction_id);
 
-        $this->post(route('planning.ppmp.store'), $this->ppmpPayload($aip))->assertSessionHasNoErrors();
-        $ppmp = PpmpPlan::firstOrFail();
-        $this->assertSame($aip->fresh()->master_transaction_id, $ppmp->master_transaction_id);
-        $this->assertEquals(2500, $ppmp->items()->first()->estimated_total_cost);
+        $kra = AipKra::create(['organization_id' => $organization->id, 'aip_id' => $aip->id, 'pillar' => 'Quality', 'kra' => 'KRA 1', 'program' => 'Reading Program']);
+        $activity = AipActivity::create(['organization_id' => $organization->id, 'aip_id' => $aip->id, 'aip_kra_id' => $kra->id, 'activity' => 'Buy reading materials', 'physical_target' => 1, 'q1_amount' => 5000, 'q2_amount' => 0, 'q3_amount' => 0, 'q4_amount' => 0]);
+        $account = ChartOfAccount::create(['organization_id' => $organization->id, 'code' => '5-02-03-010', 'title' => 'Office Supplies Expenses', 'category' => 'Expense']);
+
+        $this->post(route('planning.sob.store'), ['school_id' => $school->id, 'fiscal_year' => 2026, 'quarter' => 1, 'fund_source' => 'MOOE'])->assertSessionHasNoErrors();
+        $sob = SobPlan::firstOrFail();
+        $this->assertSame($aip->fresh()->master_transaction_id, $sob->master_transaction_id);
+        $this->post(route('planning.sob.items.store', $sob), ['aip_activity_id' => $activity->id, 'chart_of_account_id' => $account->id, 'particulars' => 'Bond paper', 'frequency' => 1, 'quantity' => 10, 'unit' => 'ream', 'unit_cost' => 250])->assertSessionHasNoErrors();
+        $this->assertEquals(2500, $sob->items()->first()->amount);
 
         $this->post(route('planning.app.generate'), ['school_id' => $school->id, 'fiscal_year' => 2026])->assertSessionHasErrors('planning');
         $this->assertSame(0, AppPlan::count());
 
-        $this->post(route('planning.ppmp.approve', $ppmp))->assertSessionHasNoErrors();
+        $this->post(route('planning.sob.approve', $sob))->assertSessionHasNoErrors();
         $this->post(route('planning.app.generate'), ['school_id' => $school->id, 'fiscal_year' => 2026])->assertSessionHasNoErrors();
         $app = AppPlan::firstOrFail();
         $this->assertSame(1, $app->items()->count());

@@ -12,6 +12,7 @@ use App\Models\ChartOfAccount;
 use App\Models\FundSource;
 use App\Models\PpmpPlan;
 use App\Models\School;
+use App\Models\SobPlan;
 use App\Services\FiscalYearService;
 use App\Services\MasterTransactionService;
 use Illuminate\Http\Request;
@@ -216,8 +217,8 @@ class AipController extends Controller
         if ($aip->status !== 'draft') {
             throw ValidationException::withMessages(['aip' => 'Only a draft AIP can be deleted. This one was already approved.']);
         }
-        if (PpmpPlan::withoutGlobalScopes()->where('aip_id', $aip->id)->exists() || BudgetAllocation::withoutGlobalScopes()->where('aip_id', $aip->id)->exists()) {
-            throw ValidationException::withMessages(['aip' => 'This AIP has a PPMP or budget built on it. Remove those first.']);
+        if (PpmpPlan::withoutGlobalScopes()->where('aip_id', $aip->id)->exists() || SobPlan::withoutGlobalScopes()->where('aip_id', $aip->id)->exists() || BudgetAllocation::withoutGlobalScopes()->where('aip_id', $aip->id)->exists()) {
+            throw ValidationException::withMessages(['aip' => 'This AIP has an SOB, a PPMP or budget built on it. Remove those first.']);
         }
 
         $transaction = $aip->transaction;

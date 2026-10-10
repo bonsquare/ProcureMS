@@ -57,10 +57,10 @@ class AppItemLinkService
     /** Log the PR on the planning transaction of every APP item it draws from. */
     public function recordLinks(ProcurementRequest $procurementRequest): void
     {
-        $procurementRequest->load('items.appItem.ppmpItem.plan.transaction');
+        $procurementRequest->load('items.appItem.ppmpItem.plan.transaction', 'items.appItem.sobItem.plan.transaction');
         foreach ($procurementRequest->items->filter(fn ($line) => $line->appItem)->groupBy('app_item_id') as $lines) {
             $appItem = $lines->first()->appItem;
-            $appItem->ppmpItem?->plan?->transaction?->recordEvent(
+            ($appItem->sobItem?->plan?->transaction ?? $appItem->ppmpItem?->plan?->transaction)?->recordEvent(
                 'app', 'pr_linked', null, $procurementRequest->status,
                 $procurementRequest->request_number.' · '.$appItem->procurement_item,
                 ['procurement_request_id' => $procurementRequest->id, 'app_item_id' => $appItem->id, 'quantity' => (float) $lines->sum('quantity')],

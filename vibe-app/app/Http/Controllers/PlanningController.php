@@ -10,12 +10,12 @@ use App\Models\AuditLog;
 use App\Models\FiscalYear;
 use App\Models\FundSource;
 use App\Models\MasterTransaction;
-use App\Models\PpmpItem;
 use App\Models\PpmpPlan;
 use App\Models\School;
 use App\Models\SipActivity;
 use App\Models\SipPlan;
 use App\Models\SipProject;
+use App\Models\SobItem;
 use App\Models\SobPlan;
 use App\Services\FiscalYearService;
 use App\Services\MasterTransactionService;
@@ -51,7 +51,7 @@ class PlanningController extends Controller
             'aips' => Aip::with(['sipProject', 'activities'])->where('school_id', $selectedSchool->id)->orderByDesc('fiscal_year')->get(),
             'sobPlans' => SobPlan::with('items')->where('school_id', $selectedSchool->id)->orderBy('fiscal_year')->orderBy('quarter')->get(),
             'ppmpPlans' => PpmpPlan::with(['items', 'aip', 'transaction'])->where('school_id', $selectedSchool->id)->orderByDesc('fiscal_year')->latest('id')->get(),
-            'appPlan' => AppPlan::with(['items.ppmpItem.plan.transaction.procurementRequests', 'items.requestItems.procurementRequest'])->where('school_id', $selectedSchool->id)->where('fiscal_year', $year)->first(),
+            'appPlan' => AppPlan::with(['items.ppmpItem.plan.transaction.procurementRequests', 'items.sobItem.plan.transaction.procurementRequests', 'items.requestItems.procurementRequest'])->where('school_id', $selectedSchool->id)->where('fiscal_year', $year)->first(),
             'fundSources' => FundSource::where('organization_id', $selectedSchool->organization_id)->orderBy('name')->get(),
             'fundOptions' => FundSource::where('organization_id', $selectedSchool->organization_id)->where('is_active', true)->orderBy('name')->pluck('name')->merge(collect(Aip::FUNDS)->flatten())->unique()->sort()->values(),
             'fiscalYears' => FiscalYear::where('organization_id', $selectedSchool->organization_id)->orderByDesc('year')->get(),
@@ -407,10 +407,11 @@ class PlanningController extends Controller
         ]);
         $school = School::whereKey($data['school_id'])->firstOrFail();
         app(FiscalYearService::class)->assertOpen((int) $school->organization_id, (int) $data['fiscal_year']);
-        $approvedItems = PpmpItem::with('plan')
+        $approvedItems = SobItem::with(['plan', 'activity'])
             ->whereHas('plan', fn (Builder $query) => $query->where('school_id', $school->id)->where('fiscal_year', $data['fiscal_year'])->where('status', 'approved'))
+            ->orderBy('id')
             ->get();
-        $this->requires(! ($approvedItems->isEmpty()), 'Approve at least one PPMP before generating the APP.');
+        $this->requires(! ($approvedItems->isEmpty()), 'Approve at least one SOB before generating the APP.');
 
         DB::transaction(function () use ($data, $school, $request, $approvedItems) {
             $appPlan = AppPlan::firstOrCreate(
@@ -419,21 +420,20 @@ class PlanningController extends Controller
             );
             $hasNewItems = false;
             foreach ($approvedItems as $item) {
-                [$appItem, $created] = AppItem::firstOrCreate(
-                    ['app_plan_id' => $appPlan->id, 'ppmp_item_id' => $item->id],
+                $appItem = AppItem::firstOrCreate(
+                    ['app_plan_id' => $appPlan->id, 'sob_item_id' => $item->id],
                     [
                         'organization_id' => $appPlan->organization_id,
-                        'procurement_item' => $item->procurement_item,
-                        'specifications' => $item->specifications,
-                        'quantity' => $item->quantity,
+                        'procurement_item' => $item->particulars,
+                        'specifications' => $item->activity?->activity,
+                        'quantity' => round((float) $item->frequency * (float) $item->quantity, 2),
                         'unit' => $item->unit,
-                        'estimated_unit_cost' => $item->estimated_unit_cost,
-                        'estimated_total_cost' => $item->estimated_total_cost,
-                        'procurement_mode' => $item->plan->procurement_mode,
-                        'procurement_schedule' => $item->plan->procurement_schedule,
+                        'estimated_unit_cost' => $item->unit_cost,
+                        'estimated_total_cost' => $item->amount,
                         'fund_source' => $item->plan->fund_source,
                     ],
                 );
+                $created = $appItem->wasRecentlyCreated;
                 $hasNewItems = $hasNewItems || $created;
                 if ($created) {
                     $item->plan->transaction?->recordEvent('app', 'included_in_app', null, 'planned', $item->procurement_item, ['app_plan_id' => $appPlan->id]);
@@ -444,7 +444,7 @@ class PlanningController extends Controller
             }
         });
 
-        return redirect()->route('planning', ['school_id' => $school->id, 'year' => $data['fiscal_year']])->with('success', 'APP generated from approved PPMP items.');
+        return redirect()->route('planning', ['school_id' => $school->id, 'year' => $data['fiscal_year']])->with('success', 'APP generated from the approved SOBs.');
     }
 
     public function updateAppItem(Request $request, AppItem $appItem)
@@ -493,10 +493,10 @@ class PlanningController extends Controller
         abort_unless($this->schoolIds()->contains($appPlan->school_id), 403);
         $this->requires(! ($appPlan->items()->doesntExist()), 'Generate APP items before approval.');
         app(FiscalYearService::class)->assertOpen((int) $appPlan->organization_id, (int) $appPlan->fiscal_year);
-        $appPlan->load('items.ppmpItem.plan.transaction');
+        $appPlan->load('items.ppmpItem.plan.transaction', 'items.sobItem.plan.transaction');
         $appPlan->update(['status' => 'approved']);
         foreach ($appPlan->items as $item) {
-            $item->ppmpItem?->plan?->transaction?->recordEvent('app', 'approved', 'draft', 'approved', $appPlan->fiscal_year.' APP', ['app_plan_id' => $appPlan->id]);
+            ($item->sobItem?->plan?->transaction ?? $item->ppmpItem?->plan?->transaction)?->recordEvent('app', 'approved', 'draft', 'approved', $appPlan->fiscal_year.' APP', ['app_plan_id' => $appPlan->id]);
         }
 
         return back()->with('success', 'APP approved.');

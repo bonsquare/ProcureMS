@@ -6,6 +6,7 @@ use App\Models\Aip;
 use App\Models\MasterTransaction;
 use App\Models\PpmpPlan;
 use App\Models\School;
+use App\Models\SobPlan;
 use App\Models\User;
 
 class MasterTransactionService
@@ -35,7 +36,8 @@ class MasterTransactionService
     {
         if (! $transaction || $transaction->aip()->exists() || $transaction->sipProjects()->exists() || $transaction->budgetAllocations()->exists()
             || $transaction->procurementRequests()->exists() || $transaction->liquidationReports()->exists()
-            || PpmpPlan::withoutGlobalScopes()->where('master_transaction_id', $transaction->id)->exists()) {
+            || PpmpPlan::withoutGlobalScopes()->where('master_transaction_id', $transaction->id)->exists()
+            || SobPlan::withoutGlobalScopes()->where('master_transaction_id', $transaction->id)->exists()) {
             return;
         }
 
