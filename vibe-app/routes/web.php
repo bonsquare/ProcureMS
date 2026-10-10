@@ -19,6 +19,9 @@ use App\Http\Controllers\StationTransferController;
 use App\Http\Controllers\UnitController;
 use Illuminate\Support\Facades\Route;
 
+// Public: the privacy policy that Google requires for the Drive connection, readable without signing in.
+Route::view('/privacy', 'privacy')->name('privacy');
+
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'create'])->name('login');
     Route::post('/login', [AuthController::class, 'store'])->name('login.store');
