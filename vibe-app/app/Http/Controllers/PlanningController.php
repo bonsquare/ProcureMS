@@ -36,7 +36,7 @@ class PlanningController extends Controller
             ?? $schools->first();
 
         if (! $selectedSchool) {
-            abort(403, 'No school is assigned to this account.');
+            return view('no-school', ['module' => 'Planning']);
         }
 
         $year = (int) $request->query('year', $selectedSchool->organization?->fiscal_year ?? now()->year);
