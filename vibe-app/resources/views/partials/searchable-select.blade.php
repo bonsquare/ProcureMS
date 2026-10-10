@@ -77,6 +77,8 @@
             state.host.appendChild(list);
             mirror(state);
             wire(state);
+            state.observer = new MutationObserver(() => refresh(select));
+            state.observer.observe(select, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['disabled', 'class', 'style', 'hidden', 'label'] });
             refresh(select);
         };
 
@@ -240,6 +242,8 @@
             input.addEventListener('input', () => open(state, true));
             input.addEventListener('blur', () => close(state));
             select.addEventListener('focus', () => input.focus());
+            // Later than the browser's own focusing of the first invalid control, so the user ends up in the visible box.
+            select.addEventListener('invalid', () => { input.setAttribute('aria-invalid', 'true'); setTimeout(() => input.focus(), 0); });
 
             input.addEventListener('keydown', (event) => {
                 const key = event.key;
@@ -275,6 +279,52 @@
         const enhanceAll = (root) => {
             (root.matches && root.matches('select') ? [root] : []).concat(Array.from(root.querySelectorAll ? root.querySelectorAll('select') : [])).forEach(enhance);
         };
+
+        // A select that left the page takes its box and list with it (no orphans after a table row is removed).
+        const cleanup = (node) => {
+            const selects = (node.matches && node.matches('select') ? [node] : []).concat(Array.from(node.querySelectorAll ? node.querySelectorAll('select[data-ss-enhanced]') : []));
+            selects.forEach((select) => {
+                const state = states.get(select);
+                if (!state || document.contains(select)) return;
+                state.observer.disconnect();
+                state.input.remove();
+                state.list.remove();
+                states.delete(select);
+                select.removeAttribute('data-ss-enhanced');
+            });
+        };
+
+        // Page scripts that set the value in code: keep the visible text in step.
+        ['value', 'selectedIndex'].forEach((property) => {
+            const descriptor = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, property);
+            if (!descriptor || !descriptor.set) return;
+            Object.defineProperty(HTMLSelectElement.prototype, property, {
+                configurable: true,
+                enumerable: descriptor.enumerable,
+                get: descriptor.get,
+                set(value) { descriptor.set.call(this, value); if (states.has(this)) refresh(this); },
+            });
+        });
+        const selectedDescriptor = Object.getOwnPropertyDescriptor(HTMLOptionElement.prototype, 'selected');
+        if (selectedDescriptor && selectedDescriptor.set) {
+            Object.defineProperty(HTMLOptionElement.prototype, 'selected', {
+                configurable: true,
+                enumerable: selectedDescriptor.enumerable,
+                get: selectedDescriptor.get,
+                set(value) { selectedDescriptor.set.call(this, value); const owner = this.closest('select'); if (owner && states.has(owner)) refresh(owner); },
+            });
+        }
+
+        document.addEventListener('reset', (event) => {
+            setTimeout(() => { if (event.target.querySelectorAll) event.target.querySelectorAll('select[data-ss-enhanced]').forEach((select) => refresh(select)); }, 0);
+        }, true);
+
+        new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.removedNodes.forEach((node) => { if (node.nodeType === 1) cleanup(node); });
+                mutation.addedNodes.forEach((node) => { if (node.nodeType === 1) enhanceAll(node); });
+            });
+        }).observe(document.documentElement, { childList: true, subtree: true });
 
         window.searchableSelect = { refresh, enhance, enhanceAll };
         if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => enhanceAll(document)); else enhanceAll(document);

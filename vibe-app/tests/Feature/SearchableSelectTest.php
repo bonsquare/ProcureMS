@@ -56,4 +56,17 @@ class SearchableSelectTest extends TestCase
         $this->assertSame(1, substr_count($html, '.official-toolbar select'));
         $this->assertGreaterThanOrEqual(3, substr_count($html, '<select'));
     }
+
+    public function test_the_script_contains_the_sync_hooks(): void
+    {
+        $script = view('partials.searchable-select')->render();
+
+        // A guard so a refactor cannot silently drop a hook; the behavior is proved in the browser.
+        $this->assertGreaterThanOrEqual(1, substr_count($script, 'HTMLSelectElement.prototype'));
+        $this->assertGreaterThanOrEqual(1, substr_count($script, 'HTMLOptionElement.prototype'));
+        $this->assertGreaterThanOrEqual(2, substr_count($script, 'new MutationObserver'));
+        $this->assertSame(1, substr_count($script, "addEventListener('reset'"));
+        $this->assertSame(1, substr_count($script, "addEventListener('invalid'"));
+        $this->assertSame(1, substr_count($script, 'const cleanup'));
+    }
 }
