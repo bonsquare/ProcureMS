@@ -1398,10 +1398,38 @@ class HomeController extends Controller
             'auditable_id' => $document->id,
         ]);
 
+        $completed = $this->completeWhenEveryDocumentExists($procurementRequest, $request->user()?->id);
+
         return redirect()->route('procurement.documents', array_filter([
             'procurementRequest' => $procurementRequest,
             'stage' => in_array($data['document_type'], ProcurementWorkspaceService::RECEIVING_DOCUMENT_TYPES, true) ? 'receiving' : null,
-        ]))->with('success', $type['label'].' saved successfully.');
+        ]))->with('success', $type['label'].' saved successfully.'.($completed ? ' All required documents are done, so '.$procurementRequest->request_number.' is now Complete.' : ''));
+    }
+
+    /** Saving the last required document (the Requisition and Issuance Slip) completes the request; nobody has to press Mark complete. */
+    private function completeWhenEveryDocumentExists(ProcurementRequest $procurementRequest, ?int $userId): bool
+    {
+        $procurementRequest->refresh();
+        if (! in_array($procurementRequest->status, ['approved', 'for_canvass'], true)) {
+            return false;
+        }
+        $missing = app(ProcurementWorkspaceService::class)->present($procurementRequest->load('documents'))['documents']['missing'] ?? [];
+        if (! empty($missing)) {
+            return false;
+        }
+
+        $previousStatus = $procurementRequest->status;
+        $procurementRequest->update(['status' => 'completed']);
+        $procurementRequest->transaction?->recordEvent('procurement', 'pr_completed', $previousStatus, 'completed', $procurementRequest->request_number, ['procurement_request_id' => $procurementRequest->id, 'automatic' => true]);
+        AuditLog::create([
+            'user_id' => $userId,
+            'school_id' => $procurementRequest->school_id,
+            'action' => 'procurement_request_completed',
+            'auditable_type' => ProcurementRequest::class,
+            'auditable_id' => $procurementRequest->id,
+        ]);
+
+        return true;
     }
 
     /**
