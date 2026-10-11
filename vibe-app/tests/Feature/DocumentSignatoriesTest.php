@@ -9,6 +9,7 @@ use App\Models\Subscription;
 use App\Models\User;
 use App\Support\SignatorySlots;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class DocumentSignatoriesTest extends TestCase
@@ -73,5 +74,66 @@ class DocumentSignatoriesTest extends TestCase
         $names = SignatorySlots::candidates(SchoolStaff::where('school_id', $school->id)->get(), $slot)->pluck('name')->all();
 
         $this->assertSame(['Walt Chair', 'Amy Plain', 'Zed Plain'], $names);
+    }
+
+    public function test_validated_returns_snapshots_for_chosen_slots(): void
+    {
+        [, $school] = $this->tenant();
+        $pat = $this->staff($school, 'Pat Chosen', ['position' => 'Teacher III']);
+
+        $snapshots = SignatorySlots::validated('purchase_order', ['school_head' => (string) $pat->id], $school->id);
+
+        $this->assertSame(['school_head' => ['staff_id' => $pat->id, 'name' => 'Pat Chosen', 'position' => 'Teacher III']], $snapshots);
+        $staff = SignatorySlots::toStaff($snapshots['school_head']);
+        $this->assertSame('Pat Chosen', $staff->name);
+        $this->assertSame('Teacher III', $staff->position);
+    }
+
+    public function test_blank_and_unknown_slots_are_ignored(): void
+    {
+        [, $school] = $this->tenant();
+        $pat = $this->staff($school, 'Pat Chosen');
+
+        $snapshots = SignatorySlots::validated('purchase_order', ['school_head' => '', 'disbursing_officer' => null, 'made_up_slot' => (string) $pat->id], $school->id);
+
+        $this->assertSame([], $snapshots);
+    }
+
+    public function test_a_string_or_nested_array_input_is_ignored_without_error(): void
+    {
+        [, $school] = $this->tenant();
+
+        $this->assertSame([], SignatorySlots::validated('purchase_order', 'x', $school->id));
+        $this->assertSame([], SignatorySlots::validated('purchase_order', null, $school->id));
+        $this->assertSame([], SignatorySlots::validated('purchase_order', ['school_head' => ['a']], $school->id));
+    }
+
+    public function test_another_schools_staff_is_refused(): void
+    {
+        [, $school] = $this->tenant('one');
+        [, $other] = $this->tenant('two');
+        $stranger = $this->staff($other, 'Stranger');
+
+        try {
+            SignatorySlots::validated('purchase_order', ['school_head' => (string) $stranger->id], $school->id);
+            $this->fail('Expected a ValidationException.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('signatories.school_head', $exception->errors());
+        }
+    }
+
+    public function test_an_inactive_or_unknown_staff_id_is_refused(): void
+    {
+        [, $school] = $this->tenant();
+        $inactive = $this->staff($school, 'Gone', ['is_active' => false]);
+
+        foreach ([(string) $inactive->id, '999999', 'abc'] as $value) {
+            try {
+                SignatorySlots::validated('purchase_order', ['disbursing_officer' => $value], $school->id);
+                $this->fail("Expected a ValidationException for {$value}.");
+            } catch (ValidationException $exception) {
+                $this->assertArrayHasKey('signatories.disbursing_officer', $exception->errors());
+            }
+        }
     }
 }

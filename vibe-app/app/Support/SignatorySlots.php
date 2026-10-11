@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\SchoolStaff;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\ValidationException;
 
 /**
  * The signature slots of every official document, and who may sign them. A slot's `var` is the variable the
@@ -91,6 +92,54 @@ final class SignatorySlots
         return $active->filter(fn (SchoolStaff $member) => self::holds($member, $slot))->sortBy($byName)
             ->concat($active->reject(fn (SchoolStaff $member) => self::holds($member, $slot))->sortBy($byName))
             ->values();
+    }
+
+    /**
+     * The chosen people as snapshots, for the slots of this document that were filled in. Blank values, unknown
+     * slots and input that is not an array are ignored; anyone who is not an active staff member of the school is refused.
+     *
+     * @return array<string, array{staff_id: int, name: string, position: ?string}>
+     */
+    public static function validated(string $document, mixed $input, int $schoolId): array
+    {
+        if (! is_array($input)) {
+            return [];
+        }
+
+        $chosen = [];
+        foreach (self::slots($document) as $slot) {
+            $value = $input[$slot['key']] ?? null;
+            if (is_scalar($value) && trim((string) $value) !== '') {
+                $chosen[$slot['key']] = trim((string) $value);
+            }
+        }
+
+        $ids = collect($chosen)->filter(fn (string $value) => ctype_digit($value))->map(fn (string $value) => (int) $value)->unique()->values();
+        $found = SchoolStaff::active()->where('school_id', $schoolId)->whereIn('id', $ids)->get()->keyBy('id');
+
+        $snapshots = [];
+        $errors = [];
+        foreach ($chosen as $key => $value) {
+            $member = ctype_digit($value) ? $found->get((int) $value) : null;
+            if (! $member) {
+                $errors['signatories.'.$key] = 'That person cannot sign for this school.';
+
+                continue;
+            }
+            $snapshots[$key] = ['staff_id' => $member->id, 'name' => $member->name, 'position' => $member->position];
+        }
+
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
+        }
+
+        return $snapshots;
+    }
+
+    /** An unsaved staff record carrying a snapshot's name and position, which is all the templates read. */
+    public static function toStaff(array $snapshot): SchoolStaff
+    {
+        return new SchoolStaff(['name' => $snapshot['name'] ?? '', 'position' => $snapshot['position'] ?? null]);
     }
 
     private static function holds(SchoolStaff $member, array $slot): bool
