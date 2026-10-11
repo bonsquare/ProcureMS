@@ -109,6 +109,52 @@ class DocumentNotRequiredTest extends TestCase
         $this->assertArrayNotHasKey('property_acknowledgement_receipt', $request->fresh()->not_required_documents ?? []);
     }
 
+    public function test_both_optional_cards_offer_the_not_required_button_on_the_receiving_page(): void
+    {
+        [$user, $request] = $this->tenant();
+
+        $html = $this->actingAs($user)->get(route('procurement.documents', [$request, 'stage' => 'receiving']))->assertOk()->getContent();
+
+        $this->assertSame(2, substr_count($html, 'Not required for this transaction'));
+        $this->assertStringContainsString(route('procurement.documents.not-required', $request), $html);
+        $this->assertStringContainsString('value="inventory_custodian_slip"', $html);
+        $this->assertStringContainsString('value="property_acknowledgement_receipt"', $html);
+    }
+
+    public function test_a_marked_card_shows_who_and_when_and_offers_to_make_it_required_again(): void
+    {
+        [$user, $request] = $this->tenant();
+        $this->actingAs($user)->post(route('procurement.documents.not-required', $request), ['document_type' => 'inventory_custodian_slip']);
+
+        $html = $this->get(route('procurement.documents', [$request, 'stage' => 'receiving']))->assertOk()->getContent();
+
+        $this->assertStringContainsString('Marked not required by '.$user->name, $html);
+        $this->assertSame(1, substr_count($html, 'Make it required again'));
+        $this->assertStringContainsString(route('procurement.documents.required-again', $request), $html);
+        // Only the Property Acknowledgement Receipt still offers the button.
+        $this->assertSame(1, substr_count($html, 'Not required for this transaction'));
+    }
+
+    public function test_a_prepared_document_still_shows_as_prepared_even_with_a_stale_mark(): void
+    {
+        [$user, $request] = $this->tenant();
+        $request->update(['not_required_documents' => ['inventory_custodian_slip' => ['user_id' => $user->id, 'name' => $user->name, 'at' => now()->toIso8601String()]]]);
+        $this->document($request, $user, 'inventory_custodian_slip');
+
+        $html = $this->actingAs($user)->get(route('procurement.documents', [$request, 'stage' => 'receiving']))->assertOk()->getContent();
+
+        $this->assertStringContainsString('INV-2026-001', $html);
+        $this->assertStringNotContainsString('Make it required again', $html);
+    }
+
+    public function test_a_user_who_cannot_edit_documents_sees_no_button(): void
+    {
+        [$viewer, $request] = $this->tenant('view', 'viewer');
+
+        $this->actingAs($viewer)->get(route('procurement.documents', [$request, 'stage' => 'receiving']))->assertOk()
+            ->assertDontSee('Not required for this transaction');
+    }
+
     public function test_the_mark_does_not_change_progress_or_the_missing_list(): void
     {
         [$user, $request] = $this->tenant();
