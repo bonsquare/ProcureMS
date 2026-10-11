@@ -31,11 +31,6 @@
         td.group { background: #fcfcfd; } td.fund { background: #fafbfc; }
         td.num { white-space: nowrap; }
 
-        .summary-wrap { margin-top: 22px; display: flex; justify-content: flex-start; }
-        .summary { width: 62%; min-width: 520px; }
-        .summary th { background: #f4e4d6; color: #3b2f26; }
-        .summary td:first-child { text-align: left; font-weight: bold; }
-        .summary tr.total td { font-weight: bold; background: #f4f4f6; }
 
         .signatures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 60px; margin-top: 36px; }
         .signatures .label { font-size: 11px; }
@@ -61,13 +56,10 @@
             th, td { padding: .3rem .4rem; font-size: .9rem; }
             thead th { padding: .9rem .3rem; font-size: .85rem; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .fund-note { margin-top: .3rem; font-size: .85rem; }
-            .summary-wrap { margin-top: 2.2rem; }
-            .summary { min-width: 0; }
             .signatures { gap: 6rem; margin-top: 3.6rem; }
             .signatures .label, .signatures .position { font-size: 1.1rem; }
             .signatures .name { margin: 4.4rem 14% 0; font-size: 1.2rem; }
-            td.pillar, td.group, td.fund, thead th, .summary th, .summary tr.total td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            tr { break-inside: avoid; }
+            td.pillar, td.group, td.fund, thead th,            tr { break-inside: avoid; }
         }
     </style>
 @include('partials.input-fixes')
@@ -75,7 +67,6 @@
 </head>
 <body>
 @php
-    $summary = $aip->fundSummary();
     $fmt = fn ($v) => (float) $v ? number_format($v, 2) : '-';
     $school = $aip->school;
     [$leftLogo, $rightLogo] = \App\Support\OfficialDocument::logos($school, $agency);
@@ -164,19 +155,6 @@
             @endforeach
         </tbody>
     </table>
-
-    <div class="summary-wrap">
-        <table class="summary">
-            <colgroup><col style="width:24%"><col style="width:15%"><col style="width:15%"><col style="width:15%"><col style="width:15%"><col style="width:16%"></colgroup>
-            <thead><tr><th>Source of Fund</th><th>1st Quarter</th><th>2nd Quarter</th><th>3rd Quarter</th><th>4th Quarter</th><th>TOTAL</th></tr></thead>
-            <tbody>
-                @foreach($summary as $fund => $row)
-                    <tr><td>{{ $fund }}</td><td>{{ $fmt($row['q1']) }}</td><td>{{ $fmt($row['q2']) }}</td><td>{{ $fmt($row['q3']) }}</td><td>{{ $fmt($row['q4']) }}</td><td><strong>{{ number_format($row['total'], 2) }}</strong></td></tr>
-                @endforeach
-                <tr class="total"><td>TOTAL</td><td>{{ $fmt($summary->sum('q1')) }}</td><td>{{ $fmt($summary->sum('q2')) }}</td><td>{{ $fmt($summary->sum('q3')) }}</td><td>{{ $fmt($summary->sum('q4')) }}</td><td>{{ number_format($summary->sum('total'), 2) }}</td></tr>
-            </tbody>
-        </table>
-    </div>
 
     <div class="signatures">
         @foreach([['Prepared by:', 'prepared_by'], ['Noted by:', 'noted_by'], ['Approved by:', 'approved_by']] as [$label, $key])
