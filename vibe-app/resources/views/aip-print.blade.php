@@ -24,7 +24,7 @@
         .doc-title .school { margin: 2px 0 0; font-size: 13.5px; font-weight: bold; text-transform: uppercase; }
 
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        th, td { border: 1px solid #8d8d95; padding: 6px 4px; text-align: center; vertical-align: middle; word-wrap: break-word; overflow-wrap: break-word; hyphens: none; }
+        th, td { border: 1px solid #8d8d95; padding: 6px 4px; font-size: 10px; text-align: center; vertical-align: middle; word-wrap: break-word; overflow-wrap: break-word; hyphens: none; }
         thead th { background: #f4e4d6; color: #3b2f26; font-weight: bold; font-size: 10px; padding: 9px 3px; }
         .fund-note { margin-top: 3px; font-size: 8.5px; font-weight: normal; line-height: 1.25; }
         td.pillar { font-weight: bold; }
@@ -47,7 +47,7 @@
             .toolbar-unused { display: none; }
             .paper { width: 100%; margin: 0; padding: 0; box-shadow: none; }
             thead th { font-size: 8.5px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            th, td { padding: 3px 4px; }
+            th, td { padding: 3px 4px; font-size: 9px; }
             .masthead img { height: 70px; }
             td.pillar, td.group, td.fund, thead th, .summary th, .summary tr.total td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             tr { break-inside: avoid; }
@@ -86,7 +86,7 @@
 
     <table>
         <colgroup>
-            <col style="width:5.5%"><col style="width:6%"><col style="width:7%"><col style="width:6%"><col style="width:6.5%"><col style="width:6.5%"><col style="width:8.5%"><col style="width:5%"><col style="width:5%"><col style="width:5%"><col style="width:5%"><col style="width:5%"><col style="width:5%"><col style="width:11%"><col style="width:7%"><col style="width:6%">
+            <col style="width:6.5%"><col style="width:7%"><col style="width:7%"><col style="width:7%"><col style="width:7%"><col style="width:7.5%"><col style="width:7.5%"><col style="width:4.5%"><col style="width:4.5%"><col style="width:5%"><col style="width:5%"><col style="width:5%"><col style="width:5%"><col style="width:9.5%"><col style="width:7%"><col style="width:5%">
         </colgroup>
         <thead>
             <tr>
@@ -107,10 +107,14 @@
                         $lines->push(['kra' => $kra, 'activity' => $act, 'values' => [$kra->pillar, $kra->kra, $kra->intermediate_outcome, $kra->strategy, $kra->five_point_agenda, $kra->program]]);
                     }
                 }
-                // No cell merges: every column repeats its value on each row.
+                // Only the pillar merges, down each run of rows with the same pillar; every other column repeats its value on each row.
                 $span = [];
                 foreach ($lines as $r => $line) {
                     for ($c = 0; $c < 6; $c++) { $span[$c][$r] = 1; }
+                }
+                $pillarStart = 0;
+                foreach ($lines as $r => $line) {
+                    if ($r > 0 && $line['values'][0] === $lines[$r - 1]['values'][0]) { $span[0][$pillarStart]++; $span[0][$r] = 0; } else { $pillarStart = $r; }
                 }
                 $pillarColors = ['access' => '#fbf3d5', 'equity' => '#fae3d2', 'quality' => '#dcebf6', 'resiliency' => '#f5dfe5', 'well-being' => '#e5dff1', 'enabling mechanism' => '#dbead7'];
                 $fallback = ['#dff0ee', '#f3e9d6', '#e3e8f3', '#e9f0dc'];

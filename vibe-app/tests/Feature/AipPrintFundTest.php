@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\AipActivity;
+use App\Models\AipKra;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\SobFixture;
 use Tests\TestCase;
@@ -28,6 +29,21 @@ class AipPrintFundTest extends TestCase
         preg_match_all('/<col /', $table, $cols);
         preg_match('/<tbody>.*?<tr>(.*?)<\/tr>/s', $table, $firstRow);
         $this->assertSame(count($cols[0]), preg_match_all('/<td/', $firstRow[1]), 'every body row has one cell for each column');
+    }
+
+    public function test_the_pillar_cell_merges_down_its_rows_and_every_other_column_repeats(): void
+    {
+        $fx = SobFixture::make();
+        $this->actingAs($fx['user']);
+        $rows = count($fx['activities']);
+        $second = AipKra::create(['organization_id' => $fx['organization']->id, 'aip_id' => $fx['aip']->id, 'pillar' => 'Quality', 'kra' => 'KRA 9', 'program' => 'Program Two']);
+        AipActivity::create(['organization_id' => $fx['organization']->id, 'aip_id' => $fx['aip']->id, 'aip_kra_id' => $second->id, 'activity' => 'Another', 'physical_target' => 1]);
+
+        $html = $this->get(route('aip.print', $fx['aip']))->assertOk()->getContent();
+
+        $this->assertSame(2, preg_match_all('/<td rowspan="\d+" class="pillar"/', $html), 'one pillar cell for each pillar');
+        $this->assertStringContainsString('<td rowspan="'.$rows.'" class="pillar"', $html, 'Access spans all of its rows');
+        $this->assertSame($rows + 1, substr_count($html, 'KRA 3') + substr_count($html, 'KRA 9'), 'the KRA still repeats on every row');
     }
 
     public function test_the_activity_form_always_offers_the_standard_funds_with_other_to_specify(): void
