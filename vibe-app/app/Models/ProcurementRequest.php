@@ -10,11 +10,11 @@ class ProcurementRequest extends Model
 {
     use BelongsToOrganization, HasFactory;
 
-    protected $fillable = ['organization_id', 'school_id', 'master_transaction_id', 'requested_by', 'request_number', 'title', 'description', 'transaction_description', 'amount', 'entity_name', 'department_name', 'section', 'sai_number', 'sai_date', 'responsibility_center_code', 'source_of_fund', 'extra_blank_rows', 'status', 'requested_at', 'approved_at', 'budget_allocation_id', 'signatories'];
+    protected $fillable = ['organization_id', 'school_id', 'master_transaction_id', 'requested_by', 'request_number', 'title', 'description', 'transaction_description', 'amount', 'entity_name', 'department_name', 'section', 'sai_number', 'sai_date', 'responsibility_center_code', 'source_of_fund', 'extra_blank_rows', 'status', 'requested_at', 'approved_at', 'budget_allocation_id', 'signatories', 'not_required_documents'];
 
     protected function casts(): array
     {
-        return ['amount' => 'decimal:2', 'sai_date' => 'date', 'requested_at' => 'datetime', 'approved_at' => 'datetime', 'signatories' => 'array'];
+        return ['amount' => 'decimal:2', 'sai_date' => 'date', 'requested_at' => 'datetime', 'approved_at' => 'datetime', 'signatories' => 'array', 'not_required_documents' => 'array'];
     }
 
     /**

@@ -1427,6 +1427,12 @@ class HomeController extends Controller
             ]
         );
 
+        if (isset($procurementRequest->not_required_documents[$data['document_type']])) {
+            $marks = $procurementRequest->not_required_documents;
+            unset($marks[$data['document_type']]);
+            $procurementRequest->update(['not_required_documents' => $marks === [] ? null : $marks]);
+        }
+
         AuditLog::create([
             'user_id' => $request->user()?->id,
             'school_id' => $procurementRequest->school_id,
@@ -1473,6 +1479,47 @@ class HomeController extends Controller
      * Live preview for the document form: runs the real save inside a transaction, renders the official
      * print page from the result, then rolls everything back so nothing is stored.
      */
+    /** An optional document (ICS, PAR) this transaction does not need: its card reads "Not required" instead of "Not prepared". Progress and completion never count these documents. */
+    public function markDocumentNotRequired(Request $request, ProcurementRequest $procurementRequest)
+    {
+        $this->authorizeProcurementAccess($procurementRequest);
+        $type = $this->optionalDocumentType($request);
+        abort_if($procurementRequest->documents()->where('document_type', $type)->exists(), 422, 'This document is already prepared, so it cannot be marked not required.');
+
+        $marks = $procurementRequest->not_required_documents ?? [];
+        $marks[$type] = ['user_id' => $request->user()->id, 'name' => $request->user()->name, 'at' => now()->toIso8601String()];
+        $procurementRequest->update(['not_required_documents' => $marks]);
+        $this->auditNotRequired($request, $procurementRequest, 'document_marked_not_required', $type);
+
+        return back()->with('success', ProcurementWorkspaceService::OPTIONAL_DOCUMENTS[$type].' marked not required for this transaction.');
+    }
+
+    public function markDocumentRequiredAgain(Request $request, ProcurementRequest $procurementRequest)
+    {
+        $this->authorizeProcurementAccess($procurementRequest);
+        $type = $this->optionalDocumentType($request);
+
+        $marks = $procurementRequest->not_required_documents ?? [];
+        unset($marks[$type]);
+        $procurementRequest->update(['not_required_documents' => $marks === [] ? null : $marks]);
+        $this->auditNotRequired($request, $procurementRequest, 'document_required_again', $type);
+
+        return back()->with('success', ProcurementWorkspaceService::OPTIONAL_DOCUMENTS[$type].' is required again for this transaction.');
+    }
+
+    private function optionalDocumentType(Request $request): string
+    {
+        return $request->validate(['document_type' => ['required', Rule::in(array_keys(ProcurementWorkspaceService::OPTIONAL_DOCUMENTS))]])['document_type'];
+    }
+
+    private function auditNotRequired(Request $request, ProcurementRequest $procurementRequest, string $action, string $type): void
+    {
+        AuditLog::create([
+            'user_id' => $request->user()->id, 'school_id' => $procurementRequest->school_id, 'action' => $action,
+            'auditable_type' => ProcurementRequest::class, 'auditable_id' => $procurementRequest->id, 'metadata' => ['document_type' => $type],
+        ]);
+    }
+
     public function previewProcurementDocument(Request $request, ProcurementRequest $procurementRequest)
     {
         $this->authorizeProcurementAccess($procurementRequest);
