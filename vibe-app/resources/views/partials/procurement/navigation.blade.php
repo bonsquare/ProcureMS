@@ -20,10 +20,7 @@
     $navigation[] = ['icon' => 'settings', 'label' => 'School Settings', 'route' => 'school-settings'];
 @endphp
 <aside id="civic-navigation" class="civic-nav" aria-label="Main navigation">
-    <div class="mb-8 flex items-center gap-3 px-2">
-        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-white"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">account_balance</span></div>
-        <div><p class="text-lg font-bold tracking-tight">ProcureMS</p><p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/55">Civic Operations</p></div>
-    </div>
+    @include('partials.brand')
     <nav class="flex-1 space-y-1">
         @foreach($navigation as $item)
             @php $active = ($item['route'] === ($activeNavRoute ?? 'procurement')); @endphp

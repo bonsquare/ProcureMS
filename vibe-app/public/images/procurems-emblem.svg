@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="21 20 210 210" role="img" aria-labelledby="title">
+  <title id="title">ProcureMS emblem</title>
+
+  <!-- Civic emblem -->
+  <circle cx="126" cy="125" r="105" fill="#00236f"/>
+  <circle cx="126" cy="125" r="95" fill="none" stroke="#d9ab54" stroke-width="3"/>
+  <circle cx="126" cy="125" r="82" fill="#0b347c" stroke="#456ba5" stroke-width="1.5"/>
+  <path d="M75 94 126 63l51 31" fill="none" stroke="#d9ab54" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M86 96h80" stroke="#d9ab54" stroke-width="4" stroke-linecap="round"/>
+  <path d="M85 184c12 10 26 16 41 17 15-1 29-7 41-17" fill="none" stroke="#d9ab54" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="72" cy="151" r="3" fill="#d9ab54"/>
+  <circle cx="180" cy="151" r="3" fill="#d9ab54"/>
+
+  <!-- Ledger pages and completed transaction -->
+  <path d="M90 108h72v68H90z" fill="#b8d5ff" opacity=".75"/>
+  <path d="M96 102h58l13 13v67H96z" fill="#ffffff"/>
+  <path d="M154 102v14h13" fill="#c8dcf7"/>
+  <path d="M108 128h42M108 140h37M108 152h28" fill="none" stroke="#37609c" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="160" cy="165" r="24" fill="#006c4a" stroke="#ffffff" stroke-width="4"/>
+  <path d="m149 165 7 7 15-17" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
