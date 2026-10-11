@@ -23,7 +23,7 @@
         .doc-title .fy { margin: 3px 0; font-size: 12.5px; letter-spacing: .4px; font-weight: bold; }
         .doc-title .school { margin: 2px 0 0; font-size: 13.5px; font-weight: bold; text-transform: uppercase; }
 
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; text-rendering: geometricPrecision; }
         th, td { border: 1px solid #8d8d95; padding: 6px 4px; font-size: 10px; text-align: center; vertical-align: middle; word-wrap: break-word; overflow-wrap: break-word; hyphens: none; }
         thead th { background: #f4e4d6; color: #3b2f26; font-weight: bold; font-size: 10px; padding: 9px 3px; }
         .fund-note { margin-top: 3px; font-size: 8.5px; font-weight: normal; line-height: 1.25; }
@@ -195,7 +195,8 @@
             var zoom = parseFloat(page.style.zoom) || 1;
             var kept = { zoom: page.style.zoom, width: page.style.width, preview: root.style.getPropertyValue('--preview-zoom') };
 
-            // Back to one merged cell per pillar.
+            // Back to one merged cell per pillar, with no forced page breaks.
+            Array.prototype.forEach.call(tbody.rows, function (row) { row.style.breakBefore = ''; });
             Array.prototype.forEach.call(tbody.querySelectorAll('td[data-clone]'), function (cell) { cell.remove(); });
             Array.prototype.forEach.call(tbody.querySelectorAll('td.pillar[data-rows]'), function (cell) { cell.setAttribute('rowspan', cell.dataset.rows); });
 
@@ -206,7 +207,8 @@
             root.classList.add('sim-print');
 
             var rows = Array.prototype.slice.call(tbody.rows);
-            var capacity = ((+spec[2] - 2 * spec[3]) * MM - 4) / zoom - 8;
+            // 7% spare: print text wraps a little differently from the screen, and a page must never be fuller than the paper.
+            var capacity = (((+spec[2] - 2 * spec[3]) * MM - 4) / zoom - 8) * 0.93;
             var headHeight = table.tHead ? table.tHead.getBoundingClientRect().height : 0;
             var position = table.getBoundingClientRect().top - page.getBoundingClientRect().top + headHeight;
             var starts = [];
@@ -221,9 +223,11 @@
             page.style.width = kept.width;
             if (kept.preview) { root.style.setProperty('--preview-zoom', kept.preview); } else { root.style.removeProperty('--preview-zoom'); }
 
+            // Each page starts where the measurement says, so the browser breaks the same rows the merged cells were split for.
             // A page that starts in the middle of a pillar gets its own copy of the pillar cell.
             starts.forEach(function (index) {
                 var row = rows[index];
+                row.style.breakBefore = 'page';
                 var origin = rows.filter(function (other) { return other.dataset.pillarGroup === row.dataset.pillarGroup; })[0];
                 if (origin === row) { return; }
                 var cell = origin.querySelector('td.pillar[data-rows]');
