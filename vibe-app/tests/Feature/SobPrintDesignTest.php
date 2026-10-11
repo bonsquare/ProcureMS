@@ -130,7 +130,7 @@ class SobPrintDesignTest extends TestCase
         $html = $this->get(route('planning.sob.show', $plan))->assertOk()->getContent();
 
         $this->assertStringContainsString('<option value="'.$solo->id.'"', $html);
-        $this->assertMatchesRegularExpression('/<option value="'.$solo->id.'"[^>]*>\s*Sustain Retention Rate \(AGAHAN MO! SAGOT KO!\)\s*<\/option>/', $html, 'the program alone when it has one activity');
-        $this->assertMatchesRegularExpression('/<option value="'.$fx['activities'][0]->id.'"[^>]*>\s*Program One — Activity 1\s*<\/option>/', $html, 'the activity tells apart the several under one program');
+        $this->assertMatchesRegularExpression('/<option value="'.$solo->id.'"[^>]*>\s*Sustain Retention Rate \(AGAHAN MO! SAGOT KO!\)\s*<\/option>/', $html, 'the program name exactly');
+        $this->assertMatchesRegularExpression('/<option value="'.$fx['activities'][0]->id.'"[^>]*>\s*Program One\s*<\/option>/', $html, 'the program alone, with no activity added');
     }
 }

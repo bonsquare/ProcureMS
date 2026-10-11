@@ -89,7 +89,7 @@ class SobMultiParticularsTest extends TestCase
         $html = $this->get(route('planning.sob.show', $plan))->assertOk()->getContent();
 
         foreach ($fx['activities'] as $activity) {
-            $this->assertStringContainsString($activity->activity, $html, 'an activity without an amount is still chosen');
+            $this->assertStringContainsString('<option value="'.$activity->id.'"', $html, 'an activity without an amount is still chosen');
         }
         $this->assertStringNotContainsString('(AIP 1ST QUARTER', $html);
         $this->assertStringNotContainsString('that has an actual budget', $html);
