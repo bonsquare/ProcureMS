@@ -118,10 +118,12 @@
             @php
                 // One row per activity, with the KRA-level columns repeated on every row.
                 $lines = collect();
-                foreach ($aip->kras->groupBy(fn ($k) => $k->pillar ?: '')->flatten() as $kra) {
+                // The template has one pillar for Resiliency and Well-Being.
+                $pillarName = fn ($name) => in_array(strtolower(trim((string) $name)), ['resiliency', 'well-being', 'well being', 'wellbeing', 'resiliency and well-being'], true) ? 'Resiliency and Well-Being' : (string) $name;
+                foreach ($aip->kras->groupBy(fn ($k) => $pillarName($k->pillar))->flatten() as $kra) {
                     $acts = $kra->activities->isNotEmpty() ? $kra->activities : collect([null]);
                     foreach ($acts as $act) {
-                        $lines->push(['kra' => $kra, 'activity' => $act, 'values' => [$kra->pillar, $kra->kra, $kra->intermediate_outcome, $kra->strategy, $kra->five_point_agenda, $kra->program]]);
+                        $lines->push(['kra' => $kra, 'activity' => $act, 'values' => [$pillarName($kra->pillar), $kra->kra, $kra->intermediate_outcome, $kra->strategy, $kra->five_point_agenda, $kra->program]]);
                     }
                 }
                 // Only the pillar merges, down each run of rows with the same pillar; every other column repeats its value on each row.
@@ -135,7 +137,7 @@
                     if ($r > 0 && $line['values'][0] === $lines[$r - 1]['values'][0]) { $span[0][$pillarStart]++; $span[0][$r] = 0; } else { $pillarStart = $r; }
                     $pillarGroup[$r] = $pillarStart;
                 }
-                $pillarColors = ['access' => '#fbf3d5', 'equity' => '#fae3d2', 'quality' => '#dcebf6', 'resiliency' => '#f5dfe5', 'well-being' => '#e5dff1', 'enabling mechanism' => '#dbead7'];
+                $pillarColors = ['access' => '#fbf3d5', 'equity' => '#fae3d2', 'quality' => '#dcebf6', 'resiliency and well-being' => '#e5dff1', 'enabling mechanism' => '#dbead7'];
                 $fallback = ['#dff0ee', '#f3e9d6', '#e3e8f3', '#e9f0dc'];
                 $pillarColor = fn ($name) => $pillarColors[strtolower(trim((string) $name))] ?? $fallback[abs(crc32((string) $name)) % count($fallback)];
             @endphp

@@ -46,6 +46,20 @@ class AipPrintFundTest extends TestCase
         $this->assertSame($rows + 1, substr_count($html, 'KRA 3') + substr_count($html, 'KRA 9'), 'the KRA still repeats on every row');
     }
 
+    public function test_resiliency_and_well_being_print_as_one_merged_pillar(): void
+    {
+        $fx = SobFixture::make();
+        $this->actingAs($fx['user']);
+        foreach (['Resiliency', 'Well-Being'] as $pillar) {
+            $kra = AipKra::create(['organization_id' => $fx['organization']->id, 'aip_id' => $fx['aip']->id, 'pillar' => $pillar, 'kra' => 'KRA '.$pillar, 'program' => 'Program']);
+            AipActivity::create(['organization_id' => $fx['organization']->id, 'aip_id' => $fx['aip']->id, 'aip_kra_id' => $kra->id, 'activity' => 'Act '.$pillar, 'physical_target' => 1]);
+        }
+
+        $html = $this->get(route('aip.print', $fx['aip']))->assertOk()->getContent();
+
+        $this->assertSame(1, preg_match_all('/<td rowspan="2" class="pillar"[^>]*>Resiliency and Well-Being<\/td>/', $html), 'the two pillars share one cell');
+    }
+
     public function test_the_activity_form_always_offers_the_standard_funds_with_other_to_specify(): void
     {
         $fx = SobFixture::make();
