@@ -122,11 +122,11 @@ class SobService
         });
     }
 
-    /** @param  array<string, mixed>  $data  fund_source, quarter and the six signatory fields */
+    /** @param  array<string, mixed>  $data  fund_source, quarter, school_id_number and the six signatory fields */
     public function updateHeader(SobPlan $plan, array $data): SobPlan
     {
         $this->requireDraft($plan);
-        $rules = ['fund_source' => ['sometimes', 'required', 'string', 'max:100'], 'quarter' => ['sometimes', 'required', 'integer', 'between:1,4']];
+        $rules = ['fund_source' => ['sometimes', 'required', 'string', 'max:100'], 'quarter' => ['sometimes', 'required', 'integer', 'between:1,4'], 'school_id_number' => ['nullable', 'string', 'max:50']];
         foreach (['prepared_by', 'recommended_by', 'approved_by'] as $prefix) {
             $rules[$prefix.'_name'] = ['nullable', 'string', 'max:255'];
             $rules[$prefix.'_position'] = ['nullable', 'string', 'max:255'];
@@ -331,7 +331,7 @@ class SobService
     {
         $items = $plan->items()->with('activity.kra')->orderBy('id')->get();
         $pillars = [];
-        foreach ($items->groupBy(fn (SobItem $i) => $i->activity->kra?->pillar ?? '') as $pillar => $pillarItems) {
+        foreach ($items->groupBy(fn (SobItem $i) => self::pillarName($i->activity->kra?->pillar)) as $pillar => $pillarItems) {
             $programs = [];
             foreach ($pillarItems->groupBy(fn (SobItem $i) => $i->activity->kra?->program ?? '') as $program => $programItems) {
                 $activities = [];
@@ -343,10 +343,23 @@ class SobService
             }
             $pillars[] = ['pillar' => (string) $pillar, 'total' => round((float) $pillarItems->sum('amount'), 2), 'programs' => $programs];
         }
-        $order = array_flip(Aip::PILLARS);
+        $order = array_flip(self::PILLARS);
         usort($pillars, fn ($a, $b) => ($order[$a['pillar']] ?? 99) <=> ($order[$b['pillar']] ?? 99));
 
         return $pillars;
+    }
+
+    /** The pillars as the SOB shows them, in the order of the school's workbook. */
+    public const PILLARS = ['Access', 'Quality', 'Equity', 'Resiliency and Well-Being', 'Governance'];
+
+    /** The AIP keeps Resiliency and Well-Being apart and calls the last pillar the Enabling Mechanism; the SOB shows them as the workbook does. */
+    public static function pillarName(?string $pillar): string
+    {
+        return match (mb_strtolower(trim((string) $pillar))) {
+            'resiliency', 'well-being', 'well being', 'wellbeing', 'resiliency and well-being' => 'Resiliency and Well-Being',
+            'enabling mechanism', 'governance' => 'Governance',
+            default => trim((string) $pillar),
+        };
     }
 
     /**

@@ -7,6 +7,8 @@
 @section('content')
 @php
     $peso = fn ($value) => '₱'.number_format((float) $value, 2);
+    // The choice is the Specific Program / Project of the AIP; the activity is added only to tell apart several under one program.
+    $programLabel = fn ($kra, $activity) => ($kra->program ?: $kra->kra).($kra->activities->count() > 1 ? ' — '.$activity->activity : '');
     $box = 'mt-1 w-full rounded border border-outline-variant/50 bg-white px-2.5 py-2 text-sm outline-none focus:border-primary';
     $draft = $plan->status === 'draft';
     $editable = $draft && $canManage;
@@ -40,7 +42,7 @@
     <form method="POST" action="{{ route('planning.sob.update', $plan) }}" class="mt-3 grid gap-3 md:grid-cols-3">@csrf @method('PUT')
         <label class="text-xs font-semibold text-on-surface-variant">Source of fund<select name="fund_source" class="{{ $box }}">@foreach($fundChoices as $fund)<option value="{{ $fund }}" @selected(old('fund_source', $plan->fund_source) === $fund)>{{ $fund }}</option>@endforeach</select></label>
         <label class="text-xs font-semibold text-on-surface-variant">Quarter<select name="quarter" class="{{ $box }}">@foreach(\App\Models\SobPlan::QUARTERS as $number => $quarterName)<option value="{{ $number }}" @selected((int) old('quarter', $plan->quarter) === $number)>{{ $quarterName }}</option>@endforeach</select></label>
-        <span class="hidden md:block"></span>
+        <label class="text-xs font-semibold text-on-surface-variant">School ID<input name="school_id_number" value="{{ old('school_id_number', $plan->school_id_number) }}" maxlength="50" placeholder="Type the School ID" class="{{ $box }}"></label>
         @foreach([['prepared_by', 'Prepared by'], ['recommended_by', 'Recommending approval'], ['approved_by', 'Approved by']] as [$prefix, $title])
             <div class="space-y-2">
                 <label class="block text-xs font-semibold text-on-surface-variant">{{ $title }}: name<input name="{{ $prefix }}_name" value="{{ old($prefix.'_name', $plan->{$prefix.'_name'}) }}" maxlength="255" class="{{ $box }}"></label>
@@ -58,9 +60,9 @@
         <div class="md:col-span-6" data-full-text-box><label class="block text-xs font-semibold text-on-surface-variant">AIP activity (PPA)
             <select name="aip_activity_id" required class="{{ $box }}">
                 <option value="">Choose an activity</option>
-                @foreach($plan->aip->kras as $kra)
-                    <optgroup label="{{ $kra->pillar }} · {{ $kra->program ?: $kra->kra }}">
-                        @foreach($kra->activities as $activity)<option value="{{ $activity->id }}" @selected((string) old('aip_activity_id') === (string) $activity->id)>{{ $activity->activity }}</option>@endforeach
+                @foreach($plan->aip->kras->groupBy(fn ($kra) => \App\Services\SobService::pillarName($kra->pillar)) as $pillarName => $pillarKras)
+                    <optgroup label="{{ $pillarName ?: 'Other' }}">
+                        @foreach($pillarKras as $kra)@foreach($kra->activities as $activity)<option value="{{ $activity->id }}" @selected((string) old('aip_activity_id') === (string) $activity->id)>{{ $programLabel($kra, $activity) }}</option>@endforeach @endforeach
                     </optgroup>
                 @endforeach
             </select>
@@ -103,7 +105,7 @@
                     @if($editable)<td class="whitespace-nowrap px-2 text-right">
                         <details class="inline-block text-left"><summary class="cursor-pointer text-primary">Edit</summary>
                             <form method="POST" action="{{ route('planning.sob.items.update', $item) }}" class="sob-line-form absolute z-10 mt-1 grid w-[min(34rem,90vw)] gap-2 rounded border border-outline-variant/50 bg-white p-3 shadow-lg md:grid-cols-4">@csrf @method('PUT')
-                                <div class="md:col-span-4" data-full-text-box><label class="block text-[11px] font-semibold">Activity<select name="aip_activity_id" class="{{ $box }}">@foreach($plan->aip->kras as $kra)@foreach($kra->activities as $activity)<option value="{{ $activity->id }}" @selected($activity->id === $item->aip_activity_id)>{{ $activity->activity }}</option>@endforeach @endforeach</select></label><p data-full-text-output class="mt-1 text-xs font-normal leading-5 text-on-surface"></p></div>
+                                <div class="md:col-span-4" data-full-text-box><label class="block text-[11px] font-semibold">Activity<select name="aip_activity_id" class="{{ $box }}">@foreach($plan->aip->kras as $kra)@foreach($kra->activities as $activity)<option value="{{ $activity->id }}" @selected($activity->id === $item->aip_activity_id)>{{ $programLabel($kra, $activity) }}</option>@endforeach @endforeach</select></label><p data-full-text-output class="mt-1 text-xs font-normal leading-5 text-on-surface"></p></div>
                                 <div class="md:col-span-4" data-full-text-box><label class="block text-[11px] font-semibold">Account<select name="chart_of_account_id" class="{{ $box }}">@foreach($accounts as $account)<option value="{{ $account->id }}" @selected($account->id === $item->chart_of_account_id)>{{ $account->code }} · {{ $account->title }}</option>@endforeach</select></label><p data-full-text-output class="mt-1 text-xs font-normal leading-5 text-on-surface"></p></div>
                                 <label class="text-[11px] font-semibold md:col-span-2">Particulars<input name="particulars" value="{{ $item->particulars }}" maxlength="255" class="{{ $box }}"></label>
                                 <label class="text-[11px] font-semibold">Frequency<input name="frequency" value="{{ (float) $item->frequency }}" class="{{ $box }}"></label>

@@ -9,25 +9,34 @@
         body { margin: 0; background: #fff; color: #111; font-family: Arial, Helvetica, sans-serif; font-size: 10.5px; line-height: 1.3; }
         .paper { width: 100%; min-width: 760px; margin: 0 auto; padding: 22px 28px 30px; background: #fff; }
 
-        .masthead { text-align: center; line-height: 1.4; margin-bottom: 6px; }
-        .masthead img { height: 70px; width: auto; display: block; margin: 0 auto 4px; }
+        .masthead { display: grid; grid-template-columns: 90px 1fr 90px; align-items: center; column-gap: 8px; text-align: center; line-height: 1.4; margin-bottom: 6px; }
+        .masthead-logo { display: flex; align-items: center; min-height: 70px; }
+        .masthead-logo-left { justify-content: flex-start; }
+        .masthead-logo-right { justify-content: flex-end; }
+        .masthead-logo img { height: 74px; width: auto; max-width: 90px; object-fit: contain; }
         .masthead .small { font-size: 10px; }
         .masthead .dept { font-size: 14px; font-weight: bold; }
         .masthead .line { font-size: 10px; font-weight: bold; text-transform: uppercase; }
         .masthead .school { font-size: 12px; font-weight: bold; text-transform: uppercase; margin-top: 2px; }
 
+        .school-id { margin-top: 3px; padding-bottom: 4px; border-bottom: 2px solid #111; font-size: 11px; }
         .doc-title { text-align: center; margin: 10px 0 8px; line-height: 1.5; }
         .doc-title h1 { margin: 0; font-size: 13px; letter-spacing: .4px; }
         .doc-title p { margin: 2px 0; font-size: 10.5px; font-weight: bold; }
 
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         th, td { border: 1px solid #222; padding: 3px 5px; vertical-align: top; overflow-wrap: break-word; hyphens: none; }
-        thead th { background: #e8edf4; font-size: 10px; text-align: center; vertical-align: middle; }
+        thead th { background: #00af50; font-size: 10px; text-align: center; vertical-align: middle; }
         td.num { text-align: right; white-space: nowrap; }
         td.center { text-align: center; }
         tr.pillar-row td { background: #f3f3f3; font-weight: bold; text-transform: uppercase; letter-spacing: .3px; }
+        tr.pillar-access td { background: #ffff00; }
+        tr.pillar-quality td { background: #2e75b5; color: #fff; }
+        tr.pillar-equity td { background: #f4af84; }
+        tr.pillar-resiliency td { background: #92d050; }
+        tr.pillar-governance td { background: #548235; color: #fff; }
         tr.sub td { font-weight: bold; }
-        tr.grand td { font-weight: bold; background: #e8edf4; }
+        tr.grand td { font-weight: bold; background: #92d050; }
         .summary { margin-top: 14px; width: 62%; }
         .summary caption { text-align: left; font-weight: bold; padding-bottom: 3px; }
 
@@ -43,6 +52,8 @@
             thead { display: table-header-group; }
             .signatures, .summary { break-inside: avoid; }
         }
+        /* Page footer: the document title on the left and Page X of Y on the right (printed in the page margin). */
+        @page { @bottom-left { content: "{{ $plan->documentTitle() }}"; font: 9px Arial, Helvetica, sans-serif; } @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 9px Arial, Helvetica, sans-serif; } }
     </style>
 @include('partials.input-fixes')
 @include('partials.print-clean')
@@ -51,7 +62,12 @@
 @php
     $money = fn ($value) => number_format((float) $value, 2);
     $number = fn ($value) => rtrim(rtrim(number_format((float) $value, 2, '.', ''), '0'), '.');
-    [$leftLogo] = \App\Support\OfficialDocument::logos($school, $agency);
+    [$leftLogo, $rightLogo] = \App\Support\OfficialDocument::logos($school, $agency);
+    $pillarClass = ['Access' => 'access', 'Quality' => 'quality', 'Equity' => 'equity', 'Resiliency and Well-Being' => 'resiliency', 'Governance' => 'governance'];
+    // Every pillar is printed, in the workbook's order, whether or not it has items.
+    $byPillar = collect($grouped)->keyBy('pillar');
+    $pillarRows = collect(\App\Services\SobService::PILLARS)->map(fn ($name) => $byPillar[$name] ?? ['pillar' => $name, 'total' => 0, 'programs' => []])
+        ->merge(collect($grouped)->reject(fn ($row) => in_array($row['pillar'], \App\Services\SobService::PILLARS, true)));
     $region = $school->region ?: $agency?->region_name;
     $division = $school->division ?: ($agency?->division_name ?: $agency?->division_office);
     $grandTotal = collect($grouped)->sum('total');
@@ -66,15 +82,18 @@
 
 <main class="paper" data-official-page data-doc="sob" data-paper="legal" data-orientation="portrait" data-margin="10">
     <header class="masthead">
-        @if($leftLogo)<img class="official-logo" src="{{ $leftLogo }}" alt="" onerror="this.remove()">@endif
-        <div class="small">Republic of the Philippines</div>
-        <div class="dept">Department of Education</div>
-        @if($region)<div class="line">{{ $region }}</div>@endif
-        @if($division)<div class="line">{{ $division }}</div>@endif
-        @if($school->district)<div class="line">{{ $school->district }}</div>@endif
-        <div class="school">{{ $school->name }}</div>
-        @if($school->code)<div class="small">School Id: {{ $school->code }}</div>@endif
+        <div class="masthead-logo masthead-logo-left">@if($leftLogo)<img class="official-logo" src="{{ $leftLogo }}" alt="" onerror="this.remove()">@endif</div>
+        <div>
+            <div class="small">Republic of the Philippines</div>
+            <div class="dept">Department of Education</div>
+            @if($region)<div class="line">{{ $region }}</div>@endif
+            @if($division)<div class="line">{{ $division }}</div>@endif
+            @if($school->district)<div class="line">{{ $school->district }}</div>@endif
+            <div class="school">{{ $school->name }}</div>
+        </div>
+        <div class="masthead-logo masthead-logo-right">@if($rightLogo)<img class="official-logo" src="{{ $rightLogo }}" alt="" onerror="this.remove()">@endif</div>
     </header>
+    <div class="school-id">School ID: <strong>{{ $plan->school_id_number ?: $school->code }}</strong></div>
 
     <div class="doc-title">
         <h1>SCHOOL OPERATING BUDGET</h1>
@@ -88,8 +107,8 @@
             <tr><th colspan="2">PPAs/Expenditures/Item</th><th>Particulars</th><th>Frequency</th><th>Quantity</th><th>Unit of Measure</th><th>Unit Cost</th><th>Amount</th></tr>
         </thead>
         <tbody>
-        @forelse($grouped as $pillar)
-            <tr class="pillar-row"><td colspan="8">{{ strtoupper($pillar['pillar'] ?: 'Other') }}</td></tr>
+        @foreach($pillarRows as $pillar)
+            <tr class="pillar-row pillar-{{ $pillarClass[$pillar['pillar']] ?? 'other' }}"><td colspan="8">{{ strtoupper($pillar['pillar'] ?: 'Other') }}</td></tr>
             @foreach($pillar['programs'] as $program)
                 @foreach($program['activities'] as $row)
                     @foreach($row['items'] as $index => $item)
@@ -107,9 +126,7 @@
                 @endforeach
             @endforeach
             <tr class="sub"><td colspan="7" style="text-align:right">Sub-Total</td><td class="num">{{ $money($pillar['total']) }}</td></tr>
-        @empty
-            <tr><td colspan="8" style="text-align:center;padding:14px">No items.</td></tr>
-        @endforelse
+        @endforeach
             <tr class="grand"><td colspan="7">GRAND TOTAL</td><td class="num">{{ $money($grandTotal) }}</td></tr>
         </tbody>
     </table>
@@ -118,7 +135,7 @@
         <caption>Summary per object of expenditure:</caption>
         <thead><tr><th style="text-align:left">Object of expenditure</th><th style="width:30%">Total Amount</th></tr></thead>
         <tbody>
-            @foreach($summary as $row)<tr><td>{{ $row['code'] }} · {{ $row['title'] }}</td><td class="num">{{ $money($row['total']) }}</td></tr>@endforeach
+            @foreach($summary as $row)<tr><td>{{ $row['title'] }}</td><td class="num">{{ $money($row['total']) }}</td></tr>@endforeach
             <tr class="grand"><td>GRAND TOTAL</td><td class="num">{{ $money($summary->sum('total')) }}</td></tr>
         </tbody>
     </table>

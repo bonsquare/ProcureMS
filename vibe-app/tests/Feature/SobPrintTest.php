@@ -57,7 +57,7 @@ class SobPrintTest extends TestCase
         $this->assertGreaterThanOrEqual(3, substr_count($html, '1,450.00'));
         $this->assertStringContainsString('Office Supplies Expenses', $html);
         $this->assertStringContainsString('Electricity Expenses', $html);
-        $this->assertStringContainsString('5-02-03-010', $html);
+        $this->assertStringNotContainsString('5-02-03-010', $html, 'the summary no longer shows the UACS code');
     }
 
     public function test_print_is_scoped_to_the_school_and_escapes_text(): void

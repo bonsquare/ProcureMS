@@ -71,7 +71,7 @@ class SobController extends Controller
     public function update(Request $request, SobPlan $sobPlan): RedirectResponse
     {
         $this->scoped($request, $sobPlan);
-        $this->sob->updateHeader($sobPlan, $request->only(['fund_source', 'quarter', 'prepared_by_name', 'prepared_by_position', 'recommended_by_name', 'recommended_by_position', 'approved_by_name', 'approved_by_position']));
+        $this->sob->updateHeader($sobPlan, $request->only(['fund_source', 'quarter', 'school_id_number', 'prepared_by_name', 'prepared_by_position', 'recommended_by_name', 'recommended_by_position', 'approved_by_name', 'approved_by_position']));
 
         return back()->with('success', 'SOB details saved.');
     }
