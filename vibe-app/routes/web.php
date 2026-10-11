@@ -91,6 +91,7 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::put('/planning/sob/{sobPlan}', [SobController::class, 'update'])->middleware('permission:planning.manage')->name('planning.sob.update')->whereNumber('sobPlan');
     Route::delete('/planning/sob/{sobPlan}', [SobController::class, 'destroy'])->middleware('permission:planning.manage')->name('planning.sob.destroy')->whereNumber('sobPlan');
     Route::post('/planning/sob/{sobPlan}/approve', [SobController::class, 'approve'])->middleware('permission:planning.manage')->name('planning.sob.approve')->whereNumber('sobPlan');
+    Route::post('/planning/sob/{sobPlan}/reopen', [SobController::class, 'reopen'])->middleware('permission:planning.manage')->name('planning.sob.reopen')->whereNumber('sobPlan');
     Route::post('/planning/sob/{sobPlan}/items', [SobController::class, 'storeItem'])->middleware('permission:planning.manage')->name('planning.sob.items.store')->whereNumber('sobPlan');
     Route::put('/planning/sob/items/{sobItem}', [SobController::class, 'updateItem'])->middleware('permission:planning.manage')->name('planning.sob.items.update')->whereNumber('sobItem');
     Route::delete('/planning/sob/items/{sobItem}', [SobController::class, 'destroyItem'])->middleware('permission:planning.manage')->name('planning.sob.items.destroy')->whereNumber('sobItem');

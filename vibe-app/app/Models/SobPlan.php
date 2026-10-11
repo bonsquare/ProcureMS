@@ -15,12 +15,12 @@ class SobPlan extends Model
     protected $fillable = [
         'organization_id', 'school_id', 'aip_id', 'master_transaction_id', 'fiscal_year', 'quarter', 'fund_source', 'status',
         'prepared_by_name', 'prepared_by_position', 'recommended_by_name', 'recommended_by_position', 'approved_by_name', 'approved_by_position',
-        'approved_at', 'created_by',
+        'approved_at', 'created_by', 'allotment_snapshot',
     ];
 
     protected function casts(): array
     {
-        return ['approved_at' => 'datetime', 'fiscal_year' => 'integer', 'quarter' => 'integer'];
+        return ['approved_at' => 'datetime', 'fiscal_year' => 'integer', 'quarter' => 'integer', 'allotment_snapshot' => 'array'];
     }
 
     public function school()

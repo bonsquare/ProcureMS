@@ -299,7 +299,7 @@
 
 <div data-panel="sob" class="hidden">
 <section class="mb-6 rounded border border-outline-variant/30 bg-white">
-    <div class="border-b border-outline-variant/20 px-5 py-4"><h2 class="font-semibold">School Operating Budget (SOB) · FY {{ $year }}</h2><p class="mt-1 text-xs text-on-surface-variant">One SOB for each quarter. Pick the AIP activities that have an actual budget in the quarter and add their items. Approving a quarter creates its Budget allotments.</p></div>
+    <div class="border-b border-outline-variant/20 px-5 py-4"><h2 class="font-semibold">School Operating Budget (SOB) · FY {{ $year }}</h2><p class="mt-1 text-xs text-on-surface-variant">One SOB for each fund in a quarter. Pick the AIP activities that have an actual budget in the quarter and add their items. Approving a quarter creates its Budget allotments.</p></div>
     @php $aipApproved = $aips->where('fiscal_year', $year)->where('status', 'approved')->isNotEmpty(); @endphp
     @unless($aipApproved)<div class="border-b border-outline-variant/20 bg-amber-50 px-5 py-3 text-xs text-amber-900">Approve the AIP for FY {{ $year }} first. The SOB is built from it.</div>@endunless
     <div class="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-4">
@@ -318,11 +318,16 @@
                     <p class="mt-3 text-xs text-on-surface-variant">Not started.</p>
                 @endforelse
                 @if(auth()->user()->hasPermission('planning.manage') && $aipApproved)
-                    <form method="POST" action="{{ route('planning.sob.store') }}" class="mt-3 space-y-2">@csrf
-                        <input type="hidden" name="school_id" value="{{ $selectedSchool->id }}"><input type="hidden" name="fiscal_year" value="{{ $year }}"><input type="hidden" name="quarter" value="{{ $quarter }}">
-                        <label class="block text-[11px] font-semibold text-on-surface-variant">Fund<input name="fund_source" value="MOOE" maxlength="100" class="{{ $inputClass }}"></label>
-                        <button class="w-full rounded bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary-container">Create SOB</button>
-                    </form>
+                    @php $freeFunds = $fundOptions->reject(fn ($fund) => $quarterPlans->contains('fund_source', $fund))->values(); @endphp
+                    @if($freeFunds->isEmpty())
+                        <p class="mt-3 text-xs text-on-surface-variant">Every fund already has an SOB this quarter.</p>
+                    @else
+                        <form method="POST" action="{{ route('planning.sob.store') }}" class="mt-3 space-y-2">@csrf
+                            <input type="hidden" name="school_id" value="{{ $selectedSchool->id }}"><input type="hidden" name="fiscal_year" value="{{ $year }}"><input type="hidden" name="quarter" value="{{ $quarter }}">
+                            <label class="block text-[11px] font-semibold text-on-surface-variant">Source of fund<select name="fund_source" class="{{ $inputClass }}">@foreach($freeFunds as $fund)<option value="{{ $fund }}" @selected($fund === 'MOOE')>{{ $fund }}</option>@endforeach</select></label>
+                            <button class="w-full rounded bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary-container">Create SOB</button>
+                        </form>
+                    @endif
                 @endif
             </div>
         @endforeach

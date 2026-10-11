@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Aip;
 use App\Models\AipActivity;
+use App\Models\AppItem;
 use App\Models\AuditLog;
 use App\Models\BudgetAllocation;
 use App\Models\School;
@@ -101,18 +102,20 @@ class SobService
         });
     }
 
-    /** @param  array<string, mixed>  $data  fund_source and the six signatory fields */
+    /** @param  array<string, mixed>  $data  fund_source, quarter and the six signatory fields */
     public function updateHeader(SobPlan $plan, array $data): SobPlan
     {
         $this->requireDraft($plan);
-        $rules = ['fund_source' => ['sometimes', 'required', 'string', 'max:100']];
+        $rules = ['fund_source' => ['sometimes', 'required', 'string', 'max:100'], 'quarter' => ['sometimes', 'required', 'integer', 'between:1,4']];
         foreach (['prepared_by', 'recommended_by', 'approved_by'] as $prefix) {
             $rules[$prefix.'_name'] = ['nullable', 'string', 'max:255'];
             $rules[$prefix.'_position'] = ['nullable', 'string', 'max:255'];
         }
         $values = Validator::make($data, $rules)->validate();
-        if (isset($values['fund_source']) && $values['fund_source'] !== $plan->fund_source && $this->exists($plan->school_id, $plan->fiscal_year, $plan->quarter, $values['fund_source'])) {
-            $this->fail('The '.$plan->quarterLabel().' SOB of FY '.$plan->fiscal_year.' ('.$values['fund_source'].') already exists.');
+        $fund = $values['fund_source'] ?? $plan->fund_source;
+        $quarter = (int) ($values['quarter'] ?? $plan->quarter);
+        if (($fund !== $plan->fund_source || $quarter !== (int) $plan->quarter) && $this->exists($plan->school_id, $plan->fiscal_year, $quarter, $fund)) {
+            $this->fail('The '.SobPlan::QUARTERS[$quarter].' SOB of FY '.$plan->fiscal_year.' ('.$fund.') already exists.');
         }
         $plan->update($values);
 
@@ -134,7 +137,7 @@ class SobService
             $transaction = $this->transactions->forAip(Aip::withoutGlobalScopes()->findOrFail($locked->aip_id), $user);
             $created = $updated = 0;
 
-            foreach ($items->groupBy(fn (SobItem $i) => $i->chart_of_account_id.'|'.($i->activity->kra?->program ?? '')) as $group) {
+            foreach ($items->groupBy(fn (SobItem $i) => $this->groupKey($i)) as $group) {
                 $first = $group->first();
                 $program = $first->activity->kra?->program;
                 $total = round((float) $group->sum('amount'), 2);
@@ -170,12 +173,110 @@ class SobService
                 }
             }
 
-            $locked->update(['status' => 'approved', 'approved_at' => now(), 'master_transaction_id' => $transaction->id]);
+            $keys = $items->map(fn (SobItem $i) => $this->groupKey($i))->unique()->values()->all();
+            $updated += $this->releaseStaleLines($locked, $keys);
+
+            $locked->update([
+                'status' => 'approved', 'approved_at' => now(), 'master_transaction_id' => $transaction->id,
+                'allotment_snapshot' => ['fund' => $locked->fund_source, 'quarter' => (int) $locked->quarter, 'groups' => $keys],
+            ]);
             $transaction->recordEvent('sob', 'approved', 'draft', 'approved', $this->title($locked), ['sob_plan_id' => $locked->id, 'created_allocations' => $created, 'updated_allocations' => $updated]);
             $this->audit($locked, $user, 'sob_approved', ['created' => $created, 'updated' => $updated]);
 
             return ['created' => $created, 'updated' => $updated];
         });
+    }
+
+    /**
+     * Turns an approved SOB back into a draft so it can be revised. The budget lines stay as they are until it is approved again,
+     * which updates them and releases what the revision no longer includes. Refused when the plan it fed can no longer follow.
+     */
+    public function reopen(SobPlan $plan, User $user): SobPlan
+    {
+        return DB::transaction(function () use ($plan, $user) {
+            $locked = SobPlan::withoutGlobalScopes()->lockForUpdate()->findOrFail($plan->id);
+            if ($locked->status !== 'approved') {
+                $this->fail('Only an approved SOB can be reopened.');
+            }
+            $this->fiscalYears->assertOpen((int) $locked->organization_id, (int) $locked->fiscal_year);
+
+            $appItems = AppItem::withoutGlobalScopes()->whereIn('sob_item_id', $locked->items()->pluck('id'))->with('plan')->get();
+            if ($appItems->contains(fn (AppItem $appItem) => $appItem->plan?->status === 'approved')) {
+                $this->fail('The items of this SOB are in the approved Annual Procurement Plan of FY '.$locked->fiscal_year.'. Revising the SOB would leave that plan out of date, so it cannot be reopened.');
+            }
+            if ($appItems->contains(fn (AppItem $appItem) => $appItem->requestItems()->exists())) {
+                $this->fail('One or more Purchase Requests already draw from the items of this SOB through the APP, so it cannot be reopened.');
+            }
+
+            // A draft APP would keep stale copies of the items being revised; they come back when the APP is generated again.
+            if ($appItems->isNotEmpty()) {
+                AppItem::withoutGlobalScopes()->whereIn('id', $appItems->pluck('id'))->delete();
+                $locked->transaction?->recordEvent('app', 'removed_from_app', 'planned', null, $this->title($locked), ['sob_plan_id' => $locked->id, 'items' => $appItems->count()]);
+            }
+
+            $locked->update(['status' => 'draft', 'approved_at' => null, 'allotment_snapshot' => $locked->allotment_snapshot ?: $this->snapshotOf($locked)]);
+            $locked->transaction?->recordEvent('sob', 'reopened', 'approved', 'draft', $this->title($locked), ['sob_plan_id' => $locked->id]);
+            $this->audit($locked, $user, 'sob_reopened');
+
+            return $locked->fresh();
+        });
+    }
+
+    /** The budget line a SOB item feeds: its account and the program of its AIP activity. */
+    private function groupKey(SobItem $item): string
+    {
+        return $item->chart_of_account_id.'|'.($item->activity->kra?->program ?? '');
+    }
+
+    /** @return array{fund: string, quarter: int, groups: array<int, string>} what an approved SOB's items wrote to the budget lines, rebuilt from its (locked, so unchanged) items */
+    private function snapshotOf(SobPlan $plan): array
+    {
+        return [
+            'fund' => $plan->fund_source, 'quarter' => (int) $plan->quarter,
+            'groups' => $plan->items()->with('activity.kra')->get()->map(fn (SobItem $item) => $this->groupKey($item))->unique()->values()->all(),
+        ];
+    }
+
+    /**
+     * After a revision: the lines the previous approval wrote that this approval no longer writes (an account that was removed, or every line
+     * when the fund or the quarter changed) lose their amount for that quarter. A line cannot drop below what is already obligated on it.
+     */
+    private function releaseStaleLines(SobPlan $plan, array $currentKeys): int
+    {
+        $previous = $plan->allotment_snapshot;
+        if (! is_array($previous) || empty($previous['groups'])) {
+            return 0;
+        }
+        $oldQuarter = (int) ($previous['quarter'] ?? $plan->quarter);
+        $moved = ($previous['fund'] ?? null) !== $plan->fund_source || $oldQuarter !== (int) $plan->quarter;
+        $stale = $moved ? $previous['groups'] : array_values(array_diff($previous['groups'], $currentKeys));
+
+        $released = 0;
+        foreach ($stale as $key) {
+            [$accountId, $program] = array_pad(explode('|', (string) $key, 2), 2, '');
+            $line = BudgetAllocation::withoutGlobalScopes()
+                ->where('aip_id', $plan->aip_id)->where('source_of_fund', $previous['fund'])
+                ->where('chart_of_account_id', (int) $accountId)->where('fiscal_year', $plan->fiscal_year)
+                ->where(fn ($q) => $program !== '' ? $q->where('program', $program) : $q->whereNull('program')->orWhere('program', ''))
+                ->first();
+            if (! $line || (float) $line->{'q'.$oldQuarter.'_amount'} == 0.0) {
+                continue;
+            }
+
+            $quarters = [];
+            foreach ([1, 2, 3, 4] as $number) {
+                $quarters["q{$number}_amount"] = $number === $oldQuarter ? 0.0 : $line->quarterAmount($number);
+            }
+            $newAmount = round(array_sum($quarters), 2);
+            $obligated = $this->budget->matrix(collect([$line]))->first()['obligated'];
+            if ($newAmount + 0.001 < $obligated) {
+                $this->fail(sprintf('"%s" (%s) is already obligated ₱%s, which is more than this revision would leave allotted (₱%s).', $program ?: 'the line', $previous['fund'], number_format($obligated, 2), number_format($newAmount, 2)));
+            }
+            $line->update($quarters + ['amount' => $newAmount]);
+            $released++;
+        }
+
+        return $released;
     }
 
     /** @return array<int, array{aip_activity_id: int, sob: float, aip: float}> activities whose SOB lines total more than the AIP gives the quarter */
