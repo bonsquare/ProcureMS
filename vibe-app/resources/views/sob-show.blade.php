@@ -26,12 +26,21 @@
 @if($errors->any())<div class="mb-4 rounded border border-error/30 bg-error/5 px-4 py-3 text-sm text-error">{{ $errors->first() }}</div>@endif
 @if($over->isNotEmpty())<div class="mb-4 rounded border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">{{ $over->count() }} activit{{ $over->count() === 1 ? 'y goes' : 'ies go' }} over the AIP amount for this quarter. Saving is still allowed; they are marked below.</div>@endif
 
+@if(! $draft && $canManage)
+<section class="mb-5 rounded border border-amber-300 bg-amber-50 p-4">
+    <h2 class="font-semibold text-amber-900">Revise this SOB</h2>
+    <p class="mt-1 text-sm text-amber-900">This SOB is approved and locked. Reopen it to change the fund, the quarter, the details or any item. The budget lines keep their amounts until you approve it again; then they follow your changes.</p>
+    <form method="POST" action="{{ route('planning.sob.reopen', $plan) }}" class="mt-3" onsubmit="return confirm('Reopen this SOB for revision? It becomes a draft until you approve it again.')">@csrf<button class="rounded bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary-container">Reopen for revision</button></form>
+</section>
+@endif
+
 @if($editable)
 <section class="mb-5 rounded border border-outline-variant/30 bg-white p-4">
     <h2 class="font-semibold">Details and signatories</h2>
     <form method="POST" action="{{ route('planning.sob.update', $plan) }}" class="mt-3 grid gap-3 md:grid-cols-3">@csrf @method('PUT')
-        <label class="text-xs font-semibold text-on-surface-variant">Fund<input name="fund_source" value="{{ old('fund_source', $plan->fund_source) }}" maxlength="100" class="{{ $box }}"></label>
-        <span class="hidden md:block md:col-span-2"></span>
+        <label class="text-xs font-semibold text-on-surface-variant">Source of fund<select name="fund_source" class="{{ $box }}">@foreach($fundChoices as $fund)<option value="{{ $fund }}" @selected(old('fund_source', $plan->fund_source) === $fund)>{{ $fund }}</option>@endforeach</select></label>
+        <label class="text-xs font-semibold text-on-surface-variant">Quarter<select name="quarter" class="{{ $box }}">@foreach(\App\Models\SobPlan::QUARTERS as $number => $quarterName)<option value="{{ $number }}" @selected((int) old('quarter', $plan->quarter) === $number)>{{ $quarterName }}</option>@endforeach</select></label>
+        <span class="hidden md:block"></span>
         @foreach([['prepared_by', 'Prepared by'], ['recommended_by', 'Recommending approval'], ['approved_by', 'Approved by']] as [$prefix, $title])
             <div class="space-y-2">
                 <label class="block text-xs font-semibold text-on-surface-variant">{{ $title }}: name<input name="{{ $prefix }}_name" value="{{ old($prefix.'_name', $plan->{$prefix.'_name'}) }}" maxlength="255" class="{{ $box }}"></label>
@@ -46,7 +55,7 @@
     <h2 class="font-semibold">Add item</h2>
     <p class="mt-1 text-xs text-on-surface-variant">Choose the AIP activity that has an actual budget this quarter, then what is bought for it. The amount is frequency × quantity × unit cost.</p>
     <form method="POST" action="{{ route('planning.sob.items.store', $plan) }}" class="sob-line-form mt-3 grid gap-3 md:grid-cols-6">@csrf
-        <label class="text-xs font-semibold text-on-surface-variant md:col-span-3">AIP activity (PPA)
+        <div class="md:col-span-6" data-full-text-box><label class="block text-xs font-semibold text-on-surface-variant">AIP activity (PPA)
             <select name="aip_activity_id" required class="{{ $box }}">
                 <option value="">Choose an activity</option>
                 @foreach($plan->aip->kras as $kra)
@@ -55,13 +64,13 @@
                     </optgroup>
                 @endforeach
             </select>
-        </label>
-        <label class="text-xs font-semibold text-on-surface-variant md:col-span-3">Object of expenditure (account)
+        </label><p data-full-text-output class="mt-1 text-xs font-normal leading-5 text-on-surface"></p></div>
+        <div class="md:col-span-6" data-full-text-box><label class="block text-xs font-semibold text-on-surface-variant">Object of expenditure (account)
             <select name="chart_of_account_id" required class="{{ $box }}">
                 <option value="">Choose an account</option>
                 @foreach($accounts as $account)<option value="{{ $account->id }}" @selected((string) old('chart_of_account_id') === (string) $account->id)>{{ $account->code }} · {{ $account->title }}</option>@endforeach
             </select>
-        </label>
+        </label><p data-full-text-output class="mt-1 text-xs font-normal leading-5 text-on-surface"></p></div>
         <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Particulars<input name="particulars" required maxlength="255" value="{{ old('particulars') }}" class="{{ $box }}"></label>
         <label class="text-xs font-semibold text-on-surface-variant">Frequency<input name="frequency" type="text" inputmode="decimal" value="{{ old('frequency', 1) }}" class="{{ $box }}"></label>
         <label class="text-xs font-semibold text-on-surface-variant">Quantity<input name="quantity" type="text" inputmode="decimal" required value="{{ old('quantity') }}" class="{{ $box }}"></label>
@@ -89,8 +98,8 @@
                     @if($editable)<td class="whitespace-nowrap px-2 text-right">
                         <details class="inline-block text-left"><summary class="cursor-pointer text-primary">Edit</summary>
                             <form method="POST" action="{{ route('planning.sob.items.update', $item) }}" class="sob-line-form absolute z-10 mt-1 grid w-[min(34rem,90vw)] gap-2 rounded border border-outline-variant/50 bg-white p-3 shadow-lg md:grid-cols-4">@csrf @method('PUT')
-                                <label class="text-[11px] font-semibold md:col-span-2">Activity<select name="aip_activity_id" class="{{ $box }}">@foreach($plan->aip->kras as $kra)@foreach($kra->activities as $activity)<option value="{{ $activity->id }}" @selected($activity->id === $item->aip_activity_id)>{{ $activity->activity }}</option>@endforeach @endforeach</select></label>
-                                <label class="text-[11px] font-semibold md:col-span-2">Account<select name="chart_of_account_id" class="{{ $box }}">@foreach($accounts as $account)<option value="{{ $account->id }}" @selected($account->id === $item->chart_of_account_id)>{{ $account->code }} · {{ $account->title }}</option>@endforeach</select></label>
+                                <div class="md:col-span-4" data-full-text-box><label class="block text-[11px] font-semibold">Activity<select name="aip_activity_id" class="{{ $box }}">@foreach($plan->aip->kras as $kra)@foreach($kra->activities as $activity)<option value="{{ $activity->id }}" @selected($activity->id === $item->aip_activity_id)>{{ $activity->activity }}</option>@endforeach @endforeach</select></label><p data-full-text-output class="mt-1 text-xs font-normal leading-5 text-on-surface"></p></div>
+                                <div class="md:col-span-4" data-full-text-box><label class="block text-[11px] font-semibold">Account<select name="chart_of_account_id" class="{{ $box }}">@foreach($accounts as $account)<option value="{{ $account->id }}" @selected($account->id === $item->chart_of_account_id)>{{ $account->code }} · {{ $account->title }}</option>@endforeach</select></label><p data-full-text-output class="mt-1 text-xs font-normal leading-5 text-on-surface"></p></div>
                                 <label class="text-[11px] font-semibold md:col-span-2">Particulars<input name="particulars" value="{{ $item->particulars }}" maxlength="255" class="{{ $box }}"></label>
                                 <label class="text-[11px] font-semibold">Frequency<input name="frequency" value="{{ (float) $item->frequency }}" class="{{ $box }}"></label>
                                 <label class="text-[11px] font-semibold">Quantity<input name="quantity" value="{{ (float) $item->quantity }}" class="{{ $box }}"></label>
@@ -144,5 +153,18 @@
         update();
     });
 })();
+</script>
+<script>
+// A long activity or account title is cut with "..." inside the closed dropdown box, so the complete text of the chosen one is also written under it.
+document.querySelectorAll('[data-full-text-box]').forEach((box) => {
+    const select = box.querySelector('select');
+    const output = box.querySelector('[data-full-text-output]');
+    const show = () => {
+        const option = select.options[select.selectedIndex];
+        output.textContent = option && option.value ? option.text.replace(/\s+/g, ' ').trim() : '';
+    };
+    select.addEventListener('change', show);
+    show();
+});
 </script>
 @endsection

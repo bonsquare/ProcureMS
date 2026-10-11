@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\AgencySetting;
+use App\Models\Aip;
 use App\Models\ChartOfAccount;
+use App\Models\FundSource;
 use App\Models\School;
 use App\Models\SobItem;
 use App\Models\SobPlan;
@@ -46,6 +48,8 @@ class SobController extends Controller
             'over' => $over,
             'accounts' => ChartOfAccount::where('organization_id', $sobPlan->organization_id)->orderBy('code')->get(),
             'canManage' => $request->user()->hasPermission('planning.manage'),
+            'fundChoices' => FundSource::where('organization_id', $sobPlan->organization_id)->where('is_active', true)->orderBy('name')->pluck('name')
+                ->merge(collect(Aip::FUNDS)->flatten())->push($sobPlan->fund_source)->unique()->sort()->values(),
         ]);
     }
 
@@ -67,7 +71,7 @@ class SobController extends Controller
     public function update(Request $request, SobPlan $sobPlan): RedirectResponse
     {
         $this->scoped($request, $sobPlan);
-        $this->sob->updateHeader($sobPlan, $request->only(['fund_source', 'prepared_by_name', 'prepared_by_position', 'recommended_by_name', 'recommended_by_position', 'approved_by_name', 'approved_by_position']));
+        $this->sob->updateHeader($sobPlan, $request->only(['fund_source', 'quarter', 'prepared_by_name', 'prepared_by_position', 'recommended_by_name', 'recommended_by_position', 'approved_by_name', 'approved_by_position']));
 
         return back()->with('success', 'SOB details saved.');
     }
@@ -86,6 +90,14 @@ class SobController extends Controller
         $result = $this->sob->approve($sobPlan, $request->user());
 
         return back()->with('success', 'SOB approved. Budget allotments created: '.$result['created'].', updated: '.$result['updated'].'. See the Allotment Registry.');
+    }
+
+    public function reopen(Request $request, SobPlan $sobPlan): RedirectResponse
+    {
+        $this->scoped($request, $sobPlan);
+        $this->sob->reopen($sobPlan, $request->user());
+
+        return back()->with('success', 'The SOB is a draft again. Make your changes, then approve it to update the budget lines.');
     }
 
     public function storeItem(Request $request, SobPlan $sobPlan): RedirectResponse

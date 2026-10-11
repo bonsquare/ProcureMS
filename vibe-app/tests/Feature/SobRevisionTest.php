@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Aip;
 use App\Models\AppItem;
 use App\Models\AppPlan;
 use App\Models\AuditLog;
@@ -12,6 +13,7 @@ use App\Models\ProcurementRequest;
 use App\Models\ProcurementRequestItem;
 use App\Models\SobItem;
 use App\Models\SobPlan;
+use App\Models\User;
 use App\Services\SobService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
@@ -243,5 +245,122 @@ class SobRevisionTest extends TestCase
         $this->service()->approve($plan->fresh(), $fx['user']);
 
         $this->assertEquals(0, $this->allotment('MOOE', $electric->id)->amount);
+    }
+
+    /** @return array<int, array<int, string>> the fund names offered by each quarter's Source of fund dropdown on the Planning page, in quarter order */
+    private function quarterFundOptions(string $html): array
+    {
+        // Only the SOB panel: other forms of the Planning page have their own fund dropdowns.
+        $panel = substr($html, (int) strpos($html, 'data-panel="sob"'), (int) strpos($html, 'data-panel="app"') - (int) strpos($html, 'data-panel="sob"'));
+        preg_match_all('/<select name="fund_source"[^>]*>(.*?)<\/select>/s', $panel, $blocks);
+
+        return array_map(fn (string $block) => array_values(array_filter(array_map('trim', explode('|', strip_tags(str_replace('</option>', '|', $block)))))), $blocks[1]);
+    }
+
+    public function test_every_quarter_creates_an_sob_from_a_fund_dropdown_without_the_funds_it_already_has(): void
+    {
+        $fx = SobFixture::make();
+        $this->actingAs($fx['user']);
+        $this->service()->create($fx['school'], 2026, 1, 'MOOE', $fx['user']);
+        $this->service()->create($fx['school'], 2026, 1, 'SEF', $fx['user']);
+
+        $html = $this->get(route('planning', ['school_id' => $fx['school']->id, 'year' => 2026]))->assertOk()->getContent();
+        $options = $this->quarterFundOptions($html);
+
+        $this->assertCount(4, $options, 'one dropdown per quarter');
+        $this->assertStringNotContainsString('<input name="fund_source"', $html, 'the fund is chosen from a list, not typed');
+        $this->assertStringNotContainsString('name="fund_source" value="MOOE"', $html);
+        $this->assertContains('IGP', $options[0]);
+        $this->assertNotContains('MOOE', $options[0], 'Q1 already has a MOOE SOB');
+        $this->assertNotContains('SEF', $options[0], 'and a SEF SOB');
+        $this->assertContains('School MOOE', $options[0], 'a different fund with a similar name is still offered');
+        $this->assertContains('MOOE', $options[1], 'Q2 has none yet');
+        $this->assertContains('SEF', $options[1]);
+        $this->post(route('planning.sob.store'), ['school_id' => $fx['school']->id, 'fiscal_year' => 2026, 'quarter' => 1, 'fund_source' => 'IGP'])->assertSessionHasNoErrors();
+        $this->assertSame(3, SobPlan::where('quarter', 1)->count(), 'several SOBs in one quarter, one per fund');
+    }
+
+    public function test_a_quarter_with_every_fund_used_shows_a_note_instead_of_a_form(): void
+    {
+        $fx = SobFixture::make();
+        $this->actingAs($fx['user']);
+        foreach (collect(Aip::FUNDS)->flatten()->unique() as $fund) {
+            $this->service()->create($fx['school'], 2026, 1, $fund, $fx['user']);
+        }
+
+        $html = $this->get(route('planning', ['school_id' => $fx['school']->id, 'year' => 2026]))->assertOk()->getContent();
+
+        $this->assertSame(1, substr_count($html, 'Every fund already has an SOB this quarter.'));
+        $this->assertCount(3, $this->quarterFundOptions($html), 'the other three quarters still have their form');
+    }
+
+    public function test_the_draft_page_edits_the_fund_and_quarter_from_dropdowns(): void
+    {
+        $fx = SobFixture::make();
+        $this->actingAs($fx['user']);
+        $plan = $this->service()->create($fx['school'], 2026, 1, 'Special Fund', $fx['user']);
+
+        $html = $this->get(route('planning.sob.show', $plan))->assertOk()->getContent();
+
+        $this->assertSame(1, preg_match('/<select name="fund_source"[^>]*>(.*?)<\/select>/s', $html, $fundSelect));
+        $this->assertStringContainsString('<option value="Special Fund" selected>', $fundSelect[1], 'a fund that is not in the list stays selectable');
+        $this->assertStringContainsString('<option value="MOOE"', $fundSelect[1]);
+        $this->assertMatchesRegularExpression('/<select name="quarter"[^>]*>.*?<option value="1" selected>1ST QUARTER<\/option>.*?4TH QUARTER/s', $html);
+        $this->put(route('planning.sob.update', $plan), ['fund_source' => 'SEF', 'quarter' => 3])->assertSessionHasNoErrors();
+        $this->assertSame(['SEF', 3], [$plan->fresh()->fund_source, $plan->fresh()->quarter]);
+        $this->put(route('planning.sob.update', $plan), ['quarter' => 9])->assertSessionHasErrors('quarter');
+    }
+
+    public function test_the_approved_page_offers_reopen_to_managers_only_and_reopening_works(): void
+    {
+        $fx = SobFixture::make();
+        $this->actingAs($fx['user']);
+        $plan = $this->approved($fx);
+
+        $this->get(route('planning.sob.show', $plan))->assertOk()->assertSee('Reopen for revision')->assertSee(route('planning.sob.reopen', $plan), false);
+        $viewer = User::factory()->create(['role' => 'viewer', 'organization_id' => $fx['organization']->id, 'school_id' => $fx['school']->id]);
+        $this->actingAs($viewer);
+        $this->get(route('planning.sob.show', $plan))->assertOk()->assertDontSee('Reopen for revision');
+        $this->post(route('planning.sob.reopen', $plan))->assertForbidden();
+        $this->assertSame('approved', $plan->fresh()->status);
+
+        $this->actingAs($fx['user']);
+        $this->post(route('planning.sob.reopen', $plan))->assertRedirect()->assertSessionHasNoErrors();
+        $this->assertSame('draft', $plan->fresh()->status);
+        $this->get(route('planning.sob.show', $plan))->assertOk()->assertDontSee('Reopen for revision')->assertSee('name="quarter"', false);
+    }
+
+    public function test_a_refused_reopen_says_why_and_another_organization_cannot_reopen(): void
+    {
+        $other = SobFixture::make(['slug' => uniqid('oth')]);
+        $otherPlan = $this->approved($other);
+        $fx = SobFixture::make(['slug' => uniqid('own')]);
+        $this->actingAs($fx['user']);
+        $plan = $this->approved($fx);
+        $this->appItemFor($fx, $plan, 'approved');
+
+        $this->post(route('planning.sob.reopen', $plan))->assertSessionHasErrors('planning');
+        $this->assertSame('approved', $plan->fresh()->status);
+        $this->post(route('planning.sob.reopen', $otherPlan))->assertStatus(404);
+        $this->assertSame('approved', SobPlan::withoutGlobalScopes()->find($otherPlan->id)->status);
+    }
+
+    public function test_the_item_selects_show_the_complete_activity_and_account_text(): void
+    {
+        $fx = SobFixture::make();
+        $this->actingAs($fx['user']);
+        $activityText = 'Conduct of the quarterly school-based learning recovery sessions in reading and numeracy for Grade 1 to Grade 6 learners with the participation of parents, teachers and the barangay council '.str_repeat('and community partners ', 3);
+        $accountTitle = 'Import Duties - Optical, Photographic, Cinematographic, Measuring, Checking, Precision, Medical or Surgical Instruments and Apparatus; Clocks and Watches; Musical Instruments; Parts and Accessories Thereof';
+        $fx['activities'][0]->update(['activity' => $activityText]);
+        $fx['account']->update(['title' => $accountTitle]);
+        $plan = $this->service()->create($fx['school'], 2026, 1, 'MOOE', $fx['user']);
+        $this->service()->addItem($plan, $this->line($fx));
+
+        $html = $this->get(route('planning.sob.show', $plan))->assertOk()->getContent();
+
+        $this->assertStringContainsString($activityText, $html, 'the option holds the whole activity');
+        $this->assertStringContainsString($accountTitle, $html, 'and the whole account title');
+        $this->assertSame(4, preg_match_all('/<p data-full-text-output/', $html), 'a full-text line under each of the 2 selects of the add form and of the one item edit form');
+        $this->assertSame(4, preg_match_all('/<div class="[^"]*" data-full-text-box>/', $html));
     }
 }
