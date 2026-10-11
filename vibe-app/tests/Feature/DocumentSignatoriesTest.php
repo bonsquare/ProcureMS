@@ -354,6 +354,75 @@ class DocumentSignatoriesTest extends TestCase
         $this->assertStringNotContainsString('typed name', $printed);
     }
 
+    private function prPayload(School $school, array $extra = []): array
+    {
+        return $extra + [
+            'school_id' => $school->id, 'purpose' => 'Office supplies', 'entity_name' => 'DepEd', 'department_name' => $school->name,
+            'request_date' => '2026-03-01', 'source_of_fund' => 'MOOE', 'transaction_description' => null, 'section' => null,
+            'sai_number' => null, 'sai_date' => null, 'responsibility_center_code' => null, 'extra_blank_rows' => 0,
+            'items' => [['name' => 'Bond paper', 'quantity' => 4, 'unit' => 'ream', 'unit_price' => 250]],
+        ];
+    }
+
+    public function test_the_pr_prints_the_chosen_requested_by_and_approved_by(): void
+    {
+        [, $school, $user] = $this->tenant();
+        $ana = $this->staff($school, 'Ana Requester', ['position' => 'Teacher I']);
+        $head = $this->staff($school, 'Hal Approver', ['position' => 'Principal II']);
+        $pr = $this->requestFor($school, $user);
+        $pr->update(['signatories' => ['requested_by' => $this->snapshot($ana), 'approved_by' => $this->snapshot($head)]]);
+        $ana->update(['is_active' => false]);
+        $head->update(['is_active' => false]);
+
+        $printed = strtolower($this->actingAs($user)->get(route('procurement.print', $pr))->assertOk()->getContent());
+
+        $this->assertStringContainsString('ana requester', $printed);
+        $this->assertStringContainsString('hal approver', $printed);
+        $this->assertStringContainsString('principal ii', $printed);
+    }
+
+    public function test_a_new_pr_saves_chosen_signatories_and_an_edit_keeps_or_clears_them(): void
+    {
+        [, $school, $user] = $this->tenant();
+        $ana = $this->staff($school, 'Ana Requester', ['position' => 'Teacher I']);
+
+        $this->actingAs($user)->post(route('procurement.store'), $this->prPayload($school, ['signatories' => ['requested_by' => (string) $ana->id, 'approved_by' => '']]))->assertSessionHasNoErrors();
+        $pr = ProcurementRequest::firstOrFail();
+        $this->assertSame(['requested_by' => $this->snapshot($ana)], $pr->signatories);
+
+        $this->put(route('procurement.update', $pr), $this->prPayload($school))->assertSessionHasNoErrors();
+        $this->assertSame(['requested_by' => $this->snapshot($ana)], $pr->fresh()->signatories);
+
+        $this->put(route('procurement.update', $pr), $this->prPayload($school, ['signatories' => ['requested_by' => '']]))->assertSessionHasNoErrors();
+        $this->assertNull($pr->fresh()->signatories);
+    }
+
+    public function test_another_schools_staff_is_refused_on_the_pr(): void
+    {
+        [, $school, $user] = $this->tenant('one');
+        [, $other] = $this->tenant('two');
+        $stranger = $this->staff($other, 'Stranger');
+
+        $this->actingAs($user)->post(route('procurement.store'), $this->prPayload($school, ['signatories' => ['approved_by' => (string) $stranger->id]]))
+            ->assertSessionHasErrors('signatories.approved_by');
+
+        $this->assertSame(0, ProcurementRequest::count());
+    }
+
+    public function test_the_pr_form_shows_the_signatories_selects_with_the_default_named(): void
+    {
+        [, $school, $user] = $this->tenant();
+        $this->staff($school, 'Rita Requesting', ['procurement_role' => 'Requesting Officer']);
+        $this->staff($school, 'Alma Approver', ['procurement_role' => 'Approver']);
+
+        $html = $this->actingAs($user)->get(route('procurement.create'))->assertOk()->getContent();
+
+        $this->assertStringContainsString('name="signatories[requested_by]"', $html);
+        $this->assertStringContainsString('name="signatories[approved_by]"', $html);
+        $this->assertStringContainsString('Default (Rita Requesting)', $html);
+        $this->assertStringContainsString('Default (Alma Approver)', $html);
+    }
+
     public function test_a_signer_from_another_school_is_refused_on_save(): void
     {
         [, $school, $user] = $this->tenant('one');

@@ -87,13 +87,20 @@ final class SignatorySlots
      */
     public static function defaults(string $document, Collection $staff): array
     {
-        if (! in_array($document, self::PROCUREMENT_DOCUMENTS, true)) {
-            return [];
-        }
-
         $role = fn (string $group, string $name) => $staff->first(fn (SchoolStaff $member) => $member->hasRole($group, $name));
         $text = fn (string $field, string $needle) => $staff->first(fn (SchoolStaff $member) => str_contains(strtolower((string) $member->{$field}), $needle));
         $approver = $role('procurement_role', 'Approver');
+
+        if ($document === 'purchase_request') {
+            return [
+                'requestingOfficer' => $role('procurement_role', 'Requesting Officer') ?? $role('procurement_role', 'Procurement Officer'),
+                'approver' => $approver ?? $text('position', 'school head'),
+            ];
+        }
+
+        if (! in_array($document, self::PROCUREMENT_DOCUMENTS, true)) {
+            return [];
+        }
 
         return [
             'requestingOfficer' => $role('procurement_role', 'Requesting Officer'),

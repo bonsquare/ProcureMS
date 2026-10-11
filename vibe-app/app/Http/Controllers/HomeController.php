@@ -674,8 +674,20 @@ class HomeController extends Controller
             'agency' => AgencySetting::first(),
             'nextPrNumber' => $this->nextPurchaseRequestNumber(false),
             'unitOptions' => Unit::options(),
+            'signatoryPanels' => $this->purchaseRequestSignatoryPanels(null),
             'activeProcurementArea' => 'requests',
         ]);
+    }
+
+    /** The PR's signatory selects for every school the user can pick in the form, keyed by school id; the saved choices belong to the request being edited. */
+    private function purchaseRequestSignatoryPanels(?ProcurementRequest $editing): array
+    {
+        $schoolIds = $this->scopedSchoolIds();
+        $staff = SchoolStaff::active()->whereIn('school_id', $schoolIds)->get()->groupBy('school_id');
+
+        return $schoolIds->mapWithKeys(fn ($schoolId) => [
+            $schoolId => SignatorySlots::panel('purchase_request', $staff->get($schoolId, collect()), $editing && (int) $editing->school_id === (int) $schoolId ? $editing->signatories : null),
+        ])->all();
     }
 
     public function editProcurement(ProcurementRequest $procurementRequest)
@@ -692,6 +704,7 @@ class HomeController extends Controller
             'budgetItems' => $this->openBudgetItems(),
             'agency' => AgencySetting::first(),
             'nextPrNumber' => $this->nextPurchaseRequestNumber(false),
+            'signatoryPanels' => $this->purchaseRequestSignatoryPanels($procurementRequest),
             'activeProcurementArea' => 'requests',
         ]);
     }
@@ -701,6 +714,7 @@ class HomeController extends Controller
         abort_unless($request->user()->canCreateProcurement(), 403, 'Your role can only view procurement records.');
         $validated = $this->validateProcurement($request);
         $this->authorizeSchoolAccess((int) $validated['school_id']);
+        $signatories = SignatorySlots::validated('purchase_request', $request->input('signatories'), (int) $validated['school_id']);
         $items = $validated['items'];
         $amount = collect($items)->sum(fn (array $item) => (float) $item['quantity'] * (float) $item['unit_price']);
         $budgetAllocation = ! empty($validated['budget_allocation_id'])
@@ -713,7 +727,7 @@ class HomeController extends Controller
         $this->assertBudgetItem($validated, (float) $amount);
         app(AppItemLinkService::class)->assertWithinApp((int) $validated['school_id'], $items);
 
-        $procurementRequest = DB::transaction(function () use ($validated, $request, $amount, $items, $budgetAllocation, $fiscalYear) {
+        $procurementRequest = DB::transaction(function () use ($validated, $request, $amount, $items, $budgetAllocation, $fiscalYear, $signatories) {
             $requestNumber = ! empty($validated['manually_encode_pr_number'])
                 ? $validated['manual_pr_number']
                 : $this->nextPurchaseRequestNumber(true, $this->organizationIdForSchool((int) $validated['school_id']));
@@ -751,6 +765,7 @@ class HomeController extends Controller
                 'extra_blank_rows' => $validated['extra_blank_rows'],
                 'status' => 'submitted',
                 'requested_at' => $validated['request_date'],
+                'signatories' => $signatories ?: null,
             ]);
 
             $this->replaceProcurementItems($procurementRequest, $items);
@@ -770,6 +785,10 @@ class HomeController extends Controller
         $this->authorizeProcurementAccess($procurementRequest);
         $validated = $this->validateProcurement($request);
         $this->authorizeSchoolAccess((int) $validated['school_id']);
+        // The chosen signers replace the saved ones when the form sends them; an update without the field keeps what was chosen before.
+        $signatories = $request->has('signatories')
+            ? SignatorySlots::validated('purchase_request', $request->input('signatories'), (int) $validated['school_id'])
+            : ($procurementRequest->signatories ?? []);
         $items = $validated['items'];
         $amount = collect($items)->sum(fn (array $item) => (float) $item['quantity'] * (float) $item['unit_price']);
         $budgetAllocation = ! empty($validated['budget_allocation_id'])
@@ -809,6 +828,7 @@ class HomeController extends Controller
             'extra_blank_rows' => $validated['extra_blank_rows'],
             'requested_at' => $validated['request_date'],
             'request_number' => $requestNumber,
+            'signatories' => $signatories ?: null,
         ]);
         $this->replaceProcurementItems($procurementRequest, $items);
         app(AppItemLinkService::class)->recordLinks($procurementRequest);
@@ -1019,6 +1039,7 @@ class HomeController extends Controller
             'amount' => $items->sum('total'),
             'status' => 'draft',
             'requested_at' => $requestDate,
+            'signatories' => $this->previewSignatories($request, $school),
         ]);
         $procurementRequest->setRelation('school', $school);
         $procurementRequest->setRelation('requester', $request->user());
@@ -1028,15 +1049,30 @@ class HomeController extends Controller
         return $this->procurementPrintView($procurementRequest);
     }
 
+    /** The signers chosen in a PR form that is still being filled in; a choice that cannot be used is left out of the preview. */
+    private function previewSignatories(Request $request, ?School $school): ?array
+    {
+        if (! $school) {
+            return null;
+        }
+
+        try {
+            return SignatorySlots::validated('purchase_request', $request->input('signatories'), $school->id) ?: null;
+        } catch (ValidationException) {
+            return null;
+        }
+    }
+
     private function procurementPrintView(ProcurementRequest $procurementRequest)
     {
         $staff = SchoolStaff::active()->where('school_id', $procurementRequest->school_id)->get();
         $rfqMetadata = $procurementRequest->documents->firstWhere('document_type', 'request_for_quotation')?->metadata ?? [];
         $transactionDescription = $procurementRequest->transaction_description ?: data_get($rfqMetadata, 'transaction_description');
-        $requestingOfficer = $staff->first(fn ($member) => $member->hasRole('procurement_role', 'Requesting Officer'))
-            ?? $staff->first(fn ($member) => $member->hasRole('procurement_role', 'Procurement Officer'));
-        $approver = $staff->first(fn ($member) => $member->hasRole('procurement_role', 'Approver'))
-            ?? $staff->first(fn ($member) => str_contains(strtolower((string) $member->position), 'school head'));
+        ['requestingOfficer' => $requestingOfficer, 'approver' => $approver] = SignatorySlots::overlay(
+            'purchase_request',
+            SignatorySlots::defaults('purchase_request', $staff),
+            $procurementRequest->signatories,
+        );
         $agency = AgencySetting::first() ?? new AgencySetting;
 
         return view('procurement-print', [
