@@ -164,6 +164,7 @@
         <form method="POST" action="{{ route('aip.update', $aip) }}" class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
             @csrf @method('PUT')
             @foreach([['prepared_by', 'Prepared by'], ['noted_by', 'Noted by'], ['approved_by', 'Approved by']] as [$key, $text])
+                <label class="{{ $label }} md:col-span-2">Role (the caption above the signature; blank prints "{{ $text }}")<input name="{{ $key }}_role" value="{{ $aip->{$key . '_role'} }}" placeholder="{{ $text }}" @disabled(!$canManage) class="{{ $field }}"></label>
                 <label class="{{ $label }}">{{ $text }}<input name="{{ $key }}_name" value="{{ $aip->{$key . '_name'} }}" @disabled(!$canManage) class="{{ $field }}"></label>
                 <label class="{{ $label }}">Position<input name="{{ $key }}_position" value="{{ $aip->{$key . '_position'} }}" @disabled(!$canManage) class="{{ $field }}"></label>
             @endforeach

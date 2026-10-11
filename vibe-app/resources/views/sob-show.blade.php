@@ -45,6 +45,7 @@
         <label class="text-xs font-semibold text-on-surface-variant">School ID<input name="school_id_number" value="{{ old('school_id_number', $plan->school_id_number) }}" maxlength="50" placeholder="Type the School ID" class="{{ $box }}"></label>
         @foreach([['prepared_by', 'Prepared by'], ['recommended_by', 'Recommending approval'], ['approved_by', 'Approved by']] as [$prefix, $title])
             <div class="space-y-2">
+                <label class="block text-xs font-semibold text-on-surface-variant">{{ $title }}: role (blank prints "{{ $title }}")<input name="{{ $prefix }}_role" value="{{ old($prefix.'_role', $plan->{$prefix.'_role'}) }}" maxlength="255" placeholder="{{ $title }}" class="{{ $box }}"></label>
                 <label class="block text-xs font-semibold text-on-surface-variant">{{ $title }}: name<input name="{{ $prefix }}_name" value="{{ old($prefix.'_name', $plan->{$prefix.'_name'}) }}" maxlength="255" class="{{ $box }}"></label>
                 <label class="block text-xs font-semibold text-on-surface-variant">Position<input name="{{ $prefix }}_position" value="{{ old($prefix.'_position', $plan->{$prefix.'_position'}) }}" maxlength="255" class="{{ $box }}"></label>
             </div>

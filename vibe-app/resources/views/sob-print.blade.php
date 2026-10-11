@@ -72,9 +72,9 @@
     $division = $school->division ?: ($agency?->division_name ?: $agency?->division_office);
     $grandTotal = collect($grouped)->sum('total');
     $signatories = [
-        ['Prepared by:', $plan->prepared_by_name, $plan->prepared_by_position],
-        ['Recommending Approval:', $plan->recommended_by_name, $plan->recommended_by_position],
-        ['APPROVED:', $plan->approved_by_name, $plan->approved_by_position],
+        [\App\Support\SignatoryCaption::of($plan->prepared_by_role, 'Prepared by:'), $plan->prepared_by_name, $plan->prepared_by_position],
+        [\App\Support\SignatoryCaption::of($plan->recommended_by_role, 'Recommending Approval:'), $plan->recommended_by_name, $plan->recommended_by_position],
+        [\App\Support\SignatoryCaption::of($plan->approved_by_role, 'APPROVED:'), $plan->approved_by_name, $plan->approved_by_position],
     ];
 @endphp
 

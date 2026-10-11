@@ -13,6 +13,7 @@ class SipPlan extends Model
     protected $fillable = [
         'organization_id', 'school_id', 'start_year',
         'prepared_by_name', 'prepared_by_position', 'recommended_by_name', 'recommended_by_position', 'approved_by_name', 'approved_by_position',
+        'prepared_by_role', 'recommended_by_role', 'approved_by_role',
     ];
 
     public function school()
