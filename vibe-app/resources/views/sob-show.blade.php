@@ -53,14 +53,14 @@
 
 <section class="mb-5 rounded border border-outline-variant/30 bg-white p-4" id="sob-item-form">
     <h2 class="font-semibold">Add item</h2>
-    <p class="mt-1 text-xs text-on-surface-variant">Choose the AIP activity that has an actual budget this quarter, then what is bought for it. The amount is frequency × quantity × unit cost.</p>
+    <p class="mt-1 text-xs text-on-surface-variant">Choose the Specific Program / Project and its activity, then what is bought for it. Use Add particulars for more than one. Each amount is frequency × quantity × unit cost.</p>
     <form method="POST" action="{{ route('planning.sob.items.store', $plan) }}" class="sob-line-form mt-3 grid gap-3 md:grid-cols-6">@csrf
         <div class="md:col-span-6" data-full-text-box><label class="block text-xs font-semibold text-on-surface-variant">AIP activity (PPA)
             <select name="aip_activity_id" required class="{{ $box }}">
                 <option value="">Choose an activity</option>
                 @foreach($plan->aip->kras as $kra)
                     <optgroup label="{{ $kra->pillar }} · {{ $kra->program ?: $kra->kra }}">
-                        @foreach($kra->activities as $activity)<option value="{{ $activity->id }}" @selected((string) old('aip_activity_id') === (string) $activity->id)>{{ $activity->activity }} (AIP {{ $plan->quarterLabel() }}: {{ $peso($activity->{'q'.$plan->quarter.'_amount'}) }})</option>@endforeach
+                        @foreach($kra->activities as $activity)<option value="{{ $activity->id }}" @selected((string) old('aip_activity_id') === (string) $activity->id)>{{ $activity->activity }}</option>@endforeach
                     </optgroup>
                 @endforeach
             </select>
@@ -71,11 +71,16 @@
                 @foreach($accounts as $account)<option value="{{ $account->id }}" @selected((string) old('chart_of_account_id') === (string) $account->id)>{{ $account->code }} · {{ $account->title }}</option>@endforeach
             </select>
         </label><p data-full-text-output class="mt-1 text-xs font-normal leading-5 text-on-surface"></p></div>
-        <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Particulars<input name="particulars" required maxlength="255" value="{{ old('particulars') }}" class="{{ $box }}"></label>
-        <label class="text-xs font-semibold text-on-surface-variant">Frequency<input name="frequency" type="text" inputmode="decimal" value="{{ old('frequency', 1) }}" class="{{ $box }}"></label>
-        <label class="text-xs font-semibold text-on-surface-variant">Quantity<input name="quantity" type="text" inputmode="decimal" required value="{{ old('quantity') }}" class="{{ $box }}"></label>
-        <label class="text-xs font-semibold text-on-surface-variant">Unit<input name="unit" required maxlength="50" value="{{ old('unit') }}" placeholder="pcs, ream, month" class="{{ $box }}"></label>
-        <label class="text-xs font-semibold text-on-surface-variant">Unit cost<input name="unit_cost" type="text" inputmode="decimal" required value="{{ old('unit_cost') }}" class="{{ $box }}"></label>
+        <div class="grid gap-3 md:col-span-6 md:grid-cols-6" data-particulars-rows>
+            <div class="contents" data-particulars-row>
+                <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Particulars<input name="lines[0][particulars]" required maxlength="255" value="{{ old('lines.0.particulars') }}" class="{{ $box }}"></label>
+                <label class="text-xs font-semibold text-on-surface-variant">Frequency<input name="lines[0][frequency]" type="text" inputmode="decimal" value="{{ old('lines.0.frequency', 1) }}" class="{{ $box }}"></label>
+                <label class="text-xs font-semibold text-on-surface-variant">Quantity<input name="lines[0][quantity]" type="text" inputmode="decimal" required value="{{ old('lines.0.quantity') }}" class="{{ $box }}"></label>
+                <label class="text-xs font-semibold text-on-surface-variant">Unit<input name="lines[0][unit]" required maxlength="50" value="{{ old('lines.0.unit') }}" placeholder="pcs, ream, month" class="{{ $box }}"></label>
+                <label class="text-xs font-semibold text-on-surface-variant">Unit cost<input name="lines[0][unit_cost]" type="text" inputmode="decimal" required value="{{ old('lines.0.unit_cost') }}" class="{{ $box }}"></label>
+            </div>
+        </div>
+        <div class="md:col-span-6"><button type="button" data-add-particulars class="rounded border border-primary px-3 py-1.5 text-xs font-semibold text-primary hover:bg-surface-low">+ Add particulars</button></div>
         <div class="flex items-end gap-3 md:col-span-6"><p class="text-sm font-semibold">Amount: <span data-amount>₱0.00</span></p><button class="ml-auto rounded bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-primary-container">Add item</button></div>
     </form>
 </section>
@@ -90,7 +95,7 @@
             <div class="border-b border-outline-variant/20 px-4 py-3 last:border-0">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <p class="text-sm font-semibold">{{ $program['program'] ?: 'No program' }} <span class="font-normal text-on-surface-variant">· {{ $row['activity']->activity }}</span></p>
-                    <p class="text-xs {{ $isOver ? 'font-bold text-amber-800' : 'text-on-surface-variant' }}">AIP {{ $plan->quarterLabel() }}: {{ $peso($row['aip_amount']) }} · SOB: {{ $peso($row['total']) }} @if($isOver)· Over the AIP amount @endif</p>
+                    <p class="text-xs {{ $isOver ? 'font-bold text-amber-800' : 'text-on-surface-variant' }}">AIP {{ $plan->quarterLabel() }}: {{ $row['aip_amount'] > 0 ? $peso($row['aip_amount']) : 'not yet determined' }} · SOB: {{ $peso($row['total']) }} @if($isOver)· Over the AIP amount @endif</p>
                 </div>
                 <div class="mt-2 overflow-x-auto"><table class="w-full min-w-[720px] text-left text-xs"><thead class="text-on-surface-variant"><tr><th class="py-1.5 pr-2">Particulars</th><th class="px-2">Account</th><th class="px-2 text-right">Frequency</th><th class="px-2 text-right">Quantity</th><th class="px-2">Unit</th><th class="px-2 text-right">Unit cost</th><th class="px-2 text-right">Amount</th>@if($editable)<th></th>@endif</tr></thead><tbody class="divide-y divide-outline-variant/20">
                 @foreach($row['items'] as $item)
@@ -143,14 +148,40 @@
 <script>
 (() => {
     const number = (value) => { const n = Number(String(value ?? '').replace(/[,₱\s]/g, '')); return Number.isFinite(n) ? n : 0; };
+    const peso = (amount) => '₱' + amount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     document.querySelectorAll('.sob-line-form').forEach((form) => {
         const out = form.querySelector('[data-amount]');
         const update = () => {
-            const amount = Math.round(number(form.elements.frequency?.value || 1) * number(form.elements.quantity?.value) * number(form.elements.unit_cost?.value) * 100) / 100;
-            out.textContent = '₱' + amount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const rows = form.querySelectorAll('[data-particulars-row]');
+            const total = (rows.length ? [...rows] : [form]).reduce((sum, row) => {
+                const field = (name) => (row.querySelector('[name$="[' + name + ']"], [name="' + name + '"]') || {}).value;
+                return sum + Math.round(number(field('frequency') || 1) * number(field('quantity')) * number(field('unit_cost')) * 100) / 100;
+            }, 0);
+            out.textContent = peso(total);
         };
         form.addEventListener('input', update);
         update();
+    });
+    // Add particulars: another row of the same fields under the chosen activity and account.
+    document.querySelectorAll('[data-add-particulars]').forEach((button) => {
+        const form = button.closest('form');
+        const holder = form.querySelector('[data-particulars-rows]');
+        button.addEventListener('click', () => {
+            const row = holder.querySelector('[data-particulars-row]').cloneNode(true);
+            const index = holder.querySelectorAll('[data-particulars-row]').length;
+            row.querySelectorAll('input').forEach((input) => {
+                input.name = input.name.replace(/lines\[\d+\]/, 'lines[' + index + ']');
+                input.value = input.name.endsWith('[frequency]') ? '1' : '';
+            });
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.textContent = '× Remove';
+            remove.className = 'justify-self-start rounded px-2 py-1 text-xs font-semibold text-error hover:bg-surface-low md:col-span-6';
+            remove.addEventListener('click', () => { row.remove(); form.dispatchEvent(new Event('input')); });
+            row.appendChild(remove);
+            holder.appendChild(row);
+            row.querySelector('input').focus();
+        });
     });
 })();
 </script>

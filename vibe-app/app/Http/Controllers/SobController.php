@@ -103,6 +103,11 @@ class SobController extends Controller
     public function storeItem(Request $request, SobPlan $sobPlan): RedirectResponse
     {
         $this->scoped($request, $sobPlan);
+        if (is_array($request->input('lines'))) {
+            $items = $this->sob->addItems($sobPlan, (string) $request->input('aip_activity_id'), (string) $request->input('chart_of_account_id'), $request->input('lines'));
+
+            return back()->with('success', count($items) === 1 ? 'Item added.' : count($items).' items added.');
+        }
         $this->sob->addItem($sobPlan, $request->all());
 
         return back()->with('success', 'Item added.');
