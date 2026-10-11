@@ -30,13 +30,6 @@
 #procurement-form>.flex.justify-end:last-child,#procurement-form>div.flex.justify-end{position:sticky;bottom:0;z-index:5;margin:0 -1.5rem!important;padding:.85rem 1.5rem!important;border:0!important;border-top:1px solid #dbe4ec!important;border-radius:0 0 14px 14px!important;background:rgba(255,255,255,.96)!important;backdrop-filter:blur(6px)}
 #procurement-form button[type=submit]{border-radius:8px;padding-inline:1.4rem;box-shadow:0 2px 6px rgba(16,57,103,.25)}
 .pr-preview-pane{border-radius:14px!important;box-shadow:0 1px 2px rgba(16,57,103,.05),0 8px 24px rgba(16,57,103,.05)}
-.blank-rows-card{display:flex;align-items:center;justify-content:space-between;gap:.75rem;border:1px solid #e1e8ef;border-radius:10px;background:#fbfcfe;padding:.45rem .8rem}
-.blank-rows-text label{display:block;font-size:.74rem!important;font-weight:700!important;color:#103967!important}
-.blank-rows-text p{margin-top:.15rem;font-size:.72rem;line-height:1.45;color:#6a7988}
-.blank-rows-stepper{display:inline-flex;flex:none;align-items:stretch;overflow:hidden;border:1px solid #cdd8e2;border-radius:8px;background:#fff}
-.blank-rows-stepper button{width:1.7rem;border:0;background:#eef3f8;color:#103967;font-size:.9rem!important;font-weight:700;line-height:1;cursor:pointer}
-.blank-rows-stepper button:hover{background:#dde8f2}
-#procurement-form .blank-rows-stepper input{width:2.6rem;min-height:1.7rem!important;padding:0!important;font-size:.76rem!important;margin:0!important;border:0!important;border-radius:0!important;border-inline:1px solid #cdd8e2!important;text-align:center;font-weight:700;box-shadow:none!important}
 </style>
 @endpush
 @section('content')
@@ -75,7 +68,7 @@
                     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">@include('partials.signatory-picker', ['rows' => $signatoryRows])</div>
                 </section>
             @endforeach
-            <div class="blank-rows-card"><div class="blank-rows-text"><label for="extra_blank_rows">Extra blank print rows</label></div><div class="blank-rows-stepper" role="group" aria-label="Extra blank print rows"><button type="button" data-step="-1" aria-label="Fewer blank rows">&minus;</button><input id="extra_blank_rows" name="extra_blank_rows" type="number" min="0" max="100" value="{{ old('extra_blank_rows', $editingRequest?->extra_blank_rows ?? 0) }}"><button type="button" data-step="1" aria-label="More blank rows">+</button></div></div>
+            @include('partials.extra-blank-rows', ['max' => 100, 'value' => old('extra_blank_rows', $editingRequest?->extra_blank_rows ?? 0)])
             <div class="flex justify-end gap-2 border-t border-outline-variant/20 pt-6"><a href="{{ route('procurement') }}" class="rounded border border-outline-variant/50 px-4 py-2.5 text-xs font-semibold hover:border-primary hover:text-primary">Cancel</a><button type="submit" class="min-h-11 rounded-lg bg-primary px-5 text-xs font-bold text-white">Save request</button></div>
         </form>
     </section>
@@ -231,11 +224,5 @@
         setTimeout(refresh, 600);
     })();
 
-    document.querySelectorAll('.blank-rows-stepper button').forEach((button) => button.addEventListener('click', () => {
-        const input = document.getElementById('extra_blank_rows');
-        const next = Math.min(100, Math.max(0, (parseInt(input.value, 10) || 0) + parseInt(button.dataset.step, 10)));
-        input.value = next;
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-    }));
 </script>
 @endsection
