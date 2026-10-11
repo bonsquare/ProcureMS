@@ -65,6 +65,11 @@ final class SignatorySlots
             ['key' => 'requester', 'label' => 'Requester / School Head', 'var' => 'requester', 'role' => null, 'needle' => 'school head'],
             ['key' => 'budget_officer', 'label' => 'Certified by (Budget / Disbursing Officer)', 'var' => 'budgetOfficer', 'role' => null, 'needle' => 'disburs'],
         ],
+        'app_cse' => [
+            ['key' => 'prepared_by', 'label' => 'Prepared by (Property/Supply Officer)', 'var' => 'preparedBy', 'role' => ['procurement_role', 'Supply Officer'], 'needle' => 'property'],
+            ['key' => 'noted_by', 'label' => 'Noted (School Head)', 'var' => 'notedBy', 'role' => ['procurement_role', 'Approver'], 'needle' => 'school head'],
+            ['key' => 'certified_by', 'label' => 'Certified funds available (Accountant / Local Budget Officer)', 'var' => 'certifiedBy', 'role' => null, 'needle' => 'accountant'],
+        ],
         'disbursement_voucher' => [
             ['key' => 'accountant', 'label' => 'Accountant', 'var' => 'accountant', 'role' => null, 'needle' => 'accountant'],
             ['key' => 'head', 'label' => 'School Head', 'var' => 'head', 'role' => null, 'needle' => 'school head'],
@@ -95,6 +100,16 @@ final class SignatorySlots
             return [
                 'requestingOfficer' => $role('procurement_role', 'Requesting Officer') ?? $role('procurement_role', 'Procurement Officer'),
                 'approver' => $approver ?? $text('position', 'school head'),
+            ];
+        }
+
+        if ($document === 'app_cse') {
+            $find = fn (string $needle) => $staff->first(fn (SchoolStaff $member) => str_contains(strtolower($member->document_role.' '.$member->position), $needle));
+
+            return [
+                'preparedBy' => $role('procurement_role', 'Supply Officer') ?? $find('property') ?? $find('supply'),
+                'notedBy' => $find('school head') ?? $approver,
+                'certifiedBy' => $find('accountant') ?? $find('budget'),
             ];
         }
 

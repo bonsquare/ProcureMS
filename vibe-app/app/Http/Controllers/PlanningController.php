@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AgencySetting;
 use App\Models\Aip;
+use App\Models\AppCsePlan;
 use App\Models\AppItem;
 use App\Models\AppPlan;
 use App\Models\AuditLog;
@@ -50,6 +51,7 @@ class PlanningController extends Controller
             'sipPlans' => SipPlan::where('school_id', $selectedSchool->id)->get()->keyBy('start_year'),
             'aips' => Aip::with(['sipProject', 'activities'])->where('school_id', $selectedSchool->id)->orderByDesc('fiscal_year')->get(),
             'sobPlans' => SobPlan::with('items')->where('school_id', $selectedSchool->id)->orderBy('fiscal_year')->orderBy('quarter')->get(),
+            'appCsePlans' => AppCsePlan::withCount('items')->where('school_id', $selectedSchool->id)->orderByDesc('fiscal_year')->get(),
             // Older PPMPs stay in the database; they only keep their AIP from being deleted.
             'legacyPpmpAipIds' => PpmpPlan::where('school_id', $selectedSchool->id)->pluck('aip_id')->all(),
             'appPlan' => AppPlan::with(['items.ppmpItem.plan.transaction.procurementRequests', 'items.sobItem.plan.transaction.procurementRequests', 'items.requestItems.procurementRequest'])->where('school_id', $selectedSchool->id)->where('fiscal_year', $year)->first(),
