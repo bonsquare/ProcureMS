@@ -160,7 +160,7 @@ class SobServiceTest extends TestCase
         $this->assertCount(2, $activities[1]['items']);
     }
 
-    public function test_edit_and_delete_only_while_draft(): void
+    public function test_a_draft_and_an_approved_sob_can_both_be_edited_and_deleted(): void
     {
         $fx = SobFixture::make();
         $plan = $this->draft($fx);
@@ -174,11 +174,14 @@ class SobServiceTest extends TestCase
 
         $this->service()->approve($plan->fresh(), $fx['user']);
         $locked = $plan->fresh();
-        $this->fails(fn () => $this->service()->updateItem($item->fresh(), $this->line($fx)), 'planning');
-        $this->fails(fn () => $this->service()->deleteItem($item->fresh()), 'planning');
-        $this->fails(fn () => $this->service()->addItem($locked, $this->line($fx)), 'planning');
-        $this->fails(fn () => $this->service()->updateHeader($locked, ['fund_source' => 'MOOE']), 'planning');
-        $this->fails(fn () => $this->service()->deletePlan($locked), 'planning');
+        $this->actingAs($fx['user']);
+        $this->service()->updateItem($item->fresh(), $this->line($fx, 0, ['quantity' => 2]));
+        $this->service()->addItem($locked, $this->line($fx));
+        $this->service()->updateHeader($locked, ['fund_source' => 'MOOE']);
+        $this->service()->deleteItem($item->fresh());
+        $this->assertSame('approved', $plan->fresh()->status, 'editing does not unlock it');
+        $this->service()->deletePlan($plan->fresh());
+        $this->assertNull(SobPlan::withoutGlobalScopes()->find($plan->id));
 
         $other = $this->draft($fx, 2);
         $extra = $this->service()->addItem($other, $this->line($fx));

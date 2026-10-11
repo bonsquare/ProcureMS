@@ -145,15 +145,17 @@ class SobItemGroupTest extends TestCase
         $this->assertSame([$fx['activities'][1]->id], SobItem::pluck('aip_activity_id')->unique()->values()->all());
     }
 
-    public function test_an_approved_sob_refuses_item_edits(): void
+    public function test_an_approved_sob_can_remove_an_item_which_releases_its_budget(): void
     {
         $fx = SobFixture::make();
         $this->actingAs($fx['user']);
         $plan = $this->draftWithGroup($fx);
         $this->service()->approve($plan, $fx['user']);
 
-        $this->expectException(ValidationException::class);
         $this->service()->deleteGroup($plan->fresh(), $fx['activities'][0]->id, $fx['account']->id);
+
+        $this->assertSame(0, SobItem::count());
+        $this->assertSame(0.0, (float) BudgetAllocation::withoutGlobalScopes()->sum('q1_amount'));
     }
 
     public function test_other_lines_count_in_the_budget_but_are_not_copied_to_the_app(): void

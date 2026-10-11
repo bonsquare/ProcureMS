@@ -105,7 +105,7 @@ class SobFlowTest extends TestCase
         $this->get(route('planning.sob.show', $plan))->assertOk()->assertSee('Over the AIP amount');
     }
 
-    public function test_approve_creates_allotments_and_locks_the_sob(): void
+    public function test_approve_creates_allotments_and_the_approved_sob_stays_editable(): void
     {
         $fx = SobFixture::make();
         $plan = $this->draft($fx);
@@ -116,14 +116,15 @@ class SobFlowTest extends TestCase
 
         $this->assertSame('approved', $plan->fresh()->status);
         $this->assertSame(1, BudgetAllocation::withoutGlobalScopes()->count());
-        $this->post(route('planning.sob.items.store', $plan), $this->line($fx))->assertSessionHasErrors('planning');
-        $this->put(route('planning.sob.items.update', $item), $this->line($fx))->assertSessionHasErrors('planning');
-        $this->delete(route('planning.sob.items.destroy', $item))->assertSessionHasErrors('planning');
-        $this->put(route('planning.sob.update', $plan), ['fund_source' => 'SEF'])->assertSessionHasErrors('planning');
-        $this->get(route('planning.sob.show', $plan))->assertOk()->assertDontSee('id="sob-item-form"', false)->assertSee('Approved');
+        $this->post(route('planning.sob.items.store', $plan), $this->line($fx))->assertSessionHasNoErrors();
+        $this->put(route('planning.sob.items.update', $item), $this->line($fx, ['quantity' => 3]))->assertSessionHasNoErrors();
+        $this->delete(route('planning.sob.items.destroy', $item))->assertSessionHasNoErrors();
+        $this->put(route('planning.sob.update', $plan), ['fund_source' => 'SEF'])->assertSessionHasNoErrors();
+        $this->assertSame('SEF', $plan->fresh()->fund_source);
+        $this->get(route('planning.sob.show', $plan))->assertOk()->assertSee('id="sob-item-form"', false)->assertSee('Approved');
     }
 
-    public function test_a_draft_sob_can_be_deleted_and_an_approved_one_cannot(): void
+    public function test_a_draft_and_an_approved_sob_can_both_be_deleted(): void
     {
         $fx = SobFixture::make();
         $draft = $this->draft($fx, 1);
@@ -132,8 +133,8 @@ class SobFlowTest extends TestCase
         app(SobService::class)->approve($approved->fresh(), $fx['user']);
         $this->actingAs($fx['user']);
 
-        $this->delete(route('planning.sob.destroy', $approved))->assertSessionHasErrors('planning');
-        $this->assertNotNull(SobPlan::withoutGlobalScopes()->find($approved->id));
+        $this->delete(route('planning.sob.destroy', $approved))->assertRedirect()->assertSessionHasNoErrors();
+        $this->assertNull(SobPlan::withoutGlobalScopes()->find($approved->id));
 
         $this->delete(route('planning.sob.destroy', $draft))->assertRedirect();
         $this->assertNull(SobPlan::withoutGlobalScopes()->find($draft->id));
