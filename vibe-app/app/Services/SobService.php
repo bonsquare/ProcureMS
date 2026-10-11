@@ -75,6 +75,26 @@ class SobService
         return SobItem::create(['organization_id' => $plan->organization_id, 'sob_plan_id' => $plan->id] + $this->itemValues($plan, $data));
     }
 
+    /**
+     * Adds several particulars under one activity and account. All are saved or none.
+     *
+     * @param  array<int, array<string, mixed>>  $lines  particulars, frequency, quantity, unit and unit_cost of each
+     * @return array<int, SobItem>
+     */
+    public function addItems(SobPlan $plan, int|string $activityId, int|string $accountId, array $lines): array
+    {
+        $this->requireDraft($plan);
+        $lines = array_values(array_filter($lines, 'is_array'));
+        if ($lines === []) {
+            throw ValidationException::withMessages(['lines' => 'Add at least one particulars.']);
+        }
+
+        return DB::transaction(fn () => array_map(
+            fn (array $line) => $this->addItem($plan, ['aip_activity_id' => $activityId, 'chart_of_account_id' => $accountId] + $line),
+            $lines,
+        ));
+    }
+
     /** @param  array<string, mixed>  $data */
     public function updateItem(SobItem $item, array $data): SobItem
     {
@@ -279,14 +299,14 @@ class SobService
         return $released;
     }
 
-    /** @return array<int, array{aip_activity_id: int, sob: float, aip: float}> activities whose SOB lines total more than the AIP gives the quarter */
+    /** @return array<int, array{aip_activity_id: int, sob: float, aip: float}> activities whose SOB lines total more than the AIP gives the quarter; an activity with no amount yet is never over */
     public function overAip(SobPlan $plan): array
     {
         $over = [];
         foreach ($plan->items()->with('activity')->get()->groupBy('aip_activity_id') as $activityId => $items) {
             $sob = round((float) $items->sum('amount'), 2);
             $aip = (float) $items->first()->activity->{"q{$plan->quarter}_amount"};
-            if ($sob > $aip + 0.001) {
+            if ($aip > 0 && $sob > $aip + 0.001) {
                 $over[] = ['aip_activity_id' => (int) $activityId, 'sob' => $sob, 'aip' => $aip];
             }
         }
