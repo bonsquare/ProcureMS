@@ -26,13 +26,14 @@
         @media (min-width: 640px) { .reg-actions { margin: 0 -2rem -2rem; padding: .9rem 2rem; } }
     </style>
 @include('partials.input-fixes')
+@include('partials.favicon')
 </head>
 <body class="min-h-screen px-4 py-8 font-inter text-on-surface">
     <main class="mx-auto w-full max-w-4xl overflow-hidden rounded-2xl border border-outline-variant/30 bg-white shadow-xl shadow-slate-900/5">
         <div class="relative overflow-hidden px-6 py-7 text-white sm:px-8" style="background:linear-gradient(135deg,#0b2a66 0%,#103967 55%,#1b5088 100%)">
             <span class="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-white/5" aria-hidden="true"></span>
             <span class="pointer-events-none absolute -bottom-24 right-24 h-48 w-48 rounded-full bg-white/5" aria-hidden="true"></span>
-            <div class="relative flex items-center gap-3"><div class="flex h-11 w-11 items-center justify-center rounded-xl bg-secondary shadow-lg shadow-black/20"><span class="material-symbols-outlined">school</span></div><div><p class="text-xl font-bold leading-tight">ProcureMS</p><p class="text-xs text-white/70">School Pre-registration</p></div></div>
+            @include('partials.brand', ['style' => 'register'])
             <h1 class="relative mt-6 text-3xl font-bold tracking-tight">Pre-register your school</h1>
             <p class="relative mt-2 max-w-2xl text-sm leading-6 text-white/80">Encode the school details and the person who will manage the school. The account is available after the master account reviews and activates the school.</p>
             <div class="relative mt-5 flex flex-wrap gap-2"><span class="reg-step"><b>1</b>School Details</span><span class="reg-step"><b>2</b>System User Information</span><span class="reg-step"><b>3</b>Master Approval</span></div>

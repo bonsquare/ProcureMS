@@ -16,6 +16,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 @include('partials.input-fixes')
+@include('partials.favicon')
 </head>
 <body class="bg-surface font-inter text-on-surface antialiased">
     @php
@@ -24,7 +25,7 @@
         $pendingPreRegistrations = $pendingPreRegistrations ?? collect();
     @endphp
     <aside id="dashboard-sidebar" class="fixed inset-y-0 left-0 z-50 hidden w-72 flex-col bg-primary px-4 py-6 text-white md:flex">
-        <div class="mb-8 flex items-center gap-3 px-2"><div class="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-white"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">account_balance</span></div><div><p class="text-lg font-bold tracking-tight">ProcureMS</p><p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/55">Civic Operations</p></div></div>
+        @include('partials.brand')
         <nav class="flex-1 space-y-1" aria-label="Main navigation">
             @php
                 $navigation = [

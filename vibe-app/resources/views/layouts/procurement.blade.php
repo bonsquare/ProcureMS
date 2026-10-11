@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="{{ asset('css/procurement.css') }}">
     @include('partials.input-fixes')
     @stack('head')
+@include('partials.favicon')
 </head>
 <body class="bg-surface font-inter text-on-surface antialiased">
     <a href="#main-content" class="civic-skip-link">Skip to main content</a>

@@ -7,10 +7,11 @@
     <script>tailwind.config={theme:{extend:{colors:{surface:'#faf8ff',primary:'#00236f','primary-container':'#1e3a8a','on-surface':'#1a1b21','on-surface-variant':'#444651',secondary:'#006c4a','outline-variant':'#c5c5d3',error:'#ba1a1a'},fontFamily:{inter:['Inter','sans-serif']}}}};</script>
     <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet"><link rel="stylesheet" href="{{ asset('css/app.css') }}">
 @include('partials.input-fixes')
+@include('partials.favicon')
 </head>
 <body class="flex min-h-screen items-center justify-center bg-surface px-4 font-inter text-on-surface">
     <main class="w-full max-w-md rounded border border-outline-variant/30 bg-white p-8 shadow-sm sm:p-10">
-        <div class="mb-8 flex items-center gap-3"><div class="flex h-10 w-10 items-center justify-center rounded bg-primary text-white"><span class="material-symbols-outlined">school</span></div><div><p class="text-xl font-semibold">ProcureMS</p><p class="text-xs text-on-surface-variant">Multi-School Procurement System</p></div></div>
+        @include('partials.brand', ['style' => 'login'])
         <h1 class="text-2xl font-semibold">Sign in</h1><p class="mt-2 text-sm text-on-surface-variant">Access your procurement, accounting, budget, and cash workspace.</p>
         @if(session('success'))<div class="mt-5 rounded border border-secondary/30 bg-secondary/10 px-4 py-3 text-sm font-medium text-secondary">{{ session('success') }}</div>@endif
         <form id="login-form" method="POST" action="{{ route('login.store') }}" class="mt-8 space-y-5">@csrf
