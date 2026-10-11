@@ -27,7 +27,7 @@ class AipPrintFundTest extends TestCase
         $this->assertStringContainsString('(School: MOOE, SEF, IGP, others; Division Office Proper:', $html, 'the template note is printed as in the AIP template');
         $table = substr($html, strpos($html, '<table'), strpos($html, '</table>') - strpos($html, '<table'));
         preg_match_all('/<col /', $table, $cols);
-        preg_match('/<tbody>.*?<tr>(.*?)<\/tr>/s', $table, $firstRow);
+        preg_match('/<tbody>.*?<tr[^>]*>(.*?)<\/tr>/s', $table, $firstRow);
         $this->assertSame(count($cols[0]), preg_match_all('/<td/', $firstRow[1]), 'every body row has one cell for each column');
     }
 

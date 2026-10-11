@@ -42,6 +42,13 @@
         .signatures .name { margin: 44px 14% 0; padding-bottom: 3px; border-bottom: 1px solid #111; text-align: center; font-weight: bold; font-size: 12px; text-transform: uppercase; }
         .signatures .position { margin-top: 4px; text-align: center; font-size: 11px; }
 
+        /* html.sim-print: the print metrics below, applied on screen while the script works out where the pages break. Keep in step with @media print. */
+        html.sim-print body { font-size: 9px; }
+        html.sim-print .paper { min-width: 0; padding: 0; margin: 0; }
+        html.sim-print thead th { font-size: 8.5px; }
+        html.sim-print th, html.sim-print td { padding: 3px 4px; font-size: 9px; }
+        html.sim-print .masthead img { height: 70px; }
+
         @media print {
             body { background: #fff; font-size: 9px; } .paper { min-width: 0; }
             .toolbar-unused { display: none; }
@@ -113,8 +120,10 @@
                     for ($c = 0; $c < 6; $c++) { $span[$c][$r] = 1; }
                 }
                 $pillarStart = 0;
+                $pillarGroup = [];
                 foreach ($lines as $r => $line) {
                     if ($r > 0 && $line['values'][0] === $lines[$r - 1]['values'][0]) { $span[0][$pillarStart]++; $span[0][$r] = 0; } else { $pillarStart = $r; }
+                    $pillarGroup[$r] = $pillarStart;
                 }
                 $pillarColors = ['access' => '#fbf3d5', 'equity' => '#fae3d2', 'quality' => '#dcebf6', 'resiliency' => '#f5dfe5', 'well-being' => '#e5dff1', 'enabling mechanism' => '#dbead7'];
                 $fallback = ['#dff0ee', '#f3e9d6', '#e3e8f3', '#e9f0dc'];
@@ -122,11 +131,11 @@
             @endphp
             @foreach($lines as $r => $line)
                 @php $a = $line['activity']; @endphp
-                <tr>
+                <tr data-pillar-group="{{ $pillarGroup[$r] }}">
                     @foreach($line['values'] as $c => $value)
                         @if($span[$c][$r] > 0)
                             @if($c === 0)
-                                <td rowspan="{{ $span[$c][$r] }}" class="pillar" style="background: {{ $pillarColor($value) }}">{{ $value }}</td>
+                                <td rowspan="{{ $span[$c][$r] }}" class="pillar" data-rows="{{ $span[$c][$r] }}" style="background: {{ $pillarColor($value) }}">{{ $value }}</td>
                             @else
                                 <td rowspan="{{ $span[$c][$r] }}" class="group">{{ $value }}</td>
                             @endif
@@ -167,5 +176,81 @@
         @endforeach
     </div>
 </main>
+<script>
+    /* The pillar cell is merged down its rows; when a pillar runs onto another page, the cell restarts at the top of that page.
+       The shared print engine sets the paper (@page), so the page breaks are worked out here with print metrics and the cell is split to match. */
+    (function () {
+        var MM = 96 / 25.4;
+        var busy = false;
+
+        function paginate() {
+            var style = document.getElementById('official-page-style');
+            var page = document.querySelector('[data-official-page]');
+            var table = page && page.querySelector('table');
+            var spec = style && /size:\s*([\d.]+)mm\s+([\d.]+)mm;\s*margin:\s*([\d.]+)mm\s+([\d.]+)mm/.exec(style.textContent);
+            if (!table || !table.tBodies[0] || !spec || busy) { return; }
+            busy = true;
+            var tbody = table.tBodies[0];
+            var root = document.documentElement;
+            var zoom = parseFloat(page.style.zoom) || 1;
+            var kept = { zoom: page.style.zoom, width: page.style.width, preview: root.style.getPropertyValue('--preview-zoom') };
+
+            // Back to one merged cell per pillar.
+            Array.prototype.forEach.call(tbody.querySelectorAll('td[data-clone]'), function (cell) { cell.remove(); });
+            Array.prototype.forEach.call(tbody.querySelectorAll('td.pillar[data-rows]'), function (cell) { cell.setAttribute('rowspan', cell.dataset.rows); });
+
+            // Measure with print metrics at the size the page will print.
+            root.style.setProperty('--preview-zoom', 1);
+            page.style.zoom = 1;
+            page.style.width = ((+spec[1] - 2 * spec[4]) * MM / zoom) + 'px';
+            root.classList.add('sim-print');
+
+            var rows = Array.prototype.slice.call(tbody.rows);
+            var capacity = ((+spec[2] - 2 * spec[3]) * MM - 4) / zoom - 8;
+            var headHeight = table.tHead ? table.tHead.getBoundingClientRect().height : 0;
+            var position = table.getBoundingClientRect().top - page.getBoundingClientRect().top + headHeight;
+            var starts = [];
+            rows.forEach(function (row, index) {
+                var height = row.getBoundingClientRect().height;
+                if (index > 0 && position + height > capacity) { starts.push(index); position = headHeight; }
+                position += height;
+            });
+
+            root.classList.remove('sim-print');
+            page.style.zoom = kept.zoom;
+            page.style.width = kept.width;
+            if (kept.preview) { root.style.setProperty('--preview-zoom', kept.preview); } else { root.style.removeProperty('--preview-zoom'); }
+
+            // A page that starts in the middle of a pillar gets its own copy of the pillar cell.
+            starts.forEach(function (index) {
+                var row = rows[index];
+                var origin = rows.filter(function (other) { return other.dataset.pillarGroup === row.dataset.pillarGroup; })[0];
+                if (origin === row) { return; }
+                var cell = origin.querySelector('td.pillar[data-rows]');
+                if (!cell) { return; }
+                var copy = cell.cloneNode(true);
+                copy.setAttribute('data-clone', '');
+                copy.removeAttribute('data-rows');
+                row.insertBefore(copy, row.firstElementChild);
+            });
+            rows.forEach(function (row, index) {
+                var cell = row.querySelector('td.pillar');
+                if (!cell || row.firstElementChild !== cell) { return; }
+                var group = row.dataset.pillarGroup, length = 1;
+                while (rows[index + length] && rows[index + length].dataset.pillarGroup === group && rows[index + length].firstElementChild.className.indexOf('pillar') === -1) { length++; }
+                cell.setAttribute('rowspan', length);
+            });
+            busy = false;
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var style = document.getElementById('official-page-style');
+            if (style) { new MutationObserver(paginate).observe(style, { childList: true, characterData: true, subtree: true }); }
+            window.addEventListener('beforeprint', paginate);
+            window.addEventListener('load', paginate);
+            paginate();
+        });
+    })();
+</script>
 </body>
 </html>
