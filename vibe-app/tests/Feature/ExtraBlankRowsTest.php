@@ -3,11 +3,13 @@
 namespace Tests\Feature;
 
 use App\Models\Organization;
+use App\Models\ProcurementDocument;
 use App\Models\ProcurementRequest;
 use App\Models\School;
 use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class ExtraBlankRowsTest extends TestCase
@@ -61,11 +63,53 @@ class ExtraBlankRowsTest extends TestCase
         $html = $this->actingAs($user)->get(route('procurement.documents', $request))->assertOk()->getContent();
 
         $this->assertSame(2, substr_count($html, 'name="extra_blank_rows"'));
-        $this->assertStringContainsString(sprintf(self::HINT, 20), $html);
-        $this->assertStringContainsString(sprintf(self::HINT, 6), $html);
+        $this->assertSame(2, substr_count($html, sprintf(self::HINT, 100)));
+        $this->assertStringNotContainsString('up to 6)', $html);
+        $this->assertStringNotContainsString('up to 20)', $html);
+        preg_match_all('/<input[^>]*name="extra_blank_rows"[^>]*>/', $html, $boxes);
+        $this->assertCount(2, $boxes[0]);
+        foreach ($boxes[0] as $box) {
+            $this->assertStringContainsString('max="100"', $box);
+        }
         $this->assertStringNotContainsString('Manual blank item rows', $html);
         // The existing show/hide hooks of the document form stay on each control.
         $this->assertMatchesRegularExpression('/<label[^>]*data-po-only[^>]*>\s*Extra Blank Rows/', $html);
         $this->assertMatchesRegularExpression('/<label[^>]*data-extra-rows-only[^>]*>\s*Extra Blank Rows/', $html);
+    }
+
+    public function test_a_document_is_saved_with_up_to_100_blank_rows_and_refused_above_that(): void
+    {
+        [$user, $request] = $this->userWithRequest();
+        $payload = ['document_type' => 'request_for_quotation', 'document_date' => '2026-10-11'];
+
+        $this->actingAs($user)->post(route('procurement.documents.store', $request), $payload + ['extra_blank_rows' => 101])->assertSessionHasErrors('extra_blank_rows');
+        $this->assertSame(0, $request->documents()->count());
+
+        $this->post(route('procurement.documents.store', $request), $payload + ['extra_blank_rows' => 100])->assertSessionHasNoErrors();
+        $this->assertSame(100, (int) $request->documents()->first()->metadata['extra_blank_rows']);
+    }
+
+    /** @return array<string, array{0: string, 1: string}> document type and the markup that marks one printed blank row */
+    public static function blankRowMarkup(): array
+    {
+        return [
+            'po' => ['purchase_order', 'aria-label="Blank purchase order row"'],
+            'iar' => ['inspection_acceptance_report', 'class="empty-row"'],
+            'ris' => ['requisition_issuance_slip', 'class="ris-empty"'],
+        ];
+    }
+
+    #[DataProvider('blankRowMarkup')]
+    public function test_the_printed_document_has_all_100_blank_rows(string $type, string $marker): void
+    {
+        [$user, $request] = $this->userWithRequest();
+        $document = ProcurementDocument::create([
+            'organization_id' => $request->organization_id, 'procurement_request_id' => $request->id, 'created_by' => $user->id, 'document_type' => $type,
+            'document_number' => 'DOC-2026-001', 'document_date' => '2026-10-11', 'status' => 'prepared', 'metadata' => ['extra_blank_rows' => 100],
+        ]);
+
+        $html = $this->actingAs($user)->get(route('procurement.documents.print', [$request, $document]))->assertOk()->getContent();
+
+        $this->assertSame(100, substr_count($html, $marker));
     }
 }

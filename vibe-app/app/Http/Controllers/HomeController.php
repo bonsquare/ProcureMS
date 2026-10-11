@@ -1178,7 +1178,7 @@ class HomeController extends Controller
             'date_opening' => ['nullable', 'date'],
             'time_opening' => ['nullable', 'date_format:H:i'],
             'terms_of_payment' => ['nullable', 'string', 'max:500'],
-            'extra_blank_rows' => ['nullable', 'integer', 'min:0', 'max:20'],
+            'extra_blank_rows' => ['nullable', 'integer', 'min:0', 'max:100'],
             'inspection_officer_name' => ['nullable', 'string', 'max:255'],
             'received_items' => ['nullable', 'array'],
             'received_items.*' => ['nullable', 'numeric', 'min:0'],
