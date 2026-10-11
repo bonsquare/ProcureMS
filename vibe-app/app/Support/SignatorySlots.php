@@ -98,6 +98,15 @@ final class SignatorySlots
             ];
         }
 
+        if ($document === 'obligation_request') {
+            $find = fn (string $needle) => $staff->first(fn (SchoolStaff $member) => str_contains(strtolower($member->document_role.' '.$member->position), $needle));
+
+            return [
+                'requester' => $find('school head') ?? $find('head'),
+                'budgetOfficer' => $find('disburs') ?? $find('budget'),
+            ];
+        }
+
         if (! in_array($document, self::PROCUREMENT_DOCUMENTS, true)) {
             return [];
         }
@@ -143,6 +152,23 @@ final class SignatorySlots
             'candidates' => self::candidates($staff, $slot),
             'saved' => is_array($saved[$slot['key']] ?? null) ? $saved[$slot['key']] : null,
         ], self::slots($document));
+    }
+
+    /**
+     * The panel of one document for each school a form lets the user pick, keyed by school id. A form that can switch
+     * schools shows only the panel of the chosen school, because each school has its own staff.
+     *
+     * @param  Collection<int, int>  $schoolIds
+     * @param  ?array<string, array{staff_id: int, name: string, position: ?string}>  $saved  the saved choices, which belong to $savedSchoolId
+     * @return array<int, array<int, array{slot: array, default: ?SchoolStaff, candidates: Collection, saved: ?array}>>
+     */
+    public static function panelsForSchools(string $document, Collection $schoolIds, ?int $savedSchoolId = null, ?array $saved = null): array
+    {
+        $staff = SchoolStaff::active()->whereIn('school_id', $schoolIds)->get()->groupBy('school_id');
+
+        return $schoolIds->mapWithKeys(fn ($schoolId) => [
+            $schoolId => self::panel($document, $staff->get($schoolId, collect()), $savedSchoolId === (int) $schoolId ? $saved : null),
+        ])->all();
     }
 
     /** @return array<int, array{key: string, label: string, var: string, role: ?array{0: string, 1: string}, needle: ?string}> */

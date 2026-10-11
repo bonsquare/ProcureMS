@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\LiquidationReport;
 use App\Models\Organization;
 use App\Models\ProcurementDocument;
 use App\Models\ProcurementRequest;
@@ -421,6 +422,71 @@ class DocumentSignatoriesTest extends TestCase
         $this->assertStringContainsString('name="signatories[approved_by]"', $html);
         $this->assertStringContainsString('Default (Rita Requesting)', $html);
         $this->assertStringContainsString('Default (Alma Approver)', $html);
+    }
+
+    private function orsFor(School $school, array $extra = []): LiquidationReport
+    {
+        return LiquidationReport::create($extra + [
+            'organization_id' => $school->organization_id, 'school_id' => $school->id, 'report_number' => 'LR-SIG-1', 'ors_number' => 'ORS-SIG-1',
+            'amount' => 1000, 'status' => 'approved', 'payee' => 'Sig Supplier', 'purpose' => 'Office supplies',
+        ]);
+    }
+
+    private function orsPayload(School $school, array $extra = []): array
+    {
+        return $extra + ['school_id' => $school->id, 'source_of_fund' => 'MOOE', 'purpose' => 'Office supplies', 'amount' => '1000', 'payee' => 'Sig Supplier'];
+    }
+
+    public function test_the_ors_prints_the_chosen_requester_and_certifier(): void
+    {
+        [, $school, $user] = $this->tenant();
+        $ana = $this->staff($school, 'Ana Head', ['position' => 'Principal II']);
+        $ben = $this->staff($school, 'Ben Certifier', ['position' => 'Admin Aide']);
+        $report = $this->orsFor($school, ['signatories' => ['ors' => ['requester' => $this->snapshot($ana), 'budget_officer' => $this->snapshot($ben)]]]);
+        $ana->update(['is_active' => false]);
+        $ben->update(['is_active' => false]);
+
+        $printed = strtolower($this->actingAs($user)->get(route('liquidation.print', $report))->assertOk()->getContent());
+
+        $this->assertStringContainsString('ana head', $printed);
+        $this->assertStringContainsString('ben certifier', $printed);
+        $this->assertStringContainsString('admin aide', $printed);
+    }
+
+    public function test_a_new_ors_saves_the_chosen_signatories_under_the_ors_key(): void
+    {
+        [, $school, $user] = $this->tenant();
+        $ana = $this->staff($school, 'Ana Head', ['position' => 'Principal II']);
+
+        $this->actingAs($user)->post(route('liquidation.store'), $this->orsPayload($school, ['signatories' => ['requester' => (string) $ana->id, 'budget_officer' => '']]))->assertSessionHasNoErrors();
+
+        $this->assertSame(['ors' => ['requester' => $this->snapshot($ana)]], LiquidationReport::firstOrFail()->signatories);
+    }
+
+    public function test_another_schools_staff_is_refused_on_the_ors(): void
+    {
+        [, $school, $user] = $this->tenant('one');
+        [, $other] = $this->tenant('two');
+        $stranger = $this->staff($other, 'Stranger');
+
+        $this->actingAs($user)->post(route('liquidation.store'), $this->orsPayload($school, ['signatories' => ['requester' => (string) $stranger->id]]))
+            ->assertSessionHasErrors('signatories.requester');
+
+        $this->assertSame(0, LiquidationReport::count());
+    }
+
+    public function test_the_ors_form_shows_the_signatories_selects_with_the_default_named(): void
+    {
+        [, $school, $user] = $this->tenant();
+        $this->staff($school, 'Sam Head', ['position' => 'School Head']);
+        $this->staff($school, 'Dina Disburse', ['document_role' => 'Disbursing Officer']);
+
+        $html = $this->actingAs($user)->get(route('budget'))->assertOk()->getContent();
+
+        $this->assertStringContainsString('name="signatories[requester]"', $html);
+        $this->assertStringContainsString('name="signatories[budget_officer]"', $html);
+        $this->assertStringContainsString('Default (Sam Head)', $html);
+        $this->assertStringContainsString('Default (Dina Disburse)', $html);
     }
 
     public function test_a_signer_from_another_school_is_refused_on_save(): void

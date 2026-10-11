@@ -682,12 +682,7 @@ class HomeController extends Controller
     /** The PR's signatory selects for every school the user can pick in the form, keyed by school id; the saved choices belong to the request being edited. */
     private function purchaseRequestSignatoryPanels(?ProcurementRequest $editing): array
     {
-        $schoolIds = $this->scopedSchoolIds();
-        $staff = SchoolStaff::active()->whereIn('school_id', $schoolIds)->get()->groupBy('school_id');
-
-        return $schoolIds->mapWithKeys(fn ($schoolId) => [
-            $schoolId => SignatorySlots::panel('purchase_request', $staff->get($schoolId, collect()), $editing && (int) $editing->school_id === (int) $schoolId ? $editing->signatories : null),
-        ])->all();
+        return SignatorySlots::panelsForSchools('purchase_request', $this->scopedSchoolIds(), $editing?->school_id, $editing?->signatories);
     }
 
     public function editProcurement(ProcurementRequest $procurementRequest)
@@ -1793,6 +1788,8 @@ class HomeController extends Controller
             }
         }
 
+        $signatories = SignatorySlots::validated('obligation_request', $request->input('signatories'), (int) $data['school_id']);
+
         if (empty($data['procurement_request_id'])) {
             app(BudgetService::class)->assertAvailable('amount', (int) $data['school_id'], $data['source_of_fund'], (float) $data['amount']);
             $this->assertBudgetItem($data, (float) $data['amount']);
@@ -1807,7 +1804,7 @@ class HomeController extends Controller
         $fiscalYear = $linkedBudget?->fiscal_year ?? $linkedRequest?->budgetAllocation?->fiscal_year ?? (int) now()->year;
         app(FiscalYearService::class)->assertOpen($organizationId, (int) $fiscalYear);
 
-        $orsNumber = DB::transaction(function () use ($data, $organizationId, $linkedRequest, $linkedBudget, $fiscalYear) {
+        $orsNumber = DB::transaction(function () use ($data, $organizationId, $linkedRequest, $linkedBudget, $fiscalYear, $signatories) {
             $numbering = app(DocumentNumberService::class);
             $reportNumber = $numbering->next($organizationId, 'liquidation_report', 'LR');
             $orsNumber = ! empty($data['manually_encode_ors_number'])
@@ -1846,6 +1843,7 @@ class HomeController extends Controller
                 'status' => 'for_review',
                 'notes' => $data['notes'] ?? null,
                 'submitted_at' => now(),
+                'signatories' => $signatories === [] ? null : ['ors' => $signatories],
             ]);
             $report->transaction?->update(['status' => 'liquidation']);
             $report->transaction?->recordEvent('liquidation', 'ors_submitted', null, 'for_review', $report->ors_number, ['liquidation_report_id' => $report->id, 'amount' => $report->amount]);
@@ -1865,14 +1863,12 @@ class HomeController extends Controller
         $this->authorizeLiquidationAccess($liquidationReport);
         $liquidationReport->load(['school', 'procurementRequest', 'submitter']);
         $staff = SchoolStaff::active()->where('school_id', $liquidationReport->school_id)->get();
-        $find = fn (string $needle) => $staff->first(fn ($m) => str_contains(strtolower($m->document_role.' '.$m->position), $needle));
 
-        return view('ors-print', [
+        return view('ors-print', SignatorySlots::overlay('obligation_request', [
             'report' => $liquidationReport,
             'agency' => AgencySetting::first() ?? new AgencySetting,
-            'requester' => $find('school head') ?? $find('head'),
-            'budgetOfficer' => $find('disburs') ?? $find('budget'),
-        ]);
+            ...SignatorySlots::defaults('obligation_request', $staff),
+        ], $liquidationReport->signatories['ors'] ?? null));
     }
 
     public function updateLiquidationStatus(Request $request, LiquidationReport $liquidationReport)
