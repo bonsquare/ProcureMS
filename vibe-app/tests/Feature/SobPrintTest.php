@@ -38,7 +38,7 @@ class SobPrintTest extends TestCase
             ->assertSee('data-official-page', false)->assertSee('data-doc="sob"', false)->assertSee('data-paper="legal"', false)->assertSee('data-orientation="portrait"', false)
             ->assertSee('SCHOOL OPERATING BUDGET')->assertSee('FY 2026 SCHOOL MAINTENANCE AND OTHER OPERATING EXPENSES (MOOE)')->assertSee('1ST QUARTER')
             ->assertSee('PPAs/Expenditures/Item')->assertSee('Particulars')->assertSee('Frequency')->assertSee('Quantity')->assertSee('Unit of Measure')->assertSee('Unit Cost')->assertSee('Amount')
-            ->assertSee('ACCESS')->assertSee('Program One')->assertSee('Activity 1')->assertSee('Sub-Total')->assertSee('GRAND TOTAL')->assertSee('Summary per object of expenditure')
+            ->assertSee('ACCESS')->assertSee('Program One')->assertSee('Sub-Total')->assertSee('GRAND TOTAL')->assertSee('Summary per object of expenditure')
             ->assertSee('Prepared by')->assertSee('Recommending Approval')->assertSee('APPROVED:')->assertSee('ANA HEAD')->assertSee('BEN CHIEF')->assertSee('CY SUPER')
             ->assertSee('School Principal I')->assertSee('Schools Division Superintendent');
     }

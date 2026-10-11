@@ -111,21 +111,34 @@
             <tr class="pillar-row pillar-{{ $pillarClass[$pillar['pillar']] ?? 'other' }}"><td colspan="8">{{ strtoupper($pillar['pillar'] ?: 'Other') }}</td></tr>
             @foreach($pillar['programs'] as $program)
                 @foreach($program['activities'] as $row)
-                    @foreach($row['items'] as $index => $item)
-                        <tr>
-                            @if($index === 0)<td rowspan="{{ $row['items']->count() }}">{{ $program['program'] ?: 'No program' }}<br><span style="font-weight:normal">{{ $row['activity']->activity }}</span></td>@endif
-                            <td>{{ $item->account?->title }}</td>
-                            <td>{{ $item->particulars }}</td>
-                            <td class="center">{{ $number($item->frequency) }}</td>
-                            <td class="center">{{ $number($item->quantity) }}</td>
-                            <td class="center">{{ $item->unit }}</td>
-                            <td class="num">{{ $money($item->unit_cost) }}</td>
-                            <td class="num">{{ $money($item->amount) }}</td>
-                        </tr>
+                    @php
+                        $activityRows = collect($row['accounts'])->sum(fn ($group) => $group['items']->count() + ($group['extras']->isNotEmpty() ? 1 + $group['extras']->count() : 0));
+                        $firstOfActivity = true;
+                    @endphp
+                    @foreach($row['accounts'] as $group)
+                        @php $groupRows = $group['items']->count() + ($group['extras']->isNotEmpty() ? 1 + $group['extras']->count() : 0); @endphp
+                        @foreach($group['items'] as $index => $item)
+                            <tr>
+                                @if($firstOfActivity)<td rowspan="{{ $activityRows }}">{{ $program['program'] ?: 'No program' }}</td>@php $firstOfActivity = false; @endphp@endif
+                                @if($index === 0)<td class="account" rowspan="{{ $groupRows }}">{{ $group['note'] ?: $group['account']?->title }}</td>@endif
+                                <td>{{ $item->particulars }}</td>
+                                <td class="center">{{ $number($item->frequency) }}</td>
+                                <td class="center">{{ $number($item->quantity) }}</td>
+                                <td class="center">{{ $item->unit }}</td>
+                                <td class="num">{{ $money($item->unit_cost) }}</td>
+                                <td class="num">{{ $money($item->amount) }}</td>
+                            </tr>
+                        @endforeach
+                        @if($group['extras']->isNotEmpty())
+                            <tr class="sub item-sub"><td colspan="5" style="text-align:right">Sub-Total</td><td class="num">{{ $money($group['items_total']) }}</td></tr>
+                            @foreach($group['extras'] as $extra)
+                                <tr class="extra"><td>{{ $extra->particulars }}</td><td></td><td></td><td class="center">{{ $extra->unit }}</td><td></td><td class="num">{{ $money($extra->amount) }}</td></tr>
+                            @endforeach
+                        @endif
                     @endforeach
                 @endforeach
             @endforeach
-            <tr class="sub"><td colspan="7" style="text-align:right">Sub-Total</td><td class="num">{{ $money($pillar['total']) }}</td></tr>
+            @if(count($pillar['programs']))<tr class="sub pillar-sub"><td colspan="7" style="text-align:right">Sub-Total</td><td class="num">{{ $money($pillar['total']) }}</td></tr>@endif
         @endforeach
             <tr class="grand"><td colspan="7">GRAND TOTAL</td><td class="num">{{ $money($grandTotal) }}</td></tr>
         </tbody>

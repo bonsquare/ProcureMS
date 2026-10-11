@@ -10,11 +10,11 @@ class SobItem extends Model
 {
     use BelongsToOrganization;
 
-    protected $fillable = ['organization_id', 'sob_plan_id', 'aip_activity_id', 'chart_of_account_id', 'particulars', 'frequency', 'quantity', 'unit', 'unit_cost', 'amount'];
+    protected $fillable = ['organization_id', 'sob_plan_id', 'aip_activity_id', 'chart_of_account_id', 'particulars', 'frequency', 'quantity', 'unit', 'unit_cost', 'amount', 'note', 'is_extra'];
 
     protected function casts(): array
     {
-        return ['frequency' => 'decimal:2', 'quantity' => 'decimal:2', 'unit_cost' => 'decimal:2', 'amount' => 'decimal:2'];
+        return ['is_extra' => 'boolean', 'frequency' => 'decimal:2', 'quantity' => 'decimal:2', 'unit_cost' => 'decimal:2', 'amount' => 'decimal:2'];
     }
 
     public function plan()

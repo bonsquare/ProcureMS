@@ -55,7 +55,7 @@
 
 <section class="mb-5 rounded border border-outline-variant/30 bg-white p-4" id="sob-item-form">
     <h2 class="font-semibold">Add item</h2>
-    <p class="mt-1 text-xs text-on-surface-variant">Choose the Specific Program / Project and its activity, then what is bought for it. Use Add particulars for more than one. Each amount is frequency × quantity × unit cost.</p>
+    <p class="mt-1 text-xs text-on-surface-variant">Choose the Specific Program / Project and its activity, then what is bought for it. Use Add particulars for more than one, and Add other line for anything else (for example Labor). Each amount is frequency × quantity × unit cost.</p>
     <form method="POST" action="{{ route('planning.sob.items.store', $plan) }}" class="sob-line-form mt-3 grid gap-3 md:grid-cols-6">@csrf
         <div class="md:col-span-6" data-full-text-box><label class="block text-xs font-semibold text-on-surface-variant">AIP activity (PPA)
             <select name="aip_activity_id" required class="{{ $box }}">
@@ -73,16 +73,7 @@
                 @foreach($accounts as $account)<option value="{{ $account->id }}" @selected((string) old('chart_of_account_id') === (string) $account->id)>{{ $account->code }} · {{ $account->title }}</option>@endforeach
             </select>
         </label><p data-full-text-output class="mt-1 text-xs font-normal leading-5 text-on-surface"></p></div>
-        <div class="grid gap-3 md:col-span-6 md:grid-cols-6" data-particulars-rows>
-            <div class="contents" data-particulars-row>
-                <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Particulars<input name="lines[0][particulars]" required maxlength="255" value="{{ old('lines.0.particulars') }}" class="{{ $box }}"></label>
-                <label class="text-xs font-semibold text-on-surface-variant">Frequency<input name="lines[0][frequency]" type="text" inputmode="decimal" value="{{ old('lines.0.frequency', 1) }}" class="{{ $box }}"></label>
-                <label class="text-xs font-semibold text-on-surface-variant">Quantity<input name="lines[0][quantity]" type="text" inputmode="decimal" required value="{{ old('lines.0.quantity') }}" class="{{ $box }}"></label>
-                <label class="text-xs font-semibold text-on-surface-variant">Unit<input name="lines[0][unit]" required maxlength="50" value="{{ old('lines.0.unit') }}" placeholder="pcs, ream, month" class="{{ $box }}"></label>
-                <label class="text-xs font-semibold text-on-surface-variant">Unit cost<input name="lines[0][unit_cost]" type="text" inputmode="decimal" required value="{{ old('lines.0.unit_cost') }}" class="{{ $box }}"></label>
-            </div>
-        </div>
-        <div class="md:col-span-6"><button type="button" data-add-particulars class="rounded border border-primary px-3 py-1.5 text-xs font-semibold text-primary hover:bg-surface-low">+ Add particulars</button></div>
+        @include('partials.sob-item-fields', ['group' => null, 'box' => $box])
         <div class="flex items-end gap-3 md:col-span-6"><p class="text-sm font-semibold">Amount: <span data-amount>₱0.00</span></p><button class="ml-auto rounded bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-primary-container">Add item</button></div>
     </form>
 </section>
@@ -99,26 +90,37 @@
                     <p class="text-sm font-semibold">{{ $program['program'] ?: 'No program' }} <span class="font-normal text-on-surface-variant">· {{ $row['activity']->activity }}</span></p>
                     <p class="text-xs {{ $isOver ? 'font-bold text-amber-800' : 'text-on-surface-variant' }}">AIP {{ $plan->quarterLabel() }}: {{ $row['aip_amount'] > 0 ? $peso($row['aip_amount']) : 'not yet determined' }} · SOB: {{ $peso($row['total']) }} @if($isOver)· Over the AIP amount @endif</p>
                 </div>
-                <div class="mt-2 overflow-x-auto"><table class="w-full min-w-[720px] text-left text-xs"><thead class="text-on-surface-variant"><tr><th class="py-1.5 pr-2">Particulars</th><th class="px-2">Account</th><th class="px-2 text-right">Frequency</th><th class="px-2 text-right">Quantity</th><th class="px-2">Unit</th><th class="px-2 text-right">Unit cost</th><th class="px-2 text-right">Amount</th>@if($editable)<th></th>@endif</tr></thead><tbody class="divide-y divide-outline-variant/20">
-                @foreach($row['items'] as $item)
-                    <tr><td class="py-1.5 pr-2">{{ $item->particulars }}</td><td class="px-2">{{ $item->account?->code }} · {{ $item->account?->title }}</td><td class="px-2 text-right">{{ rtrim(rtrim(number_format((float) $item->frequency, 2, '.', ''), '0'), '.') }}</td><td class="px-2 text-right">{{ rtrim(rtrim(number_format((float) $item->quantity, 2, '.', ''), '0'), '.') }}</td><td class="px-2">{{ $item->unit }}</td><td class="px-2 text-right">{{ number_format((float) $item->unit_cost, 2) }}</td><td class="px-2 text-right font-semibold">{{ number_format((float) $item->amount, 2) }}</td>
-                    @if($editable)<td class="whitespace-nowrap px-2 text-right">
-                        <details class="inline-block text-left"><summary class="cursor-pointer text-primary">Edit</summary>
-                            <form method="POST" action="{{ route('planning.sob.items.update', $item) }}" class="sob-line-form absolute z-10 mt-1 grid w-[min(34rem,90vw)] gap-2 rounded border border-outline-variant/50 bg-white p-3 shadow-lg md:grid-cols-4">@csrf @method('PUT')
-                                <div class="md:col-span-4" data-full-text-box><label class="block text-[11px] font-semibold">Activity<select name="aip_activity_id" class="{{ $box }}">@foreach($plan->aip->kras as $kra)@foreach($kra->activities as $activity)<option value="{{ $activity->id }}" @selected($activity->id === $item->aip_activity_id)>{{ $programLabel($kra, $activity) }}</option>@endforeach @endforeach</select></label><p data-full-text-output class="mt-1 text-xs font-normal leading-5 text-on-surface"></p></div>
-                                <div class="md:col-span-4" data-full-text-box><label class="block text-[11px] font-semibold">Account<select name="chart_of_account_id" class="{{ $box }}">@foreach($accounts as $account)<option value="{{ $account->id }}" @selected($account->id === $item->chart_of_account_id)>{{ $account->code }} · {{ $account->title }}</option>@endforeach</select></label><p data-full-text-output class="mt-1 text-xs font-normal leading-5 text-on-surface"></p></div>
-                                <label class="text-[11px] font-semibold md:col-span-2">Particulars<input name="particulars" value="{{ $item->particulars }}" maxlength="255" class="{{ $box }}"></label>
-                                <label class="text-[11px] font-semibold">Frequency<input name="frequency" value="{{ (float) $item->frequency }}" class="{{ $box }}"></label>
-                                <label class="text-[11px] font-semibold">Quantity<input name="quantity" value="{{ (float) $item->quantity }}" class="{{ $box }}"></label>
-                                <label class="text-[11px] font-semibold">Unit<input name="unit" value="{{ $item->unit }}" maxlength="50" class="{{ $box }}"></label>
-                                <label class="text-[11px] font-semibold">Unit cost<input name="unit_cost" value="{{ (float) $item->unit_cost }}" class="{{ $box }}"></label>
-                                <div class="flex items-end justify-between gap-2 md:col-span-2"><span class="text-xs font-semibold">Amount: <span data-amount>{{ $peso($item->amount) }}</span></span><button class="rounded bg-primary px-3 py-1.5 text-xs font-semibold text-white">Save</button></div>
+                @foreach($row['accounts'] as $group)
+                <div class="mt-3 rounded border border-outline-variant/30">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-outline-variant/20 bg-surface-low px-3 py-1.5">
+                        <p class="text-xs font-semibold">{{ $group['account']?->code }} · {{ $group['account']?->title }}@if($group['note'])<span class="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-semibold text-amber-900">{{ $group['note'] }}</span>@endif</p>
+                        <p class="text-xs font-semibold">{{ $peso($group['total']) }}</p>
+                    </div>
+                    <div class="overflow-x-auto"><table class="w-full min-w-[640px] text-left text-xs"><thead class="text-on-surface-variant"><tr><th class="px-3 py-1.5">Particulars</th><th class="px-2 text-right">Frequency</th><th class="px-2 text-right">Quantity</th><th class="px-2">Unit</th><th class="px-2 text-right">Unit cost</th><th class="px-3 text-right">Amount</th></tr></thead><tbody class="divide-y divide-outline-variant/20">
+                    @foreach($group['items'] as $item)
+                        <tr><td class="px-3 py-1.5">{{ $item->particulars }}</td><td class="px-2 text-right">{{ rtrim(rtrim(number_format((float) $item->frequency, 2, '.', ''), '0'), '.') }}</td><td class="px-2 text-right">{{ rtrim(rtrim(number_format((float) $item->quantity, 2, '.', ''), '0'), '.') }}</td><td class="px-2">{{ $item->unit }}</td><td class="px-2 text-right">{{ number_format((float) $item->unit_cost, 2) }}</td><td class="px-3 text-right font-semibold">{{ number_format((float) $item->amount, 2) }}</td></tr>
+                    @endforeach
+                    @foreach($group['extras'] as $extra)
+                        <tr class="bg-surface-low/60"><td class="px-3 py-1.5 italic">{{ $extra->particulars }}</td><td></td><td></td><td class="px-2">{{ $extra->unit }}</td><td></td><td class="px-3 text-right font-semibold">{{ number_format((float) $extra->amount, 2) }}</td></tr>
+                    @endforeach
+                    </tbody></table></div>
+                    @if($editable)
+                    <div class="flex flex-wrap items-start gap-3 border-t border-outline-variant/20 px-3 py-2">
+                        <details data-edit-item class="min-w-0 flex-1">
+                            <summary class="cursor-pointer text-xs font-semibold text-primary">Edit item</summary>
+                            <form method="POST" action="{{ route('planning.sob.groups.update', $plan) }}" class="sob-line-form mt-3 grid gap-3 md:grid-cols-6">@csrf @method('PUT')
+                                <input type="hidden" name="old_activity" value="{{ $row['activity']->id }}"><input type="hidden" name="old_account" value="{{ $group['account']?->id }}">
+                                <div class="md:col-span-6" data-full-text-box><label class="block text-xs font-semibold text-on-surface-variant">AIP activity (PPA)<select name="aip_activity_id" class="{{ $box }}">@foreach($plan->aip->kras as $kra)@foreach($kra->activities as $activity)<option value="{{ $activity->id }}" @selected($activity->id === $row['activity']->id)>{{ $programLabel($kra, $activity) }}</option>@endforeach @endforeach</select></label><p data-full-text-output class="mt-1 text-xs font-normal leading-5 text-on-surface"></p></div>
+                                <div class="md:col-span-6" data-full-text-box><label class="block text-xs font-semibold text-on-surface-variant">Object of expenditure (account)<select name="chart_of_account_id" class="{{ $box }}">@foreach($accounts as $account)<option value="{{ $account->id }}" @selected($account->id === $group['account']?->id)>{{ $account->code }} · {{ $account->title }}</option>@endforeach</select></label><p data-full-text-output class="mt-1 text-xs font-normal leading-5 text-on-surface"></p></div>
+                                @include('partials.sob-item-fields', ['group' => $group, 'box' => $box])
+                                <div class="flex items-end gap-3 md:col-span-6"><p class="text-sm font-semibold">Amount: <span data-amount>{{ $peso($group['total']) }}</span></p><button class="ml-auto rounded bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-primary-container">Save item</button></div>
                             </form>
                         </details>
-                        <form method="POST" action="{{ route('planning.sob.items.destroy', $item) }}" class="ml-2 inline" onsubmit="return confirm('Remove this item?')">@csrf @method('DELETE')<button class="text-error hover:underline">Remove</button></form>
-                    </td>@endif</tr>
+                        <form method="POST" action="{{ route('planning.sob.groups.destroy', $plan) }}" onsubmit="return confirm('Remove this whole item with all its particulars?')">@csrf @method('DELETE')<input type="hidden" name="old_activity" value="{{ $row['activity']->id }}"><input type="hidden" name="old_account" value="{{ $group['account']?->id }}"><button class="text-xs font-semibold text-error hover:underline">Remove item</button></form>
+                    </div>
+                    @endif
+                </div>
                 @endforeach
-                </tbody></table></div>
             </div>
         @endforeach
     @endforeach
@@ -153,37 +155,40 @@
     const peso = (amount) => '₱' + amount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     document.querySelectorAll('.sob-line-form').forEach((form) => {
         const out = form.querySelector('[data-amount]');
+        const field = (row, name) => (row.querySelector('[name$="[' + name + ']"]') || {}).value;
         const update = () => {
-            const rows = form.querySelectorAll('[data-particulars-row]');
-            const total = (rows.length ? [...rows] : [form]).reduce((sum, row) => {
-                const field = (name) => (row.querySelector('[name$="[' + name + ']"], [name="' + name + '"]') || {}).value;
-                return sum + Math.round(number(field('frequency') || 1) * number(field('quantity')) * number(field('unit_cost')) * 100) / 100;
-            }, 0);
+            let total = 0;
+            form.querySelectorAll('[data-particulars-rows] [data-row]').forEach((row) => {
+                total += Math.round(number(field(row, 'frequency') || 1) * number(field(row, 'quantity')) * number(field(row, 'unit_cost')) * 100) / 100;
+            });
+            form.querySelectorAll('[data-extra-rows] [data-row]').forEach((row) => { total += number(field(row, 'amount')); });
             out.textContent = peso(total);
         };
+        // + Add particulars / + Add other line: a fresh row from the form's template; x Remove drops a row (one particulars always stays).
+        const addRow = (buttonSelector, rowsSelector, templateSelector) => {
+            const button = form.querySelector(buttonSelector);
+            if (!button) { return; }
+            button.addEventListener('click', () => {
+                const rows = form.querySelector(rowsSelector);
+                const index = Number(rows.dataset.nextIndex || rows.querySelectorAll('[data-row]').length);
+                rows.dataset.nextIndex = index + 1;
+                rows.insertAdjacentHTML('beforeend', form.querySelector(templateSelector).innerHTML.split('__INDEX__').join(index));
+                rows.querySelector('[data-row]:last-child input:not([type=hidden])')?.focus();
+                update();
+            });
+        };
+        addRow('[data-add-particulars]', '[data-particulars-rows]', '[data-line-template]');
+        addRow('[data-add-extra]', '[data-extra-rows]', '[data-extra-template]');
+        form.addEventListener('click', (event) => {
+            const remove = event.target.closest('[data-remove-row]');
+            if (!remove) { return; }
+            const row = remove.closest('[data-row]');
+            if (row.parentElement.hasAttribute('data-particulars-rows') && row.parentElement.querySelectorAll('[data-row]').length < 2) { return; }
+            row.remove();
+            update();
+        });
         form.addEventListener('input', update);
         update();
-    });
-    // Add particulars: another row of the same fields under the chosen activity and account.
-    document.querySelectorAll('[data-add-particulars]').forEach((button) => {
-        const form = button.closest('form');
-        const holder = form.querySelector('[data-particulars-rows]');
-        button.addEventListener('click', () => {
-            const row = holder.querySelector('[data-particulars-row]').cloneNode(true);
-            const index = holder.querySelectorAll('[data-particulars-row]').length;
-            row.querySelectorAll('input').forEach((input) => {
-                input.name = input.name.replace(/lines\[\d+\]/, 'lines[' + index + ']');
-                input.value = input.name.endsWith('[frequency]') ? '1' : '';
-            });
-            const remove = document.createElement('button');
-            remove.type = 'button';
-            remove.textContent = '× Remove';
-            remove.className = 'justify-self-start rounded px-2 py-1 text-xs font-semibold text-error hover:bg-surface-low md:col-span-6';
-            remove.addEventListener('click', () => { row.remove(); form.dispatchEvent(new Event('input')); });
-            row.appendChild(remove);
-            holder.appendChild(row);
-            row.querySelector('input').focus();
-        });
     });
 })();
 </script>

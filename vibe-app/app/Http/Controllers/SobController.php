@@ -104,9 +104,9 @@ class SobController extends Controller
     {
         $this->scoped($request, $sobPlan);
         if (is_array($request->input('lines'))) {
-            $items = $this->sob->addItems($sobPlan, (string) $request->input('aip_activity_id'), (string) $request->input('chart_of_account_id'), $request->input('lines'));
+            $items = $this->sob->addItems($sobPlan, (string) $request->input('aip_activity_id'), (string) $request->input('chart_of_account_id'), $request->input('lines'), $request->input('note'), (array) $request->input('extras', []));
 
-            return back()->with('success', count($items) === 1 ? 'Item added.' : count($items).' items added.');
+            return back()->with('success', count($items) === 1 ? 'Item added.' : count($items).' lines added.');
         }
         $this->sob->addItem($sobPlan, $request->all());
 
@@ -125,6 +125,22 @@ class SobController extends Controller
     {
         $this->scoped($request, $sobItem->plan()->firstOrFail());
         $this->sob->deleteItem($sobItem);
+
+        return back()->with('success', 'Item removed.');
+    }
+
+    public function updateGroup(Request $request, SobPlan $sobPlan): RedirectResponse
+    {
+        $this->scoped($request, $sobPlan);
+        $this->sob->saveGroup($sobPlan, (int) $request->input('old_activity'), (int) $request->input('old_account'), $request->only(['aip_activity_id', 'chart_of_account_id', 'note', 'lines', 'extras']));
+
+        return back()->with('success', 'Item saved.');
+    }
+
+    public function destroyGroup(Request $request, SobPlan $sobPlan): RedirectResponse
+    {
+        $this->scoped($request, $sobPlan);
+        $this->sob->deleteGroup($sobPlan, (int) $request->input('old_activity'), (int) $request->input('old_account'));
 
         return back()->with('success', 'Item removed.');
     }
