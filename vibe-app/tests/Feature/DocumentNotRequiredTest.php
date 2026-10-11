@@ -128,7 +128,7 @@ class DocumentNotRequiredTest extends TestCase
 
         $html = $this->get(route('procurement.documents', [$request, 'stage' => 'receiving']))->assertOk()->getContent();
 
-        $this->assertStringContainsString('Marked not required by '.$user->name, $html);
+        $this->assertStringContainsString('Marked not required by '.e($user->name), $html);
         $this->assertSame(1, substr_count($html, 'Make it required again'));
         $this->assertStringContainsString(route('procurement.documents.required-again', $request), $html);
         // Only the Property Acknowledgement Receipt still offers the button.
