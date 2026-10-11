@@ -17,6 +17,9 @@ class SystemLogoTest extends TestCase
 
     private const LOGO = 'images/procurems-logo.svg';
 
+    /** Big enough that the emblem's roof, document and check mark can be made out on a sidebar (3.5rem, 56px). */
+    private const EMBLEM_SIZE = 'style="width:3.5rem;height:3.5rem"';
+
     public function test_the_emblem_file_is_a_clean_transparent_svg_cut_from_the_logo(): void
     {
         $emblem = file_get_contents(public_path(self::EMBLEM));
@@ -44,7 +47,7 @@ class SystemLogoTest extends TestCase
     public function test_the_register_page_shows_the_emblem_with_its_text(): void
     {
         $this->get(route('register'))->assertOk()
-            ->assertSee(self::EMBLEM, false)->assertSee('ProcureMS')->assertSee('School Pre-registration');
+            ->assertSee(self::EMBLEM, false)->assertSee(self::EMBLEM_SIZE, false)->assertSee('ProcureMS')->assertSee('School Pre-registration');
     }
 
     public function test_every_sidebar_page_shows_the_emblem_and_keeps_the_brand_text(): void
@@ -57,6 +60,7 @@ class SystemLogoTest extends TestCase
             $this->assertStringContainsString(self::EMBLEM, $html, $page);
             $this->assertStringContainsString('ProcureMS', $html, $page);
             $this->assertStringContainsString('Civic Operations', $html, $page);
+            $this->assertStringContainsString(self::EMBLEM_SIZE, $html, $page.' emblem is too small to read');
             $this->assertStringNotContainsString('account_balance</span></div><div><p class="text-lg', $html, $page.' still has the old icon chip');
         }
     }
