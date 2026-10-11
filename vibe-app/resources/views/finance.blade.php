@@ -100,12 +100,22 @@
                 </td>
                 <td class="px-5 py-4 text-right"><div class="flex flex-wrap items-center justify-end gap-1.5">
                     @if($isMasterUser && $isCash && ! $r->paid_at)<button type="button" data-pay="{{ route('cash.pay', $r) }}" data-label="{{ $label }}" data-amount="{{ $peso($r->amount) }}" data-mode="{{ $r->payment_mode }}" class="inline-flex items-center gap-1 rounded-lg bg-secondary px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:opacity-90"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">payments</span>Record Payment</button>@endif
-                    @if($isMasterUser && ! $isCash && $r->status === 'approved' && ! $r->dv_number)<button type="button" data-dv="{{ route('accounting.dv.store', $r) }}" data-label="{{ $label }}" data-amount="{{ $peso($r->amount) }}" data-amount-raw="{{ number_format((float) $r->amount, 2, '.', '') }}" data-expense-code="{{ $r->chargedLine()?->account?->code ?? $r->chargedLine()?->uacs_code }}" data-payee="{{ $r->payee ?: ($r->procurementRequest?->supplier_name ?? $r->school?->name) }}" data-particulars="{{ $r->purpose ?: $r->procurementRequest?->title }}" class="inline-flex items-center gap-1 rounded-lg bg-secondary px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:opacity-90"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">receipt_long</span>Create DV</button>@endif
+                    @if($isMasterUser && ! $isCash && $r->status === 'approved' && ! $r->dv_number)<button type="button" data-dv="{{ route('accounting.dv.store', $r) }}" data-school="{{ $r->school_id }}" data-label="{{ $label }}" data-amount="{{ $peso($r->amount) }}" data-amount-raw="{{ number_format((float) $r->amount, 2, '.', '') }}" data-expense-code="{{ $r->chargedLine()?->account?->code ?? $r->chargedLine()?->uacs_code }}" data-payee="{{ $r->payee ?: ($r->procurementRequest?->supplier_name ?? $r->school?->name) }}" data-particulars="{{ $r->purpose ?: $r->procurementRequest?->title }}" class="inline-flex items-center gap-1 rounded-lg bg-secondary px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:opacity-90"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">receipt_long</span>Create DV</button>@endif
                     @if($isMasterUser && ! $isCash && ! $r->dv_number && $r->status !== 'approved')<form method="POST" action="{{ route('accounting.review', $r) }}">@csrf @method('PATCH')<input type="hidden" name="status" value="approved"><button class="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-primary-container"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">check</span>Approve</button></form>@endif
                     <a href="{{ route('liquidation.print', $r) }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-primary ring-1 ring-outline-variant/50 hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">print</span>ORS</a>
                     @if($r->dv_number)
                         <a href="{{ route('accounting.dv.print', $r) }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-primary ring-1 ring-outline-variant/50 hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">print</span>DV</a>
-                        @if(! $isCash && auth()->user()->hasPermission('accounting.approve'))<form method="POST" action="{{ route('accounting.dv.options', $r) }}">@csrf @method('PATCH')<input type="hidden" name="dv_include_appropriation" value="{{ $r->dv_include_appropriation ? 0 : 1 }}"><button class="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-on-surface-variant ring-1 ring-outline-variant/50 hover:bg-surface-low" title="Show or hide the APPROPRIATION table on the printed DV">Appropriation table: {{ $r->dv_include_appropriation ? 'On' : 'Off' }}</button></form>@endif
+                        @if(! $isCash && auth()->user()->hasPermission('accounting.approve'))<form method="POST" action="{{ route('accounting.dv.options', $r) }}">@csrf @method('PATCH')<input type="hidden" name="dv_include_appropriation" value="{{ $r->dv_include_appropriation ? 0 : 1 }}"><button class="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-on-surface-variant ring-1 ring-outline-variant/50 hover:bg-surface-low" title="Show or hide the APPROPRIATION table on the printed DV">Appropriation table: {{ $r->dv_include_appropriation ? 'On' : 'Off' }}</button></form>
+                        @if(! empty($dvRowPanels[$r->id]))
+                            <details class="relative">
+                                <summary class="cursor-pointer list-none rounded-lg px-2.5 py-1.5 text-xs font-semibold text-on-surface-variant ring-1 ring-outline-variant/50 hover:bg-surface-low" title="Change who signs the printed DV">Signatories</summary>
+                                <form method="POST" action="{{ route('accounting.dv.options', $r) }}" class="absolute right-0 z-20 mt-2 w-72 space-y-3 rounded-lg border border-outline-variant/50 bg-white p-4 shadow-xl">@csrf @method('PATCH')
+                                    @include('partials.signatory-picker', ['rows' => $dvRowPanels[$r->id], 'enabled' => true])
+                                    <button class="rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-white hover:bg-primary-container">Save signatories</button>
+                                </form>
+                            </details>
+                        @endif
+                    @endif
                     @endif
                     @if($isMasterUser && ! $isCash && ! $r->dv_number)
                         <button type="button" data-review="{{ route('accounting.review', $r) }}" data-status="pending_documents" data-label="{{ $label }}" class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-primary ring-1 ring-outline-variant/50 hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">folder_open</span>Request Docs</button>
@@ -164,6 +174,13 @@
             <select id="journal-options" hidden aria-hidden="true"><option value="">Choose an account…</option>@foreach($journalAccounts as $category => $accounts)<optgroup label="{{ $category }}">@foreach($accounts as $account)<option value="{{ $account['code'] }}">{{ $account['code'] }} · {{ $account['title'] }}</option>@endforeach</optgroup>@endforeach</select>
         </div>
         <label class="flex items-start gap-2 text-xs font-semibold text-on-surface-variant md:col-span-2"><input type="checkbox" name="dv_include_appropriation" value="1" @checked(old('dv_include_appropriation')) class="mt-0.5 h-4 w-4 rounded border-outline-variant"><span>Add the APPROPRIATION table to the printed DV<span class="block font-normal">Columns: Appropriation, P/A/P, OR No., Amount, Expense Code. Left unchecked, the DV prints without it.</span></span></label>
+        @foreach(($dvDialogPanels ?? []) as $signatorySchoolId => $signatoryRows)
+            <section data-signatories-school="{{ $signatorySchoolId }}" class="hidden rounded-xl border border-outline-variant/50 bg-surface-low/50 p-3 md:col-span-2">
+                <p class="text-sm font-bold text-on-surface">Signatories</p>
+                <p class="mb-3 text-[11px] font-normal text-on-surface-variant">Who signs this DV. Leave "Default" to follow School Settings; a different choice applies to this DV only.</p>
+                <div class="grid grid-cols-1 gap-3 md:grid-cols-2">@include('partials.signatory-picker', ['rows' => $signatoryRows])</div>
+            </section>
+        @endforeach
         <div class="flex items-end justify-end gap-2 md:col-span-2"><button type="button" data-close class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Cancel</button><button id="dv-submit" class="rounded bg-secondary px-4 py-2.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40">Create DV</button></div></form></div></div>
 
 <div id="review-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true"><div class="w-full max-w-lg rounded bg-white shadow-2xl"><div class="border-b border-outline-variant/30 px-6 py-4"><h2 id="review-heading" class="text-lg font-semibold"></h2><p id="review-title" class="mt-1 text-xs text-on-surface-variant"></p></div>
@@ -178,6 +195,12 @@
     const payModal = document.getElementById('pay-modal'), reviewModal = document.getElementById('review-modal'), dvModal = document.getElementById('dv-modal');
     document.querySelectorAll('[data-dv]').forEach((b) => b.addEventListener('click', () => {
         document.getElementById('dv-form').action = b.dataset.dv;
+        // Each school has its own staff, so only the signatory selects of this report's school are shown and posted.
+        document.querySelectorAll('#dv-form [data-signatories-school]').forEach((section) => {
+            const active = section.dataset.signatoriesSchool === b.dataset.school;
+            section.classList.toggle('hidden', !active);
+            section.querySelectorAll('select').forEach((control) => { control.disabled = !active; });
+        });
         document.getElementById('dv-title').textContent = b.dataset.label + ' · ' + b.dataset.amount;
         document.getElementById('dv-payee').value = b.dataset.payee || '';
         document.getElementById('dv-particulars').value = b.dataset.particulars || '';

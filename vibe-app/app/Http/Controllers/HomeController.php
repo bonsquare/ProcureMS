@@ -28,6 +28,7 @@ use App\Services\GoogleDriveService;
 use App\Services\MasterTransactionService;
 use App\Services\ProcurementWorkspaceService;
 use App\Support\PlaceNames;
+use App\Support\SignatorySlots;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
@@ -673,8 +674,15 @@ class HomeController extends Controller
             'agency' => AgencySetting::first(),
             'nextPrNumber' => $this->nextPurchaseRequestNumber(false),
             'unitOptions' => Unit::options(),
+            'signatoryPanels' => $this->purchaseRequestSignatoryPanels(null),
             'activeProcurementArea' => 'requests',
         ]);
+    }
+
+    /** The PR's signatory selects for every school the user can pick in the form, keyed by school id; the saved choices belong to the request being edited. */
+    private function purchaseRequestSignatoryPanels(?ProcurementRequest $editing): array
+    {
+        return SignatorySlots::panelsForSchools('purchase_request', $this->scopedSchoolIds(), $editing?->school_id, $editing?->signatories);
     }
 
     public function editProcurement(ProcurementRequest $procurementRequest)
@@ -691,6 +699,7 @@ class HomeController extends Controller
             'budgetItems' => $this->openBudgetItems(),
             'agency' => AgencySetting::first(),
             'nextPrNumber' => $this->nextPurchaseRequestNumber(false),
+            'signatoryPanels' => $this->purchaseRequestSignatoryPanels($procurementRequest),
             'activeProcurementArea' => 'requests',
         ]);
     }
@@ -700,6 +709,7 @@ class HomeController extends Controller
         abort_unless($request->user()->canCreateProcurement(), 403, 'Your role can only view procurement records.');
         $validated = $this->validateProcurement($request);
         $this->authorizeSchoolAccess((int) $validated['school_id']);
+        $signatories = SignatorySlots::validated('purchase_request', $request->input('signatories'), (int) $validated['school_id']);
         $items = $validated['items'];
         $amount = collect($items)->sum(fn (array $item) => (float) $item['quantity'] * (float) $item['unit_price']);
         $budgetAllocation = ! empty($validated['budget_allocation_id'])
@@ -712,7 +722,7 @@ class HomeController extends Controller
         $this->assertBudgetItem($validated, (float) $amount);
         app(AppItemLinkService::class)->assertWithinApp((int) $validated['school_id'], $items);
 
-        $procurementRequest = DB::transaction(function () use ($validated, $request, $amount, $items, $budgetAllocation, $fiscalYear) {
+        $procurementRequest = DB::transaction(function () use ($validated, $request, $amount, $items, $budgetAllocation, $fiscalYear, $signatories) {
             $requestNumber = ! empty($validated['manually_encode_pr_number'])
                 ? $validated['manual_pr_number']
                 : $this->nextPurchaseRequestNumber(true, $this->organizationIdForSchool((int) $validated['school_id']));
@@ -750,6 +760,7 @@ class HomeController extends Controller
                 'extra_blank_rows' => $validated['extra_blank_rows'],
                 'status' => 'submitted',
                 'requested_at' => $validated['request_date'],
+                'signatories' => $signatories ?: null,
             ]);
 
             $this->replaceProcurementItems($procurementRequest, $items);
@@ -769,6 +780,10 @@ class HomeController extends Controller
         $this->authorizeProcurementAccess($procurementRequest);
         $validated = $this->validateProcurement($request);
         $this->authorizeSchoolAccess((int) $validated['school_id']);
+        // The chosen signers replace the saved ones when the form sends them; an update without the field keeps what was chosen before.
+        $signatories = $request->has('signatories')
+            ? SignatorySlots::validated('purchase_request', $request->input('signatories'), (int) $validated['school_id'])
+            : ($procurementRequest->signatories ?? []);
         $items = $validated['items'];
         $amount = collect($items)->sum(fn (array $item) => (float) $item['quantity'] * (float) $item['unit_price']);
         $budgetAllocation = ! empty($validated['budget_allocation_id'])
@@ -808,6 +823,7 @@ class HomeController extends Controller
             'extra_blank_rows' => $validated['extra_blank_rows'],
             'requested_at' => $validated['request_date'],
             'request_number' => $requestNumber,
+            'signatories' => $signatories ?: null,
         ]);
         $this->replaceProcurementItems($procurementRequest, $items);
         app(AppItemLinkService::class)->recordLinks($procurementRequest);
@@ -1018,6 +1034,7 @@ class HomeController extends Controller
             'amount' => $items->sum('total'),
             'status' => 'draft',
             'requested_at' => $requestDate,
+            'signatories' => $this->previewSignatories($request, $school),
         ]);
         $procurementRequest->setRelation('school', $school);
         $procurementRequest->setRelation('requester', $request->user());
@@ -1027,15 +1044,30 @@ class HomeController extends Controller
         return $this->procurementPrintView($procurementRequest);
     }
 
+    /** The signers chosen in a PR form that is still being filled in; a choice that cannot be used is left out of the preview. */
+    private function previewSignatories(Request $request, ?School $school): ?array
+    {
+        if (! $school) {
+            return null;
+        }
+
+        try {
+            return SignatorySlots::validated('purchase_request', $request->input('signatories'), $school->id) ?: null;
+        } catch (ValidationException) {
+            return null;
+        }
+    }
+
     private function procurementPrintView(ProcurementRequest $procurementRequest)
     {
         $staff = SchoolStaff::active()->where('school_id', $procurementRequest->school_id)->get();
         $rfqMetadata = $procurementRequest->documents->firstWhere('document_type', 'request_for_quotation')?->metadata ?? [];
         $transactionDescription = $procurementRequest->transaction_description ?: data_get($rfqMetadata, 'transaction_description');
-        $requestingOfficer = $staff->first(fn ($member) => $member->hasRole('procurement_role', 'Requesting Officer'))
-            ?? $staff->first(fn ($member) => $member->hasRole('procurement_role', 'Procurement Officer'));
-        $approver = $staff->first(fn ($member) => $member->hasRole('procurement_role', 'Approver'))
-            ?? $staff->first(fn ($member) => str_contains(strtolower((string) $member->position), 'school head'));
+        ['requestingOfficer' => $requestingOfficer, 'approver' => $approver] = SignatorySlots::overlay(
+            'purchase_request',
+            SignatorySlots::defaults('purchase_request', $staff),
+            $procurementRequest->signatories,
+        );
         $agency = AgencySetting::first() ?? new AgencySetting;
 
         return view('procurement-print', [
@@ -1091,6 +1123,7 @@ class HomeController extends Controller
             'documentCodes' => collect($this->procurementDocumentTypes())->mapWithKeys(fn ($definition, $type) => [$type => $definition['prefix']]),
             'nextDocumentNumbers' => collect($this->procurementDocumentTypes())->mapWithKeys(fn ($definition, $type) => [$type => $this->nextOfficialDocumentNumber($type, $definition['prefix'], false, (int) $procurementRequest->organization_id)]),
             'schoolStaff' => $schoolStaff,
+            'signatoryPanels' => $this->signatoryPanels($procurementRequest),
             'inspectionOfficerName' => $inspectionOfficer?->name ?? '',
             'workspace' => $workspaceService->present($procurementRequest),
             'activeProcurementArea' => 'documents',
@@ -1164,6 +1197,10 @@ class HomeController extends Controller
         ]);
 
         $type = $types[$data['document_type']];
+        // The chosen signers replace the saved ones when the form sends them; a save without the field keeps what was chosen before.
+        $signatories = $request->has('signatories')
+            ? SignatorySlots::validated($data['document_type'], $request->input('signatories'), (int) $procurementRequest->school_id)
+            : ($procurementRequest->documents()->where('document_type', $data['document_type'])->first()?->metadata['signatories'] ?? []);
         $blocked = app(ProcurementWorkspaceService::class)->blockedReason($procurementRequest, $data['document_type']);
         if ($blocked && ! $procurementRequest->documents()->where('document_type', $data['document_type'])->exists()) {
             return back()->withErrors(['document_type' => $blocked])->withInput();
@@ -1386,7 +1423,7 @@ class HomeController extends Controller
                     'received_items',
                     'iars_assignments',
                     'ics_items',
-                ])->filter(fn ($value) => $value !== null && $value !== '')->all(), $awardMetadata, $linkedDocumentMetadata),
+                ])->filter(fn ($value) => $value !== null && $value !== '')->all(), $awardMetadata, $linkedDocumentMetadata, $signatories === [] ? [] : ['signatories' => $signatories]),
             ]
         );
 
@@ -1527,6 +1564,16 @@ class HomeController extends Controller
         return $winner ? ['name' => $winner['name'], 'total' => $winner['total'], 'prices' => $winner['prices']] : null;
     }
 
+    /** The signatory selects of every procurement document of this request, keyed by document type. */
+    private function signatoryPanels(ProcurementRequest $procurementRequest): array
+    {
+        $staff = SchoolStaff::active()->where('school_id', $procurementRequest->school_id)->get();
+
+        return collect(SignatorySlots::PROCUREMENT_DOCUMENTS)->mapWithKeys(fn (string $type) => [
+            $type => SignatorySlots::panel($type, $staff, $procurementRequest->documents->firstWhere('document_type', $type)?->metadata['signatories'] ?? null),
+        ])->all();
+    }
+
     public function printProcurementDocument(ProcurementRequest $procurementRequest, ProcurementDocument $procurementDocument)
     {
         $this->authorizeProcurementAccess($procurementRequest);
@@ -1537,12 +1584,8 @@ class HomeController extends Controller
         $purchaseOrder = $procurementRequest->documents()->where('document_type', 'purchase_order')->first();
         $inspectionAcceptanceReport = $procurementRequest->documents()->where('document_type', 'inspection_acceptance_report')->first();
         $inventoryAcknowledgementReceipt = $procurementRequest->documents()->where('document_type', 'inventory_acknowledgement_receipt_supplies')->first();
-        $requestingOfficer = $staff->first(fn ($member) => $member->hasRole('procurement_role', 'Requesting Officer'));
-        $procurementOfficer = $staff->first(fn ($member) => $member->hasRole('procurement_role', 'Procurement Officer'));
-        $approver = $staff->first(fn ($member) => $member->hasRole('procurement_role', 'Approver'));
-        $canvasser = $staff->first(fn ($member) => $member->hasRole('procurement_role', 'Canvasser'));
 
-        return view('procurement-document-print', [
+        return view('procurement-document-print', SignatorySlots::overlay($procurementDocument->document_type, [
             'procurementRequest' => $procurementRequest,
             'document' => $procurementDocument,
             'purchaseOrder' => $purchaseOrder,
@@ -1552,21 +1595,10 @@ class HomeController extends Controller
             'agency' => AgencySetting::first(),
             'staff' => $staff,
             'iarsStaff' => SchoolStaff::active()->orderBy('name')->get(),
-            'schoolHead' => $staff->first(fn ($member) => str_contains(strtolower((string) $member->position), 'school head')) ?? $approver,
-            'requestingOfficer' => $requestingOfficer,
-            'procurementOfficer' => $procurementOfficer,
-            'approver' => $approver,
-            'canvasser' => $canvasser,
-            'bacChair' => $staff->first(fn ($member) => $member->hasRole('bac_role', 'BAC Chairperson')),
-            'bacViceChair' => $staff->first(fn ($member) => $member->hasRole('bac_role', 'BAC Vice Chairperson')),
-            'bacSecretariat' => $staff->first(fn ($member) => $member->hasRole('bac_role', 'BAC Secretariat')),
-            'bacMembers' => $staff->filter(fn ($member) => $member->hasRole('bac_role', 'BAC Member'))->values(),
-            'disbursingOfficer' => $staff->first(fn ($user) => str_contains(strtolower((string) $user->document_role), 'disbursing officer')) ?? $staff->first(fn ($user) => str_contains(strtolower((string) $user->position), 'disbursing')),
-            'inspectionOfficer' => $staff->first(fn ($user) => str_contains(strtolower((string) $user->document_role), 'inspection officer')) ?? $staff->first(fn ($user) => str_contains(strtolower((string) $user->position), 'inspection')),
-            'propertyOfficer' => $staff->first(fn ($user) => str_contains(strtolower((string) $user->document_role), 'property custodian')) ?? $staff->first(fn ($user) => str_contains(strtolower((string) $user->position), 'property')),
+            ...SignatorySlots::defaults($procurementDocument->document_type, $staff),
             'amountInWords' => $this->amountInWords((float) $procurementRequest->amount),
             'awardAmountInWords' => $this->amountInWords($awardAmount),
-        ]);
+        ], $procurementDocument->metadata['signatories'] ?? null));
     }
 
     public function printDeliveryReconciliation(ProcurementRequest $procurementRequest, ProcurementWorkspaceService $workspaceService)
@@ -1756,6 +1788,8 @@ class HomeController extends Controller
             }
         }
 
+        $signatories = SignatorySlots::validated('obligation_request', $request->input('signatories'), (int) $data['school_id']);
+
         if (empty($data['procurement_request_id'])) {
             app(BudgetService::class)->assertAvailable('amount', (int) $data['school_id'], $data['source_of_fund'], (float) $data['amount']);
             $this->assertBudgetItem($data, (float) $data['amount']);
@@ -1770,7 +1804,7 @@ class HomeController extends Controller
         $fiscalYear = $linkedBudget?->fiscal_year ?? $linkedRequest?->budgetAllocation?->fiscal_year ?? (int) now()->year;
         app(FiscalYearService::class)->assertOpen($organizationId, (int) $fiscalYear);
 
-        $orsNumber = DB::transaction(function () use ($data, $organizationId, $linkedRequest, $linkedBudget, $fiscalYear) {
+        $orsNumber = DB::transaction(function () use ($data, $organizationId, $linkedRequest, $linkedBudget, $fiscalYear, $signatories) {
             $numbering = app(DocumentNumberService::class);
             $reportNumber = $numbering->next($organizationId, 'liquidation_report', 'LR');
             $orsNumber = ! empty($data['manually_encode_ors_number'])
@@ -1809,6 +1843,7 @@ class HomeController extends Controller
                 'status' => 'for_review',
                 'notes' => $data['notes'] ?? null,
                 'submitted_at' => now(),
+                'signatories' => $signatories === [] ? null : ['ors' => $signatories],
             ]);
             $report->transaction?->update(['status' => 'liquidation']);
             $report->transaction?->recordEvent('liquidation', 'ors_submitted', null, 'for_review', $report->ors_number, ['liquidation_report_id' => $report->id, 'amount' => $report->amount]);
@@ -1828,14 +1863,12 @@ class HomeController extends Controller
         $this->authorizeLiquidationAccess($liquidationReport);
         $liquidationReport->load(['school', 'procurementRequest', 'submitter']);
         $staff = SchoolStaff::active()->where('school_id', $liquidationReport->school_id)->get();
-        $find = fn (string $needle) => $staff->first(fn ($m) => str_contains(strtolower($m->document_role.' '.$m->position), $needle));
 
-        return view('ors-print', [
+        return view('ors-print', SignatorySlots::overlay('obligation_request', [
             'report' => $liquidationReport,
             'agency' => AgencySetting::first() ?? new AgencySetting,
-            'requester' => $find('school head') ?? $find('head'),
-            'budgetOfficer' => $find('disburs') ?? $find('budget'),
-        ]);
+            ...SignatorySlots::defaults('obligation_request', $staff),
+        ], $liquidationReport->signatories['ors'] ?? null));
     }
 
     public function updateLiquidationStatus(Request $request, LiquidationReport $liquidationReport)

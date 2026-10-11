@@ -7,6 +7,7 @@ use App\Models\LiquidationReport;
 use App\Models\ProcurementRequest;
 use App\Models\School;
 use App\Services\BudgetService;
+use App\Support\SignatorySlots;
 use Illuminate\Http\Request;
 
 class BudgetController extends Controller
@@ -73,6 +74,7 @@ class BudgetController extends Controller
             'isMasterUser' => request()->user()->seesAllSchools(),
             'transactions' => $transactions,
             'schoolNames' => $schools->pluck('name', 'id'),
+            'signatoryPanels' => SignatorySlots::panelsForSchools('obligation_request', $schools->pluck('id')),
             'schools' => $schools,
             'allocations' => $allocations,
             'lines' => $lines,

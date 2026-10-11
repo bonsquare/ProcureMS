@@ -66,6 +66,13 @@
         <div class="md:col-span-2">@include('partials.budget-item-select', ['budgetItems' => $budgetItems, 'selectedItem' => null, 'selectClass' => $inputClass])
             <div id="charge-summary" class="mt-2 hidden rounded border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-on-surface"><span class="font-semibold text-primary">Charging of fund:</span> <span id="charge-text"></span></div></div>
         @include('partials.budget-hint')
+        @foreach($signatoryPanels as $signatorySchoolId => $signatoryRows)
+            <section data-signatories-school="{{ $signatorySchoolId }}" class="hidden rounded border border-outline-variant/30 bg-surface-low p-4 md:col-span-2">
+                <h3 class="text-sm font-semibold">Signatories</h3>
+                <p class="mb-4 mt-1 text-xs text-on-surface-variant">Who signs this ORS. Leave "Default" to follow School Settings; a different choice applies to this ORS only.</p>
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">@include('partials.signatory-picker', ['rows' => $signatoryRows])</div>
+            </section>
+        @endforeach
         <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Notes<textarea name="notes" rows="2" class="{{ $inputClass }}">{{ old('notes') }}</textarea></label>
         <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-4 md:col-span-2"><button type="button" data-close-ors class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Cancel</button><button class="rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Create ORS</button></div></form></div></div>
 <script>
@@ -99,6 +106,17 @@
         showCharge();
     });
     showCharge();
+    // Each school has its own staff, so only the signatory selects of the school the ORS is for are shown and posted.
+    const showOrsSignatories = () => {
+        const school = orsModal.querySelector('[name=school_id]')?.value;
+        orsModal.querySelectorAll('[data-signatories-school]').forEach((section) => {
+            const active = section.dataset.signatoriesSchool === String(school);
+            section.classList.toggle('hidden', !active);
+            section.querySelectorAll('select').forEach((control) => { control.disabled = !active; });
+        });
+    };
+    orsModal.querySelector('select[name=school_id]')?.addEventListener('change', showOrsSignatories);
+    showOrsSignatories();
     const openOrs = () => { orsModal.classList.remove('hidden'); orsModal.classList.add('flex'); };
     document.querySelectorAll('[data-open-ors]').forEach((b) => b.addEventListener('click', openOrs));
     document.querySelectorAll('[data-close-ors]').forEach((b) => b.addEventListener('click', () => { orsModal.classList.add('hidden'); orsModal.classList.remove('flex'); }));
@@ -106,7 +124,7 @@
         const o = e.target.selectedOptions[0];
         if (!o || !o.value) { lineSelect.disabled = false; return; }
         const f = (n) => orsModal.querySelector('[name=' + n + ']');
-        if (o.dataset.school && f('school_id')) f('school_id').value = o.dataset.school;
+        if (o.dataset.school && f('school_id')) { f('school_id').value = o.dataset.school; showOrsSignatories(); }
         if (o.dataset.fund) f('source_of_fund').value = o.dataset.fund;
         // The obligation is charged to the budget line already chosen on the PR.
         lineSelect.value = o.dataset.line || '';

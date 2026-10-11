@@ -2,19 +2,19 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Concerns\BelongsToOrganization;
 
 class ProcurementRequest extends Model
 {
-    use HasFactory, BelongsToOrganization;
+    use BelongsToOrganization, HasFactory;
 
-    protected $fillable = ['organization_id', 'school_id', 'master_transaction_id', 'requested_by', 'request_number', 'title', 'description', 'transaction_description', 'amount', 'entity_name', 'department_name', 'section', 'sai_number', 'sai_date', 'responsibility_center_code', 'source_of_fund', 'extra_blank_rows', 'status', 'requested_at', 'approved_at', 'budget_allocation_id'];
+    protected $fillable = ['organization_id', 'school_id', 'master_transaction_id', 'requested_by', 'request_number', 'title', 'description', 'transaction_description', 'amount', 'entity_name', 'department_name', 'section', 'sai_number', 'sai_date', 'responsibility_center_code', 'source_of_fund', 'extra_blank_rows', 'status', 'requested_at', 'approved_at', 'budget_allocation_id', 'signatories'];
 
     protected function casts(): array
     {
-        return ['amount' => 'decimal:2', 'sai_date' => 'date', 'requested_at' => 'datetime', 'approved_at' => 'datetime'];
+        return ['amount' => 'decimal:2', 'sai_date' => 'date', 'requested_at' => 'datetime', 'approved_at' => 'datetime', 'signatories' => 'array'];
     }
 
     /**
@@ -28,7 +28,7 @@ class ProcurementRequest extends Model
             ->map(fn ($type) => $docs->first(fn ($d) => $d->document_type === $type && $d->supplier_or_recipient))
             ->filter()->first();
 
-        if (!$doc) {
+        if (! $doc) {
             return null;
         }
 
@@ -42,12 +42,38 @@ class ProcurementRequest extends Model
         ];
     }
 
-    public function school() { return $this->belongsTo(School::class); }
+    public function school()
+    {
+        return $this->belongsTo(School::class);
+    }
 
-    public function budgetAllocation() { return $this->belongsTo(BudgetAllocation::class); }
-    public function transaction() { return $this->belongsTo(MasterTransaction::class, 'master_transaction_id'); }
-    public function requester() { return $this->belongsTo(User::class, 'requested_by'); }
-    public function liquidationReports() { return $this->hasMany(LiquidationReport::class); }
-    public function items() { return $this->hasMany(ProcurementRequestItem::class); }
-    public function documents() { return $this->hasMany(ProcurementDocument::class); }
+    public function budgetAllocation()
+    {
+        return $this->belongsTo(BudgetAllocation::class);
+    }
+
+    public function transaction()
+    {
+        return $this->belongsTo(MasterTransaction::class, 'master_transaction_id');
+    }
+
+    public function requester()
+    {
+        return $this->belongsTo(User::class, 'requested_by');
+    }
+
+    public function liquidationReports()
+    {
+        return $this->hasMany(LiquidationReport::class);
+    }
+
+    public function items()
+    {
+        return $this->hasMany(ProcurementRequestItem::class);
+    }
+
+    public function documents()
+    {
+        return $this->hasMany(ProcurementDocument::class);
+    }
 }
