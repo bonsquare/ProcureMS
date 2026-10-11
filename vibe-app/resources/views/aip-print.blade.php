@@ -10,18 +10,18 @@
 
         .paper { width: 100%; min-width: 1180px; margin: 0 auto; padding: 30px 34px 40px; background: #fff; }
 
-        .masthead { position: relative; text-align: center; min-height: 112px; margin-bottom: 26px; line-height: 1.7; }
+        .masthead { position: relative; text-align: center; min-height: 88px; margin-bottom: 12px; line-height: 1.45; }
         .masthead img { position: absolute; top: 0; height: 84px; width: auto; }
         .masthead .left { left: 6%; } .masthead .right { right: 6%; }
         .masthead .small { font-size: 11px; }
-        .masthead .dept { font-size: 18px; font-weight: bold; margin: 4px 0 6px; line-height: 1.4; }
+        .masthead .dept { font-size: 18px; font-weight: bold; margin: 2px 0 3px; line-height: 1.3; }
         .masthead .region { font-weight: bold; font-size: 11px; }
         .masthead .division { font-weight: bold; font-size: 11px; text-transform: uppercase; }
 
-        .doc-title { text-align: center; margin: 6px 0 26px; line-height: 1.6; }
+        .doc-title { text-align: center; margin: 4px 0 14px; line-height: 1.45; }
         .doc-title h1 { margin: 0; font-size: 18px; letter-spacing: .8px; }
-        .doc-title .fy { margin: 6px 0; font-size: 12.5px; letter-spacing: .4px; font-weight: bold; }
-        .doc-title .school { margin: 4px 0 0; font-size: 13.5px; font-weight: bold; text-transform: uppercase; }
+        .doc-title .fy { margin: 3px 0; font-size: 12.5px; letter-spacing: .4px; font-weight: bold; }
+        .doc-title .school { margin: 2px 0 0; font-size: 13.5px; font-weight: bold; text-transform: uppercase; }
 
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         th, td { border: 1px solid #8d8d95; padding: 6px 4px; text-align: center; vertical-align: middle; word-wrap: break-word; overflow-wrap: break-word; hyphens: none; }
