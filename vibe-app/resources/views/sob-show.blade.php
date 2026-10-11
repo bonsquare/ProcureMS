@@ -7,8 +7,8 @@
 @section('content')
 @php
     $peso = fn ($value) => '₱'.number_format((float) $value, 2);
-    // The choice is the Specific Program / Project of the AIP; the activity is added only to tell apart several under one program.
-    $programLabel = fn ($kra, $activity) => ($kra->program ?: $kra->kra).($kra->activities->count() > 1 ? ' — '.$activity->activity : '');
+    // The choice is the Specific Program / Project of the AIP, nothing added.
+    $programLabel = fn ($kra, $activity) => $kra->program ?: $kra->kra;
     $box = 'mt-1 w-full rounded border border-outline-variant/50 bg-white px-2.5 py-2 text-sm outline-none focus:border-primary';
     $draft = $plan->status === 'draft';
     $editable = $draft && $canManage;
