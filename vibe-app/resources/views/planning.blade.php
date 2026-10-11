@@ -15,7 +15,7 @@
         <h1 class="text-3xl font-semibold tracking-tight">Planning & Procurement Programs</h1>
         <p class="mt-1 text-sm text-on-surface-variant">Connect SIP priorities to AIP funding, the quarterly School Operating Budget, APP approval, and transaction history.</p>
     </div>
-    <form method="GET" action="{{ route('planning') }}" class="flex flex-wrap gap-2 rounded border border-outline-variant/40 bg-white p-3">
+    <form method="GET" action="{{ route('planning') }}" class="flex flex-wrap gap-2 rounded-xl border border-outline-variant/40 bg-white p-3 shadow-sm">
         <label class="text-xs font-semibold text-on-surface-variant">School
             <select name="school_id" class="mt-1 min-w-52 rounded border border-outline-variant/50 bg-surface-low px-3 py-2 text-sm" onchange="this.form.submit()">
                 @foreach($schools as $school)<option value="{{ $school->id }}" @selected($selectedSchool->id === $school->id)>{{ $school->name }}</option>@endforeach
@@ -98,28 +98,31 @@
         </div>
     </div>
 
-    {{-- The flow: SIP -> AIP -> SOB -> APP --}}
-    <ol class="grid gap-3 sm:grid-cols-2 xl:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr_auto_auto] xl:items-stretch xl:gap-2">
+    {{-- The flow: SIP -> AIP -> SOB -> APP, a numbered line that turns green as each step is done --}}
+    <ol class="grid gap-3 sm:grid-cols-2 xl:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr_auto_auto] xl:items-stretch xl:gap-0">
         @foreach($steps as $n => [$key, $icon, $title, $short, $line, $sub, $state, $stateLabel])
-            @php [$chip, $stateIcon, $edge] = $stateStyle[$state]; @endphp
+            @php
+                [$chip, $stateIcon, $edge] = $stateStyle[$state];
+                $dot = ['done' => 'bg-secondary text-white', 'current' => 'bg-amber-400 text-white', 'todo' => 'bg-surface-high text-on-surface-variant'][$state];
+            @endphp
             <li class="contents">
-                <button type="button" data-tab="{{ $key }}" aria-label="{{ $title }}: {{ $stateLabel }}" class="group flex h-full flex-col rounded-xl border-2 {{ $edge }} bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                <button type="button" data-tab="{{ $key }}" aria-label="{{ $title }}: {{ $stateLabel }}" class="group flex h-full flex-col rounded-2xl border-2 {{ $edge }} bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                     <div class="flex items-center justify-between gap-2">
-                        <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary"><span class="material-symbols-outlined text-[22px]" aria-hidden="true">{{ $icon }}</span></span>
+                        <span class="flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold {{ $dot }}" aria-hidden="true">@if($state === 'done')<span class="material-symbols-outlined text-[20px]">check</span>@else{{ $n + 1 }}@endif</span>
                         <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold {{ $chip }}"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">{{ $stateIcon }}</span>{{ $stateLabel }}</span>
                     </div>
-                    <p class="mt-3 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Step {{ $n + 1 }} · {{ $short }}</p>
+                    <p class="mt-3 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant"><span class="material-symbols-outlined text-[16px] text-primary" aria-hidden="true">{{ $icon }}</span>Step {{ $n + 1 }} · {{ $short }}</p>
                     <p class="mt-0.5 text-sm font-semibold leading-snug">{{ $title }}</p>
                     <p class="mt-2 text-2xl font-semibold tracking-tight text-primary">{{ $line }}</p>
                     <p class="mt-1 text-xs text-on-surface-variant">{{ $sub }}</p>
                 </button>
-                @if($n < 3)<span class="hidden items-center justify-center text-outline-variant xl:flex" aria-hidden="true"><span class="material-symbols-outlined text-[26px]">arrow_forward</span></span>@endif
+                @if($n < 3)<span class="hidden items-center xl:flex" aria-hidden="true"><span class="h-1 w-6 rounded-full {{ $state === 'done' ? 'bg-secondary' : 'bg-outline-variant/60' }}"></span></span>@endif
             </li>
         @endforeach
         @if(auth()->user()->hasPermission('planning.manage'))
             <li class="contents">
-                <span class="hidden w-px bg-outline-variant/40 xl:block" aria-hidden="true"></span>
-                <button type="button" data-tab="settings" class="group flex flex-col items-start justify-between rounded-xl border-2 border-dashed border-outline-variant/60 bg-surface-low/60 p-4 text-left transition hover:border-primary hover:bg-white xl:w-36">
+                <span class="hidden w-px bg-outline-variant/40 xl:ml-3 xl:mr-3 xl:block" aria-hidden="true"></span>
+                <button type="button" data-tab="settings" class="group flex flex-col items-start justify-between rounded-2xl border-2 border-dashed border-outline-variant/60 bg-surface-low/60 p-4 text-left transition hover:border-primary hover:bg-white xl:w-36">
                     <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-on-surface-variant ring-1 ring-outline-variant/40"><span class="material-symbols-outlined text-[22px]" aria-hidden="true">tune</span></span>
                     <span class="mt-3"><span class="block text-sm font-semibold">Settings</span><span class="mt-0.5 block text-xs text-on-surface-variant">{{ $fundSources->count() }} fund source(s) · fiscal year</span></span>
                 </button>
@@ -130,11 +133,11 @@
     {{-- SIP at a glance: the three-year budget and the programs per pillar --}}
     @if($sipNow->isNotEmpty())
         <div class="mt-4 grid gap-3 lg:grid-cols-[1.1fr_1fr]">
-            <div class="rounded-xl border border-outline-variant/40 bg-white p-4 shadow-sm">
+            <div class="rounded-2xl border border-outline-variant/40 bg-white p-4 shadow-sm">
                 <div class="flex items-baseline justify-between"><p class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">SIP financial target · {{ $latestSipYear }}-{{ $latestSipYear + 2 }}</p><p class="text-sm font-semibold text-primary">{{ $peso($sipTotal) }}</p></div>
                 <div class="mt-3 grid grid-cols-3 gap-3">
                     @foreach($sipYearTotals as $i => $amount)
-                        <div><div class="flex h-20 items-end rounded-lg bg-surface-low px-2"><div class="w-full rounded-t bg-gradient-to-t from-primary to-action" style="height: {{ max(6, round($amount / $sipPeak * 100)) }}%" title="{{ $peso($amount) }}"></div></div><p class="mt-1.5 text-center text-[11px] font-bold text-on-surface-variant">Year {{ $i + 1 }}<span class="block text-xs font-semibold text-on-surface">{{ $peso($amount) }}</span></p></div>
+                        <div><div class="flex h-24 items-end rounded-lg bg-surface-low px-3"><div class="w-full rounded-t-md {{ $amount === max($sipYearTotals) ? 'bg-primary' : 'bg-primary/55' }}" style="height: {{ max(6, round($amount / $sipPeak * 100)) }}%" title="{{ $peso($amount) }}"></div></div><p class="mt-1.5 text-center text-[11px] font-bold text-on-surface-variant">Year {{ $i + 1 }}<span class="block text-xs font-semibold text-on-surface">{{ $peso($amount) }}</span></p></div>
                     @endforeach
                 </div>
             </div>
@@ -157,9 +160,9 @@
     <option value="MOOE"></option><option value="SEF"></option><option value="IGP"></option><option value="PTA Fund"></option><option value="BLGU"></option><option value="Provincial Government"></option><option value="Municipal SEF"></option><option value="Others"></option>
 </datalist>
 @php $sipGroups = $sipProjects->groupBy('school_year')->sortKeysDesc(); @endphp
-<section class="mb-6 rounded border border-outline-variant/30 bg-white">
-    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 px-5 py-4">
-        <div><h2 class="font-semibold">School Improvement Plan (SIP)</h2><p class="mt-1 text-xs text-on-surface-variant">Three-year plan: each program lists its activities with Year 1-3 physical and financial targets. Print it on the official SIP form.</p></div>
+<section class="mb-6 rounded-xl border border-outline-variant/40 bg-white shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 bg-gradient-to-r from-primary/5 to-transparent px-5 py-4">
+        @include('partials.planning-panel-head', ['icon' => 'flag', 'title' => 'School Improvement Plan (SIP)', 'text' => 'Three-year plan: each program lists its activities with Year 1-3 physical and financial targets. Print it on the official SIP form.', 'chips' => [$sipNow->count().' program'.($sipNow->count() === 1 ? '' : 's'), $sipActivities->count().' activities', $peso($sipTotal).' over 3 years']])
         @if(auth()->user()->hasPermission('planning.manage'))
         <div class="flex flex-wrap items-center gap-2">
             <form method="POST" action="{{ route('planning.sip.import.preview') }}" enctype="multipart/form-data" class="inline-flex">@csrf<input type="hidden" name="school_id" value="{{ $selectedSchool->id }}"><label class="cursor-pointer rounded border border-primary px-4 py-2 text-xs font-semibold text-primary hover:bg-primary hover:text-white" title="Upload the school's SIP Excel file (.xlsx), check it, then confirm"><span class="material-symbols-outlined mr-1 align-middle text-[16px]">upload_file</span>Import from Excel<input type="file" name="file" accept=".xlsx" class="sr-only" onchange="this.form.submit()"></label></form>
@@ -271,8 +274,8 @@
 </div>
 
 <div data-panel="aip" class="hidden">
-<section id="aip" class="mb-6 rounded border border-outline-variant/30 bg-white">
-    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 px-5 py-4"><div><h2 class="font-semibold">Annual Implementation Plan</h2><p class="mt-1 text-xs text-on-surface-variant">Yearly activities and financial targets per quarter and fund. An approved AIP is used for reports and to start an SOB.</p></div>
+<section id="aip" class="mb-6 rounded-xl border border-outline-variant/40 bg-white shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 bg-gradient-to-r from-primary/5 to-transparent px-5 py-4">@include('partials.planning-panel-head', ['icon' => 'event_note', 'title' => 'Annual Implementation Plan', 'text' => 'Yearly activities and financial targets per quarter and fund. An approved AIP is used for reports and to start an SOB.', 'chips' => [$aipsYear->count().' plan'.($aipsYear->count() === 1 ? '' : 's').' for FY '.$year, $aipsYear->where('status', 'approved')->count().' approved', $peso($aipTotal)]])
         @if(auth()->user()->canManageBudget())
         <button type="button" data-toggle-form="aip" class="rounded bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-primary-container">+ New AIP</button>
         <form data-form="aip" data-display="flex" method="POST" action="{{ route('aip.store') }}" class="hidden w-full flex-wrap items-center justify-end gap-2 border-t border-outline-variant/20 pt-3">@csrf
@@ -299,8 +302,8 @@
 </div>
 
 <div data-panel="sob" class="hidden">
-<section class="mb-6 rounded border border-outline-variant/30 bg-white">
-    <div class="border-b border-outline-variant/20 px-5 py-4"><h2 class="font-semibold">School Operating Budget (SOB) · FY {{ $year }}</h2><p class="mt-1 text-xs text-on-surface-variant">One SOB for each fund in a quarter. Pick the AIP activities that have an actual budget in the quarter and add their items. Approving a quarter creates its Budget allotments.</p></div>
+<section class="mb-6 rounded-xl border border-outline-variant/40 bg-white shadow-sm">
+    <div class="border-b border-outline-variant/20 bg-gradient-to-r from-primary/5 to-transparent px-5 py-4">@include('partials.planning-panel-head', ['icon' => 'account_balance_wallet', 'title' => 'School Operating Budget (SOB) · FY '.$year, 'text' => 'One SOB for each fund in a quarter. Pick the AIP activities that have an actual budget in the quarter and add their items. Approving a quarter creates its Budget allotments.', 'chips' => [$sobYear->count().' quarter'.($sobYear->count() === 1 ? '' : 's'), $sobYear->where('status', 'approved')->count().' approved', $peso($sobTotal)]])</div>
     @php $aipApproved = $aips->where('fiscal_year', $year)->where('status', 'approved')->isNotEmpty(); @endphp
     @unless($aipApproved)<div class="border-b border-outline-variant/20 bg-amber-50 px-5 py-3 text-xs text-amber-900">Approve the AIP for FY {{ $year }} first. The SOB is built from it.</div>@endunless
     <div class="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-4">
@@ -337,8 +340,8 @@
 </div>
 
 <div data-panel="app" class="hidden">
-<section class="rounded border border-outline-variant/30 bg-white">
-    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 px-5 py-4"><div><h2 class="font-semibold">Annual Procurement Plan · FY {{ $year }}</h2><p class="mt-1 text-xs text-on-surface-variant">Built from the approved SOBs. Linked PR activity is visible per transaction.</p></div>@if(auth()->user()->hasPermission('planning.manage'))<form method="POST" action="{{ route('planning.app.generate') }}" class="flex gap-2">@csrf<input type="hidden" name="school_id" value="{{ $selectedSchool->id }}"><input type="hidden" name="fiscal_year" value="{{ $year }}"><button class="rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white">Generate / Refresh APP</button></form>@endif</div>
+<section class="rounded-xl border border-outline-variant/40 bg-white shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 bg-gradient-to-r from-primary/5 to-transparent px-5 py-4">@include('partials.planning-panel-head', ['icon' => 'fact_check', 'title' => 'Annual Procurement Plan · FY '.$year, 'text' => 'Built from the approved SOBs. Linked PR activity is visible per transaction.', 'chips' => $appPlan ? [$appPlan->items->count().' item'.($appPlan->items->count() === 1 ? '' : 's'), ucfirst($appPlan->status), $peso($appTotal)] : ['Not generated yet']])@if(auth()->user()->hasPermission('planning.manage'))<form method="POST" action="{{ route('planning.app.generate') }}" class="flex gap-2">@csrf<input type="hidden" name="school_id" value="{{ $selectedSchool->id }}"><input type="hidden" name="fiscal_year" value="{{ $year }}"><button class="rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white">Generate / Refresh APP</button></form>@endif</div>
     @if($appPlan)
         <div class="flex flex-wrap items-center justify-between gap-3 bg-surface-low/60 px-5 py-3"><span class="text-xs">APP status: <strong>{{ ucfirst($appPlan->status) }}</strong> · {{ $appPlan->items->count() }} item(s) · Planned total <strong>{{ $peso($appPlan->items->sum('estimated_total_cost')) }}</strong></span>@if(auth()->user()->hasPermission('planning.manage'))<div class="flex flex-wrap items-center gap-2">@if($appPlan->status !== 'approved')<form method="POST" action="{{ route('planning.app.approve', $appPlan) }}">@csrf<button class="rounded bg-secondary px-3 py-2 text-xs font-semibold text-white">Approve APP</button></form><form method="POST" action="{{ route('planning.app.destroy', $appPlan) }}" onsubmit="return confirm('Delete this draft APP and all its items? Generate APP builds it again from the approved SOBs.')">@csrf @method('DELETE')<button class="rounded border border-error/40 px-3 py-2 text-xs font-semibold text-error hover:bg-error/10">Delete APP</button></form>@else<form method="POST" action="{{ route('planning.app.unlock', $appPlan) }}" onsubmit="return confirm('Unlock this APP? It becomes a draft so its items can be edited or removed, and you approve it again afterwards.')">@csrf<button class="rounded border border-primary px-3 py-2 text-xs font-semibold text-primary hover:bg-primary hover:text-white">Unlock APP</button></form>@endif</div>@endif</div>
         <div class="flex flex-wrap items-start gap-3 border-b border-outline-variant/20 px-5 py-3">
@@ -368,9 +371,9 @@
     @else<div class="px-5 py-8 text-center text-sm text-on-surface-variant">No APP yet for FY {{ $year }}. Approve an SOB, then generate the APP.</div>@endif
 </section>
 
-<section id="app-cse" class="mt-5 rounded border border-outline-variant/30 bg-white">
-    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 px-5 py-4">
-        <div><h2 class="font-semibold">APP-CSE (Procurement Service form)</h2><p class="mt-1 text-xs text-on-surface-variant">The Annual Procurement Plan for Common Supplies and Equipment: the Procurement Service catalog with a quantity for each month, printed as the official form.</p></div>
+<section id="app-cse" class="mt-5 rounded-xl border border-outline-variant/40 bg-white shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 bg-gradient-to-r from-primary/5 to-transparent px-5 py-4">
+        @include('partials.planning-panel-head', ['icon' => 'inventory_2', 'title' => 'APP-CSE (Procurement Service form)', 'text' => 'The Annual Procurement Plan for Common Supplies and Equipment: the Procurement Service catalog with a quantity for each month, printed as the official form.', 'chips' => []])
         @if(auth()->user()->hasPermission('planning.manage'))
             <form id="app-cse-create" method="POST" action="{{ route('planning.app-cse.store') }}" class="flex items-end gap-2">@csrf<input type="hidden" name="school_id" value="{{ $selectedSchool->id }}">
                 <label class="text-xs font-semibold text-on-surface-variant">Fiscal year<input type="number" name="fiscal_year" value="{{ $year }}" min="2000" max="2100" required class="mt-1 block w-24 rounded border border-outline-variant/50 bg-white px-2.5 py-2 text-sm outline-none focus:border-primary"></label>
@@ -388,8 +391,8 @@
 
 @if(auth()->user()->hasPermission('planning.manage'))
 <div data-panel="settings" class="hidden">
-<section class="rounded border border-outline-variant/30 bg-white">
-<div class="border-b border-outline-variant/20 px-5 py-4"><h2 class="font-semibold">Settings</h2><p class="mt-1 text-xs text-on-surface-variant">Fund sources and fiscal-year controls for this organization.</p></div>
+<section class="rounded-xl border border-outline-variant/40 bg-white shadow-sm">
+<div class="border-b border-outline-variant/20 bg-gradient-to-r from-primary/5 to-transparent px-5 py-4">@include('partials.planning-panel-head', ['icon' => 'tune', 'title' => 'Settings', 'text' => 'Fund sources and fiscal-year controls for this organization.', 'chips' => [$fundSources->count().' fund source'.($fundSources->count() === 1 ? '' : 's')]])</div>
     <div class="p-5">
         <div class="mb-4"><h2 class="font-semibold">Fund Sources & Fiscal Year</h2><p class="mt-1 text-xs text-on-surface-variant">These controls belong to {{ $selectedSchool->organization?->name ?? 'this organization' }}.</p></div>
         <form method="POST" action="{{ route('planning.funds.store') }}" class="mb-5 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">@csrf<input type="hidden" name="school_id" value="{{ $selectedSchool->id }}">
