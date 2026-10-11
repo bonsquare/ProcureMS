@@ -56,6 +56,7 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::post('/procurement/preview', [HomeController::class, 'previewProcurement'])->name('procurement.preview');
     Route::post('/procurement', [HomeController::class, 'storeProcurement'])->middleware('permission:procurement.create')->name('procurement.store');
     Route::get('/procurement/{procurementRequest}', [HomeController::class, 'showProcurement'])->whereNumber('procurementRequest')->name('procurement.show');
+    Route::get('/procurement/{procurementRequest}/workspace', [HomeController::class, 'procurementWorkspace'])->whereNumber('procurementRequest')->name('procurement.workspace');
     Route::get('/procurement/{procurementRequest}/edit', [HomeController::class, 'editProcurement'])->name('procurement.edit');
     Route::put('/procurement/{procurementRequest}', [HomeController::class, 'updateProcurement'])->middleware('permission:procurement.edit')->name('procurement.update');
     Route::patch('/procurement/{procurementRequest}/status', [HomeController::class, 'updateProcurementStatus'])->name('procurement.status');

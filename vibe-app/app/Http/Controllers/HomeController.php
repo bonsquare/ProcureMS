@@ -32,6 +32,7 @@ use App\Support\SignatorySlots;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -393,11 +394,26 @@ class HomeController extends Controller
         return view('procurement-show', [
             'procurementRequest' => $procurementRequest,
             'workspace' => $workspaceService->present($procurementRequest),
+            'workspaceVersion' => $workspaceService->version($procurementRequest),
             'isMasterUser' => $this->isMasterUser(),
             'currentSchoolName' => $this->isMasterUser() ? null : request()->user()?->school?->name,
             'activeProcurementArea' => 'requests',
             'activeSection' => in_array(request('section'), ['summary', 'items', 'documents', 'activity'], true) ? request('section') : 'summary',
         ]);
+    }
+
+    /** What the request page polls to keep its stage bar live: the version stamp and the bar drawn from the same data as the page. */
+    public function procurementWorkspace(ProcurementRequest $procurementRequest, ProcurementWorkspaceService $workspaceService)
+    {
+        $this->authorizeProcurementAccess($procurementRequest);
+        $procurementRequest->load('documents');
+        $workspace = $workspaceService->present($procurementRequest);
+
+        return response()->json([
+            'version' => $workspaceService->version($procurementRequest),
+            'stage' => $workspace['current_stage'],
+            'rail_html' => Blade::render('<x-procurement.stage-rail :stages="$stages"/>', ['stages' => $workspace['stages']]),
+        ])->header('Cache-Control', 'no-store, private');
     }
 
     public function procurementDocumentIndex(ProcurementWorkspaceService $workspaceService)

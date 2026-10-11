@@ -103,6 +103,22 @@ class ProcurementWorkspaceService
         return 'Prepare the '.(self::REQUIRED_DOCUMENTS[$required] ?? self::OPTIONAL_DOCUMENTS[$required] ?? 'previous document').' first.';
     }
 
+    /**
+     * A short stamp that changes whenever the request's status, its documents or its not-required marks change. The page is
+     * rendered with it and the live stage bar compares it with the one the server reports, so both read the same data.
+     */
+    public function version(ProcurementRequest $request): string
+    {
+        $documents = $request->relationLoaded('documents') ? $request->documents : $request->documents()->get();
+
+        return substr(sha1(json_encode([
+            (string) $request->status,
+            $request->updated_at?->timestamp,
+            $documents->map(fn ($document) => [$document->id, $document->document_type, $document->updated_at?->timestamp])->sortBy(0)->values()->all(),
+            $request->not_required_documents,
+        ])), 0, 16);
+    }
+
     public function present(ProcurementRequest $request): array
     {
         $documents = $request->relationLoaded('documents') ? $request->documents : collect();

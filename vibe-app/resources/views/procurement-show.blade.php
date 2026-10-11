@@ -34,7 +34,39 @@
         @if($canEditRequest && $inProcurement && $docsComplete)<form method="POST" action="{{ route('procurement.status', $procurementRequest) }}">@csrf @method('PATCH')<input type="hidden" name="status" value="completed"><button class="min-h-11 rounded-lg bg-secondary px-4 text-xs font-bold text-white">Mark complete</button></form>@elseif($canEditRequest && $inProcurement && $stage !== 'canvass')<span class="text-xs font-semibold text-on-surface-variant">Complete all required documents to mark this request complete.</span>@endif
     </section>
 @endif
-<section class="mb-5 rounded-xl border border-outline-variant/60 bg-white px-4"><x-procurement.stage-rail :stages="$workspace['stages']"/></section>
+<section id="stage-rail-section" data-live-url="{{ route('procurement.workspace', $procurementRequest) }}" data-live-version="{{ $workspaceVersion }}" class="mb-5 rounded-xl border border-outline-variant/60 bg-white px-4"><div data-stage-rail><x-procurement.stage-rail :stages="$workspace['stages']"/></div></section>
+<p id="stage-rail-notice" role="status" class="mb-5 hidden rounded-lg border border-primary/30 bg-primary/5 px-4 py-2 text-xs font-semibold text-primary">This request was updated. <a href="{{ request()->fullUrl() }}" class="underline">Reload</a> to refresh the details below.</p>
+<script>
+    // Keeps the stage bar live: asks the server for the request's version every 15 seconds while this tab is visible, and redraws the bar
+    // when it changed. The rest of the page holds forms and lists, so it is not swapped silently; a notice offers a reload instead.
+    (() => {
+        const host = document.getElementById('stage-rail-section');
+        if (!host) return;
+        const notice = document.getElementById('stage-rail-notice');
+        let version = host.dataset.liveVersion;
+        let failures = 0;
+        let stopped = false;
+        const poll = async () => {
+            if (stopped || document.hidden) return;
+            try {
+                const response = await fetch(host.dataset.liveUrl, { headers: { Accept: 'application/json' }, credentials: 'same-origin', cache: 'no-store' });
+                if ([401, 403, 404].includes(response.status)) { stopped = true; return; }
+                if (!response.ok) throw new Error('bad response');
+                const data = await response.json();
+                failures = 0;
+                if (data.version !== version) {
+                    version = data.version;
+                    host.querySelector('[data-stage-rail]').innerHTML = data.rail_html;
+                    notice.classList.remove('hidden');
+                }
+            } catch (error) {
+                if (++failures >= 5) stopped = true;
+            }
+        };
+        setInterval(poll, 15000);
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
+    })();
+</script>
 <nav class="mb-4 flex flex-wrap gap-2" aria-label="Request sections">@foreach(['summary'=>'Summary','items'=>'Items','documents'=>'Documents','activity'=>'Activity'] as $key=>$label)<a href="{{ route('procurement.show',[$procurementRequest,'section'=>$key]) }}" @if($activeSection===$key) aria-current="page" @endif class="min-h-11 rounded-lg px-4 py-3 text-xs font-bold {{ $activeSection===$key?'bg-primary text-white':'bg-white text-primary' }}">{{ $label }}</a>@endforeach</nav>
 <div class="grid gap-5 xl:grid-cols-[1fr_300px]"><section class="rounded-xl border border-outline-variant/60 bg-white p-5">@include('partials.procurement.request-'.$activeSection)</section><aside class="rounded-xl border border-outline-variant/60 bg-white p-5"><h2 class="font-bold">Requirements</h2><p class="mt-1 text-xs text-on-surface-variant">{{ $workspace['documents']['completed'] }} of {{ $workspace['documents']['total'] }} core documents complete.</p><div class="mt-4 space-y-2">@forelse($workspace['documents']['missing'] as $missing)<div class="flex gap-2 rounded-lg bg-attention/10 p-3 text-xs"><span class="material-symbols-outlined text-[17px] text-attention">warning</span><span><strong class="block">{{ $missing['label'] }}</strong><small class="text-on-surface-variant">Required to continue the workflow</small></span></div>@empty<div class="rounded-lg bg-secondary/10 p-3 text-xs font-bold text-secondary">Core documents complete</div>@endforelse</div></aside></div>
 @endsection
