@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Aip;
 use App\Models\AuditLog;
-use App\Models\FundSource;
 use App\Models\School;
 use App\Models\SipActivity;
 use App\Models\SipProject;
@@ -58,10 +57,7 @@ class SipAipService
             throw ValidationException::withMessages(['aip' => "The SIP {$startYear}-".($startYear + 2)." has no targets for year {$yearNo}, so there is nothing to put in the AIP for FY {$fiscalYear}."]);
         }
 
-        $funds = FundSource::withoutGlobalScopes()->where('organization_id', $school->organization_id)->where('is_active', true)->pluck('name')
-            ->merge(Aip::FUNDS['School'])->unique();
-
-        return DB::transaction(function () use ($school, $startYear, $yearNo, $fiscalYear, $user, $programs, $funds) {
+        return DB::transaction(function () use ($school, $startYear, $yearNo, $fiscalYear, $user, $programs) {
             $aip = Aip::create([
                 'organization_id' => $school->organization_id,
                 'school_id' => $school->id,
@@ -90,20 +86,15 @@ class SipAipService
 
                 foreach ($program->activities as $activity) {
                     [$q1, $q2, $q3, $q4] = $this->splitQuarters($this->target($activity, 'financial', $yearNo));
-                    // The SIP names several possible funds; the AIP takes one, chosen by the budget officer before approval.
-                    $fund = $activity->source_of_fund && $funds->contains($activity->source_of_fund) ? $activity->source_of_fund : null;
                     $kra->activities()->create([
                         'organization_id' => $school->organization_id,
                         'aip_id' => $aip->id,
                         'activity' => $activity->activity,
                         'physical_target' => max(1, (int) round($this->target($activity, 'physical', $yearNo))),
                         'q1_amount' => $q1, 'q2_amount' => $q2, 'q3_amount' => $q3, 'q4_amount' => $q4,
-                        'source_of_fund' => $fund,
+                        'source_of_fund' => $activity->source_of_fund ?: null,
                         'responsible_persons' => $activity->responsible_person ? [$activity->responsible_person] : [],
-                        'remarks_list' => array_values(array_filter([
-                            $activity->remarks,
-                            $fund ? null : ($activity->source_of_fund ? 'SIP source of fund: '.$activity->source_of_fund : null),
-                        ])),
+                        'remarks_list' => [],
                     ]);
                     $count++;
                 }
