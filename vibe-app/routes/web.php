@@ -133,6 +133,7 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::get('/aip/{aip}/kras/{kra}/edit', [AipController::class, 'editKra'])->name('aip.kras.edit')->whereNumber(['aip', 'kra']);
     Route::put('/aip/{aip}/kras/{kra}', [AipController::class, 'updateKra'])->name('aip.kras.update')->whereNumber(['aip', 'kra']);
     Route::delete('/aip/{aip}/kras/{kra}', [AipController::class, 'destroyKra'])->name('aip.kras.destroy')->whereNumber(['aip', 'kra']);
+    Route::put('/aip/{aip}/activities/{activity}/fund', [AipController::class, 'updateActivityFund'])->name('aip.activities.fund')->whereNumber(['aip', 'activity']);
     Route::get('/allotment-registry', [AllotmentRegistryController::class, 'index'])->name('allotment-registry');
     Route::prefix('budget/allocation')->name('budget.allocation')->group(function () {
         Route::get('/', [BudgetAllocationController::class, 'index']);

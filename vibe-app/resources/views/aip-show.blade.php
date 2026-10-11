@@ -115,7 +115,23 @@
                                     <div class="lg:col-span-3">
                                         <table class="w-full text-sm">
                                             <thead><tr class="text-left"><th class="{{ $th }} px-2">Source</th><th class="{{ $th }} px-2 text-right">1st</th><th class="{{ $th }} px-2 text-right">2nd</th><th class="{{ $th }} px-2 text-right">3rd</th><th class="{{ $th }} px-2 text-right">4th</th><th class="{{ $th }} px-2 text-right">Total</th></tr></thead>
-                                            <tbody><tr class="border-t border-outline-variant/20"><td class="px-2 py-2 font-semibold">{{ $a->source_of_fund ?: '—' }}</td>@foreach(['q1_amount', 'q2_amount', 'q3_amount', 'q4_amount'] as $q)<td class="px-2 py-2 text-right tabular-nums">{{ (float) $a->$q ? number_format($a->$q, 2) : '—' }}</td>@endforeach<td class="px-2 py-2 text-right font-semibold tabular-nums">{{ $a->total ? number_format($a->total, 2) : '—' }}</td></tr></tbody>
+                                            <tbody><tr class="border-t border-outline-variant/20"><td class="px-2 py-2 font-semibold">
+                                                @if($canManage)
+                                                    @php $fund = (string) $a->source_of_fund; $listed = in_array($fund, $fundOptions, true); @endphp
+                                                    <form method="POST" action="{{ route('aip.activities.fund', [$aip, $a]) }}" data-fund-form class="space-y-1">
+                                                        @csrf @method('PUT')
+                                                        <input type="hidden" name="source_of_fund" value="{{ $fund }}">
+                                                        <select data-fund-select aria-label="Source of fund" class="{{ $field }} !mt-0 !py-1.5 text-sm font-semibold">
+                                                            <option value="">Select source of fund</option>
+                                                            @if($fund && !$listed)<option selected>{{ $fund }}</option>@endif
+                                                            @foreach($fundOptions as $option)<option @selected($fund === $option)>{{ $option }}</option>@endforeach
+                                                        </select>
+                                                        <input data-fund-other placeholder="Specify source of fund, then press Enter" class="{{ $field }} !mt-0 !py-1.5 hidden text-sm">
+                                                    </form>
+                                                @else
+                                                    {{ $a->source_of_fund ?: '—' }}
+                                                @endif
+                                            </td>@foreach(['q1_amount', 'q2_amount', 'q3_amount', 'q4_amount'] as $q)<td class="px-2 py-2 text-right tabular-nums">{{ (float) $a->$q ? number_format($a->$q, 2) : '—' }}</td>@endforeach<td class="px-2 py-2 text-right font-semibold tabular-nums">{{ $a->total ? number_format($a->total, 2) : '—' }}</td></tr></tbody>
                                         </table>
                                         <p class="mt-2 px-2 text-xs text-on-surface-variant">Account code:
                                             @if($a->account)<span class="font-semibold tabular-nums text-on-surface">{{ $a->account->code }}</span> · {{ $a->account->title }}
@@ -186,6 +202,27 @@
 @endsection
 @push('scripts')
 <script>
+    (() => {
+        // Source of Fund dropdown on each activity: a choice saves at once; "Others" asks for the name first.
+        document.querySelectorAll('[data-fund-form]').forEach((form) => {
+            const select = form.querySelector('[data-fund-select]');
+            const other = form.querySelector('[data-fund-other]');
+            const value = form.querySelector('input[name="source_of_fund"]');
+            select.addEventListener('change', () => {
+                if (select.value === 'Others') { other.classList.remove('hidden'); other.focus(); return; }
+                other.classList.add('hidden');
+                value.value = select.value;
+                form.submit();
+            });
+            other.addEventListener('keydown', (event) => {
+                if (event.key !== 'Enter') { return; }
+                event.preventDefault();
+                if (!other.value.trim()) { return; }
+                value.value = other.value.trim();
+                form.submit();
+            });
+        });
+    })();
     (() => {
         const select = document.getElementById('fund-filter');
         const apply = () => {

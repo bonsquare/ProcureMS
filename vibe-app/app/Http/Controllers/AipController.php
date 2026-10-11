@@ -182,6 +182,21 @@ class AipController extends Controller
         return redirect()->route('aip.show', $aip)->with('success', 'KRA and its activities saved.');
     }
 
+    /** The Source of Fund dropdown on the AIP page changes only that one activity's fund. */
+    public function updateActivityFund(Request $request, Aip $aip, AipActivity $activity)
+    {
+        $this->authorizeManage();
+        $this->authorizeAip($aip);
+        abort_unless($activity->aip_id === $aip->id, 404);
+        $this->fiscalYears->assertOpen((int) $aip->organization_id, (int) $aip->fiscal_year);
+        $data = $request->validate(['source_of_fund' => ['nullable', 'string', 'max:255']]);
+
+        $activity->update(['source_of_fund' => trim((string) ($data['source_of_fund'] ?? '')) ?: null]);
+        $this->markRevised($aip);
+
+        return back()->with('success', 'Source of fund saved.');
+    }
+
     /** Activities on the form are matched by id: updated, added, or removed when left off. */
     public function updateKra(Request $request, Aip $aip, AipKra $kra)
     {
