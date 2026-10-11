@@ -7,7 +7,7 @@
         ?: ($procurementRequest->school?->division ?: ($agency?->department_name ?: null))
         ?: ($procurementRequest->school?->name ?? '');
     $fundCluster = ($meta['source_of_fund'] ?? null) ?: ($procurementRequest->source_of_fund ?: 'General Fund');
-    $inspectionName = $meta['inspection_officer_name'] ?? $inspectionOfficer?->name ?? '';
+    $inspectionName = ($meta['signatories']['inspection_officer']['name'] ?? null) ?? $meta['inspection_officer_name'] ?? $inspectionOfficer?->name ?? '';
     $propertyName = $propertyOfficer?->name ?? '';
     $isPartialDelivery = false;
     foreach ($procurementRequest->items as $item) {

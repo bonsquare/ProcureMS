@@ -1092,6 +1092,7 @@ class HomeController extends Controller
             'documentCodes' => collect($this->procurementDocumentTypes())->mapWithKeys(fn ($definition, $type) => [$type => $definition['prefix']]),
             'nextDocumentNumbers' => collect($this->procurementDocumentTypes())->mapWithKeys(fn ($definition, $type) => [$type => $this->nextOfficialDocumentNumber($type, $definition['prefix'], false, (int) $procurementRequest->organization_id)]),
             'schoolStaff' => $schoolStaff,
+            'signatoryPanels' => $this->signatoryPanels($procurementRequest),
             'inspectionOfficerName' => $inspectionOfficer?->name ?? '',
             'workspace' => $workspaceService->present($procurementRequest),
             'activeProcurementArea' => 'documents',
@@ -1532,6 +1533,16 @@ class HomeController extends Controller
         return $winner ? ['name' => $winner['name'], 'total' => $winner['total'], 'prices' => $winner['prices']] : null;
     }
 
+    /** The signatory selects of every procurement document of this request, keyed by document type. */
+    private function signatoryPanels(ProcurementRequest $procurementRequest): array
+    {
+        $staff = SchoolStaff::active()->where('school_id', $procurementRequest->school_id)->get();
+
+        return collect(SignatorySlots::PROCUREMENT_DOCUMENTS)->mapWithKeys(fn (string $type) => [
+            $type => SignatorySlots::panel($type, $staff, $procurementRequest->documents->firstWhere('document_type', $type)?->metadata['signatories'] ?? null),
+        ])->all();
+    }
+
     public function printProcurementDocument(ProcurementRequest $procurementRequest, ProcurementDocument $procurementDocument)
     {
         $this->authorizeProcurementAccess($procurementRequest);
@@ -1542,10 +1553,6 @@ class HomeController extends Controller
         $purchaseOrder = $procurementRequest->documents()->where('document_type', 'purchase_order')->first();
         $inspectionAcceptanceReport = $procurementRequest->documents()->where('document_type', 'inspection_acceptance_report')->first();
         $inventoryAcknowledgementReceipt = $procurementRequest->documents()->where('document_type', 'inventory_acknowledgement_receipt_supplies')->first();
-        $requestingOfficer = $staff->first(fn ($member) => $member->hasRole('procurement_role', 'Requesting Officer'));
-        $procurementOfficer = $staff->first(fn ($member) => $member->hasRole('procurement_role', 'Procurement Officer'));
-        $approver = $staff->first(fn ($member) => $member->hasRole('procurement_role', 'Approver'));
-        $canvasser = $staff->first(fn ($member) => $member->hasRole('procurement_role', 'Canvasser'));
 
         return view('procurement-document-print', SignatorySlots::overlay($procurementDocument->document_type, [
             'procurementRequest' => $procurementRequest,
@@ -1557,18 +1564,7 @@ class HomeController extends Controller
             'agency' => AgencySetting::first(),
             'staff' => $staff,
             'iarsStaff' => SchoolStaff::active()->orderBy('name')->get(),
-            'schoolHead' => $staff->first(fn ($member) => str_contains(strtolower((string) $member->position), 'school head')) ?? $approver,
-            'requestingOfficer' => $requestingOfficer,
-            'procurementOfficer' => $procurementOfficer,
-            'approver' => $approver,
-            'canvasser' => $canvasser,
-            'bacChair' => $staff->first(fn ($member) => $member->hasRole('bac_role', 'BAC Chairperson')),
-            'bacViceChair' => $staff->first(fn ($member) => $member->hasRole('bac_role', 'BAC Vice Chairperson')),
-            'bacSecretariat' => $staff->first(fn ($member) => $member->hasRole('bac_role', 'BAC Secretariat')),
-            'bacMembers' => $staff->filter(fn ($member) => $member->hasRole('bac_role', 'BAC Member'))->values(),
-            'disbursingOfficer' => $staff->first(fn ($user) => str_contains(strtolower((string) $user->document_role), 'disbursing officer')) ?? $staff->first(fn ($user) => str_contains(strtolower((string) $user->position), 'disbursing')),
-            'inspectionOfficer' => $staff->first(fn ($user) => str_contains(strtolower((string) $user->document_role), 'inspection officer')) ?? $staff->first(fn ($user) => str_contains(strtolower((string) $user->position), 'inspection')),
-            'propertyOfficer' => $staff->first(fn ($user) => str_contains(strtolower((string) $user->document_role), 'property custodian')) ?? $staff->first(fn ($user) => str_contains(strtolower((string) $user->position), 'property')),
+            ...SignatorySlots::defaults($procurementDocument->document_type, $staff),
             'amountInWords' => $this->amountInWords((float) $procurementRequest->amount),
             'awardAmountInWords' => $this->amountInWords($awardAmount),
         ], $procurementDocument->metadata['signatories'] ?? null));

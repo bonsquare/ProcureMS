@@ -110,6 +110,15 @@
         <label data-extra-rows-only data-hide-for-po class="hidden block text-xs font-semibold text-on-surface-variant">Manual blank item rows<input data-meta type="number" min="0" max="6" name="extra_blank_rows" value="0" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"><span class="mt-1 block font-normal text-on-surface-variant">Add up to six empty bordered rows to the printed IAR or RIS.</span></label>
         <label data-iar-only data-iar-input class="hidden block text-xs font-semibold text-on-surface-variant">Inspection Officer / Committee Name<input data-meta name="inspection_officer_name" list="school-staff-list" placeholder="Select or enter the inspection officer name" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
         <div id="iars-assignments" class="hidden rounded-lg border border-primary/20 bg-[#f7f9fc] p-5 md:col-span-2"><div class="flex flex-col gap-4 border-b border-outline-variant/30 pb-4 lg:flex-row lg:items-center lg:justify-between"><div class="flex items-start gap-3"><span class="material-symbols-outlined rounded bg-primary/10 p-2 text-primary">inventory</span><div><p class="text-base font-semibold text-primary">Staff Item Distribution</p><p class="mt-1 text-xs text-on-surface-variant">Select staff members and encode the quantity issued for each item. Totals and balances update automatically.</p></div></div><div class="flex gap-2"><button id="fullscreen-iars" type="button" class="inline-flex items-center gap-1 rounded border border-primary/40 bg-white px-3 py-2 text-xs font-semibold text-primary shadow-sm hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[16px]">open_in_full</span>Full screen</button><button id="add-iars-staff" type="button" class="inline-flex items-center gap-1 rounded bg-primary px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-primary-container"><span class="material-symbols-outlined text-[16px]">person_add</span>Add staff</button></div></div><div id="iars-assignment-rows" class="mt-4 space-y-3"></div></div>
+        @foreach($signatoryPanels as $signatoryType => $signatoryRows)
+            @if($signatoryRows)
+                <section data-signatories-section data-document="{{ $signatoryType }}" class="hidden rounded-lg border border-outline-variant/40 bg-white p-4 md:col-span-2">
+                    <p class="mb-1 text-sm font-semibold">Signatories</p>
+                    <p class="mb-4 border-b border-outline-variant/30 pb-3 text-xs text-on-surface-variant">Who signs this document. Leave "Default" to follow School Settings; a different choice applies to this document only.</p>
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">@include('partials.signatory-picker', ['rows' => $signatoryRows])</div>
+                </section>
+            @endif
+        @endforeach
         <label id="document-notes-field" class="block text-xs font-semibold text-on-surface-variant md:col-span-2">Notes / Terms<textarea id="document-notes" name="notes" rows="3" placeholder="Additional official notes or terms" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></textarea></label>
         <label data-po-only class="hidden block text-xs font-semibold text-on-surface-variant md:col-span-2">Extra Blank Rows<input data-meta type="number" min="0" max="20" name="extra_blank_rows" value="0" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
         <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-4 md:col-span-2"><button id="cancel-document-modal" type="button" class="rounded border border-outline-variant/50 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Cancel</button><button type="submit" class="rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Save Official Document</button></div>
@@ -389,6 +398,11 @@
         document.querySelectorAll('[data-ntp-only]').forEach((element) => {
             element.classList.toggle('hidden', !isNtp);
             element.querySelectorAll('input, select, textarea').forEach((control) => { control.disabled = !isNtp; });
+        });
+        document.querySelectorAll('[data-signatories-section]').forEach((section) => {
+            const active = section.dataset.document === selectedDocumentType;
+            section.classList.toggle('hidden', !active);
+            section.querySelectorAll('select').forEach((control) => { control.disabled = !active; });
         });
         document.querySelectorAll('[data-ntp-status]').forEach((element) => element.classList.add('hidden'));
         document.querySelectorAll('[data-iar-only]').forEach((element) => element.classList.toggle('hidden', !isIar));

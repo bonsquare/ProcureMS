@@ -294,6 +294,66 @@ class DocumentSignatoriesTest extends TestCase
         $this->assertLessThan(strpos($printed, 'oli third'), strpos($printed, 'pat chosen'));
     }
 
+    /** The HTML of one signatory select on the document page, so a test can look inside it. */
+    private function selectOn(string $html, string $name): string
+    {
+        $this->assertSame(1, preg_match('/<select[^>]*name="'.preg_quote($name, '/').'"[^>]*>.*?<\/select>/s', $html, $match), "No select named {$name}");
+
+        return $match[0];
+    }
+
+    public function test_the_document_page_shows_a_signatories_select_per_slot(): void
+    {
+        [, $school, $user] = $this->tenant();
+        $pr = $this->requestFor($school, $user);
+
+        $html = $this->actingAs($user)->get(route('procurement.documents', $pr))->assertOk()->getContent();
+
+        foreach (['bac_chair', 'bac_secretariat', 'disbursing_officer', 'inspection_officer', 'bac_member_3', 'approved_by'] as $slot) {
+            $this->assertStringContainsString('name="signatories['.$slot.']"', $html, $slot);
+        }
+    }
+
+    public function test_role_holders_are_listed_before_other_staff_and_the_default_option_names_the_current_default(): void
+    {
+        [, $school, $user] = $this->tenant();
+        $this->staff($school, 'Aaron Plain');
+        $this->staff($school, 'Zoe Officer', ['document_role' => 'Disbursing Officer']);
+        $pr = $this->requestFor($school, $user);
+
+        $select = $this->selectOn($this->actingAs($user)->get(route('procurement.documents', $pr))->getContent(), 'signatories[disbursing_officer]');
+
+        $this->assertStringContainsString('Default (Zoe Officer)', $select);
+        $this->assertLessThan(strpos($select, 'Aaron Plain'), strrpos($select, 'Zoe Officer'));
+    }
+
+    public function test_a_saved_choice_is_selected_even_if_that_person_is_no_longer_active(): void
+    {
+        [, $school, $user] = $this->tenant();
+        $pat = $this->staff($school, 'Pat Chosen');
+        $pr = $this->requestFor($school, $user);
+        $this->documentFor($pr, $user, 'purchase_order', ['signatories' => ['disbursing_officer' => $this->snapshot($pat)]]);
+        $pat->update(['is_active' => false]);
+
+        $select = $this->selectOn($this->actingAs($user)->get(route('procurement.documents', $pr))->getContent(), 'signatories[disbursing_officer]');
+
+        $this->assertMatchesRegularExpression('/<option[^>]*value="'.$pat->id.'"[^>]*selected[^>]*>[^<]*Pat Chosen/', $select);
+    }
+
+    public function test_a_chosen_inspection_officer_beats_the_typed_name_on_the_iar(): void
+    {
+        [, $school, $user] = $this->tenant();
+        $pat = $this->staff($school, 'Pat Chosen');
+        $pr = $this->requestFor($school, $user);
+        $document = $this->documentFor($pr, $user, 'inspection_acceptance_report', ['inspection_officer_name' => 'Typed Name', 'signatories' => ['inspection_officer' => $this->snapshot($pat)]]);
+        $this->actingAs($user);
+
+        $printed = $this->printed($pr, $document);
+
+        $this->assertStringContainsString('pat chosen', $printed);
+        $this->assertStringNotContainsString('typed name', $printed);
+    }
+
     public function test_a_signer_from_another_school_is_refused_on_save(): void
     {
         [, $school, $user] = $this->tenant('one');

@@ -71,6 +71,73 @@ final class SignatorySlots
         ],
     ];
 
+    /** The ten documents made in the procurement document center; they share one set of default signers. */
+    public const PROCUREMENT_DOCUMENTS = [
+        'request_for_quotation', 'abstract_of_bids_quotation', 'notice_to_award', 'notice_to_proceed', 'purchase_order',
+        'inspection_acceptance_report', 'inventory_acknowledgement_receipt_supplies', 'requisition_issuance_slip',
+        'inventory_custodian_slip', 'property_acknowledgement_receipt',
+    ];
+
+    /**
+     * Who signs by default: each template variable and the staff member the School Settings roles point to. The print
+     * method and the form's "Default (Name)" option both read this, so what the form shows is what prints.
+     *
+     * @param  Collection<int, SchoolStaff>  $staff  the school's active staff
+     * @return array<string, SchoolStaff|Collection|null>
+     */
+    public static function defaults(string $document, Collection $staff): array
+    {
+        if (! in_array($document, self::PROCUREMENT_DOCUMENTS, true)) {
+            return [];
+        }
+
+        $role = fn (string $group, string $name) => $staff->first(fn (SchoolStaff $member) => $member->hasRole($group, $name));
+        $text = fn (string $field, string $needle) => $staff->first(fn (SchoolStaff $member) => str_contains(strtolower((string) $member->{$field}), $needle));
+        $approver = $role('procurement_role', 'Approver');
+
+        return [
+            'requestingOfficer' => $role('procurement_role', 'Requesting Officer'),
+            'procurementOfficer' => $role('procurement_role', 'Procurement Officer'),
+            'approver' => $approver,
+            'canvasser' => $role('procurement_role', 'Canvasser'),
+            'schoolHead' => $text('position', 'school head') ?? $approver,
+            'bacChair' => $role('bac_role', 'BAC Chairperson'),
+            'bacViceChair' => $role('bac_role', 'BAC Vice Chairperson'),
+            'bacSecretariat' => $role('bac_role', 'BAC Secretariat'),
+            'bacMembers' => $staff->filter(fn (SchoolStaff $member) => $member->hasRole('bac_role', 'BAC Member'))->values(),
+            'disbursingOfficer' => $text('document_role', 'disbursing officer') ?? $text('position', 'disbursing'),
+            'inspectionOfficer' => $text('document_role', 'inspection officer') ?? $text('position', 'inspection'),
+            'propertyOfficer' => $text('document_role', 'property custodian') ?? $text('position', 'property'),
+        ];
+    }
+
+    /** The default person of one slot, out of what defaults() returned. */
+    public static function defaultFor(array $slot, array $defaults): ?SchoolStaff
+    {
+        $value = $defaults[$slot['var']] ?? null;
+
+        return $value instanceof Collection ? $value->get((int) substr($slot['key'], -1) - 1) : $value;
+    }
+
+    /**
+     * Everything a form needs to draw the signatory selects of one document.
+     *
+     * @param  Collection<int, SchoolStaff>  $staff  the school's active staff
+     * @param  ?array<string, array{staff_id: int, name: string, position: ?string}>  $saved
+     * @return array<int, array{slot: array, default: ?SchoolStaff, candidates: Collection, saved: ?array}>
+     */
+    public static function panel(string $document, Collection $staff, ?array $saved): array
+    {
+        $defaults = self::defaults($document, $staff);
+
+        return array_map(fn (array $slot) => [
+            'slot' => $slot,
+            'default' => self::defaultFor($slot, $defaults),
+            'candidates' => self::candidates($staff, $slot),
+            'saved' => is_array($saved[$slot['key']] ?? null) ? $saved[$slot['key']] : null,
+        ], self::slots($document));
+    }
+
     /** @return array<int, array{key: string, label: string, var: string, role: ?array{0: string, 1: string}, needle: ?string}> */
     public static function slots(string $document): array
     {
