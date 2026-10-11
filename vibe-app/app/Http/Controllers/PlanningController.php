@@ -279,7 +279,7 @@ class PlanningController extends Controller
         ]);
         $school = School::whereKey($data['school_id'])->firstOrFail();
         app(FiscalYearService::class)->assertOpen((int) $school->organization_id, (int) $data['fiscal_year']);
-        $approvedItems = SobItem::with(['plan', 'activity'])
+        $approvedItems = SobItem::with(['plan', 'activity'])->where('is_extra', false)
             ->whereHas('plan', fn (Builder $query) => $query->where('school_id', $school->id)->where('fiscal_year', $data['fiscal_year'])->where('status', 'approved'))
             ->orderBy('id')
             ->get();

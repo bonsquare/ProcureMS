@@ -7,6 +7,7 @@ use App\Models\AipActivity;
 use App\Models\AppItem;
 use App\Models\AuditLog;
 use App\Models\BudgetAllocation;
+use App\Models\ChartOfAccount;
 use App\Models\School;
 use App\Models\SipPlan;
 use App\Models\SobItem;
@@ -76,23 +77,132 @@ class SobService
     }
 
     /**
-     * Adds several particulars under one activity and account. All are saved or none.
+     * Adds an Item: several particulars under one activity and account, with an optional free note and any other lines. All are saved or none.
      *
      * @param  array<int, array<string, mixed>>  $lines  particulars, frequency, quantity, unit and unit_cost of each
+     * @param  array<int, array<string, mixed>>  $extras  label (particulars), unit and amount of each other line
      * @return array<int, SobItem>
      */
-    public function addItems(SobPlan $plan, int|string $activityId, int|string $accountId, array $lines): array
+    public function addItems(SobPlan $plan, int|string $activityId, int|string $accountId, array $lines, ?string $note = null, array $extras = []): array
     {
         $this->requireDraft($plan);
-        $lines = array_values(array_filter($lines, 'is_array'));
+        $lines = $this->filledRows($lines);
         if ($lines === []) {
             throw ValidationException::withMessages(['lines' => 'Add at least one particulars.']);
         }
+        $note = $this->cleanNote($note);
 
-        return DB::transaction(fn () => array_map(
-            fn (array $line) => $this->addItem($plan, ['aip_activity_id' => $activityId, 'chart_of_account_id' => $accountId] + $line),
-            $lines,
-        ));
+        return DB::transaction(function () use ($plan, $activityId, $accountId, $lines, $note, $extras) {
+            $created = [];
+            foreach ($lines as $line) {
+                $created[] = $this->writeRow($plan, null, $this->itemValues($plan, ['aip_activity_id' => $activityId, 'chart_of_account_id' => $accountId] + $line), $note, false);
+            }
+            foreach ($this->filledExtras($extras) as $extra) {
+                $created[] = $this->writeRow($plan, null, $this->extraValues($activityId, $accountId, $extra), $note, true);
+            }
+
+            return $created;
+        });
+    }
+
+    /**
+     * Saves a whole Item at once (the activity and account it is filed under, its note, particulars and other lines): rows carrying their id are
+     * updated, new rows are added and rows left out are removed. All or nothing.
+     *
+     * @param  array{aip_activity_id?: mixed, chart_of_account_id?: mixed, note?: ?string, lines?: array<int, array<string, mixed>>, extras?: array<int, array<string, mixed>>}  $data
+     */
+    public function saveGroup(SobPlan $plan, int $activityId, int $accountId, array $data): void
+    {
+        $this->requireDraft($plan);
+        $existing = $plan->items()->where('aip_activity_id', $activityId)->where('chart_of_account_id', $accountId)->get();
+        if ($existing->isEmpty()) {
+            $this->fail('That item no longer exists.');
+        }
+        $lines = $this->filledRows($data['lines'] ?? []);
+        if ($lines === []) {
+            throw ValidationException::withMessages(['lines' => 'An item needs at least one particulars.']);
+        }
+        $note = $this->cleanNote($data['note'] ?? null);
+        $target = ['aip_activity_id' => $data['aip_activity_id'] ?? null, 'chart_of_account_id' => $data['chart_of_account_id'] ?? null];
+
+        DB::transaction(function () use ($plan, $existing, $lines, $data, $note, $target) {
+            $keep = [];
+            foreach ($lines as $line) {
+                $row = $existing->first(fn (SobItem $item) => ! $item->is_extra && (int) $item->id === (int) ($line['id'] ?? 0));
+                $keep[] = $this->writeRow($plan, $row, $this->itemValues($plan, $target + $line), $note, false)->id;
+            }
+            foreach ($this->filledExtras($data['extras'] ?? []) as $extra) {
+                $row = $existing->first(fn (SobItem $item) => $item->is_extra && (int) $item->id === (int) ($extra['id'] ?? 0));
+                $keep[] = $this->writeRow($plan, $row, $this->extraValues($target['aip_activity_id'], $target['chart_of_account_id'], $extra), $note, true)->id;
+            }
+            $plan->items()->whereIn('id', $existing->pluck('id'))->whereNotIn('id', $keep)->delete();
+        });
+    }
+
+    public function deleteGroup(SobPlan $plan, int $activityId, int $accountId): void
+    {
+        $this->requireDraft($plan);
+        $plan->items()->where('aip_activity_id', $activityId)->where('chart_of_account_id', $accountId)->delete();
+    }
+
+    /** @param  array<string, mixed>  $values */
+    private function writeRow(SobPlan $plan, ?SobItem $row, array $values, ?string $note, bool $extra): SobItem
+    {
+        $values += ['note' => $note, 'is_extra' => $extra];
+        if ($row) {
+            $row->update($values);
+
+            return $row;
+        }
+
+        return SobItem::create(['organization_id' => $plan->organization_id, 'sob_plan_id' => $plan->id] + $values);
+    }
+
+    /**
+     * @param  array<int, mixed>  $rows
+     * @return array<int, array<string, mixed>> the submitted rows that are arrays
+     */
+    private function filledRows(array $rows): array
+    {
+        return array_values(array_filter($rows, 'is_array'));
+    }
+
+    /**
+     * @param  array<int, mixed>  $extras
+     * @return array<int, array<string, mixed>> the other lines in which something was typed; an untouched blank row is ignored
+     */
+    private function filledExtras(array $extras): array
+    {
+        return array_values(array_filter($extras, fn ($extra) => is_array($extra) && (trim((string) ($extra['particulars'] ?? '')) !== '' || trim((string) ($extra['amount'] ?? '')) !== '')));
+    }
+
+    private function cleanNote(?string $note): ?string
+    {
+        $note = trim((string) $note);
+        Validator::make(['note' => $note], ['note' => ['max:255']])->validate();
+
+        return $note === '' ? null : $note;
+    }
+
+    /**
+     * @param  array<string, mixed>  $extra
+     * @return array<string, mixed> an other line as a row: the label as particulars, quantity 1, the typed amount as the cost
+     */
+    private function extraValues(mixed $activityId, mixed $accountId, array $extra): array
+    {
+        $values = Validator::make($extra + ['aip_activity_id' => $activityId, 'chart_of_account_id' => $accountId], [
+            'particulars' => ['required', 'string', 'max:255'],
+            'unit' => ['nullable', 'string', 'max:50'],
+            'amount' => ['required', 'numeric', 'gt:0'],
+            'aip_activity_id' => ['required', 'integer'],
+            'chart_of_account_id' => ['required', 'integer'],
+        ], ['particulars.required' => 'Name the other line (for example 35% Labor).', 'amount.required' => 'Type the amount of the other line.'])->validate();
+        $amount = round((float) $values['amount'], 2);
+
+        return [
+            'aip_activity_id' => (int) $values['aip_activity_id'], 'chart_of_account_id' => (int) $values['chart_of_account_id'], 'particulars' => trim($values['particulars']),
+            'frequency' => 1, 'quantity' => 1, 'unit' => trim((string) ($values['unit'] ?? '')), 'unit_cost' => $amount, 'amount' => $amount,
+        ];
     }
 
     /** @param  array<string, mixed>  $data */
@@ -329,7 +439,7 @@ class SobService
      */
     public function grouped(SobPlan $plan): array
     {
-        $items = $plan->items()->with('activity.kra')->orderBy('id')->get();
+        $items = $plan->items()->with(['activity.kra', 'account'])->orderBy('id')->get();
         $pillars = [];
         foreach ($items->groupBy(fn (SobItem $i) => self::pillarName($i->activity->kra?->pillar)) as $pillar => $pillarItems) {
             $programs = [];
@@ -337,7 +447,7 @@ class SobService
                 $activities = [];
                 foreach ($programItems->groupBy('aip_activity_id') as $activityItems) {
                     $activity = $activityItems->first()->activity;
-                    $activities[] = ['activity' => $activity, 'aip_amount' => (float) $activity->{"q{$plan->quarter}_amount"}, 'total' => round((float) $activityItems->sum('amount'), 2), 'items' => $activityItems->values()];
+                    $activities[] = ['activity' => $activity, 'aip_amount' => (float) $activity->{"q{$plan->quarter}_amount"}, 'total' => round((float) $activityItems->sum('amount'), 2), 'items' => $activityItems->values(), 'accounts' => $this->accountGroups($activityItems)];
                 }
                 $programs[] = ['program' => (string) $program, 'total' => round((float) $programItems->sum('amount'), 2), 'activities' => $activities];
             }
@@ -347,6 +457,23 @@ class SobService
         usort($pillars, fn ($a, $b) => ($order[$a['pillar']] ?? 99) <=> ($order[$b['pillar']] ?? 99));
 
         return $pillars;
+    }
+
+    /**
+     * @param  Collection<int, SobItem>  $items  the rows of one activity
+     * @return array<int, array{account: ?ChartOfAccount, note: ?string, items: Collection, extras: Collection, items_total: float, total: float}> one Item per account, in the order first entered
+     */
+    private function accountGroups(Collection $items): array
+    {
+        return $items->groupBy('chart_of_account_id')->map(function (Collection $rows) {
+            $purchased = $rows->reject->is_extra->values();
+            $extras = $rows->filter->is_extra->values();
+
+            return [
+                'account' => $rows->first()->account, 'note' => $rows->pluck('note')->filter()->first(), 'items' => $purchased, 'extras' => $extras,
+                'items_total' => round((float) $purchased->sum('amount'), 2), 'total' => round((float) $rows->sum('amount'), 2),
+            ];
+        })->values()->all();
     }
 
     /** The pillars as the SOB shows them, in the order of the school's workbook. */
