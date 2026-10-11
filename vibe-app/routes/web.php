@@ -96,6 +96,7 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::delete('/planning/sob/items/{sobItem}', [SobController::class, 'destroyItem'])->middleware('permission:planning.manage')->name('planning.sob.items.destroy')->whereNumber('sobItem');
     Route::post('/planning/app-cse', [AppCseController::class, 'store'])->middleware('permission:planning.manage')->name('planning.app-cse.store');
     Route::get('/planning/app-cse/{appCsePlan}', [AppCseController::class, 'show'])->name('planning.app-cse.show')->whereNumber('appCsePlan');
+    Route::get('/planning/app-cse/{appCsePlan}/print', [AppCseController::class, 'print'])->name('planning.app-cse.print')->whereNumber('appCsePlan');
     Route::put('/planning/app-cse/{appCsePlan}', [AppCseController::class, 'update'])->middleware('permission:planning.manage')->name('planning.app-cse.update')->whereNumber('appCsePlan');
     Route::post('/planning/app-cse/{appCsePlan}/items', [AppCseController::class, 'storeItem'])->middleware('permission:planning.manage')->name('planning.app-cse.items.store')->whereNumber('appCsePlan');
     Route::post('/planning/app-cse/{appCsePlan}/custom-items', [AppCseController::class, 'storeCustomItem'])->middleware('permission:planning.manage')->name('planning.app-cse.custom.store')->whereNumber('appCsePlan');

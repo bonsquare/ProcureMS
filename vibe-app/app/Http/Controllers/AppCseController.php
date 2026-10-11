@@ -66,6 +66,28 @@ class AppCseController extends Controller
         ]);
     }
 
+    /** The official form: every catalog row of the plan's catalog year, the plan's own items, the totals and the signatures. */
+    public function print(Request $request, AppCsePlan $appCsePlan): View
+    {
+        abort_unless($request->user()->hasPermission('planning.view') || $request->user()->hasPermission('planning.manage'), 403);
+        $this->scoped($request, $appCsePlan);
+        $appCsePlan->load('school');
+        $items = $appCsePlan->items()->get();
+        $staff = SchoolStaff::active()->where('school_id', $appCsePlan->school_id)->get();
+        $signers = SignatorySlots::overlay('app_cse', SignatorySlots::defaults('app_cse', $staff), $appCsePlan->signatories);
+
+        return view('app-cse-print', [
+            'plan' => $appCsePlan,
+            'catalog' => CseCatalogItem::where('catalog_year', $appCsePlan->catalog_year)->orderBy('sort_order')->get(),
+            'byCatalog' => $items->reject(fn (AppCseItem $item) => $item->isCustom())->keyBy('cse_catalog_item_id'),
+            'partTwo' => $items->filter(fn (AppCseItem $item) => $item->isCustom())->values(),
+            'totals' => $this->service->totals($appCsePlan),
+            'preparedBy' => $signers['preparedBy'] ?? null,
+            'notedBy' => $signers['notedBy'] ?? null,
+            'certifiedBy' => $signers['certifiedBy'] ?? null,
+        ]);
+    }
+
     public function update(Request $request, AppCsePlan $appCsePlan): RedirectResponse
     {
         $this->scoped($request, $appCsePlan);

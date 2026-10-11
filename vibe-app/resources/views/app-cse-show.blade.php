@@ -21,7 +21,7 @@
             <h1 class="text-2xl font-bold">APP-CSE · FY {{ $plan->fiscal_year }}</h1>
             <p class="mt-1 text-sm text-on-surface-variant">{{ $plan->school?->name }} · Annual Procurement Plan for Common Supplies and Equipment · Procurement Service catalog {{ $plan->catalog_year }}</p>
         </div>
-        <span class="rounded-full px-3 py-1 text-xs font-bold {{ $draft ? 'bg-amber-100 text-amber-900' : 'bg-secondary/10 text-secondary' }}">{{ $draft ? 'Draft' : 'Approved' }}</span>
+        <div class="flex items-center gap-2"><a href="{{ route('planning.app-cse.print', $plan) }}" target="_blank" rel="noopener" class="rounded border border-primary px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary hover:text-white">Print official form</a><span class="rounded-full px-3 py-1 text-xs font-bold {{ $draft ? 'bg-amber-100 text-amber-900' : 'bg-secondary/10 text-secondary' }}">{{ $draft ? 'Draft' : 'Approved' }}</span></div>
     </div>
 </div>
 @if(session('success'))<div class="mb-4 rounded border border-secondary/30 bg-secondary/5 px-4 py-3 text-sm text-secondary">{{ session('success') }}</div>@endif
