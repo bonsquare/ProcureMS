@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AipController;
 use App\Http\Controllers\AllotmentRegistryController;
+use App\Http\Controllers\AppCseController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\BudgetAllocationController;
@@ -93,6 +94,14 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::post('/planning/sob/{sobPlan}/items', [SobController::class, 'storeItem'])->middleware('permission:planning.manage')->name('planning.sob.items.store')->whereNumber('sobPlan');
     Route::put('/planning/sob/items/{sobItem}', [SobController::class, 'updateItem'])->middleware('permission:planning.manage')->name('planning.sob.items.update')->whereNumber('sobItem');
     Route::delete('/planning/sob/items/{sobItem}', [SobController::class, 'destroyItem'])->middleware('permission:planning.manage')->name('planning.sob.items.destroy')->whereNumber('sobItem');
+    Route::post('/planning/app-cse', [AppCseController::class, 'store'])->middleware('permission:planning.manage')->name('planning.app-cse.store');
+    Route::get('/planning/app-cse/{appCsePlan}', [AppCseController::class, 'show'])->name('planning.app-cse.show')->whereNumber('appCsePlan');
+    Route::put('/planning/app-cse/{appCsePlan}', [AppCseController::class, 'update'])->middleware('permission:planning.manage')->name('planning.app-cse.update')->whereNumber('appCsePlan');
+    Route::post('/planning/app-cse/{appCsePlan}/items', [AppCseController::class, 'storeItem'])->middleware('permission:planning.manage')->name('planning.app-cse.items.store')->whereNumber('appCsePlan');
+    Route::post('/planning/app-cse/{appCsePlan}/custom-items', [AppCseController::class, 'storeCustomItem'])->middleware('permission:planning.manage')->name('planning.app-cse.custom.store')->whereNumber('appCsePlan');
+    Route::put('/planning/app-cse/items/{appCseItem}', [AppCseController::class, 'updateItem'])->middleware('permission:planning.manage')->name('planning.app-cse.items.update')->whereNumber('appCseItem');
+    Route::delete('/planning/app-cse/items/{appCseItem}', [AppCseController::class, 'destroyItem'])->middleware('permission:planning.manage')->name('planning.app-cse.items.destroy')->whereNumber('appCseItem');
+    Route::post('/planning/app-cse/{appCsePlan}/approve', [AppCseController::class, 'approve'])->middleware('permission:planning.manage')->name('planning.app-cse.approve')->whereNumber('appCsePlan');
     Route::post('/planning/sip/import', [SipImportController::class, 'preview'])->middleware('permission:planning.manage')->name('planning.sip.import.preview');
     Route::get('/planning/sip/import/{token}', [SipImportController::class, 'show'])->middleware('permission:planning.manage')->name('planning.sip.import.show');
     Route::post('/planning/sip/import/{token}', [SipImportController::class, 'store'])->middleware('permission:planning.manage')->name('planning.sip.import.store');

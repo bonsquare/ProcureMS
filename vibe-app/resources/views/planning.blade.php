@@ -345,6 +345,23 @@
                 @endif</td></tr>@endforeach</tbody></table></div>
     @else<div class="px-5 py-8 text-center text-sm text-on-surface-variant">No APP yet for FY {{ $year }}. Approve an SOB, then generate the APP.</div>@endif
 </section>
+
+<section id="app-cse" class="mt-5 rounded border border-outline-variant/30 bg-white">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 px-5 py-4">
+        <div><h2 class="font-semibold">APP-CSE (Procurement Service form)</h2><p class="mt-1 text-xs text-on-surface-variant">The Annual Procurement Plan for Common Supplies and Equipment: the Procurement Service catalog with a quantity for each month, printed as the official form.</p></div>
+        @if(auth()->user()->hasPermission('planning.manage'))
+            <form id="app-cse-create" method="POST" action="{{ route('planning.app-cse.store') }}" class="flex items-end gap-2">@csrf<input type="hidden" name="school_id" value="{{ $selectedSchool->id }}">
+                <label class="text-xs font-semibold text-on-surface-variant">Fiscal year<input type="number" name="fiscal_year" value="{{ $year }}" min="2000" max="2100" required class="mt-1 block w-24 rounded border border-outline-variant/50 bg-white px-2.5 py-2 text-sm outline-none focus:border-primary"></label>
+                <button class="rounded bg-primary px-3 py-2 text-xs font-bold text-white hover:bg-primary-container">Create APP-CSE</button>
+            </form>
+        @endif
+    </div>
+    @forelse($appCsePlans as $csePlan)
+        <a href="{{ route('planning.app-cse.show', $csePlan) }}" class="flex flex-wrap items-center justify-between gap-2 border-b border-outline-variant/10 px-5 py-3 text-sm last:border-0 hover:bg-surface-low/60"><span class="font-semibold">APP-CSE FY {{ $csePlan->fiscal_year }}</span><span class="text-xs text-on-surface-variant">{{ $csePlan->items_count }} item{{ $csePlan->items_count === 1 ? '' : 's' }} · {{ ucfirst($csePlan->status) }}</span></a>
+    @empty
+        <div class="px-5 py-6 text-center text-sm text-on-surface-variant">No APP-CSE yet for this school.</div>
+    @endforelse
+</section>
 </div>
 
 @if(auth()->user()->hasPermission('planning.manage'))
