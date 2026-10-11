@@ -259,6 +259,7 @@ class SobService
         foreach (['prepared_by', 'recommended_by', 'approved_by'] as $prefix) {
             $rules[$prefix.'_name'] = ['nullable', 'string', 'max:255'];
             $rules[$prefix.'_position'] = ['nullable', 'string', 'max:255'];
+            $rules[$prefix.'_role'] = ['nullable', 'string', 'max:255'];
         }
         $values = Validator::make($data, $rules)->validate();
         $fund = $values['fund_source'] ?? $plan->fund_source;

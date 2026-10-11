@@ -14,6 +14,8 @@ class AppCsePlan extends Model
         'organization_id', 'school_id', 'fiscal_year', 'catalog_year', 'status', 'approved_at', 'created_by',
         'office_name', 'region', 'address', 'account_code', 'organization_type', 'contact_person', 'contact_position', 'contact_email', 'contact_phone',
         'approved_budget', 'approved_budget_words', 'date_prepared', 'agency_head_name', 'agency_head_position', 'signatories',
+        'agency_head_role', 'prepared_by_role', 'prepared_by_name', 'prepared_by_position', 'noted_by_role', 'noted_by_name', 'noted_by_position',
+        'certified_by_role', 'certified_by_name', 'certified_by_position',
     ];
 
     protected function casts(): array

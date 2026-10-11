@@ -83,9 +83,9 @@
         if (! $same) { $start = $r; $fundSpan[$r] = 1; } else { $fundSpan[$start]++; $fundSpan[$r] = 0; }
     }
     $signatories = [
-        ['Prepared by:', $plan?->prepared_by_name ?: $school->school_head, $plan?->prepared_by_position ?: 'School Head/Team Leader'],
-        ['Recommending Approval:', $plan?->recommended_by_name, $plan?->recommended_by_position ?: 'Chief, School Governance Operation Division'],
-        ['Approved by:', $plan?->approved_by_name, $plan?->approved_by_position ?: 'Schools Division Superintendent'],
+        [\App\Support\SignatoryCaption::of($plan?->prepared_by_role, 'Prepared by:'), $plan?->prepared_by_name ?: $school->school_head, $plan?->prepared_by_position ?: 'School Head/Team Leader'],
+        [\App\Support\SignatoryCaption::of($plan?->recommended_by_role, 'Recommending Approval:'), $plan?->recommended_by_name, $plan?->recommended_by_position ?: 'Chief, School Governance Operation Division'],
+        [\App\Support\SignatoryCaption::of($plan?->approved_by_role, 'Approved by:'), $plan?->approved_by_name, $plan?->approved_by_position ?: 'Schools Division Superintendent'],
     ];
 @endphp
 

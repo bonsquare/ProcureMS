@@ -218,6 +218,7 @@ class PlanningController extends Controller
             'prepared_by_name' => ['nullable', 'string', 'max:255'], 'prepared_by_position' => ['nullable', 'string', 'max:255'],
             'recommended_by_name' => ['nullable', 'string', 'max:255'], 'recommended_by_position' => ['nullable', 'string', 'max:255'],
             'approved_by_name' => ['nullable', 'string', 'max:255'], 'approved_by_position' => ['nullable', 'string', 'max:255'],
+            'prepared_by_role' => ['nullable', 'string', 'max:255'], 'recommended_by_role' => ['nullable', 'string', 'max:255'], 'approved_by_role' => ['nullable', 'string', 'max:255'],
         ]);
         $school = School::whereKey($data['school_id'])->firstOrFail();
         SipPlan::updateOrCreate(

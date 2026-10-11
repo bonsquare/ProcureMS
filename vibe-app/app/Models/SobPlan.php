@@ -16,6 +16,7 @@ class SobPlan extends Model
         'organization_id', 'school_id', 'aip_id', 'master_transaction_id', 'fiscal_year', 'quarter', 'fund_source', 'status',
         'prepared_by_name', 'prepared_by_position', 'recommended_by_name', 'recommended_by_position', 'approved_by_name', 'approved_by_position',
         'approved_at', 'created_by', 'allotment_snapshot', 'school_id_number',
+        'prepared_by_role', 'recommended_by_role', 'approved_by_role',
     ];
 
     protected function casts(): array

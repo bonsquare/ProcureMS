@@ -215,6 +215,7 @@
             <input type="hidden" name="school_id" value="{{ $selectedSchool->id }}"><input type="hidden" name="start_year" value="{{ $startYear }}">
             @foreach([['prepared_by', 'Prepared by', $selectedSchool->school_head, 'School Head/Team Leader'], ['recommended_by', 'Recommending Approval', null, 'Chief, School Governance Operation Division'], ['approved_by', 'Approved by', null, 'Schools Division Superintendent']] as [$key, $label, $defaultName, $defaultPosition])
             <div class="space-y-2"><p class="text-xs font-semibold">{{ $label }}</p>
+                <input name="{{ $key }}_role" maxlength="255" placeholder="Role (blank prints: {{ $label }})" value="{{ $signPlan?->{$key.'_role'} }}" class="{{ $inputClass }}">
                 <input name="{{ $key }}_name" maxlength="255" placeholder="Full name" value="{{ $signPlan?->{$key.'_name'} ?? $defaultName }}" class="{{ $inputClass }}">
                 <input name="{{ $key }}_position" maxlength="255" placeholder="Position" value="{{ $signPlan?->{$key.'_position'} ?? $defaultPosition }}" class="{{ $inputClass }}"></div>
             @endforeach

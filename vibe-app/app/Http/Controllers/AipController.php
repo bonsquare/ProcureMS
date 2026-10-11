@@ -109,6 +109,7 @@ class AipController extends Controller
             'prepared_by_name' => ['nullable', 'string', 'max:255'], 'prepared_by_position' => ['nullable', 'string', 'max:255'],
             'noted_by_name' => ['nullable', 'string', 'max:255'], 'noted_by_position' => ['nullable', 'string', 'max:255'],
             'approved_by_name' => ['nullable', 'string', 'max:255'], 'approved_by_position' => ['nullable', 'string', 'max:255'],
+            'prepared_by_role' => ['nullable', 'string', 'max:255'], 'noted_by_role' => ['nullable', 'string', 'max:255'], 'approved_by_role' => ['nullable', 'string', 'max:255'],
         ]);
         $yearChanged = isset($data['fiscal_year']) && (int) $data['fiscal_year'] !== (int) $aip->fiscal_year;
         $this->fiscalYears->assertOpen((int) $aip->organization_id, (int) ($data['fiscal_year'] ?? $aip->fiscal_year));

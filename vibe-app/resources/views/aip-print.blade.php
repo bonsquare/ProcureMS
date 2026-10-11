@@ -166,7 +166,7 @@
     <div class="signatures">
         @foreach([['Prepared by:', 'prepared_by'], ['Noted by:', 'noted_by'], ['Approved by:', 'approved_by']] as [$label, $key])
             <div>
-                <div class="label">{{ $label }}</div>
+                <div class="label">{{ \App\Support\SignatoryCaption::of($aip->{$key . '_role'}, $label) }}</div>
                 <div class="name">{{ $aip->{$key . '_name'} ?: ' ' }}</div>
                 <div class="position">{{ $aip->{$key . '_position'} }}</div>
             </div>

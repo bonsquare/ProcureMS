@@ -20,6 +20,7 @@ class Aip extends Model
     protected $fillable = [
         'organization_id', 'school_id', 'master_transaction_id', 'sip_project_id', 'created_by', 'fiscal_year', 'entity', 'status',
         'prepared_by_name', 'prepared_by_position', 'noted_by_name', 'noted_by_position', 'approved_by_name', 'approved_by_position', 'approved_at',
+        'prepared_by_role', 'noted_by_role', 'approved_by_role',
         'sip_start_year', 'sip_year_no',
     ];
 

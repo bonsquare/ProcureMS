@@ -177,10 +177,10 @@
     <p class="warranty">We hereby warrant that the total amount reflected in this Annual Supplies/ Equipment Procurement Plan to procure the listed common-use supplies, materials and equipment has been included in or is within our approved budget for the year.</p>
 
     <div class="signatures">
-        <div><div class="caption">Prepared by:</div><div class="name">{{ $preparedBy?->name }}</div><div class="role">Property/Supply Officer</div></div>
-        <div><div class="caption">NOTED:</div><div class="name">{{ $notedBy?->name }}</div><div class="role">School Head</div></div>
-        <div><div class="caption">Certified Funds Available / Certified Appropriate Funds Available:</div><div class="name">{{ $certifiedBy?->name }}</div><div class="role">Accountant / Local Budget Officer</div></div>
-        <div><div class="caption">Approved by:</div><div class="name">{{ $plan->agency_head_name }}</div><div class="role">{{ $plan->agency_head_position ?: 'Head of Office/Agency' }}</div></div>
+        <div><div class="caption">{{ \App\Support\SignatoryCaption::of($plan->prepared_by_role, 'Prepared by:') }}</div><div class="name">{{ $plan->prepared_by_name ?: $preparedBy?->name }}</div><div class="role">{{ $plan->prepared_by_position ?: 'Property/Supply Officer' }}</div></div>
+        <div><div class="caption">{{ \App\Support\SignatoryCaption::of($plan->noted_by_role, 'NOTED:') }}</div><div class="name">{{ $plan->noted_by_name ?: $notedBy?->name }}</div><div class="role">{{ $plan->noted_by_position ?: 'School Head' }}</div></div>
+        <div><div class="caption">{{ \App\Support\SignatoryCaption::of($plan->certified_by_role, 'Certified Funds Available / Certified Appropriate Funds Available:') }}</div><div class="name">{{ $plan->certified_by_name ?: $certifiedBy?->name }}</div><div class="role">{{ $plan->certified_by_position ?: 'Accountant / Local Budget Officer' }}</div></div>
+        <div><div class="caption">{{ \App\Support\SignatoryCaption::of($plan->agency_head_role, 'Approved by:') }}</div><div class="name">{{ $plan->agency_head_name }}</div><div class="role">{{ $plan->agency_head_position ?: 'Head of Office/Agency' }}</div></div>
     </div>
     <div class="prepared-date"><b>Date Prepared:</b> {{ $plan->date_prepared?->format('F d, Y') }}</div>
 </main>

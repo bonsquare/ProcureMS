@@ -155,7 +155,10 @@ class AppCseService
         $rules = [
             'office_name' => $text(255), 'region' => $text(255), 'address' => $text(500), 'account_code' => $text(255), 'organization_type' => $text(255),
             'contact_person' => $text(255), 'contact_position' => $text(255), 'contact_email' => $text(255), 'contact_phone' => $text(255),
-            'approved_budget_words' => $text(500), 'agency_head_name' => $text(255), 'agency_head_position' => $text(255),
+            'approved_budget_words' => $text(500), 'agency_head_name' => $text(255), 'agency_head_position' => $text(255), 'agency_head_role' => $text(255),
+            'prepared_by_role' => $text(255), 'prepared_by_name' => $text(255), 'prepared_by_position' => $text(255),
+            'noted_by_role' => $text(255), 'noted_by_name' => $text(255), 'noted_by_position' => $text(255),
+            'certified_by_role' => $text(255), 'certified_by_name' => $text(255), 'certified_by_position' => $text(255),
             'approved_budget' => ['nullable', 'numeric', 'min:0', 'max:9999999999999.99'], 'date_prepared' => ['nullable', 'date'],
         ];
         $values = $this->validate(array_intersect_key($data, $rules), array_intersect_key($rules, $data));

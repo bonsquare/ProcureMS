@@ -43,8 +43,17 @@
             <label class="text-xs font-semibold text-on-surface-variant">Date Prepared<input type="date" name="date_prepared" value="{{ old('date_prepared', $plan->date_prepared?->toDateString()) }}" class="{{ $box }}"></label>
             <label class="text-xs font-semibold text-on-surface-variant">E. Approved budget by the agency head (figures)<input type="number" name="approved_budget" step="0.01" min="0" value="{{ old('approved_budget', $plan->approved_budget) }}" class="{{ $box }}"></label>
             <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">E. Approved budget (in words)<input name="approved_budget_words" value="{{ old('approved_budget_words', $plan->approved_budget_words) }}" maxlength="500" class="{{ $box }}"></label>
-            <div class="grid gap-3 md:col-span-3 md:grid-cols-4">@include('partials.signatory-picker', ['rows' => $signatoryRows, 'enabled' => true])
+            <div class="grid gap-3 md:col-span-3 md:grid-cols-4">
+                @foreach([['prepared_by', 'Prepared by:', 'Property/Supply Officer'], ['noted_by', 'NOTED:', 'School Head'], ['certified_by', 'Certified Funds Available / Certified Appropriate Funds Available:', 'Accountant / Local Budget Officer']] as [$slot, $caption, $defaultPosition])
+                    <div class="space-y-2">
+                        @include('partials.signatory-picker', ['rows' => [collect($signatoryRows)->first(fn ($row) => $row['slot']['key'] === $slot)], 'enabled' => true])
+                        <label class="block text-xs font-semibold text-on-surface-variant">Role (blank prints: {{ $caption }})<input name="{{ $slot }}_role" value="{{ old($slot.'_role', $plan->{$slot.'_role'}) }}" maxlength="255" class="{{ $box }}"></label>
+                        <label class="block text-xs font-semibold text-on-surface-variant">Name (type it for someone outside the school; it replaces the choice above)<input name="{{ $slot }}_name" value="{{ old($slot.'_name', $plan->{$slot.'_name'}) }}" maxlength="255" class="{{ $box }}"></label>
+                        <label class="block text-xs font-semibold text-on-surface-variant">Position (blank prints: {{ $defaultPosition }})<input name="{{ $slot }}_position" value="{{ old($slot.'_position', $plan->{$slot.'_position'}) }}" maxlength="255" class="{{ $box }}"></label>
+                    </div>
+                @endforeach
                 <div class="space-y-2">
+                    <label class="block text-xs font-semibold text-on-surface-variant">Role (blank prints: Approved by:)<input name="agency_head_role" value="{{ old('agency_head_role', $plan->agency_head_role) }}" maxlength="255" class="{{ $box }}"></label>
                     <label class="block text-xs font-semibold text-on-surface-variant">Approved by (Head of Office/Agency): name<input name="agency_head_name" value="{{ old('agency_head_name', $plan->agency_head_name) }}" maxlength="255" class="{{ $box }}"></label>
                     <label class="block text-xs font-semibold text-on-surface-variant">Position<input name="agency_head_position" value="{{ old('agency_head_position', $plan->agency_head_position) }}" maxlength="255" class="{{ $box }}"></label>
                 </div>
