@@ -270,13 +270,13 @@ class SobRevisionTest extends TestCase
         $this->assertCount(4, $options, 'one dropdown per quarter');
         $this->assertStringNotContainsString('<input name="fund_source"', $html, 'the fund is chosen from a list, not typed');
         $this->assertStringNotContainsString('name="fund_source" value="MOOE"', $html);
-        $this->assertContains('IGP', $options[0]);
+        $this->assertContains('SBFP', $options[0]);
         $this->assertNotContains('MOOE', $options[0], 'Q1 already has a MOOE SOB');
         $this->assertNotContains('SEF', $options[0], 'and a SEF SOB');
         $this->assertContains('School MOOE', $options[0], 'a different fund with a similar name is still offered');
         $this->assertContains('MOOE', $options[1], 'Q2 has none yet');
         $this->assertContains('SEF', $options[1]);
-        $this->post(route('planning.sob.store'), ['school_id' => $fx['school']->id, 'fiscal_year' => 2026, 'quarter' => 1, 'fund_source' => 'IGP'])->assertSessionHasNoErrors();
+        $this->post(route('planning.sob.store'), ['school_id' => $fx['school']->id, 'fiscal_year' => 2026, 'quarter' => 1, 'fund_source' => 'SBFP'])->assertSessionHasNoErrors();
         $this->assertSame(3, SobPlan::where('quarter', 1)->count(), 'several SOBs in one quarter, one per fund');
     }
 
