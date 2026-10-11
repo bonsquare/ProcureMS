@@ -13,7 +13,7 @@ class Aip extends Model
 
     /** Source of fund choices depend on which entity the plan belongs to. */
     public const FUNDS = [
-        'School' => ['MOOE', 'SEF', 'IGP', 'Others'],
+        'School' => ['MOOE', 'SBFP', 'ARAL', 'Others'],
         'Division Office Proper' => ['MOOE-GASS', 'MOOE-HRTD', 'MOOE-Sub-ARO', 'School MOOE', 'SEF', 'Others'],
     ];
 

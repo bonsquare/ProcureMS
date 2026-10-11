@@ -283,11 +283,10 @@ class AipController extends Controller
 
     private function fundOptions(Aip $aip): array
     {
-        return FundSource::where('organization_id', $aip->organization_id)
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->pluck('name')
-            ->merge($aip->fundOptions())
+        // The standard funds first, then the funds the organization added, and "Others" (the one typed in Specify) always last.
+        return collect($aip->fundOptions())->reject(fn ($fund) => $fund === 'Others')
+            ->merge(FundSource::where('organization_id', $aip->organization_id)->where('is_active', true)->orderBy('name')->pluck('name')->reject(fn ($fund) => $fund === 'Others'))
+            ->push('Others')
             ->unique()
             ->values()
             ->all();
@@ -312,7 +311,7 @@ class AipController extends Controller
             'activities.*.q2_amount' => ['nullable', 'numeric', 'min:0'],
             'activities.*.q3_amount' => ['nullable', 'numeric', 'min:0'],
             'activities.*.q4_amount' => ['nullable', 'numeric', 'min:0'],
-            'activities.*.source_of_fund' => ['nullable', 'string', 'max:255', Rule::in($this->fundOptions($aip))],
+            'activities.*.source_of_fund' => ['nullable', 'string', 'max:255'],
             'activities.*.chart_of_account_id' => [
                 'nullable',
                 'integer',
