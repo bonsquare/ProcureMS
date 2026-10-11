@@ -127,6 +127,7 @@
                                                             @foreach($fundOptions as $option)<option @selected($fund === $option)>{{ $option }}</option>@endforeach
                                                         </select>
                                                         <input data-fund-other placeholder="Specify source of fund, then press Enter" class="{{ $field }} !mt-0 !py-1.5 hidden text-sm">
+                                                        <p data-fund-status class="hidden text-xs font-medium"></p>
                                                     </form>
                                                 @else
                                                     {{ $a->source_of_fund ?: '—' }}
@@ -203,23 +204,42 @@
 @push('scripts')
 <script>
     (() => {
-        // Source of Fund dropdown on each activity: a choice saves at once; "Others" asks for the name first.
+        // Source of Fund dropdown on each activity: a choice saves in the background so the page stays where it is; "Others" asks for the name first.
         document.querySelectorAll('[data-fund-form]').forEach((form) => {
             const select = form.querySelector('[data-fund-select]');
             const other = form.querySelector('[data-fund-other]');
             const value = form.querySelector('input[name="source_of_fund"]');
+            const status = form.querySelector('[data-fund-status]');
+            const say = (text, good) => {
+                status.textContent = text;
+                status.classList.remove('hidden', 'text-secondary', 'text-error');
+                status.classList.add(good ? 'text-secondary' : 'text-error');
+            };
+            const save = async () => {
+                say('Saving…', true);
+                try {
+                    const response = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
+                    if (!response.ok) { throw new Error(response.status === 422 ? 'Check the source of fund.' : 'Not saved.'); }
+                    const result = await response.json();
+                    form.closest('[data-fund]').dataset.fund = result.source_of_fund || '';
+                    say('Saved', true);
+                    if (result.status !== @json($aip->status)) { window.location.reload(); }
+                } catch (error) {
+                    say(error.message || 'Not saved. Try again.', false);
+                }
+            };
             select.addEventListener('change', () => {
                 if (select.value === 'Others') { other.classList.remove('hidden'); other.focus(); return; }
                 other.classList.add('hidden');
                 value.value = select.value;
-                form.submit();
+                save();
             });
             other.addEventListener('keydown', (event) => {
                 if (event.key !== 'Enter') { return; }
                 event.preventDefault();
                 if (!other.value.trim()) { return; }
                 value.value = other.value.trim();
-                form.submit();
+                save();
             });
         });
     })();

@@ -43,6 +43,17 @@ class AipActivityFundTest extends TestCase
         $this->assertNull(AipActivity::find($first->id)->source_of_fund);
     }
 
+    public function test_the_dropdown_saves_in_the_background_and_answers_with_json_instead_of_reloading_the_page(): void
+    {
+        $fx = SobFixture::make();
+        $this->actingAs($fx['user']);
+
+        $this->putJson(route('aip.activities.fund', [$fx['aip'], $fx['activities'][0]]), ['source_of_fund' => 'ARAL'])
+            ->assertOk()
+            ->assertJson(['source_of_fund' => 'ARAL']);
+        $this->assertSame('ARAL', AipActivity::find($fx['activities'][0]->id)->source_of_fund);
+    }
+
     public function test_an_activity_of_another_aip_cannot_be_changed_through_this_one(): void
     {
         $fx = SobFixture::make();

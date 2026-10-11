@@ -194,6 +194,10 @@ class AipController extends Controller
         $activity->update(['source_of_fund' => trim((string) ($data['source_of_fund'] ?? '')) ?: null]);
         $this->markRevised($aip);
 
+        if ($request->expectsJson()) {
+            return response()->json(['source_of_fund' => $activity->source_of_fund, 'status' => $aip->fresh()->status]);
+        }
+
         return back()->with('success', 'Source of fund saved.');
     }
 
