@@ -24,8 +24,8 @@
         .doc-title .school { margin: 4px 0 0; font-size: 13.5px; font-weight: bold; text-transform: uppercase; }
 
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        th, td { border: 1px solid #8d8d95; padding: 6px 6px; text-align: center; vertical-align: middle; word-wrap: break-word; overflow-wrap: break-word; hyphens: none; }
-        thead th { background: #f4e4d6; color: #3b2f26; font-weight: bold; font-size: 10.5px; padding: 9px 8px; }
+        th, td { border: 1px solid #8d8d95; padding: 6px 4px; text-align: center; vertical-align: middle; word-wrap: break-word; overflow-wrap: break-word; hyphens: none; }
+        thead th { background: #f4e4d6; color: #3b2f26; font-weight: bold; font-size: 10px; padding: 9px 3px; }
         .fund-note { margin-top: 3px; font-size: 8.5px; font-weight: normal; line-height: 1.25; }
         td.pillar { font-weight: bold; }
         td.group { background: #fcfcfd; } td.fund { background: #fafbfc; }
@@ -86,9 +86,7 @@
 
     <table>
         <colgroup>
-            <col style="width:6%"><col style="width:7%"><col style="width:7%"><col style="width:6%"><col style="width:7%"><col style="width:7%"><col style="width:8%">
-            <col style="width:4%"><col style="width:5%"><col style="width:4.5%"><col style="width:4.5%"><col style="width:4.5%"><col style="width:4.5%">
-            <col style="width:13%"><col style="width:7%"><col style="width:5%">
+            <col style="width:5.5%"><col style="width:6%"><col style="width:7%"><col style="width:6%"><col style="width:6.5%"><col style="width:6.5%"><col style="width:8.5%"><col style="width:5%"><col style="width:5%"><col style="width:5%"><col style="width:5%"><col style="width:5%"><col style="width:5%"><col style="width:11%"><col style="width:7%"><col style="width:6%">
         </colgroup>
         <thead>
             <tr>
