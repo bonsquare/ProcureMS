@@ -11,6 +11,12 @@
 
         .form-title { text-align: center; font-size: 8px; font-weight: bold; }
         h1 { margin: 2px 0 8px; text-align: center; font-size: 11px; letter-spacing: .3px; }
+        .instructions { margin: 0 0 8px; }
+        .instr { margin: 0 0 1px; font-size: 7.4px; line-height: 1.3; white-space: pre-wrap; }
+        .instr.b { font-weight: bold; }
+        .instr.i { font-style: italic; }
+        .instr.u { text-decoration: underline; }
+        .instr b, .instr i { font-weight: bold; font-style: italic; }
         .head-grid { display: grid; grid-template-columns: 1.4fr 1fr 1.1fr; gap: 6px 24px; margin-bottom: 8px; font-size: 8.5px; }
         .head-grid b { font-weight: bold; }
 
@@ -77,6 +83,8 @@
 <main class="paper" data-official-page data-doc="app-cse" data-paper="longbond" data-orientation="landscape" data-margin="8">
     <div class="form-title">APP-CSE 2020 FORM - 10 September 2019</div>
     <h1>ANNUAL PROCUREMENT PLAN-COMMON SUPPLIES AND EQUIPMENT (APP-CSE) {{ $plan->fiscal_year }} FORM</h1>
+
+    @include('partials.app-cse-instructions')
 
     <div class="head-grid">
         <div><div><b>Department/Bureau/Office:</b> {{ $plan->office_name }}</div><div><b>Region:</b> {{ $plan->region }}</div><div><b>Address:</b> {{ $plan->address }}</div></div>
