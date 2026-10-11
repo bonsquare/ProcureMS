@@ -15,7 +15,7 @@ class SobPlan extends Model
     protected $fillable = [
         'organization_id', 'school_id', 'aip_id', 'master_transaction_id', 'fiscal_year', 'quarter', 'fund_source', 'status',
         'prepared_by_name', 'prepared_by_position', 'recommended_by_name', 'recommended_by_position', 'approved_by_name', 'approved_by_position',
-        'approved_at', 'created_by', 'allotment_snapshot',
+        'approved_at', 'created_by', 'allotment_snapshot', 'school_id_number',
     ];
 
     protected function casts(): array
@@ -51,6 +51,12 @@ class SobPlan extends Model
     public function quarterLabel(): string
     {
         return self::QUARTERS[$this->quarter] ?? '';
+    }
+
+    /** The title printed in the page footer, e.g. "SOB 3rd Quarter 2026". */
+    public function documentTitle(): string
+    {
+        return 'SOB '.[1 => '1st', 2 => '2nd', 3 => '3rd', 4 => '4th'][(int) $this->quarter].' Quarter '.$this->fiscal_year;
     }
 
     public function total(): float
