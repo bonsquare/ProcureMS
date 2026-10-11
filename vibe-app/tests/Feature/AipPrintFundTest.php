@@ -7,12 +7,12 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\SobFixture;
 use Tests\TestCase;
 
-/** The AIP prints without a Remarks column, and the Source of Fund choice always offers MOOE, SBFP, ARAL and Other (specify). */
+/** The AIP print keeps its template; the Source of Fund choice of the form always offers MOOE, SBFP, ARAL and Other (specify). */
 class AipPrintFundTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_the_aip_print_has_no_remarks_column_or_remark_text(): void
+    public function test_the_aip_print_keeps_the_template_columns_including_remarks_and_the_template_fund_note(): void
     {
         $fx = SobFixture::make();
         $this->actingAs($fx['user']);
@@ -20,9 +20,10 @@ class AipPrintFundTest extends TestCase
 
         $html = $this->get(route('aip.print', $fx['aip']))->assertOk()->getContent();
 
-        $this->assertStringNotContainsString('Remarks', $html);
-        $this->assertStringNotContainsString('Prioritized by the school head', $html);
-        $this->assertStringContainsString('Teachers', $html, 'the Responsible Person column stays');
+        $this->assertStringContainsString('<th rowspan="2">Remarks</th>', $html, 'the template has a Remarks column');
+        $this->assertStringContainsString('Prioritized by the school head', $html);
+        $this->assertStringContainsString('Teachers', $html);
+        $this->assertStringContainsString('(School: MOOE, SEF, IGP, others; Division Office Proper:', $html, 'the template note is printed as in the AIP template');
         $table = substr($html, strpos($html, '<table'), strpos($html, '</table>') - strpos($html, '<table'));
         preg_match_all('/<col /', $table, $cols);
         preg_match('/<tbody>.*?<tr>(.*?)<\/tr>/s', $table, $firstRow);

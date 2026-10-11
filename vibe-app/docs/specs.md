@@ -25,6 +25,14 @@ These are official government and school documents. Enhance their presentation o
 - Formatting must never change underlying data (amounts, names, dates, reference numbers, quantities, totals, approvals).
 - Do not show `undefined`, `null`, `NaN`, or `[object Object]`. Show a blank or `N/A` as the official field requires. A document must still print when its saved details are empty (seeded and legacy records have no metadata); `tests/Feature/ProcurementOfficialToolbarTest.php` prints every document type with no details to guard this.
 
+### 1.1a Templates are fixed: only the content mapping changes
+
+Every official document follows the template file the owner provided for it: its columns, headings, captions, notes, order, colors and layout. A request about a document is a request about what is filled in (the content mapping: which data goes into which cell, what is typed or chosen, defaults and calculations), never about the template itself.
+
+- Do not remove, add, rename, reorder or restyle a column, heading, caption, note or section of a template because a request mentions it.
+- When a request could mean either the template or its content, open the provided template file first and keep the template as it is. If the request still conflicts with the template, ask the owner.
+- A template changes only when the owner supplies a new template file or says in so many words that the template itself is to change.
+
 ### 1.2 Typography
 
 - Primary font Arial, then Helvetica, then sans-serif. Keep Times New Roman where the official template requires it (PR, AIP, SIP).
