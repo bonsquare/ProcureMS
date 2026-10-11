@@ -21,6 +21,7 @@ use App\Models\SobPlan;
 use App\Services\FiscalYearService;
 use App\Services\MasterTransactionService;
 use App\Services\SipAipService;
+use App\Support\AppCategories;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -304,6 +305,7 @@ class PlanningController extends Controller
                         'estimated_unit_cost' => $item->unit_cost,
                         'estimated_total_cost' => $item->amount,
                         'fund_source' => $item->plan->fund_source,
+                        'category' => $item->category,
                     ],
                 );
                 $created = $appItem->wasRecentlyCreated;
@@ -332,6 +334,7 @@ class PlanningController extends Controller
             'procurement_mode' => ['nullable', 'string', 'max:100'],
             'procurement_schedule' => ['nullable', 'string', 'max:255'],
             'fund_source' => ['nullable', 'string', 'max:255'],
+            'category' => ['nullable', 'string', Rule::in(AppCategories::ALL)],
         ]);
         $data['estimated_total_cost'] = round((float) $data['quantity'] * (float) $data['estimated_unit_cost'], 2);
         $appItem->update($data);
@@ -390,6 +393,39 @@ class PlanningController extends Controller
         $appPlan->delete();
 
         return back()->with('success', 'The APP was deleted. Generate it again from the approved SOBs.');
+    }
+
+    /** The printed Annual Procurement Plan: lines grouped by category, zero amounts and empty categories left out. */
+    public function printApp(Request $request, AppPlan $appPlan)
+    {
+        abort_unless($request->user()->hasPermission('planning.view') || $request->user()->hasPermission('planning.manage'), 403);
+        abort_unless($this->schoolIds()->contains($appPlan->school_id), 403);
+        $appPlan->load('school', 'items');
+        $shown = $appPlan->items->filter(fn (AppItem $item) => (float) $item->estimated_total_cost > 0)->sortBy('id');
+        $groups = [];
+        foreach (AppCategories::ALL as $category) {
+            $lines = $shown->filter(fn (AppItem $item) => AppCategories::of($item->category) === $category)->values();
+            if ($lines->isNotEmpty()) {
+                $groups[] = ['category' => $category, 'lines' => $lines, 'total' => round((float) $lines->sum('estimated_total_cost'), 2)];
+            }
+        }
+
+        return view('app-print', ['plan' => $appPlan, 'school' => $appPlan->school, 'agency' => AgencySetting::first(), 'groups' => $groups, 'grandTotal' => round((float) $shown->sum('estimated_total_cost'), 2)]);
+    }
+
+    public function saveAppSignatories(Request $request, AppPlan $appPlan)
+    {
+        $this->authorizeManage($request);
+        abort_unless($this->schoolIds()->contains($appPlan->school_id), 403);
+        $rules = [];
+        foreach (['prepared_by', 'recommended_by', 'approved_by'] as $slot) {
+            foreach (['role', 'name', 'position'] as $field) {
+                $rules[$slot.'_'.$field] = ['nullable', 'string', 'max:255'];
+            }
+        }
+        $appPlan->update($request->validate($rules));
+
+        return back()->with('success', 'APP signatories saved.');
     }
 
     public function approveApp(Request $request, AppPlan $appPlan)

@@ -14,6 +14,7 @@ use App\Models\SipPlan;
 use App\Models\SobItem;
 use App\Models\SobPlan;
 use App\Models\User;
+use App\Support\AppCategories;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -203,7 +204,7 @@ class SobService
 
         return [
             'aip_activity_id' => (int) $values['aip_activity_id'], 'chart_of_account_id' => (int) $values['chart_of_account_id'], 'particulars' => trim($values['particulars']),
-            'frequency' => 1, 'quantity' => 1, 'unit' => trim((string) ($values['unit'] ?? '')), 'unit_cost' => $amount, 'amount' => $amount,
+            'frequency' => 1, 'quantity' => 1, 'unit' => trim((string) ($values['unit'] ?? '')), 'unit_cost' => $amount, 'amount' => $amount, 'category' => null,
         ];
     }
 
@@ -543,6 +544,7 @@ class SobService
             'quantity' => ['required', 'numeric', 'gt:0'],
             'unit' => ['required', 'string', 'max:50'],
             'unit_cost' => ['required', 'numeric', 'min:0'],
+            'category' => ['nullable', 'string', Rule::in(AppCategories::ALL)],
         ], ['aip_activity_id.exists' => 'Choose an activity of this school\'s AIP.', 'chart_of_account_id.exists' => 'Choose an account from the chart of accounts.'])->validate();
 
         $frequency = round((float) $values['frequency'], 2);
@@ -552,6 +554,7 @@ class SobService
         return [
             'aip_activity_id' => (int) $values['aip_activity_id'], 'chart_of_account_id' => (int) $values['chart_of_account_id'], 'particulars' => trim($values['particulars']),
             'frequency' => $frequency, 'quantity' => $quantity, 'unit' => trim($values['unit']), 'unit_cost' => $cost, 'amount' => round($frequency * $quantity * $cost, 2),
+            'category' => AppCategories::of($values['category'] ?? null),
         ];
     }
 
@@ -609,6 +612,7 @@ class SobService
             $appItem->update([
                 'procurement_item' => $item->particulars, 'specifications' => $item->activity?->activity, 'quantity' => round((float) $item->frequency * (float) $item->quantity, 2),
                 'unit' => $item->unit, 'estimated_unit_cost' => $item->unit_cost, 'estimated_total_cost' => $item->amount, 'fund_source' => $plan->fund_source,
+                'category' => $item->category,
             ]);
         }
         $this->audit($plan, $user, 'sob_revised', ['created' => $created, 'updated' => $updated]);
