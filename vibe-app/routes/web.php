@@ -30,9 +30,9 @@ Route::view('/privacy', 'privacy')->name('privacy');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'create'])->name('login');
-    Route::post('/login', [AuthController::class, 'store'])->name('login.store');
+    Route::post('/login', [AuthController::class, 'store'])->middleware('throttle:10,1')->name('login.store');
     Route::get('/register', [AuthController::class, 'register'])->name('register');
-    Route::post('/register', [AuthController::class, 'storeRegistration'])->name('register.store');
+    Route::post('/register', [AuthController::class, 'storeRegistration'])->middleware('throttle:10,60')->name('register.store');
 });
 
 Route::middleware(['auth', 'subscription.writes'])->group(function () {
