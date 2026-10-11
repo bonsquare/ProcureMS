@@ -88,14 +88,14 @@
         <colgroup>
             <col style="width:6%"><col style="width:7%"><col style="width:7%"><col style="width:6%"><col style="width:7%"><col style="width:7%"><col style="width:8%">
             <col style="width:4%"><col style="width:5%"><col style="width:4.5%"><col style="width:4.5%"><col style="width:4.5%"><col style="width:4.5%">
-            <col style="width:13%"><col style="width:12%">
+            <col style="width:13%"><col style="width:7%"><col style="width:5%">
         </colgroup>
         <thead>
             <tr>
                 <th rowspan="2">Pillar / Enabling Mechanism</th><th rowspan="2">KRA</th><th rowspan="2">Intermediate Outcome</th><th rowspan="2">Strategy</th><th rowspan="2">5-Point Agenda</th><th rowspan="2">Specific Program / Project</th><th rowspan="2">Activity</th>
                 <th rowspan="2">Physical Targets</th><th rowspan="2">Specific Timeline</th>
                 <th colspan="4">Financial Target (Monthly Disbursement Program)</th>
-                <th rowspan="2">Source of Fund<div class="fund-note">(School: MOOE, SBFP, ARAL, others; Division Office Proper: MOOE-GASS, MOOE-HRTD, MOOE-Sub-ARO, School MOOE, SEF, others.)</div></th><th rowspan="2">Responsible Person</th>
+                <th rowspan="2">Source of Fund<div class="fund-note">(School: MOOE, SEF, IGP, others; Division Office Proper: MOOE-GASS, MOOE-HRTD, MOOE-Sub-ARO, School MOOE, SEF, others.)</div></th><th rowspan="2">Responsible Person</th><th rowspan="2">Remarks</th>
             </tr>
             <tr><th>1st Quarter</th><th>2nd Quarter</th><th>3rd Quarter</th><th>4th Quarter</th></tr>
         </thead>
@@ -144,6 +144,7 @@
                     <td class="num">{{ $a ? $fmt($a->q1_amount) : '' }}</td><td class="num">{{ $a ? $fmt($a->q2_amount) : '' }}</td><td class="num">{{ $a ? $fmt($a->q3_amount) : '' }}</td><td class="num">{{ $a ? $fmt($a->q4_amount) : '' }}</td>
                     @if($fundSpan[$r] > 0)<td rowspan="{{ $fundSpan[$r] }}" class="fund">{{ $a?->source_of_fund }}</td>@endif
                     <td>{!! $a ? implode('<br>', array_map('e', $a->responsible_persons ?? [])) : '' !!}</td>
+                    <td>{!! $a ? implode('<br>', array_map('e', $a->remarks_list ?? [])) : '' !!}</td>
                 </tr>
             @endforeach
         </tbody>
