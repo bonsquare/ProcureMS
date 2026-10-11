@@ -1,0 +1,3314 @@
+[
+    {
+        "group_heading": null,
+        "category": "Pesticides or Pest Repellents",
+        "code": "10191509-IN-A01",
+        "description": "INSECTICIDE, aerosol type, net content: 600ml min",
+        "unit": "can",
+        "price": 139.36,
+        "sort_order": 1
+    },
+    {
+        "group_heading": null,
+        "category": "Solvents",
+        "code": "12191601-AL-E01",
+        "description": "ALCOHOL, ethyl, 68%-70%, scented, 500ml (-5ml)",
+        "unit": "bottle",
+        "price": 43.79,
+        "sort_order": 2
+    },
+    {
+        "group_heading": null,
+        "category": "Color Compounds and Dispersions",
+        "code": "12171703-SI-P01",
+        "description": "STAMP PAD INK, purple or violet",
+        "unit": "bottle",
+        "price": 30.8,
+        "sort_order": 3
+    },
+    {
+        "group_heading": null,
+        "category": "Films",
+        "code": "13111203-AC-F01",
+        "description": "ACETATE, thickness: 0.075mm min (gauge #3)",
+        "unit": "roll",
+        "price": 847.82,
+        "sort_order": 4
+    },
+    {
+        "group_heading": null,
+        "category": "Films",
+        "code": "13111201-CF-P01",
+        "description": "CARBON FILM, PE, black, size 210mm x 297mm",
+        "unit": "box",
+        "price": 221,
+        "sort_order": 5
+    },
+    {
+        "group_heading": null,
+        "category": "Films",
+        "code": "13111201-CF-P02",
+        "description": "CARBON FILM, PE, black, size 216mm x 330mm",
+        "unit": "box",
+        "price": 208.52,
+        "sort_order": 6
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "14111525-CA-A01",
+        "description": "CARTOLINA, assorted colors",
+        "unit": "pack",
+        "price": 83.72,
+        "sort_order": 7
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "14111506-CF-L11",
+        "description": "CONTINUOUS FORM, 1 PLY, 280 x 241mm",
+        "unit": "box",
+        "price": 682.24,
+        "sort_order": 8
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "14111506-CF-L12",
+        "description": "CONTINUOUS FORM, 1 PLY, 280 x 378mm",
+        "unit": "box",
+        "price": 1029.6,
+        "sort_order": 9
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "14111506-CF-L22",
+        "description": "CONTINUOUS FORM, 2 ply, 280 x 378mm, carbonless",
+        "unit": "box",
+        "price": 1528.8,
+        "sort_order": 10
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "14111506-CF-L21",
+        "description": "CONTINUOUS FORM, 2 ply, 280mm x 241mm, carbonless",
+        "unit": "box",
+        "price": 906.36,
+        "sort_order": 11
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "14111506-CF-L31",
+        "description": "CONTINUOUS FORM, 3 PLY, 280 x 241mm, carbonless",
+        "unit": "box",
+        "price": 884,
+        "sort_order": 12
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "14111506-CF-L32",
+        "description": "CONTINUOUS FORM, 3 PLY, 280 x 378mm, carbonless",
+        "unit": "box",
+        "price": 1508,
+        "sort_order": 13
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "14111609-LL-C01",
+        "description": "LOOSELEAF COVER, made of chipboard, for legal",
+        "unit": "bundle",
+        "price": 794.96,
+        "sort_order": 14
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "14111514-NP-S02",
+        "description": "NOTE PAD, stick on, 50mm x 76mm (2\" x 3\") min",
+        "unit": "pad",
+        "price": 37.06,
+        "sort_order": 15
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "14111514-NP-S04",
+        "description": "NOTE PAD, stick on, 76mm x 100mm (3\" x 4\") min",
+        "unit": "pad",
+        "price": 59.28,
+        "sort_order": 16
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "14111514-NP-S03",
+        "description": "NOTE PAD, stick on, 76mm x 76mm (3\" x 3\") min",
+        "unit": "pad",
+        "price": 47.73,
+        "sort_order": 17
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "14111514-NB-S01",
+        "description": "NOTEBOOK, STENOGRAPHER, spiral, 40 leaves",
+        "unit": "piece",
+        "price": 12.04,
+        "sort_order": 18
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "14111507-PP-M02",
+        "description": "PAPER, MULTICOPY, 80gsm, size: 216mm x 330mm",
+        "unit": "ream",
+        "price": 181.42,
+        "sort_order": 19
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "14111507-PP-C01",
+        "description": "PAPER, Multi-Purpose (COPY) A4, 70 gsm",
+        "unit": "ream",
+        "price": 230,
+        "sort_order": 20
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "14111507-PP-C02",
+        "description": "PAPER, Multi-Purpose (COPY) Legal, 70 gsm",
+        "unit": "ream",
+        "price": 250,
+        "sort_order": 21
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "14111531-PP-R01",
+        "description": "PAPER, PAD, ruled, size: 216mm x 330mm (± 2mm)",
+        "unit": "pad",
+        "price": 29.12,
+        "sort_order": 22
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "14111503-PA-P01",
+        "description": "PAPER, PARCHMENT, size: 210 x 297mm, multi-purpose",
+        "unit": "ream",
+        "price": 101.71,
+        "sort_order": 23
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "14111818-TH-P02",
+        "description": "PAPER, THERMAL, 55gsm, size: 216mm±1mm x 30m-0.3m",
+        "unit": "roll",
+        "price": 55.64,
+        "sort_order": 24
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "14111531-RE-B01",
+        "description": "RECORD BOOK, 300 PAGES, size: 214mm x 278mm min",
+        "unit": "book",
+        "price": 70.72,
+        "sort_order": 25
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "14111531-RE-B02",
+        "description": "RECORD BOOK, 500 PAGES, size: 214mm x 278mm min",
+        "unit": "book",
+        "price": 101.92,
+        "sort_order": 26
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "14111704-TT-P02",
+        "description": "TOILET TISSUE PAPER 2-plys sheets, 150 pulls",
+        "unit": "pack",
+        "price": 87.4,
+        "sort_order": 27
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "26111702-BT-A01",
+        "description": "BATTERY, dry cell, AAA, 2 pieces per blister pack",
+        "unit": "pack",
+        "price": 19.73,
+        "sort_order": 28
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "26111702-BT-A03",
+        "description": "BATTERY, dry cell, D, 1.5 volts, alkaline",
+        "unit": "pack",
+        "price": 96.2,
+        "sort_order": 29
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "31201610-GL-J01",
+        "description": "GLUE, all purpose, gross weight: 200 grams min",
+        "unit": "jar",
+        "price": 62.1,
+        "sort_order": 30
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "31151804-SW-H01",
+        "description": "STAPLE WIRE, for heavy duty staplers, (23/13)",
+        "unit": "box",
+        "price": 19.76,
+        "sort_order": 31
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "31151804-SW-S01",
+        "description": "STAPLE WIRE, STANDARD, (26/6)",
+        "unit": "box",
+        "price": 22.55,
+        "sort_order": 32
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "31201502-TA-E01",
+        "description": "TAPE, ELECTRICAL, 18mm x 16M min",
+        "unit": "roll",
+        "price": 18.67,
+        "sort_order": 33
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "31201503-TA-M01",
+        "description": "TAPE, MASKING, width: 24mm (±1mm)",
+        "unit": "roll",
+        "price": 54.6,
+        "sort_order": 34
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "31201517-TA-P01",
+        "description": "TAPE, PACKAGING, width: 48mm (±1mm)",
+        "unit": "roll",
+        "price": 19.97,
+        "sort_order": 35
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "31201512-TA-T01",
+        "description": "TAPE, TRANSPARENT, width: 2 inches",
+        "unit": "roll",
+        "price": 70,
+        "sort_order": 36
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "31201512-TA-T02",
+        "description": "TAPE, TRANSPARENT, width: 48mm (±1mm)",
+        "unit": "roll",
+        "price": 19.97,
+        "sort_order": 37
+    },
+    {
+        "group_heading": null,
+        "category": "Paper Materials and Products",
+        "code": "31151507-TW-P01",
+        "description": "TWINE, plastic, one (1) kilo per roll",
+        "unit": "roll",
+        "price": 58.24,
+        "sort_order": 38
+    },
+    {
+        "group_heading": null,
+        "category": "Heating and Ventilation and Air Circulation",
+        "code": "40101604-EF-G01",
+        "description": "ELECTRIC FAN, INDUSTRIAL, ground type, metal blade",
+        "unit": "unit",
+        "price": 1109.68,
+        "sort_order": 39
+    },
+    {
+        "group_heading": null,
+        "category": "Heating and Ventilation and Air Circulation",
+        "code": "40101604-EF-C01",
+        "description": "ELECTRIC FAN, ORBIT type, ceiling, metal blade",
+        "unit": "unit",
+        "price": 1369.68,
+        "sort_order": 40
+    },
+    {
+        "group_heading": null,
+        "category": "Heating and Ventilation and Air Circulation",
+        "code": "40101604-EF-S01",
+        "description": "ELECTRIC FAN, STAND type, plastic blade",
+        "unit": "unit",
+        "price": 856.88,
+        "sort_order": 41
+    },
+    {
+        "group_heading": null,
+        "category": "Heating and Ventilation and Air Circulation",
+        "code": "40101604-EF-W01",
+        "description": "ELECTRIC FAN, WALL type, plastic blade",
+        "unit": "unit",
+        "price": 770.11,
+        "sort_order": 42
+    },
+    {
+        "group_heading": null,
+        "category": "Lighting and Fixtures and Accessories",
+        "code": "39101605-FL-T01",
+        "description": "FLUORESCENT LAMP, 18 WATTS, linear tubular (T8)",
+        "unit": "piece",
+        "price": 39.39,
+        "sort_order": 43
+    },
+    {
+        "group_heading": null,
+        "category": "Lighting and Fixtures and Accessories",
+        "code": "39101628-LB-L01",
+        "description": "Ligth Bulb, LED, 7 watts 1 pc in individual box",
+        "unit": "piece",
+        "price": 82.16,
+        "sort_order": 44
+    },
+    {
+        "group_heading": null,
+        "category": "Measuring and Observing and Testing Equipment",
+        "code": "41111604-RU-P02",
+        "description": "RULER, plastic, 450mm (18\"), width: 38mm min",
+        "unit": "piece",
+        "price": 17.68,
+        "sort_order": 45
+    },
+    {
+        "group_heading": null,
+        "category": "Cleaning Equipment and Supplies",
+        "code": "47131812-AF-A01",
+        "description": "AIR FRESHENER, aerosol, 280ml/150g min",
+        "unit": "can",
+        "price": 86.06,
+        "sort_order": 46
+    },
+    {
+        "group_heading": null,
+        "category": "Cleaning Equipment and Supplies",
+        "code": "47131604-BR-S01",
+        "description": "BROOM, soft (tambo)",
+        "unit": "piece",
+        "price": 136.24,
+        "sort_order": 47
+    },
+    {
+        "group_heading": null,
+        "category": "Cleaning Equipment and Supplies",
+        "code": "47131604-BR-T01",
+        "description": "BROOM, STICK (TING-TING), usable length: 760mm min",
+        "unit": "piece",
+        "price": 18.2,
+        "sort_order": 48
+    },
+    {
+        "group_heading": null,
+        "category": "Cleaning Equipment and Supplies",
+        "code": "47131829-TB-C01",
+        "description": "CLEANER,TOILET BOWL AND URINAL, 900ml-1000ml cap",
+        "unit": "bottle",
+        "price": 41.6,
+        "sort_order": 49
+    },
+    {
+        "group_heading": null,
+        "category": "Cleaning Equipment and Supplies",
+        "code": "47131805-CL-P01",
+        "description": "CLEANSER, SCOURING POWDER, 350g min./can",
+        "unit": "can",
+        "price": 23.92,
+        "sort_order": 50
+    },
+    {
+        "group_heading": null,
+        "category": "Cleaning Equipment and Supplies",
+        "code": "47131811-DE-B02",
+        "description": "DETERGENT BAR, 140 grams as packed",
+        "unit": "bar",
+        "price": 9.03,
+        "sort_order": 51
+    },
+    {
+        "group_heading": null,
+        "category": "Cleaning Equipment and Supplies",
+        "code": "47131811-DE-P02",
+        "description": "DETERGENT POWDER, all purpose, 1kg",
+        "unit": "pack",
+        "price": 37.43,
+        "sort_order": 52
+    },
+    {
+        "group_heading": null,
+        "category": "Cleaning Equipment and Supplies",
+        "code": "47131803-DS-A01",
+        "description": "DISINFECTANT SPRAY, aerosol type, 400-550 grams",
+        "unit": "can",
+        "price": 128.96,
+        "sort_order": 53
+    },
+    {
+        "group_heading": null,
+        "category": "Cleaning Equipment and Supplies",
+        "code": "47131601-DU-P01",
+        "description": "DUST PAN, non-rigid plastic, w/ detachable handle",
+        "unit": "piece",
+        "price": 24.83,
+        "sort_order": 54
+    },
+    {
+        "group_heading": null,
+        "category": "Cleaning Equipment and Supplies",
+        "code": "47131802-FW-P02",
+        "description": "FLOOR WAX, PASTE, RED",
+        "unit": "can",
+        "price": 309.76,
+        "sort_order": 55
+    },
+    {
+        "group_heading": null,
+        "category": "Cleaning Equipment and Supplies",
+        "code": "47131830-FC-A01",
+        "description": "FURNITURE CLEANER, aerosol type, 300ml min per can",
+        "unit": "can",
+        "price": 115.53,
+        "sort_order": 56
+    },
+    {
+        "group_heading": null,
+        "category": "Cleaning Equipment and Supplies",
+        "code": "47121804-MP-B01",
+        "description": "MOP BUCKET, heavy duty, hard plastic",
+        "unit": "unit",
+        "price": 2288,
+        "sort_order": 57
+    },
+    {
+        "group_heading": null,
+        "category": "Cleaning Equipment and Supplies",
+        "code": "47131613-MP-H02",
+        "description": "MOPHANDLE, heavy duty, aluminum, screw type",
+        "unit": "piece",
+        "price": 145.6,
+        "sort_order": 58
+    },
+    {
+        "group_heading": null,
+        "category": "Cleaning Equipment and Supplies",
+        "code": "47131619-MP-R01",
+        "description": "MOPHEAD, made of rayon, weight: 400 grams min",
+        "unit": "piece",
+        "price": 123.76,
+        "sort_order": 59
+    },
+    {
+        "group_heading": null,
+        "category": "Cleaning Equipment and Supplies",
+        "code": "47131501-RG-C01",
+        "description": "RAGS, all cotton, 32 pieces per kilogram min",
+        "unit": "bundle",
+        "price": 53.82,
+        "sort_order": 60
+    },
+    {
+        "group_heading": null,
+        "category": "Cleaning Equipment and Supplies",
+        "code": "47131602-SC-N01",
+        "description": "SCOURING PAD, made of synthetic nylon, 140 x 220mm",
+        "unit": "pack",
+        "price": 107.12,
+        "sort_order": 61
+    },
+    {
+        "group_heading": null,
+        "category": "Cleaning Equipment and Supplies",
+        "code": "47121701-TB-P04",
+        "description": "TRASHBAG, plastic, transparent",
+        "unit": "roll",
+        "price": 134.68,
+        "sort_order": 62
+    },
+    {
+        "group_heading": null,
+        "category": "Cleaning Equipment and Supplies",
+        "code": "47121702-WB-P01",
+        "description": "WASTEBASKET, non-rigid plastic",
+        "unit": "piece",
+        "price": 23.59,
+        "sort_order": 63
+    },
+    {
+        "group_heading": null,
+        "category": "Information and Communication Technology (ICT) Equipment and Devices and Accessories",
+        "code": "43211507-DCT-03",
+        "description": "Desktop Computer, branded",
+        "unit": "unit",
+        "price": 39208,
+        "sort_order": 64
+    },
+    {
+        "group_heading": null,
+        "category": "Information and Communication Technology (ICT) Equipment and Devices and Accessories",
+        "code": "43201827-HD-X02",
+        "description": "EXTERNAL HARD DRIVE, 1TB, 2.5\"HDD, USB 3.0",
+        "unit": "piece",
+        "price": 2714,
+        "sort_order": 65
+    },
+    {
+        "group_heading": null,
+        "category": "Information and Communication Technology (ICT) Equipment and Devices and Accessories",
+        "code": "43202010-FD-U01",
+        "description": "FLASH DRIVE, 16 GB capacity",
+        "unit": "piece",
+        "price": 167.44,
+        "sort_order": 66
+    },
+    {
+        "group_heading": null,
+        "category": "Information and Communication Technology (ICT) Equipment and Devices and Accessories",
+        "code": "43211503-LCT-03",
+        "description": "Laptop Computer, branded",
+        "unit": "unit",
+        "price": 45747.52,
+        "sort_order": 67
+    },
+    {
+        "group_heading": null,
+        "category": "Information and Communication Technology (ICT) Equipment and Devices and Accessories",
+        "code": "43211708-MO-O01",
+        "description": "MOUSE, optical, USB connection type",
+        "unit": "unit",
+        "price": 111.3,
+        "sort_order": 68
+    },
+    {
+        "group_heading": null,
+        "category": "Information and Communication Technology (ICT) Equipment and Devices and Accessories",
+        "code": "43212102-PR-D02",
+        "description": "PRINTER, IMPACT DOT MATRIX, 24 pins, 136 column",
+        "unit": "unit",
+        "price": 38100.97,
+        "sort_order": 69
+    },
+    {
+        "group_heading": null,
+        "category": "Information and Communication Technology (ICT) Equipment and Devices and Accessories",
+        "code": "43212102-PR-D01",
+        "description": "PRINTER, IMPACT DOT MATRIX, 9 pins, 80 columns",
+        "unit": "unit",
+        "price": 9191.52,
+        "sort_order": 70
+    },
+    {
+        "group_heading": null,
+        "category": "Information and Communication Technology (ICT) Equipment and Devices and Accessories",
+        "code": "43212105-PR-L01",
+        "description": "PRINTER, LASER, monochrome, network-ready",
+        "unit": "unit",
+        "price": 724.88,
+        "sort_order": 71
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44121710-CH-W01",
+        "description": "CHALK, molded, white, dustless, length: 78mm min",
+        "unit": "box",
+        "price": 29.64,
+        "sort_order": 72
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44122105-BF-C01",
+        "description": "CLIP, BACKFOLD, all metal, clamping: 19mm (-1mm)",
+        "unit": "box",
+        "price": 9.05,
+        "sort_order": 73
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44122105-BF-C02",
+        "description": "CLIP, BACKFOLD, all metal, clamping: 25mm (-1mm)",
+        "unit": "box",
+        "price": 15.27,
+        "sort_order": 74
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44122105-BF-C03",
+        "description": "CLIP, BACKFOLD, all metal, clamping: 32mm (-1mm)",
+        "unit": "box",
+        "price": 20.8,
+        "sort_order": 75
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44122105-BF-C04",
+        "description": "CLIP, BACKFOLD, all metal, clamping: 50mm (-1mm)",
+        "unit": "box",
+        "price": 47.84,
+        "sort_order": 76
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44121801-CT-R01",
+        "description": "CORRECTION TAPE, film base type, UL 6m min",
+        "unit": "piece",
+        "price": 14.02,
+        "sort_order": 77
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44111515-DF-B01",
+        "description": "DATA FILE BOX, made of chipboard, with closed ends",
+        "unit": "piece",
+        "price": 77.2,
+        "sort_order": 78
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44122011-DF-F01",
+        "description": "DATA FOLDER, made of chipboard, taglia lock",
+        "unit": "piece",
+        "price": 68.64,
+        "sort_order": 79
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44121506-EN-D01",
+        "description": "ENVELOPE, DOCUMENTARY, for A4 size document",
+        "unit": "box",
+        "price": 673.09,
+        "sort_order": 80
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44121506-EN-D02",
+        "description": "ENVELOPE, DOCUMENTARY, for legal size document",
+        "unit": "box",
+        "price": 927.16,
+        "sort_order": 81
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44121506-EN-X01",
+        "description": "ENVELOPE, EXPANDING, KRAFTBOARD,for legal size doc",
+        "unit": "box",
+        "price": 738.4,
+        "sort_order": 82
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44121506-EN-X02",
+        "description": "ENVELOPE, EXPANDING, PLASTIC, 0.50mm thickness min",
+        "unit": "piece",
+        "price": 30.49,
+        "sort_order": 83
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44121506-EN-M02",
+        "description": "ENVELOPE, MAILING,white, 80gsm (-5%)",
+        "unit": "box",
+        "price": 362.44,
+        "sort_order": 84
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44121504-EN-W02",
+        "description": "ENVELOPE, mailing, white, with window",
+        "unit": "box",
+        "price": 414.13,
+        "sort_order": 85
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44111912-ER-B01",
+        "description": "ERASER, FELT, for blackboard/whiteboard",
+        "unit": "piece",
+        "price": 10.3,
+        "sort_order": 86
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44122118-FA-P01",
+        "description": "FASTENER, METAL, 70mm between prongs",
+        "unit": "box",
+        "price": 83.41,
+        "sort_order": 87
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44111515-FO-X01",
+        "description": "FILE ORGANIZER, expanding, plastic, 12 pockets",
+        "unit": "piece",
+        "price": 86.04,
+        "sort_order": 88
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44122018-FT-D01",
+        "description": "FILE TAB DIVIDER, bristol board, for A4",
+        "unit": "set",
+        "price": 11.13,
+        "sort_order": 89
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44122018-FT-D02",
+        "description": "FILE TAB DIVIDER, bristol board, for legal",
+        "unit": "set",
+        "price": 14.23,
+        "sort_order": 90
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44122011-FO-F01",
+        "description": "FOLDER, FANCY, for A4 size documents",
+        "unit": "bundle",
+        "price": 270.4,
+        "sort_order": 91
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44122011-FO-F02",
+        "description": "FOLDER, FANCY, for legal size documents",
+        "unit": "bundle",
+        "price": 311.88,
+        "sort_order": 92
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44122011-FO-L01",
+        "description": "FOLDER, L-TYPE, PLASTIC, for A4 size documents",
+        "unit": "pack",
+        "price": 187.08,
+        "sort_order": 93
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44122011-FO-L02",
+        "description": "FOLDER, L-TYPE, PLASTIC, for legal size documents",
+        "unit": "pack",
+        "price": 243.24,
+        "sort_order": 94
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44122027-FO-P01",
+        "description": "FOLDER, PRESSBOARD, size: 240mm x 370mm (-5mm)",
+        "unit": "box",
+        "price": 952.64,
+        "sort_order": 95
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44122011-FO-T03",
+        "description": "FOLDER, TAGBOARD, for A4 size documents",
+        "unit": "pack",
+        "price": 279,
+        "sort_order": 96
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44122011-FO-T04",
+        "description": "FOLDER, TAGBOARD, for legal size documents",
+        "unit": "pack",
+        "price": 321.36,
+        "sort_order": 97
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44122008-IT-T01",
+        "description": "INDEX TAB, self-adhesive, transparent",
+        "unit": "box",
+        "price": 53.14,
+        "sort_order": 98
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44111515-MF-B02",
+        "description": "MAGAZINE FILE BOX, LARGE size, made of chipboard",
+        "unit": "piece",
+        "price": 41.6,
+        "sort_order": 99
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44121716-MA-F01",
+        "description": "MARKER, FLUORESCENT, 3 assorted colors per set",
+        "unit": "set",
+        "price": 44.41,
+        "sort_order": 100
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44121708-MW-B01",
+        "description": "MARKER, whiteboard, black, felt tip, bullet type",
+        "unit": "piece",
+        "price": 13.38,
+        "sort_order": 101
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44121708-MW-B02",
+        "description": "MARKER, whiteboard, blue, felt tip, bullet type",
+        "unit": "piece",
+        "price": 13.38,
+        "sort_order": 102
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44121708-MW-B03",
+        "description": "MARKER, whiteboard, red, felt tip, bullet type",
+        "unit": "piece",
+        "price": 13.38,
+        "sort_order": 103
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44121708-MP-B01",
+        "description": "MARKER, PERMANENT, bullet type, black",
+        "unit": "piece",
+        "price": 8.98,
+        "sort_order": 104
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44121708-MP-B02",
+        "description": "MARKER, PERMANENT, bullet type, blue",
+        "unit": "piece",
+        "price": 8.98,
+        "sort_order": 105
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44121708-MP-B03",
+        "description": "MARKER, PERMANENT, bullet type, red",
+        "unit": "piece",
+        "price": 8.98,
+        "sort_order": 106
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44122104-PC-G01",
+        "description": "PAPER CLIP, vinyl/plastic coat, length: 32mm min",
+        "unit": "box",
+        "price": 7.76,
+        "sort_order": 107
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44122104-PC-J02",
+        "description": "PAPER CLIP, vinyl/plastic coat, length: 48mm min",
+        "unit": "box",
+        "price": 14.04,
+        "sort_order": 108
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44121706-PE-L01",
+        "description": "PENCIL, lead, w/ eraser, wood cased, hardness: HB",
+        "unit": "box",
+        "price": 20.79,
+        "sort_order": 109
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44122037-RB-P10",
+        "description": "RING BINDER, 80 rings, plastic, 32mm x 1.12m",
+        "unit": "bundle",
+        "price": 239.79,
+        "sort_order": 110
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44122101-RU-B01",
+        "description": "RUBBER BAND, 70mm min lay flat length (#18)",
+        "unit": "box",
+        "price": 109.5,
+        "sort_order": 111
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44121905-SP-F01",
+        "description": "STAMP PAD, FELT, bed dimension: 60mm x 100mm min",
+        "unit": "piece",
+        "price": 34.13,
+        "sort_order": 112
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44121612-BL-H01",
+        "description": "CUTTER BLADE, for heavy duty cutter",
+        "unit": "piece",
+        "price": 14.82,
+        "sort_order": 113
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44121612-CU-H01",
+        "description": "CUTTER KNIFE, for general purpose",
+        "unit": "piece",
+        "price": 33.43,
+        "sort_order": 114
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44103202-DS-M01",
+        "description": "DATING AND STAMPING MACHINE, heavy duty",
+        "unit": "piece",
+        "price": 453.96,
+        "sort_order": 115
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44121619-PS-M01",
+        "description": "PENCIL SHARPENER, manual, single cutter head",
+        "unit": "piece",
+        "price": 202.8,
+        "sort_order": 116
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44101602-PU-P01",
+        "description": "PUNCHER, paper, heavy duty, with two hole guide",
+        "unit": "piece",
+        "price": 131.96,
+        "sort_order": 117
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44121618-SS-S01",
+        "description": "SCISSORS, symmetrical, blade length: 65mm min",
+        "unit": "pair",
+        "price": 40.56,
+        "sort_order": 118
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44121615-ST-S01",
+        "description": "STAPLER, STANDARD TYPE, load cap: 200 staples min",
+        "unit": "piece",
+        "price": 176.8,
+        "sort_order": 119
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44121615-ST-B01",
+        "description": "STAPLER, BINDER TYPE, heavy duty, desktop",
+        "unit": "unit",
+        "price": 914.16,
+        "sort_order": 120
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44121613-SR-P01",
+        "description": "STAPLE REMOVER, PLIER-TYPE",
+        "unit": "piece",
+        "price": 24.9,
+        "sort_order": 121
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44121605-TD-T01",
+        "description": "TAPE DISPENSER, TABLE TOP, for 24mm width tape",
+        "unit": "piece",
+        "price": 55.83,
+        "sort_order": 122
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44101602-PB-M01",
+        "description": "BINDING AND PUNCHING MACHINE, binding cap: 50mm",
+        "unit": "unit",
+        "price": 9534.72,
+        "sort_order": 123
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44101807-CA-C01",
+        "description": "CALCULATOR, compact, 12 digits",
+        "unit": "unit",
+        "price": 346.85,
+        "sort_order": 124
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44101714-FX-M01",
+        "description": "FACSIMILE MACHINE, uses thermal paper",
+        "unit": "unit",
+        "price": 5642,
+        "sort_order": 125
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44101601-PT-M01",
+        "description": "PAPER TRIMMER/CUTTING MACHINE, max paper size: B4",
+        "unit": "unit",
+        "price": 9297.6,
+        "sort_order": 126
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44101603-PS-M01",
+        "description": "PAPER SHREDDER, cutting width: 3mm-4mm (Entry Level)",
+        "unit": "unit",
+        "price": 5699.2,
+        "sort_order": 127
+    },
+    {
+        "group_heading": null,
+        "category": "Office Equipment and Accessories and Supplies",
+        "code": "44101603-PS-M02",
+        "description": "PAPER SHREDDER, cutting width: 3mm-4mm (Mid-Level)",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 128
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103109-BR-D05",
+        "description": "DRUM CART, BROTHER DR-3455",
+        "unit": "cart",
+        "price": 6947.2,
+        "sort_order": 129
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-CA-C04",
+        "description": "INK CART, CANON CL-741, Col.",
+        "unit": "cart",
+        "price": 989.04,
+        "sort_order": 130
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-CA-C02",
+        "description": "INK CART, CANON CL-811, Colored",
+        "unit": "cart",
+        "price": 1029.6,
+        "sort_order": 131
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-CA-B04",
+        "description": "INK CART, CANON PG-740, Black",
+        "unit": "cart",
+        "price": 754,
+        "sort_order": 132
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-CA-B02",
+        "description": "INK CART, CANON PG-810, Black",
+        "unit": "cart",
+        "price": 780,
+        "sort_order": 133
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-EP-B17",
+        "description": "INK CART, EPSON C13T664100 (T6641), Black",
+        "unit": "cart",
+        "price": 249.6,
+        "sort_order": 134
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-EP-C17",
+        "description": "INK CART, EPSON C13T664200 (T6642), Cyan",
+        "unit": "cart",
+        "price": 249.6,
+        "sort_order": 135
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-EP-M17",
+        "description": "INK CART, EPSON C13T664300 (T6643), Magenta",
+        "unit": "cart",
+        "price": 249.6,
+        "sort_order": 136
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-EP-Y17",
+        "description": "INK CART, EPSON C13T664400 (T6644), Yellow",
+        "unit": "cart",
+        "price": 249.6,
+        "sort_order": 137
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-B40",
+        "description": "INK CART, HP C2P04AA (HP62) Black",
+        "unit": "cart",
+        "price": 773.76,
+        "sort_order": 138
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-T40",
+        "description": "INK CART, HP C2P06AA (HP62) Tri-color",
+        "unit": "cart",
+        "price": 950.56,
+        "sort_order": 139
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-B09",
+        "description": "INK CART, HP C9351AA, (HP21), Black",
+        "unit": "cart",
+        "price": 795.6,
+        "sort_order": 140
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-T10",
+        "description": "INK CART, HP C9352AA, (HP22), Tri-color",
+        "unit": "cart",
+        "price": 920.4,
+        "sort_order": 141
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-T30",
+        "description": "INK CART, HP C9363WA, (HP97), Tri-color",
+        "unit": "cart",
+        "price": 1492.4,
+        "sort_order": 142
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-P48",
+        "description": "INK CART, HP C9397A (HP72) 69ml Photo Black",
+        "unit": "cart",
+        "price": 1996.8,
+        "sort_order": 143
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-C48",
+        "description": "INK CART, HP C9398A (HP72) 69ml Cyan",
+        "unit": "cart",
+        "price": 1996.8,
+        "sort_order": 144
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-M48",
+        "description": "INK CART, HP C9399A (HP72) 69ml Magenta",
+        "unit": "cart",
+        "price": 1996.8,
+        "sort_order": 145
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-Y48",
+        "description": "INK CART, HP C9400A (HP72) 69ml Yellow",
+        "unit": "cart",
+        "price": 1996.8,
+        "sort_order": 146
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-G48",
+        "description": "INK CART, HP C9401A (HP72) 69ml Gray",
+        "unit": "cart",
+        "price": 1996.8,
+        "sort_order": 147
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-B48",
+        "description": "INK CART, HP C9403A (HP72) 130ml Matte Black",
+        "unit": "cart",
+        "price": 3016,
+        "sort_order": 148
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-B17",
+        "description": "INK CART, HP CC640WA, (HP60), Black",
+        "unit": "cart",
+        "price": 769.6,
+        "sort_order": 149
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-T17",
+        "description": "INK CART, HP CC643WA, (HP60), Tri-color",
+        "unit": "cart",
+        "price": 915.2,
+        "sort_order": 150
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-B35",
+        "description": "INK CART, HP CD887AA, (HP703), Black",
+        "unit": "cart",
+        "price": 366.08,
+        "sort_order": 151
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-T35",
+        "description": "INK CART, HP CD888AA, (HP703), Tri-color",
+        "unit": "cart",
+        "price": 366.08,
+        "sort_order": 152
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HX-C40",
+        "description": "INK CART, HP CD972AA, (HP 920XL), Cyan",
+        "unit": "cart",
+        "price": 641.68,
+        "sort_order": 153
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HX-M40",
+        "description": "INK CART, HP CD973AA, (HP 920XL), Magenta",
+        "unit": "cart",
+        "price": 641.68,
+        "sort_order": 154
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HX-Y40",
+        "description": "INK CART, HP CD974AA, (HP 920XL), Yellow",
+        "unit": "cart",
+        "price": 641.68,
+        "sort_order": 155
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HX-B40",
+        "description": "INK CART, HP CD975AA, (HP 920XL), Black",
+        "unit": "cart",
+        "price": 1269.84,
+        "sort_order": 156
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-B20",
+        "description": "INK CART, HP CH561WA, (HP61), Black",
+        "unit": "cart",
+        "price": 656.24,
+        "sort_order": 157
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-T20",
+        "description": "INK CART, HP CH562WA, (HP61), Tricolor",
+        "unit": "cart",
+        "price": 821.6,
+        "sort_order": 158
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-B49",
+        "description": "INK CART, HP CH565A (HP82) Black",
+        "unit": "cart",
+        "price": 1944.8,
+        "sort_order": 159
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-C49",
+        "description": "INK CART, HP CH566A (HP82) Cyan",
+        "unit": "cart",
+        "price": 1539.2,
+        "sort_order": 160
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-M49",
+        "description": "INK CART, HP CH567A (HP82) Magenta",
+        "unit": "cart",
+        "price": 1539.2,
+        "sort_order": 161
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-Y49",
+        "description": "INK CART, HP CH568A (HP82) Yellow",
+        "unit": "cart",
+        "price": 1539.2,
+        "sort_order": 162
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HX-B43",
+        "description": "INK CART, HP CN045AA, (HP950XL), Black",
+        "unit": "cart",
+        "price": 1570.4,
+        "sort_order": 163
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HX-C43",
+        "description": "INK CART, HP CN046AA, (HP951XL), Cyan",
+        "unit": "cart",
+        "price": 1165.84,
+        "sort_order": 164
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HX-M43",
+        "description": "INK CART, HP CN047AA, (HP951XL), Magenta",
+        "unit": "cart",
+        "price": 1165.84,
+        "sort_order": 165
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HX-Y43",
+        "description": "INK CART, HP CN048AA, (HP951XL). Yellow",
+        "unit": "cart",
+        "price": 1165.84,
+        "sort_order": 166
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-B36",
+        "description": "INK CART, HP CN692AA, (HP704), Black",
+        "unit": "cart",
+        "price": 366.08,
+        "sort_order": 167
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-T36",
+        "description": "INK CART, HP CN693AA, (HP704), Tri-color",
+        "unit": "cart",
+        "price": 366.08,
+        "sort_order": 168
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-B33",
+        "description": "INK CART, HP CZ107AA, (HP678), Black",
+        "unit": "cart",
+        "price": 366.08,
+        "sort_order": 169
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-T33",
+        "description": "INK CART, HP CZ108AA, (HP678), Tricolor",
+        "unit": "cart",
+        "price": 366.08,
+        "sort_order": 170
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-B42",
+        "description": "INK CART, HP CZ121A (HP685A), Black",
+        "unit": "cart",
+        "price": 366.08,
+        "sort_order": 171
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-C33",
+        "description": "INK CART, HP CZ122A (HP685A), Cyan",
+        "unit": "cart",
+        "price": 249.6,
+        "sort_order": 172
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-M33",
+        "description": "INK CART, HP CZ123A (HP685A), Magenta",
+        "unit": "cart",
+        "price": 249.6,
+        "sort_order": 173
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-Y33",
+        "description": "INK CART, HP CZ124A (HP685A), Yellow",
+        "unit": "cart",
+        "price": 249.6,
+        "sort_order": 174
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-T43",
+        "description": "INK CART, HP F6V26AA (HP680) Tri-color",
+        "unit": "cart",
+        "price": 405.6,
+        "sort_order": 175
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-B43",
+        "description": "INK CART, HP F6V27AA (HP680) Black",
+        "unit": "cart",
+        "price": 405.6,
+        "sort_order": 176
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-C50",
+        "description": "INK CART, HP L0S51AA (HP955) Cyan Original",
+        "unit": "cart",
+        "price": 995.75,
+        "sort_order": 177
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-M50",
+        "description": "INK CART, HP L0S54AA (HP955) Magenta Original",
+        "unit": "cart",
+        "price": 995.75,
+        "sort_order": 178
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-Y50",
+        "description": "INK CART, HP L0S57AA (HP955) Yellow Original",
+        "unit": "cart",
+        "price": 995.75,
+        "sort_order": 179
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-B50",
+        "description": "INK CART, HP L0S60AA (HP955) Black Original",
+        "unit": "cart",
+        "price": 4956.6,
+        "sort_order": 180
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HX-C48",
+        "description": "INK CART, HP L0S63AA (HP955XL) Cyan Original",
+        "unit": "cart",
+        "price": 1212.64,
+        "sort_order": 181
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HX-M48",
+        "description": "INK CART, HP L0S66AA (HP955XL) Magenta Original",
+        "unit": "cart",
+        "price": 1212.64,
+        "sort_order": 182
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HX-Y48",
+        "description": "INK CART, HP L0S69AA (HP955XL) Yellow Original",
+        "unit": "cart",
+        "price": 1212.64,
+        "sort_order": 183
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HX-B48",
+        "description": "INK CART, HP L0S72AA (HP955XL) Black Original",
+        "unit": "cart",
+        "price": 1644.24,
+        "sort_order": 184
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-C51",
+        "description": "INK CART, HP T6L89AA (HP905) Cyan Original",
+        "unit": "cart",
+        "price": 453.62,
+        "sort_order": 185
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-M51",
+        "description": "INK CART, HP T6L93AA (HP905) Magenta Original",
+        "unit": "cart",
+        "price": 453.62,
+        "sort_order": 186
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-Y51",
+        "description": "INK CART, HP T6L97AA (HP905) Yellow Original",
+        "unit": "cart",
+        "price": 453.62,
+        "sort_order": 187
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HP-B51",
+        "description": "INK CART, HP T6M01AA (HP905) Black Original",
+        "unit": "cart",
+        "price": 741.28,
+        "sort_order": 188
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HX-C49",
+        "description": "INK CART, HP T6M05AA (HP905XL) Cyan Original",
+        "unit": "cart",
+        "price": null,
+        "sort_order": 189
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HX-M49",
+        "description": "INK CART, HP T6M09AA (HP905XL) Magenta Original",
+        "unit": "cart",
+        "price": null,
+        "sort_order": 190
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HX-Y49",
+        "description": "INK CART, HP T6M13AA (HP905XL) Yellow Original",
+        "unit": "cart",
+        "price": null,
+        "sort_order": 191
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103105-HX-B49",
+        "description": "INK CART, HP T6M17AA (HP905XL) Black Original",
+        "unit": "cart",
+        "price": null,
+        "sort_order": 192
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103112-EP-R05",
+        "description": "RIBBON CART, EPSON C13S015516 (#8750), Black",
+        "unit": "cart",
+        "price": 77.43,
+        "sort_order": 193
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103112-EP-R07",
+        "description": "RIBBON CART, EPSON C13S015531 (S015086), Black",
+        "unit": "cart",
+        "price": 716.44,
+        "sort_order": 194
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103112-EP-R13",
+        "description": "RIBBON CART, EPSON C13S015632, Black, forLX-310",
+        "unit": "cart",
+        "price": 77.43,
+        "sort_order": 195
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-BR-B03",
+        "description": "TONER CART, BROTHER TN-2025, Black",
+        "unit": "cart",
+        "price": 2685.28,
+        "sort_order": 196
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-BR-B04",
+        "description": "TONER CART, BROTHER TN-2130, Black",
+        "unit": "cart",
+        "price": 1892.8,
+        "sort_order": 197
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-BR-B05",
+        "description": "TONER CART, BROTHER TN-2150, Black",
+        "unit": "cart",
+        "price": 2685.28,
+        "sort_order": 198
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-BR-B09",
+        "description": "TONER CART, BROTHER TN-3320, Black",
+        "unit": "cart",
+        "price": 3567.2,
+        "sort_order": 199
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-BR-B11",
+        "description": "TONER CART, BROTHER TN-3350, Black, for HL5450DN (CU Printer)",
+        "unit": "cart",
+        "price": 5002.4,
+        "sort_order": 200
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-B12",
+        "description": "TONER CART, HP CB435A, Black",
+        "unit": "cart",
+        "price": 3380,
+        "sort_order": 201
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-B14",
+        "description": "TONER CART, HP CB540A, Black",
+        "unit": "cart",
+        "price": 3337.36,
+        "sort_order": 202
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-B18",
+        "description": "TONER CART, HP CE255A, Black",
+        "unit": "cart",
+        "price": 7332,
+        "sort_order": 203
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-B21",
+        "description": "TONER CART, HP CE278A, Black",
+        "unit": "cart",
+        "price": 3952,
+        "sort_order": 204
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-B22",
+        "description": "TONER CART, HP CE285A (HP85A), Black",
+        "unit": "cart",
+        "price": 3432,
+        "sort_order": 205
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-B23",
+        "description": "TONER CART, HP CE310A, Black",
+        "unit": "cart",
+        "price": 2360.8,
+        "sort_order": 206
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-C23",
+        "description": "TONER CART, HP CE311A, Cyan",
+        "unit": "cart",
+        "price": 2542.8,
+        "sort_order": 207
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-Y23",
+        "description": "TONER CART, HP CE312A, Yellow",
+        "unit": "cart",
+        "price": 2542.8,
+        "sort_order": 208
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-M23",
+        "description": "TONER CART, HP CE313A, Magenta",
+        "unit": "cart",
+        "price": 2542.8,
+        "sort_order": 209
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-B24",
+        "description": "TONER CART, HP CE320A, Black",
+        "unit": "cart",
+        "price": 2916.16,
+        "sort_order": 210
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-C24",
+        "description": "TONER CART, HP CE321A, Cyan",
+        "unit": "cart",
+        "price": 3072.16,
+        "sort_order": 211
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-Y24",
+        "description": "TONER CART, HP CE322A, Yellow",
+        "unit": "cart",
+        "price": 3072.16,
+        "sort_order": 212
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-M24",
+        "description": "TONER CART, HP CE323A, Magenta",
+        "unit": "cart",
+        "price": 3072.16,
+        "sort_order": 213
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-B25",
+        "description": "TONER CART, HP CE390A, Black",
+        "unit": "cart",
+        "price": 7856.16,
+        "sort_order": 214
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-B26",
+        "description": "TONER CART, HP CE400A, Black",
+        "unit": "cart",
+        "price": 6900.4,
+        "sort_order": 215
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-C26",
+        "description": "TONER CART, HP CE401A, Cyan",
+        "unit": "cart",
+        "price": 10193.04,
+        "sort_order": 216
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-Y26",
+        "description": "TONER CART, HP CE402A, Yellow",
+        "unit": "cart",
+        "price": 10193.04,
+        "sort_order": 217
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-M26",
+        "description": "TONER CART, HP CE403A, Magenta",
+        "unit": "cart",
+        "price": 10193.04,
+        "sort_order": 218
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-B27",
+        "description": "TONER CART, HP CE410A, (HP305), Black",
+        "unit": "cart",
+        "price": 4201.6,
+        "sort_order": 219
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-C27",
+        "description": "TONER CART, HP CE411A, (HP305), Cyan",
+        "unit": "cart",
+        "price": 6011.2,
+        "sort_order": 220
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-Y27",
+        "description": "TONER CART, HP CE412A, (HP305), Yellow",
+        "unit": "cart",
+        "price": 6011.2,
+        "sort_order": 221
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-M27",
+        "description": "TONER CART, HP CE413A, (HP305), Magenta",
+        "unit": "cart",
+        "price": 6011.2,
+        "sort_order": 222
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-B28",
+        "description": "TONER CART, HP CE505A, Black",
+        "unit": "cart",
+        "price": 4466.8,
+        "sort_order": 223
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HX-B28",
+        "description": "TONER CART, HP CE505X, Black, high cap",
+        "unit": "cart",
+        "price": 7213.44,
+        "sort_order": 224
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-B52",
+        "description": "TONER CART, HP CF217A (HP17A) Black LaserJet",
+        "unit": "cart",
+        "price": 3044.28,
+        "sort_order": 225
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-B53",
+        "description": "TONER CART, HP CF226A (HP26A) Black LaserJet",
+        "unit": "cart",
+        "price": 5787.6,
+        "sort_order": 226
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HX-B50",
+        "description": "TONER CART, HP CF226XC (HP26XC) Black LaserJet",
+        "unit": "cart",
+        "price": null,
+        "sort_order": 227
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-B55",
+        "description": "TONER CART, HP CF280A, LaserJet Pro M401/M425 2.7K Black",
+        "unit": "cart",
+        "price": 5200,
+        "sort_order": 228
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-B51",
+        "description": "TONER CART, HP CF280XC",
+        "unit": "cart",
+        "price": 7112.56,
+        "sort_order": 229
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-B56",
+        "description": "TONER CART, HP CF281A (HP81A) Black LaserJet",
+        "unit": "cart",
+        "price": 8606,
+        "sort_order": 230
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-B57",
+        "description": "TONER CART, HP CF283A (HP83A) LaserJet Black",
+        "unit": "cart",
+        "price": 3241.7,
+        "sort_order": 231
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HX-B51",
+        "description": "TONER CART, HP CF283XC (HP83X) Blk Contract LJ",
+        "unit": "cart",
+        "price": 4056,
+        "sort_order": 232
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-B58",
+        "description": "TONER CART, HP CF287A (HP87) black",
+        "unit": "cart",
+        "price": 10051,
+        "sort_order": 233
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-B59",
+        "description": "TONER CART, HP CF310AC (HP826) black",
+        "unit": "cart",
+        "price": null,
+        "sort_order": 234
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-C59",
+        "description": "TONER CART, HP CF311AC (HP826) cyan",
+        "unit": "cart",
+        "price": null,
+        "sort_order": 235
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-Y59",
+        "description": "TONER CART, HP CF312AC (HP826) yellow",
+        "unit": "cart",
+        "price": null,
+        "sort_order": 236
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-M59",
+        "description": "TONER CART, HP CF313AC (HP826) magenta",
+        "unit": "cart",
+        "price": null,
+        "sort_order": 237
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HX-B52",
+        "description": "TONER CART, HP CF325XC (HP25X) Black LaserJet",
+        "unit": "cart",
+        "price": 13156,
+        "sort_order": 238
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-B60",
+        "description": "TONER CART, HP CF350A Black LJ",
+        "unit": "cart",
+        "price": 2901.6,
+        "sort_order": 239
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-C60",
+        "description": "TONER CART, HP CF351A Cyan LJ",
+        "unit": "cart",
+        "price": 2953.6,
+        "sort_order": 240
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-Y60",
+        "description": "TONER CART, HP CF352A Yellow LJ",
+        "unit": "cart",
+        "price": 2953.6,
+        "sort_order": 241
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-M60",
+        "description": "TONER CART, HP CF353A Magenta LJ",
+        "unit": "cart",
+        "price": 2953.6,
+        "sort_order": 242
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-B61",
+        "description": "TONER CART, HP CF360A (HP508A) Black LaserJet",
+        "unit": "cart",
+        "price": 7056.4,
+        "sort_order": 243
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HX-B53",
+        "description": "TONER CART, HP CF360XC (HP508X) Black Contract LJ",
+        "unit": "cart",
+        "price": null,
+        "sort_order": 244
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-C61",
+        "description": "TONER CART, HP CF361A (HP508A) Cyan LaserJet",
+        "unit": "cart",
+        "price": 8846.24,
+        "sort_order": 245
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HX-C53",
+        "description": "TONER CART, HP CF361XC (HP508X) Cyan Contract LJ",
+        "unit": "cart",
+        "price": null,
+        "sort_order": 246
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-Y61",
+        "description": "TONER CART, HP CF362A (HP508A) Yellow LaserJet",
+        "unit": "cart",
+        "price": 8846.24,
+        "sort_order": 247
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HX-Y53",
+        "description": "TONER CART, HP CF362XC (HP508X) Yellow Contract LJ",
+        "unit": "cart",
+        "price": null,
+        "sort_order": 248
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-M61",
+        "description": "TONER CART, HP CF363A (HP508A) Magenta LaserJet",
+        "unit": "cart",
+        "price": 8846.24,
+        "sort_order": 249
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HX-M53",
+        "description": "TONER CART, HP CF363XC (HP508X) Magenta Contract LJ",
+        "unit": "cart",
+        "price": null,
+        "sort_order": 250
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-B62",
+        "description": "TONER CART, HP CF400A (HP201A) Black LaserJet",
+        "unit": "cart",
+        "price": 3429.78,
+        "sort_order": 251
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-C62",
+        "description": "TONER CART, HP CF401A (HP201A) Cyan LaserJet",
+        "unit": "cart",
+        "price": 4043.83,
+        "sort_order": 252
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-Y62",
+        "description": "TONER CART, HP CF402A (HP201A) Yellow LaserJet",
+        "unit": "cart",
+        "price": 4043.83,
+        "sort_order": 253
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-M62",
+        "description": "TONER CART, HP CF403A (HP201A) Magenta LaserJet",
+        "unit": "cart",
+        "price": 4043.83,
+        "sort_order": 254
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-B63",
+        "description": "TONER CART, HP CF410A (HP410A) black",
+        "unit": "cart",
+        "price": 4440.8,
+        "sort_order": 255
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HX-B54",
+        "description": "TONER CART, HP CF410XC (HP410XC) black",
+        "unit": "cart",
+        "price": 7441.2,
+        "sort_order": 256
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-C63",
+        "description": "TONER CART, HP CF411A (HP410A) cyan",
+        "unit": "cart",
+        "price": 5616,
+        "sort_order": 257
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HX-C54",
+        "description": "TONER CART, HP CF411XC (HP410XC) cyan",
+        "unit": "cart",
+        "price": 7472.4,
+        "sort_order": 258
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-Y63",
+        "description": "TONER CART, HP CF412A (HP410A) yellow",
+        "unit": "cart",
+        "price": 5616,
+        "sort_order": 259
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HX-Y54",
+        "description": "TONER CART, HP CF412XC (HP410XC) yellow",
+        "unit": "cart",
+        "price": 7472.4,
+        "sort_order": 260
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-M63",
+        "description": "TONER CART, HP CF413A (HP410A) magenta",
+        "unit": "cart",
+        "price": 5616,
+        "sort_order": 261
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HX-M54",
+        "description": "TONER CART, HP CF413XC (HP410XC) magenta",
+        "unit": "cart",
+        "price": 7472.4,
+        "sort_order": 262
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-B34",
+        "description": "TONER CART, HP Q2612A, Black",
+        "unit": "cart",
+        "price": 3900,
+        "sort_order": 263
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-B39",
+        "description": "TONER CART, HP Q5942A, Black",
+        "unit": "cart",
+        "price": 7482.8,
+        "sort_order": 264
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-HP-B48",
+        "description": "TONER CART, HP Q7553A, Black",
+        "unit": "cart",
+        "price": 3972.8,
+        "sort_order": 265
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-LX-B03",
+        "description": "TONER CART, LEXMARK E360H11P, Black",
+        "unit": "cart",
+        "price": 8725.6,
+        "sort_order": 266
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-LX-B05",
+        "description": "TONER CART, LEXMARK T650A11P, Black",
+        "unit": "cart",
+        "price": 9490,
+        "sort_order": 267
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-SA-B06",
+        "description": "TONER CART, SAMSUNG MLT-D101S, Black",
+        "unit": "cart",
+        "price": 3406,
+        "sort_order": 268
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-SA-B07",
+        "description": "TONER CART, SAMSUNG MLT-D103S, Black",
+        "unit": "cart",
+        "price": 2350.4,
+        "sort_order": 269
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-SA-B08",
+        "description": "TONER CART, SAMSUNG MLT-D104S, Black",
+        "unit": "cart",
+        "price": 2454.4,
+        "sort_order": 270
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-SA-B09",
+        "description": "TONER CART, SAMSUNG MLT-D105L, Black",
+        "unit": "cart",
+        "price": 3380,
+        "sort_order": 271
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-SA-B14",
+        "description": "TONER CART, SAMSUNG MLT-D108S, Black",
+        "unit": "cart",
+        "price": 2875.58,
+        "sort_order": 272
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-SA-B21",
+        "description": "TONER CART, SAMSUNG MLT-D203E, Black",
+        "unit": "cart",
+        "price": 7259.2,
+        "sort_order": 273
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-SA-B18",
+        "description": "TONER CART, SAMSUNG MLT-D203L, Black",
+        "unit": "cart",
+        "price": 3458,
+        "sort_order": 274
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-SA-B20",
+        "description": "TONER CART, SAMSUNG MLT-D203U, black",
+        "unit": "cart",
+        "price": 6442.8,
+        "sort_order": 275
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-SA-B12",
+        "description": "TONER CART, SAMSUNG MLT-D205E, Black",
+        "unit": "cart",
+        "price": 7321.14,
+        "sort_order": 276
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-SA-B05",
+        "description": "TONER CART, SAMSUNG MLT-D205L, Black",
+        "unit": "cart",
+        "price": 3962.24,
+        "sort_order": 277
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-SA-B10",
+        "description": "TONER CART, SAMSUNG SCX-D6555A, Black",
+        "unit": "cart",
+        "price": 4066.4,
+        "sort_order": 278
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-BR-B15",
+        "description": "TONER CARTRIDGE, BROTHER TN-3478, Blackf, for printer HL-6400DW (12,000 pages)",
+        "unit": "cart",
+        "price": 6370,
+        "sort_order": 279
+    },
+    {
+        "group_heading": null,
+        "category": "Printer or Facsimile or Photocopier Supplies",
+        "code": "44103103-CA-B00",
+        "description": "TONER CARTRIDGE, CANON 324 II, for printer LBP6780x",
+        "unit": "cart",
+        "price": 13399.36,
+        "sort_order": 280
+    },
+    {
+        "group_heading": null,
+        "category": "Audio and Visual Equipment and Supplies",
+        "code": "45121517-DO-C01",
+        "description": "DOCUMENT CAMERA, 3.2M pixels",
+        "unit": "unit",
+        "price": 28860,
+        "sort_order": 281
+    },
+    {
+        "group_heading": null,
+        "category": "Audio and Visual Equipment and Supplies",
+        "code": "45111609-MM-P01",
+        "description": "MULTIMEDIA PROJECTOR, 4000 min ANSI Lumens",
+        "unit": "unit",
+        "price": 17472,
+        "sort_order": 282
+    },
+    {
+        "group_heading": null,
+        "category": "Audio and Visual Equipment and Supplies",
+        "code": "55121905-PH-F01",
+        "description": "PHILIPPINE NATIONAL FLAG, 100% polyester",
+        "unit": "piece",
+        "price": 284.84,
+        "sort_order": 283
+    },
+    {
+        "group_heading": null,
+        "category": "Audio and Visual Equipment and Supplies",
+        "code": "55101524-RA-H01",
+        "description": "HANDBOOK (RA 9184), 7th Edition",
+        "unit": "book",
+        "price": 29.12,
+        "sort_order": 284
+    },
+    {
+        "group_heading": null,
+        "category": "Audio and Visual Equipment and Supplies",
+        "code": "46191601-FE-M01",
+        "description": "FIRE EXTINGUISHER, DRY CHEMICAL, 4.5kgs",
+        "unit": "unit",
+        "price": 1144,
+        "sort_order": 285
+    },
+    {
+        "group_heading": null,
+        "category": "Audio and Visual Equipment and Supplies",
+        "code": "46191601-FE-H01",
+        "description": "FIRE EXTINGUISHER, PURE HCFC 123, 4.5kgs",
+        "unit": "unit",
+        "price": 5613.25,
+        "sort_order": 286
+    },
+    {
+        "group_heading": null,
+        "category": "Audio and Visual Equipment and Supplies",
+        "code": "52161535-DV-R01",
+        "description": "DIGITAL VOICE RECORDER, memory: 4GB (expandable)",
+        "unit": "unit",
+        "price": 6415.64,
+        "sort_order": 287
+    },
+    {
+        "group_heading": null,
+        "category": "Audio and Visual Equipment and Supplies",
+        "code": "56101504-CM-B01",
+        "description": "CHAIR, monobloc, beige, with backrest, w/o armrest",
+        "unit": "piece",
+        "price": 303.68,
+        "sort_order": 288
+    },
+    {
+        "group_heading": null,
+        "category": "Audio and Visual Equipment and Supplies",
+        "code": "56101504-CM-W01",
+        "description": "CHAIR,monobloc, white, with backrest, w/o armrest",
+        "unit": "piece",
+        "price": 301.6,
+        "sort_order": 289
+    },
+    {
+        "group_heading": null,
+        "category": "Audio and Visual Equipment and Supplies",
+        "code": "56101519-TM-S01",
+        "description": "TABLE, MONOBLOC, WHITE, 889 x 889mm (35\" x 35\")min",
+        "unit": "unit",
+        "price": 1336.4,
+        "sort_order": 290
+    },
+    {
+        "group_heading": null,
+        "category": "Audio and Visual Equipment and Supplies",
+        "code": "56101519-TM-S02",
+        "description": "TABLE, MONOBLOC, BEIGE, 889 x 889mm (35\" x 35\")min",
+        "unit": "unit",
+        "price": 1315.6,
+        "sort_order": 291
+    },
+    {
+        "group_heading": null,
+        "category": "Arts and Crafts Equipment and Accessories and Supplies",
+        "code": "60121413-CB-P01",
+        "description": "CLEARBOOK, 20 transparent pockets, for A4 size",
+        "unit": "piece",
+        "price": 39.78,
+        "sort_order": 292
+    },
+    {
+        "group_heading": null,
+        "category": "Arts and Crafts Equipment and Accessories and Supplies",
+        "code": "60121413-CB-P02",
+        "description": "CLEARBOOK, 20 transparent pockets, for LEGAL size",
+        "unit": "piece",
+        "price": 42.38,
+        "sort_order": 293
+    },
+    {
+        "group_heading": null,
+        "category": "Arts and Crafts Equipment and Accessories and Supplies",
+        "code": "60121534-ER-P01",
+        "description": "ERASER, PLASTIC/RUBBER, for pencil draft/writing",
+        "unit": "piece",
+        "price": 4.42,
+        "sort_order": 294
+    },
+    {
+        "group_heading": null,
+        "category": "Arts and Crafts Equipment and Accessories and Supplies",
+        "code": "60121524-SP-G01",
+        "description": "SIGN PEN, BLACK, liquid/gel ink, 0.5mm needle tip",
+        "unit": "piece",
+        "price": 34.61,
+        "sort_order": 295
+    },
+    {
+        "group_heading": null,
+        "category": "Arts and Crafts Equipment and Accessories and Supplies",
+        "code": "60121524-SP-G02",
+        "description": "SIGN PEN, BLUE, liquid/gel ink, 0.5mm needle tip",
+        "unit": "piece",
+        "price": 34.61,
+        "sort_order": 296
+    },
+    {
+        "group_heading": null,
+        "category": "Arts and Crafts Equipment and Accessories and Supplies",
+        "code": "60121524-SP-G03",
+        "description": "SIGN PEN, RED, liquid/gel ink, 0.5mm needle tip",
+        "unit": "piece",
+        "price": 34.61,
+        "sort_order": 297
+    },
+    {
+        "group_heading": null,
+        "category": "Arts and Crafts Equipment and Accessories and Supplies",
+        "code": "60121124-WR-P01",
+        "description": "WRAPPING PAPER, kraft, 65gsm (-5%)",
+        "unit": "pack",
+        "price": 154.84,
+        "sort_order": 298
+    },
+    {
+        "group_heading": null,
+        "category": "SOFTWARE",
+        "code": "43231513-SFT-001",
+        "description": "Business function specific software",
+        "unit": "license",
+        "price": null,
+        "sort_order": 299
+    },
+    {
+        "group_heading": null,
+        "category": "SOFTWARE",
+        "code": "43231602-SFT-002",
+        "description": "Finance accounting and enterprise resource planning ERP software",
+        "unit": "license",
+        "price": null,
+        "sort_order": 300
+    },
+    {
+        "group_heading": null,
+        "category": "SOFTWARE",
+        "code": "43232004-SFT-003",
+        "description": "Computer game or entertainment software",
+        "unit": "license",
+        "price": null,
+        "sort_order": 301
+    },
+    {
+        "group_heading": null,
+        "category": "SOFTWARE",
+        "code": "43232107-SFT-004",
+        "description": "Content authoring and editing software",
+        "unit": "license",
+        "price": null,
+        "sort_order": 302
+    },
+    {
+        "group_heading": null,
+        "category": "SOFTWARE",
+        "code": "43232202-SFT-005",
+        "description": "Content management software",
+        "unit": "license",
+        "price": null,
+        "sort_order": 303
+    },
+    {
+        "group_heading": null,
+        "category": "SOFTWARE",
+        "code": "43232304-SFT-006",
+        "description": "Data management and query software",
+        "unit": "license",
+        "price": null,
+        "sort_order": 304
+    },
+    {
+        "group_heading": null,
+        "category": "SOFTWARE",
+        "code": "43232402-SFT-007",
+        "description": "Development software",
+        "unit": "license",
+        "price": null,
+        "sort_order": 305
+    },
+    {
+        "group_heading": null,
+        "category": "SOFTWARE",
+        "code": "43232505-SFT-008",
+        "description": "Educational or reference software",
+        "unit": "license",
+        "price": null,
+        "sort_order": 306
+    },
+    {
+        "group_heading": null,
+        "category": "SOFTWARE",
+        "code": "43232603-SFT-009",
+        "description": "Industry specific software",
+        "unit": "license",
+        "price": null,
+        "sort_order": 307
+    },
+    {
+        "group_heading": null,
+        "category": "SOFTWARE",
+        "code": "43232701-SFT-010",
+        "description": "Network applications software",
+        "unit": "license",
+        "price": null,
+        "sort_order": 308
+    },
+    {
+        "group_heading": null,
+        "category": "SOFTWARE",
+        "code": "43232802-SFT-011",
+        "description": "Network management software",
+        "unit": "license",
+        "price": null,
+        "sort_order": 309
+    },
+    {
+        "group_heading": null,
+        "category": "SOFTWARE",
+        "code": "43232905-SFT-012",
+        "description": "Networking software",
+        "unit": "license",
+        "price": null,
+        "sort_order": 310
+    },
+    {
+        "group_heading": null,
+        "category": "SOFTWARE",
+        "code": "43233004-SFT-013",
+        "description": "Operating environment software",
+        "unit": "license",
+        "price": null,
+        "sort_order": 311
+    },
+    {
+        "group_heading": null,
+        "category": "SOFTWARE",
+        "code": "43233205-SFT-014",
+        "description": "Security and protection software",
+        "unit": "license",
+        "price": null,
+        "sort_order": 312
+    },
+    {
+        "group_heading": null,
+        "category": "SOFTWARE",
+        "code": "43233405-SFT-015",
+        "description": "Utility and device driver software",
+        "unit": "license",
+        "price": null,
+        "sort_order": 313
+    },
+    {
+        "group_heading": null,
+        "category": "SOFTWARE",
+        "code": "43233501-SFT-016",
+        "description": "Information exchange software",
+        "unit": "license",
+        "price": null,
+        "sort_order": 314
+    },
+    {
+        "group_heading": null,
+        "category": "PASSENGER AIR TRANSPORTATION",
+        "code": "43212111-GFA-001",
+        "description": "* Airline Ticket",
+        "unit": "ticket",
+        "price": null,
+        "sort_order": 315
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "A. For the Exercise of the Executive Functions",
+        "code": "25101503-VA101A",
+        "description": "Car (Sedan or Hatchback) Engine displacement not exceeding 2200 cc for gasoline For a Department Secretary and other officials of equivalent rank in National Government Agencies (NGAs), Government-Owned or -Controlled Corporations (GOCCs) and Local Government Units (LGUs)",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 316
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "A. For the Exercise of the Executive Functions",
+        "code": "25101503-VA101B",
+        "description": "Car (Sedan or Hatchback) Engine displacement not exceeding 2200 cc for diesel For a Department Secretary and other officials of equivalent rank in National Government Agencies (NGAs), Government-Owned or -Controlled Corporations (GOCCs) and Local Government Units (LGUs)",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 317
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "A. For the Exercise of the Executive Functions",
+        "code": "25101507-VA201A",
+        "description": "Asian Utility Vehicle (AUV or Crossover Utility Vehicle (CUV) Engine displacement not exceeding 2000 cc for gasoline For a Department Secretary and other officials of equivalent rank in National Government Agencies (NGAs), Government-Owned or -Controlled Corporations (GOCCs) and Local Government Units (LGUs)",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 318
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "A. For the Exercise of the Executive Functions",
+        "code": "25101507-VA201B",
+        "description": "Asian Utility Vehicle (AUV or Crossover Utility Vehicle (CUV) Engine displacement not exceeding 2800 cc for diesel For a Department Secretary and other officials of equivalent rank in National Government Agencies (NGAs), Government-Owned or -Controlled Corporations (GOCCs) and Local Government Units (LGUs)",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 319
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "A. For the Exercise of the Executive Functions",
+        "code": "25101503-VA102A",
+        "description": "Car (Sedan or Hatchback) Engine displacement not exceeding 3500 cc for gasoline For an Ambassador or Chief-ofMission of Philippine embassies/ consulates abroad for exclusive use in the country where the embassy/ consulate is located",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 320
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "A. For the Exercise of the Executive Functions",
+        "code": "25101503-VA102B",
+        "description": "Car (Sedan or Hatchback) Engine displacement not exceeding 3500 cc for diesel For an Ambassador or Chief-ofMission of Philippine embassies/ consulates abroad for exclusive use in the country where the embassy/ consulate is located",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 321
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "A. For the Exercise of the Executive Functions",
+        "code": "25101503-VA103A",
+        "description": "Car (Sedan or Hatchback) Engine displacement not exceeding 1600 cc for gasoline For a Department Undersecretary and other officials of equivalent rank in NGAs, GOCCs and LGUs For a Chief of Staff of the Armed Forces of the Philippines (AFP)",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 322
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "A. For the Exercise of the Executive Functions",
+        "code": "25101503-VA103B",
+        "description": "Car (Sedan or Hatchback) Engine displacement not exceeding 1600 cc for diesel For a Department Undersecretary and other officials of equivalent rank in NGAs, GOCCs and LGUs For a Chief of Staff of the Armed Forces of the Philippines (AFP)",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 323
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "A. For the Exercise of the Executive Functions",
+        "code": "25101507-VA202A",
+        "description": "Asian Utility Vehicle (AUV or Crossover Utility Vehicle (CUV) Engine displacement not exceeding 2000 cc for gasoline For a Department Undersecretary and other officials of equivalent rank in NGAs, GOCCs and LGUs For a Chief of Staff of the Armed Forces of the Philippines (AFP)",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 324
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "A. For the Exercise of the Executive Functions",
+        "code": "25101507-VA202B",
+        "description": "Asian Utility Vehicle (AUV or Crossover Utility Vehicle (CUV) Engine displacement not exceeding 2500 cc for diesel For a Department Undersecretary and other officials of equivalent rank in NGAs, GOCCs and LGUs For a Chief of Staff of the Armed Forces of the Philippines (AFP)",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 325
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "A. For the Exercise of the Executive Functions",
+        "code": "25101503-VA104A",
+        "description": "Car (Sedan or Hatchback) Engine displacement not exceeding 1500 cc for gasoline For a Department Assistant Secretary and other officials of equivalent rank in NGAs, GOCCs and LGUs For a Vice Chief of Staff and the Commanding Generals of the Major Services of the AFP",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 326
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "A. For the Exercise of the Executive Functions",
+        "code": "25101503-VA104B",
+        "description": "Car (Sedan or Hatchback) Engine displacement not exceeding 1500 cc for diesel For a Department Assistant Secretary and other officials of equivalent rank in NGAs, GOCCs and LGUs For a Vice Chief of Staff and the Commanding Generals of the Major Services of the AFP",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 327
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "A. For the Exercise of the Executive Functions",
+        "code": "25101507-VA203A",
+        "description": "Asian Utility Vehicle (AUV or Crossover Utility Vehicle (CUV) Engine displacement not exceeding 2000 cc for gasoline For a Department Assistant Secretary and other officials of equivalent rank in NGAs, GOCCs and LGUs For a Vice Chief of Staff and the Commanding Generals of the Major Services of the AFP",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 328
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "A. For the Exercise of the Executive Functions",
+        "code": "25101507-VA203B",
+        "description": "Asian Utility Vehicle (AUV or Crossover Utility Vehicle (CUV) Engine displacement not exceeding 2500 cc for diesel For a Department Assistant Secretary and other officials of equivalent rank in NGAs, GOCCs and LGUs For a Vice Chief of Staff and the Commanding Generals of the Major Services of the AFP",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 329
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "A. For the Exercise of the Executive Functions",
+        "code": "25101503-VA105A",
+        "description": "Car (Sedan or Hatchback) Engine displacement not exceeding 1500 cc for gasoline For a Bureau Director, Regional Director or department-wide/ bureau-wide regional offices and other officials of equivalent rank in NGAs, GOCCs and LGUs",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 330
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "A. For the Exercise of the Executive Functions",
+        "code": "25101503-VA105B",
+        "description": "Car (Sedan or Hatchback) Engine displacement not exceeding 1500 cc for diesel For a Bureau Director, Regional Director or department-wide/ bureau-wide regional offices and other officials of equivalent rank in NGAs, GOCCs and LGUs",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 331
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "A. For the Exercise of the Executive Functions",
+        "code": "25101507-VA204A",
+        "description": "Asian Utility Vehicle (AUV or Crossover Utility Vehicle (CUV) Engine displacement not exceeding 1500 cc for gasoline For a Bureau Director, Regional Director or department-wide/ bureau-wide regional offices and other officials of equivalent rank in NGAs, GOCCs and LGUs",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 332
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "A. For the Exercise of the Executive Functions",
+        "code": "25101507-VA204B",
+        "description": "Asian Utility Vehicle (AUV or Crossover Utility Vehicle (CUV) Engine displacement not exceeding 1500 cc for diesel For a Bureau Director, Regional Director or department-wide/ bureau-wide regional offices and other officials of equivalent rank in NGAs, GOCCs and LGUs",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 333
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "B. For the Transport of Personnel, Equipment, Supplies, Product and Materials",
+        "code": "25101507-VB101A",
+        "description": "Pick-up Engine displacement not exceeding 2200 cc for gasoline For heavy field use in rural and remote areas with generally rugged road condition, mountainous and rugged terrain",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 334
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "B. For the Transport of Personnel, Equipment, Supplies, Product and Materials",
+        "code": "25101507-VB101B",
+        "description": "Pick-up Engine displacement not exceeding 3000 cc for diesel For heavy field use in rural and remote areas with generally rugged road condition, mountainous and rugged terrain",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 335
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "B. For the Transport of Personnel, Equipment, Supplies, Product and Materials",
+        "code": "25101905-VB201A",
+        "description": "All-terrain vehicle, commonly referred to Sports Utility Vehicle Engine displacement not exceeding 2000 cc for gasoline For heavy field use in rural and remote areas with generally rugged road condition, mountainous and rugged terrain",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 336
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "B. For the Transport of Personnel, Equipment, Supplies, Product and Materials",
+        "code": "25101905-VB201B",
+        "description": "All-terrain vehicle, commonly referred to Sports Utility Vehicle Engine displacement not exceeding 2400 cc for diesel For heavy field use in rural and remote areas with generally rugged road condition, mountainous and rugged terrain",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 337
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "B. For the Transport of Personnel, Equipment, Supplies, Product and Materials",
+        "code": "25101505-VB301A",
+        "description": "Passenger Van Engine displacement not exceeding 2200 cc for gasoline For general urban use where road conditions are generally good",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 338
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "B. For the Transport of Personnel, Equipment, Supplies, Product and Materials",
+        "code": "25101505-VB301B",
+        "description": "Passenger Van Engine displacement not exceeding 3000 cc for diesel For general urban use where road conditions are generally good",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 339
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "B. For the Transport of Personnel, Equipment, Supplies, Product and Materials",
+        "code": "25181601-VB401A",
+        "description": "Multi-Purpose Vehicle (MPV) Engine displacement not exceeding 1500 cc for gasoline For general urban use where road conditions are generally good",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 340
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "B. For the Transport of Personnel, Equipment, Supplies, Product and Materials",
+        "code": "25181601-VB401B",
+        "description": "Multi-Purpose Vehicle (MPV) Engine displacement not exceeding 2500 cc for diesel For general urban use where road conditions are generally good",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 341
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "B. For the Transport of Personnel, Equipment, Supplies, Product and Materials",
+        "code": "25101801-VB5-01",
+        "description": "Motorcyle Engine displacement not exceeding 200 cc For use of field personnel/ workers who by the nature of their functions have to travel to remote areas not normally accessible by ordinary Motorcycle",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 342
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "B. For the Transport of Personnel, Equipment, Supplies, Product and Materials",
+        "code": "25101505-VB302A",
+        "description": "Passenger Van Engine displacement not exceeding 2200 cc for gasoline For transport of personnel/visitors for activities related to education, tourism, trade and investment promotions, banking and finance, foreign affairs, and other official functions",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 343
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "B. For the Transport of Personnel, Equipment, Supplies, Product and Materials",
+        "code": "25101505-VB302B",
+        "description": "Passenger Van Engine displacement not exceeding 3000 cc for diesel For transport of personnel/visitors for activities related to education, tourism, trade and investment promotions, banking and finance, foreign affairs, and other official functions",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 344
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "B. For the Transport of Personnel, Equipment, Supplies, Product and Materials",
+        "code": "25101502-VB6-01",
+        "description": "Bus Engine displacement not exceeding 8500 cc for diesel For mass transportation of personnel/visitors for activities related to education, tourism, trade and investment promotions, banking and finance, foreign affairs, and other official functions",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 345
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "B. For the Transport of Personnel, Equipment, Supplies, Product and Materials",
+        "code": "25101502-VB7-01",
+        "description": "Mini-Bus Engine displacement not exceeding 4500 cc for diesel For mass transportation of personnel/visitors for activities related to education, tourism, trade and investment promotions, banking and finance, foreign affairs, and other official functions",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 346
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "C. For the Transport of Sick and/or Injured Persons",
+        "code": "25181601-VC101A",
+        "description": "MPV (For conversion into an ambulance and fitted with the necessary medical equipment and apparatus) Engine displacement not exceeding 1500 cc for gasoline For transport of sick and/or injured persons in hospitals, and for government agencies where an ambulance may be needed on stand—by at all times in case of emergency",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 347
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "C. For the Transport of Sick and/or Injured Persons",
+        "code": "25181601-VC101B",
+        "description": "MPV (For conversion into an ambulance and fitted with the necessary medical equipment and apparatus) Engine displacement not exceeding 2500 cc for diesel For transport of sick and/or injured persons in hospitals, and for government agencies where an ambulance may be needed on stand—by at all times in case of emergency",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 348
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "C. For the Transport of Sick and/or Injured Persons",
+        "code": "25101703-VC201A",
+        "description": "Passenger Van (For conversion into an ambulance and fitted with the necessary medical equipment and apparatus) Engine displacement not exceeding 2200 cc for gasoline For transport of sick and/or injured persons in hospitals, and for government agencies where an ambulance may be needed on stand—by at all times in case of emergency",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 349
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "C. For the Transport of Sick and/or Injured Persons",
+        "code": "25101703-VC201B",
+        "description": "Passenger Van (For conversion into an ambulance and fitted with the necessary medical equipment and apparatus) Engine displacement not exceeding 3000 cc for diesel For transport of sick and/or injured persons in hospitals, and for government agencies where an ambulance may be needed on stand—by at all times in case of emergency",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 350
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "C. For the Transport of Sick and/or Injured Persons",
+        "code": "25101703-VC3-01",
+        "description": "Original ambulance, designed, built and equipped as such by the manufacturer (Specifications may vary according to manufacturer and the sophistication of the desired units) For transport of sick and/or injured persons in hospitals, and for government agencies where an ambulance may be needed on stand—by at all times in case of emergency",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 351
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "D. For Patrol Operations",
+        "code": "25101702-VD101A",
+        "description": "Patrol Car Four—door car (Sedan or Hatchback) Engine displacement not exceeding 1600 cc for gasoline For patrol operations within a city or municipal proper",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 352
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "D. For Patrol Operations",
+        "code": "25101702-VD101B",
+        "description": "Patrol Car Four—door car (Sedan or Hatchback) Engine displacement not exceeding 1600 cc for diesel For patrol operations within a city or municipal proper",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 353
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "D. For Patrol Operations",
+        "code": "25101702-VD201A",
+        "description": "Patrol Vehicle AUV or CUV Engine displacement not exceeding 2000 cc for gasoline For patrol operations within a city or municipal proper",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 354
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "D. For Patrol Operations",
+        "code": "25101702-VD201B",
+        "description": "Patrol Vehicle AUV or CUV Engine displacement not exceeding 2500 cc for diesel For patrol operations within a city or municipal proper",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 355
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "D. For Patrol Operations",
+        "code": "25101702-VD301A",
+        "description": "Patrol Jeep Assembled owner-type jeepney Engine displacement not exceeding 1800 cc for gasoline For patrol operations within a city or municipal proper",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 356
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "D. For Patrol Operations",
+        "code": "25101702-VD301B",
+        "description": "Patrol Jeep Assembled owner-type jeepney Engine displacement not exceeding 2500 cc for diesel For patrol operations within a city or municipal proper",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 357
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "D. For Patrol Operations",
+        "code": "25101702-VD4-01",
+        "description": "Patrol Motorcycle Specifications may vary according to the Motorcycle For patrol operations within a city or municipal proper",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 358
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "D. For Patrol Operations",
+        "code": "25101702-VE101A",
+        "description": "Patrol Car Four—door car (Sedan or Hatchback) Engine displacement not exceeding 2000 cc for gasoline For highway patrol operations Patrol car where speed and stability are critical when pursuing other speedy vehicles",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 359
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "D. For Patrol Operations",
+        "code": "25101702-VE101B",
+        "description": "Patrol Car Four—door car (Sedan or Hatchback) Engine displacement not exceeding 2000 cc for diesel For highway patrol operations Patrol car where speed and stability are critical when pursuing other speedy vehicles",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 360
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "D. For Patrol Operations",
+        "code": "25101702-VE2-01",
+        "description": "Patrol Motorcycle Specifications may vary according to the intended use of the agency and in consideration of the minimum specifications of motorcycles allowed in certain areas For highway patrol operations Patrol car where speed and stability are critical when pursuing other speedy vehicles",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 361
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "F. For Disaster Response and Rescue/Relief Operations",
+        "code": "25101703-VF101A",
+        "description": "MPV (for conversion into a rescue vehicle equipped with the necessary equipment and apparatus) Engine displacement not exceeding 1500 cc for gasoline For mobility purposes and immediate response during disasters and calamities",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 362
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "F. For Disaster Response and Rescue/Relief Operations",
+        "code": "25101703-VF101B",
+        "description": "MPV (for conversion into a rescue vehicle equipped with the necessary equipment and apparatus) Engine displacement not exceeding 2500 cc for diesel For mobility purposes and immediate response during disasters and calamities",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 363
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "F. For Disaster Response and Rescue/Relief Operations",
+        "code": "25101507-VF201A",
+        "description": "Pick-up (for conversion into a rescue vehicle equipped with the necessary equipment and apparatus) Engine displacement not exceeding 2200 cc for gasoline For mobility purposes and immediate response during disasters and calamities",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 364
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "F. For Disaster Response and Rescue/Relief Operations",
+        "code": "25101507-VF201B",
+        "description": "Pick-up (for conversion into a rescue vehicle equipped with the necessary equipment and apparatus) Engine displacement not exceeding 3000 cc for diesel For mobility purposes and immediate response during disasters and calamities",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 365
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "F. For Disaster Response and Rescue/Relief Operations",
+        "code": "25101801-VF3-01",
+        "description": "Motorcycle Specifications may vary according to the intended use of the agency and in consideration of the minimum specifications of motorcycles allowed in certain areas For mobility purposes and immediate response during disasters and calamities",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 366
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "H. For Fire Fighting Operations",
+        "code": "25101705-VH1-01",
+        "description": "Fire Truck Custom-built fire trucks ( siler versions are built/manufactured locally) Specifications may vary according to the manufacturer, model, intended use, etc., all pertinent data/specifications about the proposed fire truck must be supplied by the requesting agency. To provide basic fire-fighting capability to the Bureau of Fire Protection, and other government agencies whose functions and operations necessitate the maintenance of a fire-fighting unit",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 367
+    },
+    {
+        "group_heading": "Motor Vehicles",
+        "category": "H. For Fire Fighting Operations",
+        "code": "25101705-VH2-01",
+        "description": "Original Fire Truck (More sophisticated versions and fully equipped according to the intended use) Specifications may vary according to the manufacturer, model, intended use, etc., all pertinent data/specifications about the proposed fire truck must be supplied by the requesting agency. To provide basic fire-fighting capability to the Bureau of Fire Protection, and other government agencies whose functions and operations necessitate the maintenance of a fire-fighting unit",
+        "unit": "unit",
+        "price": null,
+        "sort_order": 368
+    }
+]
