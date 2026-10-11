@@ -93,8 +93,8 @@ class SipToAipTest extends TestCase
         $this->assertSame(1, (int) $holding->physical_target);
         $this->assertSame([125.0, 125.0, 125.0, 125.0], [(float) $holding->q1_amount, (float) $holding->q2_amount, (float) $holding->q3_amount, (float) $holding->q4_amount]);
         $this->assertSame(['Class Advisers, School Head, Project Team, DORP Coordinator'], $holding->responsible_persons);
-        $this->assertNull($holding->source_of_fund, 'the SIP source is a list of funds; the budget officer picks one');
-        $this->assertStringContainsString('Provincial Government', implode(' ', $holding->remarks_list));
+        $this->assertSame('Provincial Government / Municipal SEF / BLGU / PTA Fund / IGP / MOOE', $holding->source_of_fund, 'the AIP carries the SIP funds as its Source of Fund');
+        $this->assertSame([], $holding->remarks_list ?? [], 'Remarks starts empty for the user to fill');
         $this->assertNull($holding->chart_of_account_id);
     }
 
