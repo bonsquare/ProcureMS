@@ -109,18 +109,10 @@
                         $lines->push(['kra' => $kra, 'activity' => $act, 'values' => [$kra->pillar, $kra->kra, $kra->intermediate_outcome, $kra->strategy, $kra->five_point_agenda, $kra->program]]);
                     }
                 }
-                // Only the source of fund merges; every other column repeats its value on each row.
+                // No cell merges: every column repeats its value on each row.
                 $span = [];
                 foreach ($lines as $r => $line) {
                     for ($c = 0; $c < 6; $c++) { $span[$c][$r] = 1; }
-                }
-                // Consecutive rows with the same source of fund share one merged cell.
-                $fundSpan = [];
-                $fundStart = 0;
-                foreach ($lines as $r => $line) {
-                    $fund = $line['activity']?->source_of_fund;
-                    $sameFund = $r > 0 && $fund && $fund === $lines[$r - 1]['activity']?->source_of_fund;
-                    if (!$sameFund) { $fundStart = $r; $fundSpan[$r] = 1; } else { $fundSpan[$fundStart]++; $fundSpan[$r] = 0; }
                 }
                 $pillarColors = ['access' => '#fbf3d5', 'equity' => '#fae3d2', 'quality' => '#dcebf6', 'resiliency' => '#f5dfe5', 'well-being' => '#e5dff1', 'enabling mechanism' => '#dbead7'];
                 $fallback = ['#dff0ee', '#f3e9d6', '#e3e8f3', '#e9f0dc'];
@@ -142,7 +134,7 @@
                     <td>{{ $a?->physical_target }}</td>
                     <td>{{ $a?->timeline }}</td>
                     <td class="num">{{ $a ? $fmt($a->q1_amount) : '' }}</td><td class="num">{{ $a ? $fmt($a->q2_amount) : '' }}</td><td class="num">{{ $a ? $fmt($a->q3_amount) : '' }}</td><td class="num">{{ $a ? $fmt($a->q4_amount) : '' }}</td>
-                    @if($fundSpan[$r] > 0)<td rowspan="{{ $fundSpan[$r] }}" class="fund">{{ $a?->source_of_fund }}</td>@endif
+                    <td class="fund">{{ $a?->source_of_fund }}</td>
                     <td>{!! $a ? implode('<br>', array_map('e', $a->responsible_persons ?? [])) : '' !!}</td>
                     <td>{!! $a ? implode('<br>', array_map('e', $a->remarks_list ?? [])) : '' !!}</td>
                 </tr>
