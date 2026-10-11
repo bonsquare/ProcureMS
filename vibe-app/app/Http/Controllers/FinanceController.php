@@ -10,6 +10,7 @@ use App\Models\LiquidationReport;
 use App\Models\School;
 use App\Models\SchoolStaff;
 use App\Services\DocumentNumberService;
+use App\Support\SignatorySlots;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -51,9 +52,14 @@ class FinanceController extends Controller
         $counts->put('for_dv', $forDv->count());
         $counts->put('with_dv', $withDv->count());
 
+        $staff = SchoolStaff::active()->whereIn('school_id', $all->pluck('school_id')->unique())->get()->groupBy('school_id');
+        $panel = fn (int $schoolId, ?array $saved) => SignatorySlots::panel('disbursement_voucher', $staff->get($schoolId, collect()), $saved);
+
         return view('finance', [
             'section' => 'accounting',
             'tab' => $tab,
+            'dvDialogPanels' => $forDv->pluck('school_id')->unique()->mapWithKeys(fn ($schoolId) => [$schoolId => $panel((int) $schoolId, null)])->all(),
+            'dvRowPanels' => $withDv->mapWithKeys(fn ($report) => [$report->id => $panel((int) $report->school_id, $report->signatories['dv'] ?? null)])->all(),
             'isMasterUser' => $this->isMaster(),
             'counts' => $counts,
             'nextDv' => $this->nextDvNumber(),
@@ -164,8 +170,14 @@ class FinanceController extends Controller
             'journal.min' => 'The journal entry needs at least two lines (a debit and a credit).',
             'journal.max' => 'The DV has room for '.self::JOURNAL_MAX_LINES.' accounting entry lines.',
         ]);
+        $signatories = $request->has('signatories')
+            ? SignatorySlots::validated('disbursement_voucher', $request->input('signatories'), (int) $liquidationReport->school_id)
+            : null;
         $lines = $this->journalLines($data['journal'], $liquidationReport);
         unset($data['journal']);
+        if ($signatories !== null) {
+            $data['signatories'] = $this->withDvSignatories($liquidationReport, $signatories);
+        }
         $data['dv_include_appropriation'] = (bool) ($data['dv_include_appropriation'] ?? false);
 
         $data['dv_number'] ??= app(DocumentNumberService::class)
@@ -242,10 +254,35 @@ class FinanceController extends Controller
     {
         abort_unless($request->user()->hasPermission('accounting.approve') && $this->schoolIds()->contains($liquidationReport->school_id), 403);
         abort_unless($liquidationReport->dv_number, 422, 'Create the DV first.');
-        $data = $request->validate(['dv_include_appropriation' => ['required', 'boolean']]);
-        $liquidationReport->update(['dv_include_appropriation' => (bool) $data['dv_include_appropriation']]);
+        $data = $request->validate([
+            'dv_include_appropriation' => ['required_without:signatories', 'boolean'],
+            'signatories' => ['nullable', 'array'],
+        ]);
+        $changes = [];
+        if (array_key_exists('dv_include_appropriation', $data)) {
+            $changes['dv_include_appropriation'] = (bool) $data['dv_include_appropriation'];
+        }
+        if ($request->has('signatories')) {
+            $changes['signatories'] = $this->withDvSignatories($liquidationReport, SignatorySlots::validated('disbursement_voucher', $request->input('signatories'), (int) $liquidationReport->school_id));
+        }
+        $liquidationReport->update($changes);
 
-        return back()->with('success', 'DV '.$liquidationReport->dv_number.': appropriation table '.($liquidationReport->dv_include_appropriation ? 'will be printed' : 'removed from the print').'.');
+        return back()->with('success', array_key_exists('dv_include_appropriation', $changes)
+            ? 'DV '.$liquidationReport->dv_number.': appropriation table '.($liquidationReport->dv_include_appropriation ? 'will be printed' : 'removed from the print').'.'
+            : 'DV '.$liquidationReport->dv_number.': signatories saved.');
+    }
+
+    /** The report's saved signatories with its DV choices replaced; an empty list removes them and leaves the ORS ones alone. */
+    private function withDvSignatories(LiquidationReport $report, array $dv): ?array
+    {
+        $all = $report->signatories ?? [];
+        if ($dv === []) {
+            unset($all['dv']);
+        } else {
+            $all['dv'] = $dv;
+        }
+
+        return $all === [] ? null : $all;
     }
 
     public function printDv(LiquidationReport $liquidationReport)
@@ -253,13 +290,11 @@ class FinanceController extends Controller
         abort_unless($this->schoolIds()->contains($liquidationReport->school_id) && $liquidationReport->dv_number, 404);
         $liquidationReport->load(['school', 'procurementRequest']);
         $staff = SchoolStaff::active()->where('school_id', $liquidationReport->school_id)->get();
-        $find = fn (string $needle) => $staff->first(fn ($m) => str_contains(strtolower($m->document_role.' '.$m->position), $needle));
 
-        return view('dv-print', [
+        return view('dv-print', SignatorySlots::overlay('disbursement_voucher', [
             'report' => $liquidationReport,
             'agency' => AgencySetting::first() ?? new AgencySetting,
-            'accountant' => $find('accountant'),
-            'head' => $find('school head') ?? $find('head'),
-        ]);
+            ...SignatorySlots::defaults('disbursement_voucher', $staff),
+        ], $liquidationReport->signatories['dv'] ?? null));
     }
 }

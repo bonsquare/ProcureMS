@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\ChartOfAccount;
 use App\Models\LiquidationReport;
 use App\Models\Organization;
 use App\Models\ProcurementDocument;
@@ -487,6 +488,97 @@ class DocumentSignatoriesTest extends TestCase
         $this->assertStringContainsString('name="signatories[budget_officer]"', $html);
         $this->assertStringContainsString('Default (Sam Head)', $html);
         $this->assertStringContainsString('Default (Dina Disburse)', $html);
+    }
+
+    private function master(): User
+    {
+        return User::factory()->create(['role' => 'master_user', 'organization_id' => null, 'school_id' => null]);
+    }
+
+    private function dvPayload(array $extra = []): array
+    {
+        $expense = collect(ChartOfAccount::standardAccounts())->firstWhere('category', 'MOOE')['code'];
+
+        return $extra + [
+            'dv_date' => now()->toDateString(), 'payee' => 'Sig Supplier', 'dv_particulars' => 'Office supplies', 'payment_mode' => 'MDS Check',
+            'journal' => [['account_code' => $expense, 'debit' => '1000', 'credit' => ''], ['account_code' => '1010404000', 'debit' => '', 'credit' => '1000']],
+        ];
+    }
+
+    public function test_the_dv_prints_the_chosen_accountant_and_head(): void
+    {
+        [, $school] = $this->tenant();
+        $ana = $this->staff($school, 'Ana Accountant', ['position' => 'Accountant II']);
+        $hal = $this->staff($school, 'Hal Head', ['position' => 'Principal II']);
+        $report = $this->orsFor($school, ['dv_number' => 'DV-SIG-1', 'dv_date' => now()->toDateString(), 'signatories' => ['dv' => ['accountant' => $this->snapshot($ana), 'head' => $this->snapshot($hal)]]]);
+        $ana->update(['is_active' => false]);
+        $hal->update(['is_active' => false]);
+
+        $printed = strtolower($this->actingAs($this->master())->get(route('accounting.dv.print', $report))->assertOk()->getContent());
+
+        $this->assertStringContainsString('ana accountant', $printed);
+        $this->assertStringContainsString('hal head', $printed);
+    }
+
+    public function test_creating_a_dv_saves_the_chosen_signatories_and_keeps_the_ors_ones(): void
+    {
+        [, $school] = $this->tenant();
+        $ana = $this->staff($school, 'Ana Accountant');
+        $ben = $this->staff($school, 'Ben Requester');
+        $report = $this->orsFor($school, ['signatories' => ['ors' => ['requester' => $this->snapshot($ben)]]]);
+
+        $this->actingAs($this->master())->post(route('accounting.dv.store', $report), $this->dvPayload(['signatories' => ['accountant' => (string) $ana->id, 'head' => '']]))->assertSessionHasNoErrors();
+
+        $this->assertSame(
+            ['ors' => ['requester' => $this->snapshot($ben)], 'dv' => ['accountant' => $this->snapshot($ana)]],
+            $report->fresh()->signatories,
+        );
+    }
+
+    public function test_the_dv_options_request_can_change_the_signatories_without_touching_the_appropriation_option(): void
+    {
+        [, $school] = $this->tenant();
+        $ana = $this->staff($school, 'Ana Accountant');
+        $report = $this->orsFor($school, ['dv_number' => 'DV-SIG-1', 'dv_include_appropriation' => true, 'signatories' => ['ors' => ['requester' => ['staff_id' => 1, 'name' => 'Keep Me', 'position' => null]]]]);
+
+        $this->actingAs($this->master())->patch(route('accounting.dv.options', $report), ['signatories' => ['accountant' => (string) $ana->id]])->assertSessionHasNoErrors();
+
+        $fresh = $report->fresh();
+        $this->assertSame($this->snapshot($ana), $fresh->signatories['dv']['accountant']);
+        $this->assertSame('Keep Me', $fresh->signatories['ors']['requester']['name']);
+        $this->assertTrue($fresh->dv_include_appropriation);
+
+        $this->patch(route('accounting.dv.options', $report), ['signatories' => ['accountant' => '']])->assertSessionHasNoErrors();
+        $this->assertArrayNotHasKey('dv', $report->fresh()->signatories);
+    }
+
+    public function test_another_schools_staff_is_refused_on_the_dv(): void
+    {
+        [, $school] = $this->tenant('one');
+        [, $other] = $this->tenant('two');
+        $stranger = $this->staff($other, 'Stranger');
+        $report = $this->orsFor($school);
+
+        $this->actingAs($this->master())->post(route('accounting.dv.store', $report), $this->dvPayload(['signatories' => ['head' => (string) $stranger->id]]))
+            ->assertSessionHasErrors('signatories.head');
+        $this->assertNull($report->fresh()->dv_number);
+
+        $report->update(['dv_number' => 'DV-SIG-1']);
+        $this->patch(route('accounting.dv.options', $report), ['signatories' => ['head' => (string) $stranger->id]])->assertSessionHasErrors('signatories.head');
+    }
+
+    public function test_the_accounting_page_shows_the_dv_signatories_selects(): void
+    {
+        [, $school] = $this->tenant();
+        $this->staff($school, 'Acc Default', ['document_role' => 'Accountant']);
+        $this->orsFor($school);
+        $this->orsFor($school, ['report_number' => 'LR-SIG-2', 'ors_number' => 'ORS-SIG-2', 'dv_number' => 'DV-SIG-2', 'dv_date' => now()->toDateString()]);
+
+        $html = $this->actingAs($this->master())->get(route('accounting', ['tab' => 'all']))->assertOk()->getContent();
+
+        $this->assertStringContainsString('name="signatories[accountant]"', $html);
+        $this->assertStringContainsString('name="signatories[head]"', $html);
+        $this->assertStringContainsString('Default (Acc Default)', $html);
     }
 
     public function test_a_signer_from_another_school_is_refused_on_save(): void

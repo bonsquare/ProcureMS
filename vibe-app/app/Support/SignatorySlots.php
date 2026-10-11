@@ -107,6 +107,15 @@ final class SignatorySlots
             ];
         }
 
+        if ($document === 'disbursement_voucher') {
+            $find = fn (string $needle) => $staff->first(fn (SchoolStaff $member) => str_contains(strtolower($member->document_role.' '.$member->position), $needle));
+
+            return [
+                'accountant' => $find('accountant'),
+                'head' => $find('school head') ?? $find('head'),
+            ];
+        }
+
         if (! in_array($document, self::PROCUREMENT_DOCUMENTS, true)) {
             return [];
         }
