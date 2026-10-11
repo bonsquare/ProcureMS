@@ -120,6 +120,8 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::post('/planning/app/generate', [PlanningController::class, 'generateApp'])->middleware('permission:planning.manage')->name('planning.app.generate');
     Route::put('/planning/app/items/{appItem}', [PlanningController::class, 'updateAppItem'])->middleware('permission:planning.manage')->name('planning.app.items.update');
     Route::delete('/planning/app/items/{appItem}', [PlanningController::class, 'destroyAppItem'])->middleware('permission:planning.manage')->name('planning.app.items.destroy');
+    Route::get('/planning/app/{appPlan}/print', [PlanningController::class, 'printApp'])->name('planning.app.print')->whereNumber('appPlan');
+    Route::put('/planning/app/{appPlan}/signatories', [PlanningController::class, 'saveAppSignatories'])->middleware('permission:planning.manage')->name('planning.app.signatories')->whereNumber('appPlan');
     Route::post('/planning/app/{appPlan}/approve', [PlanningController::class, 'approveApp'])->middleware('permission:planning.manage')->name('planning.app.approve');
     Route::post('/planning/app/{appPlan}/unlock', [PlanningController::class, 'unlockApp'])->middleware('permission:planning.manage')->name('planning.app.unlock');
     Route::delete('/planning/app/{appPlan}', [PlanningController::class, 'destroyApp'])->middleware('permission:planning.manage')->name('planning.app.destroy');

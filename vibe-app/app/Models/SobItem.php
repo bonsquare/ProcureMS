@@ -10,7 +10,7 @@ class SobItem extends Model
 {
     use BelongsToOrganization;
 
-    protected $fillable = ['organization_id', 'sob_plan_id', 'aip_activity_id', 'chart_of_account_id', 'particulars', 'frequency', 'quantity', 'unit', 'unit_cost', 'amount', 'note', 'is_extra'];
+    protected $fillable = ['organization_id', 'sob_plan_id', 'aip_activity_id', 'chart_of_account_id', 'particulars', 'frequency', 'quantity', 'unit', 'unit_cost', 'amount', 'note', 'is_extra', 'category'];
 
     protected function casts(): array
     {

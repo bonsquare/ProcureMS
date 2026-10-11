@@ -44,6 +44,7 @@
         <label class="text-xs font-semibold">Quantity<input required type="number" name="quantity" min="0.01" step="0.01" class="{{ $field }}"></label>
         <label class="text-xs font-semibold">Unit<input required name="unit" maxlength="50" class="{{ $field }}"></label>
         <label class="text-xs font-semibold">Estimated unit cost<input required type="number" name="estimated_unit_cost" min="0" step="0.01" class="{{ $field }}"></label>
+        <label class="text-xs font-semibold sm:col-span-2">Category<select name="category" class="{{ $field }}">@foreach(\App\Support\AppCategories::ALL as $category)<option value="{{ $category }}">{{ $category }}</option>@endforeach</select></label>
         <label class="text-xs font-semibold">Procurement mode<input name="procurement_mode" maxlength="100" class="{{ $field }}"></label>
         <label class="text-xs font-semibold">Schedule<input name="procurement_schedule" maxlength="255" class="{{ $field }}"></label>
         <label class="text-xs font-semibold">Fund source<select name="fund_source" class="{{ $field }}"><option value="">Select fund source</option>@foreach($fundOptions as $fund)<option value="{{ $fund }}">{{ $fund }}</option>@endforeach</select></label>

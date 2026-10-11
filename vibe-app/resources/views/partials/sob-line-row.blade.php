@@ -11,5 +11,6 @@
     <label class="text-xs font-semibold text-on-surface-variant">Quantity<input name="lines[{{ $i }}][quantity]" type="text" inputmode="decimal" required value="{{ $val('quantity', $line ? $num($line->quantity) : '') }}" class="{{ $cls }}"></label>
     <label class="text-xs font-semibold text-on-surface-variant">Unit<input name="lines[{{ $i }}][unit]" required maxlength="50" value="{{ $val('unit', $line?->unit) }}" placeholder="pcs, ream, month" class="{{ $cls }}"></label>
     <label class="text-xs font-semibold text-on-surface-variant">Unit cost<input name="lines[{{ $i }}][unit_cost]" type="text" inputmode="decimal" required value="{{ $val('unit_cost', $line ? $num($line->unit_cost) : '') }}" class="{{ $cls }}"></label>
+    <label class="text-xs font-semibold text-on-surface-variant md:col-span-3">Category (where it belongs in the APP)<select name="lines[{{ $i }}][category]" class="{{ $cls }}">@foreach(\App\Support\AppCategories::ALL as $category)<option value="{{ $category }}" @selected($category === \App\Support\AppCategories::of($val('category', $line?->category)))>{{ $category }}</option>@endforeach</select></label>
     <button type="button" data-remove-row class="justify-self-start rounded px-2 py-1 text-xs font-semibold text-error hover:bg-surface-low md:col-span-6">× Remove particulars</button>
 </div>
