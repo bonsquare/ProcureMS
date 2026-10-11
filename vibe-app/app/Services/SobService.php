@@ -8,6 +8,7 @@ use App\Models\AppItem;
 use App\Models\AuditLog;
 use App\Models\BudgetAllocation;
 use App\Models\ChartOfAccount;
+use App\Models\MasterTransaction;
 use App\Models\School;
 use App\Models\SipPlan;
 use App\Models\SobItem;
@@ -71,9 +72,9 @@ class SobService
     /** @param  array<string, mixed>  $data */
     public function addItem(SobPlan $plan, array $data): SobItem
     {
-        $this->requireDraft($plan);
+        $this->requireEditable($plan);
 
-        return SobItem::create(['organization_id' => $plan->organization_id, 'sob_plan_id' => $plan->id] + $this->itemValues($plan, $data));
+        return $this->revise($plan, fn () => SobItem::create(['organization_id' => $plan->organization_id, 'sob_plan_id' => $plan->id] + $this->itemValues($plan, $data)), collect());
     }
 
     /**
@@ -85,14 +86,14 @@ class SobService
      */
     public function addItems(SobPlan $plan, int|string $activityId, int|string $accountId, array $lines, ?string $note = null, array $extras = []): array
     {
-        $this->requireDraft($plan);
+        $this->requireEditable($plan);
         $lines = $this->filledRows($lines);
         if ($lines === []) {
             throw ValidationException::withMessages(['lines' => 'Add at least one particulars.']);
         }
         $note = $this->cleanNote($note);
 
-        return DB::transaction(function () use ($plan, $activityId, $accountId, $lines, $note, $extras) {
+        return $this->revise($plan, fn () => DB::transaction(function () use ($plan, $activityId, $accountId, $lines, $note, $extras) {
             $created = [];
             foreach ($lines as $line) {
                 $created[] = $this->writeRow($plan, null, $this->itemValues($plan, ['aip_activity_id' => $activityId, 'chart_of_account_id' => $accountId] + $line), $note, false);
@@ -102,7 +103,7 @@ class SobService
             }
 
             return $created;
-        });
+        }), collect());
     }
 
     /**
@@ -113,7 +114,7 @@ class SobService
      */
     public function saveGroup(SobPlan $plan, int $activityId, int $accountId, array $data): void
     {
-        $this->requireDraft($plan);
+        $this->requireEditable($plan);
         $existing = $plan->items()->where('aip_activity_id', $activityId)->where('chart_of_account_id', $accountId)->get();
         if ($existing->isEmpty()) {
             $this->fail('That item no longer exists.');
@@ -125,7 +126,7 @@ class SobService
         $note = $this->cleanNote($data['note'] ?? null);
         $target = ['aip_activity_id' => $data['aip_activity_id'] ?? null, 'chart_of_account_id' => $data['chart_of_account_id'] ?? null];
 
-        DB::transaction(function () use ($plan, $existing, $lines, $data, $note, $target) {
+        $this->revise($plan, fn () => DB::transaction(function () use ($plan, $existing, $lines, $data, $note, $target) {
             $keep = [];
             foreach ($lines as $line) {
                 $row = $existing->first(fn (SobItem $item) => ! $item->is_extra && (int) $item->id === (int) ($line['id'] ?? 0));
@@ -136,13 +137,14 @@ class SobService
                 $keep[] = $this->writeRow($plan, $row, $this->extraValues($target['aip_activity_id'], $target['chart_of_account_id'], $extra), $note, true)->id;
             }
             $plan->items()->whereIn('id', $existing->pluck('id'))->whereNotIn('id', $keep)->delete();
-        });
+        }), $existing);
     }
 
     public function deleteGroup(SobPlan $plan, int $activityId, int $accountId): void
     {
-        $this->requireDraft($plan);
-        $plan->items()->where('aip_activity_id', $activityId)->where('chart_of_account_id', $accountId)->delete();
+        $this->requireEditable($plan);
+        $rows = $plan->items()->where('aip_activity_id', $activityId)->where('chart_of_account_id', $accountId)->get();
+        $this->revise($plan, fn () => $plan->items()->whereIn('id', $rows->pluck('id'))->delete(), $rows);
     }
 
     /** @param  array<string, mixed>  $values */
@@ -209,33 +211,50 @@ class SobService
     public function updateItem(SobItem $item, array $data): SobItem
     {
         $plan = $item->plan()->firstOrFail();
-        $this->requireDraft($plan);
-        $item->update($this->itemValues($plan, $data));
+        $this->requireEditable($plan);
+        $this->revise($plan, fn () => $item->update($this->itemValues($plan, $data)), collect([$item]));
 
         return $item->fresh();
     }
 
     public function deleteItem(SobItem $item): void
     {
-        $this->requireDraft($item->plan()->firstOrFail());
-        $item->delete();
+        $plan = $item->plan()->firstOrFail();
+        $this->requireEditable($plan);
+        $this->revise($plan, fn () => $item->delete(), collect([$item]));
     }
 
+    /** A draft is deleted as it is. An approved SOB first releases its Budget allotments and is refused while a Purchase Request or an approved APP uses its items. */
     public function deletePlan(SobPlan $plan): void
     {
-        $this->requireDraft($plan);
+        $this->requireEditable($plan);
+        if ($plan->status !== 'approved') {
+            DB::transaction(fn () => $this->removePlan($plan, 'draft'));
+
+            return;
+        }
+
         DB::transaction(function () use ($plan) {
-            $this->audit($plan, auth()->user(), 'sob_deleted');
-            $plan->transaction?->recordEvent('sob', 'draft_deleted', 'draft', null, $this->title($plan), ['sob_plan_id' => $plan->id]);
-            $plan->items()->delete();
-            $plan->delete();
+            $locked = SobPlan::withoutGlobalScopes()->lockForUpdate()->findOrFail($plan->id);
+            $locked->update(['allotment_snapshot' => $locked->allotment_snapshot ?: $this->snapshotOf($locked)]);
+            $this->guardApprovedChange($locked, $locked->items()->get());
+            $this->releaseStaleLines($locked->fresh(), []);
+            $this->removePlan($locked, 'approved');
         });
+    }
+
+    private function removePlan(SobPlan $plan, string $status): void
+    {
+        $this->audit($plan, auth()->user(), 'sob_deleted');
+        $plan->transaction?->recordEvent('sob', $status === 'draft' ? 'draft_deleted' : 'deleted', $status, null, $this->title($plan), ['sob_plan_id' => $plan->id]);
+        $plan->items()->delete();
+        $plan->delete();
     }
 
     /** @param  array<string, mixed>  $data  fund_source, quarter, school_id_number and the six signatory fields */
     public function updateHeader(SobPlan $plan, array $data): SobPlan
     {
-        $this->requireDraft($plan);
+        $this->requireEditable($plan);
         $rules = ['fund_source' => ['sometimes', 'required', 'string', 'max:100'], 'quarter' => ['sometimes', 'required', 'integer', 'between:1,4'], 'school_id_number' => ['nullable', 'string', 'max:50']];
         foreach (['prepared_by', 'recommended_by', 'approved_by'] as $prefix) {
             $rules[$prefix.'_name'] = ['nullable', 'string', 'max:255'];
@@ -247,7 +266,12 @@ class SobService
         if (($fund !== $plan->fund_source || $quarter !== (int) $plan->quarter) && $this->exists($plan->school_id, $plan->fiscal_year, $quarter, $fund)) {
             $this->fail('The '.SobPlan::QUARTERS[$quarter].' SOB of FY '.$plan->fiscal_year.' ('.$fund.') already exists.');
         }
-        $plan->update($values);
+        if ($plan->status === 'approved' && ($fund !== $plan->fund_source || $quarter !== (int) $plan->quarter)) {
+            // The fund and the quarter decide the Budget lines (and the fund is copied to the APP lines), so they are revised like the items.
+            $this->revise($plan, fn () => $plan->update($values), $fund !== $plan->fund_source ? $plan->items()->get() : collect());
+        } else {
+            $plan->update($values);
+        }
 
         return $plan->fresh();
     }
@@ -263,48 +287,8 @@ class SobService
                 $this->fail('Add at least one item before approving.');
             }
 
-            $school = School::withoutGlobalScopes()->findOrFail($locked->school_id);
             $transaction = $this->transactions->forAip(Aip::withoutGlobalScopes()->findOrFail($locked->aip_id), $user);
-            $created = $updated = 0;
-
-            foreach ($items->groupBy(fn (SobItem $i) => $this->groupKey($i)) as $group) {
-                $first = $group->first();
-                $program = $first->activity->kra?->program;
-                $total = round((float) $group->sum('amount'), 2);
-                $line = BudgetAllocation::withoutGlobalScopes()
-                    ->where('aip_id', $locked->aip_id)->where('source_of_fund', $locked->fund_source)
-                    ->where('chart_of_account_id', $first->chart_of_account_id)->where('fiscal_year', $locked->fiscal_year)
-                    ->where(fn ($q) => $program ? $q->where('program', $program) : $q->whereNull('program')->orWhere('program', ''))
-                    ->first();
-
-                if ($line) {
-                    $quarters = [];
-                    foreach ([1, 2, 3, 4] as $number) {
-                        $quarters["q{$number}_amount"] = $number === $locked->quarter ? $total : $line->quarterAmount($number);
-                    }
-                    $newAmount = round(array_sum($quarters), 2);
-                    $obligated = $this->budget->matrix(collect([$line]))->first()['obligated'];
-                    if ($newAmount + 0.001 < $obligated) {
-                        $this->fail(sprintf('"%s" (%s) is already obligated ₱%s, which is more than this SOB would leave allotted (₱%s).', $program ?: 'the line', $locked->fund_source, number_format($obligated, 2), number_format($newAmount, 2)));
-                    }
-                    $line->update($quarters + ['amount' => $newAmount, 'master_transaction_id' => $transaction->id]);
-                    $updated++;
-                } else {
-                    BudgetAllocation::create([
-                        'organization_id' => $locked->organization_id, 'aip_id' => $locked->aip_id, 'school_id' => $locked->school_id, 'master_transaction_id' => $transaction->id,
-                        'office' => $school->name, 'fiscal_year' => $locked->fiscal_year, 'start_date' => $locked->fiscal_year.'-01-01', 'end_date' => $locked->fiscal_year.'-12-31',
-                        'source_of_fund' => $locked->fund_source, 'program' => $program, 'chart_of_account_id' => $first->chart_of_account_id,
-                        'uacs_code' => $first->account->code, 'particulars' => $first->account->title, 'amount' => $total,
-                        'q1_amount' => $locked->quarter === 1 ? $total : 0, 'q2_amount' => $locked->quarter === 2 ? $total : 0, 'q3_amount' => $locked->quarter === 3 ? $total : 0, 'q4_amount' => $locked->quarter === 4 ? $total : 0,
-                        'created_by' => $user->id, 'budget_ref_no' => $this->numbers->next((int) $locked->organization_id, 'budget_allocation', 'BA', (int) $locked->fiscal_year),
-                        'remarks' => 'From SOB FY '.$locked->fiscal_year.' Q'.$locked->quarter,
-                    ]);
-                    $created++;
-                }
-            }
-
-            $keys = $items->map(fn (SobItem $i) => $this->groupKey($i))->unique()->values()->all();
-            $updated += $this->releaseStaleLines($locked, $keys);
+            ['created' => $created, 'updated' => $updated, 'keys' => $keys] = $this->writeBudgetLines($locked, $items, $user, $transaction);
 
             $locked->update([
                 'status' => 'approved', 'approved_at' => now(), 'master_transaction_id' => $transaction->id,
@@ -315,6 +299,60 @@ class SobService
 
             return ['created' => $created, 'updated' => $updated];
         });
+    }
+
+    /**
+     * Writes what the items give to the Budget allotment lines of the SOB's fund and quarter (one line per account and program), and releases
+     * the lines the previous approval wrote that these items no longer reach.
+     *
+     * @param  Collection<int, SobItem>  $items
+     * @return array{created: int, updated: int, keys: array<int, string>}
+     */
+    private function writeBudgetLines(SobPlan $plan, Collection $items, User $user, MasterTransaction $transaction): array
+    {
+        $school = School::withoutGlobalScopes()->findOrFail($plan->school_id);
+        $created = $updated = 0;
+
+        foreach ($items->groupBy(fn (SobItem $i) => $this->groupKey($i)) as $group) {
+            $first = $group->first();
+            $program = $first->activity->kra?->program;
+            $total = round((float) $group->sum('amount'), 2);
+            $line = BudgetAllocation::withoutGlobalScopes()
+                ->where('aip_id', $plan->aip_id)->where('source_of_fund', $plan->fund_source)
+                ->where('chart_of_account_id', $first->chart_of_account_id)->where('fiscal_year', $plan->fiscal_year)
+                ->where(fn ($q) => $program ? $q->where('program', $program) : $q->whereNull('program')->orWhere('program', ''))
+                ->first();
+
+            if ($line) {
+                $quarters = [];
+                foreach ([1, 2, 3, 4] as $number) {
+                    $quarters["q{$number}_amount"] = $number === $plan->quarter ? $total : $line->quarterAmount($number);
+                }
+                $newAmount = round(array_sum($quarters), 2);
+                $obligated = $this->budget->matrix(collect([$line]))->first()['obligated'];
+                if ($newAmount + 0.001 < $obligated) {
+                    $this->fail(sprintf('"%s" (%s) is already obligated ₱%s, which is more than this SOB would leave allotted (₱%s).', $program ?: 'the line', $plan->fund_source, number_format($obligated, 2), number_format($newAmount, 2)));
+                }
+                $line->update($quarters + ['amount' => $newAmount, 'master_transaction_id' => $transaction->id]);
+                $updated++;
+            } else {
+                BudgetAllocation::create([
+                    'organization_id' => $plan->organization_id, 'aip_id' => $plan->aip_id, 'school_id' => $plan->school_id, 'master_transaction_id' => $transaction->id,
+                    'office' => $school->name, 'fiscal_year' => $plan->fiscal_year, 'start_date' => $plan->fiscal_year.'-01-01', 'end_date' => $plan->fiscal_year.'-12-31',
+                    'source_of_fund' => $plan->fund_source, 'program' => $program, 'chart_of_account_id' => $first->chart_of_account_id,
+                    'uacs_code' => $first->account->code, 'particulars' => $first->account->title, 'amount' => $total,
+                    'q1_amount' => $plan->quarter === 1 ? $total : 0, 'q2_amount' => $plan->quarter === 2 ? $total : 0, 'q3_amount' => $plan->quarter === 3 ? $total : 0, 'q4_amount' => $plan->quarter === 4 ? $total : 0,
+                    'created_by' => $user->id, 'budget_ref_no' => $this->numbers->next((int) $plan->organization_id, 'budget_allocation', 'BA', (int) $plan->fiscal_year),
+                    'remarks' => 'From SOB FY '.$plan->fiscal_year.' Q'.$plan->quarter,
+                ]);
+                $created++;
+            }
+        }
+
+        $keys = $items->map(fn (SobItem $i) => $this->groupKey($i))->unique()->values()->all();
+        $updated += $this->releaseStaleLines($plan, $keys);
+
+        return ['created' => $created, 'updated' => $updated, 'keys' => $keys];
     }
 
     /**
@@ -514,6 +552,72 @@ class SobService
             'aip_activity_id' => (int) $values['aip_activity_id'], 'chart_of_account_id' => (int) $values['chart_of_account_id'], 'particulars' => trim($values['particulars']),
             'frequency' => $frequency, 'quantity' => $quantity, 'unit' => trim($values['unit']), 'unit_cost' => $cost, 'amount' => round($frequency * $quantity * $cost, 2),
         ];
+    }
+
+    /**
+     * Makes a change to an SOB. A draft is changed as it is. An approved SOB first checks that nothing it fed is locked or in use, then the change
+     * is made and its Budget allotments and APP lines are brought in line, all in one step: it is refused as a whole if a line would drop below
+     * what is already obligated.
+     *
+     * @param  Collection<int, SobItem>|null  $affected  the existing rows the change touches (none for an addition)
+     */
+    private function revise(SobPlan $plan, callable $change, ?Collection $affected = null): mixed
+    {
+        if ($plan->status !== 'approved') {
+            return $change();
+        }
+
+        return DB::transaction(function () use ($plan, $change, $affected) {
+            $locked = SobPlan::withoutGlobalScopes()->lockForUpdate()->findOrFail($plan->id);
+            $locked->update(['allotment_snapshot' => $locked->allotment_snapshot ?: $this->snapshotOf($locked)]);
+            $this->guardApprovedChange($locked, $affected ?? $locked->items()->get());
+
+            $result = $change();
+
+            $this->resyncApproved($locked->fresh());
+
+            return $result;
+        });
+    }
+
+    /** An approved SOB's items may be changed only while no Purchase Request draws from them and they are not in an approved APP. */
+    private function guardApprovedChange(SobPlan $plan, Collection $rows): void
+    {
+        $appItems = AppItem::withoutGlobalScopes()->whereIn('sob_item_id', $rows->pluck('id'))->with('plan')->get();
+        foreach ($appItems as $appItem) {
+            if ($appItem->requestItems()->exists()) {
+                $this->fail('A Purchase Request already draws from "'.$appItem->procurement_item.'" through the APP, so it cannot be changed or deleted.');
+            }
+        }
+        if ($appItems->contains(fn (AppItem $appItem) => $appItem->plan?->status === 'approved')) {
+            $this->fail('These items are in the approved Annual Procurement Plan of FY '.$plan->fiscal_year.'. Unlock the APP first, then change the SOB.');
+        }
+    }
+
+    /** After a change to an approved SOB: the Budget allotments, the APP lines, the audit log and the transaction history follow. */
+    private function resyncApproved(SobPlan $plan): void
+    {
+        $user = auth()->user() ?? User::withoutGlobalScopes()->find($plan->created_by);
+        $items = $plan->items()->with(['activity.kra', 'account'])->get();
+        $transaction = $this->transactions->forAip(Aip::withoutGlobalScopes()->findOrFail($plan->aip_id), $user);
+        ['created' => $created, 'updated' => $updated, 'keys' => $keys] = $this->writeBudgetLines($plan, $items, $user, $transaction);
+
+        $plan->update(['allotment_snapshot' => ['fund' => $plan->fund_source, 'quarter' => (int) $plan->quarter, 'groups' => $keys]]);
+        foreach (AppItem::withoutGlobalScopes()->whereIn('sob_item_id', $items->reject->is_extra->pluck('id'))->get() as $appItem) {
+            $item = $items->firstWhere('id', $appItem->sob_item_id);
+            $appItem->update([
+                'procurement_item' => $item->particulars, 'specifications' => $item->activity?->activity, 'quantity' => round((float) $item->frequency * (float) $item->quantity, 2),
+                'unit' => $item->unit, 'estimated_unit_cost' => $item->unit_cost, 'estimated_total_cost' => $item->amount, 'fund_source' => $plan->fund_source,
+            ]);
+        }
+        $this->audit($plan, $user, 'sob_revised', ['created' => $created, 'updated' => $updated]);
+        $transaction->recordEvent('sob', 'revised', 'approved', 'approved', $this->title($plan), ['sob_plan_id' => $plan->id, 'created_allocations' => $created, 'updated_allocations' => $updated]);
+    }
+
+    /** Items and details can be changed while the fiscal year is open, whether the SOB is a draft or approved. */
+    private function requireEditable(SobPlan $plan): void
+    {
+        $this->fiscalYears->assertOpen((int) $plan->organization_id, (int) $plan->fiscal_year);
     }
 
     private function requireDraft(SobPlan $plan, string $message = 'An approved SOB is locked.'): void

@@ -11,7 +11,7 @@
     $programLabel = fn ($kra, $activity) => $kra->program ?: $kra->kra;
     $box = 'mt-1 w-full rounded border border-outline-variant/50 bg-white px-2.5 py-2 text-sm outline-none focus:border-primary';
     $draft = $plan->status === 'draft';
-    $editable = $draft && $canManage;
+    $editable = $canManage;
     $grandTotal = collect($grouped)->sum('total');
 @endphp
 <div class="mb-5">
@@ -30,9 +30,9 @@
 
 @if(! $draft && $canManage)
 <section class="mb-5 rounded border border-amber-300 bg-amber-50 p-4">
-    <h2 class="font-semibold text-amber-900">Revise this SOB</h2>
-    <p class="mt-1 text-sm text-amber-900">This SOB is approved and locked. Reopen it to change the fund, the quarter, the details or any item. The budget lines keep their amounts until you approve it again; then they follow your changes.</p>
-    <form method="POST" action="{{ route('planning.sob.reopen', $plan) }}" class="mt-3" onsubmit="return confirm('Reopen this SOB for revision? It becomes a draft until you approve it again.')">@csrf<button class="rounded bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary-container">Reopen for revision</button></form>
+    <h2 class="font-semibold text-amber-900">This SOB is approved</h2>
+    <p class="mt-1 text-sm text-amber-900">You can still change the fund, the quarter, the details and any item. Each change is saved at once and the Budget allotments and the draft APP follow it (a change is refused if a Purchase Request already draws from the item, if the line is already obligated, or if the item is in an approved APP: unlock the APP first). Reopen it only if you want it back as a draft.</p>
+    <form method="POST" action="{{ route('planning.sob.reopen', $plan) }}" class="mt-3" onsubmit="return confirm('Reopen this SOB as a draft? The budget lines keep their amounts until you approve it again.')">@csrf<button class="rounded border border-primary px-4 py-2 text-xs font-bold text-primary hover:bg-primary hover:text-white">Reopen as a draft</button></form>
 </section>
 @endif
 
@@ -144,8 +144,8 @@
 
 @if($editable)
 <div class="flex flex-wrap items-center gap-2 border-t border-outline-variant/40 pt-4">
-    <form method="POST" action="{{ route('planning.sob.approve', $plan) }}" onsubmit="return confirm('Approve this SOB? It is locked and creates or updates the Budget allotments of this quarter.')">@csrf<button @disabled(! $grouped) class="rounded bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-container disabled:cursor-not-allowed disabled:opacity-50">Approve SOB</button></form>
-    <form method="POST" action="{{ route('planning.sob.destroy', $plan) }}" onsubmit="return confirm('Delete this draft SOB and its items?')">@csrf @method('DELETE')<button class="rounded border border-error/40 px-4 py-2 text-sm font-semibold text-error hover:bg-error/10">Delete draft</button></form>
+    @if($draft)<form method="POST" action="{{ route('planning.sob.approve', $plan) }}" onsubmit="return confirm('Approve this SOB? It creates or updates the Budget allotments of this quarter.')">@csrf<button @disabled(! $grouped) class="rounded bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-container disabled:cursor-not-allowed disabled:opacity-50">Approve SOB</button></form>@endif
+    <form method="POST" action="{{ route('planning.sob.destroy', $plan) }}" onsubmit="return confirm('{{ $draft ? 'Delete this draft SOB and its items?' : 'Delete this approved SOB, its items and release its Budget allotments?' }}')">@csrf @method('DELETE')<button class="rounded border border-error/40 px-4 py-2 text-sm font-semibold text-error hover:bg-error/10">{{ $draft ? 'Delete draft' : 'Delete SOB' }}</button></form>
 </div>
 @endif
 

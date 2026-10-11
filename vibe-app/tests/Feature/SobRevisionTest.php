@@ -317,17 +317,17 @@ class SobRevisionTest extends TestCase
         $this->actingAs($fx['user']);
         $plan = $this->approved($fx);
 
-        $this->get(route('planning.sob.show', $plan))->assertOk()->assertSee('Reopen for revision')->assertSee(route('planning.sob.reopen', $plan), false);
+        $this->get(route('planning.sob.show', $plan))->assertOk()->assertSee('Reopen as a draft')->assertSee(route('planning.sob.reopen', $plan), false);
         $viewer = User::factory()->create(['role' => 'viewer', 'organization_id' => $fx['organization']->id, 'school_id' => $fx['school']->id]);
         $this->actingAs($viewer);
-        $this->get(route('planning.sob.show', $plan))->assertOk()->assertDontSee('Reopen for revision');
+        $this->get(route('planning.sob.show', $plan))->assertOk()->assertDontSee('Reopen as a draft');
         $this->post(route('planning.sob.reopen', $plan))->assertForbidden();
         $this->assertSame('approved', $plan->fresh()->status);
 
         $this->actingAs($fx['user']);
         $this->post(route('planning.sob.reopen', $plan))->assertRedirect()->assertSessionHasNoErrors();
         $this->assertSame('draft', $plan->fresh()->status);
-        $this->get(route('planning.sob.show', $plan))->assertOk()->assertDontSee('Reopen for revision')->assertSee('name="quarter"', false);
+        $this->get(route('planning.sob.show', $plan))->assertOk()->assertDontSee('Reopen as a draft')->assertSee('name="quarter"', false);
     }
 
     public function test_a_refused_reopen_says_why_and_another_organization_cannot_reopen(): void

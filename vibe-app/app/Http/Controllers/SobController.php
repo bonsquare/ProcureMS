@@ -81,7 +81,7 @@ class SobController extends Controller
         $this->scoped($request, $sobPlan);
         $this->sob->deletePlan($sobPlan);
 
-        return redirect(route('planning', ['school_id' => $sobPlan->school_id, 'year' => $sobPlan->fiscal_year]).'#sob')->with('success', 'The draft SOB was deleted.');
+        return redirect(route('planning', ['school_id' => $sobPlan->school_id, 'year' => $sobPlan->fiscal_year]).'#sob')->with('success', 'The SOB was deleted.');
     }
 
     public function approve(Request $request, SobPlan $sobPlan): RedirectResponse

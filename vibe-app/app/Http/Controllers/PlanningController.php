@@ -359,6 +359,38 @@ class PlanningController extends Controller
         return $plan;
     }
 
+    /** An approved APP goes back to a draft so its items can be edited or removed; it is approved again afterwards. */
+    public function unlockApp(Request $request, AppPlan $appPlan)
+    {
+        $this->authorizeManage($request);
+        abort_unless($this->schoolIds()->contains($appPlan->school_id), 403);
+        $this->requires($appPlan->status === 'approved', 'Only an approved APP can be unlocked.');
+        app(FiscalYearService::class)->assertOpen((int) $appPlan->organization_id, (int) $appPlan->fiscal_year);
+        $appPlan->load('items.ppmpItem.plan.transaction', 'items.sobItem.plan.transaction');
+        $appPlan->update(['status' => 'draft']);
+        AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $appPlan->school_id, 'action' => 'app_unlocked', 'auditable_type' => AppPlan::class, 'auditable_id' => $appPlan->id, 'metadata' => ['fiscal_year' => $appPlan->fiscal_year]]);
+        foreach ($appPlan->items as $item) {
+            ($item->sobItem?->plan?->transaction ?? $item->ppmpItem?->plan?->transaction)?->recordEvent('app', 'unlocked', 'approved', 'draft', $appPlan->fiscal_year.' APP', ['app_plan_id' => $appPlan->id]);
+        }
+
+        return back()->with('success', 'The APP is a draft again. Edit or remove its items, then approve it again.');
+    }
+
+    /** A draft APP is deleted with its items when no Purchase Request draws from any of them; Generate APP builds it again from the approved SOBs. */
+    public function destroyApp(Request $request, AppPlan $appPlan)
+    {
+        $this->authorizeManage($request);
+        abort_unless($this->schoolIds()->contains($appPlan->school_id), 403);
+        $this->requires($appPlan->status !== 'approved', 'An approved APP is locked. Unlock it first.');
+        app(FiscalYearService::class)->assertOpen((int) $appPlan->organization_id, (int) $appPlan->fiscal_year);
+        $this->requires($appPlan->items->every(fn (AppItem $item) => $item->requestItems()->doesntExist()), 'A Purchase Request already draws from an item of this APP, so it cannot be deleted.');
+        AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $appPlan->school_id, 'action' => 'app_deleted', 'auditable_type' => AppPlan::class, 'auditable_id' => $appPlan->id, 'metadata' => ['fiscal_year' => $appPlan->fiscal_year, 'items' => $appPlan->items->count()]]);
+        $appPlan->items()->delete();
+        $appPlan->delete();
+
+        return back()->with('success', 'The APP was deleted. Generate it again from the approved SOBs.');
+    }
+
     public function approveApp(Request $request, AppPlan $appPlan)
     {
         $this->authorizeManage($request);
