@@ -1,7 +1,7 @@
 @php
     $meta = $document->metadata ?? [];
     $poMetadata = $purchaseOrder?->metadata ?? [];
-    $blankRows = min(6, (int) ($meta['extra_blank_rows'] ?? 0));
+    $blankRows = min(100, (int) ($meta['extra_blank_rows'] ?? 0));
     $receivedItems = $meta['received_items'] ?? [];
     $entityName = $procurementRequest->entity_name
         ?: ($procurementRequest->school?->division ?: ($agency?->department_name ?: null))
