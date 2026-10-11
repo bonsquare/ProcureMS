@@ -234,7 +234,7 @@ class HomeController extends Controller
             'system_user_name' => ['required', 'string', 'max:255'],
             'system_user_email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'system_user_role' => ['required', 'in:'.implode(',', array_keys(User::ROLES))],
-            'system_user_password' => ['required', 'string', 'min:8', 'confirmed'],
+            'system_user_password' => ['required', 'string', 'min:12', 'confirmed'],
         ]);
         $data = PlaceNames::snapFields($data, ['region' => 'region', 'division' => 'division', 'district' => 'district']);
 
@@ -2206,14 +2206,5 @@ class HomeController extends Controller
 
         return redirect(route('school-settings', ['ui' => 'staff-save-v7', 'school_id' => $schoolId]).'#staff-list')
             ->with('success', count($data['new_staff']).' staff member(s) added. No login account was created.');
-    }
-
-    public function generate(Request $request)
-    {
-        $request->validate([
-            'business_type' => ['required', 'string', 'max:255'],
-        ]);
-
-        return response('Generated successfully');
     }
 }

@@ -177,7 +177,6 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::delete('/school-settings/employees/{staff}', [SchoolSettingsController::class, 'destroyStaff'])->middleware('permission:organization.settings')->name('school-settings.employees.destroy');
     Route::post('/school-settings/roles', [SchoolSettingsController::class, 'storeRole'])->middleware('permission:organization.settings')->name('school-settings.roles.store');
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
-    Route::post('/generate', [HomeController::class, 'generate'])->name('generate');
 });
 
 Route::middleware('auth')->group(function () {

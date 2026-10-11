@@ -32,7 +32,7 @@ class SchoolManagementService
     {
         $this->assertUserManager($master);
         $this->assertReason($reason);
-        if ($user->seesAllSchools()) {
+        if ($user->isAnyMaster()) {
             $this->fail('user', 'The master account cannot be set inactive here.');
         }
         if (! $this->isActive($user)) {

@@ -97,7 +97,7 @@ class AuthController extends Controller
             'system_user_position' => ['required', 'string', 'max:255'],
             'system_user_email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'system_user_phone' => ['required', 'string', 'max:50'],
-            'system_user_password' => ['required', 'string', 'min:8', 'confirmed'],
+            'system_user_password' => ['required', 'string', 'min:12', 'confirmed'],
             'system_user_confirmed' => ['accepted'],
             'privacy_accepted' => ['accepted'],
         ], [
@@ -197,7 +197,7 @@ class AuthController extends Controller
             'system_user_position' => ['required', 'string', 'max:255'],
             'system_user_email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'system_user_phone' => ['required', 'string', 'max:50'],
-            'system_user_password' => ['required', 'string', 'min:8', 'confirmed'],
+            'system_user_password' => ['required', 'string', 'min:12', 'confirmed'],
             'system_user_confirmed' => ['accepted'],
             'privacy_accepted' => ['accepted'],
         ], [

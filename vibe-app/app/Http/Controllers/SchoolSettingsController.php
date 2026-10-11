@@ -55,7 +55,7 @@ class SchoolSettingsController extends Controller
         $this->refuseMasterTargets($user);
         $this->refuseOtherAccounts($request, $user);
         $school = $this->school($request, $user->school_id);
-        $rules = ['password' => ['required', 'string', 'min:8', 'confirmed']];
+        $rules = ['password' => ['required', 'string', 'min:12', 'confirmed']];
         if ($user->is($request->user())) {
             $rules['current_password'] = ['required', 'current_password'];
         }

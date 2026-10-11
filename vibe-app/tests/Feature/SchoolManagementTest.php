@@ -52,6 +52,15 @@ class SchoolManagementTest extends TestCase
         $this->assertSame('active', $user->fresh()->status ?: 'active');
     }
 
+    public function test_a_sub_master_cannot_set_another_master_account_inactive_here(): void
+    {
+        $actor = User::factory()->create(['role' => 'sub_master', 'organization_id' => null, 'school_id' => null, 'access' => ['schools', 'deactivate_user']]);
+        $other = User::factory()->create(['role' => 'sub_master', 'organization_id' => null, 'school_id' => null, 'access' => []]);
+
+        $this->actingAs($actor)->post(route('school-management.users.deactivate', $other), $this->deactivation())->assertSessionHasErrors('user');
+        $this->assertNotSame('inactive', $other->fresh()->status);
+    }
+
     public function test_the_list_shows_active_vacant_and_inactive_schools_and_filters_them(): void
     {
         [, $active] = $this->tenant('alpha');

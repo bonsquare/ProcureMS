@@ -78,8 +78,8 @@
         <div class="mb-4 flex items-start justify-between"><div><h3 class="text-lg font-bold">Change password</h3><p class="text-xs text-on-surface-variant" id="user-password-for"></p></div><button type="button" data-close class="rounded-lg p-1 hover:bg-surface-container" aria-label="Close"><span class="material-symbols-outlined">close</span></button></div>
         <div class="grid gap-3">
             <label class="block text-xs font-bold" id="user-password-current-wrap">Your current password<input type="password" name="current_password" autocomplete="current-password" class="{{ $field }}"></label>
-            <label class="block text-xs font-bold">New password<input type="password" name="password" required minlength="8" autocomplete="new-password" class="{{ $field }}"></label>
-            <label class="block text-xs font-bold">Confirm new password<input type="password" name="password_confirmation" required minlength="8" autocomplete="new-password" class="{{ $field }}"></label>
+            <label class="block text-xs font-bold">New password<input type="password" name="password" required minlength="12" autocomplete="new-password" class="{{ $field }}"></label>
+            <label class="block text-xs font-bold">Confirm new password<input type="password" name="password_confirmation" required minlength="12" autocomplete="new-password" class="{{ $field }}"></label>
         </div>
         <div class="mt-5 flex justify-end gap-2"><button type="button" data-close class="rounded-lg border border-outline-variant px-4 py-2 text-xs font-bold">Cancel</button><button class="rounded-lg bg-primary px-5 py-2 text-xs font-bold text-white">Change password</button></div>
     </form>

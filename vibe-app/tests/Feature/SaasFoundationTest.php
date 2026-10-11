@@ -78,8 +78,8 @@ class SaasFoundationTest extends TestCase
             'system_user_given_name' => 'Test', 'system_user_middle_initial' => 'q', 'system_user_surname' => 'Administrator',
             'system_user_username' => 'Test.Admin', 'system_user_position' => 'School Head', 'system_user_phone' => '09171234567',
             'system_user_email' => 'new-school@example.test',
-            'system_user_password' => 'password123',
-            'system_user_password_confirmation' => 'password123',
+            'system_user_password' => 'password12345',
+            'system_user_password_confirmation' => 'password12345',
             'system_user_confirmed' => '1', 'privacy_accepted' => '1',
         ])->assertRedirect(route('login'));
 
@@ -106,7 +106,7 @@ class SaasFoundationTest extends TestCase
         $base = [
             'name' => 'Another School', 'system_user_given_name' => 'Ana', 'system_user_surname' => 'Reyes', 'system_user_username' => 'ana.reyes2',
             'system_user_position' => 'Principal', 'system_user_phone' => '0917', 'system_user_email' => 'ana2@example.test',
-            'system_user_password' => 'password123', 'system_user_password_confirmation' => 'password123',
+            'system_user_password' => 'password12345', 'system_user_password_confirmation' => 'password12345',
         ];
 
         $this->post(route('register.store'), $base)->assertSessionHasErrors('system_user_confirmed');
