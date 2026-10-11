@@ -136,6 +136,36 @@ final class SignatorySlots
         return $snapshots;
     }
 
+    /**
+     * The template variables with each saved choice put in place of the default person. The BAC members are a list
+     * the Abstract reads by row, so a choice replaces only its own row and the others keep theirs.
+     *
+     * @param  array<string, mixed>  $variables
+     * @param  ?array<string, array{name?: string, position?: ?string}>  $saved
+     * @return array<string, mixed>
+     */
+    public static function overlay(string $document, array $variables, ?array $saved): array
+    {
+        foreach (self::slots($document) as $slot) {
+            $snapshot = $saved[$slot['key']] ?? null;
+            if (! is_array($snapshot)) {
+                continue;
+            }
+
+            if ($slot['var'] === 'bacMembers') {
+                $members = ($variables['bacMembers'] ?? collect())->all();
+                $members[(int) substr($slot['key'], -1) - 1] = self::toStaff($snapshot);
+                $variables['bacMembers'] = collect($members);
+
+                continue;
+            }
+
+            $variables[$slot['var']] = self::toStaff($snapshot);
+        }
+
+        return $variables;
+    }
+
     /** An unsaved staff record carrying a snapshot's name and position, which is all the templates read. */
     public static function toStaff(array $snapshot): SchoolStaff
     {

@@ -28,6 +28,7 @@ use App\Services\GoogleDriveService;
 use App\Services\MasterTransactionService;
 use App\Services\ProcurementWorkspaceService;
 use App\Support\PlaceNames;
+use App\Support\SignatorySlots;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
@@ -1164,6 +1165,10 @@ class HomeController extends Controller
         ]);
 
         $type = $types[$data['document_type']];
+        // The chosen signers replace the saved ones when the form sends them; a save without the field keeps what was chosen before.
+        $signatories = $request->has('signatories')
+            ? SignatorySlots::validated($data['document_type'], $request->input('signatories'), (int) $procurementRequest->school_id)
+            : ($procurementRequest->documents()->where('document_type', $data['document_type'])->first()?->metadata['signatories'] ?? []);
         $blocked = app(ProcurementWorkspaceService::class)->blockedReason($procurementRequest, $data['document_type']);
         if ($blocked && ! $procurementRequest->documents()->where('document_type', $data['document_type'])->exists()) {
             return back()->withErrors(['document_type' => $blocked])->withInput();
@@ -1386,7 +1391,7 @@ class HomeController extends Controller
                     'received_items',
                     'iars_assignments',
                     'ics_items',
-                ])->filter(fn ($value) => $value !== null && $value !== '')->all(), $awardMetadata, $linkedDocumentMetadata),
+                ])->filter(fn ($value) => $value !== null && $value !== '')->all(), $awardMetadata, $linkedDocumentMetadata, $signatories === [] ? [] : ['signatories' => $signatories]),
             ]
         );
 
@@ -1542,7 +1547,7 @@ class HomeController extends Controller
         $approver = $staff->first(fn ($member) => $member->hasRole('procurement_role', 'Approver'));
         $canvasser = $staff->first(fn ($member) => $member->hasRole('procurement_role', 'Canvasser'));
 
-        return view('procurement-document-print', [
+        return view('procurement-document-print', SignatorySlots::overlay($procurementDocument->document_type, [
             'procurementRequest' => $procurementRequest,
             'document' => $procurementDocument,
             'purchaseOrder' => $purchaseOrder,
@@ -1566,7 +1571,7 @@ class HomeController extends Controller
             'propertyOfficer' => $staff->first(fn ($user) => str_contains(strtolower((string) $user->document_role), 'property custodian')) ?? $staff->first(fn ($user) => str_contains(strtolower((string) $user->position), 'property')),
             'amountInWords' => $this->amountInWords((float) $procurementRequest->amount),
             'awardAmountInWords' => $this->amountInWords($awardAmount),
-        ]);
+        ], $procurementDocument->metadata['signatories'] ?? null));
     }
 
     public function printDeliveryReconciliation(ProcurementRequest $procurementRequest, ProcurementWorkspaceService $workspaceService)

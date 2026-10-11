@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Organization;
+use App\Models\ProcurementDocument;
+use App\Models\ProcurementRequest;
 use App\Models\School;
 use App\Models\SchoolStaff;
 use App\Models\Subscription;
@@ -10,6 +12,7 @@ use App\Models\User;
 use App\Support\SignatorySlots;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class DocumentSignatoriesTest extends TestCase
@@ -32,6 +35,49 @@ class DocumentSignatoriesTest extends TestCase
     private function staff(School $school, string $name, array $extra = []): SchoolStaff
     {
         return SchoolStaff::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'name' => $name] + $extra);
+    }
+
+    private function requestFor(School $school, User $user): ProcurementRequest
+    {
+        $pr = ProcurementRequest::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'requested_by' => $user->id, 'request_number' => 'PR-2026-SIG', 'title' => 'Rice', 'amount' => 1500, 'status' => 'approved']);
+        $pr->items()->create(['organization_id' => $school->organization_id, 'name' => 'RICE', 'quantity' => 1, 'unit' => 'piece', 'unit_price' => 1500, 'total' => 1500]);
+
+        return $pr;
+    }
+
+    private function documentFor(ProcurementRequest $pr, User $user, string $type, array $metadata = []): ProcurementDocument
+    {
+        return ProcurementDocument::create([
+            'organization_id' => $pr->organization_id, 'procurement_request_id' => $pr->id, 'created_by' => $user->id, 'document_type' => $type,
+            'document_number' => strtoupper(substr($type, 0, 3)).'-2026-001', 'document_date' => '2026-10-11', 'status' => 'prepared', 'metadata' => $metadata,
+        ]);
+    }
+
+    private function snapshot(SchoolStaff $member): array
+    {
+        return ['staff_id' => $member->id, 'name' => $member->name, 'position' => $member->position];
+    }
+
+    private function printed(ProcurementRequest $pr, ProcurementDocument $document): string
+    {
+        return strtolower($this->get(route('procurement.documents.print', [$pr, $document]))->assertOk()->getContent());
+    }
+
+    /** @return array<string, array{0: string, 1: string}> document type and the slot key to fill */
+    public static function documentSlots(): array
+    {
+        return [
+            'rfq' => ['request_for_quotation', 'bac_chair'],
+            'abstract' => ['abstract_of_bids_quotation', 'bac_vice_chair'],
+            'noa' => ['notice_to_award', 'school_head'],
+            'ntp' => ['notice_to_proceed', 'school_head'],
+            'po' => ['purchase_order', 'disbursing_officer'],
+            'iar' => ['inspection_acceptance_report', 'inspection_officer'],
+            'iars' => ['inventory_acknowledgement_receipt_supplies', 'school_head'],
+            'ris' => ['requisition_issuance_slip', 'property_officer'],
+            'ics' => ['inventory_custodian_slip', 'procurement_officer'],
+            'par' => ['property_acknowledgement_receipt', 'approved_by'],
+        ];
     }
 
     public function test_every_document_has_the_slots_the_spec_lists(): void
@@ -135,5 +181,130 @@ class DocumentSignatoriesTest extends TestCase
                 $this->assertArrayHasKey('signatories.disbursing_officer', $exception->errors());
             }
         }
+    }
+
+    #[DataProvider('documentSlots')]
+    public function test_a_saved_choice_prints_in_the_slot_for_each_document_type(string $type, string $slot): void
+    {
+        [, $school, $user] = $this->tenant();
+        $pat = $this->staff($school, 'Pat Chosen', ['position' => 'Teacher III']);
+        $pr = $this->requestFor($school, $user);
+        $document = $this->documentFor($pr, $user, $type, ['signatories' => [$slot => $this->snapshot($pat)]]);
+        // Some forms list every active staff member, so the name may only come from the saved choice.
+        $pat->update(['is_active' => false]);
+        $this->actingAs($user);
+
+        $this->assertStringContainsString('pat chosen', $this->printed($pr, $document));
+    }
+
+    public function test_without_a_choice_the_default_still_prints(): void
+    {
+        [, $school, $user] = $this->tenant();
+        $this->staff($school, 'Dee Default', ['document_role' => 'Disbursing Officer']);
+        $pat = $this->staff($school, 'Pat Chosen');
+        $pr = $this->requestFor($school, $user);
+        $document = $this->documentFor($pr, $user, 'purchase_order');
+        $this->actingAs($user);
+
+        $this->assertStringContainsString('dee default', $this->printed($pr, $document));
+
+        $document->update(['metadata' => ['signatories' => ['disbursing_officer' => $this->snapshot($pat)]]]);
+        $printed = $this->printed($pr, $document->fresh());
+
+        $this->assertStringContainsString('pat chosen', $printed);
+        $this->assertStringNotContainsString('dee default', $printed);
+    }
+
+    public function test_a_renamed_or_deactivated_signer_still_prints_from_the_snapshot(): void
+    {
+        [, $school, $user] = $this->tenant();
+        $pat = $this->staff($school, 'Pat Chosen');
+        $pr = $this->requestFor($school, $user);
+        $document = $this->documentFor($pr, $user, 'purchase_order', ['signatories' => ['disbursing_officer' => $this->snapshot($pat)]]);
+        $pat->update(['name' => 'Renamed Person', 'is_active' => false]);
+        $this->actingAs($user);
+
+        $printed = $this->printed($pr, $document);
+
+        $this->assertStringContainsString('pat chosen', $printed);
+        $this->assertStringNotContainsString('renamed person', $printed);
+    }
+
+    public function test_saving_a_document_stores_the_chosen_signatories_in_metadata(): void
+    {
+        [, $school, $user] = $this->tenant();
+        $pat = $this->staff($school, 'Pat Chosen', ['position' => 'Teacher III']);
+        $pr = $this->requestFor($school, $user);
+
+        $this->actingAs($user)->post(route('procurement.documents.store', $pr), [
+            'document_type' => 'request_for_quotation', 'document_date' => '2026-10-11', 'signatories' => ['bac_chair' => (string) $pat->id, 'bac_secretariat' => ''],
+        ])->assertSessionHasNoErrors();
+
+        $saved = $pr->documents()->where('document_type', 'request_for_quotation')->firstOrFail();
+        $this->assertSame(['bac_chair' => $this->snapshot($pat)], $saved->metadata['signatories']);
+    }
+
+    public function test_resaving_without_the_signatories_field_keeps_earlier_choices_and_blank_values_clear_them(): void
+    {
+        [, $school, $user] = $this->tenant();
+        $pat = $this->staff($school, 'Pat Chosen');
+        $pr = $this->requestFor($school, $user);
+        $payload = ['document_type' => 'request_for_quotation', 'document_date' => '2026-10-11'];
+        $this->actingAs($user)->post(route('procurement.documents.store', $pr), $payload + ['signatories' => ['bac_chair' => (string) $pat->id]])->assertSessionHasNoErrors();
+
+        $this->post(route('procurement.documents.store', $pr), $payload)->assertSessionHasNoErrors();
+        $this->assertSame(['bac_chair' => $this->snapshot($pat)], $pr->documents()->first()->metadata['signatories']);
+
+        $this->post(route('procurement.documents.store', $pr), $payload + ['signatories' => ['bac_chair' => '']])->assertSessionHasNoErrors();
+        $this->assertArrayNotHasKey('signatories', $pr->documents()->first()->metadata ?? []);
+    }
+
+    public function test_the_preview_shows_the_chosen_signer_and_saves_nothing(): void
+    {
+        [, $school, $user] = $this->tenant();
+        $pat = $this->staff($school, 'Pat Chosen');
+        $pr = $this->requestFor($school, $user);
+
+        $response = $this->actingAs($user)->post(route('procurement.documents.preview', $pr), [
+            'document_type' => 'request_for_quotation', 'document_date' => '2026-10-11', 'signatories' => ['bac_chair' => (string) $pat->id],
+        ])->assertOk();
+
+        $this->assertStringContainsString('pat chosen', strtolower($response->getContent()));
+        $this->assertSame(0, ProcurementDocument::count());
+    }
+
+    public function test_only_the_chosen_bac_member_row_changes_on_the_abstract(): void
+    {
+        [, $school, $user] = $this->tenant();
+        $this->staff($school, 'Mia First', ['bac_role' => 'BAC Member']);
+        $this->staff($school, 'Ned Second', ['bac_role' => 'BAC Member']);
+        $this->staff($school, 'Oli Third', ['bac_role' => 'BAC Member']);
+        $pat = $this->staff($school, 'Pat Chosen');
+        $pr = $this->requestFor($school, $user);
+        $document = $this->documentFor($pr, $user, 'abstract_of_bids_quotation', ['signatories' => ['bac_member_2' => $this->snapshot($pat)]]);
+        $this->actingAs($user);
+
+        $printed = $this->printed($pr, $document);
+
+        $this->assertStringContainsString('mia first', $printed);
+        $this->assertStringContainsString('oli third', $printed);
+        $this->assertStringContainsString('pat chosen', $printed);
+        $this->assertStringNotContainsString('ned second', $printed);
+        $this->assertLessThan(strpos($printed, 'pat chosen'), strpos($printed, 'mia first'));
+        $this->assertLessThan(strpos($printed, 'oli third'), strpos($printed, 'pat chosen'));
+    }
+
+    public function test_a_signer_from_another_school_is_refused_on_save(): void
+    {
+        [, $school, $user] = $this->tenant('one');
+        [, $other] = $this->tenant('two');
+        $stranger = $this->staff($other, 'Stranger');
+        $pr = $this->requestFor($school, $user);
+
+        $this->actingAs($user)->post(route('procurement.documents.store', $pr), [
+            'document_type' => 'request_for_quotation', 'document_date' => '2026-10-11', 'signatories' => ['bac_chair' => (string) $stranger->id],
+        ])->assertSessionHasErrors('signatories.bac_chair');
+
+        $this->assertSame(0, ProcurementDocument::count());
     }
 }
