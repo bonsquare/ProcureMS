@@ -283,6 +283,7 @@ Each section is locked until **Edit** is pressed, then **Cancel** and **Save** (
 - **Account menu:** the round user icon opens name, email, role, school, School Settings, User Management (master), Sign out.
 - **Flash messages:** one per page; a page that prints its own declares `@section('flash-handled')`.
 - **Show/hide password eye:** `partials/password-toggle.blade.php` adds one eye to every password field. It skips a field that already has its own eye next to it (the sign-in page), and hides the browser's built-in reveal button (`::-ms-reveal`), so two eyes never overlap.
+- **Extra blank rows:** a form that can add empty bordered rows to the end of a printed item table (Purchase Request, Purchase Order, Inspection and Acceptance Report, Requisition and Issuance Slip) shows one control, `partials/extra-blank-rows.blade.php`: the label "Extra Blank Rows", a plain number box named `extra_blank_rows` (0 up to the most that document's printed page holds), and the hint "Empty bordered rows added at the end of the printed table (up to N)." No stepper and no other label. A new form that needs blank rows uses the same partial.
 - Blade pitfall: a directive glued to the one before it (`@endif@if(`) is not compiled. Put a space or newline between them.
 
 ## 8. Local development
