@@ -257,3 +257,50 @@ Implement email/SMS notifications, analytics, support access, configurable appro
 ## Completion standard
 
 A phase is complete only when its database schema, UI, controller/service logic, permissions, organization isolation, transaction links, validation, tests, and user-facing output are all covered. Do not mark a phase complete because only its page or migration exists.
+
+---
+
+# Strict minimal change policy
+
+**Preserve everything that is already working.** The existing design, functionality, layout, structure, and user experience are approved unless the owner explicitly says otherwise. Never redesign, restructure, refactor, or modify unrelated components without explicit permission.
+
+## Minimal change principle
+
+1. Understand the exact problem.
+2. Identify the specific component responsible.
+3. Inspect the relevant code.
+4. Determine the smallest possible correction.
+5. Modify only what is necessary.
+6. Preserve all unrelated code and functionality.
+7. Verify that existing features remain unaffected.
+
+One small request must result in one small, targeted change whenever technically possible.
+
+## Do not change unless explicitly requested
+
+- Design: page layouts, colors and themes, fonts, buttons and icons, spacing outside the requested area, navigation and menus, forms and tables, dashboard layouts, responsive behavior, animations.
+- Functionality: business logic, database structures, API endpoints, authentication and authorization, user roles and permissions, existing workflows, reports and document templates, validations and calculations.
+- Unsolicited work: code cleanup, component restructuring, file renaming, dependency upgrades, framework migrations, architecture changes, UI improvements, performance optimizations. If a better implementation exists, ask permission first.
+
+A bug fix is not permission to redesign the interface.
+
+## Scope control
+
+Before modifying code, state: the requested change, the affected files, the protected components, and the expected result. If the change requires touching unrelated functionality, explain why and get approval first.
+
+## Implementation rules
+
+- Prefer minimal code changes; preserve existing naming conventions; reuse existing components and styles.
+- Avoid replacing entire files; do not modify unrelated files; no new dependencies without approval.
+- Never use a redesign as a shortcut to fixing a bug.
+- Do not activate unrelated skills or workflows; use specialized skills only when genuinely required.
+
+## Verification
+
+After the change: verify the reported issue is resolved, check related functionality, run relevant existing tests, review the Git diff for unintended modifications, revert unintended changes made by the current task (without overwriting pre-existing user changes), and report any verification that could not be completed.
+
+## Final report
+
+Problem · Fix Applied · Files Modified · Verification · Unchanged (relevant existing features preserved).
+
+**Do not improve, redesign, or refactor what was not asked. Fix only what is explicitly requested. When uncertain, ask before making changes.**
