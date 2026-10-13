@@ -10,6 +10,7 @@ use App\Models\ChartOfAccount;
 use App\Models\Organization;
 use App\Models\School;
 use App\Models\SipProject;
+use App\Models\SobItem;
 use App\Models\SobPlan;
 use App\Models\Subscription;
 use App\Models\User;
@@ -60,17 +61,17 @@ class PlanningFlowTest extends TestCase
         $this->post(route('planning.sob.items.store', $sob), ['aip_activity_id' => $activity->id, 'chart_of_account_id' => $account->id, 'particulars' => 'Bond paper', 'frequency' => 1, 'quantity' => 10, 'unit' => 'ream', 'unit_cost' => 250])->assertSessionHasNoErrors();
         $this->assertEquals(2500, $sob->items()->first()->amount);
 
-        $this->post(route('planning.app.generate'), ['school_id' => $school->id, 'fiscal_year' => 2026])->assertSessionHasErrors('planning');
+        $this->post(route('planning.app.generate'), ['school_id' => $school->id, 'fiscal_year' => 2026, 'sob_item_ids' => SobItem::withoutGlobalScopes()->where('is_extra', false)->pluck('id')->all()])->assertSessionHasErrors('planning');
         $this->assertSame(0, AppPlan::count());
 
         $this->post(route('planning.sob.approve', $sob))->assertSessionHasNoErrors();
-        $this->post(route('planning.app.generate'), ['school_id' => $school->id, 'fiscal_year' => 2026])->assertSessionHasNoErrors();
+        $this->post(route('planning.app.generate'), ['school_id' => $school->id, 'fiscal_year' => 2026, 'sob_item_ids' => SobItem::withoutGlobalScopes()->where('is_extra', false)->pluck('id')->all()])->assertSessionHasNoErrors();
         $app = AppPlan::firstOrFail();
         $this->assertSame(1, $app->items()->count());
         $this->assertSame($organization->id, $app->organization_id);
 
         // Regenerating must not duplicate items.
-        $this->post(route('planning.app.generate'), ['school_id' => $school->id, 'fiscal_year' => 2026]);
+        $this->post(route('planning.app.generate'), ['school_id' => $school->id, 'fiscal_year' => 2026, 'sob_item_ids' => SobItem::withoutGlobalScopes()->where('is_extra', false)->pluck('id')->all()]);
         $this->assertSame(1, $app->items()->count());
 
         $this->post(route('planning.app.approve', $app))->assertSessionHasNoErrors();
@@ -111,7 +112,7 @@ class PlanningFlowTest extends TestCase
         $this->actingAs($userA);
         $this->post(route('planning.sob.store'), ['school_id' => $schoolB->id, 'fiscal_year' => 2026, 'quarter' => 2, 'fund_source' => 'MOOE'])->assertSessionHasErrors('school_id');
         $this->post(route('planning.sob.approve', $sobB))->assertNotFound();
-        $this->post(route('planning.app.generate'), ['school_id' => $schoolB->id, 'fiscal_year' => 2026])->assertSessionHasErrors('school_id');
+        $this->post(route('planning.app.generate'), ['school_id' => $schoolB->id, 'fiscal_year' => 2026, 'sob_item_ids' => SobItem::withoutGlobalScopes()->where('is_extra', false)->pluck('id')->all()])->assertSessionHasErrors('school_id');
         $this->assertSame('draft', $sobB->fresh()->status);
         $this->assertSame(1, SobPlan::withoutGlobalScopes()->count());
     }

@@ -148,7 +148,7 @@ class FinanceController extends Controller
             ->preview((int) request()->user()->organization_id, 'disbursement_voucher', 'DV');
     }
 
-    public function createDv(Request $request, LiquidationReport $liquidationReport)
+    public function createDv(Request $request, LiquidationReport $liquidationReport, bool $preview = false)
     {
         abort_unless($request->user()->hasPermission('accounting.approve') && $this->schoolIds()->contains($liquidationReport->school_id), 403);
         abort_unless($liquidationReport->status === 'approved', 422, 'Approve the ORS before creating a disbursement voucher.');
@@ -161,8 +161,8 @@ class FinanceController extends Controller
             'dv_particulars' => ['required', 'string', 'max:255'],
             'payment_mode' => ['required', Rule::in(self::PAYMENT_MODES)],
             'dv_include_appropriation' => ['nullable', 'boolean'],
-            'journal' => ['required', 'array', 'min:2', 'max:'.self::JOURNAL_MAX_LINES],
-            'journal.*.account_code' => ['required', 'string', 'max:50'],
+            'journal' => $preview ? ['nullable', 'array', 'max:'.self::JOURNAL_MAX_LINES] : ['required', 'array', 'min:2', 'max:'.self::JOURNAL_MAX_LINES],
+            'journal.*.account_code' => [$preview ? 'nullable' : 'required', 'string', 'max:50'],
             'journal.*.debit' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
             'journal.*.credit' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
         ], [
@@ -173,7 +173,15 @@ class FinanceController extends Controller
         $signatories = $request->has('signatories')
             ? SignatorySlots::validated('disbursement_voucher', $request->input('signatories'), (int) $liquidationReport->school_id)
             : null;
-        $lines = $this->journalLines($data['journal'], $liquidationReport);
+        try {
+            $lines = $this->journalLines($data['journal'] ?? [], $liquidationReport);
+        } catch (ValidationException $e) {
+            // A preview is drawn even while the journal entry is not finished; saving still needs it complete.
+            if (! $preview) {
+                throw $e;
+            }
+            $lines = [];
+        }
         unset($data['journal']);
         if ($signatories !== null) {
             $data['signatories'] = $this->withDvSignatories($liquidationReport, $signatories);
@@ -192,6 +200,35 @@ class FinanceController extends Controller
         AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $liquidationReport->school_id, 'action' => 'dv_created', 'auditable_type' => LiquidationReport::class, 'auditable_id' => $liquidationReport->id, 'metadata' => ['dv' => $data['dv_number'], 'ors' => $liquidationReport->ors_number]]);
 
         return redirect()->route('accounting', ['tab' => 'with_dv'])->with('success', "DV {$data['dv_number']} created for {$liquidationReport->ors_number}. It is now queued in Cash for payment.");
+    }
+
+    /** The official DV drawn from the form as it is now: the voucher is made and printed inside a transaction that is rolled back, so nothing is saved. */
+    public function previewDv(Request $request, LiquidationReport $liquidationReport)
+    {
+        $request->merge([
+            'dv_date' => $request->input('dv_date') ?: now()->toDateString(),
+            'payment_mode' => $request->input('payment_mode') ?: self::PAYMENT_MODES[0],
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $this->createDv($request, $liquidationReport, true);
+            $saved = session()->has('success');
+            $errors = session('errors');
+            session()->forget(['success', 'errors', '_old_input']);
+
+            if (! $saved) {
+                $messages = $errors ? collect($errors->all())->unique()->values()->all() : ['The form is incomplete.'];
+
+                return response()->view('procurement-document-preview-error', ['messages' => $messages]);
+            }
+
+            return response($this->printDv($liquidationReport->fresh())->render());
+        } catch (ValidationException $e) {
+            return response()->view('procurement-document-preview-error', ['messages' => collect($e->errors())->flatten()->all()]);
+        } finally {
+            DB::rollBack();
+        }
     }
 
     /** Accounts offered in the journal entry, grouped like the chart: assets and liabilities first, then the expenses. */

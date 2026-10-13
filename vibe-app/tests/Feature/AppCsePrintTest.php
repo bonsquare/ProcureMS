@@ -83,8 +83,9 @@ class AppCsePrintTest extends TestCase
         $this->assertStringNotContainsString('<img', $html, 'the Procurement Service form has no logos');
     }
 
-    public function test_every_catalog_row_is_printed_with_zeros_where_unused(): void
+    public function test_only_the_catalog_rows_with_a_quantity_are_printed(): void
     {
+        // The owner's decision of 2026-10-13: the rows with no quantity are left out (it was every catalog row before).
         [$fx, $plan] = $this->context();
         $priced = $this->priced();
         $item = $this->service()->addCatalogItem($plan, $priced->id);
@@ -92,18 +93,15 @@ class AppCsePrintTest extends TestCase
 
         $html = $this->html($plan);
 
-        $this->assertSame(368, substr_count($html, 'class="catalog-row"'));
+        $this->assertSame(1, substr_count($html, 'class="catalog-row"'));
         $this->assertStringContainsString($priced->code, $html);
-        $this->assertStringContainsString('Pesticides or Pest Repellents', $html);
-        $this->assertStringContainsString('Motor Vehicles', $html, 'the group heading above sub-categories A to H');
+        $this->assertSame(1, substr_count($html, 'class="category-row"'), 'only the heading of the category that has a row with a quantity');
         $row = $this->rowContaining($html, $priced->code);
         // Q1 2 units = 278.72; Q2 1 unit = 139.36; total 3 units = 418.08 at the catalog price 139.36.
         foreach (['278.72', '139.36', '418.08'] as $figure) {
             $this->assertStringContainsString($figure, $row, $figure);
         }
-        $unused = $this->rowContaining($html, CseCatalogItem::where('catalog_year', 2026)->where('sort_order', 2)->value('code'));
-        $this->assertStringContainsString('>0<', $unused);
-        $this->assertStringContainsString('>0.00<', $unused);
+        $this->assertStringNotContainsString((string) CseCatalogItem::where('catalog_year', 2026)->where('sort_order', 2)->value('code'), $html, 'an unused catalog row is not printed');
     }
 
     public function test_part_ii_items_are_grouped_with_a_sub_total_and_escaped(): void
@@ -233,7 +231,7 @@ class AppCsePrintTest extends TestCase
 
         $html = $this->html($plan->fresh());
 
-        $this->assertSame(368, substr_count($html, 'class="catalog-row"'));
+        $this->assertSame(1, substr_count($html, 'class="catalog-row"'), 'the one row with a quantity');
         $this->assertStringNotContainsString('NEW-2030-1', $html);
         $row = $this->rowContaining($html, $priced->code);
         $this->assertStringContainsString('139.36', $row, 'the plan keeps its own price');

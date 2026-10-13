@@ -6,8 +6,8 @@
     <style>
         :root { color-scheme: light; }
         * { box-sizing: border-box; }
-        body { margin: 0; background: #fff; color: #111; font-family: Arial, Helvetica, sans-serif; font-size: 10.5px; line-height: 1.3; }
-        .paper { width: 100%; min-width: 760px; margin: 0 auto; padding: 22px 28px 30px; background: #fff; }
+        body { margin: 0; background: #fff; color: #111; font-family: Arial, Helvetica, sans-serif; font-size: 9.5px; line-height: 1.3; }
+        .paper { width: 100%; margin: 0; padding: 0; background: #fff; }
 
         .masthead { display: grid; grid-template-columns: 90px 1fr 90px; align-items: center; column-gap: 8px; text-align: center; line-height: 1.4; margin-bottom: 6px; }
         .masthead-logo { display: flex; align-items: center; min-height: 70px; }
@@ -45,18 +45,17 @@
         .signatures .position { text-align: center; }
 
         @media print {
-            body { font-size: 9.5px; }
-            .paper { min-width: 0; width: 100%; margin: 0; padding: 0; }
             thead th, tr.pillar-row td, tr.grand td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             tr { break-inside: avoid; }
             thead { display: table-header-group; }
             .signatures, .summary { break-inside: avoid; }
         }
-        /* Page footer: the document title on the left and Page X of Y on the right (printed in the page margin). */
-        @page { @bottom-left { content: "{{ $plan->documentTitle() }}"; font: 9px Arial, Helvetica, sans-serif; } @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 9px Arial, Helvetica, sans-serif; } }
+        /* Page footer: the document title on the left (printed in the page margin). */
+        @page { @bottom-left { content: "{{ $plan->documentTitle() }}"; font: 9px Arial, Helvetica, sans-serif; } }
     </style>
 @include('partials.input-fixes')
 @include('partials.print-clean')
+@include('partials.print-pages')
 </head>
 <body>
 @php
@@ -80,7 +79,7 @@
 
 @include('partials.official-toolbar', ['closeUrl' => route('planning.sob.show', $plan), 'context' => 'School Operating Budget · '.$plan->quarterLabel().' · FY '.$plan->fiscal_year])
 
-<main class="paper" data-official-page data-doc="sob" data-paper="legal" data-orientation="portrait" data-margin="10">
+<main class="paper" data-official-page data-sheets data-doc="sob" data-paper="legal" data-orientation="portrait" data-margin="10">
     <header class="masthead">
         <div class="masthead-logo masthead-logo-left">@if($leftLogo)<img class="official-logo" src="{{ $leftLogo }}" alt="" onerror="this.remove()">@endif</div>
         <div>
@@ -101,14 +100,14 @@
         <p>{{ $plan->quarterLabel() }}</p>
     </div>
 
-    <table>
-        <colgroup><col style="width:21%"><col style="width:15%"><col style="width:18%"><col style="width:9.5%"><col style="width:8%"><col style="width:8%"><col style="width:9%"><col style="width:11.5%"></colgroup>
+    <table data-paginate>
+        <colgroup><col style="width:36%"><col style="width:18%"><col style="width:9.5%"><col style="width:8%"><col style="width:8%"><col style="width:9%"><col style="width:11.5%"></colgroup>
         <thead>
-            <tr><th colspan="2">PPAs/Expenditures/Item</th><th>Particulars</th><th>Frequency</th><th>Quantity</th><th>Unit of Measure</th><th>Unit Cost</th><th>Amount</th></tr>
+            <tr><th>PPAs/Expenditures/Item</th><th>Particulars</th><th>Frequency</th><th>Quantity</th><th>Unit of Measure</th><th>Unit Cost</th><th>Amount</th></tr>
         </thead>
         <tbody>
         @foreach($pillarRows as $pillar)
-            <tr class="pillar-row pillar-{{ $pillarClass[$pillar['pillar']] ?? 'other' }}"><td colspan="8">{{ strtoupper($pillar['pillar'] ?: 'Other') }}</td></tr>
+            <tr class="pillar-row pillar-{{ $pillarClass[$pillar['pillar']] ?? 'other' }}"><td colspan="7">{{ strtoupper($pillar['pillar'] ?: 'Other') }}</td></tr>
             @foreach($pillar['programs'] as $program)
                 @foreach($program['activities'] as $row)
                     @php
@@ -119,8 +118,7 @@
                         @php $groupRows = $group['items']->count() + ($group['extras']->isNotEmpty() ? 1 + $group['extras']->count() : 0); @endphp
                         @foreach($group['items'] as $index => $item)
                             <tr>
-                                @if($firstOfActivity)<td rowspan="{{ $activityRows }}">{{ $program['program'] ?: 'No program' }}</td>@php $firstOfActivity = false; @endphp@endif
-                                @if($index === 0)<td class="account" rowspan="{{ $groupRows }}">{{ $group['note'] ?: $group['account']?->title }}</td>@endif
+                                @if($index === 0)<td class="account" rowspan="{{ $groupRows }}">@if($firstOfActivity)<div>{{ $program['program'] ?: 'No program' }}</div>@php $firstOfActivity = false; @endphp<div style="margin-top:3px">{{ $group['note'] ?: $group['account']?->title }}</div>@else{{ $group['note'] ?: $group['account']?->title }}@endif</td>@endif
                                 <td>{{ $item->particulars }}</td>
                                 <td class="center">{{ $number($item->frequency) }}</td>
                                 <td class="center">{{ $number($item->quantity) }}</td>
@@ -138,9 +136,9 @@
                     @endforeach
                 @endforeach
             @endforeach
-            @if(count($pillar['programs']))<tr class="sub pillar-sub"><td colspan="7" style="text-align:right">Sub-Total</td><td class="num">{{ $money($pillar['total']) }}</td></tr>@endif
+            @if(count($pillar['programs']))<tr class="sub pillar-sub"><td colspan="6" style="text-align:right">Sub-Total</td><td class="num">{{ $money($pillar['total']) }}</td></tr>@endif
         @endforeach
-            <tr class="grand"><td colspan="7">GRAND TOTAL</td><td class="num">{{ $money($grandTotal) }}</td></tr>
+            <tr class="grand"><td colspan="6">GRAND TOTAL</td><td class="num">{{ $money($grandTotal) }}</td></tr>
         </tbody>
     </table>
 

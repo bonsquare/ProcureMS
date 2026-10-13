@@ -9,8 +9,10 @@ use App\Models\School;
 use App\Models\SchoolStaff;
 use App\Services\AppCseService;
 use App\Support\SignatorySlots;
+use Closure;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -128,6 +130,44 @@ class AppCseController extends Controller
         $this->service->updateItem($appCseItem, $data);
 
         return back()->with('success', 'The item was saved.');
+    }
+
+    /** The official APP-CSE drawn from an entry that is not saved yet: the entry is made inside a transaction that is rolled back. An entry that does not pass is left out of the drawing. */
+    public function previewPlan(Request $request, AppCsePlan $appCsePlan)
+    {
+        return $this->previewWith($request, $appCsePlan, fn () => $this->update($request, $appCsePlan));
+    }
+
+    public function previewItem(Request $request, AppCsePlan $appCsePlan)
+    {
+        return $this->previewWith($request, $appCsePlan, fn () => $this->storeItem($request, $appCsePlan));
+    }
+
+    public function previewCustomItem(Request $request, AppCsePlan $appCsePlan)
+    {
+        return $this->previewWith($request, $appCsePlan, fn () => $this->storeCustomItem($request, $appCsePlan));
+    }
+
+    public function previewItemUpdate(Request $request, AppCseItem $appCseItem)
+    {
+        return $this->previewWith($request, $appCseItem->plan()->firstOrFail(), fn () => $this->updateItem($request, $appCseItem));
+    }
+
+    private function previewWith(Request $request, AppCsePlan $plan, Closure $apply)
+    {
+        DB::beginTransaction();
+        try {
+            try {
+                $apply();
+            } catch (\Throwable) {
+                // the saved form is drawn instead
+            }
+            session()->forget(['success', 'errors', '_old_input']);
+
+            return response($this->print($request, $plan->fresh())->render());
+        } finally {
+            DB::rollBack();
+        }
     }
 
     public function destroyItem(Request $request, AppCseItem $appCseItem): RedirectResponse

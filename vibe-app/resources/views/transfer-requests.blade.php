@@ -5,7 +5,7 @@
 @php $field = 'w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-xs outline-none focus:border-action'; $tones = ['approved' => 'bg-secondary/10 text-secondary', 'declined' => 'bg-error/10 text-error', 'cancelled' => 'bg-surface-high text-on-surface-variant', 'expired' => 'bg-surface-high text-on-surface-variant']; @endphp
 <header class="mb-6">
     <p class="text-[11px] font-bold uppercase tracking-[.14em] text-action">Master account</p>
-    <h1 class="mt-2 text-3xl font-bold">Official Station Management</h1>
+    <h1 class="mt-2 text-[28px] font-semibold leading-9 tracking-tight">Official Station Management</h1>
     <p class="mt-2 text-sm text-on-surface-variant">Official Station requests from new people who take over a vacant school, and requests from school users: a transfer to another school, a request to be given an Official Station, or any other request. Approving a transfer or an Official Station request moves the account and its subscription; the school they leave keeps its data.</p>
 </header>
 @include('partials.takeover-queue')

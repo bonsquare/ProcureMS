@@ -1835,6 +1835,7 @@ class HomeController extends Controller
             'purpose' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string', 'max:1000'],
+            'ors_include_status' => ['nullable', 'boolean'],
         ], [], ['ors_number' => 'ORS serial number', 'manually_encode_ors_number' => 'manual ORS serial option']);
         abort_unless($schoolIds->contains((int) $data['school_id']), 403);
         if (! empty($data['procurement_request_id'])) {
@@ -1905,6 +1906,7 @@ class HomeController extends Controller
                 'amount' => $data['amount'],
                 'status' => 'for_review',
                 'notes' => $data['notes'] ?? null,
+                'ors_include_status' => $data['ors_include_status'] ?? true,
                 'submitted_at' => now(),
                 'signatories' => $signatories === [] ? null : ['ors' => $signatories],
             ]);
@@ -1919,6 +1921,38 @@ class HomeController extends Controller
         return ($data['redirect_to'] ?? null) === 'budget'
             ? redirect()->route('budget')->with('success', $message)
             : back()->with('success', $message);
+    }
+
+    /** The official ORS drawn from the form as it is now: the entry is made and printed inside a transaction that is rolled back, so nothing is saved. */
+    public function previewOrs(Request $request)
+    {
+        abort_unless($request->user()->canCreateObligation(), 403, 'Your role cannot create obligation requests.');
+        $request->merge([
+            'school_id' => $request->input('school_id') ?: $this->scopedSchoolIds()->first(),
+            'source_of_fund' => $request->input('source_of_fund') ?: 'MOOE',
+            'amount' => $request->filled('amount') ? $request->input('amount') : 0,
+            'purpose' => $request->input('purpose') ?: '—',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $this->storeLiquidation($request);
+            $saved = session()->has('success');
+            $errors = session('errors');
+            session()->forget(['success', 'errors', '_old_input']);
+
+            if (! $saved) {
+                $messages = $errors ? collect($errors->all())->unique()->values()->all() : ['The form is incomplete.'];
+
+                return response()->view('procurement-document-preview-error', ['messages' => $messages]);
+            }
+
+            return response($this->printOrs(LiquidationReport::latest('id')->firstOrFail())->render());
+        } catch (ValidationException $e) {
+            return response()->view('procurement-document-preview-error', ['messages' => collect($e->errors())->flatten()->all()]);
+        } finally {
+            DB::rollBack();
+        }
     }
 
     public function printOrs(LiquidationReport $liquidationReport)

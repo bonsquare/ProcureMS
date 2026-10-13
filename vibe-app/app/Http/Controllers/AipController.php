@@ -201,6 +201,67 @@ class AipController extends Controller
         return back()->with('success', 'Source of fund saved.');
     }
 
+    /** The official AIP drawn from an entry that is not saved yet: the entry is made inside a transaction that is rolled back. */
+    public function previewActivityBudget(Request $request, Aip $aip, AipActivity $activity)
+    {
+        return $this->previewWith($aip, fn () => $this->updateActivityBudget($request, $aip, $activity));
+    }
+
+    public function previewActivityFund(Request $request, Aip $aip, AipActivity $activity)
+    {
+        return $this->previewWith($aip, fn () => $this->updateActivityFund($request, $aip, $activity));
+    }
+
+    private function previewWith(Aip $aip, \Closure $apply)
+    {
+        DB::beginTransaction();
+        try {
+            try {
+                $apply();
+            } catch (\Throwable) {
+                // the saved form is drawn instead
+            }
+            session()->forget(['success', 'errors', '_old_input']);
+
+            return response($this->print($aip->fresh())->render());
+        } finally {
+            DB::rollBack();
+        }
+    }
+
+    /**
+     * The quarterly amounts and the timeline of one activity, edited on the AIP page. A timeline left empty follows the quarters that have an amount.
+     */
+    public function updateActivityBudget(Request $request, Aip $aip, AipActivity $activity)
+    {
+        $this->authorizeManage();
+        $this->authorizeAip($aip);
+        abort_unless($activity->aip_id === $aip->id, 404);
+        $this->fiscalYears->assertOpen((int) $aip->organization_id, (int) $aip->fiscal_year);
+        $data = $request->validate([
+            'q1_amount' => ['nullable', 'numeric', 'min:0'],
+            'q2_amount' => ['nullable', 'numeric', 'min:0'],
+            'q3_amount' => ['nullable', 'numeric', 'min:0'],
+            'q4_amount' => ['nullable', 'numeric', 'min:0'],
+            'timeline' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        $amounts = [];
+        foreach (['q1_amount', 'q2_amount', 'q3_amount', 'q4_amount'] as $quarter) {
+            $amounts[$quarter] = (float) ($data[$quarter] ?? 0);
+        }
+        $timeline = trim((string) ($data['timeline'] ?? '')) ?: AipActivity::timelineFor(array_values($amounts));
+
+        $activity->update($amounts + ['timeline' => $timeline ?: null]);
+        $this->markRevised($aip);
+
+        if ($request->expectsJson()) {
+            return response()->json(['timeline' => $activity->timeline, 'total' => $activity->total, 'status' => $aip->fresh()->status]);
+        }
+
+        return back()->with('success', 'Amounts saved.');
+    }
+
     /** Activities on the form are matched by id: updated, added, or removed when left off. */
     public function updateKra(Request $request, Aip $aip, AipKra $kra)
     {

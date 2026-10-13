@@ -43,7 +43,7 @@
     @include('procurement-documents._header')<div class="bac">Bids and Awards Committee</div>
     <p class="center" style="margin:15px 8mm">After having carefully read and accepted the Instruction and Terms and Conditions, I/We submit our quotation/s for the item/s as follows:</p>
     <div class="rfq-purpose">{{ $rfqPurpose }}</div>
-    <table class="doc-table rfq-spec"><thead><tr><th style="width:34%">Minimum Technical Specifications</th><th style="width:12%">Qty.</th><th>Offered Technical<br>Specification/Service / Brand</th><th style="width:27%">Statement of Compliance<br>("Comply" or "Not Comply")</th></tr></thead><tbody><tr><td colspan="4">Note: Non-compliance with the minimum required specifications shall be rejected</td></tr><tr><td colspan="4" class="bold">Requirements:</td></tr>@foreach($procurementRequest->items as $item)<tr><td>{{ $item->name }}</td><td class="center">{{ number_format((float)$item->quantity,0) }} {{ strtoupper($item->unit) }}</td><td></td><td></td></tr>@endforeach</tbody></table>
+    <table class="doc-table rfq-spec" data-paginate><thead><tr><th style="width:34%">Minimum Technical Specifications</th><th style="width:12%">Qty.</th><th>Offered Technical<br>Specification/Service / Brand</th><th style="width:27%">Statement of Compliance<br>("Comply" or "Not Comply")</th></tr></thead><tbody><tr><td colspan="4">Note: Non-compliance with the minimum required specifications shall be rejected</td></tr><tr><td colspan="4" class="bold">Requirements:</td></tr>@foreach($procurementRequest->items as $item)<tr><td>{{ $item->name }}</td><td class="center">{{ number_format((float)$item->quantity,0) }} {{ strtoupper($item->unit) }}</td><td></td><td></td></tr>@endforeach</tbody></table>
     <div class="rfq-financial"><h2>FINANCIAL OFFER:</h2><h2>Terms of Payment:</h2><p class="rfq-p">{{ $termsOfPayment }}</p><h2>Payment Details:</h2><p>Banking Institution: ______________________________________________</p><p>Account Number: _________________________________________________</p><p>Account Name: ___________________________________________________</p></div>
 </section>
 <section class="page rfq-page page-break">
@@ -56,7 +56,7 @@
 </section>
 <section class="page rfq-page">
     @include('procurement-documents._header')<div class="bac">Bids and Awards Committee</div><h1 class="center" style="font-size:13pt;margin:14px 0">DETAILED ESTIMATES AND TECHNICAL SPECIFICATION</h1><div class="rfq-purpose">{{ $rfqPurpose }}</div>
-    <table class="doc-table rfq-estimate"><thead><tr><th style="width:7%">Stock<br>No.</th><th style="width:9%">Unit</th><th>Description</th><th style="width:7%">Qty</th><th style="width:11%">Unit Cost</th><th style="width:10%">Bid Price</th><th style="width:13%">Total Cost</th></tr></thead><tbody>
+    <table class="doc-table rfq-estimate" data-paginate><thead><tr><th style="width:7%">Stock<br>No.</th><th style="width:9%">Unit</th><th>Description</th><th style="width:7%">Qty</th><th style="width:11%">Unit Cost</th><th style="width:10%">Bid Price</th><th style="width:13%">Total Cost</th></tr></thead><tbody>
         @foreach($procurementRequest->items as $item)
             <tr><td class="center">{{ $loop->iteration }}</td><td class="center">{{ strtolower($item->unit) }}</td><td>{{ $item->name }}</td><td class="right">{{ number_format((float)$item->quantity,0) }}</td><td class="right">{{ number_format((float)$item->unit_price,2) }}</td><td></td><td></td></tr>
         @endforeach

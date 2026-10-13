@@ -61,7 +61,7 @@
                     </td>
                 </tr>
             </table>
-            <table class="ris-table" style="border-top:0">
+            <table class="ris-table" style="border-top:0" data-paginate>
                 <colgroup><col style="width:11%"><col style="width:7%"><col style="width:35%"><col style="width:11%"><col style="width:9%"><col style="width:7%"><col style="width:10%"><col style="width:10%"></colgroup>
                 <thead>
                     <tr><th colspan="4">Requisition</th><th colspan="2">Stock Available?</th><th colspan="2">Issue</th></tr>

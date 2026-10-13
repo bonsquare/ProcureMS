@@ -4,8 +4,8 @@
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $section === 'cash' ? 'Cash' : 'Accounting' }} · ProcureMS</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config={theme:{extend:{colors:{surface:'#faf8ff','surface-low':'#f4f3fa','surface-container':'#eeedf4','surface-high':'#e9e7ef',primary:'#00236f','primary-container':'#1e3a8a','on-surface':'#1a1b21','on-surface-variant':'#444651',secondary:'#006c4a','outline-variant':'#c5c5d3',error:'#ba1a1a'},fontFamily:{inter:['Inter','sans-serif']}}}};</script>
-    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet"><link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    <script>tailwind.config={theme:{extend:{colors:{surface:'#f5f8fb','surface-low':'#eef3f7','surface-container':'#e4ebf1','surface-high':'#d8e2ea',primary:'#103967','primary-container':'#174b82','on-surface':'#172538','on-surface-variant':'#536273',secondary:'#369878','outline-variant':'#cbd7e1',error:'#b64a50'},fontFamily:{inter:['Inter','sans-serif']}}}};</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet"><link rel="stylesheet" href="{{ asset('css/app.css') }}"><style>html{font-size:14px}</style>
 @include('partials.input-fixes')
 @include('partials.favicon')
 </head>
@@ -23,11 +23,11 @@
     $tones = ['for_review' => 'error', 'pending_documents' => 'primary', 'approved' => 'secondary', 'returned' => 'error', 'draft' => 'on-surface-variant'];
     $inputClass = 'mt-1 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary';
 @endphp
-<aside class="fixed inset-y-0 left-0 z-50 hidden w-72 flex-col bg-primary px-4 py-6 text-white md:flex">@include('partials.brand')<nav class="flex-1 space-y-1" aria-label="Main navigation">
-    @foreach($navigation as $item)<a href="{{ route($item['route']) }}" class="flex items-center rounded px-3 py-2.5 text-sm text-white/80 hover:bg-primary-container hover:text-white"><span class="material-symbols-outlined mr-3 text-[20px]">{{ $item['icon'] }}</span>{{ $item['label'] }}</a> @if($item['label']==='Dashboard')<details class="group" open><summary class="flex cursor-pointer list-none items-center rounded px-3 py-2.5 text-sm text-white/80 hover:bg-primary-container hover:text-white"><span class="material-symbols-outlined mr-3 text-[20px]">account_balance_wallet</span><span class="flex-1">Finance</span><span class="material-symbols-outlined text-[18px] transition-transform group-open:rotate-180">expand_more</span></summary><div class="mt-1 space-y-1">@foreach($sub as [$label,$icon,$r,$key])<a href="{{ route($r) }}" class="ml-8 flex items-center rounded px-3 py-2 text-sm {{ $key===$section ? 'bg-primary-container font-semibold text-white' : 'text-white/75 hover:bg-primary-container hover:text-white' }}"><span class="material-symbols-outlined mr-2 text-[17px]">{{ $icon }}</span>{{ $label }}</a>@endforeach</div></details>@endif @endforeach
-</nav><div class="border-t border-white/15 pt-4 text-xs text-white/60"><p>Multi-School Procurement System</p></div></aside>
+<aside class="fixed inset-y-0 left-0 z-50 hidden w-60 flex-col bg-[#103967] px-4 py-6 text-white md:flex">@include('partials.brand')<nav class="flex-1 space-y-1" aria-label="Main navigation">
+    @foreach($navigation as $item)<a href="{{ route($item['route']) }}" class="flex min-h-11 items-center rounded-[.55rem] px-3 py-2.5 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white"><span class="material-symbols-outlined mr-3 text-[20px]">{{ $item['icon'] }}</span>{{ $item['label'] }}</a> @if($item['label']==='Dashboard')<details class="group" open><summary class="flex min-h-11 cursor-pointer list-none items-center rounded-[.55rem] px-3 py-2.5 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white"><span class="material-symbols-outlined mr-3 text-[20px]">account_balance_wallet</span><span class="flex-1">Finance</span><span class="material-symbols-outlined text-[18px] transition-transform group-open:rotate-180">expand_more</span></summary><div class="mt-1 space-y-1">@foreach($sub as [$label,$icon,$r,$key])<a href="{{ route($r) }}" class="ml-8 flex items-center rounded-[.55rem] px-3 py-2 text-sm font-medium {{ $key===$section ? 'bg-white/10 font-bold text-white shadow-[inset_3px_0_0_#55c79e]' : 'text-white/75 hover:bg-white/10 hover:text-white' }}"><span class="material-symbols-outlined mr-2 text-[17px]">{{ $icon }}</span>{{ $label }}</a>@endforeach</div></details>@endif @endforeach
+</nav><div class="border-t border-white/15 px-2 pt-4 text-[11px] leading-5 text-white/55"><p>Multi-School Procurement System</p><p>Secure operational workspace</p></div></aside>
 
-<div class="md:pl-72"><header class="fixed left-0 right-0 top-0 z-40 flex h-16 items-center justify-between border-b border-outline-variant/30 bg-surface/95 px-4 backdrop-blur md:left-72 md:px-6"><span class="text-sm font-semibold text-on-surface-variant">Finance · {{ $isCash ? 'Cash' : 'Accounting' }}</span><div class="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white"><span class="material-symbols-outlined text-[18px]">person</span></div></header>
+<div class="md:pl-60"><header class="fixed left-0 right-0 top-0 z-40 flex h-16 items-center justify-between border-b border-outline-variant/30 bg-surface/95 px-4 backdrop-blur md:left-60 md:px-6"><div class="flex min-w-0 items-center gap-3"><button class="rounded p-2 text-on-surface-variant md:hidden" aria-label="Open navigation"><span class="material-symbols-outlined">menu</span></button><div class="min-w-0"><p class="text-[10px] font-bold uppercase tracking-[0.14em] text-primary">Finance</p><p class="truncate text-sm font-semibold text-on-surface">{{ $isCash ? 'Cash' : 'Accounting' }}</p></div></div><div class="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white"><span class="material-symbols-outlined text-[18px]">person</span></div></header>
 
 <main class="min-h-screen bg-surface px-4 pb-16 pt-24 md:px-6 lg:px-8"><div class="mx-auto max-w-[1600px]">
     <div class="mb-8"><h1 class="text-[28px] font-semibold leading-9 tracking-tight">{{ $isCash ? 'Cash Operations' : 'Accounting Review' }}</h1><p class="mt-1 text-[15px] leading-6 text-on-surface-variant">{{ $isCash ? 'Disbursement vouchers created in Accounting, ready for payment. Record the check / ADA reference and release date once paid.' : 'Review ORS entries created in Budget, then approve them and create the Disbursement Voucher (DV) that goes to Cash for payment.' }}</p></div>
@@ -59,7 +59,7 @@
                 <span id="row-count" class="whitespace-nowrap text-xs text-on-surface-variant">{{ count($rows) }} shown</span>
             </div>
         </div>
-        <div class="overflow-x-auto"><table class="w-full min-w-[1000px] text-left text-sm"><thead class="bg-surface-low text-[11px] uppercase tracking-wider text-on-surface-variant"><tr><th class="px-5 py-3">ORS / Particulars</th><th class="px-5 py-3">School</th><th class="px-5 py-3">Fund</th><th class="px-5 py-3 text-right">Amount</th><th class="px-5 py-3">{{ $isCash ? 'Voucher / Payment' : 'Status / DV' }}</th><th class="px-5 py-3 text-right">Actions</th></tr></thead><tbody class="divide-y divide-outline-variant/20">
+        <div class="overflow-x-auto"><table class="w-full min-w-[1000px] text-left text-sm"><thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant"><tr><th class="px-5 py-3">ORS / Particulars</th><th class="px-5 py-3">School</th><th class="px-5 py-3">Fund</th><th class="px-5 py-3 text-right">Amount</th><th class="px-5 py-3">{{ $isCash ? 'Voucher / Payment' : 'Status / DV' }}</th><th class="px-5 py-3 text-right">Actions</th></tr></thead><tbody class="divide-y divide-outline-variant/20">
         @forelse($rows as $r)
             @php
                 $tone = $tones[$r->status] ?? 'primary'; $label = $r->ors_number ?: $r->report_number;
@@ -154,8 +154,9 @@
         <label class="text-xs font-semibold text-on-surface-variant">Date Paid <span class="text-error">*</span><input type="date" name="paid_at" required max="{{ now()->toDateString() }}" value="{{ now()->toDateString() }}" class="{{ $inputClass }}"></label>
         <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-4 md:col-span-2"><button type="button" data-close class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Cancel</button><button class="rounded bg-secondary px-4 py-2.5 text-xs font-semibold text-white">Confirm Payment</button></div></form></div></div>
 
-<div id="dv-modal" class="fixed inset-0 z-[100] hidden items-center justify-center overflow-y-auto bg-black/50 p-4" role="dialog" aria-modal="true"><div class="my-auto w-full max-w-3xl rounded bg-white shadow-2xl"><div class="border-b border-outline-variant/30 px-6 py-4"><h2 class="text-lg font-semibold">Create Disbursement Voucher</h2><p id="dv-title" class="mt-1 text-xs text-on-surface-variant"></p></div>
-    <form id="dv-form" method="POST" class="grid grid-cols-1 gap-4 p-6 md:grid-cols-2">@csrf
+<div id="dv-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/50 p-3" role="dialog" aria-modal="true"><div class="flex max-h-[94vh] w-full max-w-[1400px] flex-col overflow-hidden rounded bg-white shadow-2xl"><div class="shrink-0 border-b border-outline-variant/30 px-5 py-3"><h2 class="text-lg font-semibold">Create Disbursement Voucher</h2><p id="dv-title" class="mt-1 text-xs text-on-surface-variant"></p></div>
+    <div id="dv-split"><aside id="dv-preview-pane" aria-label="DV preview"><div id="dv-preview-bar"><span>Official DV (updates as you edit)</span><span class="flex items-center gap-3"><small id="dv-preview-status">Updates as you type</small><select id="dv-preview-zoom" aria-label="Preview zoom" class="rounded border border-outline-variant/60 bg-white px-2 py-1 text-xs font-semibold"><option value="fit">Fit width</option><option value="0.5">50%</option><option value="0.75">75%</option><option value="1">100%</option></select></span></div><iframe id="dv-preview-frame" title="Official DV preview"></iframe></aside><div id="dv-form-pane">
+    <form id="dv-form" method="POST" class="grid grid-cols-1 gap-3 p-4 md:grid-cols-2">@csrf
         <label class="text-xs font-semibold text-on-surface-variant">DV Number <span class="text-error">*</span><input name="dv_number" required value="{{ old('dv_number', $nextDv ?? '') }}" class="{{ $inputClass }}"></label>
         <label class="text-xs font-semibold text-on-surface-variant">DV Date <span class="text-error">*</span><input type="date" name="dv_date" required max="{{ now()->toDateString() }}" value="{{ now()->toDateString() }}" class="{{ $inputClass }}"></label>
         <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Payee <span class="text-error">*</span><input name="payee" id="dv-payee" required maxlength="255" class="{{ $inputClass }}"></label>
@@ -172,7 +173,7 @@
                 <button type="button" id="journal-add" class="inline-flex items-center gap-1 rounded border border-outline-variant/60 bg-white px-3 py-1.5 text-xs font-semibold text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">add</span>Add line</button>
                 <p class="text-xs text-on-surface-variant">Total debit <strong id="journal-debit" class="text-on-surface">0.00</strong> · Total credit <strong id="journal-credit" class="text-on-surface">0.00</strong></p>
             </div>
-            <select id="journal-options" hidden aria-hidden="true"><option value="">Choose an account…</option>@foreach($journalAccounts as $category => $accounts)<optgroup label="{{ $category }}">@foreach($accounts as $account)<option value="{{ $account['code'] }}">{{ $account['code'] }} · {{ $account['title'] }}</option>@endforeach</optgroup>@endforeach</select>
+            <select id="journal-options" hidden aria-hidden="true"><option value="">Choose an account…</option>@foreach(($journalAccounts ?? []) as $category => $accounts)<optgroup label="{{ $category }}">@foreach($accounts as $account)<option value="{{ $account['code'] }}">{{ $account['code'] }} · {{ $account['title'] }}</option>@endforeach</optgroup>@endforeach</select>
         </div>
         <label class="flex items-start gap-2 text-xs font-semibold text-on-surface-variant md:col-span-2"><input type="checkbox" name="dv_include_appropriation" value="1" @checked(old('dv_include_appropriation')) class="mt-0.5 h-4 w-4 rounded border-outline-variant"><span>Add the APPROPRIATION table to the printed DV<span class="block font-normal">Columns: Appropriation, P/A/P, OR No., Amount, Expense Code. Left unchecked, the DV prints without it.</span></span></label>
         @foreach(($dvDialogPanels ?? []) as $signatorySchoolId => $signatoryRows)
@@ -182,14 +183,25 @@
                 <div class="grid grid-cols-1 gap-3 md:grid-cols-2">@include('partials.signatory-picker', ['rows' => $signatoryRows])</div>
             </section>
         @endforeach
-        <div class="flex items-end justify-end gap-2 md:col-span-2"><button type="button" data-close class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Cancel</button><button id="dv-submit" class="rounded bg-secondary px-4 py-2.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40">Create DV</button></div></form></div></div>
+        <div class="flex items-end justify-end gap-2 md:col-span-2"><button type="button" data-close class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Cancel</button><button id="dv-submit" class="rounded bg-secondary px-4 py-2.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40">Create DV</button></div></form></div></div></div></div>
+<style>
+    #dv-split{display:flex;flex-direction:row-reverse;min-height:0;flex:1}
+    #dv-preview-pane{display:flex;min-width:0;flex:1 1 50%;flex-direction:column;background:#d9dee5;border-left:1px solid #cbd7e1}
+    #dv-preview-bar{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:#fff;border-bottom:1px solid #cbd7e1;font-size:12px;font-weight:700;color:#103967}
+    #dv-preview-bar small{font-weight:400;color:#536273}
+    #dv-preview-frame{width:100%;flex:1;min-height:60vh;border:0;background:#d9dee5}
+    #dv-form-pane{flex:1 1 50%;min-width:0;overflow-y:auto;max-height:calc(94vh - 4.5rem)}
+    #dv-form input:not([type=checkbox]),#dv-form select:not(.journal-row select),#dv-form textarea{margin-top:.25rem;padding-top:.4rem;padding-bottom:.4rem;font-size:.8125rem}
+    @media(max-width:1023px){#dv-modal{align-items:flex-start;overflow-y:auto}#dv-split{flex-direction:column-reverse;overflow-y:auto}#dv-preview-pane{flex:none}#dv-preview-frame{min-height:55vh}#dv-form-pane{flex:none;max-height:none;overflow:visible}}
+</style>
 
 <div id="review-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true"><div class="w-full max-w-lg rounded bg-white shadow-2xl"><div class="border-b border-outline-variant/30 px-6 py-4"><h2 id="review-heading" class="text-lg font-semibold"></h2><p id="review-title" class="mt-1 text-xs text-on-surface-variant"></p></div>
     <form id="review-form" method="POST" class="grid gap-4 p-6">@csrf @method('PATCH')<input type="hidden" name="status" id="review-status">
         <label class="text-xs font-semibold text-on-surface-variant">Remarks <span class="text-error">*</span><textarea name="accounting_remarks" required maxlength="255" rows="3" placeholder="What is missing or wrong?" class="{{ $inputClass }}"></textarea></label>
-        <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-4"><button type="button" data-close class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Cancel</button><button class="rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white">Submit</button></div></form></div></div>
+        <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-4"><button type="button" data-close class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Cancel</button><button class="rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white">Submit</button></div></form></div></div>
 
 @include('partials.profile-menu')
+@include('partials.mobile-nav')
 <script>
     const show = (m) => { m.classList.remove('hidden'); m.classList.add('flex'); };
     const hide = (m) => { m.classList.add('hidden'); m.classList.remove('flex'); };
@@ -207,6 +219,7 @@
         document.getElementById('dv-particulars').value = b.dataset.particulars || '';
         if (window.journalOpen) window.journalOpen(b);
         show(dvModal);
+        if (window.refreshDvPreview) window.refreshDvPreview();
     }));
     document.querySelectorAll('[data-pay]').forEach((b) => b.addEventListener('click', () => {
         document.getElementById('pay-form').action = b.dataset.pay;
@@ -222,6 +235,60 @@
         show(reviewModal);
     }));
     [payModal, reviewModal, dvModal].forEach((m) => { m.addEventListener('click', (e) => { if (e.target === m) hide(m); }); m.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => hide(m))); });
+</script>
+<script>
+    // Live preview: the right pane draws the real official DV from the form as it is now (nothing is saved).
+    (() => {
+        const form = document.getElementById('dv-form');
+        const frame = document.getElementById('dv-preview-frame');
+        const status = document.getElementById('dv-preview-status');
+        const zoomSelect = document.getElementById('dv-preview-zoom');
+        const modal = document.getElementById('dv-modal');
+        const hideChrome = '<style>.official-toolbar{display:none!important}body{background:#d9dee5!important}.official-sheet{zoom:var(--pz,1)!important;margin-top:12px!important;margin-bottom:12px!important}</style>';
+        let timer = null; let controller = null;
+        const applyZoom = () => {
+            const doc = frame.contentDocument;
+            const sheet = doc && doc.querySelector('.official-sheet, [data-official-page]');
+            if (!sheet) return;
+            let zoom = parseFloat(zoomSelect.value);
+            if (zoomSelect.value === 'fit') {
+                doc.documentElement.style.setProperty('--pz', 1);
+                const box = sheet.getBoundingClientRect();
+                zoom = Math.min(0.72, Math.max(0.3, (frame.clientWidth - 48) / (Math.max(sheet.scrollWidth, box.width) || 1)));
+            }
+            doc.documentElement.style.setProperty('--pz', zoom);
+        };
+        frame.addEventListener('load', () => setTimeout(applyZoom, 350));
+        zoomSelect.addEventListener('change', applyZoom);
+        const retryDelays = [1500, 4000];
+        const refresh = async (attempt = 0) => {
+            if (modal.classList.contains('hidden') || !form.action) return;
+            if (controller) controller.abort();
+            controller = new AbortController();
+            status.onclick = null; status.style.cursor = ''; status.style.textDecoration = '';
+            status.textContent = attempt ? 'Updating preview... (trying again)' : 'Updating preview...';
+            let reason = 'no connection to the server';
+            try {
+                const response = await fetch(form.action.replace(/\/dv$/, '/dv/preview'), { method: 'POST', body: new FormData(form), signal: controller.signal, headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' } });
+                const html = await response.text();
+                if (response.ok || (response.status < 500 && response.status !== 419)) {
+                    frame.srcdoc = /<head[^>]*>/i.test(html) ? html.replace(/(<head[^>]*>)/i, '$1' + hideChrome) : hideChrome + html;
+                    status.textContent = response.ok ? 'Updates as you type' : 'Preview unavailable (HTTP ' + response.status + ')';
+                    return;
+                }
+                reason = response.status === 419 ? 'your session expired, reload the page' : 'server error ' + response.status;
+                if (response.status === 419) attempt = retryDelays.length;
+            } catch (error) { if (error.name === 'AbortError') return; }
+            if (attempt < retryDelays.length) { timer = setTimeout(() => refresh(attempt + 1), retryDelays[attempt]); return; }
+            status.textContent = 'Preview unavailable: ' + reason + '. Click to retry';
+            status.style.cursor = 'pointer'; status.style.textDecoration = 'underline';
+            status.onclick = () => refresh();
+        };
+        const schedule = () => { clearTimeout(timer); timer = setTimeout(() => refresh(), 900); };
+        form.addEventListener('input', schedule);
+        form.addEventListener('change', schedule);
+        window.refreshDvPreview = () => { clearTimeout(timer); timer = setTimeout(() => refresh(), 400); };
+    })();
 </script>
 <script>
     // Double-entry journal of the DV: lines of account + debit or credit that must balance and equal the DV amount.

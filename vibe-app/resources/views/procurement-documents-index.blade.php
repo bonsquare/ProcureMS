@@ -4,7 +4,7 @@
 @section('content')
 <header class="mb-6">
     <p class="text-[11px] font-bold uppercase tracking-[.14em] text-action">Operational registry</p>
-    <h1 class="mt-2 text-3xl font-bold">Document Center</h1>
+    <h1 class="mt-2 text-[28px] font-semibold leading-9 tracking-tight">Document Center</h1>
     <p class="mt-2 text-sm text-on-surface-variant">Find, review, and print every official Procurement document.</p>
 </header>
 <section class="overflow-hidden rounded-xl border border-outline-variant/60 bg-white">
@@ -18,7 +18,7 @@
     @if($documents->isEmpty())
         <x-procurement.empty-state :title="$filtersApplied ? 'No documents match these filters' : 'No documents prepared'" description="Open a request workspace to create the next required document." icon="folder_off" />
     @else
-        <div class="civic-desktop-table overflow-x-auto"><table class="w-full min-w-[1080px] text-left text-xs"><thead class="bg-surface-low text-on-surface-variant"><tr><th class="p-4">Request</th><th class="p-4">Document</th><th class="p-4">Stage</th><th class="p-4">Completeness</th><th class="p-4">Author &amp; update</th><th class="p-4 text-right">Actions</th></tr></thead><tbody>@foreach($documents as $document)<x-procurement.document-row :document="$document" :definition="$documentTypes[$document->document_type] ?? []" />@endforeach</tbody></table></div>
+        <div class="civic-desktop-table overflow-x-auto"><table class="w-full min-w-[1080px] text-left text-xs"><thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant"><tr><th class="p-4">Request</th><th class="p-4">Document</th><th class="p-4">Stage</th><th class="p-4">Completeness</th><th class="p-4">Author &amp; update</th><th class="p-4 text-right">Actions</th></tr></thead><tbody>@foreach($documents as $document)<x-procurement.document-row :document="$document" :definition="$documentTypes[$document->document_type] ?? []" />@endforeach</tbody></table></div>
         <div class="civic-mobile-cards gap-3 p-3">
             @foreach($documents as $document)
                 @php

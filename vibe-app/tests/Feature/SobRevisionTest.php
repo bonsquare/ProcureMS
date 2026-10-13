@@ -247,17 +247,21 @@ class SobRevisionTest extends TestCase
         $this->assertEquals(0, $this->allotment('MOOE', $electric->id)->amount);
     }
 
-    /** @return array<int, array<int, string>> the fund names offered by each quarter's Source of fund dropdown on the Planning page, in quarter order */
-    private function quarterFundOptions(string $html): array
+    /** @return array{used: array<string, array<int, string>>, funds: array<int, string>, quarters: int} what the Create SOB window of the Planning page offers */
+    private function createWindow(string $html): array
     {
-        // Only the SOB panel: other forms of the Planning page have their own fund dropdowns.
-        $panel = substr($html, (int) strpos($html, 'data-panel="sob"'), (int) strpos($html, 'data-panel="app"') - (int) strpos($html, 'data-panel="sob"'));
-        preg_match_all('/<select name="fund_source"[^>]*>(.*?)<\/select>/s', $panel, $blocks);
+        $this->assertSame(1, preg_match('/<dialog id="dlg-sob-create" data-used="([^"]*)"(.*?)<\/dialog>/s', $html, $window), 'one Create SOB window');
+        preg_match('/<select name="fund_source"[^>]*>(.*?)<\/select>/s', $window[2], $funds);
+        preg_match('/<select name="quarter"[^>]*>(.*?)<\/select>/s', $window[2], $quarters);
 
-        return array_map(fn (string $block) => array_values(array_filter(array_map('trim', explode('|', strip_tags(str_replace('</option>', '|', $block)))))), $blocks[1]);
+        return [
+            'used' => json_decode(html_entity_decode($window[1]), true),
+            'funds' => array_values(array_filter(array_map('trim', explode('|', strip_tags(str_replace('</option>', '|', $funds[1])))))),
+            'quarters' => substr_count($quarters[1], '<option'),
+        ];
     }
 
-    public function test_every_quarter_creates_an_sob_from_a_fund_dropdown_without_the_funds_it_already_has(): void
+    public function test_the_create_sob_window_offers_the_quarters_and_the_funds_and_knows_which_funds_each_quarter_has(): void
     {
         $fx = SobFixture::make();
         $this->actingAs($fx['user']);
@@ -265,22 +269,37 @@ class SobRevisionTest extends TestCase
         $this->service()->create($fx['school'], 2026, 1, 'SEF', $fx['user']);
 
         $html = $this->get(route('planning', ['school_id' => $fx['school']->id, 'year' => 2026]))->assertOk()->getContent();
-        $options = $this->quarterFundOptions($html);
+        $window = $this->createWindow($html);
 
-        $this->assertCount(4, $options, 'one dropdown per quarter');
+        $this->assertSame(4, $window['quarters']);
         $this->assertStringNotContainsString('<input name="fund_source"', $html, 'the fund is chosen from a list, not typed');
-        $this->assertStringNotContainsString('name="fund_source" value="MOOE"', $html);
-        $this->assertContains('SBFP', $options[0]);
-        $this->assertNotContains('MOOE', $options[0], 'Q1 already has a MOOE SOB');
-        $this->assertNotContains('SEF', $options[0], 'and a SEF SOB');
-        $this->assertContains('School MOOE', $options[0], 'a different fund with a similar name is still offered');
-        $this->assertContains('MOOE', $options[1], 'Q2 has none yet');
-        $this->assertContains('SEF', $options[1]);
+        $this->assertContains('SBFP', $window['funds']);
+        $this->assertContains('MOOE', $window['funds']);
+        $this->assertContains('School MOOE', $window['funds'], 'a different fund with a similar name is a different choice');
+        $this->assertEqualsCanonicalizing(['MOOE', 'SEF'], $window['used']['1'], 'Q1 already has a MOOE and a SEF SOB, so the window does not offer them for Q1');
+        $this->assertArrayNotHasKey('2', $window['used'], 'Q2 has none yet');
         $this->post(route('planning.sob.store'), ['school_id' => $fx['school']->id, 'fiscal_year' => 2026, 'quarter' => 1, 'fund_source' => 'SBFP'])->assertSessionHasNoErrors();
         $this->assertSame(3, SobPlan::where('quarter', 1)->count(), 'several SOBs in one quarter, one per fund');
     }
 
-    public function test_a_quarter_with_every_fund_used_shows_a_note_instead_of_a_form(): void
+    public function test_the_planning_page_lists_the_sobs_created_and_each_one_can_be_edited(): void
+    {
+        $fx = SobFixture::make();
+        $this->actingAs($fx['user']);
+        $first = $this->service()->create($fx['school'], 2026, 2, 'MOOE', $fx['user']);
+        $second = $this->service()->create($fx['school'], 2026, 1, 'SEF', $fx['user']);
+
+        $html = $this->get(route('planning', ['school_id' => $fx['school']->id, 'year' => 2026]))->assertOk()->getContent();
+
+        $this->assertStringContainsString('History of SOB created', $html);
+        $this->assertStringContainsString(route('planning.sob.show', $first), $html);
+        $this->assertStringContainsString(route('planning.sob.show', $second), $html);
+        $this->assertStringContainsString('data-action="'.route('planning.sob.update', $first).'"', $html, 'a row has its own Edit');
+        $this->put(route('planning.sob.update', $first), ['fund_source' => 'SEF', 'quarter' => 3])->assertSessionHasNoErrors();
+        $this->assertSame([3, 'SEF'], [$first->fresh()->quarter, $first->fresh()->fund_source]);
+    }
+
+    public function test_a_quarter_with_every_fund_used_is_told_so_in_the_create_window(): void
     {
         $fx = SobFixture::make();
         $this->actingAs($fx['user']);
@@ -289,9 +308,10 @@ class SobRevisionTest extends TestCase
         }
 
         $html = $this->get(route('planning', ['school_id' => $fx['school']->id, 'year' => 2026]))->assertOk()->getContent();
+        $window = $this->createWindow($html);
 
         $this->assertSame(1, substr_count($html, 'Every fund already has an SOB this quarter.'));
-        $this->assertCount(3, $this->quarterFundOptions($html), 'the other three quarters still have their form');
+        $this->assertEqualsCanonicalizing(collect(Aip::FUNDS)->flatten()->unique()->values()->all(), $window['used']['1'], 'every fund is taken in Q1');
     }
 
     public function test_the_draft_page_edits_the_fund_and_quarter_from_dropdowns(): void
@@ -345,7 +365,7 @@ class SobRevisionTest extends TestCase
         $this->assertSame('approved', SobPlan::withoutGlobalScopes()->find($otherPlan->id)->status);
     }
 
-    public function test_the_item_selects_show_the_complete_activity_and_account_text(): void
+    public function test_the_item_selects_name_the_program_only_and_show_the_complete_account_text(): void
     {
         $fx = SobFixture::make();
         $this->actingAs($fx['user']);
@@ -358,7 +378,7 @@ class SobRevisionTest extends TestCase
 
         $html = $this->get(route('planning.sob.show', $plan))->assertOk()->getContent();
 
-        $this->assertStringContainsString($activityText, $html, 'the option holds the whole activity');
+        $this->assertStringNotContainsString($activityText, $html, 'the activity is not shown: the SOB goes by the program, so a change to the activity text cannot go out of step');
         $this->assertStringContainsString($accountTitle, $html, 'and the whole account title');
         $this->assertSame(4, preg_match_all('/<p data-full-text-output/', $html), 'a full-text line under each of the 2 selects of the add form and of the one item edit form');
         $this->assertSame(4, preg_match_all('/<div class="[^"]*" data-full-text-box>/', $html));

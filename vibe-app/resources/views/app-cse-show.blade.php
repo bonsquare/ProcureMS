@@ -18,14 +18,17 @@
     <a href="{{ route('planning', ['school_id' => $plan->school_id, 'year' => $plan->fiscal_year]) }}#app-cse" class="text-xs font-semibold text-primary hover:underline">&larr; Back to Planning</a>
     <div class="mt-2 flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h1 class="text-2xl font-bold">APP-CSE · FY {{ $plan->fiscal_year }}</h1>
+            <h1 class="text-[28px] font-semibold leading-9 tracking-tight">APP-CSE · FY {{ $plan->fiscal_year }}</h1>
             <p class="mt-1 text-sm text-on-surface-variant">{{ $plan->school?->name }} · Annual Procurement Plan for Common Supplies and Equipment · Procurement Service catalog {{ $plan->catalog_year }}</p>
         </div>
-        <div class="flex items-center gap-2"><a href="{{ route('planning.app-cse.print', $plan) }}" target="_blank" rel="noopener" class="rounded border border-primary px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary hover:text-white">Print official form</a><span class="rounded-full px-3 py-1 text-xs font-bold {{ $draft ? 'bg-amber-100 text-amber-900' : 'bg-secondary/10 text-secondary' }}">{{ $draft ? 'Draft' : 'Approved' }}</span></div>
+        <div class="flex flex-wrap items-center gap-2">
+            @if($editable)<a href="#approve" class="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-primary-container disabled:cursor-not-allowed disabled:opacity-50">Review and approve</a>@endif
+            <a href="{{ route('planning.app-cse.print', $plan) }}" target="_blank" rel="noopener" class="rounded-lg border border-outline-variant/60 bg-white px-3 py-2 text-xs font-semibold text-on-surface hover:bg-surface-low">Print official form</a><span class="rounded-full px-3 py-1 text-xs font-bold {{ $draft ? 'bg-amber-100 text-amber-900' : 'bg-secondary/10 text-secondary' }}">{{ $draft ? 'Draft' : 'Approved' }}</span></div>
     </div>
 </div>
 @if(session('success'))<div class="mb-4 rounded border border-secondary/30 bg-secondary/5 px-4 py-3 text-sm text-secondary">{{ session('success') }}</div>@endif
 @if($errors->any())<div class="mb-4 rounded border border-error/30 bg-error/5 px-4 py-3 text-sm text-error">{{ $errors->first() }}</div>@endif
+@include('partials.document-strip', ['strip' => \App\Support\DocumentStrip::appCse($plan)])
 
 <section class="mb-5 rounded border border-outline-variant/30 bg-white p-4">
     <h2 class="font-semibold">Details and signatories</h2>
@@ -43,22 +46,20 @@
             <label class="text-xs font-semibold text-on-surface-variant">Date Prepared<input type="date" name="date_prepared" value="{{ old('date_prepared', $plan->date_prepared?->toDateString()) }}" class="{{ $box }}"></label>
             <label class="text-xs font-semibold text-on-surface-variant">E. Approved budget by the agency head (figures)<input type="number" name="approved_budget" step="0.01" min="0" value="{{ old('approved_budget', $plan->approved_budget) }}" class="{{ $box }}"></label>
             <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">E. Approved budget (in words)<input name="approved_budget_words" value="{{ old('approved_budget_words', $plan->approved_budget_words) }}" maxlength="500" class="{{ $box }}"></label>
-            <div class="grid gap-3 md:col-span-3 md:grid-cols-4">
-                @foreach([['prepared_by', 'Prepared by:', 'Property/Supply Officer'], ['noted_by', 'NOTED:', 'School Head'], ['certified_by', 'Certified Funds Available / Certified Appropriate Funds Available:', 'Accountant / Local Budget Officer']] as [$slot, $caption, $defaultPosition])
-                    <div class="space-y-2">
-                        @include('partials.signatory-picker', ['rows' => [collect($signatoryRows)->first(fn ($row) => $row['slot']['key'] === $slot)], 'enabled' => true])
-                        <label class="block text-xs font-semibold text-on-surface-variant">Role (blank prints: {{ $caption }})<input name="{{ $slot }}_role" value="{{ old($slot.'_role', $plan->{$slot.'_role'}) }}" maxlength="255" class="{{ $box }}"></label>
-                        <label class="block text-xs font-semibold text-on-surface-variant">Name (type it for someone outside the school; it replaces the choice above)<input name="{{ $slot }}_name" value="{{ old($slot.'_name', $plan->{$slot.'_name'}) }}" maxlength="255" class="{{ $box }}"></label>
-                        <label class="block text-xs font-semibold text-on-surface-variant">Position (blank prints: {{ $defaultPosition }})<input name="{{ $slot }}_position" value="{{ old($slot.'_position', $plan->{$slot.'_position'}) }}" maxlength="255" class="{{ $box }}"></label>
-                    </div>
-                @endforeach
-                <div class="space-y-2">
-                    <label class="block text-xs font-semibold text-on-surface-variant">Role (blank prints: Approved by:)<input name="agency_head_role" value="{{ old('agency_head_role', $plan->agency_head_role) }}" maxlength="255" class="{{ $box }}"></label>
-                    <label class="block text-xs font-semibold text-on-surface-variant">Approved by (Head of Office/Agency): name<input name="agency_head_name" value="{{ old('agency_head_name', $plan->agency_head_name) }}" maxlength="255" class="{{ $box }}"></label>
-                    <label class="block text-xs font-semibold text-on-surface-variant">Position<input name="agency_head_position" value="{{ old('agency_head_position', $plan->agency_head_position) }}" maxlength="255" class="{{ $box }}"></label>
-                </div>
-            </div>
-            <div class="md:col-span-3"><button class="rounded bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary-container">Save details</button></div>
+            @php
+                $cseDefs = [];
+                foreach ([['prepared_by', 'Prepared by', 'Prepared by:', 'Property/Supply Officer'], ['noted_by', 'Noted by', 'NOTED:', 'School Head'], ['certified_by', 'Certified funds available', 'Certified Funds Available / Certified Appropriate Funds Available:', 'Accountant / Local Budget Officer']] as [$slotKey, $slotLegend, $slotTitle, $slotPosition]) {
+                    $slotRow = collect($signatoryRows)->first(fn ($row) => $row['slot']['key'] === $slotKey);
+                    $cseDefs[] = [$slotKey, $slotLegend, rtrim($slotTitle, ': '), null, null, $slotRow['default']?->name ?: 'Full name', 'Blank prints: '.$slotPosition];
+                }
+                $cseDefs[] = ['agency_head', 'Approved by', 'Approved by', null, null, 'Full name (Head of Office/Agency)', null];
+                $cseSlots = \App\Support\PlanningSignatories::slots($cseDefs, $plan, [], true);
+                foreach ($cseSlots as $slotIndex => $cseSlot) {
+                    $cseSlots[$slotIndex]['picker'] = collect($signatoryRows)->first(fn ($row) => $row['slot']['key'] === $cseSlot['key']);
+                }
+            @endphp
+            <div class="md:col-span-3">@include('partials.signatory-editor', ['slots' => $cseSlots, 'editable' => true, 'document' => 'APP-CSE', 'open' => $errors->any()])</div>
+            <div class="md:col-span-3"><button class="rounded-lg bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary-container">Save details</button></div>
         </form>
     @else
         <dl class="mt-3 grid gap-2 text-sm md:grid-cols-3">
@@ -80,7 +81,7 @@
             <form method="POST" action="{{ route('planning.app-cse.items.store', $plan) }}" class="flex flex-wrap items-center gap-3 border-b border-outline-variant/10 py-2 text-sm">@csrf<input type="hidden" name="cse_catalog_item_id" value="{{ $found->id }}">
                 <span class="min-w-0 flex-1"><span class="font-mono text-xs text-on-surface-variant">{{ $found->code }}</span> {{ $found->description }} <span class="text-xs text-on-surface-variant">· {{ $found->unit }} · {{ $found->price !== null ? $peso($found->price) : 'no price in the catalog' }}</span></span>
                 @if($found->price === null)<input type="number" name="unit_price" step="0.01" min="0.01" required placeholder="Price" class="w-28 rounded border border-outline-variant/50 bg-white px-2 py-1.5 text-sm">@endif
-                <button class="rounded bg-primary px-3 py-1.5 text-xs font-bold text-white hover:bg-primary-container">Add</button>
+                <button class="rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-white hover:bg-primary-container">Add</button>
             </form>
         @endforeach
     @endforeach
@@ -93,7 +94,7 @@
         <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Description<input name="description" required maxlength="500" class="{{ $box }}"></label>
         <label class="text-xs font-semibold text-on-surface-variant">Unit<input name="unit" required maxlength="50" class="{{ $box }}"></label>
         <label class="text-xs font-semibold text-on-surface-variant">Price<input type="number" name="unit_price" step="0.01" min="0" required class="{{ $box }}"></label>
-        <div class="md:col-span-5"><button class="rounded bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary-container">Add to Part II</button></div>
+        <div class="md:col-span-5"><button class="rounded-lg bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary-container">Add to Part II</button></div>
     </form>
 </section>
 @endif
@@ -101,38 +102,27 @@
 @foreach([['Part I · Available at Procurement Service stores', $partOne], ['Part II · Other items not available at PS', $partTwo]] as [$partTitle, $partItems])
 <section class="mb-5 rounded border border-outline-variant/30 bg-white">
     <div class="border-b border-outline-variant/20 px-4 py-3"><h2 class="font-semibold">{{ $partTitle }}</h2></div>
-    @forelse($partItems as $item)
-        @php $itemEditable = $editable; $priceEditable = $itemEditable && ($item->isCustom() || $item->catalogItem?->price === null); @endphp
-        <div class="border-b border-outline-variant/10 px-4 py-3 last:border-0">
-            @if($itemEditable)
-            <form method="POST" action="{{ route('planning.app-cse.items.update', $item) }}">@csrf @method('PUT')
-            @endif
-                <div class="flex flex-wrap items-start justify-between gap-3">
-                    <div class="min-w-0 flex-1 text-sm">
-                        @if($item->isCustom() && $itemEditable)
-                            <div class="grid gap-2 md:grid-cols-4"><label class="text-xs font-semibold text-on-surface-variant">Category<input name="category" value="{{ $item->category }}" maxlength="150" class="{{ $box }}"></label><label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Description<input name="description" value="{{ $item->description }}" maxlength="500" class="{{ $box }}"></label><label class="text-xs font-semibold text-on-surface-variant">Unit<input name="unit" value="{{ $item->unit }}" maxlength="50" class="{{ $box }}"></label></div>
-                        @else
-                            <p class="font-semibold">@if(! $item->isCustom())<span class="font-mono text-xs font-normal text-on-surface-variant">{{ $item->catalogItem?->code }}</span> @endif{{ $item->description }}</p>
-                            <p class="text-xs text-on-surface-variant">{{ $item->category }} · {{ $item->unit }}</p>
-                        @endif
-                    </div>
-                    <div class="w-32 text-xs font-semibold text-on-surface-variant">Price @if($priceEditable)<input type="number" name="unit_price" step="0.01" min="0" value="{{ $item->unit_price }}" class="{{ $small }}">@else<span class="mt-1 block text-right text-sm font-normal text-on-surface">{{ $peso($item->unit_price) }}</span>@endif</div>
-                </div>
-                <div class="mt-2 grid grid-cols-4 gap-2 md:grid-cols-12">
-                    @foreach($monthNames as $index => $name)
-                        <label class="text-[10px] font-semibold uppercase text-on-surface-variant">{{ $name }}@if($itemEditable)<input type="number" name="m{{ $index + 1 }}" step="0.01" min="0" value="{{ $qty($item->{'m'.($index + 1)}) }}" class="{{ $small }}">@else<span class="mt-1 block text-right text-xs font-normal text-on-surface">{{ $qty($item->{'m'.($index + 1)}) }}</span>@endif</label>
-                    @endforeach
-                </div>
-                <p class="mt-2 text-xs text-on-surface-variant">Q1 {{ $qty($item->quarterQuantity(1)) }} · Q2 {{ $qty($item->quarterQuantity(2)) }} · Q3 {{ $qty($item->quarterQuantity(3)) }} · Q4 {{ $qty($item->quarterQuantity(4)) }} · Total quantity <strong>{{ $qty($item->totalQuantity()) }}</strong> · Total amount <strong>{{ $peso($item->totalAmount()) }}</strong></p>
-            @if($itemEditable)
-                <div class="mt-2"><button class="rounded bg-primary px-3 py-1.5 text-xs font-bold text-white hover:bg-primary-container">Save item</button></div>
-            </form>
-            <form method="POST" action="{{ route('planning.app-cse.items.destroy', $item) }}" class="mt-1" onsubmit="return confirm('Remove this item from the APP-CSE?')">@csrf @method('DELETE')<button class="text-xs font-semibold text-error hover:underline">Remove</button></form>
-            @endif
-        </div>
-    @empty
+    @php
+        $withQuantity = $partItems->filter(fn ($item) => $item->totalQuantity() > 0);
+        $atZero = $partItems->reject(fn ($item) => $item->totalQuantity() > 0);
+    @endphp
+    @foreach($withQuantity as $item)
+        @include('partials.app-cse-item-card')
+    @endforeach
+    @if($partItems->isEmpty())
         <div class="px-4 py-6 text-center text-sm text-on-surface-variant">No items yet.</div>
-    @endforelse
+    @elseif($withQuantity->isEmpty())
+        <div class="px-4 py-4 text-center text-sm text-on-surface-variant">No item has a quantity yet.</div>
+    @endif
+    {{-- Lines still at zero are not printed; they are kept here, folded, so a quantity can still be entered. --}}
+    @if($atZero->isNotEmpty())
+        <details class="border-t border-outline-variant/20">
+            <summary class="cursor-pointer px-4 py-3 text-xs font-semibold text-primary">{{ $atZero->count() }} item{{ $atZero->count() === 1 ? '' : 's' }} with no quantity yet (not printed)</summary>
+            @foreach($atZero as $item)
+                @include('partials.app-cse-item-card')
+            @endforeach
+        </details>
+    @endif
 </section>
 @endforeach
 
@@ -154,14 +144,15 @@
 </section>
 
 @if($editable)
-<section class="mb-8 rounded border border-outline-variant/30 bg-white p-4">
+<section id="approve" class="mb-8 rounded border border-outline-variant/30 bg-white p-4">
     <h2 class="font-semibold">Approve</h2>
     <p class="mt-1 text-sm text-on-surface-variant">Approving locks the APP-CSE: items, quantities, details and signatories can no longer be changed.</p>
     @if($hasQuantity)
-        <form method="POST" action="{{ route('planning.app-cse.approve', $plan) }}" class="mt-3" onsubmit="return confirm('Approve the APP-CSE for FY {{ $plan->fiscal_year }}? It will be locked.')">@csrf<button class="rounded bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary-container">Approve APP-CSE</button></form>
+        <form method="POST" action="{{ route('planning.app-cse.approve', $plan) }}" class="mt-3" onsubmit="return confirm('Approve the APP-CSE for FY {{ $plan->fiscal_year }}? It will be locked.')">@csrf<button class="rounded-lg bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary-container">Approve APP-CSE</button></form>
     @else
         <p class="mt-3 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">Enter a quantity for at least one item to enable approval.</p>
     @endif
 </section>
 @endif
+@include('partials.doc-preview-dock', ['key' => 'cse-'.$plan->id, 'title' => 'Official APP-CSE', 'savedUrl' => route('planning.app-cse.print', $plan), 'drafts' => 'form[method="POST"][action*="/planning/app-cse/"]:not([action$="/approve"])'])
 @endsection

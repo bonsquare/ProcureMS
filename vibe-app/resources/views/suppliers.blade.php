@@ -27,7 +27,7 @@
 <header class="mb-4 flex flex-wrap items-end justify-between gap-2">
     <div>
         <p class="text-[11px] font-bold uppercase tracking-[.14em] text-action">Supplier manager</p>
-        <h1 class="mt-1 font-bold">Supplier directory</h1>
+        <h1 class="mt-1 text-[28px] font-semibold leading-9 tracking-tight">Supplier directory</h1>
     </div>
     <p class="text-xs text-on-surface-variant">{{ $suppliers->total() }} {{ \Illuminate\Support\Str::plural('supplier', $suppliers->total()) }}@if($filtersApplied) · filtered @endif</p>
 </header>
@@ -44,7 +44,7 @@
     @else
         <div class="civic-desktop-table overflow-x-auto">
             <table class="w-full min-w-[860px] text-left text-xs">
-                <thead class="bg-surface-low text-on-surface-variant"><tr><th class="px-3 py-2">Business</th>@if($isMasterUser)<th class="px-3 py-2">School</th>@endif<th class="px-3 py-2">Contact</th><th class="px-3 py-2">Tax / TIN</th><th class="px-3 py-2">Registrations</th><th class="px-3 py-2">Status</th><th class="w-px px-3 py-2"></th></tr></thead>
+                <thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant"><tr><th class="px-3 py-2">Business</th>@if($isMasterUser)<th class="px-3 py-2">School</th>@endif<th class="px-3 py-2">Contact</th><th class="px-3 py-2">Tax / TIN</th><th class="px-3 py-2">Registrations</th><th class="px-3 py-2">Status</th><th class="w-px px-3 py-2"></th></tr></thead>
                 <tbody class="divide-y divide-outline-variant/40">
                 @foreach($suppliers as $supplier)
                     @php $permit = $expiry($supplier->business_permit_expiry); $philgeps = $expiry($supplier->philgeps_expiry); @endphp

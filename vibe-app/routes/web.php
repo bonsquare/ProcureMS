@@ -71,6 +71,7 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::get('/procurement/{procurementRequest}/delivery-reconciliation', [HomeController::class, 'printDeliveryReconciliation'])->name('procurement.delivery-reconciliation');
     Route::get('/liquidation', [HomeController::class, 'liquidation'])->name('liquidation');
     Route::post('/liquidation', [HomeController::class, 'storeLiquidation'])->middleware('permission:liquidation.create')->name('liquidation.store');
+    Route::post('/liquidation/preview', [HomeController::class, 'previewOrs'])->middleware('permission:liquidation.create')->name('liquidation.preview');
     Route::get('/liquidation/{liquidationReport}/print', [HomeController::class, 'printOrs'])->name('liquidation.print');
     Route::patch('/liquidation/{liquidationReport}/status', [HomeController::class, 'updateLiquidationStatus'])->middleware('permission:liquidation.approve')->name('liquidation.status');
     Route::get('/budget', [BudgetController::class, 'index'])->name('budget');
@@ -93,6 +94,9 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::post('/planning/sob/{sobPlan}/approve', [SobController::class, 'approve'])->middleware('permission:planning.manage')->name('planning.sob.approve')->whereNumber('sobPlan');
     Route::post('/planning/sob/{sobPlan}/reopen', [SobController::class, 'reopen'])->middleware('permission:planning.manage')->name('planning.sob.reopen')->whereNumber('sobPlan');
     Route::post('/planning/sob/{sobPlan}/items', [SobController::class, 'storeItem'])->middleware('permission:planning.manage')->name('planning.sob.items.store')->whereNumber('sobPlan');
+    Route::post('/planning/sob/{sobPlan}/items/preview', [SobController::class, 'previewItem'])->middleware('permission:planning.manage')->name('planning.sob.items.preview')->whereNumber('sobPlan');
+    Route::post('/planning/sob/items/{sobItem}/preview', [SobController::class, 'previewItemUpdate'])->middleware('permission:planning.manage')->name('planning.sob.items.update.preview')->whereNumber('sobItem');
+    Route::post('/planning/sob/{sobPlan}/groups/preview', [SobController::class, 'previewGroup'])->middleware('permission:planning.manage')->name('planning.sob.groups.preview')->whereNumber('sobPlan');
     Route::put('/planning/sob/items/{sobItem}', [SobController::class, 'updateItem'])->middleware('permission:planning.manage')->name('planning.sob.items.update')->whereNumber('sobItem');
     Route::delete('/planning/sob/items/{sobItem}', [SobController::class, 'destroyItem'])->middleware('permission:planning.manage')->name('planning.sob.items.destroy')->whereNumber('sobItem');
     Route::put('/planning/sob/{sobPlan}/groups', [SobController::class, 'updateGroup'])->middleware('permission:planning.manage')->name('planning.sob.groups.update')->whereNumber('sobPlan');
@@ -100,12 +104,20 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::post('/planning/app-cse', [AppCseController::class, 'store'])->middleware('permission:planning.manage')->name('planning.app-cse.store');
     Route::get('/planning/app-cse/{appCsePlan}', [AppCseController::class, 'show'])->name('planning.app-cse.show')->whereNumber('appCsePlan');
     Route::get('/planning/app-cse/{appCsePlan}/print', [AppCseController::class, 'print'])->name('planning.app-cse.print')->whereNumber('appCsePlan');
+    Route::post('/planning/app-cse/{appCsePlan}/preview', [AppCseController::class, 'previewPlan'])->middleware('permission:planning.manage')->name('planning.app-cse.preview')->whereNumber('appCsePlan');
+    Route::post('/planning/app-cse/{appCsePlan}/items/preview', [AppCseController::class, 'previewItem'])->middleware('permission:planning.manage')->name('planning.app-cse.items.preview')->whereNumber('appCsePlan');
+    Route::post('/planning/app-cse/{appCsePlan}/custom-items/preview', [AppCseController::class, 'previewCustomItem'])->middleware('permission:planning.manage')->name('planning.app-cse.custom.preview')->whereNumber('appCsePlan');
+    Route::post('/planning/app-cse/items/{appCseItem}/preview', [AppCseController::class, 'previewItemUpdate'])->middleware('permission:planning.manage')->name('planning.app-cse.items.update.preview')->whereNumber('appCseItem');
     Route::put('/planning/app-cse/{appCsePlan}', [AppCseController::class, 'update'])->middleware('permission:planning.manage')->name('planning.app-cse.update')->whereNumber('appCsePlan');
     Route::post('/planning/app-cse/{appCsePlan}/items', [AppCseController::class, 'storeItem'])->middleware('permission:planning.manage')->name('planning.app-cse.items.store')->whereNumber('appCsePlan');
     Route::post('/planning/app-cse/{appCsePlan}/custom-items', [AppCseController::class, 'storeCustomItem'])->middleware('permission:planning.manage')->name('planning.app-cse.custom.store')->whereNumber('appCsePlan');
     Route::put('/planning/app-cse/items/{appCseItem}', [AppCseController::class, 'updateItem'])->middleware('permission:planning.manage')->name('planning.app-cse.items.update')->whereNumber('appCseItem');
     Route::delete('/planning/app-cse/items/{appCseItem}', [AppCseController::class, 'destroyItem'])->middleware('permission:planning.manage')->name('planning.app-cse.items.destroy')->whereNumber('appCseItem');
     Route::post('/planning/app-cse/{appCsePlan}/approve', [AppCseController::class, 'approve'])->middleware('permission:planning.manage')->name('planning.app-cse.approve')->whereNumber('appCsePlan');
+    Route::post('/planning/sip/preview', [PlanningController::class, 'previewSip'])->middleware('permission:planning.manage')->name('planning.sip.preview');
+    Route::post('/planning/sip/{sipProject}/preview', [PlanningController::class, 'previewSipUpdate'])->middleware('permission:planning.manage')->name('planning.sip.update.preview')->whereNumber('sipProject');
+    Route::post('/planning/sip/{sipProject}/activities/preview', [PlanningController::class, 'previewSipActivity'])->middleware('permission:planning.manage')->name('planning.sip.activities.preview')->whereNumber('sipProject');
+    Route::post('/planning/sip/activities/{sipActivity}/preview', [PlanningController::class, 'previewSipActivityUpdate'])->middleware('permission:planning.manage')->name('planning.sip.activities.update.preview')->whereNumber('sipActivity');
     Route::post('/planning/sip/import', [SipImportController::class, 'preview'])->middleware('permission:planning.manage')->name('planning.sip.import.preview');
     Route::get('/planning/sip/import/{token}', [SipImportController::class, 'show'])->middleware('permission:planning.manage')->name('planning.sip.import.show');
     Route::post('/planning/sip/import/{token}', [SipImportController::class, 'store'])->middleware('permission:planning.manage')->name('planning.sip.import.store');
@@ -134,6 +146,9 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::put('/aip/{aip}/kras/{kra}', [AipController::class, 'updateKra'])->name('aip.kras.update')->whereNumber(['aip', 'kra']);
     Route::delete('/aip/{aip}/kras/{kra}', [AipController::class, 'destroyKra'])->name('aip.kras.destroy')->whereNumber(['aip', 'kra']);
     Route::put('/aip/{aip}/activities/{activity}/fund', [AipController::class, 'updateActivityFund'])->name('aip.activities.fund')->whereNumber(['aip', 'activity']);
+    Route::post('/aip/{aip}/activities/{activity}/budget/preview', [AipController::class, 'previewActivityBudget'])->name('aip.activities.budget.preview')->whereNumber(['aip', 'activity']);
+    Route::post('/aip/{aip}/activities/{activity}/fund/preview', [AipController::class, 'previewActivityFund'])->name('aip.activities.fund.preview')->whereNumber(['aip', 'activity']);
+    Route::put('/aip/{aip}/activities/{activity}/budget', [AipController::class, 'updateActivityBudget'])->name('aip.activities.budget')->whereNumber(['aip', 'activity']);
     Route::get('/allotment-registry', [AllotmentRegistryController::class, 'index'])->name('allotment-registry');
     Route::prefix('budget/allocation')->name('budget.allocation')->group(function () {
         Route::get('/', [BudgetAllocationController::class, 'index']);
@@ -152,6 +167,7 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::put('/accounting/chart-of-accounts/{chartOfAccount}', [ChartOfAccountController::class, 'update'])->middleware('permission:accounting.manage')->name('chart-of-accounts.update');
     Route::delete('/accounting/chart-of-accounts/{chartOfAccount}', [ChartOfAccountController::class, 'destroy'])->middleware('permission:accounting.manage')->name('chart-of-accounts.destroy');
     Route::patch('/accounting/{liquidationReport}', [FinanceController::class, 'review'])->middleware('permission:accounting.approve')->name('accounting.review');
+    Route::post('/accounting/{liquidationReport}/dv/preview', [FinanceController::class, 'previewDv'])->middleware('permission:accounting.approve')->name('accounting.dv.preview');
     Route::post('/accounting/{liquidationReport}/dv', [FinanceController::class, 'createDv'])->middleware('permission:accounting.approve')->name('accounting.dv.store');
     Route::patch('/accounting/{liquidationReport}/dv-options', [FinanceController::class, 'updateDvOptions'])->middleware('permission:accounting.approve')->name('accounting.dv.options');
     Route::get('/accounting/{liquidationReport}/dv-print', [FinanceController::class, 'printDv'])->name('accounting.dv.print');

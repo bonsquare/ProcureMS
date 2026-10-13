@@ -9,6 +9,7 @@ use App\Models\BudgetAllocation;
 use App\Models\PpmpPlan;
 use App\Models\ProcurementRequest;
 use App\Models\ProcurementRequestItem;
+use App\Models\SobItem;
 use App\Models\SobPlan;
 use App\Services\MasterTransactionService;
 use App\Services\SobService;
@@ -39,7 +40,7 @@ class SobAppTest extends TestCase
 
     private function generate(array $fx)
     {
-        return $this->post(route('planning.app.generate'), ['school_id' => $fx['school']->id, 'fiscal_year' => 2026]);
+        return $this->post(route('planning.app.generate'), ['school_id' => $fx['school']->id, 'fiscal_year' => 2026, 'sob_item_ids' => SobItem::withoutGlobalScopes()->where('is_extra', false)->pluck('id')->all()]);
     }
 
     public function test_generate_app_takes_the_items_of_approved_sobs_with_frequency_times_quantity(): void
@@ -60,6 +61,31 @@ class SobAppTest extends TestCase
         $caretaker = $items[1];
         $this->assertEquals([3, 3000, 9000], [$caretaker->quantity, $caretaker->estimated_unit_cost, $caretaker->estimated_total_cost]);
         $this->assertSame('draft', AppPlan::withoutGlobalScopes()->sole()->status);
+    }
+
+    public function test_only_the_chosen_sob_items_go_into_the_app_and_a_removed_one_is_not_brought_back_by_itself(): void
+    {
+        $fx = SobFixture::make();
+        $plan = $this->approvedSob($fx, [$this->line($fx), $this->line($fx, ['particulars' => 'Caretaker', 'frequency' => 3, 'quantity' => 1, 'unit' => 'month', 'unit_cost' => 3000])]);
+        $this->actingAs($fx['user']);
+        [$paper, $caretaker] = $plan->items()->orderBy('id')->get()->all();
+        $base = ['school_id' => $fx['school']->id, 'fiscal_year' => 2026];
+
+        $this->post(route('planning.app.generate'), $base)->assertSessionHasErrors('planning');
+        $this->assertSame(0, AppPlan::withoutGlobalScopes()->count(), 'nothing is chosen, nothing is created');
+
+        $this->post(route('planning.app.generate'), $base + ['sob_item_ids' => [$paper->id]])->assertSessionHasNoErrors();
+        $this->assertSame(['Bond paper'], AppItem::withoutGlobalScopes()->pluck('procurement_item')->all());
+
+        $page = $this->get(route('planning', ['school_id' => $fx['school']->id, 'year' => 2026]))->assertOk()->getContent();
+        $this->assertStringContainsString('Choose what goes into the APP', $page);
+        $this->assertStringContainsString('value="'.$caretaker->id.'"', $page, 'the unchosen item is still offered');
+        $this->assertStringNotContainsString('value="'.$paper->id.'" data-app-pick', $page, 'the chosen one is no longer offered');
+
+        $appItem = AppItem::withoutGlobalScopes()->sole();
+        $this->delete(route('planning.app.items.destroy', $appItem))->assertSessionHasNoErrors();
+        $this->post(route('planning.app.generate'), $base + ['sob_item_ids' => [$caretaker->id]])->assertSessionHasNoErrors();
+        $this->assertSame(['Caretaker'], AppItem::withoutGlobalScopes()->pluck('procurement_item')->all(), 'the removed item stays out until it is chosen again');
     }
 
     public function test_generating_twice_adds_no_duplicates_and_leaves_ppmp_items_alone(): void

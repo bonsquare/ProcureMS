@@ -72,7 +72,7 @@ class SobFlowTest extends TestCase
         $item = SobItem::withoutGlobalScopes()->sole();
         $this->assertEquals(1000, $item->amount);
 
-        $this->get(route('planning.sob.show', $plan))->assertOk()->assertSee('Bond paper')->assertSee('1,000.00')->assertSee('Summary per object of expenditure')->assertSee('Office Supplies Expenses')->assertSee('Program One')->assertSee('Activity 1');
+        $this->get(route('planning.sob.show', $plan))->assertOk()->assertSee('Bond paper')->assertSee('1,000.00')->assertSee('Summary per object of expenditure')->assertSee('Office Supplies Expenses')->assertSee('Program One')->assertDontSee('Activity 1', false);
 
         $this->put(route('planning.sob.items.update', $item), $this->line($fx, ['quantity' => 4, 'unit_cost' => 50, 'particulars' => 'Short paper']))->assertSessionHasNoErrors();
         $this->assertSame(['Short paper', '200.00'], [$item->fresh()->particulars, (string) $item->fresh()->amount]);
@@ -93,16 +93,20 @@ class SobFlowTest extends TestCase
         $this->assertSame(['SEF', 'New Head', 'Principal'], [$plan->fresh()->fund_source, $plan->fresh()->prepared_by_name, $plan->fresh()->prepared_by_position]);
     }
 
-    public function test_the_page_warns_when_an_activity_goes_over_its_aip_amount_but_saves(): void
+    public function test_the_page_warns_when_a_program_goes_over_its_aip_amount_but_saves(): void
     {
+        // Program One has two activities of 1,000 each in the quarter: the program gets 2,000.
         $fx = SobFixture::make(['quarterAmount' => 1000]);
         $plan = $this->draft($fx);
         $this->actingAs($fx['user']);
 
         $this->post(route('planning.sob.items.store', $plan), $this->line($fx, ['quantity' => 20]))->assertSessionHasNoErrors();
+        $this->get(route('planning.sob.show', $plan))->assertOk()->assertDontSee('Over the AIP amount')->assertSee('AIP 1ST QUARTER: ₱2,000.00');
 
-        $this->assertSame(1, SobItem::withoutGlobalScopes()->count());
-        $this->get(route('planning.sob.show', $plan))->assertOk()->assertSee('Over the AIP amount');
+        $this->post(route('planning.sob.items.store', $plan), $this->line($fx, ['quantity' => 5]))->assertSessionHasNoErrors();
+        $this->assertSame(2, SobItem::withoutGlobalScopes()->count());
+
+        $this->get(route('planning.sob.show', $plan))->assertOk()->assertSee('Over the AIP amount')->assertSee('1 program goes over the AIP amount');
     }
 
     public function test_approve_creates_allotments_and_the_approved_sob_stays_editable(): void

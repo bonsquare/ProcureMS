@@ -16,7 +16,7 @@
         <p class="mt-1 text-[15px] leading-6 text-on-surface-variant">Annual budget per account code, divided into four quarters. <a href="{{ route('budget', ['year' => $year, 'school_id' => $selectedSchoolId]) }}" class="font-semibold text-primary hover:underline">Obligations &amp; ORS →</a></p>
     </div>
     <div class="flex flex-wrap items-center gap-2">
-        @if($canManage)<a href="{{ route('budget.allocation.create', ['year' => $year, 'school_id' => $selectedSchoolId]) }}" class="rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">+ Add Budget Allocation</a>@endif
+        @if($canManage)<a href="{{ route('budget.allocation.create', ['year' => $year, 'school_id' => $selectedSchoolId]) }}" class="rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">+ Add Budget Allocation</a>@endif
         <a href="{{ route('budget.allocation.report', ['type' => 'annual'] + $query + ['format' => 'csv']) }}" class="rounded border border-outline-variant/60 bg-white px-4 py-2.5 text-xs font-semibold hover:bg-surface-low">Export to Excel</a>
         <a href="{{ route('budget.allocation.report', ['type' => 'annual'] + $query + ['print' => 1]) }}" target="_blank" rel="noopener" class="rounded border border-outline-variant/60 bg-white px-4 py-2.5 text-xs font-semibold hover:bg-surface-low">Print Report</a>
         @if($canManage)
@@ -41,7 +41,7 @@
     <select name="fund" class="{{ $field }}"><option value="">All fund sources</option>@foreach($funds as $fund)<option @selected(($filters['fund'] ?? '') === $fund)>{{ $fund }}</option>@endforeach</select>
     <select name="office" class="{{ $field }}"><option value="">All offices</option>@foreach($offices as $office)<option @selected(($filters['office'] ?? '') === $office)>{{ $office }}</option>@endforeach</select>
     <select name="quarter" class="{{ $field }}"><option value="">All quarters</option>@foreach([1, 2, 3, 4] as $q)<option value="{{ $q }}" @selected($quarter === $q)>Q{{ $q }}</option>@endforeach</select>
-    <button class="rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Filter</button>
+    <button class="rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Filter</button>
     @if(array_filter($filters))<a href="{{ route('budget.allocation', ['year' => $year]) }}" class="text-xs font-semibold text-primary hover:underline">Clear</a>@endif
 </form>
 
@@ -52,14 +52,17 @@
     @endforeach
 </div>
 
-<section class="mb-6 overflow-hidden rounded border border-outline-variant/30 bg-white">
-    <div class="border-b border-outline-variant/30 px-5 py-4">
+<style>details[open] > summary .sum-chevron{transform:rotate(180deg)}</style>
+<details open class="mb-6 overflow-hidden rounded border border-outline-variant/30 bg-white">
+    <summary class="flex cursor-pointer list-none items-center justify-between gap-3 border-b border-outline-variant/30 px-5 py-4 [&::-webkit-details-marker]:hidden">
+        <div class="min-w-0">
         <h2 class="text-lg font-semibold">Budget Ledger · FY {{ $year }}</h2>
         <p class="mt-1 text-xs text-on-surface-variant">Remaining Balance = Annual Allocation − Obligated. Unliquidated = Obligated − Liquidated. Near Limit means more than 80% obligated.</p>
-    </div>
+        </div><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] text-on-surface-variant transition-transform" aria-hidden="true">expand_more</span>
+    </summary>
     <div class="overflow-x-auto">
         <table class="w-full min-w-[1500px] text-left text-sm">
-            <thead class="bg-surface-low">
+            <thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant">
                 <tr>
                     <th class="{{ $th }}">Year</th><th class="{{ $th }}">Office / Department</th><th class="{{ $th }}">Fund Source</th><th class="{{ $th }}">Account Code</th><th class="{{ $th }}">Expense Item</th>
                     <th class="{{ $th }} text-right">Annual Allocation</th><th class="{{ $th }} text-right">Q1</th><th class="{{ $th }} text-right">Q2</th><th class="{{ $th }} text-right">Q3</th><th class="{{ $th }} text-right">Q4</th>
@@ -114,13 +117,13 @@
             @endif
         </table>
     </div>
-</section>
+</details>
 
 <details class="mb-6 overflow-hidden rounded border border-outline-variant/30 bg-white">
-    <summary class="cursor-pointer px-5 py-4 text-base font-semibold">Quarterly breakdown (allocation, obligated, liquidated, balance per quarter)</summary>
+    <summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-base font-semibold [&::-webkit-details-marker]:hidden"><span>Quarterly breakdown (allocation, obligated, liquidated, balance per quarter)</span><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] text-on-surface-variant transition-transform" aria-hidden="true">expand_more</span></summary>
     <div class="overflow-x-auto border-t border-outline-variant/30">
         <table class="w-full min-w-[1800px] text-left text-sm">
-            <thead class="bg-surface-low">
+            <thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant">
                 <tr>
                     <th class="{{ $th }}" rowspan="2">Expense Item</th><th class="{{ $th }}" rowspan="2">Account Code</th>
                     @foreach([1, 2, 3, 4] as $q)<th class="{{ $th }} border-l border-outline-variant/30 text-center" colspan="4">Q{{ $q }}</th>@endforeach

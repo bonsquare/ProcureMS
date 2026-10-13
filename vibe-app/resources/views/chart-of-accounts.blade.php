@@ -17,15 +17,17 @@
     <input id="coa-search" type="search" placeholder="Search account title or code" class="w-full max-w-sm rounded border border-outline-variant/50 bg-white px-3 py-2.5 text-sm outline-none focus:border-primary">
     <select id="coa-category" class="rounded border border-outline-variant/50 bg-white px-3 py-2.5 text-sm outline-none"><option value="">All categories</option>@foreach($categories as $category)<option>{{ $category }}</option>@endforeach</select>
     <span id="coa-count" class="text-xs text-on-surface-variant">{{ $accounts->count() }} accounts</span>
-    <button type="button" data-open-account class="ml-auto flex items-center gap-2 rounded bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]">add</span>Add Account</button>
+    <button type="button" data-open-account class="ml-auto flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]">add</span>Add Account</button>
 </div>
+<style>tbody[data-collapsed] tr:not([data-head]){display:none}tbody:not([data-collapsed]) .sum-chevron{transform:rotate(180deg)}</style>
+<div class="mb-3 flex justify-end gap-2"><button type="button" data-coa-all="1" class="rounded border border-outline-variant/60 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-surface-low">Expand all</button><button type="button" data-coa-all="0" class="rounded border border-outline-variant/60 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-surface-low">Collapse all</button></div>
 <section class="overflow-hidden rounded border border-outline-variant/30 bg-white">
     <div class="overflow-x-auto">
         <table class="w-full text-left text-sm">
-            <thead class="bg-surface-low"><tr><th class="{{ $th }}">Account Title</th><th class="{{ $th }}">Account Code / UACS</th><th class="{{ $th }}">Category</th><th class="{{ $th }} text-right">Budget Items</th><th class="{{ $th }} text-right">Budgeted</th><th class="{{ $th }}"></th></tr></thead>
+            <thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant"><tr><th class="{{ $th }}">Account Title</th><th class="{{ $th }}">Account Code / UACS</th><th class="{{ $th }}">Category</th><th class="{{ $th }} text-right">Budget Items</th><th class="{{ $th }} text-right">Budgeted</th><th class="{{ $th }}"></th></tr></thead>
             @forelse($accounts->groupBy('category') as $category => $group)
-                <tbody class="divide-y divide-outline-variant/20" data-group>
-                    <tr class="bg-surface-low/60" data-head><td colspan="6" class="px-4 py-2 text-xs font-bold uppercase tracking-wider text-primary">{{ $category }}</td></tr>
+                <tbody class="divide-y divide-outline-variant/20" data-group data-key="{{ \Illuminate\Support\Str::slug($category) }}" data-collapsed>
+                    <tr class="cursor-pointer bg-surface-low/60 hover:bg-surface-high" data-head tabindex="0" role="button" aria-expanded="false"><td colspan="6" class="px-4 py-2 text-xs font-bold uppercase tracking-wider text-primary"><span class="flex items-center justify-between gap-3"><span>{{ $category }}</span><span class="flex items-center gap-2 font-semibold normal-case tracking-normal text-on-surface-variant">{{ $group->count() }} account(s)<span class="material-symbols-outlined sum-chevron text-[20px] transition-transform" aria-hidden="true">expand_more</span></span></span></td></tr>
                     @foreach($group as $account)
                         @php $used = $usage->get($account->id); @endphp
                         <tr>
@@ -66,7 +68,7 @@
             <label class="block text-xs font-semibold text-on-surface-variant">Category<input name="category" required list="coa-categories" value="{{ old('category', 'MOOE') }}" class="{{ $inputClass }}"></label>
             <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-4">
                 <button type="button" data-close-account class="rounded border border-outline-variant/60 px-4 py-2.5 text-sm font-semibold hover:bg-surface-low">Cancel</button>
-                <button class="rounded bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-container">Save Account</button>
+                <button class="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-container">Save Account</button>
             </div>
         </form>
     </div>
@@ -78,6 +80,20 @@
     const search = document.getElementById('coa-search');
     const category = document.getElementById('coa-category');
     const count = document.getElementById('coa-count');
+    const groups = Array.from(document.querySelectorAll('[data-group]'));
+    const storeKey = 'coa-open';
+    const readOpen = () => { try { return JSON.parse(sessionStorage.getItem(storeKey) || '[]'); } catch (error) { return []; } };
+    const saveOpen = () => { try { sessionStorage.setItem(storeKey, JSON.stringify(groups.filter((g) => !g.hasAttribute('data-collapsed')).map((g) => g.dataset.key))); } catch (error) { /* storage can be blocked */ } };
+    const setGroup = (group, open) => { group.toggleAttribute('data-collapsed', !open); group.querySelector('[data-head]').setAttribute('aria-expanded', open ? 'true' : 'false'); };
+    const remembered = readOpen();
+    groups.forEach((group) => {
+        setGroup(group, remembered.includes(group.dataset.key));
+        const head = group.querySelector('[data-head]');
+        const toggle = () => { setGroup(group, group.hasAttribute('data-collapsed')); saveOpen(); };
+        head.addEventListener('click', toggle);
+        head.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggle(); } });
+    });
+    document.querySelectorAll('[data-coa-all]').forEach((button) => button.addEventListener('click', () => { groups.forEach((group) => setGroup(group, button.dataset.coaAll === '1')); saveOpen(); }));
     const filter = () => {
         const term = search.value.trim().toLowerCase();
         let shown = 0;
@@ -92,6 +108,7 @@
                 if (match) visible++;
             });
             group.hidden = visible === 0;
+            if ((term || category.value) && visible > 0) { setGroup(group, true); }
             shown += visible;
         });
         count.textContent = shown + ' accounts';

@@ -14,6 +14,7 @@
         .sheet svg { display: block; width: 100%; height: 100%; }
         .sheet line { stroke: #000; stroke-linecap: square; }
         .sheet text { fill: #000; }
+        .sheet.no-appropriation .dv-appropriation { display: none; }
         .ph { font-family: 'Times New Roman', Times, serif; color: #000; }
         @media print { html, body { background: #fff; } .print-actions { display: none; } .sheet { margin: 0; } }
     </style>
@@ -40,7 +41,7 @@
     $accountantRole = $accountant?->position ?: '';
 @endphp
 @include('partials.official-toolbar', ['closeUrl' => route('accounting', ['tab' => 'with_dv']), 'context' => 'Disbursement Voucher · '.$report->dv_number])
-<div class="sheet" data-official-page data-single-page data-doc="dv" data-paper="longbond"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 612 936" preserveAspectRatio="xMidYMid meet" stroke="#000" fill="none">
+<div class="sheet{{ $report->dv_include_appropriation ? '' : ' no-appropriation' }}" data-official-page data-single-page data-doc="dv" data-paper="longbond"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 612 936" preserveAspectRatio="xMidYMid meet" stroke="#000" fill="none">
 <g fill="none">
 <line x1="17.33" y1="40.20" x2="17.33" y2="782.56" stroke-width="1.39"/>
 <line x1="313.30" y1="496.98" x2="313.30" y2="679.97" stroke-width="1.39"/>
@@ -73,7 +74,7 @@
 <line x1="31.19" y1="569.42" x2="57.53" y2="569.42" stroke-width="0.69"/>
 <line x1="31.19" y1="579.81" x2="57.53" y2="579.81" stroke-width="0.69"/>
 <line x1="57.18" y1="569.07" x2="57.18" y2="580.16" stroke-width="0.69"/>
-<line x1="57.18" y1="793.65" x2="57.18" y2="881.67" stroke-width="0.69"/>
+<line class="dv-appropriation" x1="57.18" y1="793.65" x2="57.18" y2="881.67" stroke-width="0.69"/>
 <line x1="71.74" y1="121.30" x2="71.74" y2="154.57" stroke-width="0.69"/>
 <line x1="18.02" y1="181.26" x2="71.39" y2="181.26" stroke-width="0.69"/>
 <line x1="71.74" y1="155.96" x2="71.74" y2="180.22" stroke-width="0.69"/>
@@ -84,13 +85,13 @@
 <line x1="108.82" y1="129.96" x2="125.46" y2="129.96" stroke-width="0.69"/>
 <line x1="108.82" y1="142.44" x2="125.46" y2="142.44" stroke-width="0.69"/>
 <line x1="125.11" y1="129.62" x2="125.11" y2="142.79" stroke-width="0.69"/>
-<line x1="149.37" y1="793.65" x2="149.37" y2="881.67" stroke-width="0.69"/>
+<line class="dv-appropriation" x1="149.37" y1="793.65" x2="149.37" y2="881.67" stroke-width="0.69"/>
 <line x1="181.26" y1="129.62" x2="181.26" y2="142.79" stroke-width="0.69"/>
 <line x1="180.91" y1="129.96" x2="197.55" y2="129.96" stroke-width="0.69"/>
 <line x1="180.91" y1="142.44" x2="197.55" y2="142.44" stroke-width="0.69"/>
 <line x1="197.20" y1="129.62" x2="197.20" y2="142.79" stroke-width="0.69"/>
 <line x1="213.14" y1="697.30" x2="213.14" y2="764.53" stroke-width="0.69"/>
-<line x1="260.97" y1="793.65" x2="260.97" y2="881.67" stroke-width="0.69"/>
+<line class="dv-appropriation" x1="260.97" y1="793.65" x2="260.97" y2="881.67" stroke-width="0.69"/>
 <line x1="285.92" y1="203.78" x2="285.92" y2="354.89" stroke-width="0.69"/>
 <line x1="313.65" y1="129.62" x2="313.65" y2="142.79" stroke-width="0.69"/>
 <line x1="313.65" y1="155.96" x2="313.65" y2="180.22" stroke-width="0.69"/>
@@ -105,7 +106,7 @@
 <line x1="313.30" y1="142.44" x2="329.93" y2="142.44" stroke-width="0.69"/>
 <line x1="329.59" y1="129.62" x2="329.59" y2="142.79" stroke-width="0.69"/>
 <line x1="329.59" y1="498.37" x2="329.59" y2="515.00" stroke-width="0.69"/>
-<line x1="345.53" y1="793.65" x2="345.53" y2="881.67" stroke-width="0.69"/>
+<line class="dv-appropriation" x1="345.53" y1="793.65" x2="345.53" y2="881.67" stroke-width="0.69"/>
 <line x1="372.56" y1="129.62" x2="372.56" y2="142.79" stroke-width="0.69"/>
 <line x1="372.56" y1="203.78" x2="372.56" y2="354.89" stroke-width="0.69"/>
 <line x1="372.56" y1="595.41" x2="372.56" y2="678.58" stroke-width="0.69"/>
@@ -113,7 +114,7 @@
 <line x1="372.22" y1="142.44" x2="395.09" y2="142.44" stroke-width="0.69"/>
 <line x1="394.74" y1="129.62" x2="394.74" y2="142.79" stroke-width="0.69"/>
 <line x1="394.74" y1="435.29" x2="394.74" y2="496.98" stroke-width="0.69"/>
-<line x1="416.92" y1="793.65" x2="416.92" y2="881.67" stroke-width="0.69"/>
+<line class="dv-appropriation" x1="416.92" y1="793.65" x2="416.92" y2="881.67" stroke-width="0.69"/>
 <line x1="480.69" y1="41.59" x2="480.69" y2="119.91" stroke-width="0.69"/>
 <line x1="480.69" y1="155.96" x2="480.69" y2="180.22" stroke-width="0.69"/>
 <line x1="480.69" y1="203.78" x2="480.69" y2="354.89" stroke-width="0.69"/>
@@ -121,14 +122,14 @@
 <line x1="18.02" y1="764.19" x2="481.04" y2="764.19" stroke-width="0.69"/>
 <line x1="480.69" y1="679.97" x2="480.69" y2="781.17" stroke-width="0.69"/>
 <line x1="496.64" y1="435.29" x2="496.64" y2="496.98" stroke-width="0.69"/>
-<line x1="56.84" y1="793.99" x2="512.92" y2="793.99" stroke-width="0.69"/>
-<line x1="56.84" y1="805.08" x2="512.92" y2="805.08" stroke-width="0.69"/>
-<line x1="56.84" y1="820.33" x2="512.92" y2="820.33" stroke-width="0.69"/>
-<line x1="56.84" y1="835.58" x2="512.92" y2="835.58" stroke-width="0.69"/>
-<line x1="56.84" y1="850.83" x2="512.92" y2="850.83" stroke-width="0.69"/>
-<line x1="56.84" y1="866.08" x2="512.92" y2="866.08" stroke-width="0.69"/>
-<line x1="56.84" y1="881.33" x2="512.92" y2="881.33" stroke-width="0.69"/>
-<line x1="512.58" y1="793.65" x2="512.58" y2="881.67" stroke-width="0.69"/>
+<line class="dv-appropriation" x1="56.84" y1="793.99" x2="512.92" y2="793.99" stroke-width="0.69"/>
+<line class="dv-appropriation" x1="56.84" y1="805.08" x2="512.92" y2="805.08" stroke-width="0.69"/>
+<line class="dv-appropriation" x1="56.84" y1="820.33" x2="512.92" y2="820.33" stroke-width="0.69"/>
+<line class="dv-appropriation" x1="56.84" y1="835.58" x2="512.92" y2="835.58" stroke-width="0.69"/>
+<line class="dv-appropriation" x1="56.84" y1="850.83" x2="512.92" y2="850.83" stroke-width="0.69"/>
+<line class="dv-appropriation" x1="56.84" y1="866.08" x2="512.92" y2="866.08" stroke-width="0.69"/>
+<line class="dv-appropriation" x1="56.84" y1="881.33" x2="512.92" y2="881.33" stroke-width="0.69"/>
+<line class="dv-appropriation" x1="512.58" y1="793.65" x2="512.58" y2="881.67" stroke-width="0.69"/>
 <line x1="480.35" y1="79.36" x2="593.33" y2="79.36" stroke-width="0.69"/>
 <line x1="594.37" y1="181.60" x2="594.37" y2="202.40" stroke-width="0.69"/>
 <line x1="18.02" y1="225.62" x2="593.33" y2="225.62" stroke-width="0.69"/>
@@ -161,7 +162,7 @@
 <text x="33.96" y="512.23" font-family="'Times New Roman',Times,serif" font-size="9.2" font-weight="bold" xml:space="preserve">Certified:</text>
 <text x="332.01" y="509.46" font-family="'Times New Roman',Times,serif" font-size="9.2" font-weight="bold" xml:space="preserve">Approved for Payment</text>
 <text x="20.10" y="695.22" font-family="'Times New Roman',Times,serif" font-size="9.2" font-weight="bold" xml:space="preserve">E. Receipt of Payment </text>
-<text x="316.07" y="512.23" font-family="'Times New Roman',Times,serif" font-size="9.2" font-weight="bold" xml:space="preserve">D. A</text>
+<text x="316.07" y="512.23" font-family="'Times New Roman',Times,serif" font-size="9.2" font-weight="bold" xml:space="preserve">D.</text>
 <text x="127.54" y="140.01" font-family="'Times New Roman',Times,serif" font-size="9.2" xml:space="preserve">MDS Check</text>
 <text x="199.62" y="140.01" font-family="'Times New Roman',Times,serif" font-size="9.2" xml:space="preserve">Commercial Check</text>
 <text x="332.01" y="140.01" font-family="'Times New Roman',Times,serif" font-size="9.2" xml:space="preserve">ADA</text>
@@ -203,11 +204,11 @@
 <text x="62.15" y="557.29" font-family="'Times New Roman',Times,serif" font-size="10.2" xml:space="preserve">Subject to Authority to Debit Account (when applicable)</text>
 <text x="62.15" y="579.47" font-family="'Times New Roman',Times,serif" font-size="10.2" xml:space="preserve">Supporting documents complete and amount claimed</text>
 <text x="59.61" y="589.86" font-family="'Times New Roman',Times,serif" font-size="10.2" xml:space="preserve">proper</text>
-<text x="68.93" y="802.66" font-family="Arial,Helvetica,sans-serif" font-size="8.3" font-weight="bold" xml:space="preserve">APPROPRIATION</text>
-<text x="194.31" y="802.66" font-family="Arial,Helvetica,sans-serif" font-size="8.3" font-weight="bold" xml:space="preserve">P/A/P</text>
-<text x="288.46" y="802.66" font-family="Arial,Helvetica,sans-serif" font-size="8.3" font-weight="bold" xml:space="preserve">OR NO.</text>
-<text x="362.98" y="802.66" font-family="Arial,Helvetica,sans-serif" font-size="8.3" font-weight="bold" xml:space="preserve">AMOUNT</text>
-<text x="431.93" y="802.66" font-family="Arial,Helvetica,sans-serif" font-size="8.3" font-weight="bold" xml:space="preserve">EXPENSE CODE</text>
+<text class="dv-appropriation" x="68.93" y="802.66" font-family="Arial,Helvetica,sans-serif" font-size="8.3" font-weight="bold" xml:space="preserve">APPROPRIATION</text>
+<text class="dv-appropriation" x="194.31" y="802.66" font-family="Arial,Helvetica,sans-serif" font-size="8.3" font-weight="bold" xml:space="preserve">P/A/P</text>
+<text class="dv-appropriation" x="288.46" y="802.66" font-family="Arial,Helvetica,sans-serif" font-size="8.3" font-weight="bold" xml:space="preserve">OR NO.</text>
+<text class="dv-appropriation" x="362.98" y="802.66" font-family="Arial,Helvetica,sans-serif" font-size="8.3" font-weight="bold" xml:space="preserve">AMOUNT</text>
+<text class="dv-appropriation" x="431.93" y="802.66" font-family="Arial,Helvetica,sans-serif" font-size="8.3" font-weight="bold" xml:space="preserve">EXPENSE CODE</text>
 <!-- header -->
 <text x="537.2" y="72.8" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($fund, 108, 9.2) }}">{{ $fund }}</text>
 <text x="510.75" y="90.8" font-family="'Times New Roman',Times,serif" font-size="9.2">{{ $date }}</text>
@@ -220,21 +221,21 @@
 <text x="503" y="150.6" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="9.2">{{ $othersText }}</text>
 <!-- payee -->
 <text x="74.2" y="165.7" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($payee, 235, 10.2) }}" font-weight="bold">{{ $payee }}</text>
-<text x="391.99" y="167.0" font-family="'Times New Roman',Times,serif" font-size="9.2">{{ $tin }}</text>
-<text x="483.1" y="177.6" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($report->ors_number, 108, 9.2) }}" font-weight="bold">{{ $report->ors_number }}</text>
-<text x="74.2" y="195.5" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($address, 510, 10.2) }}">{{ $address }}</text>
+<text x="391.99" y="167.0" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($tin, 100, 9.8) }}">{{ $tin }}</text>
+<text x="483.1" y="177.6" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($report->ors_number, 108, 9.8) }}" font-weight="bold">{{ $report->ors_number }}</text>
+<text x="74.2" y="189.4" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($address, 510, 10.2) }}">{{ $address }}</text>
 <!-- particulars -->
-<foreignObject x="20.1" y="226.4" width="263" height="118"><div xmlns="http://www.w3.org/1999/xhtml" style="font:9.2px/11.1px 'Times New Roman',Times,serif;color:#000;overflow:hidden;height:118px;white-space:pre-wrap;word-wrap:break-word">{{ $particulars }}</div></foreignObject>
-<text x="329.3" y="235.0" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($rc, 80, 9.2) }}">{{ $rc }}</text>
-<text x="591.2" y="242.6" text-anchor="end" font-family="'Times New Roman',Times,serif" font-size="10.2">₱{{ $amount }}</text>
-<text x="591.2" y="351.4" text-anchor="end" font-family="'Times New Roman',Times,serif" font-size="10.2" font-weight="bold">₱{{ $amount }}</text>
+<foreignObject x="22.6" y="230.6" width="258.4" height="114"><div xmlns="http://www.w3.org/1999/xhtml" style="font:10px/12px 'Times New Roman',Times,serif;color:#000;overflow:hidden;height:114px;white-space:pre-wrap;word-wrap:break-word">{{ $particulars }}</div></foreignObject>
+<text x="329.3" y="241.2" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($rc, 80, 10) }}">{{ $rc }}</text>
+<text x="588.8" y="241.2" text-anchor="end" font-family="'Times New Roman',Times,serif" font-size="10.2">₱{{ $amount }}</text>
+<text x="588.8" y="351.4" text-anchor="end" font-family="'Times New Roman',Times,serif" font-size="10.2" font-weight="bold">₱{{ $amount }}</text>
 {{-- Accounting Entry: the double-entry journal saved with the DV (account title, UACS code, debit, credit) --}}
 @foreach($report->journalLines as $line)
-@php $rowY = 459 + $loop->index * 9.6; @endphp
-<text x="22" y="{{ $rowY }}" font-family="'Times New Roman',Times,serif" font-size="7.4" dx="{{ $line->credit > 0 ? 8 : 0 }}">{{ \Illuminate\Support\Str::limit($line->account_title, 64) }}</text>
-<text x="354" y="{{ $rowY }}" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="7.6">{{ $line->account_code }}</text>
-<text x="492" y="{{ $rowY }}" text-anchor="end" font-family="'Times New Roman',Times,serif" font-size="7.6">{{ $line->debit > 0 ? number_format((float) $line->debit, 2) : '' }}</text>
-<text x="591.2" y="{{ $rowY }}" text-anchor="end" font-family="'Times New Roman',Times,serif" font-size="7.6">{{ $line->credit > 0 ? number_format((float) $line->credit, 2) : '' }}</text>
+@php $rowY = 458.6 + $loop->index * 11.4; $title = \Illuminate\Support\Str::limit($line->account_title, 64); @endphp
+<text x="23" y="{{ $rowY }}" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($title, 300 - ($line->credit > 0 ? 8 : 0), 9.8) }}" dx="{{ $line->credit > 0 ? 8 : 0 }}">{{ $title }}</text>
+<text x="354" y="{{ $rowY }}" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="9.8">{{ $line->account_code }}</text>
+<text x="489.6" y="{{ $rowY }}" text-anchor="end" font-family="'Times New Roman',Times,serif" font-size="9.8">{{ $line->debit > 0 ? number_format((float) $line->debit, 2) : '' }}</text>
+<text x="588.8" y="{{ $rowY }}" text-anchor="end" font-family="'Times New Roman',Times,serif" font-size="9.8">{{ $line->credit > 0 ? number_format((float) $line->credit, 2) : '' }}</text>
 @endforeach
 <!-- A. certified -->
 <text x="294.6" y="404.8" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($headName, 190, 10.2) }}" font-weight="bold">{{ $headName }}</text>

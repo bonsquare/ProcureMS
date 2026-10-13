@@ -9,7 +9,7 @@
 <div class="no-print mb-4 flex flex-wrap items-center justify-between gap-3">
     @if(request('print'))<button type="button" onclick="window.close(); setTimeout(function () { if (!window.closed) window.location.href = '{{ route('budget.allocation', $query) }}'; }, 250)" class="rounded border border-primary bg-white px-4 py-2.5 text-xs font-semibold text-primary hover:bg-surface-low">Close</button>@else<a href="{{ route('budget.allocation', $query) }}" class="rounded border border-outline-variant/60 bg-white px-4 py-2.5 text-xs font-semibold hover:bg-surface-low">← Budget Allocation</a>@endif
     <div class="flex gap-2">
-        <button onclick="window.print()" class="rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Print / Save as PDF</button>
+        <button onclick="window.print()" class="rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Print / Save as PDF</button>
         <a href="{{ route('budget.allocation.report', ['type' => $type] + $query + ['format' => 'csv']) }}" class="rounded border border-outline-variant/60 bg-white px-4 py-2.5 text-xs font-semibold hover:bg-surface-low">Export to Excel</a>
     </div>
 </div>
@@ -19,7 +19,7 @@
 
 <section class="overflow-hidden rounded border border-outline-variant/30 bg-white">
     <div class="border-b border-outline-variant/30 p-5">
-        <h1 class="text-xl font-semibold">{{ $title }}</h1>
+        <h1 class="text-[28px] font-semibold leading-9 tracking-tight">{{ $title }}</h1>
         <p class="mt-1 text-xs text-on-surface-variant">FY {{ $year }} · {{ $schoolName ?? 'All schools' }} · Generated {{ now()->format('M d, Y') }}</p>
     </div>
     <div class="overflow-x-auto">

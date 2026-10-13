@@ -56,6 +56,10 @@ class PlanningController extends Controller
             // Older PPMPs stay in the database; they only keep their AIP from being deleted.
             'legacyPpmpAipIds' => PpmpPlan::where('school_id', $selectedSchool->id)->pluck('aip_id')->all(),
             'appPlan' => AppPlan::with(['items.ppmpItem.plan.transaction.procurementRequests', 'items.sobItem.plan.transaction.procurementRequests', 'items.requestItems.procurementRequest'])->where('school_id', $selectedSchool->id)->where('fiscal_year', $year)->first(),
+            'appCandidates' => SobItem::with(['plan', 'activity'])->where('is_extra', false)
+                ->whereHas('plan', fn (Builder $query) => $query->where('school_id', $selectedSchool->id)->where('fiscal_year', $year)->where('status', 'approved'))
+                ->whereDoesntHave('appItems', fn (Builder $query) => $query->whereHas('plan', fn (Builder $plan) => $plan->where('school_id', $selectedSchool->id)->where('fiscal_year', $year)))
+                ->orderBy('id')->get()->groupBy('sob_plan_id'),
             'fundSources' => FundSource::where('organization_id', $selectedSchool->organization_id)->orderBy('name')->get(),
             'fundOptions' => FundSource::where('organization_id', $selectedSchool->organization_id)->where('is_active', true)->orderBy('name')->pluck('name')->merge(collect(Aip::FUNDS)->flatten())->unique()->sort()->values(),
             'fiscalYears' => FiscalYear::where('organization_id', $selectedSchool->organization_id)->orderByDesc('year')->get(),
@@ -239,13 +243,65 @@ class PlanningController extends Controller
         ]);
         $school = School::whereKey($data['school_id'])->firstOrFail();
 
+        return $this->sipPrintView($school, (int) $data['start_year']);
+    }
+
+    private function sipPrintView(School $school, int $startYear)
+    {
         return view('sip-print', [
             'school' => $school,
-            'startYear' => (int) $data['start_year'],
-            'projects' => SipProject::with('activities')->where('school_id', $school->id)->where('school_year', $data['start_year'])->orderBy('id')->get(),
-            'plan' => SipPlan::where('school_id', $school->id)->where('start_year', $data['start_year'])->first(),
+            'startYear' => $startYear,
+            'projects' => SipProject::with('activities')->where('school_id', $school->id)->where('school_year', $startYear)->orderBy('id')->get(),
+            'plan' => SipPlan::where('school_id', $school->id)->where('start_year', $startYear)->first(),
             'agency' => AgencySetting::first(),
         ]);
+    }
+
+    /** The official SIP drawn from an entry that is not saved yet: the entry is made inside a transaction that is rolled back. An entry that does not pass is left out of the drawing. */
+    public function previewSip(Request $request)
+    {
+        $this->authorizeManage($request);
+        $schoolId = (int) $request->input('school_id');
+        abort_unless($this->schoolIds()->contains($schoolId), 403);
+
+        return $this->previewSipWith(fn () => app()->call([$this, 'storeSip'], ['request' => $request]), fn () => [$schoolId, (int) $request->input('school_year')]);
+    }
+
+    public function previewSipUpdate(Request $request, SipProject $sipProject)
+    {
+        return $this->previewSipWith(fn () => app()->call([$this, 'updateSip'], ['request' => $request, 'sipProject' => $sipProject]), fn () => [(int) $sipProject->school_id, (int) $sipProject->fresh()->school_year]);
+    }
+
+    public function previewSipActivity(Request $request, SipProject $sipProject)
+    {
+        return $this->previewSipWith(fn () => app()->call([$this, 'storeSipActivity'], ['request' => $request, 'sipProject' => $sipProject]), fn () => [(int) $sipProject->school_id, (int) $sipProject->school_year]);
+    }
+
+    public function previewSipActivityUpdate(Request $request, SipActivity $sipActivity)
+    {
+        $project = $sipActivity->project()->firstOrFail();
+
+        return $this->previewSipWith(fn () => app()->call([$this, 'updateSipActivity'], ['request' => $request, 'sipActivity' => $sipActivity]), fn () => [(int) $project->school_id, (int) $project->school_year]);
+    }
+
+    /** @param  \Closure(): mixed  $apply  @param  \Closure(): array{0: int, 1: int}  $target  the school and the start year of the SIP to draw */
+    private function previewSipWith(\Closure $apply, \Closure $target)
+    {
+        DB::beginTransaction();
+        try {
+            try {
+                $apply();
+            } catch (\Throwable) {
+                // the saved form is drawn instead
+            }
+            session()->forget(['success', 'errors', '_old_input']);
+            [$schoolId, $startYear] = $target();
+            abort_unless($this->schoolIds()->contains($schoolId), 403);
+
+            return response($this->sipPrintView(School::whereKey($schoolId)->firstOrFail(), $startYear)->render());
+        } finally {
+            DB::rollBack();
+        }
     }
 
     /** The program's estimated budget is the sum of its three-year activity targets. */
@@ -278,6 +334,8 @@ class PlanningController extends Controller
         $data = $request->validate([
             'school_id' => ['required', 'integer', Rule::in($this->schoolIds()->all())],
             'fiscal_year' => ['required', 'integer', 'between:2000,2100'],
+            'sob_item_ids' => ['nullable', 'array'],
+            'sob_item_ids.*' => ['integer'],
         ]);
         $school = School::whereKey($data['school_id'])->firstOrFail();
         app(FiscalYearService::class)->assertOpen((int) $school->organization_id, (int) $data['fiscal_year']);
@@ -286,6 +344,8 @@ class PlanningController extends Controller
             ->orderBy('id')
             ->get();
         $this->requires(! ($approvedItems->isEmpty()), 'Approve at least one SOB before generating the APP.');
+        $approvedItems = $approvedItems->whereIn('id', $data['sob_item_ids'] ?? [])->values();
+        $this->requires(! ($approvedItems->isEmpty()), 'Choose at least one SOB item to put in the APP.');
 
         DB::transaction(function () use ($data, $school, $request, $approvedItems) {
             $appPlan = AppPlan::firstOrCreate(
@@ -319,7 +379,7 @@ class PlanningController extends Controller
             }
         });
 
-        return redirect()->route('planning', ['school_id' => $school->id, 'year' => $data['fiscal_year']])->with('success', 'APP generated from the approved SOBs.');
+        return redirect()->route('planning', ['school_id' => $school->id, 'year' => $data['fiscal_year']])->with('success', $approvedItems->count().' item(s) added to the APP.');
     }
 
     public function updateAppItem(Request $request, AppItem $appItem)
@@ -347,7 +407,7 @@ class PlanningController extends Controller
         $plan = $this->editableAppItem($request, $appItem);
         $appItem->delete();
 
-        return back()->with('success', 'APP item removed from FY '.$plan->fiscal_year.'. Generate the APP again to bring it back.');
+        return back()->with('success', 'APP item removed from FY '.$plan->fiscal_year.'. Choose it again from the SOB items to bring it back.');
     }
 
     /** A draft APP item that no Purchase Request draws from can be changed or removed. */

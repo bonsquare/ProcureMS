@@ -120,19 +120,19 @@ class SobServiceTest extends TestCase
         $this->assertSame(0, SobItem::withoutGlobalScopes()->count());
     }
 
-    public function test_over_aip_is_reported_and_does_not_block(): void
+    public function test_over_aip_is_reported_per_program_and_does_not_block(): void
     {
+        // Program One has two activities of 10,000 each in the quarter, so the program gets 20,000 in all.
         $fx = SobFixture::make(['quarterAmount' => 10000]);
         $plan = $this->draft($fx);
 
         $this->service()->addItem($plan, $this->line($fx, 0, ['quantity' => 120]));
-        $this->service()->addItem($plan, $this->line($fx, 1, ['quantity' => 50]));
+        $this->assertSame([], $this->service()->overAip($plan->fresh()), '12,000 on one activity is within what the program gets');
 
+        $this->service()->addItem($plan, $this->line($fx, 1, ['quantity' => 90]));
         $over = $this->service()->overAip($plan->fresh());
         $this->assertCount(1, $over);
-        $this->assertSame($fx['activities'][0]->id, $over[0]['aip_activity_id']);
-        $this->assertSame(12000.0, $over[0]['sob']);
-        $this->assertSame(10000.0, $over[0]['aip']);
+        $this->assertSame(['Access', 'Program One', 21000.0, 20000.0], [$over[0]['pillar'], $over[0]['program'], $over[0]['sob'], $over[0]['aip']]);
         $this->assertSame(2, SobItem::withoutGlobalScopes()->count());
     }
 

@@ -6,8 +6,8 @@
     <style>
         :root { color-scheme: light; }
         * { box-sizing: border-box; }
-        body { margin: 0; background: #fff; color: #111; font-family: "Times New Roman", Times, serif; font-size: 11px; line-height: 1.3; }
-        .paper { width: 100%; min-width: 1180px; margin: 0 auto; padding: 24px 28px 36px; background: #fff; }
+        body { margin: 0; background: #fff; color: #111; font-family: "Times New Roman", Times, serif; font-size: 9px; line-height: 1.3; }
+        .paper { width: 100%; margin: 0; padding: 0; background: #fff; }
 
         .masthead { text-align: center; line-height: 1.45; margin-bottom: 4px; }
         .masthead img { height: 78px; width: auto; display: block; margin: 0 auto 4px; }
@@ -22,7 +22,7 @@
         .doc-title .school { margin: 2px 0 0; font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: bold; text-transform: uppercase; }
 
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        th, td { border: 1px solid #8d8d95; padding: 5px 5px; text-align: center; vertical-align: middle; overflow-wrap: break-word; hyphens: none; }
+        th, td { border: 1px solid #8d8d95; padding: 3px 4px; text-align: center; vertical-align: middle; overflow-wrap: break-word; hyphens: none; }
         thead th { background: #f8cbad; color: #111; font-weight: bold; font-size: 10px; padding: 6px 5px; }
         thead th.physical { background: #ffe699; } thead th.financial { background: #c6e0b4; }
         thead th.physical-year { background: #ffe699; white-space: nowrap; padding: 6px 2px; } thead th.financial-year { background: #e2efda; white-space: nowrap; padding: 6px 2px; }
@@ -30,6 +30,7 @@
         td.pillar { background: #8ea9db; font-weight: bold; font-size: 22px; letter-spacing: 2px; padding: 2px; }
         td.pillar span { display: block; line-height: 1.25; }
         td.pillar.small { font-size: 12px; }
+        td.pillar.xsmall { font-size: 9px; letter-spacing: 1px; }
         td.kra { font-size: 10px; } td.kra strong { font-weight: bold; }
         td.num { white-space: nowrap; font-size: 10px; }
         td.left { text-align: left; }
@@ -41,15 +42,14 @@
         .signatures .position { text-align: center; font-size: 12px; }
 
         @media print {
-            body { font-size: 9px; } .paper { min-width: 0; width: 100%; margin: 0; padding: 0; }
             thead th, td.pillar { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            th, td { padding: 3px 4px; }
             tr { break-inside: avoid; }
             thead { display: table-header-group; }
         }
     </style>
 @include('partials.input-fixes')
 @include('partials.print-clean')
+@include('partials.print-pages')
 </head>
 <body>
 @php
@@ -58,8 +58,10 @@
     [$leftLogo] = \App\Support\OfficialDocument::logos($school, $agency);
     $region = $school->region ?: $agency?->region_name;
     $division = $school->division ?: ($agency?->division_name ?: $agency?->division_office);
-    $pillarOrder = ['access', 'equity', 'quality', 'resiliency', 'well-being', 'enabling mechanism'];
-    $projects = $projects->sortBy(fn ($p) => [array_search(strtolower(trim((string) $p->pillar)), $pillarOrder) === false ? 99 : array_search(strtolower(trim((string) $p->pillar)), $pillarOrder), $p->id])->values();
+    // The template has one pillar for Resiliency and Well-Being, whichever of the two names the program was saved with.
+    $pillarName = fn ($name) => in_array(strtolower(trim((string) $name)), ['resiliency', 'well-being', 'well being', 'wellbeing', 'resiliency and well-being'], true) ? 'Resiliency and Well-Being' : (string) $name;
+    $pillarOrder = ['access', 'equity', 'quality', 'resiliency and well-being', 'enabling mechanism'];
+    $projects = $projects->sortBy(fn ($p) => [array_search(strtolower(trim($pillarName($p->pillar))), $pillarOrder) === false ? 99 : array_search(strtolower(trim($pillarName($p->pillar))), $pillarOrder), $p->id])->values();
 
     // One printed row per activity; a program without activities still prints one empty row.
     $rows = collect();
@@ -72,7 +74,7 @@
     // Pillar cell spans every consecutive row of the same pillar.
     $pillarSpan = []; $start = 0;
     foreach ($rows as $r => $row) {
-        $same = $r > 0 && strtolower(trim((string) $rows[$r - 1]['project']->pillar)) === strtolower(trim((string) $row['project']->pillar));
+        $same = $r > 0 && strtolower(trim($pillarName($rows[$r - 1]['project']->pillar))) === strtolower(trim($pillarName($row['project']->pillar)));
         if (! $same) { $start = $r; $pillarSpan[$r] = 1; } else { $pillarSpan[$start]++; $pillarSpan[$r] = 0; }
     }
     // Source of fund merges consecutive activities of one program that share it.
@@ -91,7 +93,7 @@
 
 @include('partials.official-toolbar', ['closeUrl' => route('planning').'#sip', 'context' => 'School Improvement Plan'])
 
-<main class="paper" data-official-page data-doc="sip" data-paper="longbond" data-orientation="landscape" data-margin="10">
+<main class="paper" data-official-page data-sheets data-doc="sip" data-paper="longbond" data-orientation="landscape" data-margin="10">
     <header class="masthead">
         @if($leftLogo)<img class="official-logo" src="{{ $leftLogo }}" alt="" onerror="this.remove()">@endif
         <div class="small">Republic of the Philippines</div>
@@ -106,7 +108,7 @@
         <p class="school">{{ $school->name }}</p>
     </div>
 
-    <table>
+    <table data-paginate>
         <colgroup>
             <col style="width:4.5%"><col style="width:6%"><col style="width:9.5%"><col style="width:6.5%"><col style="width:8%"><col style="width:8%"><col style="width:10%">
             <col style="width:3.6%"><col style="width:3.6%"><col style="width:3.6%"><col style="width:5%"><col style="width:5%"><col style="width:5%">
@@ -130,7 +132,7 @@
                 @php $p = $row['project']; $a = $row['activity']; @endphp
                 <tr>
                     @if($pillarSpan[$r] > 0)
-                        <td rowspan="{{ $pillarSpan[$r] }}" class="pillar {{ mb_strlen((string) $p->pillar) > 10 ? 'small' : '' }}">@foreach(mb_str_split(strtoupper((string) $p->pillar)) as $letter)<span>{{ $letter === ' ' ? ' ' : $letter }}</span>@endforeach</td>
+                        <td rowspan="{{ $pillarSpan[$r] }}" class="pillar {{ mb_strlen($pillarName($p->pillar)) > 20 ? 'small xsmall' : (mb_strlen($pillarName($p->pillar)) > 10 ? 'small' : '') }}">@foreach(mb_str_split(strtoupper($pillarName($p->pillar))) as $letter)<span>{{ $letter === ' ' ? ' ' : $letter }}</span>@endforeach</td>
                     @endif
                     @if($row['first'])
                         <td rowspan="{{ $row['span'] }}" class="kra">{{ $p->kra }}</td>

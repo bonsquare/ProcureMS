@@ -39,6 +39,30 @@ class DvJournalEntryTest extends TestCase
         ];
     }
 
+    public function test_the_dv_preview_draws_the_official_voucher_even_before_the_journal_is_finished_and_saves_nothing(): void
+    {
+        [$report, $master] = $this->ors(10000);
+        $c = $this->codes();
+        $this->actingAs($master);
+        $form = ['dv_date' => now()->toDateString(), 'payee' => 'Preview Supplier', 'dv_particulars' => 'Preview particulars', 'payment_mode' => 'MDS Check'];
+
+        $unfinished = $this->post(route('accounting.dv.preview', $report), $form + ['journal' => [['account_code' => '', 'debit' => '10000', 'credit' => '']]])->assertOk()->getContent();
+        $this->assertStringContainsString('Appendix 32', $unfinished);
+        $this->assertStringContainsString('Preview Supplier', $unfinished);
+
+        $finished = $this->post(route('accounting.dv.preview', $report), $form + ['journal' => [
+            ['account_code' => $c['expense'], 'debit' => '10000', 'credit' => ''],
+            ['account_code' => $c['cash'], 'debit' => '', 'credit' => '10000'],
+        ]])->assertOk()->getContent();
+        $this->assertStringContainsString($c['expense'], $finished);
+
+        $this->assertNull($report->fresh()->dv_number, 'a preview is rolled back');
+        $this->assertSame(0, DvJournalLine::count());
+
+        $this->post(route('accounting.dv.store', $report), $form + ['journal' => [['account_code' => '', 'debit' => '10000', 'credit' => '']]])->assertSessionHasErrors();
+        $this->assertNull($report->fresh()->dv_number, 'saving still needs the finished journal entry');
+    }
+
     public function test_a_balanced_double_entry_is_saved_with_the_dv(): void
     {
         [$report, $master] = $this->ors(10000);
@@ -134,6 +158,13 @@ class DvJournalEntryTest extends TestCase
                 ->assertSee('Finance')->assertSee(route('budget'), false)->assertSee(route('accounting'), false)->assertSee(route('chart-of-accounts'), false)
                 ->assertSee(route('allotment-registry'), false)->assertSee(route('cash'), false);
         }
+    }
+
+    public function test_the_cash_page_opens_without_the_journal_account_list(): void
+    {
+        [, $master] = $this->ors(100);
+
+        $this->actingAs($master)->get(route('cash'))->assertOk()->assertSee('Cash');
     }
 
     public function test_the_accounting_tab_shows_counts_search_and_the_journal_summary(): void

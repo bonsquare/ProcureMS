@@ -449,15 +449,20 @@ class SobService
         return $released;
     }
 
-    /** @return array<int, array{aip_activity_id: int, sob: float, aip: float}> activities whose SOB lines total more than the AIP gives the quarter; an activity with no amount yet is never over */
+    /**
+     * The programs whose SOB lines total more than the AIP gives that program in the quarter (all its activities together); a program with no
+     * amount yet is never over. The SOB goes by the program, so a change to the program's activities in the AIP does not make it wrong.
+     *
+     * @return array<int, array{pillar: string, program: string, sob: float, aip: float}>
+     */
     public function overAip(SobPlan $plan): array
     {
         $over = [];
-        foreach ($plan->items()->with('activity')->get()->groupBy('aip_activity_id') as $activityId => $items) {
-            $sob = round((float) $items->sum('amount'), 2);
-            $aip = (float) $items->first()->activity->{"q{$plan->quarter}_amount"};
-            if ($aip > 0 && $sob > $aip + 0.001) {
-                $over[] = ['aip_activity_id' => (int) $activityId, 'sob' => $sob, 'aip' => $aip];
+        foreach ($this->grouped($plan) as $pillar) {
+            foreach ($pillar['programs'] as $program) {
+                if ($program['over']) {
+                    $over[] = ['pillar' => $pillar['pillar'], 'program' => $program['program'], 'sob' => $program['total'], 'aip' => $program['aip_amount']];
+                }
             }
         }
 
@@ -475,11 +480,18 @@ class SobService
     /**
      * The lines grouped for the page and the print: pillar, then program, then AIP activity.
      *
-     * @return array<int, array{pillar: string, total: float, programs: array<int, array{program: string, total: float, activities: array<int, array{activity: AipActivity, aip_amount: float, total: float, items: Collection}>}>}>
+     * A program's aip_amount is what the AIP gives all of the program's activities in the quarter; over is true when the SOB spends more.
+     *
+     * @return array<int, array{pillar: string, total: float, programs: array<int, array{program: string, total: float, aip_amount: float, over: bool, activities: array<int, array{activity: AipActivity, aip_amount: float, total: float, items: Collection}>}>}>
      */
     public function grouped(SobPlan $plan): array
     {
         $items = $plan->items()->with(['activity.kra', 'account'])->orderBy('id')->get();
+        $aipByProgram = [];
+        foreach ($plan->aip()->with('kras.activities')->first()?->kras ?? [] as $kra) {
+            $key = self::pillarName($kra->pillar).'|'.($kra->program ?? '');
+            $aipByProgram[$key] = ($aipByProgram[$key] ?? 0) + (float) $kra->activities->sum(fn (AipActivity $activity) => (float) $activity->{"q{$plan->quarter}_amount"});
+        }
         $pillars = [];
         foreach ($items->groupBy(fn (SobItem $i) => self::pillarName($i->activity->kra?->pillar)) as $pillar => $pillarItems) {
             $programs = [];
@@ -489,7 +501,9 @@ class SobService
                     $activity = $activityItems->first()->activity;
                     $activities[] = ['activity' => $activity, 'aip_amount' => (float) $activity->{"q{$plan->quarter}_amount"}, 'total' => round((float) $activityItems->sum('amount'), 2), 'items' => $activityItems->values(), 'accounts' => $this->accountGroups($activityItems)];
                 }
-                $programs[] = ['program' => (string) $program, 'total' => round((float) $programItems->sum('amount'), 2), 'activities' => $activities];
+                $total = round((float) $programItems->sum('amount'), 2);
+                $aip = round((float) ($aipByProgram[$pillar.'|'.$program] ?? 0), 2);
+                $programs[] = ['program' => (string) $program, 'total' => $total, 'aip_amount' => $aip, 'over' => $aip > 0 && $total > $aip + 0.001, 'activities' => $activities];
             }
             $pillars[] = ['pillar' => (string) $pillar, 'total' => round((float) $pillarItems->sum('amount'), 2), 'programs' => $programs];
         }

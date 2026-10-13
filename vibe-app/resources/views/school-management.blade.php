@@ -8,7 +8,7 @@
 @endphp
 <header class="mb-5">
     <p class="text-[11px] font-bold uppercase tracking-[.14em] text-action">Master account</p>
-    <h1 class="mt-2 text-3xl font-bold">School Management</h1>
+    <h1 class="mt-2 text-[28px] font-semibold leading-9 tracking-tight">School Management</h1>
     <p class="mt-2 text-sm text-on-surface-variant">Every school and its user. When someone retires, resigns or transfers, set them inactive. Nothing is deleted, and everything can be reactivated.</p>
 </header>
 
@@ -27,7 +27,7 @@
     </div>
     <div class="overflow-x-auto">
         <table class="w-full min-w-[760px] text-left text-sm">
-            <thead class="bg-surface-low text-[11px] uppercase tracking-wide text-on-surface-variant">
+            <thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant">
                 <tr><th class="px-5 py-2.5">School</th><th class="px-3 py-2.5">User</th><th class="px-3 py-2.5">Division</th><th class="px-3 py-2.5 text-center">Transfers</th><th class="px-3 py-2.5">Status</th><th class="px-5 py-2.5"></th></tr>
             </thead>
             <tbody class="divide-y divide-outline-variant/30">

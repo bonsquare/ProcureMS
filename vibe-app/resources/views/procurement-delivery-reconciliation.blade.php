@@ -9,11 +9,12 @@
     </style>
 @include('partials.input-fixes')
 @include('partials.print-clean')
+@include('partials.print-pages')
 @include('partials.procurement-emphasis')
 </head>
 <body>
 @include('partials.official-toolbar', ['closeUrl' => route('procurement.documents', $procurementRequest), 'context' => 'Delivery reconciliation'])
-<main class="page" data-official-page data-doc="reconciliation" data-paper="letter">
+<div data-official-page data-doc="reconciliation" data-paper="letter"><main class="page">
     @php
         [$leftLogo, $rightLogo] = \App\Support\OfficialDocument::logos($procurementRequest->school, $agency);
     @endphp
@@ -59,7 +60,7 @@
     </section>
 
     <div class="section-title">Items for Reconciliation</div>
-    <table class="report-table">
+    <table class="report-table" data-paginate>
         <thead>
             <tr>
                 <th style="width:9%">Stock No.</th>
@@ -90,7 +91,7 @@
     @if($partialRows->isEmpty())
         <div class="empty">No partial deliveries recorded.</div>
     @else
-        <table class="report-table">
+        <table class="report-table" data-paginate>
             <thead><tr><th>Description</th><th style="width:12%">PO Qty</th><th style="width:14%">Received Qty</th><th style="width:12%">Balance</th><th style="width:18%">Remarks</th></tr></thead>
             <tbody>
                 @foreach($partialRows as $row)
@@ -104,7 +105,7 @@
     @if($completeRows->isEmpty())
         <div class="empty">No completed deliveries recorded.</div>
     @else
-        <table class="report-table">
+        <table class="report-table" data-paginate>
             <thead><tr><th>Description</th><th style="width:12%">PO Qty</th><th style="width:14%">Received Qty</th><th style="width:18%">Remarks</th></tr></thead>
             <tbody>
                 @foreach($completeRows as $row)
@@ -118,6 +119,6 @@
         <div><div class="sign-line">Prepared by</div></div>
         <div><div class="sign-line">Reviewed by</div></div>
     </section>
-</main>
+</main></div>
 </body>
 </html>

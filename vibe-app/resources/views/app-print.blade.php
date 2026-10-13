@@ -6,8 +6,8 @@
     <style>
         :root { color-scheme: light; }
         * { box-sizing: border-box; }
-        body { margin: 0; background: #fff; color: #111; font-family: Arial, Helvetica, sans-serif; font-size: 10.5px; line-height: 1.3; }
-        .paper { width: 100%; min-width: 1080px; margin: 0 auto; padding: 22px 28px 30px; background: #fff; }
+        body { margin: 0; background: #fff; color: #111; font-family: Arial, Helvetica, sans-serif; font-size: 9.5px; line-height: 1.3; }
+        .paper { width: 100%; margin: 0; padding: 0; background: #fff; }
 
         .masthead { display: grid; grid-template-columns: 90px 1fr 90px; align-items: center; column-gap: 8px; text-align: center; line-height: 1.4; margin-bottom: 6px; }
         .masthead-logo { display: flex; align-items: center; min-height: 70px; }
@@ -39,18 +39,17 @@
         .signatures .position { text-align: center; }
 
         @media print {
-            body { font-size: 9.5px; }
-            .paper { min-width: 0; width: 100%; margin: 0; padding: 0; }
             thead th, tr.category-row td, tr.grand td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             tr { break-inside: avoid; }
             thead { display: table-header-group; }
             .signatures { break-inside: avoid; }
         }
-        /* Page footer: the document title on the left and Page X of Y on the right (printed in the page margin). */
-        @page { @bottom-left { content: "APP FY {{ $plan->fiscal_year }}"; font: 9px Arial, Helvetica, sans-serif; } @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 9px Arial, Helvetica, sans-serif; } }
+        /* Page footer: the document title on the left (printed in the page margin). */
+        @page { @bottom-left { content: "APP FY {{ $plan->fiscal_year }}"; font: 9px Arial, Helvetica, sans-serif; } }
     </style>
 @include('partials.input-fixes')
 @include('partials.print-clean')
+@include('partials.print-pages')
 </head>
 <body>
 @php
@@ -69,7 +68,7 @@
 
 @include('partials.official-toolbar', ['closeUrl' => route('planning').'#app', 'context' => 'Annual Procurement Plan · FY '.$plan->fiscal_year])
 
-<main class="paper" data-official-page data-doc="app" data-paper="legal" data-orientation="landscape" data-margin="10">
+<main class="paper" data-official-page data-sheets data-doc="app" data-paper="legal" data-orientation="landscape" data-margin="10">
     <header class="masthead">
         <div class="masthead-logo masthead-logo-left">@if($leftLogo)<img class="official-logo" src="{{ $leftLogo }}" alt="" onerror="this.remove()">@endif</div>
         <div>
@@ -89,7 +88,7 @@
         <p>FY {{ $plan->fiscal_year }}</p>
     </div>
 
-    <table>
+    <table data-paginate>
         <colgroup><col style="width:3.5%"><col style="width:24%"><col style="width:16%"><col style="width:5.5%"><col style="width:5.5%"><col style="width:8.5%"><col style="width:10%"><col style="width:9%"><col style="width:9%"><col style="width:9%"></colgroup>
         <thead>
             <tr><th>No.</th><th>Procurement Item</th><th>Specifications / PPA</th><th>Qty</th><th>Unit</th><th>Unit Cost</th><th>Estimated Total</th><th>Mode of Procurement</th><th>Schedule</th><th>Source of Fund</th></tr>

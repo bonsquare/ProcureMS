@@ -86,7 +86,7 @@
 
     <div class="flex justify-end gap-2">
         <a href="{{ route('budget.allocation', ['year' => $item->fiscal_year, 'school_id' => $item->school_id]) }}" class="rounded border border-outline-variant/60 bg-white px-5 py-2.5 text-sm font-semibold hover:bg-surface-low">Cancel</a>
-        <button class="rounded bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-container">{{ $editing ? 'Update Budget Allocation' : 'Save Budget Allocation' }}</button>
+        <button class="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-container">{{ $editing ? 'Update Budget Allocation' : 'Save Budget Allocation' }}</button>
     </div>
 </form>
 

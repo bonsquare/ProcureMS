@@ -61,7 +61,7 @@ class SobPrintDesignTest extends TestCase
 
         $html = $this->printed($plan);
 
-        preg_match_all('/<tr class="pillar-row pillar-([a-z-]+)"><td colspan="8">([^<]+)<\/td><\/tr>/', $html, $rows);
+        preg_match_all('/<tr class="pillar-row pillar-([a-z-]+)"><td colspan="7">([^<]+)<\/td><\/tr>/', $html, $rows);
         $this->assertSame(['ACCESS', 'QUALITY', 'EQUITY', 'RESILIENCY AND WELL-BEING', 'GOVERNANCE'], $rows[2], 'all five pillars, items or not');
         foreach (['#ffff00' => 'access', '#2e75b5' => 'quality', '#f4af84' => 'equity', '#92d050' => 'resiliency', '#548235' => 'governance'] as $color => $pillar) {
             $this->assertMatchesRegularExpression('/pillar-'.$pillar.'[^}]*background:\s*'.$color.'/i', $html, "$pillar keeps its color");
@@ -115,9 +115,8 @@ class SobPrintDesignTest extends TestCase
         $this->assertLessThan(strpos($html, 'Republic of the Philippines'), strpos($html, 'class="masthead-logo masthead-logo-left"'), 'left logo comes before the title block');
         $this->assertGreaterThan(strpos($html, 'Republic of the Philippines'), strpos($html, 'class="masthead-logo masthead-logo-right"'), 'right logo after it');
         $this->assertStringContainsString('"SOB 3rd Quarter 2026"', $html, 'the footer carries the document title');
-        $this->assertStringContainsString('"Page " counter(page) " of " counter(pages)', $html);
+        $this->assertStringNotContainsString('counter(page)', $html, 'no page numbers are printed');
         $this->assertMatchesRegularExpression('/@bottom-left/', $html);
-        $this->assertMatchesRegularExpression('/@bottom-right/', $html);
     }
 
     public function test_the_add_item_choices_are_the_specific_programs_of_the_aip(): void
@@ -132,5 +131,19 @@ class SobPrintDesignTest extends TestCase
         $this->assertStringContainsString('<option value="'.$solo->id.'"', $html);
         $this->assertMatchesRegularExpression('/<option value="'.$solo->id.'"[^>]*>\s*Sustain Retention Rate \(AGAHAN MO! SAGOT KO!\)\s*<\/option>/', $html, 'the program name exactly');
         $this->assertMatchesRegularExpression('/<option value="'.$fx['activities'][0]->id.'"[^>]*>\s*Program One\s*<\/option>/', $html, 'the program alone, with no activity added');
+    }
+
+    public function test_a_program_with_several_activities_is_one_choice_without_its_activities(): void
+    {
+        $fx = SobFixture::make(['activityCount' => 3]);
+        $this->actingAs($fx['user']);
+        $plan = $this->service()->create($fx['school'], 2026, 1, 'MOOE', $fx['user']);
+
+        $html = $this->get(route('planning.sob.show', $plan))->assertOk()->getContent();
+
+        $this->assertSame(1, preg_match_all('/<option value="\d+"[^>]*>\s*Program One\s*<\/option>/', $html), 'the program once, not once for each activity');
+        $this->assertMatchesRegularExpression('/<option value="'.$fx['activities'][0]->id.'"[^>]*>\s*Program One\s*<\/option>/', $html, 'kept under its first activity');
+        $this->assertStringNotContainsString('Activity 1', $html);
+        $this->assertStringNotContainsString('Activity 2', $html);
     }
 }

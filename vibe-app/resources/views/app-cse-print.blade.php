@@ -7,7 +7,7 @@
         :root { color-scheme: light; }
         * { box-sizing: border-box; }
         body { margin: 0; background: #fff; color: #111; font-family: Arial, Helvetica, sans-serif; font-size: 8px; line-height: 1.25; }
-        .paper { width: 100%; min-width: 1100px; margin: 0 auto; padding: 14px 18px 24px; background: #fff; }
+        .paper { width: 100%; margin: 0; padding: 0; background: #fff; }
 
         .form-title { text-align: center; font-size: 8px; font-weight: bold; }
         h1 { margin: 2px 0 8px; text-align: center; font-size: 11px; letter-spacing: .3px; }
@@ -42,7 +42,6 @@
         .prepared-date { margin-top: 10px; font-size: 8.5px; }
 
         @media print {
-            .paper { min-width: 0; width: 100%; margin: 0; padding: 0; }
             table.app thead { display: table-header-group; }
             table.app tr { break-inside: avoid; }
             table.app thead th, table.app tr.part-row td, table.app tr.group-row td, table.app tr.category-row td, table.app tr.sub-total td, table.app tr.totals-row td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -51,6 +50,7 @@
     </style>
 @include('partials.input-fixes')
 @include('partials.print-clean')
+@include('partials.print-pages')
 </head>
 <body>
 @php
@@ -80,7 +80,7 @@
 
 @include('partials.official-toolbar', ['closeUrl' => route('planning.app-cse.show', $plan), 'context' => 'APP-CSE · FY '.$plan->fiscal_year])
 
-<main class="paper" data-official-page data-doc="app-cse" data-paper="longbond" data-orientation="landscape" data-margin="8">
+<main class="paper" data-official-page data-sheets data-doc="app-cse" data-paper="longbond" data-orientation="landscape" data-margin="8">
     <div class="form-title">APP-CSE 2020 FORM - 10 September 2019</div>
     <h1>ANNUAL PROCUREMENT PLAN-COMMON SUPPLIES AND EQUIPMENT (APP-CSE) {{ $plan->fiscal_year }} FORM</h1>
 
@@ -92,7 +92,7 @@
         <div><div><b>Contact Person:</b> {{ $plan->contact_person }}</div><div><b>Position:</b> {{ $plan->contact_position }}</div><div><b>E-mail :</b> {{ $plan->contact_email }}</div><div><b>Telephone/Mobile Nos:</b> {{ $plan->contact_phone }}</div></div>
     </div>
 
-    <table class="app">
+    <table class="app" data-paginate>
         <colgroup>@foreach($widths as $width)<col style="width: {{ round($width / $widthSum * 100, 3) }}%">@endforeach</colgroup>
         <thead>
             <tr>
@@ -113,7 +113,8 @@
         <tbody>
             <tr class="part-row"><td colspan="27">PART I. AVAILABLE AT PROCUREMENT SERVICE STORES</td></tr>
             @php $lastGroup = null; $lastCategory = null; @endphp
-            @foreach($catalog as $entry)
+            {{-- Only the catalog rows with a quantity are printed (the owner's decision, 2026-10-13); the headings follow the rows that are left. --}}
+            @foreach($catalog->filter(fn ($entry) => ($byCatalog->get($entry->id)?->totalQuantity() ?? 0) > 0) as $entry)
                 @if($entry->group_heading !== $lastGroup && $entry->group_heading !== null)<tr class="group-row"><td colspan="27">{{ $entry->group_heading }}</td></tr>@endif
                 @if($entry->category !== $lastCategory)<tr class="category-row"><td colspan="27">{{ $entry->category }}</td></tr>@endif
                 @php
@@ -126,7 +127,7 @@
             @endforeach
 
             <tr class="part-row"><td colspan="27">PART II. OTHER ITEMS NOT AVALABLE AT PS BUT REGULARLY PURCHASED FROM OTHER SOURCES (Note: Please indicate price of items)</td></tr>
-            @foreach($partTwo->groupBy('category') as $category => $group)
+            @foreach($partTwo->filter(fn ($line) => $line->totalQuantity() > 0)->groupBy('category') as $category => $group)
                 <tr class="category-row"><td colspan="27">{{ $category }}</td></tr>
                 @foreach($group as $line)
                     @php $number++; @endphp

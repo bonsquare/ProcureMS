@@ -41,7 +41,7 @@ class AppCategoriesPrintTest extends TestCase
             $this->line('Mystery item', null),
         ]);
         $this->service()->approve($plan->fresh(), $fx['user']);
-        $this->post(route('planning.app.generate'), ['school_id' => $fx['school']->id, 'fiscal_year' => 2026])->assertSessionHasNoErrors();
+        $this->post(route('planning.app.generate'), ['school_id' => $fx['school']->id, 'fiscal_year' => 2026, 'sob_item_ids' => SobItem::withoutGlobalScopes()->where('is_extra', false)->pluck('id')->all()])->assertSessionHasNoErrors();
 
         return AppPlan::firstOrFail();
     }
@@ -149,7 +149,7 @@ class AppCategoriesPrintTest extends TestCase
         $this->assertStringContainsString('3,000.00', $html, 'the grand total of what is printed (1,000 + 1,000 + 1,000)');
         $this->assertMatchesRegularExpression('/thead th\s*\{[^}]*background:\s*#00af50/i', $html);
         $this->assertStringContainsString('"APP FY 2026"', $html);
-        $this->assertStringContainsString('"Page " counter(page) " of " counter(pages)', $html);
+        $this->assertStringNotContainsString('counter(page)', $html, 'no page numbers are printed');
         $this->assertStringContainsString('class="masthead-logo masthead-logo-left"', $html);
         $this->assertStringContainsString('class="masthead-logo masthead-logo-right"', $html);
     }

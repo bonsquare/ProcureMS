@@ -61,6 +61,7 @@
     </style>
 @include('partials.input-fixes')
 @include('partials.print-clean')
+@include('partials.print-pages')
 @include('partials.procurement-emphasis')
 </head>
 <body>
@@ -68,7 +69,7 @@
     @php
         [$leftLogo, $rightLogo] = \App\Support\OfficialDocument::logos($procurementRequest->school, $agency);
     @endphp
-    <div class="page" data-official-page data-doc="pr" data-paper="a4">
+    <div data-official-page data-doc="pr" data-paper="a4"><div class="page">
         <div class="form">
             <div class="header">
                 @if($leftLogo)<img class="left-logo official-logo" src="{{ $leftLogo }}" alt="Department logo" onerror="this.remove()">@endif
@@ -81,7 +82,7 @@
                 <span class="meta-label">Section:</span><span class="meta-value">{{ $procurementRequest->section }}</span><span class="meta-label">SAI No. :</span><span class="meta-value">{{ $procurementRequest->sai_number }}</span><span class="meta-label">Date:</span><span class="meta-value">{{ $procurementRequest->sai_date?->format('F d, Y') }}</span>
                 <span class="meta-label meta-label-wide">Responsibility Center Code:</span><span class="meta-value">{{ $procurementRequest->responsibility_center_code }}</span><span class="meta-empty"></span><span class="meta-empty"></span><span class="meta-empty"></span><span class="meta-empty"></span>
             </div>
-            <table>
+            <table data-paginate>
                 <thead><tr><th class="stock">Stock No.</th><th class="unit">Unit</th><th class="description">Item Description</th><th class="quantity">Quantity</th><th class="unit-cost">Unit Cost</th><th class="total-cost">Total Cost</th></tr></thead>
                 <tbody>
                     @foreach ($procurementRequest->items as $item)
@@ -99,6 +100,6 @@
                 <div class="signature-cell"><div class="signature-title center">Approved by:</div><div class="signature-name">{{ $approved_by }}</div><div class="signature-role">{{ $approved_by_role }}</div></div>
             </div>
         </div>
-    </div>
+    </div></div>
 </body>
 </html>

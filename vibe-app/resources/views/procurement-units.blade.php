@@ -3,7 +3,7 @@
 @section('content')
 <header class="mb-6">
     <p class="text-[11px] font-bold uppercase tracking-[.14em] text-action">Item setup</p>
-    <h1 class="mt-2 text-3xl font-bold">Units of measure</h1>
+    <h1 class="mt-2 text-[28px] font-semibold leading-9 tracking-tight">Units of measure</h1>
     <p class="mt-2 text-sm text-on-surface-variant">Every unit shown in the Unit dropdown of Purchase Request items. Add a new one when you need it.</p>
 </header>
 <div class="grid items-start gap-5 xl:grid-cols-[1fr_340px]">

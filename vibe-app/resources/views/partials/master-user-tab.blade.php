@@ -14,7 +14,7 @@
             <label class="text-xs font-semibold text-on-surface-variant">E-mail<input type="email" name="email" required value="{{ old('email', $me->email) }}" class="{{ $input }}">@error('email')<span class="mt-1 block text-error">{{ $message }}</span>@enderror</label>
             <label class="text-xs font-semibold text-on-surface-variant">Phone<input name="phone" value="{{ old('phone', $me->phone) }}" class="{{ $input }}">@error('phone')<span class="mt-1 block text-error">{{ $message }}</span>@enderror</label>
             <label class="text-xs font-semibold text-on-surface-variant">Position<input name="position" value="{{ old('position', $me->position) }}" class="{{ $input }}">@error('position')<span class="mt-1 block text-error">{{ $message }}</span>@enderror</label>
-            <div class="sm:col-span-2"><button class="inline-flex items-center gap-2 rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]">save</span>Save details</button></div>
+            <div class="sm:col-span-2"><button class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]">save</span>Save details</button></div>
         </form>
     </section>
 
@@ -25,7 +25,7 @@
             <label class="text-xs font-semibold text-on-surface-variant">Current password<input type="password" name="current_password" required autocomplete="current-password" class="{{ $input }}">@error('current_password')<span class="mt-1 block text-error">{{ $message }}</span>@enderror</label>
             <label class="text-xs font-semibold text-on-surface-variant">New password<input type="password" name="password" required minlength="12" autocomplete="new-password" class="{{ $input }}">@error('password')<span class="mt-1 block text-error">{{ $message }}</span>@enderror</label>
             <label class="text-xs font-semibold text-on-surface-variant">Confirm new password<input type="password" name="password_confirmation" required minlength="12" autocomplete="new-password" class="{{ $input }}"></label>
-            <div><button class="inline-flex items-center gap-2 rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]">key</span>Change password</button></div>
+            <div><button class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]">key</span>Change password</button></div>
         </form>
     </section>
 </div>

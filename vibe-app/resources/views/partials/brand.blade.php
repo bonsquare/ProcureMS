@@ -1,7 +1,7 @@
 {{-- The ProcureMS brand (docs: the logo in public/images). $style: 'sidebar' (default, navy sidebars), 'register' (navy panel) or 'login' (light card, full logo). --}}
 @php($style = $style ?? 'sidebar')
 @if($style === 'login')
-    <div class="mb-8"><img src="{{ asset('images/procurems-logo.svg') }}" alt="ProcureMS - School Procurement &amp; Liquidation" class="h-16 w-auto"></div>
+    <div class="mb-8 flex justify-center"><img src="{{ asset('images/procurems-logo.svg') }}" alt="ProcureMS - School Procurement &amp; Liquidation" class="h-32 w-auto sm:h-40"></div>
 @elseif($style === 'register')
     <div class="relative flex items-center gap-3"><img src="{{ asset('images/procurems-emblem.svg') }}" alt="" class="shrink-0" style="width:3.5rem;height:3.5rem"><div><p class="text-xl font-bold leading-tight">ProcureMS</p><p class="text-xs text-white/70">School Pre-registration</p></div></div>
 @else

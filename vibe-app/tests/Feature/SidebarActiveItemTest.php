@@ -21,7 +21,7 @@ class SidebarActiveItemTest extends TestCase
 
         $active = [];
         foreach ($links as [, $href, $class, $label]) {
-            if (in_array('bg-primary-container', preg_split('/\s+/', trim($class)), true)) {
+            if (in_array('bg-white/10', preg_split('/\s+/', trim($class)), true)) {
                 $active[$href] = trim(strip_tags((string) preg_replace('/<span class="material-symbols-outlined[^>]*>.*?<\/span>/s', '', $label)));
             }
         }

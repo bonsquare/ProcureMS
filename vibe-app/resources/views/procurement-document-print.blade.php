@@ -9,6 +9,7 @@
     </style>
 @include('partials.input-fixes')
 @include('partials.print-clean')
+@include('partials.print-pages')
 @include('partials.procurement-emphasis')
 </head>
 <body>

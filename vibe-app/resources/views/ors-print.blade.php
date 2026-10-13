@@ -14,6 +14,7 @@
         .sheet svg { display: block; width: 100%; height: 100%; }
         .sheet line { stroke: #000; stroke-linecap: square; }
         .sheet text { fill: #000; }
+        .sheet.no-status .ors-status { display: none; }
         .ph { font-family: 'Times New Roman', Times, serif; color: #000; }
         @media print { html, body { background: #fff; } .print-actions { display: none; } .sheet { margin: 0; } }
     </style>
@@ -42,15 +43,16 @@
     $requesterRole = $requester?->position ?: 'School Head';
     $certifierName = strtoupper((string) ($budgetOfficer?->name ?? ''));
     $certifierRole = $budgetOfficer?->position ?: 'Disbursing Officer';
+    $showStatus = (bool) ($report->ors_include_status ?? true);
 @endphp
 @include('partials.official-toolbar', ['closeUrl' => route('budget'), 'context' => 'Obligation Request · '.$report->ors_number])
-<div class="sheet" data-official-page data-single-page data-doc="ors" data-paper="longbond"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 612 936" preserveAspectRatio="xMidYMid meet" stroke="#000" fill="none">
+<div class="sheet{{ $showStatus ? '' : ' no-status' }}" data-official-page data-single-page data-doc="ors" data-paper="longbond"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 612 936" preserveAspectRatio="xMidYMid meet" stroke="#000" fill="none">
 <g fill="none">
-<line x1="17.39" y1="44.92" x2="17.39" y2="883.92" stroke-width="1.45"/>
+<line x1="17.39" y1="44.92" x2="17.39" y2="{{ $showStatus ? '883.92' : '683.23' }}" stroke-width="1.45"/>
 <line x1="16.66" y1="528.18" x2="52.17" y2="528.18" stroke-width="1.45"/>
 <line x1="51.44" y1="496.30" x2="51.44" y2="528.91" stroke-width="1.45"/>
-<line x1="51.44" y1="682.51" x2="51.44" y2="709.31" stroke-width="1.45"/>
-<line x1="254.31" y1="707.86" x2="254.31" y2="883.92" stroke-width="1.45"/>
+<line class="ors-status" x1="51.44" y1="682.51" x2="51.44" y2="709.31" stroke-width="1.45"/>
+<line class="ors-status" x1="254.31" y1="707.86" x2="254.31" y2="883.92" stroke-width="1.45"/>
 <line x1="81.15" y1="626.72" x2="318.07" y2="626.72" stroke-width="1.45"/>
 <line x1="317.34" y1="496.30" x2="317.34" y2="683.95" stroke-width="1.45"/>
 <line x1="316.62" y1="528.18" x2="355.74" y2="528.18" stroke-width="1.45"/>
@@ -63,40 +65,40 @@
 <line x1="16.66" y1="497.03" x2="594.84" y2="497.03" stroke-width="1.45"/>
 <line x1="390.52" y1="626.72" x2="594.84" y2="626.72" stroke-width="1.45"/>
 <line x1="16.66" y1="683.23" x2="594.84" y2="683.23" stroke-width="1.45"/>
-<line x1="16.66" y1="708.59" x2="594.84" y2="708.59" stroke-width="1.45"/>
-<line x1="16.66" y1="721.63" x2="594.84" y2="721.63" stroke-width="1.45"/>
-<line x1="253.58" y1="768.72" x2="594.84" y2="768.72" stroke-width="1.45"/>
-<line x1="16.66" y1="786.84" x2="594.84" y2="786.84" stroke-width="1.45"/>
-<line x1="16.66" y1="883.20" x2="594.84" y2="883.20" stroke-width="1.45"/>
-<line x1="594.11" y1="44.92" x2="594.11" y2="883.92" stroke-width="1.45"/>
-<line x1="51.80" y1="722.35" x2="51.80" y2="786.11" stroke-width="0.72"/>
-<line x1="51.80" y1="787.56" x2="51.80" y2="882.48" stroke-width="0.72"/>
+<line class="ors-status" x1="16.66" y1="708.59" x2="594.84" y2="708.59" stroke-width="1.45"/>
+<line class="ors-status" x1="16.66" y1="721.63" x2="594.84" y2="721.63" stroke-width="1.45"/>
+<line class="ors-status" x1="253.58" y1="768.72" x2="594.84" y2="768.72" stroke-width="1.45"/>
+<line class="ors-status" x1="16.66" y1="786.84" x2="594.84" y2="786.84" stroke-width="1.45"/>
+<line class="ors-status" x1="16.66" y1="883.20" x2="594.84" y2="883.20" stroke-width="1.45"/>
+<line x1="594.11" y1="44.92" x2="594.11" y2="{{ $showStatus ? '883.92' : '683.23' }}" stroke-width="1.45"/>
+<line class="ors-status" x1="51.80" y1="722.35" x2="51.80" y2="786.11" stroke-width="0.72"/>
+<line class="ors-status" x1="51.80" y1="787.56" x2="51.80" y2="882.48" stroke-width="0.72"/>
 <line x1="115.56" y1="120.27" x2="115.56" y2="196.35" stroke-width="0.72"/>
 <line x1="115.56" y1="197.80" x2="115.56" y2="226.05" stroke-width="0.72"/>
 <line x1="115.56" y1="227.50" x2="115.56" y2="496.30" stroke-width="0.72"/>
-<line x1="159.03" y1="722.35" x2="159.03" y2="786.11" stroke-width="0.72"/>
-<line x1="159.03" y1="787.56" x2="159.03" y2="882.48" stroke-width="0.72"/>
+<line class="ors-status" x1="159.03" y1="722.35" x2="159.03" y2="786.11" stroke-width="0.72"/>
+<line class="ors-status" x1="159.03" y1="787.56" x2="159.03" y2="882.48" stroke-width="0.72"/>
 <line x1="317.71" y1="197.80" x2="317.71" y2="226.05" stroke-width="0.72"/>
 <line x1="317.71" y1="227.50" x2="317.71" y2="496.30" stroke-width="0.72"/>
-<line x1="317.71" y1="722.35" x2="317.71" y2="768.00" stroke-width="0.72"/>
-<line x1="317.71" y1="769.45" x2="317.71" y2="786.11" stroke-width="0.72"/>
-<line x1="317.71" y1="787.56" x2="317.71" y2="882.48" stroke-width="0.72"/>
+<line class="ors-status" x1="317.71" y1="722.35" x2="317.71" y2="768.00" stroke-width="0.72"/>
+<line class="ors-status" x1="317.71" y1="769.45" x2="317.71" y2="786.11" stroke-width="0.72"/>
+<line class="ors-status" x1="317.71" y1="787.56" x2="317.71" y2="882.48" stroke-width="0.72"/>
 <line x1="390.88" y1="197.80" x2="390.88" y2="226.05" stroke-width="0.72"/>
 <line x1="390.88" y1="227.50" x2="390.88" y2="496.30" stroke-width="0.72"/>
-<line x1="390.88" y1="722.35" x2="390.88" y2="768.00" stroke-width="0.72"/>
-<line x1="390.88" y1="769.45" x2="390.88" y2="786.11" stroke-width="0.72"/>
-<line x1="390.88" y1="787.56" x2="390.88" y2="882.48" stroke-width="0.72"/>
+<line class="ors-status" x1="390.88" y1="722.35" x2="390.88" y2="768.00" stroke-width="0.72"/>
+<line class="ors-status" x1="390.88" y1="769.45" x2="390.88" y2="786.11" stroke-width="0.72"/>
+<line class="ors-status" x1="390.88" y1="787.56" x2="390.88" y2="882.48" stroke-width="0.72"/>
 <line x1="463.34" y1="197.80" x2="463.34" y2="226.05" stroke-width="0.72"/>
 <line x1="463.34" y1="227.50" x2="463.34" y2="496.30" stroke-width="0.72"/>
-<line x1="463.34" y1="722.35" x2="463.34" y2="768.00" stroke-width="0.72"/>
-<line x1="463.34" y1="769.45" x2="463.34" y2="786.11" stroke-width="0.72"/>
-<line x1="463.34" y1="787.56" x2="463.34" y2="882.48" stroke-width="0.72"/>
-<line x1="526.37" y1="737.57" x2="526.37" y2="768.00" stroke-width="0.72"/>
-<line x1="526.37" y1="769.45" x2="526.37" y2="786.11" stroke-width="0.72"/>
-<line x1="526.37" y1="787.56" x2="526.37" y2="882.48" stroke-width="0.72"/>
+<line class="ors-status" x1="463.34" y1="722.35" x2="463.34" y2="768.00" stroke-width="0.72"/>
+<line class="ors-status" x1="463.34" y1="769.45" x2="463.34" y2="786.11" stroke-width="0.72"/>
+<line class="ors-status" x1="463.34" y1="787.56" x2="463.34" y2="882.48" stroke-width="0.72"/>
+<line class="ors-status" x1="526.37" y1="737.57" x2="526.37" y2="768.00" stroke-width="0.72"/>
+<line class="ors-status" x1="526.37" y1="769.45" x2="526.37" y2="786.11" stroke-width="0.72"/>
+<line class="ors-status" x1="526.37" y1="787.56" x2="526.37" y2="882.48" stroke-width="0.72"/>
 <line x1="18.11" y1="147.44" x2="593.39" y2="147.44" stroke-width="0.72"/>
 <line x1="18.11" y1="172.08" x2="593.39" y2="172.08" stroke-width="0.72"/>
-<line x1="462.97" y1="737.93" x2="593.39" y2="737.93" stroke-width="0.72"/>
+<line class="ors-status" x1="462.97" y1="737.93" x2="593.39" y2="737.93" stroke-width="0.72"/>
 </g>
 <g fill="#000" stroke="none">
 <text x="544.11" y="34.05" font-family="'Times New Roman',Times,serif" font-size="9.7" font-style="italic" xml:space="preserve">Appendix 11</text>
@@ -115,22 +117,22 @@
 <text x="118.10" y="525.28" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Charges to appropriation/alloment are</text>
 <text x="402.15" y="525.28" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">  Allotment available and obligated</text>
 <text x="320.24" y="623.82" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Printed Name:</text>
-<text x="24.75" y="757.86" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Date</text>
-<text x="82.71" y="757.86" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Particulars</text>
-<text x="169.02" y="751.34" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">ORS/JEV/Check/</text>
-<text x="173.74" y="764.38" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">ADA/TRA No.</text>
-<text x="263.47" y="749.16" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Obligation</text>
-<text x="337.48" y="749.16" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Payable</text>
-<text x="408.52" y="749.16" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Payment</text>
-<text x="511.44" y="733.22" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Balance</text>
-<text x="468.25" y="757.13" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Not Yet Due</text>
-<text x="542.22" y="750.61" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Due and</text>
-<text x="533.22" y="763.65" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Demandable</text>
-<text x="280.29" y="781.04" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">(a)</text>
-<text x="348.10" y="781.04" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">(b)</text>
-<text x="421.22" y="781.04" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">(c)</text>
-<text x="484.53" y="781.04" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">(a-b)</text>
-<text x="549.74" y="781.04" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">(b-c)</text>
+<text class="ors-status" x="24.75" y="757.86" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Date</text>
+<text class="ors-status" x="82.71" y="757.86" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Particulars</text>
+<text class="ors-status" x="169.02" y="751.34" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">ORS/JEV/Check/</text>
+<text class="ors-status" x="173.74" y="764.38" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">ADA/TRA No.</text>
+<text class="ors-status" x="263.47" y="749.16" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Obligation</text>
+<text class="ors-status" x="337.48" y="749.16" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Payable</text>
+<text class="ors-status" x="408.52" y="749.16" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Payment</text>
+<text class="ors-status" x="511.44" y="733.22" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Balance</text>
+<text class="ors-status" x="468.25" y="757.13" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Not Yet Due</text>
+<text class="ors-status" x="542.22" y="750.61" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Due and</text>
+<text class="ors-status" x="533.22" y="763.65" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Demandable</text>
+<text class="ors-status" x="280.29" y="781.04" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">(a)</text>
+<text class="ors-status" x="348.10" y="781.04" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">(b)</text>
+<text class="ors-status" x="421.22" y="781.04" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">(c)</text>
+<text class="ors-status" x="484.53" y="781.04" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">(a-b)</text>
+<text class="ors-status" x="549.74" y="781.04" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">(b-c)</text>
 <text x="54.34" y="539.05" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">necessary, lawful and under my direct supervision;and</text>
 <text x="357.92" y="539.05" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve"> for the purpose/adjustment necessary as</text>
 <text x="54.34" y="552.09" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">supporting documents valid, proper and legal</text>
@@ -146,10 +148,10 @@
 <text x="331.31" y="515.86" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold" xml:space="preserve">B.</text>
 <text x="61.57" y="525.28" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold" xml:space="preserve">Certified:</text>
 <text x="357.92" y="525.28" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold" xml:space="preserve">Certified:</text>
-<text x="29.25" y="699.17" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold" xml:space="preserve">C.</text>
-<text x="258.44" y="699.17" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold" xml:space="preserve">STATUS OF OBLIGATION</text>
-<text x="113.24" y="719.46" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold" xml:space="preserve">Reference</text>
-<text x="405.62" y="719.46" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold" xml:space="preserve">Amount</text>
+<text class="ors-status" x="29.25" y="699.17" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold" xml:space="preserve">C.</text>
+<text class="ors-status" x="258.44" y="699.17" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold" xml:space="preserve">STATUS OF OBLIGATION</text>
+<text class="ors-status" x="113.24" y="719.46" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold" xml:space="preserve">Reference</text>
+<text class="ors-status" x="405.62" y="719.46" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold" xml:space="preserve">Amount</text>
 <!-- header fields -->
 <text x="393.4" y="67.4" font-family="'Times New Roman',Times,serif" font-size="13.5" xml:space="preserve">Serial No. : </text>
 <text x="458.65" y="67.4" font-family="'Times New Roman',Times,serif" font-size="13.5" text-decoration="underline" xml:space="preserve">{{ $report->ors_number ?: '______________' }}</text>
@@ -178,9 +180,9 @@
 <text x="492.4" y="622.4" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($certifierName, 190, 10.6) }}" font-weight="bold">{{ $certifierName }}</text>
 <text x="492.4" y="641.9" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($certifierRole, 190, 10.6) }}">{{ $certifierRole }}</text>
 <!-- C. status of obligation -->
-<foreignObject x="53" y="822.5" width="105" height="58"><div xmlns="http://www.w3.org/1999/xhtml" style="font:9.5px/11.5px 'Times New Roman',Times,serif;color:#000;text-align:center;overflow:hidden;height:58px;word-wrap:break-word;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical">{{ $statusParticulars }}</div></foreignObject>
-<text x="293" y="838.3" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="10.6">{{ $amount }}</text>
-<text x="438.7" y="838.3" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="10.6">{{ $paidAmount }}</text>
+<foreignObject class="ors-status" x="53" y="822.5" width="105" height="58"><div xmlns="http://www.w3.org/1999/xhtml" style="font:9.5px/11.5px 'Times New Roman',Times,serif;color:#000;text-align:center;overflow:hidden;height:58px;word-wrap:break-word;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical">{{ $statusParticulars }}</div></foreignObject>
+<text class="ors-status" x="293" y="838.3" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="10.6">{{ $amount }}</text>
+<text class="ors-status" x="438.7" y="838.3" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="10.6">{{ $paidAmount }}</text>
 
 </g>
 </svg></div>

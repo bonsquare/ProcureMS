@@ -17,7 +17,7 @@
 @endif
 <header class="mb-5">
     <p class="text-[11px] font-bold uppercase tracking-[.14em] text-action">Supplier manager</p>
-    <h1 class="mt-2 text-3xl font-bold">{{ $editing ? 'Edit supplier' : 'Add supplier' }}</h1>
+    <h1 class="mt-2 text-[28px] font-semibold leading-9 tracking-tight">{{ $editing ? 'Edit supplier' : 'Add supplier' }}</h1>
     <p class="mt-2 text-sm text-on-surface-variant">This data will appear on the NOA, NTP, PO and other procurement documents.</p>
 </header>
 @if($errors->any())<div role="alert" class="civic-alert" style="border-color:#e4b4b7;background:#f8e2e4;color:#8a2f35">Please check the highlighted fields below.</div>@endif

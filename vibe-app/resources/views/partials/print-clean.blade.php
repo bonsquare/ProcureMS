@@ -8,6 +8,7 @@
         data-orientation="portrait|landscape"
         data-margin="10"               page margin in mm for forms that rely on @page margins (default 0: the form carries its own)
         data-single-page               fixed one-page forms (scaled to fit the sheet rather than paginated)
+        data-sheets                    the form builds its own `.doc-page` blocks, one per printed page; the screen then shows each as a separate sheet
 --}}
 <style id="official-print-base">
     :root {
@@ -71,6 +72,15 @@
         background-image: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0, rgba(0,0,0,0) calc(var(--sheet-h) - 1px), #b8bcc6 calc(var(--sheet-h) - 1px), #b8bcc6 var(--sheet-h)); }
     .official-sheet > [data-official-page] { margin-left: auto !important; margin-right: auto !important; }
     img.official-logo { object-fit: contain; }
+    /* data-sheets: every .doc-page is its own sheet on screen (a gap between pages instead of one tall paper). */
+    .official-sheet.is-sheets { background: none; box-shadow: none; border-radius: 0; padding: 0 !important; min-height: 0 !important; }
+    .is-sheets .doc-page { position: relative; margin: 0 auto 24px; padding: var(--sheet-py, 0) var(--sheet-px, 0); min-height: var(--sheet-h, 0); background: #fff; border-radius: 2px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, .14), 0 10px 32px rgba(15, 23, 42, .2); }
+    .is-sheets .doc-page:last-child { margin-bottom: 0; }
+    .is-sheets .doc-page > .official-fill, .is-sheets .doc-page > [data-chain] { margin-top: 0 !important; margin-bottom: 0 !important; break-before: auto !important; break-after: auto !important; page-break-before: auto !important; page-break-after: auto !important; }
+    /* A form made of fixed pages (an RFQ with its copies, an RIS per person): each page is its own sheet on screen, with a gap between them. */
+    .official-sheet.is-pages { background: none; box-shadow: none; border-radius: 0; margin-bottom: 0; }
+    .is-pages .official-pg { background: #fff; border-radius: 2px; margin-bottom: 24px !important; box-shadow: 0 1px 2px rgba(15, 23, 42, .14), 0 10px 32px rgba(15, 23, 42, .2); }
 
     /* ---- print ---- */
     @media print {
@@ -78,6 +88,9 @@
         .official-toolbar, .no-print { display: none !important; }
         .official-sheet { margin: 0 !important; padding: 0 !important; width: auto !important; min-height: 0 !important; zoom: 1 !important; background: #fff !important; background-image: none !important; box-shadow: none !important; border-radius: 0 !important; break-after: page; page-break-after: always; }
         .official-sheet:last-of-type { break-after: auto; page-break-after: auto; }
+        .is-sheets .doc-page { margin: 0 !important; padding: 0 !important; min-height: 0 !important; background: none !important; box-shadow: none !important; border-radius: 0 !important; break-after: page; page-break-after: always; }
+        .is-sheets .doc-page:last-child { break-after: auto; page-break-after: auto; }
+        .is-pages .official-pg { margin-bottom: 0 !important; box-shadow: none !important; border-radius: 0 !important; }
         [data-official-page] { box-shadow: none !important; border-radius: 0 !important; margin-top: 0 !important; margin-bottom: 0 !important; }
         /* The filler is sized for the paper chosen in the toolbar. If the printer uses a shorter paper, 100vh is the real
            page height, so the filler never pushes a blank page after every form page. */
@@ -125,7 +138,7 @@
             // itself); "tops" are the outermost ones, i.e. one per physical form page.
             var sheets = pages.map(function (page) {
                 var sheet = document.createElement('div');
-                sheet.className = 'official-sheet';
+                sheet.className = 'official-sheet' + (page.hasAttribute('data-sheets') ? ' is-sheets' : '');
                 page.parentNode.insertBefore(sheet, page);
                 sheet.appendChild(page);
                 var fills = [page].concat(Array.prototype.slice.call(page.querySelectorAll('*'))).filter(function (node) {
@@ -173,12 +186,19 @@
                 });
             }
 
+            // A form that no longer fits one page and has a long table (data-paginate) is laid out page by page (partials.print-pages).
+            if (!paged) {
+                sheets.forEach(function (item) {
+                    if (item.page.querySelector('table[data-paginate]')) { item.page.setAttribute('data-sheets', ''); item.sheet.classList.add('is-sheets'); }
+                });
+            }
+
             function layout() {
                 var dims = paperMm(), pw = dims[0], ph = dims[1];
                 var marginX = baseMargin, marginY = baseMargin;
                 var result = sheets.map(function (item) {
                     var m = measure(item, pw);
-                    var zoom = Math.min(1, ((pw - 2 * marginX) * MM) / m.width);
+                    var zoom = Math.min(1, ((pw - (item.page.hasAttribute('data-sheets') ? 0 : 2 * marginX)) * MM) / m.width);
                     // 3% headroom: text re-wraps slightly when scaled, so a form scaled to the exact sheet height can overflow by a line.
                     if (paged) { zoom = Math.min(zoom, ((ph - 2 * marginY) * MM) / ((single ? m.height : m.topHeight) * 1.03)); }
                     return { item: item, zoom: zoom, naturalH: m.height };
@@ -197,9 +217,15 @@
                         node.style.minHeight = fillH;
                     });
                     if (paged) { r.item.tops.forEach(function (node, index) { node.style.breakBefore = index ? 'page' : ''; }); }
+                    // Forms that carry their own margins (no sheet padding) show each page as a separate sheet.
+                    var separate = paged && !single && !marginX && !marginY && !r.item.page.hasAttribute('data-sheets');
+                    r.item.sheet.classList.toggle('is-pages', separate);
+                    r.item.tops.forEach(function (node) { node.classList.toggle('official-pg', separate); });
                     r.item.sheet.style.minHeight = ph + 'mm';
                     r.item.sheet.style.padding = marginY + 'mm ' + marginX + 'mm';
                     r.item.sheet.style.setProperty('--sheet-h', ph + 'mm');
+                    r.item.sheet.style.setProperty('--sheet-px', marginX + 'mm');
+                    r.item.sheet.style.setProperty('--sheet-py', marginY + 'mm');
                 });
                 pageStyle.textContent = '@page { size: ' + pw + 'mm ' + ph + 'mm; margin: ' + marginY + 'mm ' + marginX + 'mm; }';
                 var preview = state.zoom === 'fit' ? Math.min(1, (window.innerWidth - 40) / (pw * MM)) : (+state.zoom || 1);

@@ -12,14 +12,14 @@ class AppCseItem extends Model
 
     protected $fillable = [
         'organization_id', 'app_cse_plan_id', 'cse_catalog_item_id', 'category', 'description', 'unit', 'unit_price',
-        'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9', 'm10', 'm11', 'm12', 'sort_order',
+        'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9', 'm10', 'm11', 'm12', 'sort_order', 'from_sob',
     ];
 
     protected function casts(): array
     {
         $months = array_fill_keys(['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9', 'm10', 'm11', 'm12'], 'decimal:2');
 
-        return ['unit_price' => 'decimal:2', 'sort_order' => 'integer'] + $months;
+        return ['unit_price' => 'decimal:2', 'sort_order' => 'integer', 'from_sob' => 'boolean'] + $months;
     }
 
     public function plan()

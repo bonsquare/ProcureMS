@@ -54,6 +54,48 @@ class PlanningSignatoryRolesTest extends TestCase
         $this->assertStringContainsString('District Supervisor', $html);
     }
 
+    public function test_the_aip_sip_app_and_app_cse_forms_fill_in_the_role_of_each_signature_with_the_caption_they_print(): void
+    {
+        $fx = SobFixture::make();
+        $this->actingAs($fx['user']);
+
+        $aip = $this->get(route('aip.show', $fx['aip']))->assertOk()->getContent();
+        foreach (['prepared_by_role' => 'Prepared by', 'noted_by_role' => 'Noted by', 'approved_by_role' => 'Approved by'] as $name => $caption) {
+            $this->assertStringContainsString('name="'.$name.'" value="'.$caption.'"', $aip);
+        }
+
+        $this->post(route('planning.sip.store'), ['school_id' => $fx['school']->id, 'school_year' => 2026, 'pillar' => 'Access', 'kra' => 'KRA 3', 'organizational_outcome' => 'Outcome', 'strategy' => 'Strategy', 'five_point_agenda' => 'Agenda', 'project' => 'Program'])->assertSessionHasNoErrors();
+        $planning = $this->get(route('planning', ['school_id' => $fx['school']->id, 'year' => 2026]))->assertOk()->getContent();
+        foreach (['prepared_by_role' => 'Prepared by', 'recommended_by_role' => 'Recommending Approval', 'approved_by_role' => 'Approved by'] as $name => $caption) {
+            $this->assertMatchesRegularExpression('/name="'.$name.'"[^>]*value="'.$caption.'"/', $planning, "the SIP form: $name");
+        }
+
+        $cse = app(AppCseService::class)->create($fx['school'], 2026, $fx['user']);
+        $page = $this->get(route('planning.app-cse.show', $cse))->assertOk()->getContent();
+        foreach (['prepared_by_role' => 'Prepared by', 'noted_by_role' => 'NOTED', 'certified_by_role' => 'Certified Funds Available / Certified Appropriate Funds Available', 'agency_head_role' => 'Approved by'] as $name => $caption) {
+            $this->assertStringContainsString('name="'.$name.'" value="'.$caption.'"', $page);
+        }
+    }
+
+    public function test_the_sob_form_fills_in_the_role_of_each_signature_with_the_caption_the_sob_prints(): void
+    {
+        $fx = SobFixture::make();
+        $this->actingAs($fx['user']);
+        $plan = app(SobService::class)->create($fx['school'], 2026, 1, 'MOOE', $fx['user']);
+
+        $form = $this->get(route('planning.sob.show', $plan))->assertOk()->getContent();
+        $this->assertStringContainsString('name="prepared_by_role" value="Prepared by"', $form);
+        $this->assertStringContainsString('name="recommended_by_role" value="Recommending Approval"', $form);
+        $this->assertStringContainsString('name="approved_by_role" value="APPROVED"', $form);
+
+        // Saved as they stand, the print reads the same as when the roles were left blank.
+        $this->put(route('planning.sob.update', $plan), ['fund_source' => 'MOOE', 'quarter' => 1, 'prepared_by_role' => 'Prepared by', 'recommended_by_role' => 'Recommending Approval', 'approved_by_role' => 'APPROVED'])->assertSessionHasNoErrors();
+        $printed = $this->get(route('planning.sob.print', $plan))->assertOk()->getContent();
+        $this->assertStringContainsString('>Prepared by:<', $printed);
+        $this->assertStringContainsString('>Recommending Approval:<', $printed);
+        $this->assertStringContainsString('>APPROVED:<', $printed);
+    }
+
     public function test_the_sob_prints_the_typed_role_name_and_position(): void
     {
         $fx = SobFixture::make();

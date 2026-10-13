@@ -22,6 +22,21 @@ class AipActivity extends Model
         ];
     }
 
+    /**
+     * The timeline the quarters with an amount cover: from the first month of the first such quarter to the last month of the last one
+     * (only the 1st quarter is January - March, the 2nd April - June, all four January - December). Empty when no quarter has an amount.
+     *
+     * @param  array<int, float|int|string|null>  $quarters  the amounts of the 1st to the 4th quarter
+     */
+    public static function timelineFor(array $quarters): string
+    {
+        $starts = ['January', 'April', 'July', 'October'];
+        $ends = ['March', 'June', 'September', 'December'];
+        $used = array_keys(array_filter(array_values($quarters), fn ($amount) => (float) $amount > 0));
+
+        return $used === [] ? '' : $starts[min($used)].' - '.$ends[max($used)];
+    }
+
     public function aip()
     {
         return $this->belongsTo(Aip::class);

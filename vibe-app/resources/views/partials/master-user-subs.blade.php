@@ -27,7 +27,7 @@
                             <label class="text-xs font-semibold text-on-surface-variant">Phone<input name="phone" value="{{ $sub->phone }}" class="{{ $input }}"></label>
                             <label class="text-xs font-semibold text-on-surface-variant sm:col-span-2">Position<input name="position" value="{{ $sub->position }}" class="{{ $input }}"></label>
                             <div class="sm:col-span-2">@include('partials.sub-master-checklist', ['selected' => $selected])</div>
-                            <div class="sm:col-span-2"><button class="rounded bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-primary-container">Save changes</button></div>
+                            <div class="sm:col-span-2"><button class="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-primary-container">Save changes</button></div>
                         </form>
                         <div class="mt-4 grid gap-3 border-t border-outline-variant/30 pt-3 sm:grid-cols-2">
                             <form method="POST" action="{{ route('master-user.sub-masters.password', $sub->id) }}" class="space-y-2" autocomplete="off">@csrf @method('PUT')
@@ -65,7 +65,7 @@
             <label class="text-xs font-semibold text-on-surface-variant">Temporary password (12+ characters)<input type="password" name="password" required minlength="12" autocomplete="new-password" class="{{ $input }}"></label>
             <label class="text-xs font-semibold text-on-surface-variant">Confirm password<input type="password" name="password_confirmation" required minlength="12" autocomplete="new-password" class="{{ $input }}"></label>
             <div class="sm:col-span-2">@include('partials.sub-master-checklist', ['selected' => SubMasterAccess::defaults()])</div>
-            <div class="sm:col-span-2"><button class="rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Add Sub-master</button></div>
+            <div class="sm:col-span-2"><button class="rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Add Sub-master</button></div>
         </form>
     </details>
     @if($errors->any() && (old('_add') || old('access_present')))

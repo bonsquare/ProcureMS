@@ -10,7 +10,7 @@
 @endphp
 <div class="mb-5">
     <a href="{{ route('planning', ['school_id' => $school->id]) }}#sip" class="text-xs font-semibold text-primary hover:underline">&larr; Back to Planning</a>
-    <h1 class="mt-2 text-2xl font-bold">Import SIP from Excel</h1>
+    <h1 class="mt-2 text-[28px] font-semibold leading-9 tracking-tight">Import SIP from Excel</h1>
     <p class="mt-1 text-sm text-on-surface-variant">{{ $school->name }} · SIP {{ $state['plan']['planning_period'] ?? '' }}. Check what was read, correct anything that is wrong, then confirm. Nothing is saved until you confirm.</p>
 </div>
 @if(session('error'))<div class="mb-4 rounded border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">{{ session('error') }}</div>@endif
@@ -52,7 +52,7 @@
     <p class="text-xs text-on-surface-variant" id="sip-import-status" aria-live="polite"></p>
     <div class="flex gap-2">
         <a href="{{ route('planning', ['school_id' => $school->id]) }}#sip" class="rounded border border-outline-variant px-4 py-2 text-sm font-semibold">Cancel</a>
-        <button type="submit" id="sip-import-confirm" disabled class="rounded bg-primary px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">Confirm import</button>
+        <button type="submit" id="sip-import-confirm" disabled class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">Confirm import</button>
     </div>
 </form>
 

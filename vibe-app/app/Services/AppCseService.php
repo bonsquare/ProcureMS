@@ -9,6 +9,7 @@ use App\Models\AppCsePlan;
 use App\Models\AuditLog;
 use App\Models\CseCatalogItem;
 use App\Models\School;
+use App\Models\SobItem;
 use App\Models\User;
 use App\Support\SignatorySlots;
 use Illuminate\Support\Facades\Auth;
@@ -110,11 +111,58 @@ class AppCseService
         return $item;
     }
 
+    /**
+     * The Common Office Supply particulars of the school's approved SOBs, written into the APP-CSE of the same fiscal year as Part II lines:
+     * the quantity (frequency x quantity) goes in the first month of the SOB's quarter, one line per particulars, unit and unit cost.
+     * The lines are written again on every change of an SOB, so they follow it; an approved APP-CSE is locked and left as it is.
+     * An APP-CSE is created for the year when there is none yet.
+     */
+    public function syncFromSob(School $school, int $fiscalYear, ?User $user): void
+    {
+        $items = SobItem::withoutGlobalScopes()->with('plan')->where('is_extra', false)->where('category', 'Common Office Supply')
+            ->whereHas('plan', fn ($query) => $query->withoutGlobalScopes()->where('school_id', $school->id)->where('fiscal_year', $fiscalYear)->where('status', 'approved'))
+            ->orderBy('id')->get();
+        $plan = AppCsePlan::withoutGlobalScopes()->where('school_id', $school->id)->where('fiscal_year', $fiscalYear)->first();
+        if (! $plan) {
+            if ($items->isEmpty() || ! $user) {
+                return;
+            }
+            try {
+                $plan = $this->create($school, $fiscalYear, $user);
+            } catch (ValidationException) {
+                return; // a closed fiscal year or no catalog: the SOB is saved, the APP-CSE waits
+            }
+        }
+        if ($plan->isApproved()) {
+            return;
+        }
+
+        $lines = [];
+        foreach ($items as $item) {
+            $key = mb_strtolower(trim((string) $item->particulars)).'|'.mb_strtolower(trim((string) $item->unit)).'|'.number_format((float) $item->unit_cost, 2, '.', '');
+            $month = 'm'.((((int) $item->plan->quarter) - 1) * 3 + 1);
+            $lines[$key] ??= ['description' => trim((string) $item->particulars), 'unit' => trim((string) $item->unit), 'unit_price' => (float) $item->unit_cost, 'months' => []];
+            $lines[$key]['months'][$month] = ($lines[$key]['months'][$month] ?? 0) + (float) $item->frequency * (float) $item->quantity;
+        }
+
+        DB::transaction(function () use ($plan, $lines) {
+            AppCseItem::withoutGlobalScopes()->where('app_cse_plan_id', $plan->id)->where('from_sob', true)->delete();
+            $order = (int) AppCseItem::withoutGlobalScopes()->where('app_cse_plan_id', $plan->id)->whereNull('cse_catalog_item_id')->max('sort_order');
+            foreach ($lines as $line) {
+                AppCseItem::withoutGlobalScopes()->create(array_map(fn ($quantity) => round($quantity, 2), $line['months']) + array_fill_keys(['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9', 'm10', 'm11', 'm12'], 0) + [
+                    'organization_id' => $plan->organization_id, 'app_cse_plan_id' => $plan->id, 'cse_catalog_item_id' => null, 'category' => 'Common Office Supply',
+                    'description' => $line['description'], 'unit' => $line['unit'], 'unit_price' => $line['unit_price'], 'sort_order' => ++$order, 'from_sob' => true,
+                ]);
+            }
+        });
+    }
+
     /** @param  array<string, mixed>  $data  m1..m12; for a Part II item also category, description, unit and unit_price; for a catalog item unit_price only when the catalog has none */
     public function updateItem(AppCseItem $item, array $data): AppCseItem
     {
         $plan = $item->plan()->firstOrFail();
         $this->requireDraft($plan);
+        $this->requireOwnLine($item);
 
         $rules = [];
         foreach (range(1, 12) as $month) {
@@ -142,6 +190,7 @@ class AppCseService
     {
         $plan = $item->plan()->firstOrFail();
         $this->requireDraft($plan);
+        $this->requireOwnLine($item);
         $description = $item->description;
         $item->delete();
         $this->audit($plan, 'app_cse_item_removed', ['item' => $description]);
@@ -254,6 +303,14 @@ class AppCseService
     private function validate(array $data, array $rules): array
     {
         return Validator::make($data, $rules)->validate();
+    }
+
+    /** A line written from the SOB is changed in the SOB, so it keeps following it. */
+    private function requireOwnLine(AppCseItem $item): void
+    {
+        if ($item->from_sob) {
+            $this->fail('This line comes from the SOB (Common Office Supply). Change it in the SOB.');
+        }
     }
 
     private function fail(string $message, string $key = 'planning'): never

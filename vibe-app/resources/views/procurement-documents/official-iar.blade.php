@@ -40,14 +40,14 @@
         <div class="fund-value">{{ $fundCluster }}</div>
     </div>
 
-    <table class="iar-table">
+    <table class="iar-table" data-paginate>
         <colgroup><col style="width:36mm"><col style="width:85mm"><col style="width:20mm"><col style="width:29mm"></colgroup>
         <tbody>
             <tr class="details-row"><td class="label">Supplier :</td><td class="data">{{ strtoupper($document->supplier_or_recipient ?: $purchaseOrder?->supplier_or_recipient ?: '') }}</td><td class="label">IAR No. :</td><td>{{ $document->document_number }}</td></tr>
             <tr class="details-row"><td class="label">PO No./Date :</td><td class="data">{{ ($meta['purchase_order_number'] ?? $purchaseOrder?->document_number ?? '') }}@php($poDate = $meta['purchase_order_date'] ?? optional($purchaseOrder?->document_date)->format('F d, Y'))@if($poDate) / {{ $poDate }}@endif</td><td class="label">Date :</td><td>{{ $document->document_date->format('m/d/Y') }}</td></tr>
             <tr class="details-row"><td class="label">Requisitioning<br>Office/Dept.:</td><td>{{ $procurementRequest->department_name ?: $procurementRequest->school?->name }}</td><td class="label">Inv. No.</td><td></td></tr>
             <tr class="details-row"><td class="label center">Responsibility Center</td><td>{{ $procurementRequest->responsibility_center_code }}</td><td class="label">Date :</td><td></td></tr>
-            <tr class="header-row"><th>Stock/<br>Property No.</th><th>Description</th><th>Unit</th><th>Quantity</th></tr>
+            <tr class="header-row" data-repeat-head><th>Stock/<br>Property No.</th><th>Description</th><th>Unit</th><th>Quantity</th></tr>
             @foreach($procurementRequest->items as $item)
                 <tr class="item-row"><td class="center">{{ $loop->iteration }}</td><td class="item-description">{{ $item->name }}@if($item->description) ({{ $item->description }})@endif</td><td class="center">{{ strtoupper($item->unit) }}</td><td class="center">{{ number_format((float) ($receivedItems[$item->id] ?? $item->quantity), 0) }}</td></tr>
             @endforeach

@@ -35,7 +35,7 @@
 <header class="mb-4 flex flex-wrap items-end justify-between gap-3">
     <div>
         <p class="text-[11px] font-bold uppercase tracking-[.14em] text-action">Organization configuration</p>
-        <h1 class="mt-1 font-bold">School Settings</h1>
+        <h1 class="mt-1 text-[28px] font-semibold leading-9 tracking-tight">School Settings</h1>
         <p class="mt-1 text-sm text-on-surface-variant">{{ $selectedSchool?->name ?? 'Choose a school to manage' }} · agency identity, system users and who does what.</p>
     </div>
     @if($isMasterUser)

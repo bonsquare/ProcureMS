@@ -11,7 +11,7 @@
     $openForm = $errors->any() && old('school_id') !== null;
 @endphp
 <div class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><div class="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-on-surface-variant"><span class="material-symbols-outlined text-[16px]">group</span><span class="font-semibold text-primary">Access &amp; Permissions</span></div><h1 class="text-[28px] font-semibold leading-9 tracking-tight">User Management</h1><p class="mt-1 text-[15px] leading-6 text-on-surface-variant">Manage accounts, school assignments, roles, and access across the organization.</p></div>
-    <a href="#add-user" onclick="document.getElementById('add-user').open = true" class="flex items-center justify-center gap-2 rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]">person_add</span>Add User</a></div>
+    <a href="#add-user" onclick="document.getElementById('add-user').open = true" class="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]">person_add</span>Add User</a></div>
 
 <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">@foreach($metricCards as $card)<article class="flex items-center justify-between rounded border border-outline-variant/30 bg-white p-5"><div><p class="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">{{ $card['label'] }}</p><p class="mt-3 text-3xl font-semibold tabular-nums {{ $card['tone'] === 'error' ? 'text-error' : '' }}" data-metric="{{ $card['key'] }}">{{ $metrics[$card['key']] }}</p><p class="mt-1 text-xs font-medium text-{{ $card['tone'] }}">{{ $card['note'] }}</p></div><span class="flex h-10 w-10 items-center justify-center rounded bg-{{ $card['tone'] }}/10 text-{{ $card['tone'] }}"><span class="material-symbols-outlined">{{ $card['icon'] }}</span></span></article>@endforeach</div>
 
@@ -33,7 +33,7 @@
             @error('role')<span class="mt-1 block text-error">{{ $message }}</span>@enderror</label>
         <label class="text-xs font-semibold text-on-surface-variant">Temporary password<input type="password" name="password" required minlength="12" autocomplete="new-password" class="{{ $input }}">@error('password')<span class="mt-1 block text-error">{{ $message }}</span>@enderror</label>
         <label class="text-xs font-semibold text-on-surface-variant">Confirm password<input type="password" name="password_confirmation" required minlength="12" autocomplete="new-password" class="{{ $input }}"></label>
-        <div class="sm:col-span-2 lg:col-span-3"><button class="inline-flex items-center gap-2 rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]">person_add</span>Create account</button></div>
+        <div class="sm:col-span-2 lg:col-span-3"><button class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]">person_add</span>Create account</button></div>
     </form>
 </details>
 
@@ -44,7 +44,7 @@
             <select name="role" class="{{ $filter }}"><option value="">All Roles</option>@foreach($roles as $key => $label)<option value="{{ $key }}" @selected(request('role') === $key)>{{ $label }}</option>@endforeach</select>
             <select name="status" class="{{ $filter }}"><option value="">All Statuses</option>@foreach(['active' => 'Active', 'pending' => 'Pending', 'inactive' => 'Inactive'] as $key => $label)<option value="{{ $key }}" @selected(request('status') === $key)>{{ $label }}</option>@endforeach</select>
             <select name="school_id" class="{{ $filter }} max-w-[14rem]"><option value="">All Schools</option>@foreach($schools as $school)<option value="{{ $school->id }}" @selected((string) request('school_id') === (string) $school->id)>{{ $school->name }}</option>@endforeach</select>
-            <button class="rounded bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary-container">Filter</button>
+            <button class="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary-container">Filter</button>
             @if(request()->hasAny(['q', 'role', 'status', 'school_id']))<a href="{{ route('user-management') }}" class="rounded border border-outline-variant/50 px-3 py-2 text-xs font-semibold text-on-surface-variant hover:bg-surface-low">Clear</a>@endif
         </form></div>
     <div class="overflow-x-auto"><table class="w-full min-w-[1050px] border-collapse text-left"><thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant"><tr class="border-b border-outline-variant/30"><th class="px-5 py-3 font-semibold">User</th><th class="px-5 py-3 font-semibold">Role</th><th class="px-5 py-3 font-semibold">School / Access</th><th class="px-5 py-3 font-semibold">Status</th><th class="px-5 py-3 font-semibold">Last Active</th><th class="px-5 py-3 text-right font-semibold">Actions</th></tr></thead>

@@ -77,7 +77,7 @@
                     <div class="grid items-center gap-3 sm:grid-cols-[1fr_auto_1fr]">
                         <div class="rounded-xl border border-outline-variant/60 bg-surface-low px-4 py-3"><p class="text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">From</p><p class="mt-0.5 font-bold">{{ $item->fromSchool?->name ?? '—' }}</p><p class="text-xs text-on-surface-variant">{{ $item->fromSchool?->code }}</p></div>
                         <span class="material-symbols-outlined hidden text-[26px] text-action sm:block" aria-hidden="true">arrow_forward</span>
-                        <div class="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3"><p class="text-[10px] font-bold uppercase tracking-wide text-primary">To @if(! $item->to_school_id)<span class="ml-1 rounded bg-primary px-1.5 py-0.5 text-[9px] text-white">New school</span>@endif</p><p class="mt-0.5 font-bold">{{ $item->destinationName() }}</p><p class="text-xs text-on-surface-variant">{{ $item->toSchool?->code ?? 'Will be registered on approval' }}</p></div>
+                        <div class="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3"><p class="text-[10px] font-bold uppercase tracking-wide text-primary">To @if(! $item->to_school_id)<span class="ml-1 rounded-lg bg-primary px-1.5 py-0.5 text-[9px] text-white">New school</span>@endif</p><p class="mt-0.5 font-bold">{{ $item->destinationName() }}</p><p class="text-xs text-on-surface-variant">{{ $item->toSchool?->code ?? 'Will be registered on approval' }}</p></div>
                     </div>
 
                     <div class="rounded-xl border-l-4 border-amber-500 bg-amber-50 px-4 py-3">

@@ -166,7 +166,7 @@ class SobItemGroupTest extends TestCase
         $this->service()->approve($plan, $fx['user']);
 
         $this->assertSame(25260.0, (float) BudgetAllocation::withoutGlobalScopes()->sum('q1_amount'));
-        $this->post(route('planning.app.generate'), ['school_id' => $fx['school']->id, 'fiscal_year' => 2026])->assertSessionHasNoErrors();
+        $this->post(route('planning.app.generate'), ['school_id' => $fx['school']->id, 'fiscal_year' => 2026, 'sob_item_ids' => SobItem::withoutGlobalScopes()->where('is_extra', false)->pluck('id')->all()])->assertSessionHasNoErrors();
         $this->assertSame(['Ready Mix Latex', 'Paint Tray'], AppItem::orderBy('id')->pluck('procurement_item')->all(), 'labor is not purchased');
     }
 
@@ -221,7 +221,7 @@ class SobItemGroupTest extends TestCase
         $html = $this->get(route('planning.sob.print', $plan))->assertOk()->getContent();
 
         $this->assertSame(1, preg_match_all('/<td class="account"[^>]*>Electricity Expenses<\/td>/', $html), 'the account title is written once for its particulars');
-        $this->assertMatchesRegularExpression('/<td class="account" rowspan="\d+">POW required<\/td>/', $html, 'the note stands in for the account title');
+        $this->assertMatchesRegularExpression('/<td class="account" rowspan="\d+"><div>Program One<\/div><div[^>]*>POW required<\/div><\/td>/', $html, 'the program, and under it the note that stands in for the account title');
         $this->assertMatchesRegularExpression('/<td class="account" rowspan="\d+">Electricity Expenses<\/td>/', $html);
         $this->assertStringContainsString('35% Labor', $html);
         $this->assertSame(1, substr_count($html, 'class="sub item-sub"'), 'a Sub-Total after the particulars only of the Item that has other lines');

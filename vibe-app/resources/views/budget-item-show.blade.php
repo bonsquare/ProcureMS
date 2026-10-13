@@ -13,7 +13,7 @@
     </div>
     <div class="no-print flex gap-2">
         <button onclick="window.print()" class="rounded border border-outline-variant/60 bg-white px-4 py-2.5 text-xs font-semibold hover:bg-surface-low">Print</button>
-        @if(auth()->user()->canManageBudget() && !$item->closed_at)<a href="{{ route('budget.allocation.edit', $item) }}" class="rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Edit Budget Allocation</a>@endif
+        @if(auth()->user()->canManageBudget() && !$item->closed_at)<a href="{{ route('budget.allocation.edit', $item) }}" class="rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Edit Budget Allocation</a>@endif
         @if(request('print'))<button type="button" onclick="window.close(); setTimeout(function () { if (!window.closed) window.location.href = '{{ route('budget.allocation', ['year' => $item->fiscal_year, 'school_id' => $item->school_id]) }}'; }, 250)" class="rounded border border-primary bg-white px-4 py-2.5 text-xs font-semibold text-primary hover:bg-surface-low">Close</button>@else<a href="{{ route('budget.allocation', ['year' => $item->fiscal_year, 'school_id' => $item->school_id]) }}" class="rounded border border-outline-variant/60 bg-white px-4 py-2.5 text-xs font-semibold hover:bg-surface-low">← Back</a>@endif
     </div>
 </div>
@@ -27,14 +27,14 @@
 
 <section class="mb-6 overflow-hidden rounded border border-outline-variant/30 bg-white">
     <h2 class="border-b border-outline-variant/30 px-5 py-3 text-base font-semibold">By Quarter</h2>
-    <table class="w-full text-left text-sm"><thead class="bg-surface-low"><tr><th class="{{ $th }}">Quarter</th><th class="{{ $th }} text-right">Allocation</th><th class="{{ $th }} text-right">Obligated</th><th class="{{ $th }} text-right">Liquidated</th><th class="{{ $th }} text-right">Balance</th></tr></thead>
+    <table class="w-full text-left text-sm"><thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant"><tr><th class="{{ $th }}">Quarter</th><th class="{{ $th }} text-right">Allocation</th><th class="{{ $th }} text-right">Obligated</th><th class="{{ $th }} text-right">Liquidated</th><th class="{{ $th }} text-right">Balance</th></tr></thead>
         <tbody class="divide-y divide-outline-variant/20">@foreach($row['quarters'] as $q => $v)<tr><td class="px-4 py-3 font-semibold">Q{{ $q }}</td><td class="px-4 py-3 text-right tabular-nums">{{ $peso($v['allocated']) }}</td><td class="px-4 py-3 text-right tabular-nums">{{ $peso($v['obligated']) }}</td><td class="px-4 py-3 text-right tabular-nums">{{ $peso($v['liquidated']) }}</td><td class="px-4 py-3 text-right tabular-nums {{ $v['balance'] < 0 ? 'text-error' : '' }}">{{ $peso($v['balance']) }}</td></tr>@endforeach</tbody>
     </table>
 </section>
 
 <section class="overflow-hidden rounded border border-outline-variant/30 bg-white">
     <h2 class="border-b border-outline-variant/30 px-5 py-3 text-base font-semibold">Obligation &amp; Liquidation Transactions</h2>
-    <div class="overflow-x-auto"><table class="w-full text-left text-sm"><thead class="bg-surface-low"><tr><th class="{{ $th }}">Date</th><th class="{{ $th }}">Type</th><th class="{{ $th }}">Reference</th><th class="{{ $th }}">Description</th><th class="{{ $th }} text-right">Obligated</th><th class="{{ $th }} text-right">Liquidated</th><th class="{{ $th }}">Status</th></tr></thead>
+    <div class="overflow-x-auto"><table class="w-full text-left text-sm"><thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant"><tr><th class="{{ $th }}">Date</th><th class="{{ $th }}">Type</th><th class="{{ $th }}">Reference</th><th class="{{ $th }}">Description</th><th class="{{ $th }} text-right">Obligated</th><th class="{{ $th }} text-right">Liquidated</th><th class="{{ $th }}">Status</th></tr></thead>
         <tbody class="divide-y divide-outline-variant/20">
             @forelse($transactions as $t)<tr><td class="px-4 py-3">{{ $t['date']->format('M d, Y') }}</td><td class="px-4 py-3">{{ $t['type'] }}</td><td class="px-4 py-3"><a href="{{ $t['url'] }}" class="font-semibold text-primary hover:underline">{{ $t['ref'] }}</a></td><td class="px-4 py-3">{{ $t['description'] }}</td><td class="px-4 py-3 text-right tabular-nums">{{ $peso($t['obligated']) }}</td><td class="px-4 py-3 text-right tabular-nums">{{ $peso($t['liquidated']) }}</td><td class="px-4 py-3">{{ \Illuminate\Support\Str::headline($t['status']) }}</td></tr>
             @empty<tr><td colspan="7" class="px-4 py-8 text-center text-on-surface-variant">No transactions yet. Choose this item as the Budget Item on a PR or ORS to charge it.</td></tr>@endforelse

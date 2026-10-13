@@ -56,7 +56,7 @@
 
     <div class="sticky bottom-0 -mx-4 flex justify-end gap-2 border-t border-outline-variant/30 bg-surface/95 px-4 py-3 backdrop-blur md:-mx-6 md:px-6 lg:-mx-8 lg:px-8">
         <a href="{{ route('aip.show', $aip) }}" class="rounded border border-outline-variant/60 bg-white px-5 py-2.5 text-sm font-semibold hover:bg-surface-low">Cancel</a>
-        <button class="rounded bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-container">Save KRA and Activities</button>
+        <button class="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-container">Save KRA and Activities</button>
     </div>
 </form>
 

@@ -7,14 +7,14 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { theme: { extend: {
-            colors: { surface: '#faf8ff', 'surface-low': '#f4f3fa', 'surface-container': '#eeedf4', 'surface-high': '#e9e7ef', 'surface-highest': '#e3e1e9', primary: '#00236f', 'primary-container': '#1e3a8a', 'on-surface': '#1a1b21', 'on-surface-variant': '#444651', secondary: '#006c4a', outline: '#757682', 'outline-variant': '#c5c5d3', error: '#ba1a1a' },
+            colors: { surface: '#f5f8fb', 'surface-low': '#eef3f7', 'surface-container': '#e4ebf1', 'surface-high': '#d8e2ea', 'surface-highest': '#d8e2ea', primary: '#103967', 'primary-container': '#174b82', 'on-surface': '#172538', 'on-surface-variant': '#536273', secondary: '#369878', outline: '#7a8794', 'outline-variant': '#cbd7e1', error: '#b64a50' },
             fontFamily: { inter: ['Inter', 'sans-serif'] }
         } } };
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}"><style>html{font-size:14px}</style>
 @include('partials.input-fixes')
 @include('partials.favicon')
 </head>
@@ -24,7 +24,7 @@
         $currentSchool = $schools->first();
         $pendingPreRegistrations = $pendingPreRegistrations ?? collect();
     @endphp
-    <aside id="dashboard-sidebar" class="fixed inset-y-0 left-0 z-50 hidden w-72 flex-col bg-primary px-4 py-6 text-white md:flex">
+    <aside id="dashboard-sidebar" class="fixed inset-y-0 left-0 z-50 hidden w-60 flex-col bg-[#103967] px-4 py-6 text-white md:flex">
         @include('partials.brand')
         <nav class="flex-1 space-y-1" aria-label="Main navigation">
             @php
@@ -36,7 +36,7 @@
                     ['icon' => 'bar_chart', 'label' => 'Reports', 'route' => 'reports'],
                 ];
                 if (auth()->user()?->hasPermission('planning.view') || auth()->user()?->hasPermission('planning.manage')) {
-                    array_splice($navigation, 1, 0, [['icon' => 'account_tree', 'label' => 'Planning / SIP', 'route' => 'planning']]);
+                    array_splice($navigation, 3, 0, [['icon' => 'account_tree', 'label' => 'Planning', 'route' => 'planning']]);
                 }
                 if ($isMasterUser) {
                     $navigation[] = ['icon' => 'group', 'label' => 'User Management', 'route' => 'user-management'];
@@ -46,25 +46,25 @@
                 $navigation[] = ['icon' => 'settings', 'label' => 'School Settings', 'route' => 'school-settings'];
             @endphp
             @foreach ($navigation as $item)
-                <a href="{{ route($item['route']) }}" class="flex items-center rounded px-3 py-2.5 text-sm {{ ($item['active'] ?? false) ? 'bg-primary-container font-semibold text-white' : 'text-white/80 hover:bg-primary-container hover:text-white' }}"><span class="material-symbols-outlined mr-3 text-[20px]">{{ $item['icon'] }}</span>{{ $item['label'] }}</a>
+                <a href="{{ route($item['route']) }}" class="flex min-h-11 items-center rounded-[.55rem] px-3 py-2.5 text-sm font-medium {{ ($item['active'] ?? false) ? 'bg-white/10 font-bold text-white shadow-[inset_3px_0_0_#55c79e]' : 'text-white/80 hover:bg-white/10 hover:text-white' }}"><span class="material-symbols-outlined mr-3 text-[20px]">{{ $item['icon'] }}</span>{{ $item['label'] }}</a>
                  @if(($item['label'] ?? '') === 'Dashboard')
                     <details class="group">
-                        <summary class="flex cursor-pointer list-none items-center rounded px-3 py-2.5 text-sm text-white/80 hover:bg-primary-container hover:text-white"><span class="material-symbols-outlined mr-3 text-[20px]">account_balance_wallet</span><span class="flex-1">Finance</span><span class="material-symbols-outlined text-[18px] transition-transform group-open:rotate-180">expand_more</span></summary>
+                        <summary class="flex min-h-11 cursor-pointer list-none items-center rounded-[.55rem] px-3 py-2.5 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white"><span class="material-symbols-outlined mr-3 text-[20px]">account_balance_wallet</span><span class="flex-1">Finance</span><span class="material-symbols-outlined text-[18px] transition-transform group-open:rotate-180">expand_more</span></summary>
                         <div class="mt-1 space-y-1">
-                            <a href="{{ route('budget') }}" class="ml-8 flex items-center rounded px-3 py-2 text-sm text-white/75 hover:bg-primary-container hover:text-white"><span class="material-symbols-outlined mr-2 text-[17px]">account_balance</span>Budget</a>
-                            <a href="{{ route('accounting') }}" class="ml-8 flex items-center rounded px-3 py-2 text-sm text-white/75 hover:bg-primary-container hover:text-white"><span class="material-symbols-outlined mr-2 text-[17px]">request_quote</span>Accounting</a><a href="{{ route('chart-of-accounts') }}" class="ml-8 flex items-center rounded px-3 py-2 text-sm text-white/75 hover:bg-primary-container hover:text-white"><span class="material-symbols-outlined mr-2 text-[17px]">list_alt</span>Chart of Accounts</a><a href="{{ route('allotment-registry') }}" class="ml-8 flex items-center rounded px-3 py-2 text-sm text-white/75 hover:bg-primary-container hover:text-white"><span class="material-symbols-outlined mr-2 text-[17px]">menu_book</span>Allotment Registry</a>
-                            <a href="{{ route('cash') }}" class="ml-8 flex items-center rounded px-3 py-2 text-sm text-white/75 hover:bg-primary-container hover:text-white"><span class="material-symbols-outlined mr-2 text-[17px]">payments</span>Cash</a>
+                            <a href="{{ route('budget') }}" class="ml-8 flex items-center rounded-[.55rem] px-3 py-2 text-sm font-medium text-white/75 hover:bg-white/10 hover:text-white"><span class="material-symbols-outlined mr-2 text-[17px]">account_balance</span>Budget</a>
+                            <a href="{{ route('accounting') }}" class="ml-8 flex items-center rounded-[.55rem] px-3 py-2 text-sm font-medium text-white/75 hover:bg-white/10 hover:text-white"><span class="material-symbols-outlined mr-2 text-[17px]">request_quote</span>Accounting</a><a href="{{ route('chart-of-accounts') }}" class="ml-8 flex items-center rounded-[.55rem] px-3 py-2 text-sm font-medium text-white/75 hover:bg-white/10 hover:text-white"><span class="material-symbols-outlined mr-2 text-[17px]">list_alt</span>Chart of Accounts</a><a href="{{ route('allotment-registry') }}" class="ml-8 flex items-center rounded-[.55rem] px-3 py-2 text-sm font-medium text-white/75 hover:bg-white/10 hover:text-white"><span class="material-symbols-outlined mr-2 text-[17px]">menu_book</span>Allotment Registry</a>
+                            <a href="{{ route('cash') }}" class="ml-8 flex items-center rounded-[.55rem] px-3 py-2 text-sm font-medium text-white/75 hover:bg-white/10 hover:text-white"><span class="material-symbols-outlined mr-2 text-[17px]">payments</span>Cash</a>
                         </div>
                     </details>
                 @endif
             @endforeach
         </nav>
-        <div class="border-t border-white/15 pt-4 text-xs text-white/60"><p>Multi-School Procurement System</p><p class="mt-1">Secure operational workspace</p></div>
+        <div class="border-t border-white/15 px-2 pt-4 text-[11px] leading-5 text-white/55"><p>Multi-School Procurement System</p><p>Secure operational workspace</p></div>
     </aside>
 
-    <div class="md:pl-72">
+    <div class="md:pl-60">
         @php $dashboardView = $isMasterUser && request('view') !== 'kpi' ? 'system' : 'kpi'; @endphp
-        <header class="fixed left-0 right-0 top-0 z-40 flex h-16 items-center justify-between border-b border-outline-variant/30 bg-surface/95 px-4 backdrop-blur md:left-72 md:px-6">
+        <header class="fixed left-0 right-0 top-0 z-40 flex h-16 items-center justify-between border-b border-outline-variant/30 bg-surface/95 px-4 backdrop-blur md:left-60 md:px-6">
             <div class="flex items-center gap-3"><button id="open-dashboard-menu" type="button" class="rounded p-2 text-on-surface-variant hover:bg-primary hover:text-white md:hidden" aria-label="Open navigation"><span class="material-symbols-outlined">menu</span></button>@if($isMasterUser)<nav class="hidden rounded-xl border border-outline-variant/60 bg-white p-1 text-xs font-bold sm:inline-flex" aria-label="Dashboard views">
                     <a href="{{ route('home') }}" @if($dashboardView === 'system') aria-current="page" @endif class="flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 {{ $dashboardView === 'system' ? 'bg-primary text-white' : 'text-primary hover:bg-surface-low' }}"><span class="material-symbols-outlined text-[17px]" aria-hidden="true">admin_panel_settings</span>System Master Dashboard</a>
                     <a href="{{ route('home', ['view' => 'kpi']) }}" @if($dashboardView === 'kpi') aria-current="page" @endif class="flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 {{ $dashboardView === 'kpi' ? 'bg-primary text-white' : 'text-primary hover:bg-surface-low' }}"><span class="material-symbols-outlined text-[17px]" aria-hidden="true">monitoring</span>KPI Dashboard</a>
@@ -77,7 +77,7 @@
             <div class="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-error/30 bg-error/5 px-4 py-3 text-sm text-error" role="alert"><span class="material-symbols-outlined" aria-hidden="true">warning</span><span class="flex-1">The last database backup failed on {{ $lastBackupFailure->created_at->timezone('Asia/Manila')->format('M d, Y g:i A') }}.</span><a href="{{ route('backup.index') }}" class="rounded border border-error/40 px-3 py-1 text-xs font-bold hover:bg-error hover:text-white">Open Backup</a></div>
             @endif
             @if($isMasterUser)
-            <div class="mb-4 flex flex-col justify-between gap-3 xl:flex-row xl:items-center"><div>@if($isMasterUser)<div class="mb-2 flex flex-wrap items-center gap-2 text-xs font-medium uppercase tracking-wider text-on-surface-variant"><span class="material-symbols-outlined text-[16px]">{{ $isMasterUser ? 'admin_panel_settings' : 'domain' }}</span><span>{{ $isMasterUser ? 'Super Admin Control Center' : 'School Workspace' }}</span><span>/</span><span class="font-semibold text-primary">{{ $isMasterUser ? 'Global Overview' : ($currentSchool?->name ?? 'Assigned School') }}</span></div><h1 class="text-[28px] font-semibold leading-9 tracking-tight">{{ $isMasterUser ? 'System Master Dashboard' : 'My KPI Dashboard' }}</h1>@endif<p class="mt-1 text-[15px] leading-6 text-on-surface-variant">{{ $isMasterUser ? 'Real-time telemetry and cross-institution governance for '.$totalSchools.' connected '.Str::plural('campus', $totalSchools).'.' : 'Welcome, '.auth()->user()->name.'. Your school procurement, budget, and liquidation at a glance.' }}</p></div><div class="flex flex-wrap gap-2">@if($isMasterUser)<button type="button" id="open-add-school" class="flex items-center gap-2 rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]">add_business</span>Add School</button>@endif @if($isMasterUser)<a href="{{ route('school-settings') }}" class="flex items-center gap-2 rounded bg-surface-high px-4 py-2.5 text-xs font-semibold text-on-surface hover:bg-surface-highest"><span class="material-symbols-outlined text-[18px]">domain</span>Manage Schools</a>@endif @if($isMasterUser)<a href="{{ route('subscriptions') }}" class="flex items-center gap-2 rounded bg-surface-high px-4 py-2.5 text-xs font-semibold text-on-surface hover:bg-surface-highest"><span class="material-symbols-outlined text-[18px]">card_membership</span>Subscriptions</a>@endif</div></div>
+            <div class="mb-4 flex flex-col justify-between gap-3 xl:flex-row xl:items-center"><div>@if($isMasterUser)<div class="mb-2 flex flex-wrap items-center gap-2 text-xs font-medium uppercase tracking-wider text-on-surface-variant"><span class="material-symbols-outlined text-[16px]">{{ $isMasterUser ? 'admin_panel_settings' : 'domain' }}</span><span>{{ $isMasterUser ? 'Super Admin Control Center' : 'School Workspace' }}</span><span>/</span><span class="font-semibold text-primary">{{ $isMasterUser ? 'Global Overview' : ($currentSchool?->name ?? 'Assigned School') }}</span></div><h1 class="text-[28px] font-semibold leading-9 tracking-tight">{{ $isMasterUser ? 'System Master Dashboard' : 'My KPI Dashboard' }}</h1>@endif<p class="mt-1 text-[15px] leading-6 text-on-surface-variant">{{ $isMasterUser ? 'Real-time telemetry and cross-institution governance for '.$totalSchools.' connected '.Str::plural('campus', $totalSchools).'.' : 'Welcome, '.auth()->user()->name.'. Your school procurement, budget, and liquidation at a glance.' }}</p></div><div class="flex flex-wrap gap-2">@if($isMasterUser)<button type="button" id="open-add-school" class="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]">add_business</span>Add School</button>@endif @if($isMasterUser)<a href="{{ route('school-settings') }}" class="flex items-center gap-2 rounded bg-surface-high px-4 py-2.5 text-xs font-semibold text-on-surface hover:bg-surface-highest"><span class="material-symbols-outlined text-[18px]">domain</span>Manage Schools</a>@endif @if($isMasterUser)<a href="{{ route('subscriptions') }}" class="flex items-center gap-2 rounded bg-surface-high px-4 py-2.5 text-xs font-semibold text-on-surface hover:bg-surface-highest"><span class="material-symbols-outlined text-[18px]">card_membership</span>Subscriptions</a>@endif</div></div>
             @endif
 
             @if(session('success'))<div class="mb-5 rounded border border-secondary/30 bg-secondary/10 px-4 py-3 text-sm font-medium text-secondary">{{ session('success') }}</div>@endif
@@ -189,7 +189,7 @@
                 <div></div>
                 <label class="text-xs font-semibold text-on-surface-variant">Temporary Password <span class="text-error">*</span><input type="password" name="system_user_password" required minlength="12" autocomplete="new-password" placeholder="Minimum 8 characters" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
                 <label class="text-xs font-semibold text-on-surface-variant">Confirm Password <span class="text-error">*</span><input type="password" name="system_user_password_confirmation" required minlength="12" autocomplete="new-password" placeholder="Repeat temporary password" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
-                <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-4 md:col-span-2"><button type="button" data-close-school-modal class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Cancel</button><button type="submit" class="rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Save School &amp; User</button></div>
+                <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-4 md:col-span-2"><button type="button" data-close-school-modal class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Cancel</button><button type="submit" class="rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Save School &amp; User</button></div>
             </form>
         </div>
     </div>

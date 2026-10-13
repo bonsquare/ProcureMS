@@ -182,7 +182,7 @@
             <div class="border-b border-outline-variant/40 px-4 py-3"><h3 class="text-sm font-bold">School performance</h3><p class="text-xs text-on-surface-variant">Requests and budget use per school</p></div>
             <div class="overflow-x-auto">
                 <table class="w-full min-w-[640px] text-left text-xs">
-                    <thead class="bg-surface-low text-on-surface-variant"><tr><th class="px-4 py-2">School</th><th class="px-4 py-2 text-right">Requests</th><th class="px-4 py-2 text-right">Pending</th><th class="px-4 py-2 text-right">Completed</th><th class="px-4 py-2">Budget used</th></tr></thead>
+                    <thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant"><tr><th class="px-4 py-2">School</th><th class="px-4 py-2 text-right">Requests</th><th class="px-4 py-2 text-right">Pending</th><th class="px-4 py-2 text-right">Completed</th><th class="px-4 py-2">Budget used</th></tr></thead>
                     <tbody class="divide-y divide-outline-variant/40">
                         @foreach($kpi['schools'] as $row)
                             <tr class="hover:bg-surface-low/50">

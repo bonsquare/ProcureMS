@@ -1,6 +1,6 @@
 @extends('layouts.budget')
 @section('title', 'Annual Implementation Plan')
-@section('section', 'Reports')
+@section('section', 'Planning')
 @section('crumb', 'AIP')
 @section('content')
 @php $th = 'px-4 py-3 text-xs font-semibold uppercase tracking-wider text-on-surface-variant'; @endphp
@@ -14,7 +14,7 @@
             @csrf
             <select name="school_id" class="rounded border border-outline-variant/50 bg-white px-3 py-2.5 text-xs outline-none">@foreach($schools as $school)<option value="{{ $school->id }}">{{ $school->name }}</option>@endforeach</select>
             <label class="flex items-center gap-2 text-xs font-semibold text-on-surface-variant">Fiscal Year<input type="number" name="fiscal_year" value="{{ now()->year + 1 }}" min="2000" max="2100" required class="w-24 rounded border border-outline-variant/50 bg-white px-3 py-2.5 text-xs outline-none focus:border-primary" title="Type the year this plan is for; AIPs are usually crafted a year ahead."></label>
-            <button class="rounded bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">+ New AIP</button>
+            <button class="rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">+ New AIP</button>
         </form>
     @endif
 </div>
@@ -25,7 +25,7 @@
 <section class="overflow-hidden rounded border border-outline-variant/30 bg-white">
     <div class="overflow-x-auto">
         <table class="w-full text-left text-sm">
-            <thead class="bg-surface-low"><tr><th class="{{ $th }}">School</th><th class="{{ $th }}">Fiscal Year</th><th class="{{ $th }} text-right">Activities</th><th class="{{ $th }} text-right">Total Financial Target</th><th class="{{ $th }}">Status</th><th class="{{ $th }}"></th></tr></thead>
+            <thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant"><tr><th class="{{ $th }}">School</th><th class="{{ $th }}">Fiscal Year</th><th class="{{ $th }} text-right">Activities</th><th class="{{ $th }} text-right">Total Financial Target</th><th class="{{ $th }}">Status</th><th class="{{ $th }}"></th></tr></thead>
             <tbody class="divide-y divide-outline-variant/20">
                 @forelse($aips as $aip)
                     <tr>

@@ -76,13 +76,27 @@ class SipTemplateTest extends TestCase
         ])->assertSessionHasNoErrors();
 
         $this->get(route('planning.sip.print', ['school_id' => $school->id, 'start_year' => 2026]))->assertOk()
-            ->assertSee('SCHOOL IMPROVEMENT PLAN')->assertSee('FY 2026-2028')->assertSee("School alpha")
+            ->assertSee('SCHOOL IMPROVEMENT PLAN')->assertSee('FY 2026-2028')->assertSee('School alpha')
             ->assertSee('DepEd Organizational Outcomes')->assertSee('Strategy (Processes)')->assertSee('5-Point Agenda')
             ->assertSee('Physical Targets')->assertSee('Financial Target')->assertSee('YEAR 3')
             ->assertSee('Papel mo Kinabukasan Ko!')->assertSee('Conduct home visit')
             ->assertSee('Prepared by:')->assertSee('Recommending Approval:')->assertSee('Approved by:')
             ->assertSee('Chiqueto E. Domingo')->assertSee('Julie B. Lumogdang, EdD')->assertSee('Schools Division Superintendent');
         $this->assertSame(1, SipPlan::count());
+    }
+
+    public function test_resiliency_and_well_being_print_as_one_pillar_named_in_full(): void
+    {
+        [, $school, $user] = $this->tenant('alpha');
+        $this->actingAs($user);
+        $this->post(route('planning.sip.store'), $this->program($school, ['pillar' => 'Resiliency', 'project' => 'Program R']));
+        $this->post(route('planning.sip.store'), $this->program($school, ['pillar' => 'Well-Being', 'project' => 'Program W']));
+
+        $html = $this->get(route('planning.sip.print', ['school_id' => $school->id, 'start_year' => 2026]))->assertOk()->getContent();
+
+        $this->assertSame(1, preg_match_all('/<td rowspan="2" class="pillar [^"]*">/', $html), 'the two programs share one pillar cell');
+        $this->assertStringContainsString('<span>R</span><span>E</span><span>S</span><span>I</span><span>L</span><span>I</span><span>E</span><span>N</span><span>C</span><span>Y</span>', $html, 'the pillar reads Resiliency and Well-Being in full');
+        $this->assertDoesNotMatchRegularExpression('/class="pillar [^"]*"><span>W<\/span>/', $html, 'the pillar cell does not start with the half name Well-Being');
     }
 
     public function test_sip_requires_permission_open_fiscal_year_and_isolation(): void
