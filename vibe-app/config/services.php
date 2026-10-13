@@ -41,4 +41,16 @@ return [
         ],
     ],
 
+    'railway' => [
+        'token' => env('RAILWAY_API_TOKEN'),
+        'project_id' => env('RAILWAY_PROJECT_ID'),
+    ],
+
+    'server_dashboard' => [
+        'url' => env('SERVER_DASHBOARD_URL'),
+        'domain_name' => env('DOMAIN_NAME'),
+        'domain_expires_at' => env('DOMAIN_EXPIRES_AT'),
+        'domain_renewal_price' => env('DOMAIN_RENEWAL_PRICE'),
+    ],
+
 ];

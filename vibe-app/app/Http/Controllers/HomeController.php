@@ -27,6 +27,7 @@ use App\Services\FiscalYearService;
 use App\Services\GoogleDriveService;
 use App\Services\MasterTransactionService;
 use App\Services\ProcurementWorkspaceService;
+use App\Services\ServerDashboardService;
 use App\Support\PlaceNames;
 use App\Support\SignatorySlots;
 use Illuminate\Http\Request;
@@ -145,6 +146,7 @@ class HomeController extends Controller
             'pendingProcurements' => ProcurementRequest::whereIn('school_id', $schoolIds)->whereIn('status', ['submitted', 'pending_approval'])->count(),
             'isMasterUser' => $this->isMasterUser($user),
             'kpi' => app(DashboardKpiService::class)->forSchools($schoolIds),
+            'server' => $user?->isMaster() && request('view') === 'server' ? app(ServerDashboardService::class)->snapshot() : null,
             'systemKpi' => $this->systemKpi($user, $schoolIds, $pendingPreRegistrations),
             'currentSchool' => $this->isMasterUser($user) ? null : $schools->first(),
             'lastBackupFailure' => $this->isMasterUser($user) ? $this->lastBackupFailure() : null,
