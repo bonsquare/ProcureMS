@@ -24,7 +24,7 @@ class ServerDashboardTest extends TestCase
         config(['services.railway.token' => 'tok', 'services.railway.project_id' => 'proj', 'services.server_dashboard.url' => 'http://example.test', 'services.server_dashboard.domain_expires_at' => now()->addDays(30)->toDateString()]);
         Http::fake([
             'backboard.railway.com/*' => Http::response(['data' => [
-                'project' => ['name' => 'procurems', 'services' => ['edges' => [['node' => ['name' => 'procurems']]]], 'environments' => ['edges' => [['node' => ['name' => 'production']]]]],
+                'project' => ['name' => 'procurems', 'subscriptionPlanLimit' => ['includedUsageDollars' => 5, 'containers' => ['cpu' => 2, 'memoryBytes' => 1000000000, 'diskBytes' => 1000000000]], 'workspace' => ['plan' => 'HOBBY', 'customer' => ['currentUsage' => 0.4034, 'creditBalance' => 5, 'remainingUsageCreditBalance' => 4.5966, 'isTrialing' => true, 'trialDaysRemaining' => 26]], 'volumes' => ['edges' => [['node' => ['volumeInstances' => ['edges' => [['node' => ['currentSizeMB' => 59.2, 'sizeMB' => 500]]]]]]]], 'services' => ['edges' => [['node' => ['name' => 'procurems']]]], 'environments' => ['edges' => [['node' => ['name' => 'production']]]]],
                 'deployments' => ['edges' => [['node' => ['status' => 'SUCCESS', 'createdAt' => '2026-10-13T22:18:00Z']]]],
                 'estimatedUsage' => [['measurement' => 'NETWORK_TX_GB', 'estimatedValue' => 10], ['measurement' => 'MEMORY_USAGE_GB', 'estimatedValue' => 1000]],
             ]]),
@@ -34,7 +34,10 @@ class ServerDashboardTest extends TestCase
         $this->actingAs($this->master())->get(route('home', ['view' => 'server']))
             ->assertOk()
             ->assertSee('Server dashboard', false)
-            ->assertSee('$0.73')
+            ->assertSee('$0.40')
+            ->assertSee('of $5.00 used')
+            ->assertSee('59.2 MB')
+            ->assertSee('$4.60 left to spend')
             ->assertSee('SUCCESS')
             ->assertSee('Online');
 

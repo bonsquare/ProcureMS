@@ -8,7 +8,7 @@
         ['Site status', $d['up'] ? 'Online' : 'Down', $d['response_ms'] !== null ? $d['response_ms'].' ms response' : 'No response', 'public', $d['up'] ? 'text-secondary' : 'text-error'],
         ['SSL certificate', $sslDays === null ? '—' : $sslDays.' days', $d['ssl_expires'] ? 'Expires '.$d['ssl_expires']->format('M d, Y') : 'Could not read the certificate', 'lock', $dayTone($sslDays)],
         ['Domain renewal', $domainDays === null ? '—' : $domainDays.' days', $d['expires_at'] ? 'Expires '.$d['expires_at']->format('M d, Y').($d['renewal_price'] ? ' · renews at '.$d['renewal_price'] : '') : 'Set DOMAIN_EXPIRES_AT to track this', 'event', $dayTone($domainDays)],
-        ['Estimated hosting bill', $h['connected'] ? '$'.number_format($h['estimated_cost'], 2) : '—', $h['connected'] ? 'This billing period, from usage so far' : 'Railway not connected', 'payments', 'text-primary'],
+        ['Hosting bill so far', $h['connected'] ? '$'.number_format($h['plan']['used'] ?? $h['estimated_cost'], 2) : '—', $h['connected'] ? ($h['plan']['used'] !== null ? 'Billed usage this period, from Railway' : 'Estimate from usage so far') : 'Railway not connected', 'payments', 'text-primary'],
         ['Last deploy', $h['connected'] ? $h['last_status'] : '—', $h['connected'] && $h['last_deploy'] ? $h['last_deploy']->timezone('Asia/Manila')->format('M d, g:i A') : 'Railway not connected', 'rocket_launch', $h['connected'] ? ($statusOk ? 'text-secondary' : 'text-error') : 'text-on-surface-variant'],
         ['Services', $h['connected'] ? $h['services'] : '—', $h['connected'] ? implode(', ', $h['environments']) : 'Railway not connected', 'dns', 'text-primary'],
     ];
@@ -44,6 +44,27 @@
     </div>
 
     @if($h['connected'])
+    @php
+        $pl = $h['plan']; $creditPct = $pl['credit'] > 0 && $pl['used'] !== null ? min(100, round($pl['used'] / $pl['credit'] * 100, 1)) : 0;
+        $volPct = $pl['volume_size_mb'] ? min(100, round($pl['volume_used_mb'] / $pl['volume_size_mb'] * 100, 1)) : 0;
+        $barTone = fn ($pct) => $pct >= 90 ? '#b64a50' : ($pct >= 70 ? '#b46f1f' : '#369878');
+    @endphp
+    <div class="mt-4 rounded-xl border border-outline-variant/50 bg-white p-4">
+        <h3 class="text-sm font-bold text-primary">Allocation and usage <span class="font-normal text-on-surface-variant">· {{ $pl['name'] ?? 'Plan' }} plan{{ $pl['trial_days'] ? ' · trial, '.$pl['trial_days'].' days left' : '' }}</span></h3>
+        <div class="mt-3 grid grid-cols-1 gap-5 md:grid-cols-2">
+            <div>
+                <div class="flex items-baseline justify-between text-sm"><span class="font-semibold">Hosting credit</span><span><strong>${{ number_format($pl['used'] ?? 0, 2) }}</strong> of ${{ number_format($pl['credit'], 2) }} used</span></div>
+                <div class="mt-1.5 h-2 overflow-hidden rounded-full bg-surface-container" role="progressbar" aria-label="Hosting credit used" aria-valuenow="{{ $creditPct }}" aria-valuemin="0" aria-valuemax="100"><div class="h-full rounded-full" style="width:{{ $creditPct }}%;background:{{ $barTone($creditPct) }}"></div></div>
+                <p class="mt-1 text-xs text-on-surface-variant">{{ $pl['remaining'] !== null ? '$'.number_format($pl['remaining'], 2).' left to spend' : 'Remaining credit unavailable' }}</p>
+            </div>
+            <div>
+                <div class="flex items-baseline justify-between text-sm"><span class="font-semibold">Database volume</span><span><strong>{{ number_format($pl['volume_used_mb'], 1) }} MB</strong> of {{ number_format($pl['volume_size_mb']) }} MB used</span></div>
+                <div class="mt-1.5 h-2 overflow-hidden rounded-full bg-surface-container" role="progressbar" aria-label="Volume used" aria-valuenow="{{ $volPct }}" aria-valuemin="0" aria-valuemax="100"><div class="h-full rounded-full" style="width:{{ $volPct }}%;background:{{ $barTone($volPct) }}"></div></div>
+                <p class="mt-1 text-xs text-on-surface-variant">{{ number_format(max(0, $pl['volume_size_mb'] - $pl['volume_used_mb']), 1) }} MB free</p>
+            </div>
+        </div>
+        <p class="mt-4 text-xs text-on-surface-variant">Each service may use up to {{ $pl['cpu'] ?? '—' }} vCPU, {{ $pl['memory_gb'] !== null ? rtrim(rtrim(number_format($pl['memory_gb'], 1), '0'), '.') : '—' }} GB memory and {{ $pl['disk_gb'] !== null ? rtrim(rtrim(number_format($pl['disk_gb'], 1), '0'), '.') : '—' }} GB disk on this plan.</p>
+    </div>
     <div class="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
         <div class="rounded-xl border border-outline-variant/50 bg-white p-4">
             <h3 class="text-sm font-bold text-primary">Usage this period</h3>

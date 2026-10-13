@@ -45,7 +45,7 @@ class ServerDashboardService
         }
 
         try {
-            $query = 'query($id:String!){project(id:$id){name services{edges{node{name}}} environments{edges{node{name}}}}'
+            $query = 'query($id:String!){project(id:$id){name subscriptionPlanLimit workspace{plan customer{currentUsage creditBalance remainingUsageCreditBalance isTrialing trialDaysRemaining billingPeriod{end}}} volumes{edges{node{volumeInstances{edges{node{currentSizeMB sizeMB}}}}}} services{edges{node{name}}} environments{edges{node{name}}}}'
                 .' deployments(first:5,input:{projectId:$id}){edges{node{status createdAt}}}'
                 .' estimatedUsage(projectId:$id,measurements:[CPU_USAGE,MEMORY_USAGE_GB,NETWORK_TX_GB,DISK_USAGE_GB]){measurement estimatedValue}}';
             $response = Http::withToken($token)->timeout(8)->post('https://backboard.railway.com/graphql/v2', ['query' => $query, 'variables' => ['id' => $project]]);
@@ -56,6 +56,23 @@ class ServerDashboardService
         } catch (Throwable $e) {
             return ['connected' => false, 'note' => 'Railway could not be reached: '.$e->getMessage()];
         }
+
+        $project = $data['project'] ?? [];
+        $customer = $project['workspace']['customer'] ?? null;
+        $limit = $project['subscriptionPlanLimit'] ?? [];
+        $volumes = collect($project['volumes']['edges'] ?? [])->flatMap(fn ($v) => collect($v['node']['volumeInstances']['edges'] ?? [])->pluck('node'));
+        $plan = [
+            'name' => $project['workspace']['plan'] ?? null,
+            'credit' => $customer ? (float) $customer['creditBalance'] : (float) ($limit['includedUsageDollars'] ?? 0),
+            'used' => $customer ? round((float) $customer['currentUsage'], 2) : null,
+            'remaining' => $customer ? round((float) $customer['remainingUsageCreditBalance'], 2) : null,
+            'trial_days' => $customer && $customer['isTrialing'] ? $customer['trialDaysRemaining'] : null,
+            'cpu' => $limit['containers']['cpu'] ?? null,
+            'memory_gb' => isset($limit['containers']['memoryBytes']) ? $limit['containers']['memoryBytes'] / 1e9 : null,
+            'disk_gb' => isset($limit['containers']['diskBytes']) ? $limit['containers']['diskBytes'] / 1e9 : null,
+            'volume_used_mb' => round((float) $volumes->max('currentSizeMB'), 1),
+            'volume_size_mb' => (int) ($volumes->max('sizeMB') ?? 0),
+        ];
 
         $usage = collect($data['estimatedUsage'] ?? [])->mapWithKeys(fn ($row) => [$row['measurement'] => (float) $row['estimatedValue']]);
         $cost = $usage->sum(fn ($value, $key) => $value * (self::RATES[$key] ?? 0));
@@ -68,6 +85,7 @@ class ServerDashboardService
             'environments' => collect($data['project']['environments']['edges'] ?? [])->pluck('node.name')->all(),
             'usage' => $usage->all(),
             'estimated_cost' => round($cost, 2),
+            'plan' => $plan,
             'last_status' => $deployments->first()['status'] ?? '—',
             'last_deploy' => ($deployments->first()['createdAt'] ?? null) ? Carbon::parse($deployments->first()['createdAt'])->timestamp : null,
             'deployments' => $deployments->map(fn ($d) => ['status' => $d['status'], 'at' => Carbon::parse($d['createdAt'])->timestamp])->all(),
