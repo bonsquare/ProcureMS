@@ -16,11 +16,23 @@ class ServerDashboardService
     /** @return array<string, mixed> */
     public function snapshot(): array
     {
-        return Cache::remember('server-dashboard', 300, fn () => [
+        // Dates are cached as Unix timestamps: the cache store will not unserialize Carbon objects.
+        $raw = Cache::remember('server-dashboard', 300, fn () => [
             'hosting' => $this->hosting(),
             'domain' => $this->domain(),
-            'checked_at' => now(),
+            'checked_at' => now()->timestamp,
         ]);
+
+        $at = fn (?int $time) => $time ? Carbon::createFromTimestamp($time) : null;
+        if ($raw['hosting']['connected']) {
+            $raw['hosting']['last_deploy'] = $at($raw['hosting']['last_deploy']);
+            $raw['hosting']['deployments'] = array_map(fn ($d) => ['status' => $d['status'], 'at' => $at($d['at'])], $raw['hosting']['deployments']);
+        }
+        $raw['domain']['ssl_expires'] = $at($raw['domain']['ssl_expires']);
+        $raw['domain']['expires_at'] = $at($raw['domain']['expires_at']);
+        $raw['checked_at'] = $at($raw['checked_at']);
+
+        return $raw;
     }
 
     /** @return array<string, mixed> */
@@ -57,8 +69,8 @@ class ServerDashboardService
             'usage' => $usage->all(),
             'estimated_cost' => round($cost, 2),
             'last_status' => $deployments->first()['status'] ?? '—',
-            'last_deploy' => ($deployments->first()['createdAt'] ?? null) ? Carbon::parse($deployments->first()['createdAt']) : null,
-            'deployments' => $deployments->map(fn ($d) => ['status' => $d['status'], 'at' => Carbon::parse($d['createdAt'])])->all(),
+            'last_deploy' => ($deployments->first()['createdAt'] ?? null) ? Carbon::parse($deployments->first()['createdAt'])->timestamp : null,
+            'deployments' => $deployments->map(fn ($d) => ['status' => $d['status'], 'at' => Carbon::parse($d['createdAt'])->timestamp])->all(),
         ];
     }
 
@@ -84,12 +96,12 @@ class ServerDashboardService
             'up' => $up,
             'response_ms' => $ms,
             'ssl_expires' => $this->sslExpiry($host),
-            'expires_at' => $expires ? Carbon::parse($expires) : null,
+            'expires_at' => $expires ? Carbon::parse($expires)->timestamp : null,
             'renewal_price' => config('services.server_dashboard.domain_renewal_price'),
         ];
     }
 
-    private function sslExpiry(string $host): ?Carbon
+    private function sslExpiry(string $host): ?int
     {
         try {
             $context = stream_context_create(['ssl' => ['capture_peer_cert' => true, 'verify_peer' => false]]);
@@ -99,7 +111,7 @@ class ServerDashboardService
             }
             $cert = openssl_x509_parse(stream_context_get_params($socket)['options']['ssl']['peer_certificate']);
 
-            return isset($cert['validTo_time_t']) ? Carbon::createFromTimestamp($cert['validTo_time_t']) : null;
+            return isset($cert['validTo_time_t']) ? (int) $cert['validTo_time_t'] : null;
         } catch (Throwable) {
             return null;
         }

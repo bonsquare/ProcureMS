@@ -37,6 +37,8 @@ class ServerDashboardTest extends TestCase
             ->assertSee('$0.73')
             ->assertSee('SUCCESS')
             ->assertSee('Online');
+
+        $this->assertSame([], array_filter(array_merge(...array_values(array_map(fn ($part) => is_array($part) ? $part : [], Cache::get('server-dashboard')))), 'is_object'), 'Only plain values may be cached.');
     }
 
     public function test_without_a_token_the_dashboard_says_how_to_connect_railway(): void
