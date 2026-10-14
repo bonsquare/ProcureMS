@@ -331,6 +331,17 @@ class SobRevisionTest extends TestCase
         $this->put(route('planning.sob.update', $plan), ['quarter' => 9])->assertSessionHasErrors('quarter');
     }
 
+    public function test_the_details_and_signatories_form_posts_to_the_real_update_route(): void
+    {
+        $fx = SobFixture::make();
+        $this->actingAs($fx['user']);
+        $plan = $this->approved($fx);
+
+        $this->get(route('planning.sob.show', $plan))->assertOk()
+            ->assertSee('action="'.route('planning.sob.update', $plan).'"', false)
+            ->assertDontSee("{ route('planning.sob.update'", false);
+    }
+
     public function test_the_approved_page_offers_reopen_to_managers_only_and_reopening_works(): void
     {
         $fx = SobFixture::make();

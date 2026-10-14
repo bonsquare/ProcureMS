@@ -85,9 +85,10 @@
 </dialog>
 
 {{-- SOB: its quarter and fund --}}
-<dialog id="dlg-sob" class="w-[min(94vw,28rem)] rounded-2xl border border-outline-variant/60 p-0 shadow-2xl backdrop:bg-slate-900/40">
-    <form method="POST" class="grid gap-3 p-5">@csrf @method('PUT')
-        <h3 class="text-lg font-bold">Edit SOB</h3>
+<dialog id="dlg-sob" class="w-[min(94vw,32rem)] rounded-2xl border border-outline-variant/60 p-0 shadow-2xl backdrop:bg-slate-900/40">
+    <form method="POST" class="grid gap-3 p-5 sm:grid-cols-2">@csrf @method('PUT')
+        <h3 class="text-lg font-bold sm:col-span-2">Edit SOB</h3>
+        <p class="-mt-1 text-xs text-on-surface-variant sm:col-span-2">Change the quarter or the source of fund of this SOB.</p>
         <label class="text-xs font-semibold">Quarter<select required name="quarter" class="{{ $field }}">@foreach(\App\Models\SobPlan::QUARTERS as $quarter => $quarterLabel)<option value="{{ $quarter }}">{{ $quarterLabel }}</option>@endforeach</select></label>
         <label class="text-xs font-semibold">Source of fund<select required name="fund_source" class="{{ $field }}">@foreach($fundOptions as $fund)<option value="{{ $fund }}">{{ $fund }}</option>@endforeach</select></label>
         {!! $actions !!}

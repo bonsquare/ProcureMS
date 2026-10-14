@@ -29,7 +29,8 @@
 </div>
 @if(session('success'))<div class="mb-4 rounded border border-secondary/30 bg-secondary/5 px-4 py-3 text-sm text-secondary">{{ session('success') }}</div>@endif
 @if($errors->any())<div class="mb-4 rounded border border-error/30 bg-error/5 px-4 py-3 text-sm text-error">{{ $errors->first() }}</div>@endif
-@include('partials.document-strip', ['strip' => \App\Support\DocumentStrip::sob($plan)])
+{{-- "Reopen as a draft" sits in the first box of the page (the document strip), under the form the SOB makes. --}}
+@include('partials.document-strip', ['strip' => \App\Support\DocumentStrip::sob($plan), 'reopenUrl' => (! $draft && $canManage) ? route('planning.sob.reopen', $plan) : null])
 <style>details[open] > summary .sum-chevron{transform:rotate(180deg)}</style>
 @if($over->isNotEmpty())<div class="mb-4 rounded border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">{{ $over->count() }} program{{ $over->count() === 1 ? ' goes' : 's go' }} over the AIP amount for this quarter. Saving is still allowed; they are marked below.</div>@endif
 
@@ -37,25 +38,14 @@
 <details class="group mb-5 rounded border border-amber-300 bg-amber-50 p-4">
     <summary class="flex cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center justify-between gap-2 text-amber-900"><h2 class="font-semibold">This SOB is approved</h2><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] transition-transform" aria-hidden="true">expand_more</span></summary>
     <p class="mt-1 text-sm text-amber-900">You can still change the fund, the quarter, the details and any item. Each change is saved at once and the Budget allotments and the draft APP follow it (a change is refused if a Purchase Request already draws from the item, if the line is already obligated, or if the item is in an approved APP: unlock the APP first). Reopen it only if you want it back as a draft.</p>
-    <form method="POST" action="{{ route('planning.sob.reopen', $plan) }}" class="mt-3" onsubmit="return confirm('Reopen this SOB as a draft? The budget lines keep their amounts until you approve it again.')">@csrf<button class="rounded border border-primary px-4 py-2 text-xs font-bold text-primary hover:bg-primary hover:text-white">Reopen as a draft</button></form>
 </details>
 @endif
 
 @if($editable)
-<details class="group mb-5 rounded border border-outline-variant/30 bg-white p-4" @if($errors->any()) open @endif>
-    <summary class="flex cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center justify-between gap-2"><h2 class="font-semibold">Details and signatories</h2><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] transition-transform" aria-hidden="true">expand_more</span></summary>
-    <form method="POST" action="{ route('planning.sob.update', $plan) }" class="mt-3 grid gap-3 md:grid-cols-3">@csrf @method('PUT')
-        <label class="text-xs font-semibold text-on-surface-variant">Source of fund<select name="fund_source" class="{{ $box }}">@foreach($fundChoices as $fund)<option value="{{ $fund }}" @selected(old('fund_source', $plan->fund_source) === $fund)>{{ $fund }}</option>@endforeach</select></label>
-        <label class="text-xs font-semibold text-on-surface-variant">Quarter<select name="quarter" class="{{ $box }}">@foreach(\App\Models\SobPlan::QUARTERS as $number => $quarterName)<option value="{{ $number }}" @selected((int) old('quarter', $plan->quarter) === $number)>{{ $quarterName }}</option>@endforeach</select></label>
-        <label class="text-xs font-semibold text-on-surface-variant">School ID<input name="school_id_number" value="{{ old('school_id_number', $plan->school_id_number) }}" maxlength="50" placeholder="Type the School ID" class="{{ $box }}"></label>
-        @php $sobSlots = \App\Support\PlanningSignatories::slots([['prepared_by', 'Prepared by', 'Prepared by', null, null, null, null], ['recommended_by', 'Recommending approval', 'Recommending Approval', null, null, null, null], ['approved_by', 'Approved by', 'APPROVED', null, null, null, null]], $plan, \App\Support\PlanningSignatories::lastUsed($plan->school_id, ['prepared_by', 'recommended_by', 'approved_by']), true); @endphp
-        <div class="md:col-span-3">@include('partials.signatory-editor', ['slots' => $sobSlots, 'editable' => true, 'document' => 'SOB', 'open' => $errors->any()])</div>
-        <div class="md:col-span-3"><button class="rounded border border-primary px-4 py-2 text-xs font-semibold text-primary hover:bg-primary hover:text-white">Save details</button></div>
-    </form>
-</details>
-
-<details class="group mb-5 rounded border border-outline-variant/30 bg-white p-4" id="sob-item-form" @if($errors->any() || $plan->items->isEmpty()) open @endif>
-    <summary class="flex cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center justify-between gap-2"><h2 class="font-semibold">Add item</h2><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] transition-transform" aria-hidden="true">expand_more</span></summary>
+{{-- Add item: a chip on the right opens (and closes) the form under it. --}}
+<div class="mb-3 flex justify-end"><button type="button" data-toggle-item-form aria-controls="sob-item-form" aria-expanded="{{ $errors->any() || $plan->items->isEmpty() ? 'true' : 'false' }}" class="inline-flex items-center gap-1.5 rounded-full border border-primary bg-primary/10 px-4 py-1.5 text-xs font-semibold text-primary hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">add</span>Add item</button></div>
+<div class="mb-5 rounded border border-outline-variant/30 bg-white p-4 {{ $errors->any() || $plan->items->isEmpty() ? '' : 'hidden' }}" id="sob-item-form">
+    <h2 class="font-semibold">Add item</h2>
     <p class="mt-1 text-xs text-on-surface-variant">Choose the Specific Program / Project and its activity, then what is bought for it. Use Add particulars for more than one, and Add other line for anything else (for example Labor). Each amount is frequency × quantity × unit cost.</p>
     <form method="POST" action="{{ route('planning.sob.items.store', $plan) }}" class="sob-line-form mt-3 grid gap-3 md:grid-cols-6">@csrf
         <div class="md:col-span-6" data-full-text-box><label class="block text-xs font-semibold text-on-surface-variant">AIP activity (PPA)
@@ -81,7 +71,7 @@
         @include('partials.sob-item-fields', ['group' => null, 'box' => $box])
         <div class="flex items-end gap-3 md:col-span-6"><p class="text-sm font-semibold">Amount: <span data-amount>₱0.00</span></p><button class="ml-auto rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-primary-container">Add item</button></div>
     </form>
-</details>
+</div>
 @endif
 
 @forelse($grouped as $pillar)
@@ -153,6 +143,20 @@
 @endif
 
 @if($editable)
+<details class="group mb-5 rounded border border-outline-variant/30 bg-white p-4" @if($errors->any()) open @endif>
+    <summary class="flex cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center justify-between gap-2"><h2 class="font-semibold">Details and signatories</h2><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] transition-transform" aria-hidden="true">expand_more</span></summary>
+    <form method="POST" action="{{ route('planning.sob.update', $plan) }}" class="mt-3 grid gap-3 md:grid-cols-3">@csrf @method('PUT')
+        <label class="text-xs font-semibold text-on-surface-variant">Source of fund<select name="fund_source" class="{{ $box }}">@foreach($fundChoices as $fund)<option value="{{ $fund }}" @selected(old('fund_source', $plan->fund_source) === $fund)>{{ $fund }}</option>@endforeach</select></label>
+        <label class="text-xs font-semibold text-on-surface-variant">Quarter<select name="quarter" class="{{ $box }}">@foreach(\App\Models\SobPlan::QUARTERS as $number => $quarterName)<option value="{{ $number }}" @selected((int) old('quarter', $plan->quarter) === $number)>{{ $quarterName }}</option>@endforeach</select></label>
+        <label class="text-xs font-semibold text-on-surface-variant">School ID<input name="school_id_number" value="{{ old('school_id_number', $plan->school_id_number) }}" maxlength="50" placeholder="Type the School ID" class="{{ $box }}"></label>
+        @php $sobSlots = \App\Support\PlanningSignatories::slots([['prepared_by', 'Prepared by', 'Prepared by', null, null, null, null], ['recommended_by', 'Recommending approval', 'Recommending Approval', null, null, null, null], ['approved_by', 'Approved by', 'APPROVED', null, null, null, null]], $plan, \App\Support\PlanningSignatories::lastUsed($plan->school_id, ['prepared_by', 'recommended_by', 'approved_by']), true); @endphp
+        <div class="md:col-span-3">@include('partials.signatory-editor', ['slots' => $sobSlots, 'editable' => true, 'document' => 'SOB', 'open' => $errors->any()])</div>
+        <div class="md:col-span-3"><button class="rounded border border-primary px-4 py-2 text-xs font-semibold text-primary hover:bg-primary hover:text-white">Save details</button></div>
+    </form>
+</details>
+@endif
+
+@if($editable)
 <details class="mt-8 rounded-lg border border-error/30 bg-error/5">
     <summary class="flex cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center gap-2 px-4 py-3 text-xs font-bold uppercase tracking-wider text-error"><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] transition-transform" aria-hidden="true">expand_more</span>Danger zone</summary>
     <div class="flex flex-wrap items-center justify-between gap-3 border-t border-error/20 px-4 py-3">
@@ -163,6 +167,12 @@
 @endif
 
 <script>
+    document.querySelector('[data-toggle-item-form]')?.addEventListener('click', (event) => {
+        const form = document.getElementById('sob-item-form');
+        const show = form.classList.toggle('hidden') === false;
+        event.currentTarget.setAttribute('aria-expanded', show ? 'true' : 'false');
+        if (show) { form.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+    });
 (() => {
     const number = (value) => { const n = Number(String(value ?? '').replace(/[,₱\s]/g, '')); return Number.isFinite(n) ? n : 0; };
     const peso = (amount) => '₱' + amount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

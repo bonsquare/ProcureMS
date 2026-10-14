@@ -9,6 +9,9 @@
         <div>
             <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Makes the official form</p>
             <p class="mt-1 flex items-center gap-1.5 text-sm font-semibold"><span class="material-symbols-outlined text-[18px] text-primary" aria-hidden="true">description</span>{{ $strip['generates'] }}</p>
+            @if(! empty($reopenUrl))
+                <form method="POST" action="{{ $reopenUrl }}" class="mt-2" onsubmit="return confirm('Reopen this SOB as a draft? The budget lines keep their amounts until you approve it again.')">@csrf<button class="rounded border border-primary px-4 py-2 text-xs font-bold text-primary hover:bg-primary hover:text-white">Reopen as a draft</button></form>
+            @endif
         </div>
         <div>
             <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Based on</p>
