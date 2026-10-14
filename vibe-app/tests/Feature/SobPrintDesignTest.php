@@ -114,9 +114,7 @@ class SobPrintDesignTest extends TestCase
         $this->assertMatchesRegularExpression('/class="masthead-logo masthead-logo-right"/', $html);
         $this->assertLessThan(strpos($html, 'Republic of the Philippines'), strpos($html, 'class="masthead-logo masthead-logo-left"'), 'left logo comes before the title block');
         $this->assertGreaterThan(strpos($html, 'Republic of the Philippines'), strpos($html, 'class="masthead-logo masthead-logo-right"'), 'right logo after it');
-        $this->assertStringContainsString('"SOB 3rd Quarter 2026"', $html, 'the footer carries the document title');
-        $this->assertStringNotContainsString('counter(page)', $html, 'no page numbers are printed');
-        $this->assertMatchesRegularExpression('/@bottom-left/', $html);
+        $this->assertStringContainsString('data-page-footer="SOB 3rd Quarter 2026"', $html, 'the footer carries the document title on the right and the page number in the middle');
     }
 
     public function test_the_add_item_choices_are_the_specific_programs_of_the_aip(): void

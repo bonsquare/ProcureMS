@@ -179,6 +179,22 @@
         </div>
         @endif
     </div>
+    {{-- Break into AIP: each year of the SIP becomes the AIP of that fiscal year (the quarterly amounts are split evenly until the SOB template is provided). A year that already has its AIP is a blue chip. --}}
+    @foreach($sipGroups as $startYear => $programs)
+    <div class="flex flex-wrap items-center gap-2 border-b border-outline-variant/20 px-5 py-3">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant" title="Each year of the SIP becomes the AIP of that fiscal year. The quarterly amounts are split evenly until the SOB template is provided.">Break into AIP · SIP FY {{ $startYear }}-{{ $startYear + 2 }}</span>
+        @foreach([1, 2, 3] as $yearNo)
+            @php $fy = $startYear + $yearNo - 1; $yearAip = $aips->firstWhere('fiscal_year', $fy); $yearTotal = $programs->sum(fn ($p) => $p->activities->sum('financial_year'.$yearNo)); @endphp
+            @if($yearAip)
+                <a href="{{ route('aip.show', $yearAip) }}" title="Year {{ $yearNo }}: open or edit the AIP" class="inline-flex items-center gap-1.5 rounded-full border border-blue-300 bg-blue-100 px-3 py-1 text-[11px] font-semibold text-blue-800 hover:bg-blue-200"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">check_circle</span>AIP FY {{ $fy }} · {{ $peso($yearTotal) }} · {{ \Illuminate\Support\Str::headline($yearAip->status) }}</a>
+            @elseif(auth()->user()->hasPermission('planning.manage') && auth()->user()->canManageBudget())
+                <form method="POST" action="{{ route('planning.sip.generate-aip') }}" class="inline-flex">@csrf<input type="hidden" name="school_id" value="{{ $selectedSchool->id }}"><input type="hidden" name="start_year" value="{{ $startYear }}"><input type="hidden" name="year_no" value="{{ $yearNo }}"><button title="Year {{ $yearNo }}: create the AIP" class="inline-flex items-center gap-1.5 rounded-full border border-outline-variant/60 bg-white px-3 py-1 text-[11px] font-semibold text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">event_note</span>Create AIP FY {{ $fy }} · {{ $peso($yearTotal) }}</button></form>
+            @else
+                <span class="inline-flex items-center rounded-full border border-outline-variant/50 bg-surface-low/60 px-3 py-1 text-[11px] text-on-surface-variant">FY {{ $fy }} · {{ $peso($yearTotal) }} · No AIP yet</span>
+            @endif
+        @endforeach
+    </div>
+    @endforeach
     @if($sipProjects->isNotEmpty())
         {{-- Find a program: by pillar and by any word of its program, KRA, strategy or activities. --}}
         <div data-sip-filter class="flex flex-wrap items-center gap-3 border-b border-outline-variant/20 px-5 py-3">
@@ -200,34 +216,6 @@
                 
             </div>
         </div>
-        <details class="group mt-3 rounded-lg border border-outline-variant/40 bg-white p-3" data-collapsible>
-            <summary class="flex cursor-pointer list-none [&::-webkit-details-marker]:hidden flex-wrap items-center justify-between gap-2"><span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Break into AIP</span><span class="flex items-center gap-2 text-[11px] text-on-surface-variant">Each year of the SIP becomes the AIP of that fiscal year.<span class="material-symbols-outlined shrink-0 text-[20px] text-on-surface-variant sum-chevron transition-transform" aria-hidden="true">expand_more</span></span></summary>
-            <p class="mt-2 text-[11px] text-on-surface-variant">The quarterly amounts are split evenly until the SOB template is provided.</p>
-            <div class="mt-2 grid gap-2 sm:grid-cols-3">
-                @foreach([1, 2, 3] as $yearNo)
-                    @php $fy = $startYear + $yearNo - 1; $yearAip = $aips->firstWhere('fiscal_year', $fy); $yearTotal = $programs->sum(fn ($p) => $p->activities->sum('financial_year'.$yearNo)); @endphp
-                    <div class="rounded-lg border p-3 {{ $yearAip ? 'border-secondary/40 bg-secondary/5' : 'border-outline-variant/50 bg-surface-low/60' }}">
-                        <div class="flex items-center justify-between gap-2"><p class="text-xs font-bold">Year {{ $yearNo }} · FY {{ $fy }}</p>@if($yearAip)<span class="rounded-full px-2 py-0.5 text-[10px] font-bold {{ $yearAip->status === 'approved' ? 'bg-secondary/15 text-secondary' : 'bg-amber-100 text-amber-800' }}">{{ \Illuminate\Support\Str::headline($yearAip->status) }}</span>@endif</div>
-                        <p class="mt-0.5 text-sm font-semibold text-primary">{{ $peso($yearTotal) }}</p>
-                        @if($yearAip)
-                            <a href="{{ route('aip.show', $yearAip) }}" class="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline">AIP FY {{ $fy }}: Open / Edit<span class="material-symbols-outlined text-[14px]" aria-hidden="true">arrow_forward</span></a>
-                        @elseif(auth()->user()->hasPermission('planning.manage') && auth()->user()->canManageBudget())
-                            <form method="POST" action="{{ route('planning.sip.generate-aip') }}" class="mt-2">@csrf<input type="hidden" name="school_id" value="{{ $selectedSchool->id }}"><input type="hidden" name="start_year" value="{{ $startYear }}"><input type="hidden" name="year_no" value="{{ $yearNo }}"><button class="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">event_note</span>Create AIP FY {{ $fy }}</button></form>
-                        @else
-                            <p class="mt-2 text-[11px] text-on-surface-variant">No AIP yet</p>
-                        @endif
-                    </div>
-                @endforeach
-            </div>
-        </details>
-        @php
-            $signPlan = $sipPlans[$startYear] ?? null;
-            $sipSlots = \App\Support\PlanningSignatories::slots([['prepared_by', 'Prepared by', 'Prepared by', $selectedSchool->school_head, 'School Head/Team Leader', null, null], ['recommended_by', 'Recommending Approval', 'Recommending Approval', null, 'Chief, School Governance Operation Division', null, null], ['approved_by', 'Approved by', 'Approved by', null, 'Schools Division Superintendent', null, null]], $signPlan, auth()->user()->hasPermission('planning.manage') ? \App\Support\PlanningSignatories::lastUsed($selectedSchool->id, ['prepared_by', 'recommended_by', 'approved_by']) : []);
-        @endphp
-        <form method="POST" action="{{ route('planning.sip.signatories') }}" class="mt-3">@csrf
-            <input type="hidden" name="school_id" value="{{ $selectedSchool->id }}"><input type="hidden" name="start_year" value="{{ $startYear }}">
-            @include('partials.signatory-editor', ['slots' => $sipSlots, 'editable' => auth()->user()->hasPermission('planning.manage'), 'document' => 'SIP', 'saveLabel' => 'Save signatories'])
-        </form>
     </div>
     @php
         $pillarOrder = ['Access', 'Equity', 'Quality', 'Resiliency and Well-Being', 'Enabling Mechanism'];
@@ -276,6 +264,16 @@
     </div>
     </details>
     @endforeach
+    <div class="border-t border-outline-variant/20 bg-surface-low/60 px-5 py-3">
+        @php
+            $signPlan = $sipPlans[$startYear] ?? null;
+            $sipSlots = \App\Support\PlanningSignatories::slots([['prepared_by', 'Prepared by', 'Prepared by', $selectedSchool->school_head, 'School Head/Team Leader', null, null], ['recommended_by', 'Recommending Approval', 'Recommending Approval', null, 'Chief, School Governance Operation Division', null, null], ['approved_by', 'Approved by', 'Approved by', null, 'Schools Division Superintendent', null, null]], $signPlan, auth()->user()->hasPermission('planning.manage') ? \App\Support\PlanningSignatories::lastUsed($selectedSchool->id, ['prepared_by', 'recommended_by', 'approved_by']) : []);
+        @endphp
+        <form method="POST" action="{{ route('planning.sip.signatories') }}" class="mb-3">@csrf
+            <input type="hidden" name="school_id" value="{{ $selectedSchool->id }}"><input type="hidden" name="start_year" value="{{ $startYear }}">
+            @include('partials.signatory-editor', ['slots' => $sipSlots, 'editable' => auth()->user()->hasPermission('planning.manage'), 'document' => 'SIP', 'saveLabel' => 'Save signatories', 'horizontal' => true])
+        </form>
+    </div>
     @empty
     <div class="px-5 py-8 text-center text-sm text-on-surface-variant">No SIP programs saved for this school yet.</div>
     @endforelse
@@ -323,14 +321,14 @@
     </div>
     <div class="overflow-x-auto"><table class="w-full min-w-[640px] text-left text-xs"><thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant"><tr><th class="px-5 py-3">Fiscal Year</th><th class="px-4 py-3 text-right">Activities</th><th class="px-4 py-3 text-right">Total Financial Target</th><th class="px-4 py-3">SIP</th><th class="px-4 py-3">Status</th><th class="px-5 py-3"></th></tr></thead><tbody class="divide-y divide-outline-variant/20">
         @forelse($aips as $aip)
-        <tr><td class="px-5 py-3 font-semibold">FY {{ $aip->fiscal_year }}</td><td class="px-4 py-3 text-right tabular-nums">{{ $aip->activities->count() }}</td><td class="px-4 py-3 text-right font-semibold tabular-nums">{{ $peso($aip->activities->sum(fn ($a) => $a->total)) }}</td><td class="px-4 py-3">@if($aip->sip_start_year)<span class="font-semibold text-primary">from SIP {{ $aip->sip_start_year }}-{{ $aip->sip_start_year + 2 }} · Year {{ $aip->sip_year_no }}</span>@else{{ $aip->sipProject?->project ?: '—' }}@endif</td><td class="px-4 py-3"><span class="rounded-full px-2 py-1 text-[11px] font-semibold {{ $aip->status === 'approved' ? 'bg-secondary/10 text-secondary' : 'bg-amber-100 text-amber-800' }}">{{ \Illuminate\Support\Str::headline($aip->status) }}</span></td><td class="px-5 py-3 text-right font-semibold"><a href="{{ route('aip.show', $aip) }}" class="text-primary hover:underline">Open / Edit</a> · <a href="{{ route('aip.print', $aip) }}" target="_blank" rel="noopener" class="text-primary hover:underline">Print</a>
+        <tr><td class="px-5 py-3 font-semibold">FY {{ $aip->fiscal_year }}</td><td class="px-4 py-3 text-right tabular-nums">{{ $aip->activities->count() }}</td><td class="px-4 py-3 text-right font-semibold tabular-nums">{{ $peso($aip->activities->sum(fn ($a) => $a->total)) }}</td><td class="px-4 py-3">@if($aip->sip_start_year)<span class="font-semibold text-primary">from SIP {{ $aip->sip_start_year }}-{{ $aip->sip_start_year + 2 }} · Year {{ $aip->sip_year_no }}</span>@else{{ $aip->sipProject?->project ?: '—' }}@endif</td><td class="px-4 py-3"><span class="rounded-full px-2 py-1 text-[11px] font-semibold {{ $aip->status === 'approved' ? 'bg-secondary/10 text-secondary' : 'bg-amber-100 text-amber-800' }}">{{ \Illuminate\Support\Str::headline($aip->status) }}</span></td><td class="px-5 py-3 text-right"><div class="inline-flex items-center justify-end gap-1.5"><a href="{{ route('aip.show', $aip) }}" title="Open / Edit" aria-label="Open / Edit the AIP for FY {{ $aip->fiscal_year }}" class="inline-flex h-8 w-8 items-center justify-center rounded border border-outline-variant/60 bg-white text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">edit</span></a><a href="{{ route('aip.print', $aip) }}" target="_blank" rel="noopener" title="Print" aria-label="Print the AIP for FY {{ $aip->fiscal_year }}" class="inline-flex h-8 w-8 items-center justify-center rounded border border-outline-variant/60 bg-white text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">print</span></a>
             @if(auth()->user()->canManageBudget())
                 @if($aip->status === 'draft' && ! in_array($aip->id, $legacyPpmpAipIds) && $sobPlans->where('aip_id', $aip->id)->isEmpty())
-                    · <form method="POST" action="{{ route('aip.destroy', $aip) }}" class="inline" data-delete-aip onsubmit="return confirm('Delete the AIP for FY {{ $aip->fiscal_year }}? Its KRAs and activities are removed. This cannot be undone.')">@csrf @method('DELETE')<button class="font-semibold text-error hover:underline">Delete</button></form>
+                    <form method="POST" action="{{ route('aip.destroy', $aip) }}" class="inline-flex" data-delete-aip onsubmit="return confirm('Delete the AIP for FY {{ $aip->fiscal_year }}? Its KRAs and activities are removed. This cannot be undone.')">@csrf @method('DELETE')<button title="Delete" aria-label="Delete the AIP for FY {{ $aip->fiscal_year }}" class="inline-flex h-8 w-8 items-center justify-center rounded border border-error/40 bg-white text-error hover:bg-error/10"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">delete</span></button></form>
                 @else
-                    · <span class="cursor-not-allowed font-semibold text-on-surface-variant/50" title="Only a draft AIP with nothing built on it (an SOB or a budget) can be deleted.">Delete</span>
+                    <span class="inline-flex h-8 w-8 items-center justify-center rounded border cursor-not-allowed border-outline-variant/40 bg-white text-on-surface-variant/40" title="Only a draft AIP with nothing built on it (an SOB or a budget) can be deleted." aria-label="Delete is not available for this AIP"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">delete</span></span>
                 @endif
-            @endif</td></tr>
+            @endif</div></td></tr>
         @empty<tr><td colspan="6" class="px-5 py-8 text-center text-on-surface-variant">No AIP for this school yet.@if(auth()->user()->canManageBudget()) Enter the fiscal year and click New AIP.@endif</td></tr>@endforelse
     </tbody></table></div>
 </section>

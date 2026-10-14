@@ -11,9 +11,22 @@
     - The rows that fit one printed page go in one `.doc-page` block: the screen shows each block as its own sheet, the print breaks after each.
       Every page after the first gets its own copy of the heading rows (the table's thead, or a row marked data-repeat-head), and a cell merged down several
       rows (rowspan) restarts at the top of the next page.
+    - A table marked data-split-rows (SIP, AIP) also flows its text across a page break: a row that does not fit the room left on the page is split in
+      two rows, the first keeps the words that fit in each cell, the second carries the rest to the next page; both keep every border of the cells.
+    - A page element marked data-page-footer="Title" gets a footer in every page block (Page X of Y in the middle, the title on the right) and keeps
+      two lines of room at the bottom of each page for it; the document's CSS places it (.doc-footer).
     - The document's CSS must be the same on screen and in print (no @media print size rules), so the rows are measured the way they print.
     - The paper (@page) comes from the shared print engine; this script only reads it.
 --}}
+<style>
+    /* Footer of a page that has data-page-footer: the page number in the middle, the title on the right, at the bottom of the printable area. */
+    .doc-footer { position: absolute; left: var(--sheet-px, 0); right: var(--sheet-px, 0); bottom: var(--sheet-py, 0); display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; font-size: var(--doc-footer-size, .75rem); color: #333; line-height: 1.2; }
+    .doc-footer .center { text-align: center; } .doc-footer .right { text-align: right; }
+    @media print {
+        html .is-sheets .doc-page { min-height: var(--doc-page-h, 0) !important; }
+        .doc-footer { left: 0; right: 0; bottom: 0; }
+    }
+</style>
 <script>
     (function () {
         var MM = 96 / 25.4;
@@ -71,6 +84,7 @@
         }
 
         function restore(page, units) {
+            Array.prototype.forEach.call(page.querySelectorAll('[data-doc-footer]'), function (footer) { footer.remove(); });
             Array.prototype.forEach.call(page.querySelectorAll(':scope > .doc-page'), function (block) {
                 while (block.firstChild) { page.insertBefore(block.firstChild, block); }
                 block.remove();
@@ -93,6 +107,12 @@
                 tablesOf(unit).forEach(function (table) {
                     var tbody = table.tBodies[0];
                     Array.prototype.forEach.call(tbody.querySelectorAll('[data-clone]'), function (cell) { cell.remove(); });
+                    // A row split to flow its text across a page break is put back whole.
+                    Array.prototype.forEach.call(tbody.querySelectorAll('tr[data-split-b]'), function (row) { row.remove(); });
+                    Array.prototype.forEach.call(tbody.querySelectorAll('tr[data-split-a]'), function (row) {
+                        Array.prototype.forEach.call(row.cells, function (cell, i) { cell.innerHTML = row._whole[i]; });
+                        row.removeAttribute('data-split-a');
+                    });
                     Array.prototype.forEach.call(tbody.querySelectorAll('[data-rs]'), function (cell) { cell.rowSpan = +cell.dataset.rs; });
                 });
             });
@@ -157,8 +177,87 @@
             return { top: top, bottom: bottom };
         }
 
+        // The words and line breaks of a cell that holds only text, or null when it holds anything else.
+        function tokensOf(cell) {
+            var list = [];
+            for (var i = 0; i < cell.childNodes.length; i++) {
+                var node = cell.childNodes[i];
+                if (node.nodeType === 3) { (node.nodeValue.match(/\S+/g) || []).forEach(function (word) { list.push(word); }); } else if (node.nodeName === 'BR') { list.push(null); } else { return null; }
+            }
+            return list;
+        }
+
+        function fillTokens(cell, tokens) {
+            cell.textContent = '';
+            tokens.forEach(function (token, i) {
+                if (token === null) { cell.appendChild(document.createElement('br')); return; }
+                cell.appendChild(document.createTextNode((i > 0 && tokens[i - 1] !== null ? ' ' : '') + token));
+            });
+        }
+
+        // Splits a row that does not fit the room left on the page into two: the first keeps the words of each cell that fit, the second (inserted
+        // after it) carries the rest. Cells merged down the rows are stretched over both. False when the row cannot be split.
+        function splitRow(rows, index, room) {
+            var row = rows[index];
+            var cells = Array.prototype.slice.call(row.cells);
+            var plain = cells.filter(function (cell) { return cell.rowSpan === 1; });
+            var texts = plain.map(tokensOf);
+            if (!texts.some(function (tokens) { return tokens && tokens.length > 1; })) { return false; }
+            if (room < parseFloat(getComputedStyle(row).fontSize) * 4) { return false; }
+
+            var whole = cells.map(function (cell) { return cell.innerHTML; });
+            var restoreAll = function () { cells.forEach(function (cell, i) { cell.innerHTML = whole[i]; }); };
+            var fits = function () { return row.getBoundingClientRect().height <= room; };
+            var counts = texts.map(function (tokens, i) {
+                if (!tokens) { return null; }
+                // The words of this cell that fit alone (the other cells empty while it is measured).
+                plain.forEach(function (cell, j) { if (j !== i) { cell.textContent = ''; } });
+                var low = 0, high = tokens.length;
+                while (low < high) {
+                    var middle = Math.ceil((low + high) / 2);
+                    fillTokens(plain[i], tokens.slice(0, middle));
+                    if (fits()) { low = middle; } else { high = middle - 1; }
+                }
+                return low;
+            });
+            restoreAll();
+            var progress = counts.some(function (n) { return n !== null && n > 0; });
+            var rest = counts.some(function (n, i) { return n !== null && n < texts[i].length; });
+            if (!progress || !rest) { return false; }
+            plain.forEach(function (cell, i) { if (texts[i]) { fillTokens(cell, texts[i].slice(0, counts[i])); } });
+            if (!fits()) { restoreAll(); return false; }
+
+            // The cells merged across this row now also cover the new row.
+            var covering = gridOf(rows).filter(function (item) { return item.span > 1 && item.row <= index && index < item.row + item.span; });
+            var next = row.cloneNode(false);
+            next.removeAttribute('id');
+            next.setAttribute('data-split-b', '');
+            plain.forEach(function (cell, i) {
+                var copy = cell.cloneNode(false);
+                copy.removeAttribute('data-rs');
+                if (texts[i]) { fillTokens(copy, texts[i].slice(counts[i])); }
+                next.appendChild(copy);
+            });
+            row._whole = whole;
+            row.setAttribute('data-split-a', '');
+            row.parentNode.insertBefore(next, row.nextSibling);
+            covering.forEach(function (item) { item.el.rowSpan = item.span + 1; });
+            rows.splice(index + 1, 0, next);
+            return true;
+        }
+
+        // The height a cell needs for its content alone, at its own width (a merged cell cut at a page break keeps all of it in a shorter piece).
+        function naturalHeight(cell) {
+            var probe = cell.cloneNode(true);
+            probe.style.cssText = 'position:absolute;visibility:hidden;left:0;top:0;display:block;height:auto;box-sizing:border-box;width:' + cell.getBoundingClientRect().width + 'px';
+            cell.parentNode.parentNode.parentNode.parentNode.appendChild(probe);
+            var height = probe.getBoundingClientRect().height;
+            probe.remove();
+            return height;
+        }
+
         // Where the pages of one table break, measured the way they print.
-        function plan(page, unit, capacity) {
+        function plan(page, unit, capacity, reserves) {
             var table = unit.table;
             var origin = unit.legacy ? page : unit.levels[0].child;
             var rows = Array.prototype.slice.call(table.tBodies[0].rows);
@@ -166,12 +265,46 @@
             var repeated = table.tHead || table.querySelector('tr[data-repeat-head]');
             var repeatHeight = repeated ? repeated.getBoundingClientRect().height : 0;
             var position = table.getBoundingClientRect().top - origin.getBoundingClientRect().top + (table.tHead ? table.tHead.getBoundingClientRect().height : 0);
+            var splitting = table.hasAttribute('data-split-rows');
+            var merged = null;
+            var naturals = new Map();
+            // What a page that ends at row `last` and starts at row `first` adds because the merged cells cut by its edges keep their whole text
+            // in a shorter piece (the piece cannot be shorter than its text); `lastHeight` stands in for the height of the last row.
+            var extraFor = function (first, last, lastHeight) {
+                if (!merged) { merged = gridOf(rows).filter(function (item) { return item.span > 1; }); }
+                var byRow = {};
+                merged.forEach(function (item) {
+                    var end = item.row + item.span - 1;
+                    if (end < first || item.row > last) { return; }
+                    var from = Math.max(item.row, first), to = Math.min(end, last);
+                    if (from === item.row && to === end) { return; }
+                    var sum = 0;
+                    for (var i = from; i <= to; i++) { sum += i === last && lastHeight !== undefined ? lastHeight : rows[i].getBoundingClientRect().height; }
+                    if (!naturals.has(item.el)) { naturals.set(item.el, naturalHeight(item.el)); }
+                    var need = naturals.get(item.el) - sum;
+                    if (need > 0 && !(byRow[to] >= need)) { byRow[to] = need; }
+                });
+                return Object.keys(byRow).reduce(function (total, key) { return total + byRow[key]; }, 0);
+            };
             var starts = [];
-            rows.forEach(function (row, index) {
-                var height = row.getBoundingClientRect().height;
-                if (index > 0 && position + height > capacity - around.bottom) { starts.push(index); position = repeatHeight + around.top; }
+            var pageStart = 0;
+            for (var index = 0; index < rows.length; index++) {
+                var height = rows[index].getBoundingClientRect().height;
+                var limit = capacity - around.bottom - ((unit.legacy && reserves[starts.length]) || 0);
+                if (position + height + (splitting ? extraFor(pageStart, index) : 0) > limit) {
+                    // The text flows on to the next page when the row can be split; otherwise the whole row goes there.
+                    var room = limit - position;
+                    if (splitting && splitRow(rows, index, room - extraFor(pageStart, index, room))) {
+                        merged = null;
+                        starts.push(index + 1);
+                        pageStart = index + 1;
+                        position = repeatHeight + around.top;
+                        continue;
+                    }
+                    if (index > 0 && starts[starts.length - 1] !== index) { starts.push(index); pageStart = index; position = repeatHeight + around.top; }
+                }
                 position += height;
-            });
+            }
             var tailHeight = 0;
             unit.levels.forEach(function (level) { level.tail.forEach(function (node) { tailHeight += outerHeight(node); }); });
             return { rows: rows, starts: starts, position: position, tailHeight: tailHeight, around: around, repeated: repeated };
@@ -316,9 +449,11 @@
             }
         }
 
-        function build(page, units, spec, factor) {
+        function build(page, units, spec, factor, reserves) {
             var root = document.documentElement;
-            var availableHeight = (+spec[2] - 2 * spec[3]) * MM - 3;
+            // A page that carries a footer (data-page-footer on the page element) keeps two lines of room at the bottom for it.
+            var footed = page.hasAttribute('data-page-footer');
+            var availableHeight = (+spec[2] - 2 * spec[3]) * MM - 3 - (footed ? 2 * parseFloat(getComputedStyle(root).fontSize) : 0);
             var capacity = availableHeight * factor;
 
             // Measure the way the page prints: the paper inside its margins, at full size.
@@ -326,7 +461,7 @@
             root.style.setProperty('--preview-zoom', 1);
             page.style.zoom = 1;
             page.style.width = ((+spec[1] - 2 * spec[4]) * MM) + 'px';
-            var made = units.map(function (unit) { return unit.flow ? flowPlan(unit, capacity) : plan(page, unit, capacity); });
+            var made = units.map(function (unit) { return unit.flow ? flowPlan(unit, capacity) : plan(page, unit, capacity, reserves); });
             var kids = Array.prototype.slice.call(page.children);
             page.style.zoom = kept.zoom;
             page.style.width = kept.width;
@@ -357,21 +492,38 @@
                 });
             }
             blocks.forEach(function (element) { page.appendChild(element); });
+            // Footer of every page: the page number in the middle, the title of the document (the value of data-page-footer) on the right.
+            if (footed) {
+                root.style.setProperty('--doc-page-h', ((+spec[2] - 2 * spec[3]) * MM - 4) + 'px');
+                blocks.forEach(function (element, number) {
+                    var footer = document.createElement('div');
+                    footer.setAttribute('data-doc-footer', '');
+                    footer.className = 'doc-footer';
+                    [['', 'left'], ['Page ' + (number + 1) + ' of ' + blocks.length, 'center'], [page.getAttribute('data-page-footer'), 'right']].forEach(function (part) {
+                        var cell = document.createElement('span');
+                        cell.className = part[1];
+                        cell.textContent = part[0];
+                        footer.appendChild(cell);
+                    });
+                    element.appendChild(footer);
+                });
+            }
             return availableHeight;
         }
 
-        // True when a page holds more than the paper can print (a merged cell copy or a wrapped line made it taller than measured).
+        // How far each page holds more than the paper can print (a merged cell copy or a wrapped line made it taller than measured); only the pages that do.
         function overflows(page, availableHeight) {
             var root = document.documentElement;
             var preview = root.style.getPropertyValue('--preview-zoom');
             root.style.setProperty('--preview-zoom', 1);
-            var over = Array.prototype.some.call(page.querySelectorAll(':scope > .doc-page'), function (block) {
+            var over = [];
+            Array.prototype.forEach.call(page.querySelectorAll(':scope > .doc-page'), function (block, number) {
                 var top = block.getBoundingClientRect().top + parseFloat(getComputedStyle(block).paddingTop);
-                var bottom = Math.max.apply(null, Array.prototype.map.call(block.children, function (child) { return child.getBoundingClientRect().bottom; }).concat([top]));
-                return bottom - top > availableHeight + 1;
+                var bottom = Math.max.apply(null, Array.prototype.filter.call(block.children, function (child) { return !child.hasAttribute('data-doc-footer'); }).map(function (child) { return child.getBoundingClientRect().bottom; }).concat([top]));
+                if (bottom - top > availableHeight + 1) { over[number] = bottom - top - availableHeight; }
             });
             if (preview) { root.style.setProperty('--preview-zoom', preview); } else { root.style.removeProperty('--preview-zoom'); }
-            return over;
+            return over.length ? over : [];
         }
 
         function paginate() {
@@ -388,11 +540,19 @@
                     });
                 });
                 var factor = 0.98;
-                for (var attempt = 0; attempt < 6; attempt++) {
+                var reserves = [];
+                var single = units.length === 1 && units[0].legacy;
+                for (var attempt = 0; attempt < 10; attempt++) {
                     restore(page, units);
-                    var availableHeight = build(page, units, spec, factor);
-                    if (!overflows(page, availableHeight)) { break; }
-                    factor -= 0.05;
+                    var availableHeight = build(page, units, spec, factor, reserves);
+                    var over = overflows(page, availableHeight);
+                    if (!over.length) { break; }
+                    if (single && attempt < 6) {
+                        // Only the page that came out too tall gets less room, so the other pages stay as full as they can be.
+                        over.forEach(function (excess, number) { if (excess) { reserves[number] = (reserves[number] || 0) + excess + 2; } });
+                    } else {
+                        factor -= 0.05;
+                    }
                 }
             } finally {
                 busy = false;

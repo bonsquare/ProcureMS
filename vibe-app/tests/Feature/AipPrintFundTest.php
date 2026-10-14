@@ -31,7 +31,7 @@ class AipPrintFundTest extends TestCase
         $this->assertSame(count($cols[0]), preg_match_all('/<td/', $firstRow[1]), 'every body row has one cell for each column');
     }
 
-    public function test_the_pillar_cell_merges_down_its_rows_and_every_other_column_repeats(): void
+    public function test_the_pillar_cell_and_every_identical_value_merge_down_their_rows(): void
     {
         $fx = SobFixture::make();
         $this->actingAs($fx['user']);
@@ -43,7 +43,19 @@ class AipPrintFundTest extends TestCase
 
         $this->assertSame(2, preg_match_all('/<td rowspan="\d+" class="pillar"/', $html), 'one pillar cell for each pillar');
         $this->assertStringContainsString('<td rowspan="'.$rows.'" class="pillar"', $html, 'Access spans all of its rows');
-        $this->assertSame($rows + 1, substr_count($html, 'KRA 3') + substr_count($html, 'KRA 9'), 'the KRA still repeats on every row');
+        $this->assertSame(2, substr_count($html, 'KRA 3') + substr_count($html, 'KRA 9'), 'the KRA is written once for each run of rows that share it');
+    }
+
+    public function test_the_printed_timeline_follows_the_quarters_that_have_an_amount(): void
+    {
+        $fx = SobFixture::make();
+        $this->actingAs($fx['user']);
+        $fx['activities'][0]->update(['q1_amount' => 100, 'q2_amount' => 100, 'q3_amount' => 0, 'q4_amount' => 0, 'timeline' => 'Every June']);
+
+        $html = $this->get(route('aip.print', $fx['aip']))->assertOk()->getContent();
+
+        $this->assertStringContainsString('<td>January - June</td>', $html, 'the 1st and 2nd quarter print January - June, not the older typed text');
+        $this->assertStringNotContainsString('Every June', $html);
     }
 
     public function test_resiliency_and_well_being_print_as_one_merged_pillar(): void
@@ -57,7 +69,7 @@ class AipPrintFundTest extends TestCase
 
         $html = $this->get(route('aip.print', $fx['aip']))->assertOk()->getContent();
 
-        $this->assertSame(1, preg_match_all('/<td rowspan="2" class="pillar"[^>]*>Resiliency and Well-Being<\/td>/', $html), 'the two pillars share one cell');
+        $this->assertSame(1, preg_match_all('/<td rowspan="2" class="pillar"[^>]*>.*?aria-label="Resiliency and Well-Being"/s', $html), 'the two pillars share one cell');
     }
 
     public function test_the_activity_form_always_offers_the_standard_funds_with_other_to_specify(): void

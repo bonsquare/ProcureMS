@@ -19,7 +19,7 @@
         .masthead .line { font-size: 10px; font-weight: bold; text-transform: uppercase; }
         .masthead .school { font-size: 12px; font-weight: bold; text-transform: uppercase; margin-top: 2px; }
 
-        .school-id { margin-top: 3px; padding-bottom: 4px; border-bottom: 2px solid #111; font-size: 11px; }
+        .school-id { margin-top: 3px; padding-bottom: 4px; border-bottom: 2px solid #111; font-size: 11px; text-align: center; }
         .doc-title { text-align: center; margin: 10px 0 8px; line-height: 1.5; }
         .doc-title h1 { margin: 0; font-size: 13px; letter-spacing: .4px; }
         .doc-title p { margin: 2px 0; font-size: 10.5px; font-weight: bold; }
@@ -50,8 +50,7 @@
             thead { display: table-header-group; }
             .signatures, .summary { break-inside: avoid; }
         }
-        /* Page footer: the document title on the left (printed in the page margin). */
-        @page { @bottom-left { content: "{{ $plan->documentTitle() }}"; font: 9px Arial, Helvetica, sans-serif; } }
+        :root { --doc-footer-size: 8px; }
     </style>
 @include('partials.input-fixes')
 @include('partials.print-clean')
@@ -79,7 +78,7 @@
 
 @include('partials.official-toolbar', ['closeUrl' => route('planning.sob.show', $plan), 'context' => 'School Operating Budget · '.$plan->quarterLabel().' · FY '.$plan->fiscal_year])
 
-<main class="paper" data-official-page data-sheets data-doc="sob" data-paper="legal" data-orientation="portrait" data-margin="10">
+<main class="paper" data-official-page data-sheets data-page-footer="{{ $plan->documentTitle() }}" data-doc="sob" data-paper="legal" data-orientation="portrait" data-margin="10">
     <header class="masthead">
         <div class="masthead-logo masthead-logo-left">@if($leftLogo)<img class="official-logo" src="{{ $leftLogo }}" alt="" onerror="this.remove()">@endif</div>
         <div>

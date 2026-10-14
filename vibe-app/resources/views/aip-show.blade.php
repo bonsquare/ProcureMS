@@ -89,12 +89,16 @@
         </summary>
 
         <div class="space-y-4 p-4">
-            @foreach($kras as $kra)
-                <details data-kra-card data-acc="k-{{ $kra->id }}" class="group rounded-lg border border-outline-variant/40 border-l-4 border-l-secondary bg-surface-low/40">
+            {{-- The same Key Result Area is one box: each of its programs (with its own details and activities) is listed inside it. --}}
+            @foreach($kras->groupBy(fn ($k) => trim((string) $k->kra)) as $kraGroup)
+                @php $groupActivities = $kraGroup->sum(fn ($k) => $k->activities->count()); @endphp
+                <details data-kra-card data-acc="k-{{ $kraGroup->first()->id }}" class="group rounded-lg border border-outline-variant/40 border-l-4 border-l-secondary bg-surface-low/40">
                     <summary class="flex cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center justify-between gap-3 p-4">
-                        <span class="min-w-0"><span class="block text-[10px] font-semibold uppercase tracking-widest text-secondary">Key Result Area</span><h3 class="text-base font-semibold">{{ $kra->kra }}</h3></span>
-                        <span class="flex shrink-0 items-center gap-2 text-xs text-on-surface-variant">{{ $kra->activities->count() }} activit{{ $kra->activities->count() === 1 ? 'y' : 'ies' }}<span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] transition-transform" aria-hidden="true">expand_more</span></span>
+                        <span class="min-w-0"><span class="block text-[10px] font-semibold uppercase tracking-widest text-secondary">Key Result Area</span><h3 class="text-base font-semibold">{{ $kraGroup->first()->kra }}</h3></span>
+                        <span class="flex shrink-0 items-center gap-2 text-xs text-on-surface-variant">@if($kraGroup->count() > 1){{ $kraGroup->count() }} programs · @endif{{ $groupActivities }} activit{{ $groupActivities === 1 ? 'y' : 'ies' }}<span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] transition-transform" aria-hidden="true">expand_more</span></span>
                     </summary>
+                    @foreach($kraGroup as $kra)
+                    <div class="{{ $loop->first ? '' : 'border-t-4 border-outline-variant/30' }}">
                     <div class="flex flex-col gap-3 border-y border-outline-variant/30 p-4 lg:flex-row lg:items-start lg:justify-between">
                         <div class="min-w-0 flex-1">
                             <dl class="grid grid-cols-1 gap-x-6 gap-y-2 text-sm md:grid-cols-2 xl:grid-cols-4">
@@ -114,10 +118,10 @@
 
                     <div class="space-y-3 p-4">
                         @forelse($kra->activities as $a)
-                            <div data-fund="{{ $a->source_of_fund }}" class="rounded-lg border border-outline-variant/40 bg-white">
-                                <div class="flex items-start justify-between gap-3 border-b border-outline-variant/20 px-4 py-3">
+                            <div data-fund="{{ $a->source_of_fund }}" class="rounded-lg border border-outline-variant/40 border-l-4 border-l-primary bg-white shadow-sm">
+                                <div class="flex items-start justify-between gap-3 border-b border-primary/15 bg-primary/5 px-4 py-3">
                                     <div class="min-w-0">
-                                        <p class="text-[10px] font-semibold uppercase tracking-widest text-on-surface-variant">Activity</p>
+                                        <p class="text-[10px] font-semibold uppercase tracking-widest text-primary">Activity</p>
                                         <p class="font-semibold">{{ $a->activity }}</p>
                                         <p class="mt-1 flex flex-wrap gap-2 text-xs text-on-surface-variant"><span class="rounded bg-surface-container px-2 py-0.5">Target: {{ $a->physical_target }}</span>@if($a->timeline)<span class="rounded bg-surface-container px-2 py-0.5">{{ $a->timeline }}</span>@endif</p>
                                     </div>
@@ -150,7 +154,7 @@
                                                 <form id="budget-{{ $a->id }}" method="POST" action="{{ route('aip.activities.budget', [$aip, $a]) }}" data-budget-form @if(! $a->timeline || $a->timeline === $suggested) data-timeline-auto @endif>
                                                     @csrf @method('PUT')
                                                     <p class="text-[10px] font-semibold uppercase tracking-widest text-on-surface-variant">Financial target per quarter (₱)</p>
-                                                    <div class="mt-1.5 grid grid-cols-2 gap-3 sm:grid-cols-5">
+                                                    <div class="mt-1.5 grid grid-cols-2 items-end gap-3 sm:grid-cols-5">
                                                         @foreach(['q1_amount', 'q2_amount', 'q3_amount', 'q4_amount'] as $q)
                                                             <label class="block text-xs font-semibold text-on-surface-variant">{{ ['1st', '2nd', '3rd', '4th'][$loop->index] }} quarter<span class="block text-[11px] font-normal">{{ $quarterMonths[$loop->index] }}</span>
                                                                 <span class="relative mt-1 block">
@@ -199,6 +203,8 @@
                             <p class="rounded border border-dashed border-outline-variant/60 px-4 py-6 text-center text-sm text-on-surface-variant">No activities under this KRA yet. @if($canManage)Use “Edit KRA &amp; Activities” to add them.@endif</p>
                         @endforelse
                     </div>
+                    </div>
+                    @endforeach
                 </details>
             @endforeach
         </div>
@@ -207,7 +213,7 @@
     <p class="mb-6 rounded-lg border border-dashed border-outline-variant/60 bg-white px-4 py-12 text-center text-on-surface-variant">No KRA yet. @if($canManage)Click “+ Add KRA and Activities”.@endif</p>
 @endforelse
 
-<div class="mb-6 grid grid-cols-1 gap-4 xl:grid-cols-2">
+<div class="mb-6">
     <section class="overflow-hidden rounded border border-outline-variant/30 bg-white">
         <h2 class="border-b border-outline-variant/30 px-5 py-3 text-base font-semibold">Financial Target per Source of Fund</h2>
         <table class="w-full text-left text-sm">
@@ -217,15 +223,6 @@
             </tbody>
             <tfoot class="border-t-2 border-outline-variant/40 bg-surface-low/60 font-bold"><tr><td class="px-3 py-2.5">TOTAL</td>@foreach(['q1', 'q2', 'q3', 'q4'] as $q)<td class="px-3 py-2.5 text-right tabular-nums">{{ number_format($grand[$q], 2) }}</td>@endforeach<td class="px-3 py-2.5 text-right tabular-nums">{{ number_format($grand['total'], 2) }}</td></tr></tfoot>
         </table>
-    </section>
-
-    <section class="rounded border border-outline-variant/30 bg-white p-5">
-        <h2 class="text-base font-semibold">Signatories</h2>
-        <form method="POST" action="{{ route('aip.update', $aip) }}" class="mt-3">
-            @csrf @method('PUT')
-            @php $aipSlots = \App\Support\PlanningSignatories::slots([['prepared_by', 'Prepared by', 'Prepared by', null, null, null, null], ['noted_by', 'Noted by', 'Noted by', null, null, null, null], ['approved_by', 'Approved by', 'Approved by', null, null, null, null]], $aip, $canManage ? \App\Support\PlanningSignatories::lastUsed($aip->school_id, ['prepared_by', 'noted_by', 'approved_by']) : []); @endphp
-            @include('partials.signatory-editor', ['slots' => $aipSlots, 'editable' => $canManage, 'document' => 'AIP', 'open' => $errors->any(), 'saveLabel' => 'Save signatories'])
-        </form>
     </section>
 </div>
 
@@ -238,6 +235,15 @@
         </table>
     </section>
 @endif
+
+<section class="mt-6 rounded border border-outline-variant/30 bg-white p-5">
+    <h2 class="text-base font-semibold">Signatories</h2>
+    <form method="POST" action="{{ route('aip.update', $aip) }}" class="mt-3">
+        @csrf @method('PUT')
+        @php $aipSlots = \App\Support\PlanningSignatories::slots([['prepared_by', 'Prepared by', 'Prepared by', null, null, null, null], ['noted_by', 'Noted by', 'Noted by', null, null, null, null], ['approved_by', 'Approved by', 'Approved by', null, null, null, null]], $aip, $canManage ? \App\Support\PlanningSignatories::lastUsed($aip->school_id, ['prepared_by', 'noted_by', 'approved_by']) : []); @endphp
+        @include('partials.signatory-editor', ['slots' => $aipSlots, 'editable' => $canManage, 'document' => 'AIP', 'open' => $errors->any(), 'saveLabel' => 'Save signatories', 'horizontal' => true])
+    </form>
+</section>
 
 @include('partials.doc-preview-dock', ['key' => 'aip-'.$aip->id, 'title' => 'Official AIP', 'savedUrl' => route('aip.print', $aip), 'drafts' => '[data-budget-form], [data-fund-form]'])
 @endsection
@@ -284,8 +290,8 @@
         });
     })();
     (() => {
-        // The amounts of each quarter and the timeline of an activity: the timeline follows the quarters that have an amount (only the 1st = January - March,
-        // all four = January - December) until it is typed by hand; Save amounts keeps the page where it is, then refreshes the totals.
+        // The amounts of each quarter and the timeline of an activity: whenever an amount changes, the timeline follows the quarters that have an amount (only the 1st =
+        // January - March, up to the 3rd = January - September, all four = January - December); Save amounts keeps the page where it is, then refreshes the totals.
         const starts = ['January', 'April', 'July', 'October'];
         const ends = ['March', 'June', 'September', 'December'];
         const timelineFor = (values) => {
@@ -298,7 +304,6 @@
             const timeline = form.querySelector('[data-timeline]');
             const total = card.querySelector('[data-total]');
             const status = form.querySelector('[data-budget-status]');
-            let auto = form.hasAttribute('data-timeline-auto');
             const say = (text, good) => {
                 status.textContent = text;
                 status.classList.remove('hidden', 'text-secondary', 'text-error');
@@ -308,10 +313,10 @@
                 const values = inputs.map((input) => parseFloat(input.value) || 0);
                 const sum = values.reduce((carry, value) => carry + value, 0);
                 total.textContent = sum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                if (auto) { timeline.value = timelineFor(values); }
+                const followed = timelineFor(values);
+                if (followed) { timeline.value = followed; }
             };
             inputs.forEach((input) => input.addEventListener('input', refresh));
-            timeline.addEventListener('input', () => { auto = timeline.value.trim() === ''; if (auto) { refresh(); } });
             form.addEventListener('submit', async (event) => {
                 event.preventDefault();
                 say('Saving…', true);
