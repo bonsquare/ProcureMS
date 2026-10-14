@@ -550,3 +550,43 @@ The AIP print (`/aip/{aip}/print`, `resources/views/aip-print.blade.php`), the A
 - Open / Edit, Print and Delete are icon buttons (pencil, printer, trash, with a tooltip and a label for screen readers). Delete is red; when an AIP cannot be deleted it is gray and not clickable, with the reason in its tooltip. The confirmation before deleting and the rule for when it is allowed are unchanged.
 
 Tests: `AipPrintFundTest`, `AipActivityBudgetTest`, `PlanningFlowTest`, `OfficialPrintTest`.
+
+## 24. SOB print, SOB page, APP / APP-CSE from the SOB and the Planning steps (approved by the owner 2026-10-14)
+
+The SOB print (`/planning/sob/{id}/print`, `resources/views/sob-print.blade.php`), the SOB page (`/planning/sob/{id}`, `resources/views/sob-show.blade.php`), the SOB list in Planning and the Planning step bar are approved as they are. Do not change them without the owner's permission.
+
+### 24.1 Printed SOB
+
+- Paper: legal, portrait, 10 mm margins, through the shared print engine (1.5, 1.6); long item tables flow page by page with the shared pagination (`data-paginate`).
+- School ID: centered, above the bar line under the letterhead (`.school-id`, bar kept).
+- Footer on every page: "Page X of Y" in the middle and the document title (for example "SOB 4th Quarter 2026") on the right (`data-page-footer`), in a small size (8px, `--doc-footer-size`); two lines at the bottom of each page are kept for it. The old title in the left page margin is gone.
+
+### 24.2 SOB page
+
+- First box (the document strip): "Makes the official form", "Based on", "Status", "Next". For an approved SOB (people allowed to manage planning) the **Reopen as a draft** button is in this box, under the form name; the yellow "This SOB is approved" notice keeps only its explanation.
+- **Add item** is a chip on the right (blue, rounded, "+ Add item"); it opens and closes the item form under it. The form is open by itself when the SOB has no item yet or the form has an error.
+- **Details and signatories** (Source of fund, Quarter, School ID and the three signatures) is at the bottom of the page, above the Danger zone. Its Save details posts to `planning.sob.update`.
+- The order of the page: first box, notices, Add item chip (and its form), the pillars with their items, Grand total and Summary per object of expenditure, Details and signatories, Danger zone.
+- The yellow notices ("1 program goes over the AIP amount…" and "This SOB is approved") are small (text-xs, little padding) and each has an **X** that removes it until the page is opened again.
+- Each item (one account of one program) is a box: a bar with the account, its total and two icon buttons (Edit, pencil; Remove item, trash), and under it the table **Category · Particulars · Frequency · Quantity · Unit · Unit cost · Amount** (the Category of each particulars comes first; an "other line" has none).
+- **Edit** works in the same place: the table is replaced by the item's fields (Cancel brings the table back, Save item saves). There is no disclosure under the table. The fields: AIP activity (PPA) and Object of expenditure side by side; each particulars row as Category (where it belongs in the APP), Particulars, Frequency, Quantity, Unit, Unit cost in that order, flowing to the next line by the width of the form (so they fit when the official form is open at the right); Add particulars; the Note; the other lines and Add other line. Add item has the same fields.
+- The chosen activity and account are not written again under their boxes; their full text is the tooltip of the box.
+
+### 24.3 SOB list in Planning
+
+- Edit, Delete and Open are icon buttons (pencil, trash, open in new, each with a tooltip and a label for screen readers). Delete is red and asks before deleting: "Delete this draft SOB and its items?" or, for an approved SOB, "Delete this approved SOB, its items and release its Budget allotments?"; the same route and rules as the Danger zone of the SOB page. Open has a blue edge.
+- The Edit SOB window has two columns: the title and a short line across the top, Quarter and Source of fund side by side, Cancel and Save changes at the bottom right.
+
+### 24.4 Planning step bar
+
+- Steps 1 to 4 (SIP, AIP, SOB, APP) and the separate plan (APP-CSE) show the page that is open in **solid navy** (white text) so it cannot be mistaken for the other steps; the other steps keep their state colors (green done, amber current, gray to do). Clicking the open step again goes back to the overview. Opening the APP-CSE also marks the APP-CSE button in navy.
+
+### 24.5 From the SOB to the APP and the APP-CSE
+
+- **Approving an SOB puts every item of it into the school's APP of the fiscal year by itself**, under the item's Category, with its Particulars, quantity (Frequency × Quantity), Unit, Unit cost, total, source of fund and, as specifications, the AIP activity (the APP is made when there is none). An item added to an approved SOB later goes in too; an item the user took out of the APP is not brought back by an edit (it is offered again under "Choose what goes into the APP", which is shown only while some item is not in the APP). An approved APP that receives a new item goes back to a draft. Items already in an approved APP, or drawn on by a Purchase Request, still protect the SOB item as before.
+- **The APP-CSE (Procurement Service form) takes the items of every category** of the approved SOBs as Part II lines under their own category (Common Office Supply, Drugs and Medicine, Construction Components & Supplies, Paper and Products, Common ICT Equipments, Other categories): the quantity in the first month of the SOB's quarter, one line per category, particulars, unit and unit cost. The lines are changed in the SOB, not in the APP-CSE. An approved APP-CSE is left as it is while its SOB lines are the same; when a line comes or changes it goes back to a draft and follows the SOB (approve it again).
+- **Order of the APP panel** (Planning → APP), from the top: the first box (document strip), the **APP-CSE** (Procurement Service form) card, the **APP** with its Procurement Item list, and the **APP signatories** card at the very bottom (the Print APP button stays in the APP). The APP-CSE card says that its Part II lines come from the approved SOB.
+- **APP signatories:** "Suggested, not saved yet" names are not official: only saved names are printed on the APP.
+- **APP-CSE page** (`/planning/app-cse/{id}`): the first card is **Details** (office, region, address, contact, date, approved budget); the **Signatories** (Prepared by, Noted by, Certified Funds Available, Approved by) are at the very bottom of the page, after Approve, side by side in four columns, in a form of their own with Save signatories (only the signatory fields are sent, so the Details are not touched).
+
+Tests: `SobFlowTest`, `SobRevisionTest`, `SobPrintDesignTest`, `SobAppTest`, `SobApprovedEditTest`, `AppCseFromSobTest`, `PlanningFlowTest`.
