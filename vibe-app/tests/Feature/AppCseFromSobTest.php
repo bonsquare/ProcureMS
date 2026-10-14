@@ -35,7 +35,7 @@ class AppCseFromSobTest extends TestCase
             ->map(fn (AppCseItem $line) => [$line->description, $line->unit, (float) $line->unit_price, array_map('floatval', $line->months())])->all();
     }
 
-    public function test_a_common_office_supply_line_of_the_sob_is_written_into_the_app_cse_in_the_first_month_of_its_quarter(): void
+    public function test_every_line_of_the_sob_is_written_into_the_app_cse_under_its_category_in_the_first_month_of_its_quarter(): void
     {
         $fx = SobFixture::make();
         $this->actingAs($fx['user']);
@@ -52,10 +52,12 @@ class AppCseFromSobTest extends TestCase
         $this->assertNotNull($plan, 'the APP-CSE of the year is made when there is none');
         $october = array_fill(0, 12, 0.0);
         $october[9] = 10.0;
-        $this->assertSame([['Bond Paper', 'Ream', 300.0, $october]], $this->fromSob(), 'only the Common Office Supply line, in October, at the SOB unit cost');
-        $line = AppCseItem::where('from_sob', true)->first();
-        $this->assertTrue($line->isCustom(), 'a Part II line');
-        $this->assertSame('Common Office Supply', $line->category);
+        $laptop = $october;
+        $laptop[9] = 1.0;
+        $this->assertSame([['Bond Paper', 'Ream', 300.0, $october], ['Laptop', 'unit', 40000.0, $laptop]], $this->fromSob(), 'every category, in October, at the SOB unit cost');
+        $lines = AppCseItem::where('from_sob', true)->orderBy('sort_order')->get();
+        $this->assertTrue($lines->every->isCustom(), 'Part II lines');
+        $this->assertSame(['Common Office Supply', 'Common ICT Equipments'], $lines->pluck('category')->all(), 'each under its own category');
     }
 
     public function test_the_lines_follow_the_sob_when_it_changes_and_the_same_particulars_are_added_up(): void
@@ -87,7 +89,7 @@ class AppCseFromSobTest extends TestCase
         $this->assertSame([], $this->fromSob(), 'gone with the last SOB that had it');
     }
 
-    public function test_a_line_from_the_sob_is_changed_in_the_sob_and_an_approved_app_cse_is_left_alone(): void
+    public function test_a_line_from_the_sob_is_changed_in_the_sob_and_an_approved_app_cse_follows_it_as_a_draft(): void
     {
         $fx = SobFixture::make();
         $this->actingAs($fx['user']);
@@ -106,8 +108,12 @@ class AppCseFromSobTest extends TestCase
         $this->assertStringContainsString('From the SOB: change it in the SOB', $page);
 
         $line->plan->update(['status' => 'approved']);
+        app(AppCseService::class)->syncFromSob($fx['school'], 2026, $fx['user']);
+        $this->assertSame('approved', $line->plan->fresh()->status, 'nothing changed in the SOB: the approved APP-CSE is left as it is');
+
         $this->addLines($fx, $q1, [['particulars' => 'Folder', 'frequency' => 1, 'quantity' => 3, 'unit' => 'pc', 'unit_cost' => 10, 'category' => 'Common Office Supply']]);
-        $this->assertCount(1, $this->fromSob(), 'the approved APP-CSE stays as it was approved');
+        $this->assertCount(2, $this->fromSob(), 'a new line of the SOB comes into the APP-CSE');
+        $this->assertSame('draft', $line->plan->fresh()->status, 'and the approved APP-CSE goes back to a draft so it follows the SOB');
     }
 
     public function test_lines_with_no_quantity_are_folded_on_the_page_and_not_printed(): void

@@ -76,7 +76,14 @@
     {{-- The flow, always in view: SIP -> AIP -> SOB -> APP (each one opens its panel), and the separate APP-CSE --}}
     <nav id="planning-stepper" aria-label="Planning steps" class="sticky top-16 z-20 -mx-4 mb-4 overflow-hidden border-b border-outline-variant/30 bg-surface/95 px-4 py-2 backdrop-blur md:-mx-6 md:px-6 lg:-mx-8 lg:px-8">
         <div class="flex items-stretch gap-2 overflow-x-auto pb-0.5">
-            <style>#planning-stepper [data-overview][hidden]{display:none}</style><button type="button" data-overview hidden class="inline-flex shrink-0 items-center gap-1 rounded-lg border border-outline-variant/60 bg-white px-3 text-xs font-semibold text-primary hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">arrow_back</span>Overview</button>
+            <style>
+                #planning-stepper [data-overview][hidden]{display:none}
+                /* The step (or the separate plan) whose page is open is solid navy, so it cannot be mistaken for the others. */
+                #planning-stepper [aria-pressed="true"]{background:#103967;border-color:#103967;border-style:solid;box-shadow:0 4px 12px rgba(16,57,103,.35)}
+                #planning-stepper [aria-pressed="true"] .text-primary,#planning-stepper [aria-pressed="true"] .text-on-surface-variant:not(.material-symbols-outlined),#planning-stepper [aria-pressed="true"] .text-sm{color:#fff}
+                #planning-stepper [aria-pressed="true"] .text-on-surface-variant{color:rgba(255,255,255,.78)}
+                #planning-stepper [aria-pressed="true"] .rounded-full:not(.h-8){background:#fff}
+            </style><button type="button" data-overview hidden class="inline-flex shrink-0 items-center gap-1 rounded-lg border border-outline-variant/60 bg-white px-3 text-xs font-semibold text-primary hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">arrow_back</span>Overview</button>
             <ol class="flex shrink-0 items-stretch gap-1.5 md:min-w-0 md:flex-1">
                 @foreach($steps as $n => [$key, $icon, $title, $short, $line, $sub, $state, $stateLabel])
                     @php
@@ -425,6 +432,25 @@
 
 <div data-panel="app" class="hidden">
 @include('partials.document-strip', ['strip' => \App\Support\DocumentStrip::app($selectedSchool, (int) $year, $appPlan)])
+<section id="app-cse" class="mb-5 rounded-xl border border-outline-variant/40 bg-white shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 bg-gradient-to-r from-primary/5 to-transparent px-5 py-4">
+        @include('partials.planning-panel-head', ['icon' => 'inventory_2', 'title' => 'APP-CSE (Procurement Service form)', 'text' => 'The Annual Procurement Plan for Common Supplies and Equipment: the Procurement Service catalog with a quantity for each month, printed as the official form. It is a separate plan from the APP below; its Part II lines come from the approved SOB (every category).', 'chips' => []])
+        @if(auth()->user()->hasPermission('planning.manage'))
+            <form id="app-cse-create" method="POST" action="{{ route('planning.app-cse.store') }}" class="flex items-end gap-2">@csrf<input type="hidden" name="school_id" value="{{ $selectedSchool->id }}">
+                <label class="text-xs font-semibold text-on-surface-variant">Fiscal year<input type="number" name="fiscal_year" value="{{ $year }}" min="2000" max="2100" required class="mt-1 block w-24 rounded border border-outline-variant/50 bg-white px-2.5 py-2 text-sm outline-none focus:border-primary"></label>
+                <button class="rounded-lg bg-primary px-3 py-2 text-xs font-bold text-white hover:bg-primary-container">Create APP-CSE</button>
+            </form>
+        @endif
+    </div>
+    <details class="group" data-app-cse-list @if($appCsePlans->count() <= 1) open @endif>
+    <summary class="flex cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center justify-between gap-2 border-b border-outline-variant/10 px-5 py-3 text-xs font-semibold text-on-surface-variant"><span>{{ $appCsePlans->count() }} APP-CSE plan(s)</span><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] text-on-surface-variant transition-transform" aria-hidden="true">expand_more</span></summary>
+    @forelse($appCsePlans as $csePlan)
+        <a href="{{ route('planning.app-cse.show', $csePlan) }}" class="flex flex-wrap items-center justify-between gap-2 border-b border-outline-variant/10 px-5 py-3 text-sm last:border-0 hover:bg-surface-low/60"><span class="font-semibold">APP-CSE FY {{ $csePlan->fiscal_year }}</span><span class="text-xs text-on-surface-variant">{{ $csePlan->items_count }} item{{ $csePlan->items_count === 1 ? '' : 's' }} · {{ ucfirst($csePlan->status) }}</span></a>
+    @empty
+        <div class="px-5 py-6 text-center text-sm text-on-surface-variant">No APP-CSE yet for this school.</div>
+    @endforelse
+    </details>
+</section>
 <section class="rounded-xl border border-outline-variant/40 bg-white shadow-sm">
     <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 bg-gradient-to-r from-primary/5 to-transparent px-5 py-4">@include('partials.planning-panel-head', ['icon' => 'fact_check', 'title' => 'Annual Procurement Plan · FY '.$year, 'text' => 'Built from the approved SOBs. Linked PR activity is visible per transaction.', 'chips' => $appPlan ? [$appPlan->items->count().' item'.($appPlan->items->count() === 1 ? '' : 's'), ucfirst($appPlan->status), $peso($appTotal)] : ['Not generated yet']])@if(auth()->user()->hasPermission('planning.manage') && ($appCandidates->flatten(1)->isNotEmpty() || ! $appPlan))<a href="#app-picker" class="rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white">Choose SOB items for the APP</a>@endif</div>
     @php $appCandidateCount = $appCandidates->flatten(1)->count(); @endphp
@@ -456,14 +482,6 @@
         <div class="flex flex-wrap items-center justify-between gap-3 bg-surface-low/60 px-5 py-3"><span class="text-xs">APP status: <strong>{{ ucfirst($appPlan->status) }}</strong> · {{ $appPlan->items->count() }} item(s) · Planned total <strong>{{ $peso($appPlan->items->sum('estimated_total_cost')) }}</strong></span>@if(auth()->user()->hasPermission('planning.manage') && $appPlan->status !== 'approved')<form method="POST" action="{{ route('planning.app.approve', $appPlan) }}">@csrf<button class="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-primary-container disabled:cursor-not-allowed disabled:opacity-50">Approve APP</button></form>@endif</div>
         <div class="flex flex-wrap items-start gap-3 border-b border-outline-variant/20 px-5 py-3">
             <a href="{{ route('planning.app.print', $appPlan) }}" target="_blank" rel="noopener" class="rounded-lg border border-outline-variant/60 bg-white px-3 py-2 text-xs font-semibold text-on-surface hover:bg-surface-low">Print APP</a>
-            @if(auth()->user()->hasPermission('planning.manage'))
-            <div class="min-w-0 flex-1">
-                <form method="POST" action="{{ route('planning.app.signatories', $appPlan) }}">@csrf @method('PUT')
-                    @php $appSlots = \App\Support\PlanningSignatories::slots([['prepared_by', 'Prepared by', 'Prepared by', null, null, null, null], ['recommended_by', 'Recommending Approval', 'Recommending Approval', null, null, null, null], ['approved_by', 'Approved by', 'Approved by', null, null, null, null]], $appPlan, \App\Support\PlanningSignatories::lastUsed($appPlan->school_id, ['prepared_by', 'recommended_by', 'approved_by'])); @endphp
-                    @include('partials.signatory-editor', ['slots' => $appSlots, 'editable' => true, 'document' => 'APP', 'saveLabel' => 'Save signatories'])
-                </form>
-            </div>
-            @endif
         </div>
         <div class="overflow-x-auto"><table class="w-full min-w-[700px] text-left text-xs"><thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant"><tr><th class="px-5 py-3">Procurement Item</th><th class="px-4 py-3">Fund / Mode</th><th class="px-4 py-3 text-right">Planned Amount</th><th class="px-4 py-3">Requested (PR)</th><th class="px-5 py-3">Transaction / PR Status</th><th class="px-4 py-3"></th></tr></thead><tbody class="divide-y divide-outline-variant/20">@foreach(\App\Support\AppCategories::ALL as $categoryName)@php $categoryItems = $appPlan->items->filter(fn ($line) => \App\Support\AppCategories::of($line->category) === $categoryName); $catKey = \Illuminate\Support\Str::slug($categoryName); $catOpen = $appPlan->items->count() <= 10; @endphp @if($categoryItems->isNotEmpty())<tr class="cursor-pointer bg-primary text-white hover:bg-primary-container" data-app-cat="{{ $catKey }}" aria-expanded="{{ $catOpen ? 'true' : 'false' }}" tabindex="0" role="button"><td colspan="6" class="px-5 py-3"><span class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1"><span class="flex items-center gap-3"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">flag</span><span><span class="block text-[10px] font-semibold uppercase tracking-widest text-white/70">Category</span><span class="block text-base font-semibold normal-case tracking-normal">{{ $categoryName }}</span></span></span><span class="flex items-center gap-2 text-xs font-normal normal-case tracking-normal text-white/80 max-sm:basis-full max-sm:pl-9">{{ $categoryItems->count() }} item(s) · {{ $peso($categoryItems->sum('estimated_total_cost')) }}<span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] text-on-surface-variant transition-transform" aria-hidden="true">expand_more</span></span></span></td></tr>@foreach($categoryItems as $item)@php $transaction = $item->sobItem?->plan?->transaction ?? $item->ppmpItem?->plan?->transaction; $linkedPrs = $transaction?->procurementRequests ?? collect(); @endphp<tr data-app-cat-row="{{ $catKey }}" @if(! $catOpen) hidden @endif><td class="px-5 py-3"><span class="font-semibold">{{ $item->procurement_item }}</span><div class="mt-1 text-on-surface-variant">{{ $item->specifications ?: '—' }}</div></td><td class="px-4 py-3">{{ $item->fund_source ?: '—' }}<div class="mt-1 text-on-surface-variant">{{ $item->procurement_mode ?: 'Mode not set' }}</div></td><td class="px-4 py-3 text-right font-semibold">{{ $peso($item->estimated_total_cost) }}</td>@php $activeLines = $item->requestItems->filter(fn ($line) => $line->procurementRequest && ! in_array($line->procurementRequest->status, ['returned', 'rejected'])); @endphp<td class="px-4 py-3">{{ rtrim(rtrim(number_format((float) $activeLines->sum('quantity'), 2), '0'), '.') ?: '0' }} of {{ rtrim(rtrim(number_format((float) $item->quantity, 2), '0'), '.') }} {{ $item->unit }}<div class="mt-1 text-on-surface-variant">@forelse($activeLines->pluck('procurementRequest')->unique('id') as $linkedPr)<a class="font-semibold text-primary underline" href="{{ route('procurement.print', $linkedPr) }}">{{ $linkedPr->request_number }}</a>@if(! $loop->last), @endif @empty No PR yet @endforelse</div></td><td class="px-5 py-3">@if($transaction)<a class="font-semibold text-primary underline" href="{{ route('transactions.show', $transaction) }}">{{ $transaction->transaction_number }}</a><div class="mt-1 text-on-surface-variant">{{ $linkedPrs->count() }} linked PR(s) · {{ str($transaction->status)->replace('_', ' ')->title() }}</div>@else<span class="text-on-surface-variant">No transaction link</span>@endif</td>
                 <td class="whitespace-nowrap px-4 py-3 text-right">@if(auth()->user()->hasPermission('planning.manage'))
@@ -502,25 +520,16 @@
 
 </section>
 
-<section id="app-cse" class="mt-5 rounded-xl border border-outline-variant/40 bg-white shadow-sm">
-    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 bg-gradient-to-r from-primary/5 to-transparent px-5 py-4">
-        @include('partials.planning-panel-head', ['icon' => 'inventory_2', 'title' => 'APP-CSE (Procurement Service form)', 'text' => 'The Annual Procurement Plan for Common Supplies and Equipment: the Procurement Service catalog with a quantity for each month, printed as the official form. It is a separate plan: it does not come from the SOB and does not change the APP above.', 'chips' => []])
-        @if(auth()->user()->hasPermission('planning.manage'))
-            <form id="app-cse-create" method="POST" action="{{ route('planning.app-cse.store') }}" class="flex items-end gap-2">@csrf<input type="hidden" name="school_id" value="{{ $selectedSchool->id }}">
-                <label class="text-xs font-semibold text-on-surface-variant">Fiscal year<input type="number" name="fiscal_year" value="{{ $year }}" min="2000" max="2100" required class="mt-1 block w-24 rounded border border-outline-variant/50 bg-white px-2.5 py-2 text-sm outline-none focus:border-primary"></label>
-                <button class="rounded-lg bg-primary px-3 py-2 text-xs font-bold text-white hover:bg-primary-container">Create APP-CSE</button>
-            </form>
-        @endif
-    </div>
-    <details class="group" data-app-cse-list @if($appCsePlans->count() <= 1) open @endif>
-    <summary class="flex cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center justify-between gap-2 border-b border-outline-variant/10 px-5 py-3 text-xs font-semibold text-on-surface-variant"><span>{{ $appCsePlans->count() }} APP-CSE plan(s)</span><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] text-on-surface-variant transition-transform" aria-hidden="true">expand_more</span></summary>
-    @forelse($appCsePlans as $csePlan)
-        <a href="{{ route('planning.app-cse.show', $csePlan) }}" class="flex flex-wrap items-center justify-between gap-2 border-b border-outline-variant/10 px-5 py-3 text-sm last:border-0 hover:bg-surface-low/60"><span class="font-semibold">APP-CSE FY {{ $csePlan->fiscal_year }}</span><span class="text-xs text-on-surface-variant">{{ $csePlan->items_count }} item{{ $csePlan->items_count === 1 ? '' : 's' }} · {{ ucfirst($csePlan->status) }}</span></a>
-    @empty
-        <div class="px-5 py-6 text-center text-sm text-on-surface-variant">No APP-CSE yet for this school.</div>
-    @endforelse
-    </details>
+{{-- Signatories of the APP: at the very bottom of the APP panel, after the APP-CSE (Procurement Service form). --}}
+@if($appPlan && auth()->user()->hasPermission('planning.manage'))
+<section class="mt-5 rounded-xl border border-outline-variant/40 bg-white p-5 shadow-sm">
+    <h2 class="text-base font-semibold">APP signatories</h2>
+    <form method="POST" action="{{ route('planning.app.signatories', $appPlan) }}" class="mt-3">@csrf @method('PUT')
+        @php $appSlots = \App\Support\PlanningSignatories::slots([['prepared_by', 'Prepared by', 'Prepared by', null, null, null, null], ['recommended_by', 'Recommending Approval', 'Recommending Approval', null, null, null, null], ['approved_by', 'Approved by', 'Approved by', null, null, null, null]], $appPlan, \App\Support\PlanningSignatories::lastUsed($appPlan->school_id, ['prepared_by', 'recommended_by', 'approved_by'])); @endphp
+        @include('partials.signatory-editor', ['slots' => $appSlots, 'editable' => true, 'document' => 'APP', 'saveLabel' => 'Save signatories'])
+    </form>
 </section>
+@endif
 </div>
 
 @if(auth()->user()->hasPermission('planning.manage'))
@@ -570,6 +579,7 @@
             tab.classList.toggle('ring-primary/30', on);
             tab.setAttribute('aria-pressed', on ? 'true' : 'false');
         });
+        document.querySelector('[data-goto="app-cse"]')?.setAttribute('aria-pressed', 'false');
         hint.classList.toggle('hidden', Boolean(name));
         document.getElementById('planning-glance')?.classList.toggle('hidden', Boolean(name));
         document.querySelector('[data-overview]')?.toggleAttribute('hidden', ! name);
@@ -578,7 +588,7 @@
     }
     tabs.forEach((tab) => tab.addEventListener('click', () => show(tab.classList.contains('ring-2') ? '' : tab.dataset.tab)));
     document.querySelector('[data-overview]')?.addEventListener('click', () => show(''));
-    document.querySelector('[data-goto="app-cse"]')?.addEventListener('click', () => { show('app'); document.getElementById('app-cse')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+    document.querySelector('[data-goto="app-cse"]')?.addEventListener('click', (event) => { show('app'); event.currentTarget.setAttribute('aria-pressed', 'true'); document.getElementById('app-cse')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
     document.querySelectorAll('[data-toggle-form]').forEach((button) => {
         button.dataset.label = button.textContent;
         button.addEventListener('click', () => {

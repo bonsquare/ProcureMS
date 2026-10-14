@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Aip;
 use App\Models\AipActivity;
 use App\Models\AppItem;
+use App\Models\AppPlan;
 use App\Models\AuditLog;
 use App\Models\BudgetAllocation;
 use App\Models\ChartOfAccount;
@@ -298,6 +299,7 @@ class SobService
             ]);
             $transaction->recordEvent('sob', 'approved', 'draft', 'approved', $this->title($locked), ['sob_plan_id' => $locked->id, 'created_allocations' => $created, 'updated_allocations' => $updated]);
             $this->audit($locked, $user, 'sob_approved', ['created' => $created, 'updated' => $updated]);
+            $this->placeInApp($locked, $items, $transaction, $user);
 
             return ['created' => $created, 'updated' => $updated];
         });
@@ -612,6 +614,50 @@ class SobService
         }
     }
 
+    /**
+     * Every item of an approved SOB goes into the school's APP of the fiscal year by itself, under its category, with its particulars,
+     * quantity, unit and unit cost (the APP is made when there is none). An item that is already there is left to the refresh of resyncApproved();
+     * an approved APP that receives a new item goes back to a draft, as when items are chosen for it by hand.
+     *
+     * @param  Collection<int, SobItem>  $items
+     */
+    private function placeInApp(SobPlan $plan, Collection $items, MasterTransaction $transaction, ?User $user): int
+    {
+        if ($items->reject->is_extra->isEmpty()) {
+            return 0;
+        }
+        $appPlan = AppPlan::withoutGlobalScopes()->firstOrCreate(
+            ['school_id' => $plan->school_id, 'fiscal_year' => $plan->fiscal_year],
+            ['organization_id' => $plan->organization_id, 'status' => 'draft', 'created_by' => $user?->id ?? $plan->created_by],
+        );
+        $added = 0;
+        foreach ($items->reject->is_extra as $item) {
+            $appItem = AppItem::withoutGlobalScopes()->firstOrCreate(
+                ['app_plan_id' => $appPlan->id, 'sob_item_id' => $item->id],
+                [
+                    'organization_id' => $plan->organization_id,
+                    'procurement_item' => $item->particulars,
+                    'specifications' => $item->activity?->activity,
+                    'quantity' => round((float) $item->frequency * (float) $item->quantity, 2),
+                    'unit' => $item->unit,
+                    'estimated_unit_cost' => $item->unit_cost,
+                    'estimated_total_cost' => $item->amount,
+                    'fund_source' => $plan->fund_source,
+                    'category' => $item->category,
+                ],
+            );
+            if ($appItem->wasRecentlyCreated) {
+                $added++;
+                $transaction->recordEvent('app', 'included_in_app', null, 'planned', $item->particulars, ['app_plan_id' => $appPlan->id]);
+            }
+        }
+        if ($added > 0 && $appPlan->status === 'approved') {
+            $appPlan->update(['status' => 'draft']);
+        }
+
+        return $added;
+    }
+
     /** After a change to an approved SOB: the Budget allotments, the APP lines, the audit log and the transaction history follow. */
     private function resyncApproved(SobPlan $plan): void
     {
@@ -629,6 +675,8 @@ class SobService
                 'category' => $item->category,
             ]);
         }
+        // Only an item added after the approval goes in (an item the user took out of the APP is not brought back by an edit).
+        $this->placeInApp($plan, $items->filter(fn (SobItem $item) => $plan->approved_at && $item->created_at && $item->created_at->gte($plan->approved_at)), $transaction, $user);
         $this->audit($plan, $user, 'sob_revised', ['created' => $created, 'updated' => $updated]);
         $transaction->recordEvent('sob', 'revised', 'approved', 'approved', $this->title($plan), ['sob_plan_id' => $plan->id, 'created_allocations' => $created, 'updated_allocations' => $updated]);
     }

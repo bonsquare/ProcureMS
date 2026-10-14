@@ -16,7 +16,7 @@
     $fieldClass = 'mt-1 w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-sm font-normal outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:bg-surface-low';
 @endphp
 <div class="rounded-lg border border-outline-variant/40 bg-white" data-signatory-editor>
-    <ul class="divide-y divide-outline-variant/20 {{ $horizontal ? 'md:grid md:grid-cols-3 md:divide-x md:divide-y-0' : '' }}" aria-label="Who signs the {{ $document }}">
+    <ul class="divide-y divide-outline-variant/20 {{ $horizontal ? (count($slots) >= 4 ? 'md:grid md:grid-cols-4 md:divide-x md:divide-y-0' : 'md:grid md:grid-cols-3 md:divide-x md:divide-y-0') : '' }}" aria-label="Who signs the {{ $document }}">
         @foreach($slots as $slot)
             @php [$chip, $icon, $label] = $statusStyle[$slot['status']]; @endphp
             <li class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-2.5 {{ $horizontal ? 'md:flex-col md:items-start md:justify-start md:gap-y-2' : '' }}">

@@ -119,12 +119,11 @@ class SobRevisionTest extends TestCase
 
     private function appItemFor(array $fx, SobPlan $plan, string $appStatus): AppItem
     {
-        $appPlan = AppPlan::create(['organization_id' => $fx['organization']->id, 'school_id' => $fx['school']->id, 'fiscal_year' => 2026, 'status' => $appStatus]);
+        // Approving the SOB already put its items into the APP; the test only sets the status of that APP.
+        $appPlan = AppPlan::withoutGlobalScopes()->where('school_id', $fx['school']->id)->where('fiscal_year', 2026)->firstOrFail();
+        $appPlan->update(['status' => $appStatus]);
 
-        return AppItem::create([
-            'organization_id' => $fx['organization']->id, 'app_plan_id' => $appPlan->id, 'sob_item_id' => $plan->items()->first()->id, 'procurement_item' => 'Bond paper',
-            'quantity' => 10, 'unit' => 'ream', 'estimated_unit_cost' => 100, 'estimated_total_cost' => 1000, 'fund_source' => 'MOOE',
-        ]);
+        return AppItem::withoutGlobalScopes()->where('app_plan_id', $appPlan->id)->where('sob_item_id', $plan->items()->first()->id)->firstOrFail();
     }
 
     public function test_reopening_is_refused_when_an_approved_app_or_a_purchase_request_uses_its_items(): void
@@ -391,7 +390,7 @@ class SobRevisionTest extends TestCase
 
         $this->assertStringNotContainsString($activityText, $html, 'the activity is not shown: the SOB goes by the program, so a change to the activity text cannot go out of step');
         $this->assertStringContainsString($accountTitle, $html, 'and the whole account title');
-        $this->assertSame(4, preg_match_all('/<p data-full-text-output/', $html), 'a full-text line under each of the 2 selects of the add form and of the one item edit form');
+        $this->assertSame(0, preg_match_all('/<p data-full-text-output/', $html), 'the chosen text is not written again under the select (it is the tooltip of the select)');
         $this->assertSame(4, preg_match_all('/<div class="[^"]*" data-full-text-box>/', $html));
     }
 }

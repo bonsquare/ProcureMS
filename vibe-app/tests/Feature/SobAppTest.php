@@ -43,6 +43,22 @@ class SobAppTest extends TestCase
         return $this->post(route('planning.app.generate'), ['school_id' => $fx['school']->id, 'fiscal_year' => 2026, 'sob_item_ids' => SobItem::withoutGlobalScopes()->where('is_extra', false)->pluck('id')->all()]);
     }
 
+    public function test_approving_the_sob_puts_its_items_into_the_app_under_their_category_and_a_later_item_follows(): void
+    {
+        $fx = SobFixture::make();
+        $this->actingAs($fx['user']);
+        $plan = $this->approvedSob($fx, [$this->line($fx, ['category' => 'Common Office Supply', 'frequency' => 2])]);
+
+        $paper = AppItem::withoutGlobalScopes()->sole();
+        $this->assertSame(['Bond paper', 'Common Office Supply', 'ream', 'MOOE'], [$paper->procurement_item, $paper->category, $paper->unit, $paper->fund_source]);
+        $this->assertEquals([20, 250, 5000], [$paper->quantity, $paper->estimated_unit_cost, $paper->estimated_total_cost]);
+        $this->assertSame('draft', AppPlan::withoutGlobalScopes()->sole()->status);
+
+        app(SobService::class)->addItem($plan->fresh(), $this->line($fx, ['particulars' => 'Folder', 'category' => 'Common Office Supply', 'quantity' => 5, 'unit' => 'box', 'unit_cost' => 100]));
+
+        $this->assertSame(['Bond paper', 'Folder'], AppItem::withoutGlobalScopes()->orderBy('id')->pluck('procurement_item')->all(), 'an item added to the approved SOB goes into the APP too');
+    }
+
     public function test_generate_app_takes_the_items_of_approved_sobs_with_frequency_times_quantity(): void
     {
         $fx = SobFixture::make();
@@ -71,21 +87,19 @@ class SobAppTest extends TestCase
         [$paper, $caretaker] = $plan->items()->orderBy('id')->get()->all();
         $base = ['school_id' => $fx['school']->id, 'fiscal_year' => 2026];
 
+        $this->assertSame(['Bond paper', 'Caretaker'], AppItem::withoutGlobalScopes()->orderBy('id')->pluck('procurement_item')->all(), 'approving the SOB put every item into the APP by itself');
         $this->post(route('planning.app.generate'), $base)->assertSessionHasErrors('planning');
-        $this->assertSame(0, AppPlan::withoutGlobalScopes()->count(), 'nothing is chosen, nothing is created');
-
-        $this->post(route('planning.app.generate'), $base + ['sob_item_ids' => [$paper->id]])->assertSessionHasNoErrors();
-        $this->assertSame(['Bond paper'], AppItem::withoutGlobalScopes()->pluck('procurement_item')->all());
+        $this->assertSame(2, AppItem::withoutGlobalScopes()->count(), 'nothing is chosen, nothing is added');
 
         $page = $this->get(route('planning', ['school_id' => $fx['school']->id, 'year' => 2026]))->assertOk()->getContent();
-        $this->assertStringContainsString('Choose what goes into the APP', $page);
-        $this->assertStringContainsString('value="'.$caretaker->id.'"', $page, 'the unchosen item is still offered');
-        $this->assertStringNotContainsString('value="'.$paper->id.'" data-app-pick', $page, 'the chosen one is no longer offered');
+        $this->assertStringNotContainsString('Choose what goes into the APP', $page, 'every item is already in the APP, so there is nothing to choose');
 
-        $appItem = AppItem::withoutGlobalScopes()->sole();
-        $this->delete(route('planning.app.items.destroy', $appItem))->assertSessionHasNoErrors();
+        $this->delete(route('planning.app.items.destroy', AppItem::withoutGlobalScopes()->where('sob_item_id', $caretaker->id)->sole()))->assertSessionHasNoErrors();
+        $page = $this->get(route('planning', ['school_id' => $fx['school']->id, 'year' => 2026]))->assertOk()->getContent();
+        $this->assertStringContainsString('value="'.$caretaker->id.'"', $page, 'an item taken out of the APP is offered again');
+        $this->assertStringNotContainsString('value="'.$paper->id.'" data-app-pick', $page, 'the one still in the APP is not offered');
         $this->post(route('planning.app.generate'), $base + ['sob_item_ids' => [$caretaker->id]])->assertSessionHasNoErrors();
-        $this->assertSame(['Caretaker'], AppItem::withoutGlobalScopes()->pluck('procurement_item')->all(), 'the removed item stays out until it is chosen again');
+        $this->assertSame(['Bond paper', 'Caretaker'], AppItem::withoutGlobalScopes()->orderBy('id')->pluck('procurement_item')->all(), 'it comes back when it is chosen again');
     }
 
     public function test_generating_twice_adds_no_duplicates_and_leaves_ppmp_items_alone(): void

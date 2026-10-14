@@ -31,7 +31,7 @@
 @include('partials.document-strip', ['strip' => \App\Support\DocumentStrip::appCse($plan)])
 
 <section class="mb-5 rounded border border-outline-variant/30 bg-white p-4">
-    <h2 class="font-semibold">Details and signatories</h2>
+    <h2 class="font-semibold">Details</h2>
     @if($editable)
         <form method="POST" action="{{ route('planning.app-cse.update', $plan) }}" class="mt-3 grid gap-3 md:grid-cols-3">@csrf @method('PUT')
             <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Department/Bureau/Office<input name="office_name" value="{{ old('office_name', $plan->office_name) }}" maxlength="255" class="{{ $box }}"></label>
@@ -46,19 +46,6 @@
             <label class="text-xs font-semibold text-on-surface-variant">Date Prepared<input type="date" name="date_prepared" value="{{ old('date_prepared', $plan->date_prepared?->toDateString()) }}" class="{{ $box }}"></label>
             <label class="text-xs font-semibold text-on-surface-variant">E. Approved budget by the agency head (figures)<input type="number" name="approved_budget" step="0.01" min="0" value="{{ old('approved_budget', $plan->approved_budget) }}" class="{{ $box }}"></label>
             <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">E. Approved budget (in words)<input name="approved_budget_words" value="{{ old('approved_budget_words', $plan->approved_budget_words) }}" maxlength="500" class="{{ $box }}"></label>
-            @php
-                $cseDefs = [];
-                foreach ([['prepared_by', 'Prepared by', 'Prepared by:', 'Property/Supply Officer'], ['noted_by', 'Noted by', 'NOTED:', 'School Head'], ['certified_by', 'Certified funds available', 'Certified Funds Available / Certified Appropriate Funds Available:', 'Accountant / Local Budget Officer']] as [$slotKey, $slotLegend, $slotTitle, $slotPosition]) {
-                    $slotRow = collect($signatoryRows)->first(fn ($row) => $row['slot']['key'] === $slotKey);
-                    $cseDefs[] = [$slotKey, $slotLegend, rtrim($slotTitle, ': '), null, null, $slotRow['default']?->name ?: 'Full name', 'Blank prints: '.$slotPosition];
-                }
-                $cseDefs[] = ['agency_head', 'Approved by', 'Approved by', null, null, 'Full name (Head of Office/Agency)', null];
-                $cseSlots = \App\Support\PlanningSignatories::slots($cseDefs, $plan, [], true);
-                foreach ($cseSlots as $slotIndex => $cseSlot) {
-                    $cseSlots[$slotIndex]['picker'] = collect($signatoryRows)->first(fn ($row) => $row['slot']['key'] === $cseSlot['key']);
-                }
-            @endphp
-            <div class="md:col-span-3">@include('partials.signatory-editor', ['slots' => $cseSlots, 'editable' => true, 'document' => 'APP-CSE', 'open' => $errors->any()])</div>
             <div class="md:col-span-3"><button class="rounded-lg bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary-container">Save details</button></div>
         </form>
     @else
@@ -152,6 +139,28 @@
     @else
         <p class="mt-3 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">Enter a quantity for at least one item to enable approval.</p>
     @endif
+</section>
+@endif
+
+@if($editable)
+{{-- Signatories of the APP-CSE: at the very bottom of the page, side by side (a form of their own: only the signatory fields are sent). --}}
+<section class="mb-8 rounded border border-outline-variant/30 bg-white p-4">
+    <h2 class="font-semibold">Signatories</h2>
+    <form method="POST" action="{{ route('planning.app-cse.update', $plan) }}" class="mt-3">@csrf @method('PUT')
+        @php
+            $cseDefs = [];
+            foreach ([['prepared_by', 'Prepared by', 'Prepared by:', 'Property/Supply Officer'], ['noted_by', 'Noted by', 'NOTED:', 'School Head'], ['certified_by', 'Certified funds available', 'Certified Funds Available / Certified Appropriate Funds Available:', 'Accountant / Local Budget Officer']] as [$slotKey, $slotLegend, $slotTitle, $slotPosition]) {
+                $slotRow = collect($signatoryRows)->first(fn ($row) => $row['slot']['key'] === $slotKey);
+                $cseDefs[] = [$slotKey, $slotLegend, rtrim($slotTitle, ': '), null, null, $slotRow['default']?->name ?: 'Full name', 'Blank prints: '.$slotPosition];
+            }
+            $cseDefs[] = ['agency_head', 'Approved by', 'Approved by', null, null, 'Full name (Head of Office/Agency)', null];
+            $cseSlots = \App\Support\PlanningSignatories::slots($cseDefs, $plan, [], true);
+            foreach ($cseSlots as $slotIndex => $cseSlot) {
+                $cseSlots[$slotIndex]['picker'] = collect($signatoryRows)->first(fn ($row) => $row['slot']['key'] === $cseSlot['key']);
+            }
+        @endphp
+        @include('partials.signatory-editor', ['slots' => $cseSlots, 'editable' => true, 'document' => 'APP-CSE', 'open' => $errors->any(), 'saveLabel' => 'Save signatories', 'horizontal' => true])
+    </form>
 </section>
 @endif
 @include('partials.doc-preview-dock', ['key' => 'cse-'.$plan->id, 'title' => 'Official APP-CSE', 'savedUrl' => route('planning.app-cse.print', $plan), 'drafts' => 'form[method="POST"][action*="/planning/app-cse/"]:not([action$="/approve"])'])

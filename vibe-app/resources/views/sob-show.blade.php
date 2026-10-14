@@ -31,14 +31,28 @@
 @if($errors->any())<div class="mb-4 rounded border border-error/30 bg-error/5 px-4 py-3 text-sm text-error">{{ $errors->first() }}</div>@endif
 {{-- "Reopen as a draft" sits in the first box of the page (the document strip), under the form the SOB makes. --}}
 @include('partials.document-strip', ['strip' => \App\Support\DocumentStrip::sob($plan), 'reopenUrl' => (! $draft && $canManage) ? route('planning.sob.reopen', $plan) : null])
-<style>details[open] > summary .sum-chevron{transform:rotate(180deg)}</style>
-@if($over->isNotEmpty())<div class="mb-4 rounded border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">{{ $over->count() }} program{{ $over->count() === 1 ? ' goes' : 's go' }} over the AIP amount for this quarter. Saving is still allowed; they are marked below.</div>@endif
+<style>
+    details[open] > summary .sum-chevron{transform:rotate(180deg)}
+    /* The particulars of an item flow by the width of the form itself (not the screen), so they fit when the official form is open beside them. */
+    .sob-rows{display:flex;flex-wrap:wrap;align-items:flex-end;gap:.75rem}
+    .sob-rows > [data-row]{display:contents}
+    .sob-rows .sob-f-cat{flex:2 1 11rem;min-width:0}
+    .sob-rows .sob-f-part{flex:3 1 12rem;min-width:0}
+    .sob-rows .sob-f-num{flex:0 1 5.5rem;min-width:0}
+    .sob-rows .sob-f-unit{flex:1 1 6rem;min-width:0}
+    .sob-rows .sob-f-cost{flex:1 1 7rem;min-width:0}
+    .sob-rows .sob-f-remove{flex:0 0 100%;text-align:left}
+</style>
+@if($over->isNotEmpty())<div data-notice class="relative mb-3 rounded border border-amber-300 bg-amber-50 py-2 pl-3 pr-9 text-xs text-amber-900"><button type="button" data-dismiss-notice title="Close" aria-label="Close this message" class="absolute right-1.5 top-1.5 inline-flex h-6 w-6 items-center justify-center rounded text-amber-900 hover:bg-amber-200/60"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">close</span></button>{{ $over->count() }} program{{ $over->count() === 1 ? ' goes' : 's go' }} over the AIP amount for this quarter. Saving is still allowed; they are marked below.</div>@endif
 
 @if(! $draft && $canManage)
-<details class="group mb-5 rounded border border-amber-300 bg-amber-50 p-4">
-    <summary class="flex cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center justify-between gap-2 text-amber-900"><h2 class="font-semibold">This SOB is approved</h2><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] transition-transform" aria-hidden="true">expand_more</span></summary>
-    <p class="mt-1 text-sm text-amber-900">You can still change the fund, the quarter, the details and any item. Each change is saved at once and the Budget allotments and the draft APP follow it (a change is refused if a Purchase Request already draws from the item, if the line is already obligated, or if the item is in an approved APP: unlock the APP first). Reopen it only if you want it back as a draft.</p>
+<div data-notice class="relative mb-3">
+<details class="group rounded border border-amber-300 bg-amber-50 py-2 pl-3 pr-9">
+    <summary class="flex cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center justify-between gap-2 text-amber-900"><h2 class="text-sm font-semibold">This SOB is approved</h2><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] transition-transform" aria-hidden="true">expand_more</span></summary>
+    <p class="mt-1 text-xs text-amber-900">You can still change the fund, the quarter, the details and any item. Each change is saved at once and the Budget allotments and the draft APP follow it (a change is refused if a Purchase Request already draws from the item, if the line is already obligated, or if the item is in an approved APP: unlock the APP first). Reopen it only if you want it back as a draft.</p>
 </details>
+<button type="button" data-dismiss-notice title="Close" aria-label="Close this message" class="absolute right-1.5 top-2 inline-flex h-6 w-6 items-center justify-center rounded text-amber-900 hover:bg-amber-200/60"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">close</span></button>
+</div>
 @endif
 
 @if($editable)
@@ -48,7 +62,7 @@
     <h2 class="font-semibold">Add item</h2>
     <p class="mt-1 text-xs text-on-surface-variant">Choose the Specific Program / Project and its activity, then what is bought for it. Use Add particulars for more than one, and Add other line for anything else (for example Labor). Each amount is frequency × quantity × unit cost.</p>
     <form method="POST" action="{{ route('planning.sob.items.store', $plan) }}" class="sob-line-form mt-3 grid gap-3 md:grid-cols-6">@csrf
-        <div class="md:col-span-6" data-full-text-box><label class="block text-xs font-semibold text-on-surface-variant">AIP activity (PPA)
+        <div class="md:col-span-3" data-full-text-box><label class="block text-xs font-semibold text-on-surface-variant">AIP activity (PPA)
             <select name="aip_activity_id" required class="{{ $box }}">
                 <option value="">Choose an activity</option>
                 @foreach($plan->aip->kras->groupBy(fn ($kra) => \App\Services\SobService::pillarName($kra->pillar)) as $pillarName => $pillarKras)
@@ -61,13 +75,13 @@
                     </optgroup>
                 @endforeach
             </select>
-        </label><p data-full-text-output class="mt-1 text-xs font-normal leading-5 text-on-surface"></p></div>
-        <div class="md:col-span-6" data-full-text-box><label class="block text-xs font-semibold text-on-surface-variant">Object of expenditure (account)
+        </label></div>
+        <div class="md:col-span-3" data-full-text-box><label class="block text-xs font-semibold text-on-surface-variant">Object of expenditure (account)
             <select name="chart_of_account_id" required class="{{ $box }}">
                 <option value="">Choose an account</option>
                 @foreach($accounts as $account)<option value="{{ $account->id }}" @selected((string) old('chart_of_account_id') === (string) $account->id)>{{ $account->code }} · {{ $account->title }}</option>@endforeach
             </select>
-        </label><p data-full-text-output class="mt-1 text-xs font-normal leading-5 text-on-surface"></p></div>
+        </label></div>
         @include('partials.sob-item-fields', ['group' => null, 'box' => $box])
         <div class="flex items-end gap-3 md:col-span-6"><p class="text-sm font-semibold">Amount: <span data-amount>₱0.00</span></p><button class="ml-auto rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-primary-container">Add item</button></div>
     </form>
@@ -91,33 +105,32 @@
                     @if($loop->first)<p class="text-xs {{ $isOver ? 'font-bold text-amber-800' : 'text-on-surface-variant' }}">AIP {{ $plan->quarterLabel() }}: {{ $program['aip_amount'] > 0 ? $peso($program['aip_amount']) : 'not yet determined' }} · SOB: {{ $peso($program['total']) }} @if($isOver)· Over the AIP amount @endif</p>@endif
                 </div>
                 @foreach($row['accounts'] as $group)
-                <div class="mt-3 rounded border border-outline-variant/30">
+                <div class="mt-3 rounded border border-outline-variant/30" data-item-box>
                     <div class="flex flex-wrap items-center justify-between gap-2 border-b border-outline-variant/20 bg-surface-low px-3 py-1.5">
                         <p class="text-xs font-semibold">{{ $group['account']?->code }} · {{ $group['account']?->title }}@if($group['note'])<span class="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-semibold text-amber-900">{{ $group['note'] }}</span>@endif</p>
-                        <p class="text-xs font-semibold">{{ $peso($group['total']) }}</p>
+                        <div class="flex items-center gap-2"><p class="text-xs font-semibold">{{ $peso($group['total']) }}</p>
+                            @if($editable)
+                            <button type="button" data-edit-toggle title="Edit item" aria-label="Edit this item" class="inline-flex h-7 w-7 items-center justify-center rounded border bg-white border-outline-variant/60 text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">edit</span></button>
+                            <form class="inline-flex" method="POST" action="{{ route('planning.sob.groups.destroy', $plan) }}" onsubmit="return confirm('Remove this whole item with all its particulars?')">@csrf @method('DELETE')<input type="hidden" name="old_activity" value="{{ $row['activity']->id }}"><input type="hidden" name="old_account" value="{{ $group['account']?->id }}"><button title="Remove item" aria-label="Remove this item" class="inline-flex h-7 w-7 items-center justify-center rounded border bg-white border-error/40 text-error hover:bg-error/10"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">delete</span></button></form>
+                            @endif
+                        </div>
                     </div>
-                    <div class="overflow-x-auto"><table class="w-full min-w-[640px] text-left text-xs"><thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant"><tr><th class="px-3 py-1.5">Particulars</th><th class="px-2 text-right">Frequency</th><th class="px-2 text-right">Quantity</th><th class="px-2">Unit</th><th class="px-2 text-right">Unit cost</th><th class="px-3 text-right">Amount</th></tr></thead><tbody class="divide-y divide-outline-variant/20">
+                    <div class="overflow-x-auto" data-item-view><table class="w-full min-w-[720px] text-left text-xs"><thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant"><tr><th class="px-3 py-1.5">Category</th><th class="px-3 py-1.5">Particulars</th><th class="px-2 text-right">Frequency</th><th class="px-2 text-right">Quantity</th><th class="px-2">Unit</th><th class="px-2 text-right">Unit cost</th><th class="px-3 text-right">Amount</th></tr></thead><tbody class="divide-y divide-outline-variant/20">
                     @foreach($group['items'] as $item)
-                        <tr><td class="px-3 py-1.5">{{ $item->particulars }}</td><td class="px-2 text-right">{{ rtrim(rtrim(number_format((float) $item->frequency, 2, '.', ''), '0'), '.') }}</td><td class="px-2 text-right">{{ rtrim(rtrim(number_format((float) $item->quantity, 2, '.', ''), '0'), '.') }}</td><td class="px-2">{{ $item->unit }}</td><td class="px-2 text-right">{{ number_format((float) $item->unit_cost, 2) }}</td><td class="px-3 text-right font-semibold">{{ number_format((float) $item->amount, 2) }}</td></tr>
+                        <tr><td class="px-3 py-1.5">{{ \App\Support\AppCategories::of($item->category) }}</td><td class="px-3 py-1.5">{{ $item->particulars }}</td><td class="px-2 text-right">{{ rtrim(rtrim(number_format((float) $item->frequency, 2, '.', ''), '0'), '.') }}</td><td class="px-2 text-right">{{ rtrim(rtrim(number_format((float) $item->quantity, 2, '.', ''), '0'), '.') }}</td><td class="px-2">{{ $item->unit }}</td><td class="px-2 text-right">{{ number_format((float) $item->unit_cost, 2) }}</td><td class="px-3 text-right font-semibold">{{ number_format((float) $item->amount, 2) }}</td></tr>
                     @endforeach
                     @foreach($group['extras'] as $extra)
-                        <tr class="bg-surface-low/60"><td class="px-3 py-1.5 italic">{{ $extra->particulars }}</td><td></td><td></td><td class="px-2">{{ $extra->unit }}</td><td></td><td class="px-3 text-right font-semibold">{{ number_format((float) $extra->amount, 2) }}</td></tr>
+                        <tr class="bg-surface-low/60"><td></td><td class="px-3 py-1.5 italic">{{ $extra->particulars }}</td><td></td><td></td><td class="px-2">{{ $extra->unit }}</td><td></td><td class="px-3 text-right font-semibold">{{ number_format((float) $extra->amount, 2) }}</td></tr>
                     @endforeach
                     </tbody></table></div>
                     @if($editable)
-                    <div class="flex flex-wrap items-start gap-3 border-t border-outline-variant/20 px-3 py-2">
-                        <details data-edit-item class="min-w-0 flex-1">
-                            <summary class="cursor-pointer text-xs font-semibold text-primary">Edit item</summary>
-                            <form method="POST" action="{{ route('planning.sob.groups.update', $plan) }}" class="sob-line-form mt-3 grid gap-3 md:grid-cols-6">@csrf @method('PUT')
+                    <form method="POST" action="{{ route('planning.sob.groups.update', $plan) }}" data-edit-item data-item-editor class="sob-line-form hidden grid gap-3 border-t border-outline-variant/20 p-3 md:grid-cols-6">@csrf @method('PUT')
                                 <input type="hidden" name="old_activity" value="{{ $row['activity']->id }}"><input type="hidden" name="old_account" value="{{ $group['account']?->id }}">
-                                <div class="md:col-span-6" data-full-text-box><label class="block text-xs font-semibold text-on-surface-variant">AIP activity (PPA)<select name="aip_activity_id" class="{{ $box }}">@foreach($plan->aip->kras->groupBy(fn ($kra) => $programLabel($kra, null)) as $label => $programKras)@php $programActivities = $programKras->flatMap(fn ($kra) => $kra->activities->pluck('id')); $holdsThis = $programActivities->contains($row['activity']->id); @endphp @if($programActivities->isNotEmpty())<option value="{{ $holdsThis ? $row['activity']->id : $programActivities->min() }}" @selected($holdsThis)>{{ $label }}</option>@endif @endforeach</select></label><p data-full-text-output class="mt-1 text-xs font-normal leading-5 text-on-surface"></p></div>
-                                <div class="md:col-span-6" data-full-text-box><label class="block text-xs font-semibold text-on-surface-variant">Object of expenditure (account)<select name="chart_of_account_id" class="{{ $box }}">@foreach($accounts as $account)<option value="{{ $account->id }}" @selected($account->id === $group['account']?->id)>{{ $account->code }} · {{ $account->title }}</option>@endforeach</select></label><p data-full-text-output class="mt-1 text-xs font-normal leading-5 text-on-surface"></p></div>
+                                <div class="md:col-span-3" data-full-text-box><label class="block text-xs font-semibold text-on-surface-variant">AIP activity (PPA)<select name="aip_activity_id" class="{{ $box }}">@foreach($plan->aip->kras->groupBy(fn ($kra) => $programLabel($kra, null)) as $label => $programKras)@php $programActivities = $programKras->flatMap(fn ($kra) => $kra->activities->pluck('id')); $holdsThis = $programActivities->contains($row['activity']->id); @endphp @if($programActivities->isNotEmpty())<option value="{{ $holdsThis ? $row['activity']->id : $programActivities->min() }}" @selected($holdsThis)>{{ $label }}</option>@endif @endforeach</select></label></div>
+                                <div class="md:col-span-3" data-full-text-box><label class="block text-xs font-semibold text-on-surface-variant">Object of expenditure (account)<select name="chart_of_account_id" class="{{ $box }}">@foreach($accounts as $account)<option value="{{ $account->id }}" @selected($account->id === $group['account']?->id)>{{ $account->code }} · {{ $account->title }}</option>@endforeach</select></label></div>
                                 @include('partials.sob-item-fields', ['group' => $group, 'box' => $box])
-                                <div class="flex items-end gap-3 md:col-span-6"><p class="text-sm font-semibold">Amount: <span data-amount>{{ $peso($group['total']) }}</span></p><button class="ml-auto rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-primary-container">Save item</button></div>
+                                <div class="flex items-end gap-3 md:col-span-6"><p class="text-sm font-semibold">Amount: <span data-amount>{{ $peso($group['total']) }}</span></p><span class="ml-auto flex gap-2"><button type="button" data-cancel-edit class="rounded border border-outline-variant px-4 py-2 text-xs font-semibold hover:bg-surface-low">Cancel</button><button class="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-primary-container">Save item</button></span></div>
                             </form>
-                        </details>
-                        <form method="POST" action="{{ route('planning.sob.groups.destroy', $plan) }}" onsubmit="return confirm('Remove this whole item with all its particulars?')">@csrf @method('DELETE')<input type="hidden" name="old_activity" value="{{ $row['activity']->id }}"><input type="hidden" name="old_account" value="{{ $group['account']?->id }}"><button class="text-xs font-semibold text-error hover:underline">Remove item</button></form>
-                    </div>
                     @endif
                 </div>
                 @endforeach
@@ -167,6 +180,16 @@
 @endif
 
 <script>
+    // Edit on an item shows its fields in the same place as the details (the table is hidden while editing); Cancel brings the table back.
+    document.querySelectorAll('[data-item-box]').forEach((box) => {
+        const view = box.querySelector('[data-item-view]');
+        const editor = box.querySelector('[data-item-editor]');
+        if (!editor) { return; }
+        const swap = (editing) => { view.classList.toggle('hidden', editing); editor.classList.toggle('hidden', !editing); box.querySelector('[data-edit-toggle]')?.setAttribute('aria-pressed', editing ? 'true' : 'false'); };
+        box.querySelector('[data-edit-toggle]')?.addEventListener('click', () => swap(view.classList.contains('hidden') ? false : true));
+        box.querySelector('[data-cancel-edit]')?.addEventListener('click', () => swap(false));
+    });
+    document.querySelectorAll('[data-dismiss-notice]').forEach((button) => button.addEventListener('click', () => button.closest('[data-notice]')?.remove()));
     document.querySelector('[data-toggle-item-form]')?.addEventListener('click', (event) => {
         const form = document.getElementById('sob-item-form');
         const show = form.classList.toggle('hidden') === false;
@@ -216,13 +239,12 @@
 })();
 </script>
 <script>
-// A long activity or account title is cut with "..." inside the closed dropdown box, so the complete text of the chosen one is also written under it.
+// A long activity or account title is cut with "..." inside the closed dropdown box: the complete text of the chosen one is its tooltip (it is not written again under the box).
 document.querySelectorAll('[data-full-text-box]').forEach((box) => {
     const select = box.querySelector('select');
-    const output = box.querySelector('[data-full-text-output]');
     const show = () => {
         const option = select.options[select.selectedIndex];
-        output.textContent = option && option.value ? option.text.replace(/\s+/g, ' ').trim() : '';
+        select.title = option && option.value ? option.text.replace(/\s+/g, ' ').trim() : '';
     };
     select.addEventListener('change', show);
     show();
