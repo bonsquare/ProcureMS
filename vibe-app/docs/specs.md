@@ -496,3 +496,57 @@ Design: `docs/superpowers/specs/2026-10-10-sub-master-design.md`.
 - A new empty demo database loads the demo data by itself on first start (`deploy/entrypoint.sh`, `demo:reset --if-empty`).
 - Demo accounts (all `password`): master `admin@procurems.test`, Sub-master `submaster@procurems.test`, school admin `demo@gmail.com` (Test School, with the full planning, procurement, budget and liquidation sample), plus an admin for each of the other seeded schools. The showcase adds two vacant schools, a new registrant waiting for an Official Station, and one open request of each kind (transfer, Official Station, Other).
 - `DatabaseSeeder` no longer mutes model events, which had broken the AIP approval in `PlanningDemoSeeder` and skipped user codes. Tests: `DemoModeTest`.
+
+## 22. SIP official print and the SIP panel (approved by the owner 2026-10-14)
+
+The SIP print (`/planning/sip/print`, `resources/views/sip-print.blade.php`) and the SIP panel of Planning are approved as they are. Do not change them without the owner's permission.
+
+### 22.1 Printed SIP
+
+- Paper: long bond, landscape, 10 mm margins, through the shared print engine (1.5, 1.6). Fonts: Arial.
+- Size: every size is in `rem`, and 1rem is 1/117.1 of the page width (the same as the AIP), so the table lays out the same on any paper, on screen and in print.
+- Header: one logo in the middle, Republic of the Philippines, Department of Education (1.4rem), Region, Division (black); title block "SCHOOL IMPROVEMENT PLAN" (1.4rem), "FY 2026-2028" and the school name (small and balanced, not large).
+- Table text and pillar letters share one size that is chosen by the page: the largest from 10pt down to 8pt (on the long bond paper) that does not add a page compared with 8pt. The table headings keep their own smaller size.
+- The Pillar column heading is smaller (.72rem) so that "Mechanism" is not broken; the KRA column is 7% and DepEd Organizational Outcomes 8.5%. The other columns, heading colors (peach, yellow Physical, green Financial, blue pillar) and the official SIP columns are unchanged.
+- Pillar: written downward, one letter on each line. A name of two or more words goes in two columns of letters, split where they are the most even (Resiliency and Well-Being: RESILIENCY | AND WELL-BEING; Enabling Mechanism: ENABLING | MECHANISM).
+- Merged cells: the pillar, the KRA to Program cells and the Source of Fund merge across the rows that share them.
+- Automatic text flow with border-preserving pagination: the table has `data-paginate data-split-rows`. A row that does not fit the room left on a page is split in two rows; the first keeps the words of each cell that fit and the second carries the rest to the next page, and both keep every border. Merged cells cut by the break keep their text on each page, the heading rows repeat on every page and a page never holds more than the paper can print. The engine is `partials/print-pages.blade.php` (also used by the AIP).
+- Footer on every page: "Page X of Y" in the middle and "School Improvement Plan" on the right (`data-page-footer`), in a small size; two lines at the bottom of each page are kept for it.
+- Signatures: three, side by side, after the last rows (Prepared by, Recommending Approval, Approved by; names and positions from the SIP plan).
+
+### 22.2 SIP panel in Planning
+
+- "Break into AIP" is shown at the top of the SIP panel, under the "School Improvement Plan (SIP)" header, as small chips: Year 1 to Year 3 of each SIP year. A year that already has its AIP is a **blue** chip that opens it (with its total and status); a year without one is a white "Create AIP FY ..." chip (people allowed to manage the budget) or a gray "No AIP yet" chip.
+- Order of each SIP year: the year header and Print SIP, then the pillars (Access first) with their programs, then the signatories.
+- The signatories are shown horizontally (three columns side by side) with the Edit signatories box under them (`horizontal` option of `partials/signatory-editor`).
+
+Tests: `SipTemplateTest`, `OfficialPrintTest`, `PlanningFlowTest`.
+
+## 23. AIP official print and the AIP pages (approved by the owner 2026-10-14)
+
+The AIP print (`/aip/{aip}/print`, `resources/views/aip-print.blade.php`), the AIP page (`/aip/{aip}`, `resources/views/aip-show.blade.php`) and the AIP list in Planning are approved as they are. Do not change them without the owner's permission.
+
+### 23.1 Printed AIP
+
+- Paper: long bond, landscape, 10 mm margins, through the shared print engine (1.5, 1.6). Fonts: Arial. Same size rule as the SIP (22.1): every size in `rem`, 1rem = 1/117.1 of the page width.
+- Header: the department logo on the left and the school logo on the right, Republic of the Philippines, Department of Education (1.4rem), Region, Division; title block "ANNUAL IMPLEMENTATION PLAN" (1.4rem), "FISCAL YEAR ..." and the school name, all small and balanced (not large).
+- Pillar: written downward, one letter on each line; a name of two or more words in two columns of letters, split where they are the most even (the same rule as the SIP). The pillar cell keeps the color of its pillar.
+- Merged cells: identical data merges down the rows. Each column from the pillar to the Specific Program / Project merges a run of rows whose value (and every value to its left) is the same; Source of Fund merges the same fund within one KRA. Activity, targets, timeline, quarters, Responsible Person and Remarks are never merged.
+- Specific Timeline: follows the quarters that have an amount (1st and 2nd = January - June, up to the 3rd = January - September, 1st to 4th = January - December, only the 1st = January - March); the saved text is printed only when no quarter has an amount.
+- Automatic text flow with border-preserving pagination: the table has `data-paginate data-split-rows` (the same engine and rules as the SIP, 22.1).
+- Footer on every page: "Page X of Y" in the middle and "Annual Implementation Plan" on the right (`data-page-footer`), in a small size (shared with the SIP and the SOB, whose title on the right is its document title).
+- Signatures: three, side by side, after the last rows (Prepared by, Noted by, Approved by).
+
+### 23.2 AIP page
+
+- Same Key Result Area is one box: inside a pillar, KRAs with the same title are merged into one disclosure ("N programs · M activities"); each of its programs keeps its own details (Intermediate Outcome, Strategy, 5-Point Agenda, Specific Program / Project), Edit KRA &amp; Activities, Delete and activities, separated by a thick line.
+- Each activity is highlighted: a blue bar on its left, a light blue heading with a blue "ACTIVITY" label and a small shadow.
+- Financial target per quarter: the four amount boxes and the Total box are aligned on the same line.
+- Frequency (timeline): follows the quarters that have an amount whenever an amount changes (same rule as the print). A frequency typed by hand is kept when the quarters are not changed.
+- Order of the page: pillars and KRAs, Financial Target per Source of Fund, Allotments created from this AIP (when there are any), then Signatories at the very bottom, shown horizontally (three columns, `horizontal` option of `partials/signatory-editor`).
+
+### 23.3 AIP list in Planning
+
+- Open / Edit, Print and Delete are icon buttons (pencil, printer, trash, with a tooltip and a label for screen readers). Delete is red; when an AIP cannot be deleted it is gray and not clickable, with the reason in its tooltip. The confirmation before deleting and the rule for when it is allowed are unchanged.
+
+Tests: `AipPrintFundTest`, `AipActivityBudgetTest`, `PlanningFlowTest`, `OfficialPrintTest`.
