@@ -28,7 +28,7 @@
     <p class="rfq-p">Interested service provider shall also submit a copy of the following documents along with the quotation on or before the above specified deadline of submission of quotation:</p>
     <div style="margin-left:16px"><strong>a.</strong> Mayor's/Business Permit<br><strong>b.</strong> PhilGeps Registration Number<br><strong>c.</strong> Income/Business Tax Return</div>
     <p class="rfq-p">The Head of the Procuring Entity (HoPE) of the {{ strtoupper($procurementRequest->school?->name) }}, reserves the right to reject any and all quotations, declare a failure of procurement, or not award the contract in accordance with the conditions specified under Section 70 of the IRR of RA No. 12009.</p>
-    <p class="rfq-p">For any clarification, you may contact the BAC Secretariat at {{ $procurementRequest->school?->contact_number ?: '____________' }} or send email to {{ $procurementRequest->school?->contact_email ?: '____________' }}.</p>
+    <p class="rfq-p">For any clarification, you may contact the BAC Secretariat at <strong><u>{{ $bacSecretariat?->contact_number ?: ($procurementRequest->school?->contact_number ?: '____________') }}</u></strong> or send email to <strong><u>{{ $bacSecretariat?->email ?: ($procurementRequest->school?->contact_email ?: '____________') }}</u></strong>.</p>
     <p>By the authority of the Bids and awards Committee:</p><div style="margin-top:28px"><div class="signature-name">{{ strtoupper($bacSecretariat?->name ?? 'BAC SECRETARIAT HEAD') }}</div><div>BAC Secretariat Head</div></div>
 </section>
 <section class="page rfq-page page-break">
@@ -51,7 +51,7 @@
     <div class="bac">Bids and Awards Committee</div>
     <p class="bold" style="font-size:11pt">Please quote your BEST OFFER for the item/s below. Please do not leave any blank items. Indicate "0" if item being offered is for free.</p>
     <div class="rfq-purpose">{{ $rfqPurpose }}</div><p class="center">(Delivery: upon receipt of Notice to Proceed)</p>
-    <table class="doc-table rfq-offer"><thead><tr><th>Approved Budget of the Contract</th><th>Total Offered Quotation (Inclusive of VAT)</th></tr></thead><tbody><tr><td rowspan="2" class="center bold" style="width:38%">{{ $amountInWords }}<br><br>Php {{ number_format((float)$procurementRequest->amount,2) }}</td><td>In Words:<div style="margin:24px 8mm 0;border-bottom:1px solid #111"></div><div style="margin:22px 8mm 0;border-bottom:1px solid #111"></div></td></tr><tr><td>In Figures:<div style="margin:24px 8mm 0;width:58mm;border-bottom:1px solid #111"></div></td></tr></tbody></table>
+    <table class="doc-table rfq-offer"><thead><tr><th>Approved Budget of the Contract</th><th>Total Offered Quotation (Inclusive of VAT)</th></tr></thead><tbody><tr><td class="center bold" style="width:38%;vertical-align:middle">{{ $amountInWords }}</td><td>In Words:<div style="margin:24px 8mm 0;border-bottom:1px solid #111"></div><div style="margin:22px 8mm 0;border-bottom:1px solid #111"></div></td></tr><tr><td class="center bold" style="vertical-align:middle">Php {{ number_format((float)$procurementRequest->amount,2) }}</td><td>In Figures:<div style="margin:24px 8mm 0;width:58mm;border-bottom:1px solid #111"></div></td></tr></tbody></table>
     <div class="rfq-lines"><div>Signature over Printed Name: <span></span></div><div>Position/Designation: <span></span></div><div>Office Telephone / Fax / Mobile Nos.: <span style="width:85mm"></span></div><div>Email Address/es: <span style="width:105mm"></span></div></div>
 </section>
 <section class="page rfq-page">

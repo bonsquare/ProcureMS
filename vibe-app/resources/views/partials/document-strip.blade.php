@@ -10,7 +10,7 @@
             <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Makes the official form</p>
             <p class="mt-1 flex items-center gap-1.5 text-sm font-semibold"><span class="material-symbols-outlined text-[18px] text-primary" aria-hidden="true">description</span>{{ $strip['generates'] }}</p>
             @if(! empty($reopenUrl))
-                <form method="POST" action="{{ $reopenUrl }}" class="mt-2" onsubmit="return confirm({{ \Illuminate\Support\Js::from($reopenConfirm ?? 'Reopen this SOB as a draft? The budget lines keep their amounts until you approve it again.') }})">@csrf<button class="rounded border border-primary px-4 py-2 text-xs font-bold text-primary hover:bg-primary hover:text-white">Reopen as a draft</button></form>
+                <form method="POST" action="{{ $reopenUrl }}" class="mt-2" onsubmit="return confirm({{ \Illuminate\Support\Js::from($reopenConfirm ?? 'Reopen this SOB as a draft? The budget lines keep their amounts until you approve it again.') }})">@csrf<button class="inline-flex items-center gap-1.5 rounded-lg border border-amber-500 bg-amber-300 px-4 py-2 text-xs font-extrabold text-amber-950 shadow-sm transition hover:bg-amber-400"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">lock_open</span>Reopen as a draft</button></form>
             @endif
         </div>
         <div>

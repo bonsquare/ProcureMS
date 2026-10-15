@@ -25,16 +25,16 @@
     $flowMax = max(1, $b['allocated'], $b['obligated']);
 @endphp
 <section aria-label="KPI dashboard" class="mb-6">
-    <div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-outline-variant/50 border-l-4 border-l-primary bg-white px-5 py-3.5">
+    <div class="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-gradient-to-r from-[#103967] via-[#174b82] to-[#286da8] px-6 py-5 text-white shadow-md">
         <div class="min-w-0">
-            <p class="text-xs font-bold uppercase tracking-[.14em] text-action">{{ $isMasterUser ? 'KPI Dashboard' : 'School Dashboard' }} <span class="font-semibold text-on-surface-variant">· FY {{ $kpi['year'] }}</span></p>
-            <h2 class="mt-1 truncate text-xl font-bold text-primary">{{ $isMasterUser ? 'All schools' : ($currentSchool?->name ?? 'Your school') }}</h2>
-            @unless($isMasterUser)<p class="mt-0.5 text-sm text-on-surface-variant">Welcome, {{ auth()->user()->name }}. Your procurement, budget, and liquidation at a glance.</p>@endunless
+            <p class="text-xs font-bold uppercase tracking-[.14em] text-white/80">{{ $isMasterUser ? 'KPI Dashboard' : 'School Dashboard' }} <span class="font-semibold text-white/70">· FY {{ $kpi['year'] }}</span></p>
+            <h2 class="mt-1 truncate text-2xl font-extrabold tracking-tight text-white">{{ $isMasterUser ? 'All schools' : ($currentSchool?->name ?? 'Your school') }}</h2>
+            @unless($isMasterUser)<p class="mt-1 text-sm text-white/80">Welcome, {{ auth()->user()->name }}. Your procurement, budget, and liquidation at a glance.</p>@endunless
         </div>
         @if($isMasterUser)
             <div class="flex flex-wrap gap-2 text-xs">
                 @foreach([['Schools', $totalSchools], ['Active', $activeSchools], ['Users', $totalUsers], ['Subscriptions', $activeSubscriptions]] as [$chipLabel, $chipValue])
-                    <span class="rounded-full border border-outline-variant/60 bg-surface-low px-3 py-1 font-semibold">{{ $chipLabel }} <strong class="ml-1 text-primary">{{ $chipValue }}</strong></span>
+                    <span class="rounded-full border border-white/30 bg-white/15 px-3 py-1 font-semibold text-white">{{ $chipLabel }} <strong class="ml-1 text-white">{{ $chipValue }}</strong></span>
                 @endforeach
             </div>
         @endif
@@ -43,14 +43,14 @@
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         @foreach($cards as $card)
             @php [$soft, $strong, $edge, $tint] = $tone($card['tone']); $value = in_array($card['tone'], ['amber', 'red'], true) ? $strong : '#103967'; @endphp
-            <a href="{{ $card['href'] }}" class="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-outline-variant/50 bg-white p-4 pl-5 transition hover:border-action/50 hover:shadow-md">
+            <a href="{{ $card['href'] }}" class="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-outline-variant/50 shadow-sm bg-gradient-to-br from-white to-surface-low/70 p-4 pl-5 transition duration-200 hover:-translate-y-0.5 hover:border-action/50 hover:shadow-lg">
                 <span class="absolute inset-y-0 left-0 w-1" style="background:{{ $strong }}" aria-hidden="true"></span>
                 <div class="flex items-start justify-between gap-3">
                     <div class="min-w-0">
                         <p class="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant">{{ $card['label'] }}</p>
-                        <p class="mt-1.5 text-2xl font-bold leading-none" style="color:{{ $value }}">{{ $card['value'] }}</p>
+                        <p class="mt-1.5 text-3xl font-extrabold leading-none tracking-tight" style="color:{{ $value }}">{{ $card['value'] }}</p>
                     </div>
-                    <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg" style="background:{{ $soft }};color:{{ $strong }}"><span class="material-symbols-outlined text-[19px]" aria-hidden="true">{{ $card['icon'] }}</span></span>
+                    <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl" style="background:{{ $soft }};color:{{ $strong }}"><span class="material-symbols-outlined text-[19px]" aria-hidden="true">{{ $card['icon'] }}</span></span>
                 </div>
                 @if(isset($card['bar']) && $card['bar'] !== null)
                     <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-container" role="progressbar" aria-valuenow="{{ $card['bar'] }}" aria-valuemin="0" aria-valuemax="100"><div class="h-full rounded-full" style="width:{{ $card['bar'] }}%;background:{{ $strong }}"></div></div>
@@ -60,12 +60,50 @@
         @endforeach
     </div>
 
+    @php $pl = $kpi['planning']; @endphp
+    <div class="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-5">
+        <article class="rounded-2xl border border-outline-variant/50 shadow-sm bg-white p-4 lg:col-span-2">
+            <div class="flex items-center justify-between gap-2"><div><h3 class="text-base font-bold text-primary">Planning flow</h3><p class="text-xs text-on-surface-variant">SIP, AIP, SOB, APP and APP-CSE · FY {{ $kpi['year'] }}</p></div><a href="{{ route('planning') }}" class="text-xs font-bold text-action hover:underline">Open Planning</a></div>
+            <ol class="mt-3 space-y-2">
+                @foreach($pl['steps'] as $stepKey => $step)
+                    @php
+                        $started = $step['total'] > 0;
+                        $done = $started && ($step['approved'] === null || $step['approved'] === $step['total']);
+                        $chip = $done ? ['bg-secondary/10 text-secondary', $step['approved'] === null ? 'Entered' : 'Approved'] : ($started ? ['bg-amber-100 text-amber-800', $step['approved'].' of '.$step['total'].' approved'] : ['bg-rose-100 text-rose-800', 'Not started']);
+                    @endphp
+                    <li><a href="{{ route('planning') }}#{{ $stepKey }}" class="flex items-center gap-3 rounded-lg border border-outline-variant/50 px-3 py-2 hover:border-primary hover:bg-surface-low/60">
+                        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full text-xs font-bold {{ $done ? 'bg-secondary text-white' : ($started ? 'bg-amber-400 text-white' : 'bg-rose-200 text-rose-900') }}">{{ $loop->iteration }}</span>
+                        <span class="min-w-0 flex-1"><span class="block text-sm font-bold text-primary">{{ $step['label'] }}</span><span class="block text-xs text-on-surface-variant">{{ $step['total'] }} {{ $step['unit'] }}{{ $step['total'] === 1 ? '' : 's' }}</span></span>
+                        <span class="rounded-full px-2.5 py-0.5 text-[11px] font-bold {{ $chip[0] }}">{{ $chip[1] }}</span>
+                    </a></li>
+                @endforeach
+            </ol>
+        </article>
+
+        <article class="overflow-hidden rounded-2xl border border-outline-variant/50 shadow-sm bg-white lg:col-span-3">
+            <div class="flex items-center justify-between gap-2 border-b border-outline-variant/40 px-4 py-3"><div><h3 class="text-base font-bold text-primary">Budget funded from the SOB</h3><p class="text-xs text-on-surface-variant">The approved SOB is the actual budget · by source of fund and quarter</p></div><a href="{{ route('allotment-registry') }}" class="text-xs font-bold text-action hover:underline">Allotment Registry</a></div>
+            @if(count($pl['funds']))
+                <div class="overflow-x-auto"><table class="w-full min-w-[520px] text-left text-xs">
+                    <thead class="bg-surface-low uppercase tracking-wider text-on-surface-variant"><tr><th class="px-4 py-2">Source of fund</th>@foreach([1, 2, 3, 4] as $q)<th class="px-2 py-2 text-center">Q{{ $q }}</th>@endforeach<th class="px-3 py-2 text-center">Total</th><th class="px-3 py-2 text-center">Obligated</th></tr></thead>
+                    <tbody class="divide-y divide-outline-variant/40">
+                        @foreach($pl['funds'] as $fundRow)
+                            <tr class="hover:bg-surface-low/50"><td class="px-4 py-2.5 font-bold text-primary">{{ $fundRow['fund'] }}<span class="block font-normal text-on-surface-variant">{{ $fundRow['items'] }} item{{ $fundRow['items'] === 1 ? '' : 's' }}</span></td>@foreach($fundRow['quarters'] as $amount)<td class="px-2 py-2.5 text-center tabular-nums {{ $amount > 0 ? 'font-semibold' : 'text-on-surface-variant/40' }}">{{ $amount > 0 ? number_format($amount, 2) : '–' }}</td>@endforeach<td class="px-3 py-2.5 text-center font-bold tabular-nums">{{ number_format($fundRow['allocated'], 2) }}</td><td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($fundRow['obligated'], 2) }}</td></tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot class="border-t-2 border-outline-variant/60 bg-surface-low font-bold"><tr><td class="px-4 py-2.5">TOTAL</td>@foreach([0, 1, 2, 3] as $quarterIndex)<td class="px-2 py-2.5 text-center tabular-nums">{{ number_format(collect($pl['funds'])->sum(fn ($fundRow) => $fundRow['quarters'][$quarterIndex]), 2) }}</td>@endforeach<td class="px-3 py-2.5 text-center tabular-nums">{{ number_format(collect($pl['funds'])->sum('allocated'), 2) }}</td><td class="px-3 py-2.5 text-center tabular-nums">{{ number_format(collect($pl['funds'])->sum('obligated'), 2) }}</td></tr></tfoot>
+                </table></div>
+            @else
+                <p class="px-4 py-8 text-center text-xs text-on-surface-variant">No SOB has been approved for FY {{ $kpi['year'] }} yet. Approving a quarter of the SOB creates the budget.</p>
+            @endif
+        </article>
+    </div>
+
     <div class="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-3">
-        <article class="rounded-xl border border-outline-variant/50 bg-white p-4">
-            <h3 class="text-sm font-bold">Request pipeline</h3>
+        <article class="rounded-2xl border border-outline-variant/50 shadow-sm bg-white p-4">
+            <h3 class="text-base font-bold text-primary">Request pipeline</h3>
             <p class="text-xs text-on-surface-variant">Purchase requests by status</p>
             @if(array_sum($p['by_status']))
-                <div class="mt-4 flex h-3 overflow-hidden rounded-full bg-surface-container">
+                <div class="mt-4 flex h-4 overflow-hidden rounded-full bg-surface-container">
                     @foreach($statusMeta as $key => [$statusLabel, $statusColor])
                         @if(($p['by_status'][$key] ?? 0) > 0)<div title="{{ $statusLabel }}: {{ $p['by_status'][$key] }}" style="width:{{ $p['by_status'][$key] / $statusTotal * 100 }}%;background:{{ $statusColor }}"></div>@endif
                     @endforeach
@@ -80,8 +118,8 @@
             @endif
         </article>
 
-        <article class="rounded-xl border border-outline-variant/50 bg-white p-4">
-            <h3 class="text-sm font-bold">Requests per month</h3>
+        <article class="rounded-2xl border border-outline-variant/50 shadow-sm bg-white p-4">
+            <h3 class="text-base font-bold text-primary">Requests per month</h3>
             <p class="text-xs text-on-surface-variant">Last six months</p>
             <div class="mt-4 flex h-28 items-end justify-between gap-2" role="img" aria-label="Purchase requests per month">
                 @foreach($p['monthly'] as $month)
@@ -94,15 +132,15 @@
             </div>
         </article>
 
-        <article class="rounded-xl border border-outline-variant/50 bg-white p-4">
-            <h3 class="text-sm font-bold">Budget flow</h3>
+        <article class="rounded-2xl border border-outline-variant/50 shadow-sm bg-white p-4">
+            <h3 class="text-base font-bold text-primary">Budget flow</h3>
             <p class="text-xs text-on-surface-variant">Allocated, obligated and liquidated</p>
             @if($b['lines'])
                 <div class="mt-4 space-y-3">
                     @foreach($flow as [$flowLabel, $flowValue, $flowColor])
                         <div>
                             <div class="mb-1 flex justify-between text-xs"><span class="font-semibold">{{ $flowLabel }}</span><span>{{ $money($flowValue) }}</span></div>
-                            <div class="h-2.5 overflow-hidden rounded-full bg-surface-container"><div class="h-full rounded-full" style="width:{{ min(100, $flowValue / $flowMax * 100) }}%;background:{{ $flowColor }}"></div></div>
+                            <div class="h-3.5 overflow-hidden rounded-full bg-surface-container"><div class="h-full rounded-full" style="width:{{ min(100, $flowValue / $flowMax * 100) }}%;background:{{ $flowColor }}"></div></div>
                         </div>
                     @endforeach
                 </div>
@@ -127,8 +165,8 @@
             $quarterMax = max(1, collect($b['quarters'])->max('allocated'), collect($b['quarters'])->max('obligated'));
         @endphp
         <div class="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-3">
-            <article class="rounded-xl border border-outline-variant/50 bg-white p-4">
-                <div class="flex items-center justify-between"><h3 class="text-sm font-bold">Needs your attention</h3><span class="rounded-full px-2 py-0.5 text-[10px] font-bold {{ count($attention) ? 'bg-attention/15 text-attention' : 'bg-secondary/10 text-secondary' }}">{{ count($attention) ?: 'All clear' }}</span></div>
+            <article class="rounded-2xl border border-outline-variant/50 shadow-sm bg-white p-4">
+                <div class="flex items-center justify-between"><h3 class="text-base font-bold text-primary">Needs your attention</h3><span class="rounded-full px-2 py-0.5 text-[10px] font-bold {{ count($attention) ? 'bg-attention/15 text-attention' : 'bg-secondary/10 text-secondary' }}">{{ count($attention) ?: 'All clear' }}</span></div>
                 @if(count($attention))
                     <ul class="mt-3 space-y-2">
                         @foreach($attention as $item)
@@ -141,16 +179,16 @@
                 @endif
             </article>
 
-            <article class="rounded-xl border border-outline-variant/50 bg-white p-4">
-                <h3 class="text-sm font-bold">Budget by quarter</h3>
+            <article class="rounded-2xl border border-outline-variant/50 shadow-sm bg-white p-4">
+                <h3 class="text-base font-bold text-primary">Budget by quarter</h3>
                 <p class="text-xs text-on-surface-variant">Allocated vs obligated</p>
                 @if($b['lines'])
                     <div class="mt-4 flex h-28 items-end justify-between gap-3">
                         @foreach($b['quarters'] as $quarter => $row)
                             <div class="flex h-full flex-1 flex-col items-center justify-end gap-1" title="Q{{ $quarter }}: {{ $money($row['obligated']) }} of {{ $money($row['allocated']) }}">
                                 <div class="flex h-full w-full items-end justify-center gap-1">
-                                    <div class="w-3 rounded-t" style="height:{{ max($row['allocated'] / $quarterMax * 100, 2) }}%;background:#cbd7e1"></div>
-                                    <div class="w-3 rounded-t" style="height:{{ max($row['obligated'] / $quarterMax * 100, 2) }}%;background:#286da8"></div>
+                                    <div class="w-5 rounded-t-md" style="height:{{ max($row['allocated'] / $quarterMax * 100, 2) }}%;background:#cbd7e1"></div>
+                                    <div class="w-5 rounded-t-md" style="height:{{ max($row['obligated'] / $quarterMax * 100, 2) }}%;background:#286da8"></div>
                                 </div>
                                 <span class="text-[10px] font-semibold text-on-surface-variant">Q{{ $quarter }}</span>
                             </div>
@@ -162,8 +200,8 @@
                 @endif
             </article>
 
-            <article class="rounded-xl border border-outline-variant/50 bg-white">
-                <div class="flex items-center justify-between px-4 pt-4"><h3 class="text-sm font-bold">Recent requests</h3><a href="{{ route('procurement.requests') }}" class="text-xs font-bold text-action">View all</a></div>
+            <article class="rounded-2xl border border-outline-variant/50 shadow-sm bg-white">
+                <div class="flex items-center justify-between px-4 pt-4"><h3 class="text-base font-bold text-primary">Recent requests</h3><a href="{{ route('procurement.requests') }}" class="text-xs font-bold text-action">View all</a></div>
                 @if(count($kpi['recent']))
                     <ul class="mt-2 divide-y divide-outline-variant/40">
                         @foreach($kpi['recent'] as $recent)
@@ -178,8 +216,8 @@
     @endif
 
     @if($isMasterUser && count($kpi['schools']) > 0)
-        <article class="mt-3 overflow-hidden rounded-xl border border-outline-variant/50 bg-white">
-            <div class="border-b border-outline-variant/40 px-4 py-3"><h3 class="text-sm font-bold">School performance</h3><p class="text-xs text-on-surface-variant">Requests and budget use per school</p></div>
+        <article class="mt-3 overflow-hidden rounded-2xl border border-outline-variant/50 shadow-sm bg-white">
+            <div class="border-b border-outline-variant/40 px-4 py-3"><h3 class="text-base font-bold text-primary">School performance</h3><p class="text-xs text-on-surface-variant">Requests and budget use per school</p></div>
             <div class="overflow-x-auto">
                 <table class="w-full min-w-[640px] text-left text-xs">
                     <thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant"><tr><th class="px-4 py-2">School</th><th class="px-4 py-2 text-right">Requests</th><th class="px-4 py-2 text-right">Pending</th><th class="px-4 py-2 text-right">Completed</th><th class="px-4 py-2">Budget used</th></tr></thead>

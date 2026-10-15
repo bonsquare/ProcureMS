@@ -32,7 +32,7 @@
 @include('partials.document-strip', ['strip' => \App\Support\DocumentStrip::appCse($plan), 'reopenUrl' => ($plan->isApproved() && $canManage) ? route('planning.app-cse.reopen', $plan) : null, 'reopenConfirm' => 'Reopen this APP-CSE as a draft? You can then change its details and items, and approve it again afterwards.'])
 
 <style>details[open] > summary .sum-chevron{transform:rotate(180deg)}</style>
-<details open class="mb-5 rounded border border-outline-variant/30 bg-white p-4">
+<details open id="plan-details" class="mb-5 rounded border border-outline-variant/30 bg-white p-4">
     <summary class="flex cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center gap-2"><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] text-on-surface-variant transition-transform" aria-hidden="true">expand_more</span><h2 class="font-semibold">Details</h2></summary>
     @if($editable)
         <form method="POST" action="{{ route('planning.app-cse.update', $plan) }}" class="mt-3 grid gap-3 md:grid-cols-3">@csrf @method('PUT')

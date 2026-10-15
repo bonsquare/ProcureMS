@@ -107,7 +107,7 @@
                 @foreach($row['accounts'] as $group)
                 <div class="mt-3 rounded border border-outline-variant/30" data-item-box>
                     <div class="flex flex-wrap items-center justify-between gap-2 border-b border-outline-variant/20 bg-surface-low px-3 py-1.5">
-                        <p class="text-xs font-semibold">{{ $group['account']?->code }} · {{ $group['account']?->title }}@if($group['note'])<span class="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-semibold text-amber-900">{{ $group['note'] }}</span>@endif</p>
+                        <p class="text-xs font-semibold">{{ $group['account']?->code }} · {{ $group['account']?->title }}@if($group['note'])<span class="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-semibold text-amber-900">{{ $group['note'] }}</span>@endif @foreach($group['extras'] as $extra)<span class="ml-2 rounded bg-sky-100 px-1.5 py-0.5 text-[11px] font-semibold text-sky-900" title="Other line of this item">{{ $extra->particulars ?: 'Labor' }} · {{ $peso($extra->amount) }}</span>@endforeach</p>
                         <div class="flex items-center gap-2"><p class="text-xs font-semibold">{{ $peso($group['total']) }}</p>
                             @if($editable)
                             <button type="button" data-edit-toggle title="Edit item" aria-label="Edit this item" class="inline-flex h-7 w-7 items-center justify-center rounded border bg-white border-outline-variant/60 text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">edit</span></button>

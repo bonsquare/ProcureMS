@@ -43,8 +43,10 @@ class DocumentStrip
         return self::make([
             'title' => 'Annual Implementation Plan · FY '.$aip->fiscal_year,
             'generates' => 'Official Annual Implementation Plan form',
-            'source' => $aip->sipProject ? ['label' => 'SIP program: '.$aip->sipProject->project, 'url' => route('planning', ['school_id' => $aip->school_id, 'year' => $aip->fiscal_year]).'#sip', 'status' => null] : null,
-            'sourceNote' => 'Not linked to a SIP program.',
+            'source' => $aip->sip_start_year
+                ? ['label' => 'SIP '.$aip->sip_start_year.'-'.($aip->sip_start_year + 2).' · Year '.$aip->sip_year_no, 'url' => route('planning', ['school_id' => $aip->school_id, 'year' => $aip->fiscal_year]).'#sip', 'status' => null]
+                : ($aip->sipProject ? ['label' => 'SIP program: '.$aip->sipProject->project, 'url' => route('planning', ['school_id' => $aip->school_id, 'year' => $aip->fiscal_year]).'#sip', 'status' => null] : null),
+            'sourceNote' => 'Entered directly: this AIP was not made from the SIP.',
             'status' => $aip->status,
             'checks' => $checks,
             'next' => $approved ? 'Create the SOB of a quarter (Planning → SOB).' : (collect($checks)->contains(fn ($c) => $c['required'] && ! $c['ok']) ? 'Add at least one activity.' : 'Approve the AIP to start the SOB.'),

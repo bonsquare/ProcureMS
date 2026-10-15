@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AgencySetting;
+use App\Models\AppItem;
 use App\Models\AuditLog;
 use App\Models\BackupRun;
 use App\Models\BudgetAllocation;
@@ -672,6 +673,9 @@ class HomeController extends Controller
             ->map(fn ($item) => [
                 'id' => $item->id,
                 'school_id' => (int) $schoolId,
+                'activity_id' => $item->loadMissing('sobItem.activity.kra')->sobItem?->aip_activity_id,
+                'activity' => $item->sobItem?->activity?->activity,
+                'program' => $item->sobItem?->activity?->kra?->program,
                 'name' => $item->procurement_item,
                 'specifications' => $item->specifications,
                 'unit' => $item->unit,
@@ -730,6 +734,9 @@ class HomeController extends Controller
         $signatories = SignatorySlots::validated('purchase_request', $request->input('signatories'), (int) $validated['school_id']);
         $items = $validated['items'];
         $amount = collect($items)->sum(fn (array $item) => (float) $item['quantity'] * (float) $item['unit_price']);
+        // The Budget line is not asked: it is the one the SOB wrote for the items.
+        $derived = empty($validated['budget_allocation_id']) ? $this->budgetLineOfItems((int) $validated['school_id'], $items) : null;
+        $validated['budget_allocation_id'] = $validated['budget_allocation_id'] ?? $derived['id'] ?? null;
         $budgetAllocation = ! empty($validated['budget_allocation_id'])
             ? BudgetAllocation::findOrFail($validated['budget_allocation_id'])
             : null;
@@ -737,10 +744,11 @@ class HomeController extends Controller
         $fiscalYear = $budgetAllocation?->fiscal_year ?? (int) date('Y', strtotime($validated['request_date']));
         app(FiscalYearService::class)->assertOpen($organizationId, (int) $fiscalYear);
         app(BudgetService::class)->assertAvailable('source_of_fund', (int) $validated['school_id'], $validated['source_of_fund'], (float) $amount);
-        $this->assertBudgetItem($validated, (float) $amount);
+        $this->assertPrBudgetLine($validated, (float) $amount, $derived);
         app(AppItemLinkService::class)->assertWithinApp((int) $validated['school_id'], $items);
+        $sobActivityId = $this->chosenSobActivity($validated);
 
-        $procurementRequest = DB::transaction(function () use ($validated, $request, $amount, $items, $budgetAllocation, $fiscalYear, $signatories) {
+        $procurementRequest = DB::transaction(function () use ($validated, $request, $amount, $items, $budgetAllocation, $fiscalYear, $signatories, $sobActivityId) {
             $requestNumber = ! empty($validated['manually_encode_pr_number'])
                 ? $validated['manual_pr_number']
                 : $this->nextPurchaseRequestNumber(true, $this->organizationIdForSchool((int) $validated['school_id']));
@@ -772,6 +780,7 @@ class HomeController extends Controller
                 'responsibility_center_code' => $validated['responsibility_center_code'] ?: null,
                 'source_of_fund' => $validated['source_of_fund'],
                 'budget_allocation_id' => $validated['budget_allocation_id'] ?? null,
+                'aip_activity_id' => $sobActivityId,
                 'master_transaction_id' => $masterTransactionId,
                 'description' => 'Itemized goods request',
                 'amount' => $amount,
@@ -804,6 +813,8 @@ class HomeController extends Controller
             : ($procurementRequest->signatories ?? []);
         $items = $validated['items'];
         $amount = collect($items)->sum(fn (array $item) => (float) $item['quantity'] * (float) $item['unit_price']);
+        $derived = empty($validated['budget_allocation_id']) ? $this->budgetLineOfItems((int) $validated['school_id'], $items) : null;
+        $validated['budget_allocation_id'] = $validated['budget_allocation_id'] ?? ($procurementRequest->liquidationReports()->exists() ? $procurementRequest->budget_allocation_id : ($derived['id'] ?? $procurementRequest->budget_allocation_id));
         $budgetAllocation = ! empty($validated['budget_allocation_id'])
             ? BudgetAllocation::findOrFail($validated['budget_allocation_id'])
             : null;
@@ -816,8 +827,9 @@ class HomeController extends Controller
             (int) ($budgetAllocation?->fiscal_year ?? date('Y', strtotime($validated['request_date']))),
         );
         app(BudgetService::class)->assertAvailable('source_of_fund', (int) $validated['school_id'], $validated['source_of_fund'], (float) $amount, $procurementRequest->created_at?->year, $procurementRequest->id);
-        $this->assertBudgetItem($validated, (float) $amount, $procurementRequest->id, null, $procurementRequest->created_at);
+        $this->assertPrBudgetLine($validated, (float) $amount, $derived, $procurementRequest->id, $procurementRequest->created_at);
         app(AppItemLinkService::class)->assertWithinApp((int) $validated['school_id'], $items, $procurementRequest->id);
+        $sobActivityId = $this->chosenSobActivity($validated, $procurementRequest->id);
         $requestNumber = ! empty($validated['manually_encode_pr_number'])
             ? $validated['manual_pr_number']
             : (preg_match('/^PR-\d{4}-\d{3,}$/', $procurementRequest->request_number)
@@ -836,6 +848,7 @@ class HomeController extends Controller
             'responsibility_center_code' => $validated['responsibility_center_code'] ?: null,
             'source_of_fund' => $validated['source_of_fund'],
             'budget_allocation_id' => $validated['budget_allocation_id'] ?? null,
+            'aip_activity_id' => $sobActivityId,
             'master_transaction_id' => $budgetAllocation?->master_transaction_id,
             'amount' => $amount,
             'extra_blank_rows' => $validated['extra_blank_rows'],
@@ -905,6 +918,20 @@ class HomeController extends Controller
             ->with('success', 'Procurement request status updated to '.str($nextStatus)->replace('_', ' ')->title().'.');
     }
 
+    /** The Budget check of a Purchase Request: a line found from the SOB is checked for its own share of the cost; without any, the school's budget still has to be named. */
+    private function assertPrBudgetLine(array $validated, float $amount, ?array $derived, ?int $ignorePrId = null, ?\DateTimeInterface $date = null): void
+    {
+        if ($derived && (int) $validated['budget_allocation_id'] === $derived['id']) {
+            $amount = $derived['amount'];
+        } elseif (empty($validated['budget_allocation_id'])) {
+            $budgeted = BudgetAllocation::where('school_id', $validated['school_id'])->where('fiscal_year', ($date ?? now())->format('Y'))->whereNull('closed_at');
+            if ($budgeted->exists()) {
+                throw ValidationException::withMessages(['items' => 'Add the items from the SOB activity: the request is charged to the Budget line the SOB wrote for them.']);
+            }
+        }
+        $this->assertBudgetItem($validated, $amount, $ignorePrId, null, $date);
+    }
+
     /**
      * Every charge must name a budget line once the school has budgeted for the year; the line must
      * match the school and fund and have room for the amount (annual and quarterly).
@@ -934,6 +961,64 @@ class HomeController extends Controller
         app(BudgetService::class)->assertItemAvailable('budget_allocation_id', $item->id, $amount, $ignorePrId, $ignoreOrsId, $date);
     }
 
+    /**
+     * The SOB activity is the basis of a Purchase Request: when the school has SOB activities with something left to request, one must be chosen, and it must be one of them.
+     */
+    private function chosenSobActivity(array $validated, ?int $ignorePrId = null): ?int
+    {
+        $available = app(AppItemLinkService::class)->available((int) $validated['school_id'], $ignorePrId)
+            ->filter(fn ($item) => (float) $item->remaining_quantity > 0)
+            ->map(fn ($item) => $item->loadMissing('sobItem')->sobItem?->aip_activity_id)->filter()->unique()->values();
+        $chosen = (int) ($validated['sob_activity_id'] ?? 0);
+
+        if ($available->isEmpty()) {
+            return null;
+        }
+        if ($chosen === 0) {
+            throw ValidationException::withMessages(['sob_activity_id' => 'Choose the SOB activity this request is for.']);
+        }
+        if (! $available->contains($chosen)) {
+            throw ValidationException::withMessages(['sob_activity_id' => 'The chosen activity has no item left in an approved SOB of this school.']);
+        }
+
+        return $chosen;
+    }
+
+    /**
+     * The Budget line a Purchase Request is charged to, found from its items: each item linked to the APP comes from an SOB item, and the approved SOB wrote one Budget line per
+     * fund, account and program. The line with the most cost wins when the items reach several; its share of the cost is what is checked against it.
+     *
+     * @param  array<int, array<string, mixed>>  $items
+     * @return array{id: int, amount: float}|null
+     */
+    private function budgetLineOfItems(int $schoolId, array $items): ?array
+    {
+        $costs = [];
+        foreach ($items as $item) {
+            if (empty($item['app_item_id'])) {
+                continue;
+            }
+            $sobItem = AppItem::with('sobItem.plan', 'sobItem.activity.kra')->find($item['app_item_id'])?->sobItem;
+            if (! $sobItem) {
+                continue;
+            }
+            $program = $sobItem->activity?->kra?->program;
+            $line = BudgetAllocation::where('school_id', $schoolId)->where('aip_id', $sobItem->plan->aip_id)->where('fiscal_year', $sobItem->plan->fiscal_year)
+                ->where('source_of_fund', $sobItem->plan->fund_source)->where('chart_of_account_id', $sobItem->chart_of_account_id)
+                ->where(fn ($query) => $program ? $query->where('program', $program) : $query->whereNull('program')->orWhere('program', ''))
+                ->first();
+            if ($line) {
+                $costs[$line->id] = ($costs[$line->id] ?? 0) + (float) $item['quantity'] * (float) $item['unit_price'];
+            }
+        }
+        if ($costs === []) {
+            return null;
+        }
+        arsort($costs);
+
+        return ['id' => (int) array_key_first($costs), 'amount' => (float) reset($costs)];
+    }
+
     private function validateProcurement(Request $request): array
     {
         $organizationId = $request->filled('school_id')
@@ -942,6 +1027,7 @@ class HomeController extends Controller
 
         return $request->validate([
             'school_id' => ['required', 'exists:schools,id'],
+            'sob_activity_id' => ['nullable', 'integer'],
             'purpose' => ['required', 'string', 'max:255'],
             'transaction_description' => ['nullable', 'string', 'max:255'],
             'entity_name' => ['required', 'string', 'max:255'],
@@ -1095,9 +1181,7 @@ class HomeController extends Controller
             'date' => optional($procurementRequest->requested_at ?? $procurementRequest->created_at)->format('F d, Y'),
             'payee_name' => $procurementRequest->school?->name ?? '',
             'amount' => number_format((float) $procurementRequest->amount, 2),
-            'purpose' => collect([$transactionDescription, $procurementRequest->title])
-                ->filter()
-                ->implode(' for '),
+            'purpose' => $procurementRequest->purposeText(),
             'prepared_by' => $requestingOfficer?->name ?? $procurementRequest->requester?->name ?? '',
             'prepared_by_role' => $requestingOfficer?->position ?? 'Requested by',
             'approved_by' => $approver?->name ?? $procurementRequest->school?->school_head ?? '',
@@ -1542,6 +1626,12 @@ class HomeController extends Controller
     {
         $this->authorizeProcurementAccess($procurementRequest);
 
+        // The Notice to Proceed counts days: while they are not typed yet the preview draws the form with a blank line for them (nothing is saved by a preview).
+        $blankDays = $request->input('document_type') === 'notice_to_proceed' && ! $request->filled('delivery_days');
+        if ($blankDays) {
+            $request->merge(['delivery_days' => 1]);
+        }
+
         DB::beginTransaction();
         try {
             $this->storeProcurementDocument($request, $procurementRequest);
@@ -1556,6 +1646,9 @@ class HomeController extends Controller
             }
 
             $document = $procurementRequest->documents()->where('document_type', $request->input('document_type'))->firstOrFail();
+            if ($blankDays) {
+                $document->forceFill(['metadata' => array_merge($document->metadata ?? [], ['delivery_days' => ''])])->save();
+            }
 
             return response($this->printProcurementDocument($procurementRequest, $document)->render());
         } catch (ValidationException $e) {
@@ -1832,12 +1925,14 @@ class HomeController extends Controller
             'budget_allocation_id' => ['nullable', 'integer', 'exists:budget_allocations,id'],
             'payee' => ['nullable', 'string', 'max:255'],
             'payee_address' => ['nullable', 'string', 'max:255'],
+            'payee_office' => ['nullable', 'string', 'max:255'],
             'payee_tin' => ['nullable', 'string', 'max:100'],
             'responsibility_center_code' => ['nullable', 'string', 'max:100'],
             'purpose' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string', 'max:1000'],
-            'ors_include_status' => ['nullable', 'boolean'],
+            'ors_date' => ['nullable', 'date'],
+            'ors_show_uacs' => ['nullable', 'boolean'],
         ], [], ['ors_number' => 'ORS serial number', 'manually_encode_ors_number' => 'manual ORS serial option']);
         abort_unless($schoolIds->contains((int) $data['school_id']), 403);
         if (! empty($data['procurement_request_id'])) {
@@ -1902,14 +1997,16 @@ class HomeController extends Controller
                 'budget_allocation_id' => $data['budget_allocation_id'] ?? null,
                 'payee' => $data['payee'] ?? null,
                 'payee_address' => $data['payee_address'] ?? null,
+                'payee_office' => $data['payee_office'] ?? null,
+                'ors_show_uacs' => $data['ors_show_uacs'] ?? true,
                 'payee_tin' => $data['payee_tin'] ?? null,
                 'responsibility_center_code' => $data['responsibility_center_code'] ?? null,
                 'purpose' => $data['purpose'],
                 'amount' => $data['amount'],
                 'status' => 'for_review',
                 'notes' => $data['notes'] ?? null,
-                'ors_include_status' => $data['ors_include_status'] ?? true,
-                'submitted_at' => now(),
+                'ors_include_status' => true,
+                'submitted_at' => ! empty($data['ors_date']) ? Carbon::parse($data['ors_date'])->setTimeFrom(now()) : now(),
                 'signatories' => $signatories === [] ? null : ['ors' => $signatories],
             ]);
             $report->transaction?->update(['status' => 'liquidation']);
@@ -1944,17 +2041,36 @@ class HomeController extends Controller
             session()->forget(['success', 'errors', '_old_input']);
 
             if (! $saved) {
-                $messages = $errors ? collect($errors->all())->unique()->values()->all() : ['The form is incomplete.'];
-
-                return response()->view('procurement-document-preview-error', ['messages' => $messages]);
+                return $this->blankOrsPreview($request);
             }
 
             return response($this->printOrs(LiquidationReport::latest('id')->firstOrFail())->render());
-        } catch (ValidationException $e) {
-            return response()->view('procurement-document-preview-error', ['messages' => collect($e->errors())->flatten()->all()]);
+        } catch (ValidationException) {
+            return $this->blankOrsPreview($request);
         } finally {
             DB::rollBack();
         }
+    }
+
+    /** What is still missing does not stop the preview: the official ORS is drawn with what has been typed so far (blank where nothing was). */
+    private function blankOrsPreview(Request $request)
+    {
+        $draft = (new LiquidationReport)->forceFill([
+            'school_id' => $request->input('school_id'),
+            'ors_number' => $request->input('ors_number') ?: LiquidationReport::nextOrsNumber(),
+            'source_of_fund' => $request->input('source_of_fund'),
+            'payee' => $request->input('payee'),
+            'payee_address' => $request->input('payee_address'),
+            'payee_office' => $request->input('payee_office'),
+            'submitted_at' => $request->filled('ors_date') ? Carbon::parse($request->input('ors_date')) : now(),
+            'payee_tin' => $request->input('payee_tin'),
+            'responsibility_center_code' => $request->input('responsibility_center_code'),
+            'purpose' => $request->input('purpose') === '—' ? null : $request->input('purpose'),
+            'amount' => (float) $request->input('amount') > 0 ? $request->input('amount') : null,
+            'ors_include_status' => true,
+        ]);
+
+        return response($this->printOrs($draft)->render());
     }
 
     public function printOrs(LiquidationReport $liquidationReport)

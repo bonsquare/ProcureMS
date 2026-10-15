@@ -53,6 +53,19 @@ class StaffStatusAndRolesTest extends TestCase
         $this->assertTrue($staff->fresh()->is_active);
     }
 
+    public function test_an_employee_has_a_contact_number_and_an_email_that_are_saved_and_shown(): void
+    {
+        [, $school, $user] = $this->tenant('staff-contact');
+        $this->actingAs($user)->post(route('school-settings.employees.store'), ['school_id' => $school->id, 'name' => 'Sec Retariat', 'contact_number' => '0917 123 4567', 'email' => 'bac@example.test'])->assertRedirect();
+        $staff = SchoolStaff::where('name', 'Sec Retariat')->firstOrFail();
+        $this->assertSame(['0917 123 4567', 'bac@example.test'], [$staff->contact_number, $staff->email]);
+
+        $this->put(route('school-settings.employees.update', $staff), ['school_id' => $school->id, 'name' => 'Sec Retariat', 'contact_number' => '09999999999', 'email' => 'new@example.test'])->assertRedirect();
+        $this->assertSame(['09999999999', 'new@example.test'], [$staff->fresh()->contact_number, $staff->fresh()->email]);
+        $this->put(route('school-settings.employees.update', $staff), ['school_id' => $school->id, 'name' => 'Sec Retariat', 'email' => 'not-an-email'])->assertSessionHasErrors('email');
+        $this->get($this->page($school))->assertOk()->assertSee('name="contact_number"', false)->assertSee('name="email"', false);
+    }
+
     public function test_inactive_employees_are_left_out_of_the_signatory_lookups(): void
     {
         [, $school] = $this->tenant('staff-c');

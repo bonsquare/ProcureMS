@@ -134,4 +134,17 @@ class PrAppLinkTest extends TestCase
 
         $this->get(route('procurement.create'))->assertOk()->assertSee('Bond paper')->assertViewHas('appItems', fn ($items) => count($items) === 1);
     }
+
+    public function test_pr_form_has_the_sob_activity_picker_that_fills_the_items(): void
+    {
+        [, $user] = $this->tenantWithApprovedApp('alpha');
+        $this->actingAs($user);
+
+        $this->get(route('procurement.create'))->assertOk()
+            ->assertSee('id="pr-sob-activity"', false)
+            ->assertSee('Activity (from the SOB)')
+            ->assertSeeInOrder(['id="school_id"', 'selected'], false)
+            ->assertSeeInOrder(['name="school_id" required', 'hidden', 'class="mt-2 w-full rounded border'], false)
+            ->assertViewHas('appItems', fn ($items) => array_key_exists('activity_id', $items[0]) && array_key_exists('activity', $items[0]) && array_key_exists('program', $items[0]));
+    }
 }

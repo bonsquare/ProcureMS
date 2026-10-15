@@ -73,13 +73,15 @@ class SchoolSettingsController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'position' => ['nullable', 'string', 'max:255'],
+            'contact_number' => ['nullable', 'string', 'max:50'],
+            'email' => ['nullable', 'email', 'max:255'],
             'is_active' => ['nullable', 'boolean'],
             'roles' => ['nullable', 'array'],
             'roles.*' => ['nullable', 'array'],
             'roles.*.*' => ['string', 'max:100'],
         ]);
 
-        $staff = new SchoolStaff(['name' => $data['name'], 'position' => $data['position'] ?? null, 'is_active' => $data['is_active'] ?? true, 'school_id' => $school->id, 'organization_id' => $school->organization_id]);
+        $staff = new SchoolStaff(['name' => $data['name'], 'position' => $data['position'] ?? null, 'contact_number' => $data['contact_number'] ?? null, 'email' => $data['email'] ?? null, 'is_active' => $data['is_active'] ?? true, 'school_id' => $school->id, 'organization_id' => $school->organization_id]);
         $this->applyRoles($staff, $data['roles'] ?? []);
         $staff->save();
 
@@ -92,6 +94,8 @@ class SchoolSettingsController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'position' => ['nullable', 'string', 'max:255'],
+            'contact_number' => ['nullable', 'string', 'max:50'],
+            'email' => ['nullable', 'email', 'max:255'],
             'is_active' => ['nullable', 'boolean'],
             'roles' => ['nullable', 'array'],
             'roles.*' => ['nullable', 'array'],
@@ -100,6 +104,8 @@ class SchoolSettingsController extends Controller
 
         $staff->name = $data['name'];
         $staff->position = $data['position'] ?? null;
+        $staff->contact_number = $data['contact_number'] ?? null;
+        $staff->email = $data['email'] ?? null;
         $staff->is_active = $data['is_active'] ?? $staff->is_active;
         $this->applyRoles($staff, $data['roles'] ?? []);
         $staff->save();

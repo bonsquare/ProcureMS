@@ -30,20 +30,21 @@
     $fund = $report->source_of_fund ?: $pr?->source_of_fund ?: $line?->source_of_fund;
     $division = $report->school?->division ?: ($agency->division_name ?: $agency->division_office);
     $payee = $report->payee ?: ($pr?->school?->name ?? $report->school?->name);
-    $office = $report->school?->name;
-    $address = $report->school?->address;
+    $office = $report->payee_office; // the Payee, Office and Address lines all describe the payee
+    $address = $report->payee_address;
     $rc = $report->responsibility_center_code ?: $pr?->responsibility_center_code ?: $line?->responsibility_center;
-    $uacs = $line?->uacs_code;
-    $pap = $line?->program;
+    $uacs = ($report->ors_show_uacs ?? true) ? $line?->uacs_code : null; // written in the UACS Object Code column only when the box was ticked
+    $pap = ''; // MFO/PAP is left blank
     $particulars = $report->purpose . ($report->notes ? "\n" . $report->notes : '');
     $amount = number_format((float) $report->amount, 2);
     $paidAmount = $report->paid_at ? $amount : '';
     $statusParticulars = $report->purpose;
+    $orsReference = preg_replace('/^ORS-?/i', '', (string) $report->ors_number); // the ORS/JEV/Check/ADA/TRA No. of Section C: the ORS number, without the letters
     $requesterName = strtoupper((string) ($requester?->name ?: $report->school?->school_head));
     $requesterRole = $requester?->position ?: 'School Head';
     $certifierName = strtoupper((string) ($budgetOfficer?->name ?? ''));
     $certifierRole = $budgetOfficer?->position ?: 'Disbursing Officer';
-    $showStatus = (bool) ($report->ors_include_status ?? true);
+    $showStatus = true; // Section C, Status of Obligation, is always part of the ORS
 @endphp
 @include('partials.official-toolbar', ['closeUrl' => route('budget'), 'context' => 'Obligation Request · '.$report->ors_number])
 <div class="sheet{{ $showStatus ? '' : ' no-status' }}" data-official-page data-single-page data-doc="ors" data-paper="longbond"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 612 936" preserveAspectRatio="xMidYMid meet" stroke="#000" fill="none">
@@ -154,23 +155,23 @@
 <text class="ors-status" x="405.62" y="719.46" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold" xml:space="preserve">Amount</text>
 <!-- header fields -->
 <text x="393.4" y="67.4" font-family="'Times New Roman',Times,serif" font-size="13.5" xml:space="preserve">Serial No. : </text>
-<text x="458.65" y="67.4" font-family="'Times New Roman',Times,serif" font-size="13.5" text-decoration="underline" xml:space="preserve">{{ $report->ors_number ?: '______________' }}</text>
-<text x="429.39" y="87.7" font-family="'Times New Roman',Times,serif" font-size="13.5">{{ $date }}</text>
+<text x="458.65" y="67.4" font-family="'Times New Roman',Times,serif" font-size="13.5" font-weight="bold" text-decoration="underline" xml:space="preserve">{{ $report->ors_number ?: '______________' }}</text>
+<text x="429.39" y="87.7" font-family="'Times New Roman',Times,serif" font-size="13.5" font-weight="bold" text-decoration="underline">{{ $date }}</text>
 <text x="393.4" y="108.7" font-family="'Times New Roman',Times,serif" font-size="13.5" xml:space="preserve">Fund Cluster : </text>
-<text x="473.8" y="108.7" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($fund, 118, 13.5) }}" text-decoration="underline">{{ $fund }}</text>
+<text x="473.8" y="108.7" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($fund, 118, 13.5) }}" font-weight="bold" text-decoration="underline">{{ $fund }}</text>
 <text x="204" y="111.6" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="11.6" font-weight="bold">{{ $division }}</text>
 <!-- payee / office / address -->
 <text x="118.1" y="137.7" font-family="Arial,Helvetica,sans-serif" font-size="{{ $fit($payee, 470, 11.6) }}">{{ $payee }}</text>
 <text x="118.1" y="163.7" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($office, 470, 11.6) }}">{{ $office }}</text>
 <text x="118.1" y="188.4" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($address, 470, 11.6) }}">{{ $address }}</text>
 <!-- responsibility center / particulars -->
-<text x="66.3" y="237.6" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="{{ $fit($rc, 92, 10.6) }}">{{ $rc }}</text>
-<text x="362.5" y="237.6" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="{{ $fit($pap, 58, 9) }}">{{ $pap }}</text>
-<text x="432.5" y="237.6" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="{{ $fit($uacs, 64, 10) }}">{{ $uacs }}</text>
-<foreignObject x="118.1" y="227.6" width="196" height="266"><div xmlns="http://www.w3.org/1999/xhtml" style="font:10.6px/13.05px Arial,Helvetica,sans-serif;color:#000;overflow:hidden;height:266px;white-space:pre-wrap;word-wrap:break-word">{{ $particulars }}</div></foreignObject>
+<text x="66.3" y="263.7" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="{{ $fit($rc, 92, 10.6) }}">{{ $rc }}</text>
+<text x="362.5" y="263.7" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="{{ $fit($pap, 58, 9) }}">{{ $pap }}</text>
+<text x="432.5" y="263.7" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="{{ $fit($uacs, 64, 10) }}">{{ $uacs }}</text>
+<foreignObject x="123.1" y="253.7" width="188" height="240"><div xmlns="http://www.w3.org/1999/xhtml" style="font:10.6px/13.05px Arial,Helvetica,sans-serif;color:#000;overflow:hidden;height:240px;white-space:pre-wrap;word-wrap:break-word">{{ $particulars }}</div></foreignObject>
 <!-- amount -->
-<text x="469.1" y="286.2" font-family="Arial,Helvetica,sans-serif" font-size="9.7">₱</text>
-<text x="588.0" y="286.2" text-anchor="end" font-family="Arial,Helvetica,sans-serif" font-size="9.7">{{ $amount }}</text>
+<text x="469.1" y="263.7" font-family="Arial,Helvetica,sans-serif" font-size="9.7">₱</text>
+<text x="588.0" y="263.7" text-anchor="end" font-family="Arial,Helvetica,sans-serif" font-size="9.7">{{ $amount }}</text>
 <text x="469.4" y="493.4" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold">₱</text>
 <text x="587.7" y="493.4" text-anchor="end" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold">{{ $amount }}</text>
 <!-- A. requested by -->
@@ -181,7 +182,9 @@
 <text x="492.4" y="641.9" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($certifierRole, 190, 10.6) }}">{{ $certifierRole }}</text>
 <!-- C. status of obligation -->
 <foreignObject class="ors-status" x="53" y="822.5" width="105" height="58"><div xmlns="http://www.w3.org/1999/xhtml" style="font:9.5px/11.5px 'Times New Roman',Times,serif;color:#000;text-align:center;overflow:hidden;height:58px;word-wrap:break-word;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical">{{ $statusParticulars }}</div></foreignObject>
+<text class="ors-status" x="211" y="838.3" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($orsReference, 90, 10.6) }}">{{ $orsReference }}</text>
 <text class="ors-status" x="293" y="838.3" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="10.6">{{ $amount }}</text>
+<text class="ors-status" x="366" y="838.3" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="10.6">{{ $amount }}</text>
 <text class="ors-status" x="438.7" y="838.3" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="10.6">{{ $paidAmount }}</text>
 
 </g>

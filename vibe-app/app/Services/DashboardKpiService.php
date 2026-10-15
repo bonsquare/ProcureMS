@@ -2,10 +2,15 @@
 
 namespace App\Services;
 
+use App\Models\Aip;
+use App\Models\AppCsePlan;
+use App\Models\AppPlan;
 use App\Models\BudgetAllocation;
 use App\Models\LiquidationReport;
 use App\Models\ProcurementRequest;
 use App\Models\School;
+use App\Models\SipProject;
+use App\Models\SobPlan;
 use App\Models\Supplier;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -68,6 +73,7 @@ class DashboardKpiService
                 ]])->all(),
                 'lines' => $allocations->count(),
             ],
+            'planning' => $this->planning($schoolIds, $year, $matrix),
             'liquidation' => [
                 'total' => $reports->count(),
                 'pending' => $reports->where('status', 'for_review')->count(),
@@ -86,6 +92,39 @@ class DashboardKpiService
                 'amount' => (float) $request->amount,
             ])->values()->all(),
             'schools' => $this->perSchool($schoolIds, $requests, $matrix),
+        ];
+    }
+
+    /**
+     * Where the planning flow stands (SIP, AIP, SOB, APP, APP-CSE) and the budget the approved SOB funded, by source of fund and quarter.
+     *
+     * @param  Collection<int, int>  $schoolIds
+     * @return array<string, mixed>
+     */
+    private function planning(Collection $schoolIds, int $year, Collection $matrix): array
+    {
+        $count = fn ($query) => ['total' => (int) $query->count(), 'approved' => (int) (clone $query)->where('status', 'approved')->count()];
+        $sobPlans = SobPlan::withoutGlobalScopes()->whereIn('school_id', $schoolIds)->where('fiscal_year', $year)->with(['items' => fn ($q) => $q->withoutGlobalScopes()])->get();
+
+        $steps = [
+            'sip' => ['label' => 'SIP', 'total' => (int) SipProject::withoutGlobalScopes()->whereIn('school_id', $schoolIds)->whereBetween('school_year', [$year - 2, $year])->count(), 'approved' => null, 'unit' => 'program'],
+            'aip' => ['label' => 'AIP', 'unit' => 'plan'] + $count(Aip::withoutGlobalScopes()->whereIn('school_id', $schoolIds)->where('fiscal_year', $year)),
+            'sob' => ['label' => 'SOB', 'total' => $sobPlans->count(), 'approved' => $sobPlans->where('status', 'approved')->count(), 'unit' => 'quarter'],
+            'app' => ['label' => 'APP', 'unit' => 'plan'] + $count(AppPlan::withoutGlobalScopes()->whereIn('school_id', $schoolIds)->where('fiscal_year', $year)),
+            'app-cse' => ['label' => 'APP-CSE', 'unit' => 'plan'] + $count(AppCsePlan::withoutGlobalScopes()->whereIn('school_id', $schoolIds)->where('fiscal_year', $year)),
+        ];
+
+        $funded = $matrix->filter(fn (array $row) => str_starts_with((string) $row['item']->remarks, 'From SOB'))->groupBy(fn (array $row) => $row['item']->source_of_fund);
+
+        return [
+            'steps' => $steps,
+            'funds' => $funded->map(fn ($rows, $fund) => [
+                'fund' => $fund,
+                'quarters' => collect([1, 2, 3, 4])->map(fn (int $quarter) => (float) $rows->sum(fn (array $row) => $row['quarters'][$quarter]['allocated']))->all(),
+                'allocated' => (float) $rows->sum('allocated'),
+                'obligated' => (float) $rows->sum('obligated'),
+                'items' => $rows->count(),
+            ])->sortKeys()->values()->all(),
         ];
     }
 

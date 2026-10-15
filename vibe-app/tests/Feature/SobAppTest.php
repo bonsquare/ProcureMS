@@ -150,12 +150,16 @@ class SobAppTest extends TestCase
         $allotment = BudgetAllocation::withoutGlobalScopes()->sole();
 
         $payload = fn (float $quantity, float $price = 250) => [
-            'school_id' => $fx['school']->id, 'purpose' => 'Office supplies', 'entity_name' => 'DepEd', 'department_name' => $fx['school']->name,
+            'school_id' => $fx['school']->id, 'sob_activity_id' => $fx['activities'][0]->id, 'purpose' => 'Office supplies', 'entity_name' => 'DepEd', 'department_name' => $fx['school']->name,
             'request_date' => '2026-03-01', 'source_of_fund' => 'MOOE', 'budget_allocation_id' => $allotment->id, 'transaction_description' => null, 'section' => null,
             'sai_number' => null, 'sai_date' => null, 'responsibility_center_code' => null, 'extra_blank_rows' => 0,
             'items' => [['app_item_id' => $appItem->id, 'name' => 'Bond paper', 'quantity' => $quantity, 'unit' => 'ream', 'unit_price' => $price]],
         ];
 
+        // The SOB activity is the basis of the request: it must be chosen, and it must be one with an item left in an approved SOB.
+        $this->post(route('procurement.store'), ['sob_activity_id' => null] + $payload(6))->assertSessionHasErrors('sob_activity_id');
+        $this->post(route('procurement.store'), ['sob_activity_id' => 999999] + $payload(6))->assertSessionHasErrors('sob_activity_id');
+        $this->assertSame(0, ProcurementRequest::count());
         $this->post(route('procurement.store'), $payload(6))->assertSessionHasNoErrors();
         $this->post(route('procurement.store'), $payload(5))->assertSessionHasErrors('items');
         $this->post(route('procurement.store'), $payload(4, 300))->assertSessionHasErrors('items');
@@ -165,6 +169,32 @@ class SobAppTest extends TestCase
         $this->assertSame(2, ProcurementRequestItem::count());
         $this->assertTrue($plan->fresh()->transaction->events()->where('module', 'app')->where('action', 'pr_linked')->exists());
         $this->get(route('planning', ['school_id' => $fx['school']->id, 'year' => 2026]))->assertOk()->assertSee('10 of 10 ream');
+    }
+
+    public function test_a_purchase_request_from_the_sob_is_charged_to_the_budget_line_the_sob_wrote_without_asking_for_it(): void
+    {
+        $fx = SobFixture::make();
+        $this->approvedSob($fx, [$this->line($fx), $this->line($fx, ['particulars' => 'Big item', 'quantity' => 40])]);
+        $this->actingAs($fx['user']);
+        $this->generate($fx);
+        $this->post(route('planning.app.approve', AppPlan::withoutGlobalScopes()->sole()))->assertSessionHasNoErrors();
+        $appItem = AppItem::withoutGlobalScopes()->where('procurement_item', 'Bond paper')->sole();
+        $allotment = BudgetAllocation::withoutGlobalScopes()->sole();
+
+        $payload = [
+            'school_id' => $fx['school']->id, 'sob_activity_id' => $fx['activities'][0]->id, 'purpose' => 'Office supplies', 'entity_name' => 'DepEd', 'department_name' => $fx['school']->name,
+            'request_date' => '2026-03-01', 'source_of_fund' => 'MOOE', 'transaction_description' => null, 'section' => null,
+            'sai_number' => null, 'sai_date' => null, 'responsibility_center_code' => null, 'extra_blank_rows' => 0,
+            'items' => [['app_item_id' => $appItem->id, 'name' => 'Bond paper', 'quantity' => 2, 'unit' => 'ream', 'unit_price' => 250]],
+        ];
+
+        $this->get(route('procurement.create'))->assertOk()->assertDontSee('Charge to Budget Line');
+        $this->post(route('procurement.store'), $payload)->assertSessionHasNoErrors();
+        $this->assertSame($allotment->id, ProcurementRequest::firstOrFail()->budget_allocation_id, 'the Budget line is the one the SOB wrote for the item');
+
+        $unlinked = $payload;
+        $unlinked['items'] = [['name' => 'Anything', 'quantity' => 1, 'unit' => 'piece', 'unit_price' => 10]];
+        $this->post(route('procurement.store'), $unlinked)->assertSessionHasErrors('items');
     }
 
     public function test_an_aip_with_an_sob_cannot_be_deleted(): void

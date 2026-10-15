@@ -17,6 +17,25 @@
         <form method="POST" action="{{ route('procurement.status', $procurementRequest) }}">@csrf @method('PATCH')<input type="hidden" name="status" value="pending_approval"><button class="min-h-11 rounded-lg bg-primary px-4 text-xs font-bold text-white">Submit for approval</button></form>
     </section>
 @endif
+{{-- Obligation: it is the Purchase Order that obligates the budget; the ORS is made from the PO (it brings the payee, the awarded amount and the budget line). --}}
+@unless(in_array($procurementRequest->status, ['returned', 'rejected'], true))
+    @php $activeOrs = $procurementRequest->liquidationReports->whereNotIn('status', ['returned', 'rejected'])->first(); $purchaseOrder = $procurementRequest->purchaseOrder(); @endphp
+    @if($activeOrs)
+        <section class="mb-5 flex flex-wrap items-center gap-3 rounded-xl border border-secondary/40 bg-secondary/5 p-4" aria-label="Obligation">
+            <span class="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-secondary/15 text-secondary"><span class="material-symbols-outlined text-[22px]" aria-hidden="true">assignment_turned_in</span></span>
+            <div class="mr-auto"><p class="text-[10px] font-bold uppercase tracking-wider text-secondary">Obligated</p><p class="text-sm font-bold">{{ $activeOrs->ors_number }} · ₱{{ number_format((float) $activeOrs->amount, 2) }} <span class="ml-1 rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-secondary">{{ \Illuminate\Support\Str::headline($activeOrs->status) }}</span></p></div>
+            <a href="{{ route('liquidation.print', $activeOrs) }}" target="_blank" rel="noopener" class="inline-flex min-h-10 items-center rounded-lg border border-secondary px-4 text-xs font-bold text-secondary hover:bg-secondary hover:text-white">View ORS</a>
+        </section>
+    @elseif($purchaseOrder)
+        <section class="mb-5 flex flex-wrap items-center gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4" aria-label="Obligation">
+            <span class="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-amber-100 text-amber-800"><span class="material-symbols-outlined text-[22px]" aria-hidden="true">pending_actions</span></span>
+            <div class="mr-auto"><p class="text-[10px] font-bold uppercase tracking-wider text-amber-800">Not obligated yet</p><p class="text-sm font-bold">{{ $purchaseOrder->document_number }} is ready: create the ORS to obligate ₱{{ number_format($procurementRequest->obligationAmount(), 2) }} of the budget.</p></div>
+            @if(request()->user()->canCreateObligation())<a href="{{ route('budget', ['pr' => $procurementRequest->id, 'new' => 1]) }}" class="inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-primary px-4 text-xs font-bold text-white shadow-md hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">add</span>Create ORS</a>@else<span class="text-xs text-on-surface-variant">Waiting for the ORS.</span>@endif
+        </section>
+    @else
+        <p class="mb-5 flex items-center gap-2 rounded-xl border border-outline-variant/60 bg-white px-4 py-3 text-xs text-on-surface-variant" aria-label="Obligation"><span class="material-symbols-outlined text-[18px] text-primary" aria-hidden="true">info</span>The budget is obligated by the Purchase Order: once the PO is made, the ORS is created from it.</p>
+    @endif
+@endunless
 @if(in_array($procurementRequest->status, ['draft', 'returned', 'approved', 'for_canvass', 'completed'], true))
     @php
         $canEditRequest = request()->user()->hasPermission('procurement.edit') || request()->user()->hasPermission('procurement.create');

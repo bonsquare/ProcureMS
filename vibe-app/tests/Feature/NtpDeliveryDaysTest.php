@@ -45,6 +45,21 @@ class NtpDeliveryDaysTest extends TestCase
         $this->assertSame(0, $pr->documents()->where('document_type', 'notice_to_proceed')->count());
     }
 
+    public function test_the_preview_draws_the_notice_to_proceed_with_a_blank_line_until_the_days_are_typed(): void
+    {
+        [, $user, $pr] = $this->setupRequest();
+        $this->actingAs($user);
+
+        $blank = $this->post(route('procurement.documents.preview', $pr), $this->ntp())->assertOk()->getContent();
+        $this->assertStringNotContainsString('Preview not ready', $blank);
+        $this->assertStringContainsString('<u>________</u>', $blank, 'the days are a blank line, not a made-up number');
+        $this->assertSame(0, $pr->documents()->where('document_type', 'notice_to_proceed')->count(), 'a preview saves nothing');
+
+        $typed = $this->post(route('procurement.documents.preview', $pr), $this->ntp(['delivery_days' => '45']))->assertOk()->getContent();
+        $this->assertStringContainsString('<u>45</u>', $typed);
+        $this->post(route('procurement.documents.store', $pr), $this->ntp())->assertSessionHasErrors('delivery_days');
+    }
+
     public function test_the_typed_days_are_saved_and_printed_on_the_notice_to_proceed(): void
     {
         [, $user, $pr] = $this->setupRequest();

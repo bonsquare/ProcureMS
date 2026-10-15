@@ -15,6 +15,8 @@ class SchoolStaff extends Model
         'school_id',
         'name',
         'position',
+        'contact_number',
+        'email',
         'procurement_role',
         'document_role',
         'bac_role',

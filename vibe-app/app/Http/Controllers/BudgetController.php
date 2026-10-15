@@ -6,6 +6,7 @@ use App\Models\BudgetAllocation;
 use App\Models\LiquidationReport;
 use App\Models\ProcurementRequest;
 use App\Models\School;
+use App\Models\Supplier;
 use App\Services\BudgetService;
 use App\Support\SignatorySlots;
 use Illuminate\Http\Request;
@@ -64,13 +65,14 @@ class BudgetController extends Controller
             ->sortByDesc('date')->values();
 
         $orsList = LiquidationReport::with(['school', 'procurementRequest.budgetAllocation', 'budgetAllocation'])->whereYear('created_at', $year)->tap($schoolFilter)->latest()->get();
-        $availableProcurements = ProcurementRequest::with('school', 'documents', 'budgetAllocation')->whereIn('school_id', $schoolIds)->whereDoesntHave('liquidationReports')->latest()->get();
+        $availableProcurements = ProcurementRequest::with('school', 'documents', 'budgetAllocation')->whereIn('school_id', $schoolIds)->whereHas('documents', fn ($query) => $query->where('document_type', 'purchase_order'))->whereDoesntHave('liquidationReports')->latest()->get();
 
         return view('budget', [
             'nextOrsNumber' => LiquidationReport::nextOrsNumber(),
             'budgetItems' => app(BudgetService::class)->withAvailability(BudgetAllocation::whereIn('school_id', $schoolIds)->whereNull('closed_at')->where('fiscal_year', $year)->orderBy('particulars')->get()),
             'orsList' => $orsList,
             'availableProcurements' => $availableProcurements,
+            'orsSuppliers' => Supplier::whereIn('school_id', $schoolIds)->where('status', 'active')->orderBy('business_name')->get(['id', 'school_id', 'business_name', 'business_address', 'tin']),
             'isMasterUser' => request()->user()->seesAllSchools(),
             'transactions' => $transactions,
             'schoolNames' => $schools->pluck('name', 'id'),

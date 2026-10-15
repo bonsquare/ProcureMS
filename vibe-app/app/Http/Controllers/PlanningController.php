@@ -50,7 +50,7 @@ class PlanningController extends Controller
             'year' => $year,
             'sipProjects' => SipProject::with(['transaction', 'activities'])->where('school_id', $selectedSchool->id)->orderByDesc('school_year')->latest('id')->get(),
             'sipPlans' => SipPlan::where('school_id', $selectedSchool->id)->get()->keyBy('start_year'),
-            'aips' => Aip::with(['sipProject', 'activities'])->where('school_id', $selectedSchool->id)->orderByDesc('fiscal_year')->get(),
+            'aips' => Aip::with(['sipProject', 'activities', 'kras'])->where('school_id', $selectedSchool->id)->orderByDesc('fiscal_year')->get(),
             'sobPlans' => SobPlan::with('items')->where('school_id', $selectedSchool->id)->orderBy('fiscal_year')->orderBy('quarter')->get(),
             'appCsePlans' => AppCsePlan::withCount('items')->where('school_id', $selectedSchool->id)->orderByDesc('fiscal_year')->get(),
             // Older PPMPs stay in the database; they only keep their AIP from being deleted.

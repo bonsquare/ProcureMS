@@ -5,7 +5,7 @@
         'document_role' => ['#ddf0e8', '#2a7f64', 'description'],
     ];
     $staffData = $staff->mapWithKeys(fn ($member) => [$member->id => [
-        'name' => $member->name, 'position' => $member->position, 'code' => $member->employee_no, 'active' => (bool) $member->is_active,
+        'name' => $member->name, 'position' => $member->position, 'contact_number' => $member->contact_number, 'email' => $member->email, 'code' => $member->employee_no, 'active' => (bool) $member->is_active,
         'roles' => collect(array_keys($roleGroups))->mapWithKeys(fn ($group) => [$group => $member->rolesFor($group)])->all(),
     ]]);
     $dialog = 'w-[min(46rem,95vw)] rounded-2xl border border-outline-variant/60 bg-white p-0 shadow-2xl backdrop:bg-black/40';
@@ -82,6 +82,8 @@
         <div class="grid gap-3 sm:grid-cols-2">
             <label class="block text-xs font-bold">Full name<input name="name" required class="{{ $field }}"></label>
             <label class="block text-xs font-bold">Position<input name="position" placeholder="e.g. Administrative Officer II" class="{{ $field }}"></label>
+            <label class="block text-xs font-bold">Contact number<input name="contact_number" maxlength="50" placeholder="e.g. 0917 123 4567" class="{{ $field }}"></label>
+            <label class="block text-xs font-bold">E-mail<input type="email" name="email" maxlength="255" placeholder="name@deped.gov.ph" class="{{ $field }}"></label>
             {!! $statusSelect('staff-add-status') !!}
         </div>
         <p class="mb-2 mt-4 text-xs font-bold">Roles</p>
@@ -99,6 +101,8 @@
         <div class="grid gap-3 sm:grid-cols-2">
             <label class="block text-xs font-bold">Full name<input name="name" required class="{{ $field }}"></label>
             <label class="block text-xs font-bold">Position<input name="position" class="{{ $field }}"></label>
+            <label class="block text-xs font-bold">Contact number<input name="contact_number" maxlength="50" class="{{ $field }}"></label>
+            <label class="block text-xs font-bold">E-mail<input type="email" name="email" maxlength="255" class="{{ $field }}"></label>
             {!! $statusSelect('staff-edit-status') !!}
         </div>
         <p class="mb-2 mt-4 text-xs font-bold">Tick every role this person holds</p>
@@ -118,6 +122,8 @@
             form.action = updateUrl.replace('__ID__', id);
             form.elements.name.value = member.name || '';
             form.elements.position.value = member.position || '';
+            form.elements.contact_number.value = member.contact_number || '';
+            form.elements.email.value = member.email || '';
             form.elements.is_active.value = member.active ? '1' : '0';
             document.getElementById('staff-edit-code').textContent = member.code || '';
             form.querySelectorAll('input[type=checkbox]').forEach((box) => {

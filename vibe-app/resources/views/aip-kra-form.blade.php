@@ -63,6 +63,8 @@
 <template id="activity-template">
     @include('partials.aip-activity-card', ['i' => '__INDEX__', 'a' => [], 'accounts' => $accounts, 'fundOptions' => $fundOptions, 'field' => $field, 'label' => $label])
 </template>
+{{-- The official AIP stays beside the form, as on the AIP page (the saved form; the entry is drawn after Save). --}}
+@include('partials.doc-preview-dock', ['key' => 'aip-'.$aip->id, 'title' => 'Official AIP', 'savedUrl' => route('aip.print', $aip), 'drafts' => '[data-no-draft-preview]'])
 @endsection
 @push('scripts')
 <script>

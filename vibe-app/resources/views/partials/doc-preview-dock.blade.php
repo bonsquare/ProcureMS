@@ -27,13 +27,29 @@
         const draftSelector = @json($drafts);
         const csrf = document.querySelector('meta[name=csrf-token]')?.content || @json(csrf_token());
         const dock = document.getElementById('doc-dock');
+        // The preview and its button are fixed on the screen; they are kept outside the page content so scaling the page never scales them.
+        document.body.append(dock, document.getElementById('doc-dock-open'));
         const frame = document.getElementById('doc-dock-frame');
         const status = document.getElementById('doc-dock-status');
         const zoomSelect = document.getElementById('doc-dock-zoom');
         const hideChrome = '<style>.official-toolbar{display:none!important}body{background:#d9dee5!important}.official-sheet{zoom:var(--pz,1)!important;margin-top:12px!important;margin-bottom:12px!important}</style>';
         let timer = null; let controller = null; let lastDraft = null;
         const isOpen = () => document.body.classList.contains('dock-open');
-        const setOpen = (open) => { document.body.classList.toggle('dock-open', open); try { sessionStorage.setItem(key, open ? '1' : '0'); } catch (error) { /* storage can be blocked */ } if (open) { render(lastDraft); } };
+        // With the preview beside it the page has less room: its text and boxes are scaled down to fit (the whole page, so every screen of the system follows),
+        // never below 60% (the smallest text, 10px, is then 6px). Closing the preview puts the page back to its normal size.
+        const main = document.querySelector('main');
+        const scalePage = () => {
+            if (!main) return;
+            // the page itself is scaled; the preview and its button (also inside main) keep their size
+            const content = [...main.children].filter((element) => !element.matches('#doc-dock, #doc-dock-open, script, style'));
+            content.forEach((element) => element.style.removeProperty('zoom'));
+            if (!isOpen() || window.innerWidth < 1100) { return; }
+            const room = window.innerWidth - dock.getBoundingClientRect().width - main.getBoundingClientRect().left - 32;
+            const scale = Math.min(1, Math.max(0.6, room / 1000));
+            content.forEach((element) => element.style.setProperty('zoom', scale.toFixed(3)));
+        };
+        window.addEventListener('resize', scalePage);
+        const setOpen = (open) => { document.body.classList.toggle('dock-open', open); try { sessionStorage.setItem(key, open ? '1' : '0'); } catch (error) { /* storage can be blocked */ } scalePage(); if (open) { render(lastDraft); } };
         const applyZoom = () => {
             const doc = frame.contentDocument;
             const sheet = doc && doc.querySelector('.official-sheet, [data-official-page]');
