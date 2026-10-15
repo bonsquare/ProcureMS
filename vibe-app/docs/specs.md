@@ -590,3 +590,48 @@ The SOB print (`/planning/sob/{id}/print`, `resources/views/sob-print.blade.php`
 - **APP-CSE page** (`/planning/app-cse/{id}`): the first card is **Details** (office, region, address, contact, date, approved budget); the **Signatories** (Prepared by, Noted by, Certified Funds Available, Approved by) are at the very bottom of the page, after Approve, side by side in four columns, in a form of their own with Save signatories (only the signatory fields are sent, so the Details are not touched).
 
 Tests: `SobFlowTest`, `SobRevisionTest`, `SobPrintDesignTest`, `SobAppTest`, `SobApprovedEditTest`, `AppCseFromSobTest`, `PlanningFlowTest`.
+
+## 25. Planning page refinements (approved by the owner 2026-10-15)
+
+These refine sections 22 to 24. Where a line below differs from an older line of 24.2 to 24.5 (the SOB list icons, the step bar, the order of the APP and APP-CSE pages), this section is the later decision.
+
+### 25.1 Jump buttons
+
+- Every planning page shows **Back to Planning** with four small jump buttons, **SIP, AIP, SOB, APP**, at the top (`resources/views/partials/planning-jump.blade.php`): the AIP page, the SOB page, the APP-CSE page and the SIP Excel import preview. Each opens Planning on that tab for the same school and fiscal year. Print pages (the paper forms) do not have them.
+
+### 25.2 AIP page
+
+- The KRA button is **Edit KRA**. Each activity has its own **Edit** (opens the KRA edit page scrolled to that activity) and a **Delete** (trash, asks first). Deleting an activity follows the rules of deleting a KRA: refused in a closed fiscal year and while an SOB uses the activity; on an approved AIP it marks the AIP as revised so it needs approval again.
+
+### 25.3 SOB list and SOB page
+
+- A row of the SOB history in Planning has only **Open**, and **Delete** (red trash) for a draft SOB that is not approved. There is no Edit icon there (the quarter and fund are chosen in Create SOB); this replaces the Edit and Delete icons of 24.3.
+- The pillar bar of the SOB page says **Pillar** (not "Pillar / Enabling Mechanism", because Enabling Mechanism is one of the pillars) and shows no program name.
+
+### 25.4 Document strip (all planning documents)
+
+- **Review before generating** and **History** are two cards side by side in the strip (icon, title, a line such as "4 of 5 ready" or "7 recorded events", open icon). Each opens a card window (title, close button, scrolling list); clicking outside or Esc closes it.
+
+### 25.5 APP panel
+
+- **Unlock APP** (approved) or **Delete APP** (draft) is a red rounded chip in the same row as **Print APP**, at the right, with its explanation beside it, asking before it acts. The Danger zone box of the APP panel is gone. The APP signatories are shown horizontally (three columns).
+
+### 25.6 APP-CSE in the Planning flow
+
+- The APP-CSE is **Step 5** of the step bar ("APP-CSE · FY", items, Not started / Draft / Approved); the separate-plan button is gone. It waits for the SOB. Plan progress counts five plans.
+- It has its own panel (`#app-cse`), not inside the APP panel. The panel lists the plans as a table: Plan, Catalog, Status, Items, Grand total, Created, with Print and Open icons. The create button is **Generate APP-CSE**. A show / hide arrow is at the left of the panel title.
+
+### 25.7 APP-CSE page
+
+- **Details**, **Part I** and **Part II** are folded sections with the arrow at the left; open by default.
+- Items are grouped by category. Each category has a solid blue bar with its name (a long name wraps), and under it the heading **Item, Unit Price, Q1 to Q4 over Jan to Dec, Qty, Amount**. Each item is one row in the same columns (months as small cells, an empty month is a faint dash). The row scrolls sideways on a narrow screen.
+- **Totals** are two boxes: Summary of amounts (A, B, C, D highlighted, E) and Monthly cash requirements (F: G.1, G.2, total by Q1 to Q4 and Year).
+- **SOB signatories** (history of SOB created, view only) is under the Totals: for each SOB of the school and year, its Prepared by, Recommending approval and Approved by, with **Edit in the SOB**. They are changed in the SOB, not here.
+- **Approve APP-CSE** is at the top right, next to Print official form (greyed until an item has a quantity; the confirmation says that approving locks it). An approved APP-CSE has **Reopen as a draft** in the first box (people allowed to manage planning, open fiscal year); it is recorded in the audit log and the history.
+- The boxes **Add from the Procurement Service catalog (Part I)** and **Add my own item (Part II)** are removed from the page: the lines come from the approved SOB. (Open: how Part I lines are filled is not decided yet; today every SOB line goes to Part II.)
+
+### 25.8 Planning Settings
+
+- Two cards: **Fund sources** (the funds offered as Source of fund in the AIP and the SOB, listed with code, name and Active / Inactive) and **Fiscal year** (Open / Closed with the lock explained). The Settings button stays in the same row as View.
+
+Tests: `AppCseEntryTest`, `AppCseFromSobTest`, `SobRevisionTest`, `PlanningFlowTest`, `DocumentStripTest`.
