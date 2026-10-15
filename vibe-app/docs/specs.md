@@ -635,3 +635,33 @@ These refine sections 22 to 24. Where a line below differs from an older line of
 - Two cards: **Fund sources** (the funds offered as Source of fund in the AIP and the SOB, listed with code, name and Active / Inactive) and **Fiscal year** (Open / Closed with the lock explained). The Settings button stays in the same row as View.
 
 Tests: `AppCseEntryTest`, `AppCseFromSobTest`, `SobRevisionTest`, `PlanningFlowTest`, `DocumentStripTest`.
+
+## 26. SOB labor print, Allotment Registry, Budget Allocation page and AIP amounts (approved by the owner 2026-10-15)
+
+These refine sections 24 and 25 and the Finance pages. Where a line below differs from an older line, this section is the later decision.
+
+### 26.1 Printed SOB: other lines (labor) and Sub-Totals
+
+- An Item (one account of one program) that has other lines prints, in this order: its particulars, a **Sub-Total** of the particulars, each other line, then a second **Sub-Total** (particulars plus other lines, in bold, across the full width). An Item without other lines has no Sub-Total of its own.
+- An other line (for example "35 % Labor") is written in the **left column**, under the program and the note ("POW required"), and the word **Labor** in italics is in the Particulars column; its amount is in the Amount column. The left cell of the Item covers its particulars and the first Sub-Total only.
+- The pillar Sub-Total is left out when the pillar has one Item only and that Item has other lines (it would repeat the Item's last Sub-Total). A pillar with two or more Items keeps its pillar Sub-Total.
+- On the SOB page the Item's table shows the same Sub-Total, other lines and Sub-Total.
+
+### 26.2 Allotment Registry (`/allotment-registry`)
+
+- The page is the summary of the budget, not the per-line ledger: summary cards (Total allotment, Obligated, Disbursed, Not yet obligated, and a "Budget used" bar), **Summary per Source of Fund**, **Items funded from the SOB** and **Manual allotments**. The per-line obligation and disbursement boxes are not shown; Export to Excel still has every entry.
+- Only funded lines are listed: a line with no allotment in the chosen period (and nothing obligated on it) is left out. The Budget lines written by an approved SOB (their remarks say "From SOB FY ... Q...") are the **Items funded from the SOB**; every other line is a **Manual allotment** (funding with no project: a donation, a transfer, a grant). **Add manual allotment** (people allowed to manage the budget) opens the Budget allocation form; each manual line has an Open icon. The cards and the summary count both.
+- **Allotment** is one plain heading (same size and style as the other headings, no box or highlight) over Q1 to Q4; the four quarters have the same width. All number columns are centered. The account (UACS) code is shown larger, on its own line above the account title, and the title wraps.
+- The first button next to Export to Excel is **SOB** (it opens the SOB tab of Planning).
+
+### 26.3 Budget Allocation page (`/budget/allocation`)
+
+- It is **live**: the summary cards, the Budget Ledger and the Quarterly breakdown are read again every 30 seconds without reloading (and on Refresh, and when the tab comes back), with a "Live · Updated hh:mm:ss" note. Folded sections stay as they are.
+- **Obligated** (by quarter and in all), Remaining, Unliquidated, the status and the warnings come from the Registry of Allotments, Obligations and Disbursements (the ORS; `App\Services\AllotmentRegistryService`, `BudgetService::matrixFromRegistry`), so this page and the Allotment Registry always agree. Liquidated is unchanged. The Budget page (`/budget`) is not changed by this.
+- The **Office / Department** column (and the office filter and the office in the Quarterly breakdown) is shown only to a user who sees more than one school; a user of one school does not see it. The school name is not repeated under the office when it is the same.
+
+### 26.4 AIP page: the amounts save by themselves
+
+- The **Save amounts** button is gone. The quarter amounts and the Frequency (timeline) of an activity save in the background when a box is left or Enter is pressed (one save at a time), showing "Saving…" then "Saved", like the Source of fund. The page does not reload unless the AIP's status changes (an approved AIP becoming revised). The Total and the timeline still follow the amounts as they are typed. The totals lower on the page are refreshed when the page is opened again.
+
+Tests: `SobItemGroupTest`, `SobFlowTest`, `AipActivityBudgetTest`, `PlanningFlowTest`.
