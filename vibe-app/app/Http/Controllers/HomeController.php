@@ -1960,6 +1960,10 @@ class HomeController extends Controller
         }
 
         $linkedRequest = ! empty($data['procurement_request_id']) ? ProcurementRequest::findOrFail($data['procurement_request_id']) : null;
+        // The date of the PO is the date of its ORS.
+        if ($linkedRequest && ($purchaseOrderDate = $linkedRequest->purchaseOrder()?->document_date)) {
+            $data['ors_date'] = $purchaseOrderDate->toDateString();
+        }
         $linkedBudget = ! empty($data['budget_allocation_id']) ? BudgetAllocation::findOrFail($data['budget_allocation_id']) : null;
         $organizationId = $this->organizationIdForSchool((int) $data['school_id']);
         $fiscalYear = $linkedBudget?->fiscal_year ?? $linkedRequest?->budgetAllocation?->fiscal_year ?? (int) now()->year;
@@ -2062,7 +2066,7 @@ class HomeController extends Controller
             'payee' => $request->input('payee'),
             'payee_address' => $request->input('payee_address'),
             'payee_office' => $request->input('payee_office'),
-            'submitted_at' => $request->filled('ors_date') ? Carbon::parse($request->input('ors_date')) : now(),
+            'submitted_at' => ($purchaseOrderDate = ProcurementRequest::find($request->input('procurement_request_id'))?->purchaseOrder()?->document_date) ? $purchaseOrderDate : ($request->filled('ors_date') ? Carbon::parse($request->input('ors_date')) : now()),
             'payee_tin' => $request->input('payee_tin'),
             'responsibility_center_code' => $request->input('responsibility_center_code'),
             'purpose' => $request->input('purpose') === '—' ? null : $request->input('purpose'),

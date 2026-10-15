@@ -102,10 +102,10 @@
 <line class="ors-status" x1="462.97" y1="737.93" x2="593.39" y2="737.93" stroke-width="0.72"/>
 </g>
 <g fill="#000" stroke="none">
-<text x="544.11" y="34.05" font-family="'Times New Roman',Times,serif" font-size="9.7" font-style="italic" xml:space="preserve">Appendix 11</text>
-<text x="82.81" y="63.03" font-family="'Times New Roman',Times,serif" font-size="13.5" font-weight="bold" xml:space="preserve">OBLIGATION REQUEST AND STATUS</text>
-<text x="103.04" y="92.02" font-family="'Times New Roman',Times,serif" font-size="13.5" font-weight="bold" xml:space="preserve">DEPARTMENT OF EDUCATION</text>
-<text x="393.42" y="87.67" font-family="'Times New Roman',Times,serif" font-size="13.5" xml:space="preserve">Date :</text>
+<text x="544.11" y="34.05" font-family="'Times New Roman',Times,serif" font-size="10.6" font-style="italic" xml:space="preserve">Appendix 11</text>
+<text x="82.81" y="68.6" font-family="'Times New Roman',Times,serif" font-size="13.5" font-weight="bold" xml:space="preserve">OBLIGATION REQUEST AND STATUS</text>
+<text x="103.04" y="90.1" font-family="'Times New Roman',Times,serif" font-size="13.5" font-weight="bold" xml:space="preserve">DEPARTMENT OF EDUCATION</text>
+<text x="466.4" y="87.67" text-anchor="end" font-family="'Times New Roman',Times,serif" font-size="12" xml:space="preserve">Date :</text>
 <text x="52.82" y="137.66" font-family="'Times New Roman',Times,serif" font-size="11.6" xml:space="preserve">Payee</text>
 <text x="51.96" y="163.74" font-family="'Times New Roman',Times,serif" font-size="11.6" xml:space="preserve">Office</text>
 <text x="47.66" y="188.38" font-family="'Times New Roman',Times,serif" font-size="11.6" xml:space="preserve">Address</text>
@@ -125,7 +125,7 @@
 <text class="ors-status" x="263.47" y="749.16" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Obligation</text>
 <text class="ors-status" x="337.48" y="749.16" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Payable</text>
 <text class="ors-status" x="408.52" y="749.16" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Payment</text>
-<text class="ors-status" x="511.44" y="733.22" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Balance</text>
+<text class="ors-status" x="527" y="733.8" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="11.6" font-weight="bold" xml:space="preserve">Balance</text>
 <text class="ors-status" x="468.25" y="757.13" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Not Yet Due</text>
 <text class="ors-status" x="542.22" y="750.61" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Due and</text>
 <text class="ors-status" x="533.22" y="763.65" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Demandable</text>
@@ -151,32 +151,32 @@
 <text x="357.92" y="525.28" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold" xml:space="preserve">Certified:</text>
 <text class="ors-status" x="29.25" y="699.17" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold" xml:space="preserve">C.</text>
 <text class="ors-status" x="258.44" y="699.17" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold" xml:space="preserve">STATUS OF OBLIGATION</text>
-<text class="ors-status" x="113.24" y="719.46" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold" xml:space="preserve">Reference</text>
-<text class="ors-status" x="405.62" y="719.46" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold" xml:space="preserve">Amount</text>
+<text class="ors-status" x="139" y="720.4" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="11.6" font-weight="bold" xml:space="preserve">Reference</text>
+<text class="ors-status" x="424" y="720.4" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="11.6" font-weight="bold" xml:space="preserve">Amount</text>
 <!-- header fields -->
-<text x="393.4" y="67.4" font-family="'Times New Roman',Times,serif" font-size="13.5" xml:space="preserve">Serial No. : </text>
-<text x="458.65" y="67.4" font-family="'Times New Roman',Times,serif" font-size="13.5" font-weight="bold" text-decoration="underline" xml:space="preserve">{{ $report->ors_number ?: '______________' }}</text>
-<text x="429.39" y="87.7" font-family="'Times New Roman',Times,serif" font-size="13.5" font-weight="bold" text-decoration="underline">{{ $date }}</text>
-<text x="393.4" y="108.7" font-family="'Times New Roman',Times,serif" font-size="13.5" xml:space="preserve">Fund Cluster : </text>
-<text x="473.8" y="108.7" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($fund, 118, 13.5) }}" font-weight="bold" text-decoration="underline">{{ $fund }}</text>
+<text x="466.4" y="67.4" text-anchor="end" font-family="'Times New Roman',Times,serif" font-size="12" xml:space="preserve">Serial No. :</text>
+<text x="472" y="67.4" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($report->ors_number ?: '______________', 116, 12.5) }}" font-weight="bold" text-decoration="underline" xml:space="preserve">{{ $report->ors_number ?: '______________' }}</text>
+<text x="472" y="87.7" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($date, 116, 12.5) }}" font-weight="bold" text-decoration="underline">{{ $date }}</text>
+<text x="466.4" y="108.7" text-anchor="end" font-family="'Times New Roman',Times,serif" font-size="12" xml:space="preserve">Fund Cluster :</text>
+<text x="472" y="108.7" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($fund, 116, 12.5) }}" font-weight="bold" text-decoration="underline">{{ $fund }}</text>
 <text x="204" y="111.6" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="11.6" font-weight="bold">{{ $division }}</text>
 <!-- payee / office / address -->
-<text x="118.1" y="137.7" font-family="Arial,Helvetica,sans-serif" font-size="{{ $fit($payee, 470, 11.6) }}">{{ $payee }}</text>
+<text x="118.1" y="137.7" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($payee, 470, 11.6) }}">{{ $payee }}</text>
 <text x="118.1" y="163.7" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($office, 470, 11.6) }}">{{ $office }}</text>
 <text x="118.1" y="188.4" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($address, 470, 11.6) }}">{{ $address }}</text>
 <!-- responsibility center / particulars -->
-<text x="66.3" y="263.7" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="{{ $fit($rc, 92, 10.6) }}">{{ $rc }}</text>
-<text x="362.5" y="263.7" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="{{ $fit($pap, 58, 9) }}">{{ $pap }}</text>
-<text x="432.5" y="263.7" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="{{ $fit($uacs, 64, 10) }}">{{ $uacs }}</text>
-<foreignObject x="123.1" y="253.7" width="188" height="240"><div xmlns="http://www.w3.org/1999/xhtml" style="font:10.6px/13.05px Arial,Helvetica,sans-serif;color:#000;overflow:hidden;height:240px;white-space:pre-wrap;word-wrap:break-word">{{ $particulars }}</div></foreignObject>
+<text x="66.3" y="263.7" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($rc, 92, 10.6) }}">{{ $rc }}</text>
+<text x="362.5" y="263.7" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($pap, 58, 9) }}">{{ $pap }}</text>
+<text x="432.5" y="263.7" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($uacs, 64, 10) }}">{{ $uacs }}</text>
+<foreignObject x="123.1" y="253.7" width="188" height="240"><div xmlns="http://www.w3.org/1999/xhtml" style="font:11.4px/13.05px 'Times New Roman',Times,serif;color:#000;overflow:hidden;height:240px;white-space:pre-wrap;word-wrap:break-word">{{ $particulars }}</div></foreignObject>
 <!-- amount -->
-<text x="469.1" y="263.7" font-family="Arial,Helvetica,sans-serif" font-size="9.7">₱</text>
-<text x="588.0" y="263.7" text-anchor="end" font-family="Arial,Helvetica,sans-serif" font-size="9.7">{{ $amount }}</text>
+<text x="469.1" y="263.7" font-family="'Times New Roman',Times,serif" font-size="10.6">₱</text>
+<text x="588.0" y="263.7" text-anchor="end" font-family="'Times New Roman',Times,serif" font-size="10.6">{{ $amount }}</text>
 <text x="469.4" y="493.4" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold">₱</text>
 <text x="587.7" y="493.4" text-anchor="end" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold">{{ $amount }}</text>
 <!-- A. requested by -->
-<text x="199.3" y="623.1" text-anchor="middle" font-family="'Bookman Old Style','Book Antiqua',Palatino,'Times New Roman',serif" font-size="{{ $fit($requesterName, 230, 9.7) }}" font-weight="bold">{{ $requesterName }}</text>
-<text x="199.3" y="641.2" text-anchor="middle" font-family="'Bookman Old Style','Book Antiqua',Palatino,'Times New Roman',serif" font-size="{{ $fit($requesterRole, 230, 9.7) }}">{{ $requesterRole }}</text>
+<text x="199.3" y="623.1" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($requesterName, 230, 9.7) }}" font-weight="bold">{{ $requesterName }}</text>
+<text x="199.3" y="641.2" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($requesterRole, 230, 9.7) }}">{{ $requesterRole }}</text>
 <!-- B. certified by -->
 <text x="492.4" y="622.4" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($certifierName, 190, 10.6) }}" font-weight="bold">{{ $certifierName }}</text>
 <text x="492.4" y="641.9" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($certifierRole, 190, 10.6) }}">{{ $certifierRole }}</text>

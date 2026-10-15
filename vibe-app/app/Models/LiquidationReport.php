@@ -11,11 +11,14 @@ class LiquidationReport extends Model
 {
     use BelongsToOrganization, HasFactory;
 
-    protected $fillable = ['dv_include_appropriation', 'ors_include_status', 'payee_office', 'ors_show_uacs', 'organization_id', 'school_id', 'master_transaction_id', 'procurement_request_id', 'submitted_by', 'report_number', 'ors_number', 'source_of_fund', 'payee', 'payee_address', 'payee_tin', 'responsibility_center_code', 'purpose', 'amount', 'status', 'notes', 'accounting_remarks', 'dv_number', 'dv_date', 'dv_particulars', 'payment_mode', 'payment_reference', 'paid_at', 'paid_by', 'submitted_at', 'approved_at', 'budget_allocation_id', 'signatories'];
+    /** The "Less:" deductions a DV can carry, by key. */
+    public const DV_DEDUCTIONS = ['withholding_tax' => 'Withholding Tax', 'liquidated_damages' => 'Liquidated Damages', 'retention' => 'Retention', 'mobilization' => 'Mobilization'];
+
+    protected $fillable = ['dv_deductions', 'dv_include_appropriation', 'ors_include_status', 'payee_office', 'ors_show_uacs', 'organization_id', 'school_id', 'master_transaction_id', 'procurement_request_id', 'submitted_by', 'report_number', 'ors_number', 'source_of_fund', 'payee', 'payee_address', 'payee_tin', 'responsibility_center_code', 'purpose', 'amount', 'status', 'notes', 'accounting_remarks', 'dv_number', 'dv_date', 'dv_particulars', 'payment_mode', 'payment_reference', 'paid_at', 'paid_by', 'submitted_at', 'approved_at', 'budget_allocation_id', 'signatories'];
 
     protected function casts(): array
     {
-        return ['amount' => 'decimal:2', 'paid_at' => 'date', 'dv_date' => 'date', 'dv_include_appropriation' => 'boolean', 'ors_include_status' => 'boolean', 'ors_show_uacs' => 'boolean', 'signatories' => 'array', 'submitted_at' => 'datetime', 'approved_at' => 'datetime'];
+        return ['dv_deductions' => 'array', 'amount' => 'decimal:2', 'paid_at' => 'date', 'dv_date' => 'date', 'dv_include_appropriation' => 'boolean', 'ors_include_status' => 'boolean', 'ors_show_uacs' => 'boolean', 'signatories' => 'array', 'submitted_at' => 'datetime', 'approved_at' => 'datetime'];
     }
 
     public function school()

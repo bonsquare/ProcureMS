@@ -138,6 +138,47 @@ class OrsStatusPrintTest extends TestCase
         $this->get(route('budget'))->assertOk()->assertSee('data-title="Procurement of Office Supply for 3rd Quarter MOOE for SY 2026 as per PO No. 2026-002"', false);
     }
 
+    public function test_the_ors_made_from_a_purchase_order_has_the_date_of_the_po(): void
+    {
+        [$school, $user] = $this->tenant();
+        $this->actingAs($user);
+        $pr = ProcurementRequest::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'requested_by' => $user->id, 'request_number' => 'PR-2026-DAT', 'title' => 'Rice', 'amount' => 1500, 'status' => 'approved', 'source_of_fund' => 'MOOE']);
+        ProcurementDocument::create(['organization_id' => $school->organization_id, 'procurement_request_id' => $pr->id, 'created_by' => $user->id, 'document_type' => 'purchase_order', 'document_number' => 'PO-2026-003', 'document_date' => '2026-03-12', 'supplier_or_recipient' => 'Ors Supplier', 'status' => 'prepared']);
+
+        $this->get(route('budget'))->assertOk()->assertSee('data-po-date="2026-03-12"', false);
+
+        $this->post(route('liquidation.store'), $this->payload($school, ['procurement_request_id' => $pr->id, 'ors_date' => '2026-09-30']))->assertSessionHasNoErrors();
+        $this->assertSame('2026-03-12', LiquidationReport::firstOrFail()->submitted_at->toDateString(), 'the date of the PO is the date of the ORS, whatever the form sent');
+        $this->get(route('liquidation.print', LiquidationReport::firstOrFail()))->assertOk()->assertSee('March 12, 2026');
+    }
+
+    public function test_the_budget_page_shows_the_stage_of_a_request_not_its_raw_status(): void
+    {
+        [$school, $user] = $this->tenant();
+        $this->actingAs($user);
+        $pr = ProcurementRequest::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'requested_by' => $user->id, 'request_number' => 'PR-2026-STG', 'title' => 'Rice', 'amount' => 1500, 'status' => 'for_canvass', 'source_of_fund' => 'MOOE']);
+        $this->get(route('budget'))->assertOk()->assertSee('Canvass');
+
+        ProcurementDocument::create(['organization_id' => $school->organization_id, 'procurement_request_id' => $pr->id, 'created_by' => $user->id, 'document_type' => 'purchase_order', 'document_number' => 'PO-2026-004', 'document_date' => now(), 'supplier_or_recipient' => 'Ors Supplier', 'status' => 'prepared']);
+
+        $this->get(route('budget'))->assertOk()->assertDontSee('For Canvass');
+    }
+
+    public function test_a_school_user_with_the_accounting_permissions_can_review_the_ors_and_one_without_cannot(): void
+    {
+        [$school, $user] = $this->tenant();
+        $this->actingAs($user)->post(route('liquidation.store'), $this->payload($school))->assertSessionHasNoErrors();
+        $ors = LiquidationReport::firstOrFail();
+
+        $this->get(route('accounting'))->assertOk()->assertSee(route('accounting.review', $ors), false);
+        $this->patch(route('accounting.review', $ors), ['status' => 'approved'])->assertSessionHasNoErrors();
+        $this->assertSame('approved', $ors->fresh()->status);
+        $this->get(route('accounting', ['tab' => 'for_dv']))->assertOk()->assertSee(route('accounting.dv.store', $ors), false);
+
+        $viewer = User::factory()->create(['role' => 'auditor', 'organization_id' => $school->organization_id, 'school_id' => $school->id]);
+        $this->actingAs($viewer)->get(route('accounting', ['tab' => 'for_dv']))->assertOk()->assertDontSee(route('accounting.dv.store', $ors), false);
+    }
+
     public function test_the_ors_form_has_no_tick_box_for_section_c(): void
     {
         [, $user] = $this->tenant();

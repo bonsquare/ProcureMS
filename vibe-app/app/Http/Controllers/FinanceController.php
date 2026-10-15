@@ -21,7 +21,7 @@ class FinanceController extends Controller
     public const PAYMENT_MODES = ['MDS Check', 'Commercial Check', 'ADA', 'Others'];
 
     /** The Accounting Entry table of the printed DV has room for this many lines. */
-    public const JOURNAL_MAX_LINES = 4;
+    public const JOURNAL_MAX_LINES = 20;
 
     private function isMaster(): bool
     {
@@ -161,6 +161,8 @@ class FinanceController extends Controller
             'dv_particulars' => ['required', 'string', 'max:255'],
             'payment_mode' => ['required', Rule::in(self::PAYMENT_MODES)],
             'dv_include_appropriation' => ['nullable', 'boolean'],
+            'deductions' => ['nullable', 'array'],
+            'deductions.*' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
             'journal' => $preview ? ['nullable', 'array', 'max:'.self::JOURNAL_MAX_LINES] : ['required', 'array', 'min:2', 'max:'.self::JOURNAL_MAX_LINES],
             'journal.*.account_code' => [$preview ? 'nullable' : 'required', 'string', 'max:50'],
             'journal.*.debit' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
@@ -182,7 +184,13 @@ class FinanceController extends Controller
             }
             $lines = [];
         }
-        unset($data['journal']);
+        unset($data['journal'], $data['deductions']);
+        $deductions = collect(LiquidationReport::DV_DEDUCTIONS)->keys()
+            ->mapWithKeys(fn ($key) => [$key => round((float) $request->input('deductions.'.$key, 0), 2)])->filter(fn ($value) => $value > 0);
+        if ($deductions->sum() >= (float) $liquidationReport->amount) {
+            throw ValidationException::withMessages(['deductions' => 'The deductions must be less than the amount of the DV.']);
+        }
+        $data['dv_deductions'] = $deductions->isEmpty() ? null : $deductions->all();
         if ($signatories !== null) {
             $data['signatories'] = $this->withDvSignatories($liquidationReport, $signatories);
         }

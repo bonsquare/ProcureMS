@@ -8,6 +8,7 @@ use App\Models\ProcurementRequest;
 use App\Models\School;
 use App\Models\Supplier;
 use App\Services\BudgetService;
+use App\Services\ProcurementWorkspaceService;
 use App\Support\SignatorySlots;
 use Illuminate\Http\Request;
 
@@ -32,7 +33,7 @@ class BudgetController extends Controller
             ->when($selectedSchoolId && $schoolIds->contains((int) $selectedSchoolId), fn ($q) => $q->where('school_id', $selectedSchoolId));
 
         $allocations = BudgetAllocation::with('school')->where('fiscal_year', $year)->tap($schoolFilter)->latest()->get();
-        $obligations = ProcurementRequest::with('liquidationReports')->whereYear('created_at', $year)->tap($schoolFilter)->get();
+        $obligations = ProcurementRequest::with('liquidationReports', 'documents')->whereYear('created_at', $year)->tap($schoolFilter)->get();
 
         $directOrs = LiquidationReport::whereNull('procurement_request_id')->whereYear('created_at', $year)->tap($schoolFilter)->get();
 
@@ -60,7 +61,7 @@ class BudgetController extends Controller
         $isUnbudgeted = fn ($r) => ! $allocations->contains(fn ($a) => $a->school_id === $r->school_id && $a->source_of_fund === $r->source_of_fund);
         $unbudgeted = $obligations->filter($isUnbudgeted)->sum('amount') + $directOrs->filter($isUnbudgeted)->sum('amount');
 
-        $transactions = $obligations->map(fn ($r) => ['date' => $r->created_at, 'type' => 'PR', 'ref' => $r->request_number, 'description' => $r->title, 'school_id' => $r->school_id, 'fund' => $r->source_of_fund, 'amount' => $r->amount, 'status' => $r->status, 'url' => route('procurement.edit', $r)])
+        $transactions = $obligations->map(fn ($r) => ['date' => $r->created_at, 'type' => 'PR', 'ref' => $r->request_number, 'description' => $r->title, 'school_id' => $r->school_id, 'fund' => $r->source_of_fund, 'amount' => $r->amount, 'status' => app(ProcurementWorkspaceService::class)->summary($r)['stage_label'], 'url' => route('procurement.edit', $r)])
             ->concat($directOrs->map(fn ($o) => ['date' => $o->created_at, 'type' => 'ORS (no PR)', 'ref' => $o->ors_number, 'description' => $o->purpose, 'school_id' => $o->school_id, 'fund' => $o->source_of_fund, 'amount' => $o->amount, 'status' => $o->status, 'url' => route('liquidation', ['search' => $o->ors_number])]))
             ->sortByDesc('date')->values();
 

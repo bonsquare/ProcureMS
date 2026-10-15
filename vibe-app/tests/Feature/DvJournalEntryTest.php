@@ -103,7 +103,7 @@ class DvJournalEntryTest extends TestCase
             'debit and credit on one line' => [['account_code' => $c['expense'], 'debit' => '5000', 'credit' => '5000'], ['account_code' => $c['cash'], 'debit' => '5000', 'credit' => '5000']],
             'empty line' => [['account_code' => $c['expense'], 'debit' => '10000'], ['account_code' => $c['cash'], 'credit' => '10000'], ['account_code' => $c['tax']]],
             'unknown account' => [['account_code' => '0000000000', 'debit' => '10000'], ['account_code' => $c['cash'], 'credit' => '10000']],
-            'too many lines' => array_merge([['account_code' => $c['expense'], 'debit' => '10000']], array_fill(0, 4, ['account_code' => $c['cash'], 'credit' => '2500'])),
+            'too many lines' => array_merge([['account_code' => $c['expense'], 'debit' => '10000']], array_fill(0, 20, ['account_code' => $c['cash'], 'credit' => '500'])),
             'no entry' => null,
         ];
 
@@ -130,6 +130,53 @@ class DvJournalEntryTest extends TestCase
         $this->assertStringContainsString('Cash-Modified Disbursement System (MDS), Regular', $html);
         $this->assertStringContainsString($c['cash'], $html);
         $this->assertStringContainsString('10,000.00', $html);
+        $this->assertStringContainsString('y="460"', $html, 'the first entry');
+        $this->assertStringContainsString('y="475"', $html, 'the second entry follows the first, close to it');
+        $this->assertStringContainsString('dominant-baseline="central"', $html);
+        $this->assertMatchesRegularExpression('/justify-content:flex-start[^>]*font:bold [0-9.]+px[^>]*>Journal Supplier<\/div>/', $html, 'the payee is bold, left aligned and centered vertically in its box');
+    }
+
+    public function test_a_dv_takes_ten_entry_lines_and_the_form_grows_to_hold_them(): void
+    {
+        [$report, $master] = $this->ors(10000);
+        $c = $this->codes();
+        $journal = [];
+        for ($i = 0; $i < 9; $i++) {
+            $journal[] = ['account_code' => $c['expense'], 'debit' => $i === 0 ? '2000' : '1000'];
+        }
+        $journal[] = ['account_code' => $c['cash'], 'credit' => '10000'];
+        $form = ['dv_date' => now()->toDateString(), 'payee' => 'Journal Supplier', 'dv_particulars' => 'Office supplies', 'payment_mode' => 'MDS Check'];
+
+        $this->actingAs($master)->post(route('accounting.dv.store', $report), $form + ['journal' => array_merge($journal, array_fill(0, 11, ['account_code' => $c['cash'], 'credit' => '1']))])->assertSessionHasErrors('journal');
+        $this->post(route('accounting.dv.store', $report), $form + ['journal' => $journal]);
+        $this->assertSame(10, $report->fresh()->journalLines()->count());
+
+        $html = $this->get(route('accounting.dv.print', $report->fresh()))->assertOk()->getContent();
+        $this->assertStringContainsString('y="459"', $html, 'the first of ten lines');
+        $this->assertStringContainsString('y="544.5"', $html, 'the tenth line');
+        $this->assertStringContainsString('translate(0 50.82)', $html, 'the rest of the form moves down to make room');
+        $this->assertStringNotContainsString('translate(0 -', $html, 'ten lines still fit without cutting the Particulars');
+    }
+
+    public function test_the_deductions_of_a_dv_are_saved_and_printed_above_the_amount_due(): void
+    {
+        [$report, $master] = $this->ors(10000);
+        $c = $this->codes();
+        $form = ['dv_date' => now()->toDateString(), 'payee' => 'Journal Supplier', 'dv_particulars' => 'Office supplies', 'payment_mode' => 'MDS Check',
+            'journal' => [['account_code' => $c['expense'], 'debit' => '10000'], ['account_code' => $c['cash'], 'credit' => '10000']]];
+
+        $this->actingAs($master)->post(route('accounting.dv.store', $report), $form + ['deductions' => ['withholding_tax' => '10000']])->assertSessionHasErrors('deductions');
+        $this->assertNull($report->fresh()->dv_number);
+
+        $this->post(route('accounting.dv.store', $report), $form + ['deductions' => ['withholding_tax' => '500', 'liquidated_damages' => '', 'retention' => '250', 'mobilization' => '0']])->assertSessionHasNoErrors();
+        $this->assertEquals(['withholding_tax' => 500, 'retention' => 250], $report->fresh()->dv_deductions);
+
+        $html = $this->get(route('accounting.dv.print', $report->fresh()))->assertOk()->getContent();
+        $this->assertStringContainsString('Less:', $html);
+        $this->assertStringContainsString('Withholding Tax', $html);
+        $this->assertStringContainsString('Retention', $html);
+        $this->assertStringNotContainsString('Mobilization', $html, 'only the deductions that were typed are printed');
+        $this->assertStringContainsString('₱9,250.00', $html, 'Amount Due is the amount less the deductions');
     }
 
     public function test_a_dv_without_entries_still_prints(): void
