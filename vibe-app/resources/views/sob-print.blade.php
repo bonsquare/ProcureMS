@@ -110,11 +110,11 @@
             @foreach($pillar['programs'] as $program)
                 @foreach($program['activities'] as $row)
                     @php
-                        $activityRows = collect($row['accounts'])->sum(fn ($group) => $group['items']->count() + ($group['extras']->isNotEmpty() ? 1 + $group['extras']->count() : 0));
+                        $activityRows = collect($row['accounts'])->sum(fn ($group) => $group['items']->count() + ($group['extras']->isNotEmpty() ? 2 + $group['extras']->count() : 0));
                         $firstOfActivity = true;
                     @endphp
                     @foreach($row['accounts'] as $group)
-                        @php $groupRows = $group['items']->count() + ($group['extras']->isNotEmpty() ? 1 + $group['extras']->count() : 0); @endphp
+                        @php $groupRows = $group['items']->count() + ($group['extras']->isNotEmpty() ? 1 : 0); @endphp
                         @foreach($group['items'] as $index => $item)
                             <tr>
                                 @if($index === 0)<td class="account" rowspan="{{ $groupRows }}">@if($firstOfActivity)<div>{{ $program['program'] ?: 'No program' }}</div>@php $firstOfActivity = false; @endphp<div style="margin-top:3px">{{ $group['note'] ?: $group['account']?->title }}</div>@else{{ $group['note'] ?: $group['account']?->title }}@endif</td>@endif
@@ -129,13 +129,15 @@
                         @if($group['extras']->isNotEmpty())
                             <tr class="sub item-sub"><td colspan="5" style="text-align:right">Sub-Total</td><td class="num">{{ $money($group['items_total']) }}</td></tr>
                             @foreach($group['extras'] as $extra)
-                                <tr class="extra"><td>{{ $extra->particulars }}</td><td></td><td></td><td class="center">{{ $extra->unit }}</td><td></td><td class="num">{{ $money($extra->amount) }}</td></tr>
+                                <tr class="extra"><td>{{ $extra->particulars }}@if($extra->unit) ({{ $extra->unit }})@endif</td><td style="font-style:italic">Labor</td><td colspan="4"></td><td class="num">{{ $money($extra->amount) }}</td></tr>
                             @endforeach
+                            <tr class="sub item-sub"><td colspan="6" style="text-align:right">Sub-Total</td><td class="num">{{ $money($group['total']) }}</td></tr>
                         @endif
                     @endforeach
                 @endforeach
             @endforeach
-            @if(count($pillar['programs']))<tr class="sub pillar-sub"><td colspan="6" style="text-align:right">Sub-Total</td><td class="num">{{ $money($pillar['total']) }}</td></tr>@endif
+            @php $pillarGroups = collect($pillar['programs'])->flatMap(fn ($program) => collect($program['activities'])->flatMap(fn ($activity) => $activity['accounts'])); $sameAsItemSubTotal = $pillarGroups->count() === 1 && $pillarGroups->first()['extras']->isNotEmpty(); @endphp
+            @if(count($pillar['programs']) && ! $sameAsItemSubTotal)<tr class="sub pillar-sub"><td colspan="6" style="text-align:right">Sub-Total</td><td class="num">{{ $money($pillar['total']) }}</td></tr>@endif
         @endforeach
             <tr class="grand"><td colspan="6">GRAND TOTAL</td><td class="num">{{ $money($grandTotal) }}</td></tr>
         </tbody>

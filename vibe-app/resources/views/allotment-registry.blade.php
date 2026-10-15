@@ -12,10 +12,10 @@
 <div class="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
     <div>
         <h1 class="text-[28px] font-semibold leading-9 tracking-tight">Registry of Allotments, Obligations and Disbursements</h1>
-        <p class="mt-1 text-[15px] leading-6 text-on-surface-variant">FY {{ $year }}{{ $quarter ? ' · Q' . $quarter : '' }}. Allotments come from the approved AIP or budget allocation; obligations are ORS; disbursements are paid DVs.</p>
+        <p class="mt-1 text-[15px] leading-6 text-on-surface-variant">FY {{ $year }}{{ $quarter ? ' · Q' . $quarter : '' }}. The approved SOB is the actual budget, quarter by quarter; funding that has no project is added as a manual allotment. Obligations are ORS; disbursements are paid DVs.</p>
     </div>
     <div class="no-print flex flex-wrap items-center gap-2">
-        <a href="{{ route('planning') }}#aip" class="rounded border border-outline-variant/60 bg-white px-4 py-2.5 text-xs font-semibold hover:bg-surface-low">AIP</a>
+        <a href="{{ route('planning') }}#sob" class="rounded border border-outline-variant/60 bg-white px-4 py-2.5 text-xs font-semibold hover:bg-surface-low">SOB</a>
         <a href="{{ route('allotment-registry', $query + ['format' => 'csv']) }}" class="rounded border border-outline-variant/60 bg-white px-4 py-2.5 text-xs font-semibold hover:bg-surface-low">Export to Excel</a>
         <button onclick="window.print()" class="rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Print</button>
     </div>
@@ -29,43 +29,90 @@
     <button class="rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Filter</button>
 </form>
 
+@php
+    $sobRegistry = $registry->filter(fn ($r) => str_starts_with((string) $r['line']->remarks, 'From SOB'))->values();
+    $manualRegistry = $registry->reject(fn ($r) => str_starts_with((string) $r['line']->remarks, 'From SOB'))->values();
+    $kpiAllotment = $summary->sum('allotment_total');
+    $kpiObligation = $summary->sum('obligation');
+    $kpiDisbursement = $summary->sum('disbursement');
+    $kpiRate = $kpiAllotment > 0 ? min(100, round($kpiObligation / $kpiAllotment * 100, 1)) : 0;
+@endphp
+<div class="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    @foreach([['Total allotment', $kpiAllotment, 'account_balance_wallet', 'text-primary bg-primary/10'], ['Obligated', $kpiObligation, 'assignment_turned_in', 'text-amber-800 bg-amber-100'], ['Disbursed', $kpiDisbursement, 'payments', 'text-secondary bg-secondary/10'], ['Not yet obligated', $kpiAllotment - $kpiObligation, 'savings', 'text-primary bg-primary/10']] as [$kpiLabel, $kpiValue, $kpiIcon, $kpiTone])
+        <div class="flex items-center gap-3 rounded-xl border border-outline-variant/40 bg-white px-4 py-3 shadow-sm">
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg {{ $kpiTone }}"><span class="material-symbols-outlined text-[22px]" aria-hidden="true">{{ $kpiIcon }}</span></span>
+            <div class="min-w-0"><p class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">{{ $kpiLabel }}</p><p class="text-lg font-bold tabular-nums">₱{{ number_format($kpiValue, 2) }}</p></div>
+        </div>
+    @endforeach
+    <div class="rounded-xl border border-outline-variant/40 bg-white px-4 py-3 shadow-sm sm:col-span-2 xl:col-span-4">
+        <div class="flex items-baseline justify-between text-xs font-semibold"><span class="text-on-surface-variant">Budget used (obligated ÷ allotment)</span><span class="text-primary">{{ $kpiRate }}%</span></div>
+        <div class="mt-1.5 h-2 overflow-hidden rounded-full bg-surface-high" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $kpiRate }}"><div class="h-full rounded-full bg-gradient-to-r from-primary to-secondary" style="width: {{ $kpiRate }}%"></div></div>
+    </div>
+</div>
+
 <style>details[open] > summary .sum-chevron{transform:rotate(180deg)}</style>
 <details open class="mb-6 overflow-hidden rounded border border-outline-variant/30 bg-white">
     <summary class="flex cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden border-b border-outline-variant/30 px-5 py-3"><h2 class="text-base font-semibold">Summary per Source of Fund</h2><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] text-on-surface-variant transition-transform" aria-hidden="true">expand_more</span></summary>
     <div class="overflow-x-auto"><table class="w-full text-left text-sm">
-        <thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant"><tr><th class="{{ $th }}">Source of Fund</th><th class="{{ $th }} text-right">Q1 Allotment</th><th class="{{ $th }} text-right">Q2</th><th class="{{ $th }} text-right">Q3</th><th class="{{ $th }} text-right">Q4</th><th class="{{ $th }} text-right">Total Allotment</th><th class="{{ $th }} text-right">Obligations</th><th class="{{ $th }} text-right">Disbursements</th><th class="{{ $th }} text-right">Not Yet Obligated</th><th class="{{ $th }} text-right">Unpaid Obligations</th></tr></thead>
+        <thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant">
+            <tr><th rowspan="2" class="{{ $th }} align-bottom">Source of Fund</th><th colspan="4" class="{{ $th }} text-center">Allotment</th><th rowspan="2" class="{{ $th }} text-center align-bottom">Total Allotment</th><th rowspan="2" class="{{ $th }} text-center align-bottom">Obligations</th><th rowspan="2" class="{{ $th }} text-center align-bottom">Disbursements</th><th rowspan="2" class="{{ $th }} text-center align-bottom">Not Yet Obligated</th><th rowspan="2" class="{{ $th }} text-center align-bottom">Unpaid Obligations</th></tr>
+            <tr><th class="{{ $th }} w-28 text-center">Q1</th><th class="{{ $th }} w-28 text-center">Q2</th><th class="{{ $th }} w-28 text-center">Q3</th><th class="{{ $th }} w-28 text-center">Q4</th></tr>
+        </thead>
         <tbody class="divide-y divide-outline-variant/20">
             @forelse($summary as $name => $row)
-                <tr><td class="px-3 py-2.5 font-semibold">{{ $name }}</td>@foreach($row['allotment'] as $a)<td class="px-3 py-2.5 text-right tabular-nums">{{ $a ? number_format($a, 2) : '' }}</td>@endforeach<td class="px-3 py-2.5 text-right font-semibold tabular-nums">{{ number_format($row['allotment_total'], 2) }}</td><td class="px-3 py-2.5 text-right tabular-nums">{{ number_format($row['obligation'], 2) }}</td><td class="px-3 py-2.5 text-right tabular-nums">{{ number_format($row['disbursement'], 2) }}</td><td class="px-3 py-2.5 text-right tabular-nums">{{ number_format($row['allotment_total'] - $row['obligation'], 2) }}</td><td class="px-3 py-2.5 text-right tabular-nums">{{ number_format($row['obligation'] - $row['disbursement'], 2) }}</td></tr>
+                <tr><td class="px-3 py-2.5 font-semibold">{{ $name }}</td>@foreach($row['allotment'] as $a)<td class="px-3 py-2.5 text-center tabular-nums {{ $a ? '' : 'text-on-surface-variant/40' }}">{{ $a ? number_format($a, 2) : '–' }}</td>@endforeach<td class="px-3 py-2.5 text-center font-semibold tabular-nums">{{ number_format($row['allotment_total'], 2) }}</td><td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($row['obligation'], 2) }}</td><td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($row['disbursement'], 2) }}</td><td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($row['allotment_total'] - $row['obligation'], 2) }}</td><td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($row['obligation'] - $row['disbursement'], 2) }}</td></tr>
             @empty
-                <tr><td colspan="10" class="px-4 py-8 text-center text-on-surface-variant">No allotments for FY {{ $year }}. Approve an AIP or add a budget allocation.</td></tr>
+                <tr><td colspan="10" class="px-4 py-8 text-center text-on-surface-variant">No allotments for FY {{ $year }}. Approve a quarter of the SOB or add a manual allotment.</td></tr>
             @endforelse
         </tbody>
     </table></div>
 </details>
 
-@foreach($registry as $r)
-    @php $l = $r['line']; $t = $r['totals']; @endphp
-    <details data-registry-line @if(count($registry) <= 3) open @endif class="mb-5 overflow-hidden rounded border border-outline-variant/30 bg-white" style="break-inside: avoid">
-        <summary class="flex cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden border-b border-outline-variant/30 bg-surface-low/60 px-5 py-3">
-            <div class="min-w-0">
-            <p class="text-sm font-semibold">{{ $l->source_of_fund }} · UACS {{ $l->uacs_code }} · {{ $l->particulars }}</p>
-            <p class="text-xs text-on-surface-variant">{{ $l->office }}@if($l->program) · {{ $l->program }}@endif · {{ $l->budget_ref_no }}</p>
-            </div><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] text-on-surface-variant transition-transform" aria-hidden="true">expand_more</span>
-        </summary>
-        <div class="overflow-x-auto"><table class="w-full min-w-[1100px] text-left text-sm">
-            <thead><tr class="bg-surface-low"><th class="{{ $th }}">Date</th><th class="{{ $th }}">ORS / DV / Check No.</th><th class="{{ $th }}">Payee</th><th class="{{ $th }}">Particulars</th><th class="{{ $th }} text-right">Allotments</th><th class="{{ $th }} text-right">Obligations</th><th class="{{ $th }} text-right">Disbursements</th><th class="{{ $th }} text-right">Allotment Not Yet Obligated</th><th class="{{ $th }} text-right">Unpaid Obligations</th></tr></thead>
-            <tbody class="divide-y divide-outline-variant/20">
-                @foreach($r['entries'] as $e)
-                    <tr class="{{ $e['type'] === 'Allotment' ? 'bg-primary/5' : '' }}"><td class="px-3 py-2.5 whitespace-nowrap">{{ $e['date']?->format('M d, Y') }}</td><td class="px-3 py-2.5">{{ $e['ref'] }}</td><td class="px-3 py-2.5">{{ $e['payee'] }}</td><td class="px-3 py-2.5">{{ $e['particulars'] }}</td>
-                        <td class="px-3 py-2.5 text-right tabular-nums">{{ $e['allotment'] ? number_format($e['allotment'], 2) : '' }}</td><td class="px-3 py-2.5 text-right tabular-nums">{{ $e['obligation'] ? number_format($e['obligation'], 2) : '' }}</td><td class="px-3 py-2.5 text-right tabular-nums">{{ $e['disbursement'] ? number_format($e['disbursement'], 2) : '' }}</td>
-                        <td class="px-3 py-2.5 text-right tabular-nums">{{ number_format($e['not_obligated'], 2) }}</td><td class="px-3 py-2.5 text-right tabular-nums">{{ number_format($e['unpaid'], 2) }}</td></tr>
-                @endforeach
-            </tbody>
-            <tfoot class="border-t-2 border-outline-variant/40 bg-surface-low/60 font-bold"><tr><td colspan="4" class="px-3 py-2.5">TOTAL</td><td class="px-3 py-2.5 text-right tabular-nums">{{ number_format($t['allotment'], 2) }}</td><td class="px-3 py-2.5 text-right tabular-nums">{{ number_format($t['obligation'], 2) }}</td><td class="px-3 py-2.5 text-right tabular-nums">{{ number_format($t['disbursement'], 2) }}</td><td class="px-3 py-2.5 text-right tabular-nums">{{ number_format($t['not_obligated'], 2) }}</td><td class="px-3 py-2.5 text-right tabular-nums">{{ number_format($t['unpaid'], 2) }}</td></tr></tfoot>
-        </table></div>
-    </details>
-@endforeach
+<details open class="mb-6 overflow-hidden rounded border border-outline-variant/30 bg-white">
+    <summary class="flex cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden border-b border-outline-variant/30 px-5 py-3"><h2 class="text-base font-semibold">Items funded from the SOB <span class="ml-1 text-xs font-normal text-on-surface-variant">{{ $sobRegistry->count() }} item{{ $sobRegistry->count() === 1 ? '' : 's' }}</span></h2><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] text-on-surface-variant transition-transform" aria-hidden="true">expand_more</span></summary>
+    <div class="overflow-x-auto"><table class="w-full min-w-[960px] text-left text-sm">
+        <thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant">
+            <tr><th rowspan="2" class="{{ $th }} align-bottom">Source of Fund</th><th rowspan="2" class="{{ $th }} align-bottom">Program / Project</th><th rowspan="2" class="{{ $th }} align-bottom">Object of Expenditure</th><th colspan="4" class="{{ $th }} text-center">Allotment</th><th rowspan="2" class="{{ $th }} text-center align-bottom">Total Allotment</th><th rowspan="2" class="{{ $th }} text-center align-bottom">Obligated</th><th rowspan="2" class="{{ $th }} text-center align-bottom">Not Yet Obligated</th></tr>
+            <tr><th class="{{ $th }} w-28 text-center">Q1</th><th class="{{ $th }} w-28 text-center">Q2</th><th class="{{ $th }} w-28 text-center">Q3</th><th class="{{ $th }} w-28 text-center">Q4</th></tr>
+        </thead>
+        <tbody class="divide-y divide-outline-variant/20">
+            @forelse($sobRegistry as $r)
+                @php $l = $r['line']; @endphp
+                <tr><td class="px-3 py-2.5 font-semibold">{{ $l->source_of_fund }}</td><td class="px-3 py-2.5">{{ $l->program ?: '—' }}@if($selectedSchoolId === null && $schools->count() > 1)<span class="block text-xs text-on-surface-variant">{{ $l->school?->name }}</span>@endif</td><td class="min-w-[16rem] px-3 py-2.5"><span class="block break-all text-sm font-semibold tabular-nums text-primary">{{ $l->uacs_code }}</span><span class="block whitespace-normal break-words">{{ $l->particulars }}</span></td>@foreach([1, 2, 3, 4] as $q)<td class="px-3 py-2.5 text-center tabular-nums {{ $l->quarterAmount($q) > 0 ? 'font-semibold text-primary' : 'text-on-surface-variant/40' }}">{{ $l->quarterAmount($q) > 0 ? number_format($l->quarterAmount($q), 2) : '–' }}</td>@endforeach<td class="px-3 py-2.5 text-center font-semibold tabular-nums">{{ number_format($r['totals']['allotment'], 2) }}</td><td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($r['totals']['obligation'], 2) }}</td><td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($r['totals']['not_obligated'], 2) }}</td></tr>
+            @empty
+                <tr><td colspan="10" class="px-4 py-8 text-center text-on-surface-variant">No item funded from the SOB for FY {{ $year }}. Approve a quarter of the SOB first.</td></tr>
+            @endforelse
+        </tbody>
+        @if($sobRegistry->isNotEmpty())
+        <tfoot class="border-t-2 border-outline-variant/40 bg-surface-low/60 font-bold"><tr><td colspan="3" class="px-3 py-2.5">TOTAL</td>@foreach([1, 2, 3, 4] as $q)<td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($sobRegistry->sum(fn ($r) => $r['line']->quarterAmount($q)), 2) }}</td>@endforeach<td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($sobRegistry->sum(fn ($r) => $r['totals']['allotment']), 2) }}</td><td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($sobRegistry->sum(fn ($r) => $r['totals']['obligation']), 2) }}</td><td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($sobRegistry->sum(fn ($r) => $r['totals']['not_obligated']), 2) }}</td></tr></tfoot>
+        @endif
+    </table></div>
+</details>
+
+<details open class="mb-6 overflow-hidden rounded border border-outline-variant/30 bg-white">
+    <summary class="flex cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden border-b border-outline-variant/30 px-5 py-3"><h2 class="text-base font-semibold">Manual allotments <span class="ml-1 text-xs font-normal text-on-surface-variant">funding with no project · {{ $manualRegistry->count() }} item{{ $manualRegistry->count() === 1 ? '' : 's' }}</span></h2><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] text-on-surface-variant transition-transform" aria-hidden="true">expand_more</span></summary>
+    @if($canManage)
+        <div class="no-print flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 bg-surface-low/40 px-5 py-3">
+            <p class="text-xs text-on-surface-variant">For funds that do not come from a project of the SOB, such as a donation, a fund transfer or a grant. Pick the source of fund, the object of expenditure and the amount per quarter.</p>
+            <a href="{{ route('budget.allocation.create', array_filter(['year' => $year, 'school_id' => $selectedSchoolId])) }}" class="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary px-3.5 py-1.5 text-xs font-bold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">add</span>Add manual allotment</a>
+        </div>
+    @endif
+    <div class="overflow-x-auto"><table class="w-full min-w-[960px] text-left text-sm">
+        <thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant">
+            <tr><th rowspan="2" class="{{ $th }} align-bottom">Source of Fund</th><th rowspan="2" class="{{ $th }} align-bottom">Particulars</th><th rowspan="2" class="{{ $th }} align-bottom">Object of Expenditure</th><th colspan="4" class="{{ $th }} text-center">Allotment</th><th rowspan="2" class="{{ $th }} text-center align-bottom">Total Allotment</th><th rowspan="2" class="{{ $th }} text-center align-bottom">Obligated</th><th rowspan="2" class="{{ $th }} text-center align-bottom">Not Yet Obligated</th><th rowspan="2" class="{{ $th }}"></th></tr>
+            <tr><th class="{{ $th }} w-28 text-center">Q1</th><th class="{{ $th }} w-28 text-center">Q2</th><th class="{{ $th }} w-28 text-center">Q3</th><th class="{{ $th }} w-28 text-center">Q4</th></tr>
+        </thead>
+        <tbody class="divide-y divide-outline-variant/20">
+            @forelse($manualRegistry as $r)
+                @php $l = $r['line']; @endphp
+                <tr><td class="px-3 py-2.5 font-semibold">{{ $l->source_of_fund }}</td><td class="px-3 py-2.5">{{ $l->program ?: ($l->remarks ?: '—') }}<span class="block text-xs text-on-surface-variant">{{ $l->budget_ref_no }}</span></td><td class="min-w-[16rem] px-3 py-2.5"><span class="block break-all text-sm font-semibold tabular-nums text-primary">{{ $l->uacs_code }}</span><span class="block whitespace-normal break-words">{{ $l->particulars }}</span></td>@foreach([1, 2, 3, 4] as $q)<td class="px-3 py-2.5 text-center tabular-nums {{ $l->quarterAmount($q) > 0 ? 'font-semibold text-primary' : 'text-on-surface-variant/40' }}">{{ $l->quarterAmount($q) > 0 ? number_format($l->quarterAmount($q), 2) : '–' }}</td>@endforeach<td class="px-3 py-2.5 text-center font-semibold tabular-nums">{{ number_format($r['totals']['allotment'], 2) }}</td><td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($r['totals']['obligation'], 2) }}</td><td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($r['totals']['not_obligated'], 2) }}</td><td class="no-print whitespace-nowrap px-3 py-2.5 text-right"><a href="{{ route('budget.allocation.show', $l) }}" title="Open" aria-label="Open {{ $l->budget_ref_no }}" class="inline-flex h-8 w-8 items-center justify-center rounded border border-primary bg-white text-primary hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">open_in_new</span></a></td></tr>
+            @empty
+                <tr><td colspan="11" class="px-4 py-8 text-center text-on-surface-variant">No manual allotment for FY {{ $year }}.</td></tr>
+            @endforelse
+        </tbody>
+    </table></div>
+</details>
+
 <script>
     // The registry can be printed: every line is opened for printing and put back afterwards.
     (() => {

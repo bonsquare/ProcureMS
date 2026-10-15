@@ -119,9 +119,13 @@
                     @foreach($group['items'] as $item)
                         <tr><td class="px-3 py-1.5">{{ \App\Support\AppCategories::of($item->category) }}</td><td class="px-3 py-1.5">{{ $item->particulars }}</td><td class="px-2 text-right">{{ rtrim(rtrim(number_format((float) $item->frequency, 2, '.', ''), '0'), '.') }}</td><td class="px-2 text-right">{{ rtrim(rtrim(number_format((float) $item->quantity, 2, '.', ''), '0'), '.') }}</td><td class="px-2">{{ $item->unit }}</td><td class="px-2 text-right">{{ number_format((float) $item->unit_cost, 2) }}</td><td class="px-3 text-right font-semibold">{{ number_format((float) $item->amount, 2) }}</td></tr>
                     @endforeach
-                    @foreach($group['extras'] as $extra)
-                        <tr class="bg-surface-low/60"><td></td><td class="px-3 py-1.5 italic">{{ $extra->particulars }}</td><td></td><td></td><td class="px-2">{{ $extra->unit }}</td><td></td><td class="px-3 text-right font-semibold">{{ number_format((float) $extra->amount, 2) }}</td></tr>
-                    @endforeach
+                    @if($group['extras']->isNotEmpty())
+                        <tr class="bg-surface-low/60"><td colspan="6" class="px-3 py-1.5 text-right italic">Sub-Total</td><td class="px-3 text-right font-semibold">{{ number_format((float) $group['items_total'], 2) }}</td></tr>
+                        @foreach($group['extras'] as $extra)
+                            <tr><td colspan="6" class="px-3 py-1.5 text-right italic">{{ $extra->particulars }}@if($extra->unit) ({{ $extra->unit }})@endif</td><td class="px-3 text-right font-semibold">{{ number_format((float) $extra->amount, 2) }}</td></tr>
+                        @endforeach
+                        <tr class="bg-surface-low"><td colspan="6" class="px-3 py-1.5 text-right font-bold">Sub-Total</td><td class="px-3 text-right font-bold">{{ number_format((float) $group['total'], 2) }}</td></tr>
+                    @endif
                     </tbody></table></div>
                     @if($editable)
                     <form method="POST" action="{{ route('planning.sob.groups.update', $plan) }}" data-edit-item data-item-editor class="sob-line-form hidden grid gap-3 border-t border-outline-variant/20 p-3 md:grid-cols-6">@csrf @method('PUT')

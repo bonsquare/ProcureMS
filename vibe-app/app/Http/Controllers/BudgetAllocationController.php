@@ -86,7 +86,7 @@ class BudgetAllocationController extends Controller
                 ->orWhere('office', 'like', "%{$search}%")->orWhere('program', 'like', "%{$search}%")->orWhere('source_of_fund', 'like', "%{$search}%")))
             ->orderBy('office')->orderBy('source_of_fund')->orderBy('uacs_code')->get();
 
-        return [$year, $schoolId, $this->budget->matrix($items)];
+        return [$year, $schoolId, $this->budget->matrixFromRegistry($items)];
     }
 
     private function summaries($rows): array

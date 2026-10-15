@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\BudgetAllocation;
 use App\Models\LiquidationReport;
 use App\Models\ProcurementRequest;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
 class BudgetService
@@ -24,7 +26,7 @@ class BudgetService
         $obligated = (float) ProcurementRequest::where('school_id', $schoolId)->where('source_of_fund', $fund)->whereYear('created_at', $year)
             ->when($ignorePrId, fn ($q) => $q->where('id', '!=', $ignorePrId))->sum('amount')
             + (float) LiquidationReport::where('school_id', $schoolId)->where('source_of_fund', $fund)->whereNull('procurement_request_id')->whereYear('created_at', $year)
-            ->when($ignoreOrsId, fn ($q) => $q->where('id', '!=', $ignoreOrsId))->sum('amount');
+                ->when($ignoreOrsId, fn ($q) => $q->where('id', '!=', $ignoreOrsId))->sum('amount');
 
         return [
             'has_allocation' => $allocations->exists(),
@@ -50,8 +52,40 @@ class BudgetService
      * Per-item quarterly matrix for the Budget Allocation register.
      * Obligations = PRs (and ORS without a PR) linked to the item; liquidations = approved ORS under them.
      *
-     * @param  \Illuminate\Support\Collection<int, BudgetAllocation>  $allocations
+     * @param  Collection<int, BudgetAllocation>  $allocations
      */
+    /**
+     * The matrix with Obligated (by quarter and in all) taken from the Registry of Allotments, Obligations and Disbursements (the ORS), so the Budget Allocation page
+     * and the Allotment Registry always show the same figures. Liquidated stays as the matrix has it.
+     */
+    public function matrixFromRegistry($allocations)
+    {
+        $registry = app(AllotmentRegistryService::class);
+
+        return $this->matrix($allocations)->map(function (array $row) use ($registry) {
+            $entries = $registry->buildLine($row['item'], 0)['entries'];
+            $quarters = $row['quarters'];
+            foreach ([1, 2, 3, 4] as $q) {
+                $obligated = (float) $entries->where('quarter', $q)->sum('obligation');
+                $quarters[$q]['obligated'] = $obligated;
+                $quarters[$q]['balance'] = $quarters[$q]['allocated'] - $obligated;
+            }
+            $obligated = (float) $entries->sum('obligation');
+            $allocated = (float) $row['allocated'];
+            $row['quarters'] = $quarters;
+            $row['obligated'] = $obligated;
+            $row['balance'] = $allocated - $obligated;
+            $row['unliquidated'] = $obligated - (float) $row['liquidated'];
+            $row['status'] = $this->status($row['item'], $allocated, $obligated, (float) $row['liquidated']);
+            $row['warnings'] = array_values(array_filter([
+                $obligated > $allocated + 0.001 ? 'Insufficient Budget Balance' : null,
+                (float) $row['liquidated'] > $obligated + 0.001 ? 'Liquidated amount cannot exceed obligated amount' : null,
+            ]));
+
+            return $row;
+        });
+    }
+
     public function matrix($allocations)
     {
         $ids = $allocations->pluck('id');
@@ -127,7 +161,7 @@ class BudgetService
      */
     public function assertItemAvailable(string $field, ?int $budgetAllocationId, float $amount, ?int $ignorePrId = null, ?int $ignoreOrsId = null, ?\DateTimeInterface $date = null): void
     {
-        if (!$budgetAllocationId) {
+        if (! $budgetAllocationId) {
             return;
         }
 
@@ -145,7 +179,7 @@ class BudgetService
             throw ValidationException::withMessages([$field => sprintf('Insufficient budget balance for this expense item. ₱%s requested but only ₱%s remains in %s.', number_format($amount, 2), number_format(max($balance, 0), 2), $item->particulars)]);
         }
 
-        $when = \Illuminate\Support\Carbon::instance($date ?? now());
+        $when = Carbon::instance($date ?? now());
         $quarter = $when->year < $item->fiscal_year ? 1 : ($when->year > $item->fiscal_year ? 4 : $when->quarter);
         $allowed = collect(range(1, $quarter))->sum(fn ($q) => $item->quarterAmount($q));
         $usedThroughQuarter = (float) $obligations->filter(fn ($o) => ($o->created_at->year > $item->fiscal_year ? 4 : $o->created_at->quarter) <= $quarter)->sum('amount');

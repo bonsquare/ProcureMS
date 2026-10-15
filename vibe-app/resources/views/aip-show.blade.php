@@ -177,7 +177,6 @@
                                                         <label class="min-w-[14rem] flex-1 text-xs font-semibold text-on-surface-variant">Frequency (timeline)
                                                             <input name="timeline" data-timeline value="{{ $a->timeline ?: $suggested }}" placeholder="e.g. January - December" class="{{ $field }} !mt-1 !py-2 text-sm font-normal">
                                                         </label>
-                                                        <button type="submit" class="h-[2.4rem] rounded-lg bg-primary px-5 text-xs font-semibold text-white hover:bg-primary-container">Save amounts</button>
                                                     </div>
                                                     <p data-budget-status class="mt-2 hidden text-xs font-medium"></p>
                                                 </form>
@@ -297,7 +296,7 @@
     })();
     (() => {
         // The amounts of each quarter and the timeline of an activity: whenever an amount changes, the timeline follows the quarters that have an amount (only the 1st =
-        // January - March, up to the 3rd = January - September, all four = January - December); Save amounts keeps the page where it is, then refreshes the totals.
+        // January - March, up to the 3rd = January - September, all four = January - December); the amounts save by themselves when a box is left.
         const starts = ['January', 'April', 'July', 'October'];
         const ends = ['March', 'June', 'September', 'December'];
         const timelineFor = (values) => {
@@ -323,18 +322,25 @@
                 if (followed) { timeline.value = followed; }
             };
             inputs.forEach((input) => input.addEventListener('input', refresh));
-            form.addEventListener('submit', async (event) => {
-                event.preventDefault();
-                say('Saving…', true);
-                try {
-                    const response = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
-                    if (!response.ok) { throw new Error(response.status === 422 ? 'Check the amounts.' : 'Not saved.'); }
-                    say('Saved', true);
-                    window.setTimeout(() => window.location.reload(), 500);
-                } catch (error) {
-                    say(error.message || 'Not saved. Try again.', false);
-                }
-            });
+            // Like the Source of fund: the amounts and the timeline save by themselves when a box is left (one save at a time, the page stays where it is).
+            let saving = Promise.resolve();
+            const save = () => {
+                saving = saving.then(async () => {
+                    say('Saving…', true);
+                    try {
+                        const response = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
+                        if (!response.ok) { throw new Error(response.status === 422 ? 'Check the amounts.' : 'Not saved.'); }
+                        const result = await response.json();
+                        say('Saved', true);
+                        if (result.status !== @json($aip->status)) { window.location.reload(); }
+                    } catch (error) {
+                        say(error.message || 'Not saved. Try again.', false);
+                    }
+                });
+            };
+            inputs.forEach((input) => input.addEventListener('change', save));
+            timeline.addEventListener('change', save);
+            form.addEventListener('submit', (event) => { event.preventDefault(); save(); });
         });
     })();
     (() => {

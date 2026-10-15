@@ -128,6 +128,35 @@ class SobFlowTest extends TestCase
         $this->get(route('planning.sob.show', $plan))->assertOk()->assertSee('id="sob-item-form"', false)->assertSee('Approved');
     }
 
+    public function test_the_allotment_registry_lists_the_sob_items_and_the_manual_allotments_apart(): void
+    {
+        $fx = SobFixture::make();
+        $plan = $this->draft($fx, 4);
+        app(SobService::class)->addItem($plan, $this->line($fx, ['particulars' => 'Bond paper']));
+        $this->actingAs($fx['user']);
+        $this->post(route('planning.sob.approve', $plan))->assertSessionHasNoErrors();
+        $manual = BudgetAllocation::withoutGlobalScopes()->first()->replicate();
+        $manual->program = 'A MANUAL BUDGET LINE';
+        $manual->remarks = null;
+        $manual->budget_ref_no = 'BA-MANUAL';
+        $manual->save();
+
+        $page = $this->get(route('allotment-registry', ['year' => 2026]))->assertOk();
+
+        $page->assertSee('Items funded from the SOB')->assertSee('Manual allotments')->assertSee('A MANUAL BUDGET LINE')->assertSee('Add manual allotment');
+    }
+
+    public function test_the_budget_allocation_page_is_live_and_shows_the_sob_lines(): void
+    {
+        $fx = SobFixture::make();
+        $plan = $this->draft($fx, 4);
+        app(SobService::class)->addItem($plan, $this->line($fx, ['particulars' => 'Bond paper']));
+        $this->actingAs($fx['user']);
+        $this->post(route('planning.sob.approve', $plan))->assertSessionHasNoErrors();
+
+        $this->get(route('budget.allocation', ['year' => 2026]))->assertOk()->assertSee('id="budget-live"', false)->assertSee('data-live-status', false)->assertSee('1,000.00');
+    }
+
     public function test_a_draft_and_an_approved_sob_can_both_be_deleted(): void
     {
         $fx = SobFixture::make();

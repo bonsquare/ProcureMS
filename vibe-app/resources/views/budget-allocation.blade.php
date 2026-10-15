@@ -8,6 +8,7 @@
     $query = ['year' => $year, 'school_id' => $selectedSchoolId] + $filters;
     $th = 'px-3 py-2 text-xs font-semibold uppercase tracking-wider text-on-surface-variant';
     $quarter = (int) ($filters['quarter'] ?? 0);
+    $showOffice = $schools->count() > 1;
     $field = 'rounded border border-outline-variant/50 bg-white px-3 py-2.5 text-xs outline-none focus:border-primary';
 @endphp
 <div class="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
@@ -39,12 +40,14 @@
         <select name="school_id" class="{{ $field }}"><option value="">All schools</option>@foreach($schools as $school)<option value="{{ $school->id }}" @selected((int) $selectedSchoolId === $school->id)>{{ $school->name }}</option>@endforeach</select>
     @endif
     <select name="fund" class="{{ $field }}"><option value="">All fund sources</option>@foreach($funds as $fund)<option @selected(($filters['fund'] ?? '') === $fund)>{{ $fund }}</option>@endforeach</select>
-    <select name="office" class="{{ $field }}"><option value="">All offices</option>@foreach($offices as $office)<option @selected(($filters['office'] ?? '') === $office)>{{ $office }}</option>@endforeach</select>
+    @if($showOffice)<select name="office" class="{{ $field }}"><option value="">All offices</option>@foreach($offices as $office)<option @selected(($filters['office'] ?? '') === $office)>{{ $office }}</option>@endforeach</select>@endif
     <select name="quarter" class="{{ $field }}"><option value="">All quarters</option>@foreach([1, 2, 3, 4] as $q)<option value="{{ $q }}" @selected($quarter === $q)>Q{{ $q }}</option>@endforeach</select>
     <button class="rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Filter</button>
     @if(array_filter($filters))<a href="{{ route('budget.allocation', ['year' => $year]) }}" class="text-xs font-semibold text-primary hover:underline">Clear</a>@endif
 </form>
 
+<div class="mb-2 flex items-center justify-end gap-2 text-xs text-on-surface-variant no-print"><span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-secondary" aria-hidden="true"></span>Live</span><span data-live-status>Updated just now</span><button type="button" data-live-refresh class="inline-flex items-center gap-1 rounded border border-outline-variant/60 bg-white px-2 py-1 font-semibold text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">refresh</span>Refresh</button></div>
+<div id="budget-live">
 @php $cards = [['Total Annual Allocation', $peso($t['allocated']), ''], ['Total Obligated', $peso($t['obligated']), ''], ['Total Liquidated', $peso($t['liquidated']), 'text-secondary'], ['Total Remaining Balance', $peso($t['balance']), $t['balance'] < 0 ? 'text-error' : 'text-secondary'], ['Fully Obligated Items', $counts['fully'], $counts['fully'] ? 'text-error' : ''], ['Near Limit Items', $counts['near'], $counts['near'] ? 'text-amber-700' : ''], ['Available Budget Items', $counts['available'], 'text-secondary']]; @endphp
 <div class="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4 xl:grid-cols-7">
     @foreach($cards as [$label, $value, $tone])
@@ -64,7 +67,7 @@
         <table class="w-full min-w-[1500px] text-left text-sm">
             <thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant">
                 <tr>
-                    <th class="{{ $th }}">Year</th><th class="{{ $th }}">Office / Department</th><th class="{{ $th }}">Fund Source</th><th class="{{ $th }}">Account Code</th><th class="{{ $th }}">Expense Item</th>
+                    <th class="{{ $th }}">Year</th>@if($showOffice)<th class="{{ $th }}">Office / Department</th>@endif<th class="{{ $th }}">Fund Source</th><th class="{{ $th }}">Account Code</th><th class="{{ $th }}">Expense Item</th>
                     <th class="{{ $th }} text-right">Annual Allocation</th><th class="{{ $th }} text-right">Q1</th><th class="{{ $th }} text-right">Q2</th><th class="{{ $th }} text-right">Q3</th><th class="{{ $th }} text-right">Q4</th>
                     <th class="{{ $th }} text-right">Obligated</th><th class="{{ $th }} text-right">Liquidated</th><th class="{{ $th }} text-right">Unliquidated</th><th class="{{ $th }} text-right">Remaining</th>
                     @if($quarter)<th class="{{ $th }} text-right">Q{{ $quarter }} Obligated</th><th class="{{ $th }} text-right">Q{{ $quarter }} Available</th>@endif
@@ -76,7 +79,7 @@
                     @php $i = $r['item']; $qv = $quarter ? $r['quarters'][$quarter] : null; @endphp
                     <tr class="align-top">
                         <td class="px-3 py-3">{{ $i->fiscal_year }}</td>
-                        <td class="px-3 py-3">{{ $i->office }}@if(!$selectedSchoolId)<span class="block text-[11px] text-on-surface-variant">{{ $i->school?->name }}</span>@endif</td>
+                        @if($showOffice)<td class="px-3 py-3">{{ $i->office }}@if(!$selectedSchoolId && $i->school?->name !== $i->office)<span class="block text-[11px] text-on-surface-variant">{{ $i->school?->name }}</span>@endif</td>@endif
                         <td class="px-3 py-3">{{ $i->source_of_fund }}</td>
                         <td class="px-3 py-3 tabular-nums">{{ $i->uacs_code }}</td>
                         <td class="px-3 py-3 font-semibold">{{ $i->particulars }}@if($i->program)<span class="block text-xs font-normal text-on-surface-variant">{{ $i->program }}</span>@endif</td>
@@ -97,13 +100,13 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="18" class="px-4 py-12 text-center text-on-surface-variant">No budget allocations match. @if($canManage)Click “Add Budget Allocation” to start.@endif</td></tr>
+                    <tr><td colspan="{{ $showOffice ? 18 : 17 }}" class="px-4 py-12 text-center text-on-surface-variant">No budget allocations match. @if($canManage)Click “Add Budget Allocation” to start.@endif</td></tr>
                 @endforelse
             </tbody>
             @if($rows->isNotEmpty())
                 <tfoot class="border-t-2 border-outline-variant/40 bg-surface-low/60 font-bold">
                     <tr>
-                        <td class="px-3 py-3" colspan="5">TOTAL</td>
+                        <td class="px-3 py-3" colspan="{{ $showOffice ? 5 : 4 }}">TOTAL</td>
                         <td class="px-3 py-3 text-right tabular-nums">{{ $peso($t['allocated']) }}</td>
                         @foreach($summary['quarters'] as $v)<td class="px-3 py-3 text-right tabular-nums">{{ $peso($v['allocated']) }}</td>@endforeach
                         <td class="px-3 py-3 text-right tabular-nums">{{ $peso($t['obligated']) }}</td>
@@ -132,7 +135,7 @@
             </thead>
             <tbody class="divide-y divide-outline-variant/20">
                 @foreach($rows as $r)
-                    <tr><td class="px-3 py-2.5 font-semibold">{{ $r['item']->particulars }}<span class="block text-[11px] font-normal text-on-surface-variant">{{ $r['item']->office }} · {{ $r['item']->source_of_fund }}</span></td><td class="px-3 py-2.5 tabular-nums">{{ $r['item']->uacs_code }}</td>
+                    <tr><td class="px-3 py-2.5 font-semibold">{{ $r['item']->particulars }}<span class="block text-[11px] font-normal text-on-surface-variant">@if($showOffice){{ $r['item']->office }} · @endif{{ $r['item']->source_of_fund }}</span></td><td class="px-3 py-2.5 tabular-nums">{{ $r['item']->uacs_code }}</td>
                         @foreach($r['quarters'] as $v)<td class="border-l border-outline-variant/30 px-3 py-2.5 text-right tabular-nums">{{ $peso($v['allocated']) }}</td><td class="px-3 py-2.5 text-right tabular-nums">{{ $peso($v['obligated']) }}</td><td class="px-3 py-2.5 text-right tabular-nums">{{ $peso($v['liquidated']) }}</td><td class="px-3 py-2.5 text-right tabular-nums {{ $v['balance'] < 0 ? 'text-error' : '' }}">{{ $peso($v['balance']) }}</td>@endforeach
                     </tr>
                 @endforeach
@@ -140,6 +143,7 @@
         </table>
     </div>
 </details>
+</div>
 
 <section class="rounded border border-outline-variant/30 bg-white p-5">
     <h2 class="text-base font-semibold">Reports</h2>
@@ -149,4 +153,35 @@
         @endforeach
     </div>
 </section>
+
+<script>
+    // Real time: the cards and the ledger are read again every 30 seconds (and on Refresh) without reloading the page.
+    (() => {
+        const box = document.getElementById('budget-live');
+        const status = document.querySelector('[data-live-status]');
+        if (!box) return;
+        let busy = false;
+        const refresh = async () => {
+            if (busy || document.hidden) return;
+            busy = true;
+            try {
+                const response = await fetch(location.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' });
+                if (!response.ok) throw new Error('refresh failed');
+                const fresh = new DOMParser().parseFromString(await response.text(), 'text/html').getElementById('budget-live');
+                if (fresh) {
+                    const open = [...box.querySelectorAll('details')].map((d) => d.open);
+                    box.innerHTML = fresh.innerHTML;
+                    box.querySelectorAll('details').forEach((d, i) => { if (open[i] !== undefined) d.open = open[i]; });
+                }
+                status.textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            } catch (error) {
+                status.textContent = 'Could not refresh, trying again';
+            }
+            busy = false;
+        };
+        setInterval(refresh, 30000);
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+        document.querySelector('[data-live-refresh]')?.addEventListener('click', refresh);
+    })();
+</script>
 @endsection

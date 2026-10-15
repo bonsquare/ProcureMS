@@ -224,7 +224,7 @@ class SobItemGroupTest extends TestCase
         $this->assertMatchesRegularExpression('/<td class="account" rowspan="\d+"><div>Program One<\/div><div[^>]*>POW required<\/div><\/td>/', $html, 'the program, and under it the note that stands in for the account title');
         $this->assertMatchesRegularExpression('/<td class="account" rowspan="\d+">Electricity Expenses<\/td>/', $html);
         $this->assertStringContainsString('35% Labor', $html);
-        $this->assertSame(1, substr_count($html, 'class="sub item-sub"'), 'a Sub-Total after the particulars only of the Item that has other lines');
+        $this->assertSame(2, substr_count($html, 'class="sub item-sub"'), 'only the Item that has other lines has a Sub-Total of its particulars and a Sub-Total with its other lines (the labor)');
     }
 
     public function test_a_pillar_without_entries_has_no_sub_total(): void
@@ -233,6 +233,11 @@ class SobItemGroupTest extends TestCase
         $this->actingAs($fx['user']);
         $plan = $this->draftWithGroup($fx);
 
+        $html = $this->get(route('planning.sob.print', $plan))->assertOk()->getContent();
+
+        $this->assertSame(0, substr_count($html, '<tr class="sub pillar-sub">'), 'one Item with other lines already ends with the same Sub-Total, so the pillar does not repeat it');
+
+        $this->service()->addItems($plan, $fx['activities'][0]->id, $this->otherAccount($fx)->id, [['particulars' => 'Electricity', 'frequency' => 3, 'quantity' => 1, 'unit' => 'monthly', 'unit_cost' => 2000]]);
         $html = $this->get(route('planning.sob.print', $plan))->assertOk()->getContent();
 
         $this->assertSame(1, substr_count($html, '<tr class="sub pillar-sub">'), 'only Access has entries, so only it has a Sub-Total');
