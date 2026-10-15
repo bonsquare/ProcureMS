@@ -815,3 +815,9 @@ Tests: `OrsStatusPrintTest`.
 - The printed DV shows **Less:** and only the deductions that were typed, at the foot of the Particulars, before **Amount Due** (the usual ones, then the others); **Amount Due is the amount less the deductions**. The amount at the top of the Particulars stays whole. The journal entry still balances against the whole amount of the DV (the deductions are entered as credit lines).
 
 Tests: `DvJournalEntryTest`, `OrsStatusPrintTest`, `DvAppropriationPrintTest`.
+
+## 34. APP-CSE: a disclosure for each category (approved by the owner 2026-10-15)
+
+- In the APP-CSE entry page (`/planning/app-cse/{id}`), each **category band** (Common Office Supply, Construction Components & Supplies, Other categories, and so on) is a disclosure with its arrow on the left: it folds and opens the month headings and the items of that category. Every category is open when the page opens. It is the same in Part I, Part II and in the folded list of items with no quantity yet. The printed APP-CSE does not change.
+
+Tests: `AppCse*` (the page still renders with its categories).
