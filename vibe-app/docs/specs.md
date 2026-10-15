@@ -665,3 +665,19 @@ These refine sections 24 and 25 and the Finance pages. Where a line below differ
 - The **Save amounts** button is gone. The quarter amounts and the Frequency (timeline) of an activity save in the background when a box is left or Enter is pressed (one save at a time), showing "Saving…" then "Saved", like the Source of fund. The page does not reload unless the AIP's status changes (an approved AIP becoming revised). The Total and the timeline still follow the amounts as they are typed. The totals lower on the page are refreshed when the page is opened again.
 
 Tests: `SobItemGroupTest`, `SobFlowTest`, `AipActivityBudgetTest`, `PlanningFlowTest`.
+
+## 27. Allotment Registry fund details and system-wide contrast (approved by the owner 2026-10-15)
+
+This refines 26.2 and the screen design standards (7).
+
+### 27.1 Allotment Registry: the items are the details of the fund
+
+- The separate box "Items funded from the SOB" is gone. Each source of fund in the **Summary per Source of Fund** is clickable (the whole row, also with Enter or Space; an arrow at its name turns, the row is lightly highlighted): it opens a detail row right under it, "Items funded from the SOB · fund · N items", with Program / Project, Object of Expenditure (the account code larger on its own line, the title wrapping), Allotment Q1 to Q4, Total Allotment, Obligated and Not Yet Obligated, and a TOTAL row of that fund. Clicking the fund again closes it; several funds can be open at once; printing opens all of them. The details are closed when the page opens.
+- The **Manual allotments** section stays apart, as in 26.2.
+
+### 27.2 Contrast of the screens (grouping of data must be easy to see)
+
+- The shared colors of every application page (the Tailwind color settings of the layouts and of the standalone Finance, Budget, Liquidation, Reports, Subscriptions, User Management, Backup and Google Drive pages) are: surface `#e6edf4` (page background), surface-low `#dbe5ee` (table heading and summary bands), surface-container `#cfdbe6`, surface-high `#c0cfdd`, on-surface-variant `#374a5d` (labels and subtitles), outline-variant `#7f95a9` (borders and dividers). The sign-in and registration pages and the printed official forms keep their own colors.
+- A new page uses these tokens (`surface-low` for bands, `outline-variant` for borders) and must not use lighter colors of its own; a group of data (a card, a pillar, a fund, a table) is always set apart by a visible border or band.
+
+Tests: `SobFlowTest`; the whole suite is run after a color change.
