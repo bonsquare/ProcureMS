@@ -23,6 +23,9 @@ class FinanceController extends Controller
     /** The Accounting Entry table of the printed DV has room for this many lines. */
     public const JOURNAL_MAX_LINES = 20;
 
+    /** The Less: block of the printed DV has room for this many deduction lines (the usual four and others typed by name). */
+    public const DEDUCTION_MAX_LINES = 6;
+
     private function isMaster(): bool
     {
         return request()->user()->seesAllSchools();
@@ -163,6 +166,9 @@ class FinanceController extends Controller
             'dv_include_appropriation' => ['nullable', 'boolean'],
             'deductions' => ['nullable', 'array'],
             'deductions.*' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
+            'deductions_other' => ['nullable', 'array', 'max:'.(self::DEDUCTION_MAX_LINES - count(LiquidationReport::DV_DEDUCTIONS))],
+            'deductions_other.*.label' => ['nullable', 'string', 'max:40'],
+            'deductions_other.*.amount' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
             'journal' => $preview ? ['nullable', 'array', 'max:'.self::JOURNAL_MAX_LINES] : ['required', 'array', 'min:2', 'max:'.self::JOURNAL_MAX_LINES],
             'journal.*.account_code' => [$preview ? 'nullable' : 'required', 'string', 'max:50'],
             'journal.*.debit' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
@@ -184,13 +190,20 @@ class FinanceController extends Controller
             }
             $lines = [];
         }
-        unset($data['journal'], $data['deductions']);
+        unset($data['journal'], $data['deductions'], $data['deductions_other']);
         $deductions = collect(LiquidationReport::DV_DEDUCTIONS)->keys()
             ->mapWithKeys(fn ($key) => [$key => round((float) $request->input('deductions.'.$key, 0), 2)])->filter(fn ($value) => $value > 0);
-        if ($deductions->sum() >= (float) $liquidationReport->amount) {
+        $others = collect($request->input('deductions_other', []))
+            ->map(fn ($row) => ['label' => trim((string) ($row['label'] ?? '')), 'amount' => round((float) ($row['amount'] ?? 0), 2)])
+            ->filter(fn ($row) => $row['amount'] > 0 || $row['label'] !== '')->values();
+        if ($others->contains(fn ($row) => $row['label'] === '' || $row['amount'] <= 0)) {
+            throw ValidationException::withMessages(['deductions' => 'Give each other deduction a name and an amount.']);
+        }
+        if ($deductions->sum() + $others->sum('amount') >= (float) $liquidationReport->amount) {
             throw ValidationException::withMessages(['deductions' => 'The deductions must be less than the amount of the DV.']);
         }
-        $data['dv_deductions'] = $deductions->isEmpty() ? null : $deductions->all();
+        $stored = $deductions->all() + ($others->isEmpty() ? [] : ['other' => $others->all()]);
+        $data['dv_deductions'] = $stored === [] ? null : $stored;
         if ($signatories !== null) {
             $data['signatories'] = $this->withDvSignatories($liquidationReport, $signatories);
         }

@@ -179,6 +179,25 @@ class DvJournalEntryTest extends TestCase
         $this->assertStringContainsString('₱9,250.00', $html, 'Amount Due is the amount less the deductions');
     }
 
+    public function test_a_deduction_not_in_the_list_can_be_added_by_name(): void
+    {
+        [$report, $master] = $this->ors(10000);
+        $c = $this->codes();
+        $form = ['dv_date' => now()->toDateString(), 'payee' => 'Journal Supplier', 'dv_particulars' => 'Office supplies', 'payment_mode' => 'MDS Check',
+            'journal' => [['account_code' => $c['expense'], 'debit' => '10000'], ['account_code' => $c['cash'], 'credit' => '10000']]];
+
+        $this->actingAs($master)->post(route('accounting.dv.store', $report), $form + ['deductions_other' => [['label' => '', 'amount' => '100']]])->assertSessionHasErrors('deductions');
+        $this->post(route('accounting.dv.store', $report), $form + ['deductions_other' => array_fill(0, 3, ['label' => 'Penalty', 'amount' => '10'])])->assertSessionHasErrors('deductions_other');
+        $this->assertNull($report->fresh()->dv_number);
+
+        $this->post(route('accounting.dv.store', $report), $form + ['deductions' => ['retention' => '250'], 'deductions_other' => [['label' => 'Penalty', 'amount' => '300']]])->assertSessionHasNoErrors();
+
+        $html = $this->get(route('accounting.dv.print', $report->fresh()))->assertOk()->getContent();
+        $this->assertStringContainsString('Penalty', $html);
+        $this->assertStringContainsString('₱9,450.00', $html, 'Amount Due is the amount less every deduction');
+        $this->get(route('accounting', ['tab' => 'for_dv']))->assertOk()->assertSee('id="deduction-add"', false);
+    }
+
     public function test_a_dv_without_entries_still_prints(): void
     {
         [$report, $master] = $this->ors(500);

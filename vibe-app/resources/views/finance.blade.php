@@ -162,15 +162,6 @@
         <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Payee <span class="text-error">*</span><input name="payee" id="dv-payee" required maxlength="255" class="{{ $inputClass }}"></label>
         <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Particulars <span class="text-error">*</span><input name="dv_particulars" id="dv-particulars" required maxlength="255" class="{{ $inputClass }}"></label>
         <label class="text-xs font-semibold text-on-surface-variant">Mode of Payment <span class="text-error">*</span><select name="payment_mode" required class="{{ $inputClass }}"><option>MDS Check</option><option>Commercial Check</option><option>ADA</option><option>Others</option></select></label>
-        <div class="rounded-xl border border-outline-variant/50 bg-surface-low/50 p-3 md:col-span-2">
-            <p class="text-sm font-bold text-on-surface">Less: Deductions <span class="font-normal text-on-surface-variant">(optional)</span></p>
-            <p class="mb-2 text-[11px] font-normal text-on-surface-variant">Typed only when they apply. They are printed above Amount Due, and Amount Due becomes the amount less the deductions.</p>
-            <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                @foreach(\App\Models\LiquidationReport::DV_DEDUCTIONS as $deductionKey => $deductionLabel)
-                    <label class="text-xs font-semibold text-on-surface-variant">{{ $deductionLabel }}<input type="number" step="0.01" min="0" name="deductions[{{ $deductionKey }}]" value="{{ old('deductions.'.$deductionKey) }}" class="{{ $inputClass }} text-right"></label>
-                @endforeach
-            </div>
-        </div>
         <div id="journal-box" class="rounded-xl border border-outline-variant/50 bg-surface-low/50 p-3 md:col-span-2">
             <div class="mb-2 flex flex-wrap items-start justify-between gap-2">
                 <div><p class="text-sm font-bold text-on-surface">Journal entry <span class="font-normal text-on-surface-variant">(double entry)</span></p><p class="text-[11px] font-normal text-on-surface-variant">Total debit must equal total credit and the DV amount. Up to {{ \App\Http\Controllers\FinanceController::JOURNAL_MAX_LINES }} lines fit the printed DV.</p></div>
@@ -183,6 +174,17 @@
                 <p class="text-xs text-on-surface-variant">Total debit <strong id="journal-debit" class="text-on-surface">0.00</strong> · Total credit <strong id="journal-credit" class="text-on-surface">0.00</strong></p>
             </div>
             <select id="journal-options" hidden aria-hidden="true"><option value="">Choose an account…</option>@foreach(($journalAccounts ?? []) as $category => $accounts)<optgroup label="{{ $category }}">@foreach($accounts as $account)<option value="{{ $account['code'] }}">{{ $account['code'] }} · {{ $account['title'] }}</option>@endforeach</optgroup>@endforeach</select>
+        </div>
+        <div class="rounded-xl border border-outline-variant/50 bg-surface-low/50 p-3 md:col-span-2">
+            <p class="text-sm font-bold text-on-surface">Less: Deductions <span class="font-normal text-on-surface-variant">(optional)</span></p>
+            <p class="mb-2 text-[11px] font-normal text-on-surface-variant">Typed only when they apply. They are printed above Amount Due, and Amount Due becomes the amount less the deductions. Add another one by name if it is not listed (up to {{ \App\Http\Controllers\FinanceController::DEDUCTION_MAX_LINES }} lines in all).</p>
+            <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                @foreach(\App\Models\LiquidationReport::DV_DEDUCTIONS as $deductionKey => $deductionLabel)
+                    <label class="text-xs font-semibold text-on-surface-variant">{{ $deductionLabel }}<input type="number" step="0.01" min="0" name="deductions[{{ $deductionKey }}]" value="{{ old('deductions.'.$deductionKey) }}" class="{{ $inputClass }} text-right"></label>
+                @endforeach
+            </div>
+            <div id="deduction-others" class="mt-2 space-y-2"></div>
+            <button type="button" id="deduction-add" class="mt-2 inline-flex items-center gap-1 rounded border border-outline-variant/60 bg-white px-3 py-1.5 text-xs font-semibold text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">add</span>Add other deduction</button>
         </div>
         <label class="flex items-start gap-2 text-xs font-semibold text-on-surface-variant md:col-span-2"><input type="checkbox" name="dv_include_appropriation" value="1" @checked(old('dv_include_appropriation')) class="mt-0.5 h-4 w-4 rounded border-outline-variant"><span>Add the APPROPRIATION table to the printed DV<span class="block font-normal">Columns: Appropriation, P/A/P, OR No., Amount, Expense Code. Left unchecked, the DV prints without it.</span></span></label>
         @foreach(($dvDialogPanels ?? []) as $signatorySchoolId => $signatoryRows)
@@ -226,6 +228,7 @@
         document.getElementById('dv-title').textContent = b.dataset.label + ' · ' + b.dataset.amount;
         document.getElementById('dv-payee').value = b.dataset.payee || '';
         document.getElementById('dv-particulars').value = b.dataset.particulars || '';
+        if (window.deductionsReset) window.deductionsReset();
         if (window.journalOpen) window.journalOpen(b);
         show(dvModal);
         if (window.refreshDvPreview) window.refreshDvPreview();
@@ -297,6 +300,42 @@
         form.addEventListener('input', schedule);
         form.addEventListener('change', schedule);
         window.refreshDvPreview = () => { clearTimeout(timer); timer = setTimeout(() => refresh(), 400); };
+    })();
+</script>
+<script>
+    // Deductions of the DV: the four usual ones are fields; any other one is added by name and amount.
+    (() => {
+        const MAX = {{ \App\Http\Controllers\FinanceController::DEDUCTION_MAX_LINES - count(\App\Models\LiquidationReport::DV_DEDUCTIONS) }};
+        const form = document.getElementById('dv-form');
+        const box = document.getElementById('deduction-others');
+        const add = document.getElementById('deduction-add');
+        const field = 'w-full rounded border border-outline-variant/50 bg-white px-2.5 py-2 text-sm font-normal outline-none focus:border-primary';
+        const changed = () => form.dispatchEvent(new Event('input', { bubbles: true }));
+        const renumber = () => {
+            box.querySelectorAll('[data-other]').forEach((row, index) => {
+                row.querySelector('[data-label]').name = `deductions_other[${index}][label]`;
+                row.querySelector('[data-amount]').name = `deductions_other[${index}][amount]`;
+            });
+            add.disabled = box.children.length >= MAX;
+            add.classList.toggle('opacity-40', box.children.length >= MAX);
+        };
+        add.addEventListener('click', () => {
+            if (box.children.length >= MAX) return;
+            const row = document.createElement('div');
+            row.dataset.other = '1';
+            row.className = 'grid grid-cols-[1fr_9rem_2rem] gap-2';
+            row.innerHTML = `<input type="text" data-label maxlength="40" placeholder="Name of the deduction" class="${field}"><input type="number" data-amount step="0.01" min="0" placeholder="Amount" class="${field} text-right tabular-nums"><button type="button" title="Remove" aria-label="Remove deduction" class="grid h-9 w-8 place-items-center rounded text-on-surface-variant hover:bg-error/10 hover:text-error"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">delete</span></button>`;
+            row.querySelector('button').addEventListener('click', () => { row.remove(); renumber(); changed(); });
+            box.append(row);
+            renumber();
+            row.querySelector('[data-label]').focus();
+        });
+        window.deductionsReset = () => {
+            box.innerHTML = '';
+            form.querySelectorAll('input[name^="deductions["]').forEach((input) => { input.value = ''; });
+            renumber();
+        };
+        renumber();
     })();
 </script>
 <script>

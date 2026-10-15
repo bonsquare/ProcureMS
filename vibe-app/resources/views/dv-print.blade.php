@@ -35,7 +35,7 @@
     $particulars = $report->dv_particulars ?: $report->purpose;
     $rc = $report->responsibility_center_code ?: $pr?->responsibility_center_code;
     $amount = number_format((float) $report->amount, 2);
-    $deductions = collect(\App\Models\LiquidationReport::DV_DEDUCTIONS)->map(fn ($label, $key) => ['label' => $label, 'value' => (float) ($report->dv_deductions[$key] ?? 0)])->filter(fn ($row) => $row['value'] > 0)->values();
+    $deductions = collect(\App\Models\LiquidationReport::DV_DEDUCTIONS)->map(fn ($label, $key) => ['label' => $label, 'value' => (float) ($report->dv_deductions[$key] ?? 0)])->filter(fn ($row) => $row['value'] > 0)->values()->concat(collect($report->dv_deductions['other'] ?? [])->map(fn ($row) => ['label' => $row['label'], 'value' => (float) $row['amount']]));
     $amountDue = number_format((float) $report->amount - $deductions->sum('value'), 2);
     $lessHeight = $deductions->isEmpty() ? 0 : 11 * ($deductions->count() + 1) + 4;
     $headName = strtoupper((string) ($head?->name ?: $report->school?->school_head));
@@ -250,16 +250,16 @@
 <text x="483.1" y="177.6" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($report->ors_number, 108, 9.8) }}" font-weight="bold">{{ $report->ors_number }}</text>
 <foreignObject x="76" y="181.6" width="514" height="20.8"><div xmlns="http://www.w3.org/1999/xhtml" style="display:flex;align-items:center;justify-content:flex-start;height:20.8px;overflow:hidden;font:bold {{ $addressCell['size'] }}px/1.08 'Times New Roman',Times,serif;color:#000;word-wrap:break-word;text-align:left">{{ $address }}</div></foreignObject>
 <!-- particulars -->
-<foreignObject x="22.6" y="230.6" width="258.4" height="{{ 114 - $cut - $lessHeight }}"><div xmlns="http://www.w3.org/1999/xhtml" style="font:10px/12px 'Times New Roman',Times,serif;color:#000;overflow:hidden;height:{{ 114 - $cut - $lessHeight }}px;white-space:pre-wrap;word-wrap:break-word">{{ $particulars }}</div></foreignObject>
-<text x="329.3" y="241.2" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($rc, 80, 10) }}">{{ $rc }}</text>
-<text x="588.8" y="241.2" text-anchor="end" font-family="'Times New Roman',Times,serif" font-size="10.2">₱{{ $amount }}</text>
+<foreignObject x="22.6" y="230.6" width="258.4" height="{{ 114 - $cut - $lessHeight }}"><div xmlns="http://www.w3.org/1999/xhtml" style="font:bold 10px/12px 'Times New Roman',Times,serif;color:#000;overflow:hidden;height:{{ 114 - $cut - $lessHeight }}px;white-space:pre-wrap;word-wrap:break-word">{{ $particulars }}</div></foreignObject>
+<text x="329.3" y="241.2" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($rc, 80, 10) }}" font-weight="bold">{{ $rc }}</text>
+<text x="588.8" y="241.2" text-anchor="end" font-family="'Times New Roman',Times,serif" font-size="10.2" font-weight="bold">₱{{ $amount }}</text>
 <text transform="translate(0 {{ 0 - $cut }})" x="588.8" y="351.4" text-anchor="end" font-family="'Times New Roman',Times,serif" font-size="10.2" font-weight="bold">₱{{ $amountDue }}</text>
 @if($deductions->isNotEmpty())
 <text x="24" y="{{ 337 - $cut - $deductions->count() * 11 }}" font-family="'Times New Roman',Times,serif" font-size="9.8" font-weight="bold">Less:</text>
 @foreach($deductions as $deduction)
 @php $deductionY = 337 - $cut - ($deductions->count() - 1 - $loop->index) * 11; @endphp
-<text x="36" y="{{ $deductionY }}" font-family="'Times New Roman',Times,serif" font-size="9.8">{{ $deduction['label'] }}</text>
-<text x="588.8" y="{{ $deductionY }}" text-anchor="end" font-family="'Times New Roman',Times,serif" font-size="9.8">₱{{ number_format($deduction['value'], 2) }}</text>
+<text x="36" y="{{ $deductionY }}" font-family="'Times New Roman',Times,serif" font-size="9.8" font-weight="bold">{{ $deduction['label'] }}</text>
+<text x="588.8" y="{{ $deductionY }}" text-anchor="end" font-family="'Times New Roman',Times,serif" font-size="9.8" font-weight="bold">₱{{ number_format($deduction['value'], 2) }}</text>
 @endforeach
 @endif
 {{-- Accounting Entry: the double-entry journal saved with the DV (account title, UACS code, debit, credit) --}}
