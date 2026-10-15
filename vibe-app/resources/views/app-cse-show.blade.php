@@ -68,8 +68,9 @@
     @endphp
     @foreach($withQuantity->groupBy('category') as $categoryName => $categoryItems)
         <div class="overflow-x-auto"><div class="min-w-[68rem]">
-        <div class="border-b border-outline-variant/20 bg-primary/5">
-                    <div class="bg-primary px-4 py-2 text-sm font-bold uppercase tracking-wide text-white">{{ $categoryName ?: 'Other' }}</div>
+        <details open>
+            <summary class="flex cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center gap-2 bg-primary px-4 py-2 text-sm font-bold uppercase tracking-wide text-white"><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] text-white transition-transform" aria-hidden="true">expand_more</span>{{ $categoryName ?: 'Other' }}</summary>
+            <div class="border-b border-outline-variant/20 bg-primary/5">
                     <div class="grid items-end gap-x-1 px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant" style="{{ $rowColumns }}">
                         <span style="grid-column: 1; grid-row: 1 / span 2;">Item</span>
                         <span class="text-right" style="grid-column: 2; grid-row: 1 / span 2;">Unit Price</span>
@@ -82,6 +83,7 @@
         @foreach($categoryItems as $item)
             @include('partials.app-cse-item-card')
         @endforeach
+        </details>
         </div></div>
     @endforeach
     @if($partItems->isEmpty())
@@ -95,8 +97,9 @@
             <summary class="cursor-pointer px-4 py-3 text-xs font-semibold text-primary">{{ $atZero->count() }} item{{ $atZero->count() === 1 ? '' : 's' }} with no quantity yet (not printed)</summary>
             @foreach($atZero->groupBy('category') as $categoryName => $categoryItems)
                 <div class="overflow-x-auto"><div class="min-w-[68rem]">
-                <div class="border-b border-outline-variant/20 bg-primary/5">
-                    <div class="bg-primary px-4 py-2 text-sm font-bold uppercase tracking-wide text-white">{{ $categoryName ?: 'Other' }}</div>
+                <details open>
+                    <summary class="flex cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center gap-2 bg-primary px-4 py-2 text-sm font-bold uppercase tracking-wide text-white"><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] text-white transition-transform" aria-hidden="true">expand_more</span>{{ $categoryName ?: 'Other' }}</summary>
+                    <div class="border-b border-outline-variant/20 bg-primary/5">
                     <div class="grid items-end gap-x-1 px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant" style="{{ $rowColumns }}">
                         <span style="grid-column: 1; grid-row: 1 / span 2;">Item</span>
                         <span class="text-right" style="grid-column: 2; grid-row: 1 / span 2;">Unit Price</span>
@@ -109,6 +112,7 @@
                 @foreach($categoryItems as $item)
                     @include('partials.app-cse-item-card')
                 @endforeach
+                </details>
                 </div></div>
             @endforeach
         </details>
