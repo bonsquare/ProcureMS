@@ -681,3 +681,94 @@ This refines 26.2 and the screen design standards (7).
 - A new page uses these tokens (`surface-low` for bands, `outline-variant` for borders) and must not use lighter colors of its own; a group of data (a card, a pillar, a fund, a table) is always set apart by a visible border or band.
 
 Tests: `SobFlowTest`; the whole suite is run after a color change.
+
+## 28. Dashboard planning panels, step colors and AIP wording (approved by the owner 2026-10-15)
+
+### 28.1 KPI dashboard (school dashboard and the administrator's KPI view)
+
+- Under the KPI cards, two panels are added (`resources/views/partials/dashboard-kpi.blade.php`, data from `DashboardKpiService::planning`):
+  - **Planning flow**: SIP, AIP, SOB, APP and APP-CSE of the fiscal year, each with its count (programs, plans, quarters), a numbered circle and a status chip (green Approved or Entered, amber "x of y approved", rose Not started); each row opens that step in Planning.
+  - **Budget funded from the SOB**: the Budget lines written by an approved SOB (remarks "From SOB ..."), by source of fund, with Q1 to Q4, total and obligated, a TOTAL row and a link to the Allotment Registry. The approved SOB is the actual budget; without one the panel says to approve a quarter.
+- The look is modern: a gradient banner with the school name, larger KPI numbers with larger icon tiles, rounder cards with a soft shadow, thicker chart bars, titles in the brand blue. The administrator's "system" dashboard and the server dashboard are separate layouts and keep their own look.
+
+### 28.2 Planning step bar
+
+- A step that is **Not started** is rose (chip, number circle and card edge), not gray, so it can be seen; on the open (navy) step the chip stays readable.
+
+### 28.3 AIP wording
+
+- The "Based on" box of the AIP page shows **SIP 2026-2028 · Year 1** (a link to the SIP tab) for an AIP made from the SIP; "SIP program: ..." for an older AIP tied to one program; and "Entered directly: this AIP was not made from the SIP." for an AIP entered by hand. It no longer says "Not linked to a SIP program".
+- The AIP list in Planning has the column **Programs · Activities**: the number of different Specific Programs / Projects of the AIP, and under it the number of activities (for example 25 programs, 89 activities).
+
+Tests: `DashboardKpiTest`, `PlanningFlowTest`, `DocumentStripTest`.
+
+## 29. AIP list, docked preview and Print SIP (approved by the owner 2026-10-15)
+
+This refines 28.3 and the docked preview of the planning pages.
+
+### 29.1 AIP list in Planning
+
+- The columns are **Fiscal Year, Programs · Activities, Total Financial Target, School Improvement Plan, Status** (the heading is spelled out, not "SIP"); the headings and the content of all of them are centered (the icon buttons stay at the right).
+- **Programs · Activities** shows two lines, for example **25** Programs and **89** Activities: the numbers in bold, the words capitalized (singular for one: Program, Activity).
+
+### 29.2 Docked preview of the official form (AIP page, Edit KRA page, SOB page)
+
+- When the preview of the official form is open beside a page (screen 1100 px or wider), the **page is scaled to fit the room that is left** (the whole page: text, boxes and buttons together), never below **60%** (the smallest text, 10px, is then 6px). The preview and its Show button stay at their normal size (they are kept outside the page content). Hiding the preview puts the page back to its normal size; the scale follows when the window is resized. On a narrower screen the preview covers the page and nothing is scaled.
+- The **Edit KRA and Activities** page (`/aip/{id}/kras/{id}/edit`) keeps the preview beside the form like the AIP page, with the same open or closed state (it shows the saved form; **Refresh** or Save updates it).
+
+### 29.3 Print SIP
+
+- **Print SIP** is the highlighted button (navy, bold, printer icon, shadow and ring) at the top right of the School Improvement Plan panel, with Import from Excel and Add program; everyone who sees the SIP panel sees it, and it prints the latest SIP. The year bar of each SIP period keeps a small printer icon for that period.
+
+Tests: `PlanningFlowTest`, `SipTemplateTest`, `AipPrintFundTest`.
+
+## 30. Planning panels and the Obligation Request and Status (approved by the owner 2026-10-15)
+
+This refines 24.2, 25.5, 25.6, 28 and 29, and records the ORS (Create ORS window on the Budget page and the printed ORS, `resources/views/ors-print.blade.php`).
+
+### 30.1 Planning panels
+
+- **SOB panel:** under the title, one line per quarter (1st to 4th Quarter): the quarter name at the left, the amount and a status chip at the right (rose Not created, amber Draft, green Approved); a quarter with one SOB opens it when clicked, and the funds are in the tooltip. **Create SOB** (bold) is beside them. On the SOB page an item that has other lines (for example 35 % Labor) shows a blue chip with that line and its amount next to the yellow note chip (POW).
+- **APP panel:** **Print APP** (highlighted like Print SIP) and **Unlock APP** (approved) or **Delete APP** (draft) are at the right of the panel header, with the explanation of Unlock or Delete under them; the separate row of buttons is gone.
+- **APP-CSE panel:** chips show the number of plans and how many are approved; **Generate APP-CSE** has a plus icon; the table (Plan, Catalog, Status, Items, Grand total, Created) is centered except the plan name, the Items and Grand total are bold, and **Print** is a labelled navy button next to the Open icon. The list is always open.
+- **Reopen as a draft** (the strip of a planning document) and **Unlock APP** are **yellow** (solid, bold, lock-open icon) so they are easy to find; Delete APP stays red.
+
+### 30.2 Create ORS window (Budget page)
+
+- The preview of the official ORS is the template from the start: what is still missing never stops it ("Preview not ready yet" is not shown); it is drawn with what has been typed so far, blank where nothing was. Nothing is saved by a preview.
+- **Date** comes first, with the **Linked Procurement Request** beside it (Serial No. and, for the administrator, School have their own rows). The date is the date of the ORS (saved as the date of the obligation, so the Allotment Registry counts it in that quarter) and prints in the Date line.
+- **Payee / Supplier** is connected to **Supplier Management**: it suggests the active suppliers of the school's schools, and choosing one fills in its address and TIN; a payee that is not listed can be typed with its details (Payee Office, Payee Address, Payee TIN), or added in Supplier Management (link under the field). A linked PR with an awarded supplier still fills the payee from it.
+- The tick box "Include Section C" is gone: **Section C, Status of Obligation, is always part of the ORS.**
+- **Show the UACS code on the ORS** is a tick box beside Charge to Budget Line (Fund · Account Code), ticked by default; unticked, the UACS Object Code column is left empty.
+
+### 30.3 Printed ORS
+
+- The **Serial No., the Date and the Fund Cluster** values are bold and underlined.
+- The **Payee, Office and Address** lines all describe the payee: Office is the Payee Office and Address is the Payee Address (the school's name and address are not used there).
+- **Responsibility Center, Particulars, MFO/PAP, UACS Object Code and Amount** start two lines below the heading line (the Particulars a little away from the left line) and the Amount is on the same line as the first line of the Particulars. **MFO/PAP is left blank.**
+- Section C: the column **ORS/JEV/Check/ADA/TRA No.** shows the ORS number without the letters (2026-0001), and **Payable (b)** is the same amount as the **Obligation (a)**.
+
+Tests: `OrsStatusPrintTest`, `SobFlowTest`, `PlanningFlowTest`, `AppCseEntryTest`.
+
+## 31. Purchase Request from the SOB, obligation by the Purchase Order and the procurement documents (approved by the owner 2026-10-15)
+
+This refines 2 (procurement workflow), 24.5 and 30.
+
+### 31.1 Purchase Request form
+
+- A user of one school does not choose a school: the school is shown as a line (the choice stays only for a user who sees several schools).
+- The **SOB activity is the basis of the request.** The form has **Activity (from the SOB)** (required): it lists the activities of the school's approved SOBs that have an APP item with quantity left. Choosing one adds the items of that activity to the Items by themselves (name, specification, unit, unit cost and the quantity still left to request), sets the Source of Fund, and links every line to its APP item (the field "Approved APP item" is kept hidden; the checks of quantity and cost left in the APP are unchanged). Items can still be added by hand (without an APP link). The activity is saved on the request (`aip_activity_id`); the server refuses a request without one (or with one that has nothing left) when the school has such activities.
+- **Charge to Budget Line is not asked:** the Budget line is the one the approved SOB wrote for the items; with items of several lines the line with the most cost is used and only its share of the cost is checked against it. A request with no SOB-linked item is refused when the school has a Budget for the year ("Add the items from the SOB activity ...").
+
+### 31.2 Obligation by the Purchase Order
+
+- It is the **Purchase Order that obligates the budget**, not the PR. The PR page shows the state: before the PO, a note that the budget is obligated by the PO; with a PO and no ORS, **Not obligated yet** with **Create ORS**; with an ORS, **Obligated** with its number, amount and status and **View ORS**.
+- The Create ORS window lists the **Purchase Orders** (requests that have a PO and no ORS yet), each as "PO number · supplier · amount · PR number". Choosing one fills in the payee, address and TIN, the amount of the PO (its winning bid, `ProcurementRequest::obligationAmount`), the fund and the Budget line. The **Purpose / Particulars** is the Purpose of the PR (the transaction description for the project title, as printed on the PR) followed by "as per PO No." and the PO number without its letters, for example "Procurement of Office Supply for 3rd Quarter MOOE for SY 2026 as per PO No. 2026-001". An ORS without a PO (utilities, travel) is still written by hand.
+
+### 31.3 Procurement documents
+
+- **Abstract of Bids or Quotation** window: the supplier price comparison comes first, then the Signatories, then Save; the other documents also end with Signatories, Notes and Save. The price of each bidder is a small right-aligned box ("Price/unit").
+- **Notice to Proceed:** the NTP Template and the Calendar days to deliver are side by side. Its preview is drawn with a blank line for the days until they are typed (saving still needs them).
+- **Request for Quotation:** the line "you may contact the BAC Secretariat at ... or send email to ..." shows the **contact number and e-mail of the employee who holds the BAC Secretariat role** (School Settings -> Employees & roles has **Contact number** and **E-mail** for every employee), in bold and underlined; the school's contact is used when the employee has none. The Approved Budget of the Contract is split in two boxes, the amount in words and the amount in figures, level with In Words and In Figures.
+
+Tests: `PrAppLinkTest`, `SobAppTest`, `OrsStatusPrintTest`, `NtpDeliveryDaysTest`, `StaffStatusAndRolesTest`.
