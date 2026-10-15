@@ -809,7 +809,9 @@ Tests: `OrsStatusPrintTest`.
 
 ### 33.4 Less: Deductions
 
-- The Create DV window has an optional **Less: Deductions** box: Withholding Tax, Liquidated Damages, Retention, Mobilization (amounts typed by hand, saved in `liquidation_reports.dv_deductions`). Their total must be less than the amount of the DV.
-- The printed DV shows **Less:** and only the deductions that were typed, at the foot of the Particulars, before **Amount Due**; **Amount Due is the amount less the deductions**. The amount at the top of the Particulars stays whole. The journal entry still balances against the whole amount of the DV (the deductions are entered as credit lines).
+- Everything inside the Particulars (the particulars text, the Responsibility Center, the amounts, the Less lines) is printed bold.
+
+- The Create DV window has an optional **Less: Deductions** box, **below the Journal entry**: Withholding Tax, Liquidated Damages, Retention, Mobilization (amounts typed by hand, saved in `liquidation_reports.dv_deductions`), and an **Add other deduction** button for any other one, typed by name and amount (saved under `other`). At most 6 deduction lines in all (`FinanceController::DEDUCTION_MAX_LINES`); each other deduction needs a name and an amount; the total must be less than the amount of the DV. The box is emptied each time a DV is opened.
+- The printed DV shows **Less:** and only the deductions that were typed, at the foot of the Particulars, before **Amount Due** (the usual ones, then the others); **Amount Due is the amount less the deductions**. The amount at the top of the Particulars stays whole. The journal entry still balances against the whole amount of the DV (the deductions are entered as credit lines).
 
 Tests: `DvJournalEntryTest`, `OrsStatusPrintTest`, `DvAppropriationPrintTest`.
