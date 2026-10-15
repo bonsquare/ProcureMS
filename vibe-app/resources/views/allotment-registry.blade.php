@@ -60,32 +60,34 @@
         </thead>
         <tbody class="divide-y divide-outline-variant/20">
             @forelse($summary as $name => $row)
-                <tr><td class="px-3 py-2.5 font-semibold">{{ $name }}</td>@foreach($row['allotment'] as $a)<td class="px-3 py-2.5 text-center tabular-nums {{ $a ? '' : 'text-on-surface-variant/40' }}">{{ $a ? number_format($a, 2) : '–' }}</td>@endforeach<td class="px-3 py-2.5 text-center font-semibold tabular-nums">{{ number_format($row['allotment_total'], 2) }}</td><td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($row['obligation'], 2) }}</td><td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($row['disbursement'], 2) }}</td><td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($row['allotment_total'] - $row['obligation'], 2) }}</td><td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($row['obligation'] - $row['disbursement'], 2) }}</td></tr>
+                <tr data-fund-row="{{ $name }}" tabindex="0" role="button" aria-expanded="false" title="Show the items funded from the SOB" class="cursor-pointer hover:bg-surface-low/60"><td class="px-3 py-2.5 font-semibold"><span class="inline-flex items-center gap-1"><span class="material-symbols-outlined sum-chevron text-[18px] text-on-surface-variant transition-transform" aria-hidden="true">expand_more</span>{{ $name }}</span></td>@foreach($row['allotment'] as $a)<td class="px-3 py-2.5 text-center tabular-nums {{ $a ? '' : 'text-on-surface-variant/40' }}">{{ $a ? number_format($a, 2) : '–' }}</td>@endforeach<td class="px-3 py-2.5 text-center font-semibold tabular-nums">{{ number_format($row['allotment_total'], 2) }}</td><td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($row['obligation'], 2) }}</td><td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($row['disbursement'], 2) }}</td><td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($row['allotment_total'] - $row['obligation'], 2) }}</td><td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($row['obligation'] - $row['disbursement'], 2) }}</td></tr>
+                @php $fundItems = $sobRegistry->filter(fn ($r) => $r['line']->source_of_fund === $name)->values(); @endphp
+                <tr data-fund-detail="{{ $name }}" hidden>
+                    <td colspan="10" class="bg-surface-low/40 p-0">
+                        <p class="px-5 pt-3 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Items funded from the SOB · {{ $name }} · {{ $fundItems->count() }} item{{ $fundItems->count() === 1 ? '' : 's' }}</p>
+                        <div class="overflow-x-auto px-3 pb-3"><table class="w-full min-w-[900px] text-left text-sm">
+                            <thead class="text-xs uppercase tracking-wider text-on-surface-variant">
+                                <tr><th rowspan="2" class="{{ $th }} align-bottom">Program / Project</th><th rowspan="2" class="{{ $th }} align-bottom">Object of Expenditure</th><th colspan="4" class="{{ $th }} text-center">Allotment</th><th rowspan="2" class="{{ $th }} text-center align-bottom">Total Allotment</th><th rowspan="2" class="{{ $th }} text-center align-bottom">Obligated</th><th rowspan="2" class="{{ $th }} text-center align-bottom">Not Yet Obligated</th></tr>
+                                <tr><th class="{{ $th }} w-28 text-center">Q1</th><th class="{{ $th }} w-28 text-center">Q2</th><th class="{{ $th }} w-28 text-center">Q3</th><th class="{{ $th }} w-28 text-center">Q4</th></tr>
+                            </thead>
+                            <tbody class="divide-y divide-outline-variant/20 bg-white">
+                                @forelse($fundItems as $r)
+                                    @php $l = $r['line']; @endphp
+                                    <tr><td class="px-3 py-2.5">{{ $l->program ?: '—' }}@if($selectedSchoolId === null && $schools->count() > 1)<span class="block text-xs text-on-surface-variant">{{ $l->school?->name }}</span>@endif</td><td class="min-w-[16rem] px-3 py-2.5"><span class="block break-all text-sm font-semibold tabular-nums text-primary">{{ $l->uacs_code }}</span><span class="block whitespace-normal break-words">{{ $l->particulars }}</span></td>@foreach([1, 2, 3, 4] as $q)<td class="px-3 py-2.5 text-center tabular-nums {{ $l->quarterAmount($q) > 0 ? 'font-semibold text-primary' : 'text-on-surface-variant/40' }}">{{ $l->quarterAmount($q) > 0 ? number_format($l->quarterAmount($q), 2) : '–' }}</td>@endforeach<td class="px-3 py-2.5 text-center font-semibold tabular-nums">{{ number_format($r['totals']['allotment'], 2) }}</td><td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($r['totals']['obligation'], 2) }}</td><td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($r['totals']['not_obligated'], 2) }}</td></tr>
+                                @empty
+                                    <tr><td colspan="9" class="px-4 py-5 text-center text-on-surface-variant">No item funded from the SOB under this fund.</td></tr>
+                                @endforelse
+                            </tbody>
+                            @if($fundItems->isNotEmpty())
+                            <tfoot class="border-t-2 border-outline-variant/40 bg-white font-bold"><tr><td colspan="2" class="px-3 py-2.5">TOTAL</td>@foreach([1, 2, 3, 4] as $q)<td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($fundItems->sum(fn ($r) => $r['line']->quarterAmount($q)), 2) }}</td>@endforeach<td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($fundItems->sum(fn ($r) => $r['totals']['allotment']), 2) }}</td><td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($fundItems->sum(fn ($r) => $r['totals']['obligation']), 2) }}</td><td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($fundItems->sum(fn ($r) => $r['totals']['not_obligated']), 2) }}</td></tr></tfoot>
+                            @endif
+                        </table></div>
+                    </td>
+                </tr>
             @empty
                 <tr><td colspan="10" class="px-4 py-8 text-center text-on-surface-variant">No allotments for FY {{ $year }}. Approve a quarter of the SOB or add a manual allotment.</td></tr>
             @endforelse
         </tbody>
-    </table></div>
-</details>
-
-<details open class="mb-6 overflow-hidden rounded border border-outline-variant/30 bg-white">
-    <summary class="flex cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden border-b border-outline-variant/30 px-5 py-3"><h2 class="text-base font-semibold">Items funded from the SOB <span class="ml-1 text-xs font-normal text-on-surface-variant">{{ $sobRegistry->count() }} item{{ $sobRegistry->count() === 1 ? '' : 's' }}</span></h2><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] text-on-surface-variant transition-transform" aria-hidden="true">expand_more</span></summary>
-    <div class="overflow-x-auto"><table class="w-full min-w-[960px] text-left text-sm">
-        <thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant">
-            <tr><th rowspan="2" class="{{ $th }} align-bottom">Source of Fund</th><th rowspan="2" class="{{ $th }} align-bottom">Program / Project</th><th rowspan="2" class="{{ $th }} align-bottom">Object of Expenditure</th><th colspan="4" class="{{ $th }} text-center">Allotment</th><th rowspan="2" class="{{ $th }} text-center align-bottom">Total Allotment</th><th rowspan="2" class="{{ $th }} text-center align-bottom">Obligated</th><th rowspan="2" class="{{ $th }} text-center align-bottom">Not Yet Obligated</th></tr>
-            <tr><th class="{{ $th }} w-28 text-center">Q1</th><th class="{{ $th }} w-28 text-center">Q2</th><th class="{{ $th }} w-28 text-center">Q3</th><th class="{{ $th }} w-28 text-center">Q4</th></tr>
-        </thead>
-        <tbody class="divide-y divide-outline-variant/20">
-            @forelse($sobRegistry as $r)
-                @php $l = $r['line']; @endphp
-                <tr><td class="px-3 py-2.5 font-semibold">{{ $l->source_of_fund }}</td><td class="px-3 py-2.5">{{ $l->program ?: '—' }}@if($selectedSchoolId === null && $schools->count() > 1)<span class="block text-xs text-on-surface-variant">{{ $l->school?->name }}</span>@endif</td><td class="min-w-[16rem] px-3 py-2.5"><span class="block break-all text-sm font-semibold tabular-nums text-primary">{{ $l->uacs_code }}</span><span class="block whitespace-normal break-words">{{ $l->particulars }}</span></td>@foreach([1, 2, 3, 4] as $q)<td class="px-3 py-2.5 text-center tabular-nums {{ $l->quarterAmount($q) > 0 ? 'font-semibold text-primary' : 'text-on-surface-variant/40' }}">{{ $l->quarterAmount($q) > 0 ? number_format($l->quarterAmount($q), 2) : '–' }}</td>@endforeach<td class="px-3 py-2.5 text-center font-semibold tabular-nums">{{ number_format($r['totals']['allotment'], 2) }}</td><td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($r['totals']['obligation'], 2) }}</td><td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($r['totals']['not_obligated'], 2) }}</td></tr>
-            @empty
-                <tr><td colspan="10" class="px-4 py-8 text-center text-on-surface-variant">No item funded from the SOB for FY {{ $year }}. Approve a quarter of the SOB first.</td></tr>
-            @endforelse
-        </tbody>
-        @if($sobRegistry->isNotEmpty())
-        <tfoot class="border-t-2 border-outline-variant/40 bg-surface-low/60 font-bold"><tr><td colspan="3" class="px-3 py-2.5">TOTAL</td>@foreach([1, 2, 3, 4] as $q)<td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($sobRegistry->sum(fn ($r) => $r['line']->quarterAmount($q)), 2) }}</td>@endforeach<td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($sobRegistry->sum(fn ($r) => $r['totals']['allotment']), 2) }}</td><td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($sobRegistry->sum(fn ($r) => $r['totals']['obligation']), 2) }}</td><td class="px-3 py-2.5 text-center tabular-nums">{{ number_format($sobRegistry->sum(fn ($r) => $r['totals']['not_obligated']), 2) }}</td></tr></tfoot>
-        @endif
     </table></div>
 </details>
 
@@ -119,6 +121,28 @@
         let closed = [];
         window.addEventListener('beforeprint', () => { closed = Array.from(document.querySelectorAll('details:not([open])')); closed.forEach((box) => { box.open = true; }); });
         window.addEventListener('afterprint', () => { closed.forEach((box) => { box.open = false; }); closed = []; });
+    })();
+</script>
+
+<script>
+    // Click a source of fund in the summary to open its details (the items the SOB funded under it) right under it; click it again to close them.
+    (() => {
+        const rows = [...document.querySelectorAll('[data-fund-row]')];
+        const detailOf = (row) => [...document.querySelectorAll('[data-fund-detail]')].find((detail) => detail.dataset.fundDetail === row.dataset.fundRow);
+        const choose = (row) => {
+            const detail = detailOf(row);
+            if (!detail) return;
+            const opening = detail.hidden;
+            detail.hidden = !opening;
+            row.setAttribute('aria-expanded', opening ? 'true' : 'false');
+            row.querySelector('.sum-chevron').style.transform = opening ? 'rotate(180deg)' : '';
+            row.classList.toggle('bg-primary/5', opening);
+        };
+        rows.forEach((row) => {
+            row.addEventListener('click', () => choose(row));
+            row.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); choose(row); } });
+        });
+        window.addEventListener('beforeprint', () => { document.querySelectorAll('[data-fund-detail]').forEach((detail) => { detail.hidden = false; }); });
     })();
 </script>
 @endsection
