@@ -7,6 +7,7 @@ use App\Models\AppCsePlan;
 use App\Models\CseCatalogItem;
 use App\Models\School;
 use App\Models\SchoolStaff;
+use App\Models\SobPlan;
 use App\Services\AppCseService;
 use App\Support\SignatorySlots;
 use Closure;
@@ -66,6 +67,7 @@ class AppCseController extends Controller
             'query' => $query,
             'results' => $results->groupBy('category'),
             'signatoryRows' => SignatorySlots::panel('app_cse', $staff, $appCsePlan->signatories),
+            'sobHistory' => SobPlan::where('school_id', $appCsePlan->school_id)->where('fiscal_year', $appCsePlan->fiscal_year)->orderByDesc('created_at')->get(),
             'canManage' => $request->user()->hasPermission('planning.manage'),
         ]);
     }
@@ -184,6 +186,14 @@ class AppCseController extends Controller
         $this->service->approve($appCsePlan, $request->user());
 
         return back()->with('success', 'The APP-CSE for FY '.$appCsePlan->fiscal_year.' was approved and is now locked.');
+    }
+
+    public function reopen(Request $request, AppCsePlan $appCsePlan): RedirectResponse
+    {
+        $this->scoped($request, $appCsePlan);
+        $this->service->reopen($appCsePlan, $request->user());
+
+        return back()->with('success', 'The APP-CSE is a draft again. Make your changes, then approve it.');
     }
 
     /** @return array<int, int> the schools this user may work with (the same rule as the Planning page and the SOB) */

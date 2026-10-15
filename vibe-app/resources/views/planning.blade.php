@@ -10,14 +10,14 @@
     $peso = fn ($value) => '₱' . number_format((float) $value, 2);
 @endphp
 <div class="mb-4 flex flex-col justify-between gap-3 lg:flex-row lg:items-end">
-    <div>
+    <div class="min-w-0">
         <div class="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary"><span class="material-symbols-outlined text-base">account_tree</span> Integrated School Planning</div>
         <h1 class="text-2xl font-semibold leading-8 tracking-tight">Planning</h1>
-        <p class="mt-0.5 text-sm text-on-surface-variant">SIP → AIP → SOB → APP. The APP-CSE is a separate plan from the Procurement Service catalog.</p>
+        <p class="mt-0.5 text-sm text-on-surface-variant">SIP → AIP → SOB → APP → APP-CSE. The APP-CSE is the Procurement Service form for common supplies and equipment.</p>
     </div>
-    <form method="GET" action="{{ route('planning') }}" class="flex flex-wrap items-end gap-2 rounded-xl border border-outline-variant/40 bg-white p-2.5 shadow-sm">
+    <form method="GET" action="{{ route('planning') }}" class="flex shrink-0 flex-wrap items-end gap-2 rounded-xl border border-outline-variant/40 bg-white p-2.5 shadow-sm">
         <label class="text-xs font-semibold text-on-surface-variant">School
-            <select name="school_id" class="mt-1 min-w-52 rounded border border-outline-variant/50 bg-surface-low px-3 py-2 text-sm" onchange="this.form.submit()">
+            <select name="school_id" class="mt-1 min-w-44 rounded border border-outline-variant/50 bg-surface-low px-3 py-2 text-sm" onchange="this.form.submit()">
                 @foreach($schools as $school)<option value="{{ $school->id }}" @selected($selectedSchool->id === $school->id)>{{ $school->name }}</option>@endforeach
             </select>
         </label>
@@ -25,7 +25,7 @@
             <input type="number" name="year" min="2000" max="2100" value="{{ $year }}" class="mt-1 w-24 rounded border border-outline-variant/50 bg-surface-low px-3 py-2 text-sm">
         </label>
         <button class="rounded-lg border border-primary px-4 py-2 text-xs font-semibold text-primary hover:bg-primary hover:text-white">View</button>
-        @if(auth()->user()->hasPermission('planning.manage'))<button type="button" data-tab="settings" class="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-xs font-semibold text-on-surface-variant hover:bg-surface-low" title="{{ $fundSources->count() }} fund source(s) · fiscal year"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">tune</span>Settings</button>@endif
+        @if(auth()->user()->hasPermission('planning.manage'))<button type="button" data-tab="settings" class="inline-flex items-center gap-1 whitespace-nowrap rounded-lg border border-outline-variant/60 px-3 py-2 text-xs font-semibold text-on-surface-variant hover:bg-surface-low" title="{{ $fundSources->count() }} fund source(s) · fiscal year"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">tune</span>Settings</button>@endif
     </form>
 </div>
 
@@ -50,6 +50,7 @@
         $sobYear = $sobPlans->where('fiscal_year', $year);
         $sobTotal = $sobYear->sum(fn ($plan) => $plan->items->sum('amount'));
         $appTotal = $appPlan ? $appPlan->items->sum('estimated_total_cost') : 0;
+        $appCseYear = $appCsePlans->where('fiscal_year', (int) $year)->first();
 
         // state: done (green), current (amber: started, not approved yet), todo (grey)
         $steps = [
@@ -57,6 +58,7 @@
             ['aip', 'event_note', 'Annual Implementation Plan', 'AIP · FY '.$year, $aipsYear->count().' plan'.($aipsYear->count() === 1 ? '' : 's'), $aipsYear->where('status', 'approved')->count().' approved · '.$peso($aipTotal), $aipsYear->where('status', 'approved')->isNotEmpty() ? 'done' : ($aipsYear->isNotEmpty() ? 'current' : 'todo'), $aipsYear->where('status', 'approved')->isNotEmpty() ? 'Approved' : ($aipsYear->isNotEmpty() ? 'Awaiting approval' : 'Not started')],
             ['sob', 'account_balance_wallet', 'School Operating Budget', 'SOB · FY '.$year, $sobYear->count().' quarter'.($sobYear->count() === 1 ? '' : 's'), $sobYear->where('status', 'approved')->count().' approved · '.$peso($sobTotal), $sobYear->where('status', 'approved')->isNotEmpty() ? 'done' : ($sobYear->isNotEmpty() ? 'current' : 'todo'), $sobYear->where('status', 'approved')->isNotEmpty() ? 'Approved' : ($sobYear->isNotEmpty() ? 'Awaiting approval' : 'Not started')],
             ['app', 'fact_check', 'Annual Procurement Plan', 'APP · FY '.$year, ($appPlan?->items->count() ?? 0).' item'.(($appPlan?->items->count() ?? 0) === 1 ? '' : 's'), $appPlan ? $peso($appTotal) : 'Not generated yet', $appPlan?->status === 'approved' ? 'done' : ($appPlan ? 'current' : 'todo'), $appPlan?->status === 'approved' ? 'Approved' : ($appPlan ? ucfirst($appPlan->status) : 'Not started')],
+            ['app-cse', 'inventory_2', 'APP-CSE (Procurement Service form)', 'APP-CSE · FY '.$year, ($appCseYear?->items_count ?? 0).' item'.(($appCseYear?->items_count ?? 0) === 1 ? '' : 's'), $appCseYear ? 'Common supplies and equipment' : 'Not created yet', $appCseYear?->isApproved() ? 'done' : ($appCseYear ? 'current' : 'todo'), $appCseYear?->isApproved() ? 'Approved' : ($appCseYear ? 'Draft' : 'Not started')],
         ];
         $doneCount = collect($steps)->where(6, 'done')->count();
         $nextStep = collect($steps)->first(fn ($step) => $step[6] !== 'done');
@@ -64,6 +66,7 @@
             'sip' => ['Start with the SIP', "Enter the school's programs and their activities for the three-year plan."],
             'aip' => $aipsYear->isNotEmpty() ? ['Approve the AIP for FY '.$year, 'Approving it lets you start the SOB. The AIP is for reports and is not connected to the Budget.'] : ['Create the AIP for FY '.$year, 'Turn the SIP programs into the annual plan with a budget per quarter and source of fund.'],
             'sob' => $sobYear->isNotEmpty() ? ['Approve the SOB for FY '.$year, 'Each approved quarter creates its Budget allotments and feeds the Annual Procurement Plan.'] : ['Prepare the SOB for FY '.$year, 'For each quarter, pick the AIP activities that have an actual budget and add their items.'],
+            'app-cse' => $appCseYear ? ['Approve the APP-CSE for FY '.$year, 'Check the quantities for each month, then approve the Procurement Service form.'] : ['Create the APP-CSE for FY '.$year, 'Pick the Procurement Service catalog items and enter a quantity for each month. Its Part II lines come from the approved SOB.'],
             'app' => $appPlan ? ['Approve the APP for FY '.$year, 'The approved APP is the source of every Purchase Request.'] : ['Choose the APP items for FY '.$year, 'Pick the items of the approved SOBs that go into the Annual Procurement Plan.'],
         ];
         $stateStyle = [
@@ -78,7 +81,7 @@
         <div class="flex items-stretch gap-2 overflow-x-auto pb-0.5">
             <style>
                 #planning-stepper [data-overview][hidden]{display:none}
-                /* The step (or the separate plan) whose page is open is solid navy, so it cannot be mistaken for the others. */
+                /* The step whose page is open is solid navy, so it cannot be mistaken for the others. */
                 #planning-stepper [aria-pressed="true"]{background:#103967;border-color:#103967;border-style:solid;box-shadow:0 4px 12px rgba(16,57,103,.35)}
                 #planning-stepper [aria-pressed="true"] .text-primary,#planning-stepper [aria-pressed="true"] .text-on-surface-variant:not(.material-symbols-outlined),#planning-stepper [aria-pressed="true"] .text-sm{color:#fff}
                 #planning-stepper [aria-pressed="true"] .text-on-surface-variant{color:rgba(255,255,255,.78)}
@@ -89,7 +92,7 @@
                     @php
                         [$chip, $stateIcon, $edge] = $stateStyle[$state];
                         $dot = ['done' => 'bg-secondary text-white', 'current' => 'bg-amber-400 text-white', 'todo' => 'bg-surface-high text-on-surface-variant'][$state];
-                        $before = $n > 0 ? $steps[$n - 1] : null;
+                        $before = $key === 'app-cse' ? $steps[2] : ($n > 0 ? $steps[$n - 1] : null);
                         $wait = $state === 'done' ? null : (($before && $before[6] !== 'done') ? 'Waits for: '.$guidance[$before[0]][0] : 'Next: '.$guidance[$key][0]);
                     @endphp
                     <li class="min-w-[9.75rem] flex-none md:flex-1">
@@ -105,11 +108,6 @@
                     </li>
                 @endforeach
             </ol>
-            <span class="hidden w-px shrink-0 bg-outline-variant/50 md:block" aria-hidden="true"></span>
-            <button type="button" data-goto="app-cse" title="A separate plan from the Procurement Service catalog" class="flex min-w-[8.5rem] shrink-0 items-center gap-2 rounded-xl border-2 border-dashed border-outline-variant/60 bg-surface-low/60 px-3 py-2 text-left hover:border-primary hover:bg-white">
-                <span class="material-symbols-outlined text-[20px] text-on-surface-variant" aria-hidden="true">inventory_2</span>
-                <span><span class="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Separate plan</span><span class="block text-sm font-semibold">APP-CSE</span></span>
-            </button>
         </div>
     </nav>
 
@@ -123,14 +121,14 @@
                     <p class="mt-1 text-lg font-semibold tracking-tight">Next: {{ $guidance[$nextStep[0]][0] }}</p>
                     <p class="mt-0.5 text-sm text-on-surface-variant">{{ $guidance[$nextStep[0]][1] }}</p>
                 @else
-                    <p class="mt-1 text-lg font-semibold tracking-tight text-secondary">All four plans for FY {{ $year }} are approved</p>
+                    <p class="mt-1 text-lg font-semibold tracking-tight text-secondary">All five plans for FY {{ $year }} are approved</p>
                     <p class="mt-0.5 text-sm text-on-surface-variant">Raise Purchase Requests from the Annual Procurement Plan.</p>
                 @endif
             </div>
             <div class="flex items-center gap-4">
                 <div class="w-44">
-                    <div class="flex items-baseline justify-between text-xs font-semibold"><span class="text-on-surface-variant">Plan progress</span><span class="text-primary">{{ $doneCount }} of 4</span></div>
-                    <div class="mt-1.5 h-2 overflow-hidden rounded-full bg-surface-high" role="progressbar" aria-valuemin="0" aria-valuemax="4" aria-valuenow="{{ $doneCount }}"><div class="h-full rounded-full bg-gradient-to-r from-primary to-secondary transition-all" style="width: {{ $doneCount * 25 }}%"></div></div>
+                    <div class="flex items-baseline justify-between text-xs font-semibold"><span class="text-on-surface-variant">Plan progress</span><span class="text-primary">{{ $doneCount }} of {{ count($steps) }}</span></div>
+                    <div class="mt-1.5 h-2 overflow-hidden rounded-full bg-surface-high" role="progressbar" aria-valuemin="0" aria-valuemax="{{ count($steps) }}" aria-valuenow="{{ $doneCount }}"><div class="h-full rounded-full bg-gradient-to-r from-primary to-secondary transition-all" style="width: {{ round($doneCount / count($steps) * 100) }}%"></div></div>
                 </div>
                 @if($nextStep)
                     <button type="button" data-tab="{{ $nextStep[0] }}" class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-primary-container">Open {{ strtoupper($nextStep[0]) }}<span class="material-symbols-outlined text-[16px]" aria-hidden="true">arrow_forward</span></button>
@@ -380,8 +378,7 @@
                             <td class="whitespace-nowrap px-3 py-3 text-on-surface-variant">{{ $sob->created_at?->format('M d, Y') }}</td>
                             <td class="whitespace-nowrap px-5 py-3 text-right">
                                 <div class="flex items-center justify-end gap-1.5">
-                                    @if($canManageSob)<button type="button" data-edit-dialog="dlg-sob" data-action="{{ route('planning.sob.update', $sob) }}" data-payload="{{ json_encode(['quarter' => $sob->quarter, 'fund_source' => $sob->fund_source]) }}" title="Edit" aria-label="Edit the {{ \App\Models\SobPlan::QUARTERS[$sob->quarter] ?? $sob->quarter }} SOB" class="inline-flex h-8 w-8 items-center justify-center rounded border border-outline-variant/60 bg-white text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">edit</span></button>
-                                    <form method="POST" action="{{ route('planning.sob.destroy', $sob) }}" class="inline-flex" onsubmit="return confirm('{{ $sob->status === 'approved' ? 'Delete this approved SOB, its items and release its Budget allotments?' : 'Delete this draft SOB and its items?' }}')">@csrf @method('DELETE')<button title="Delete" aria-label="Delete the {{ \App\Models\SobPlan::QUARTERS[$sob->quarter] ?? $sob->quarter }} SOB" class="inline-flex h-8 w-8 items-center justify-center rounded border border-error/40 bg-white text-error hover:bg-error/10"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">delete</span></button></form>@endif
+                                    @if($canManageSob && $sob->status !== 'approved')<form method="POST" action="{{ route('planning.sob.destroy', $sob) }}" class="inline-flex" onsubmit="return confirm('Delete this draft SOB and its items?')">@csrf @method('DELETE')<button title="Delete" aria-label="Delete the {{ \App\Models\SobPlan::QUARTERS[$sob->quarter] ?? $sob->quarter }} SOB" class="inline-flex h-8 w-8 items-center justify-center rounded border border-error/40 bg-white text-error hover:bg-error/10"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">delete</span></button></form>@endif
                                     <a href="{{ route('planning.sob.show', $sob) }}" title="Open" aria-label="Open the {{ \App\Models\SobPlan::QUARTERS[$sob->quarter] ?? $sob->quarter }} SOB" class="inline-flex h-8 w-8 items-center justify-center rounded border border-primary bg-white text-primary hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">open_in_new</span></a>
                                 </div>
                             </td>
@@ -432,27 +429,9 @@
 
 <div data-panel="app" class="hidden">
 @include('partials.document-strip', ['strip' => \App\Support\DocumentStrip::app($selectedSchool, (int) $year, $appPlan)])
-<section id="app-cse" class="mb-5 rounded-xl border border-outline-variant/40 bg-white shadow-sm">
-    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 bg-gradient-to-r from-primary/5 to-transparent px-5 py-4">
-        @include('partials.planning-panel-head', ['icon' => 'inventory_2', 'title' => 'APP-CSE (Procurement Service form)', 'text' => 'The Annual Procurement Plan for Common Supplies and Equipment: the Procurement Service catalog with a quantity for each month, printed as the official form. It is a separate plan from the APP below; its Part II lines come from the approved SOB (every category).', 'chips' => []])
-        @if(auth()->user()->hasPermission('planning.manage'))
-            <form id="app-cse-create" method="POST" action="{{ route('planning.app-cse.store') }}" class="flex items-end gap-2">@csrf<input type="hidden" name="school_id" value="{{ $selectedSchool->id }}">
-                <label class="text-xs font-semibold text-on-surface-variant">Fiscal year<input type="number" name="fiscal_year" value="{{ $year }}" min="2000" max="2100" required class="mt-1 block w-24 rounded border border-outline-variant/50 bg-white px-2.5 py-2 text-sm outline-none focus:border-primary"></label>
-                <button class="rounded-lg bg-primary px-3 py-2 text-xs font-bold text-white hover:bg-primary-container">Create APP-CSE</button>
-            </form>
-        @endif
-    </div>
-    <details class="group" data-app-cse-list @if($appCsePlans->count() <= 1) open @endif>
-    <summary class="flex cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center justify-between gap-2 border-b border-outline-variant/10 px-5 py-3 text-xs font-semibold text-on-surface-variant"><span>{{ $appCsePlans->count() }} APP-CSE plan(s)</span><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] text-on-surface-variant transition-transform" aria-hidden="true">expand_more</span></summary>
-    @forelse($appCsePlans as $csePlan)
-        <a href="{{ route('planning.app-cse.show', $csePlan) }}" class="flex flex-wrap items-center justify-between gap-2 border-b border-outline-variant/10 px-5 py-3 text-sm last:border-0 hover:bg-surface-low/60"><span class="font-semibold">APP-CSE FY {{ $csePlan->fiscal_year }}</span><span class="text-xs text-on-surface-variant">{{ $csePlan->items_count }} item{{ $csePlan->items_count === 1 ? '' : 's' }} · {{ ucfirst($csePlan->status) }}</span></a>
-    @empty
-        <div class="px-5 py-6 text-center text-sm text-on-surface-variant">No APP-CSE yet for this school.</div>
-    @endforelse
-    </details>
-</section>
 <section class="rounded-xl border border-outline-variant/40 bg-white shadow-sm">
-    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 bg-gradient-to-r from-primary/5 to-transparent px-5 py-4">@include('partials.planning-panel-head', ['icon' => 'fact_check', 'title' => 'Annual Procurement Plan · FY '.$year, 'text' => 'Built from the approved SOBs. Linked PR activity is visible per transaction.', 'chips' => $appPlan ? [$appPlan->items->count().' item'.($appPlan->items->count() === 1 ? '' : 's'), ucfirst($appPlan->status), $peso($appTotal)] : ['Not generated yet']])@if(auth()->user()->hasPermission('planning.manage') && ($appCandidates->flatten(1)->isNotEmpty() || ! $appPlan))<a href="#app-picker" class="rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white">Choose SOB items for the APP</a>@endif</div>
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 bg-gradient-to-r from-primary/5 to-transparent px-5 py-4">@include('partials.planning-panel-head', ['icon' => 'fact_check', 'title' => 'Annual Procurement Plan · FY '.$year, 'text' => 'Built from the approved SOBs. Linked PR activity is visible per transaction.', 'chips' => $appPlan ? [$appPlan->items->count().' item'.($appPlan->items->count() === 1 ? '' : 's'), ucfirst($appPlan->status), $peso($appTotal)] : ['Not generated yet']])@if(auth()->user()->hasPermission('planning.manage') && ($appCandidates->flatten(1)->isNotEmpty() || ! $appPlan))<a href="#app-picker" class="rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white">Choose SOB items for the APP</a>@endif
+    </div>
     @php $appCandidateCount = $appCandidates->flatten(1)->count(); @endphp
     @if(auth()->user()->hasPermission('planning.manage') && ($appCandidateCount > 0 || ! $appPlan))
     <form id="app-picker" method="POST" action="{{ route('planning.app.generate') }}" class="border-b border-outline-variant/20 bg-surface-low/40 px-5 py-4">@csrf<input type="hidden" name="school_id" value="{{ $selectedSchool->id }}"><input type="hidden" name="fiscal_year" value="{{ $year }}">
@@ -480,8 +459,15 @@
     @endif
     @if($appPlan)
         <div class="flex flex-wrap items-center justify-between gap-3 bg-surface-low/60 px-5 py-3"><span class="text-xs">APP status: <strong>{{ ucfirst($appPlan->status) }}</strong> · {{ $appPlan->items->count() }} item(s) · Planned total <strong>{{ $peso($appPlan->items->sum('estimated_total_cost')) }}</strong></span>@if(auth()->user()->hasPermission('planning.manage') && $appPlan->status !== 'approved')<form method="POST" action="{{ route('planning.app.approve', $appPlan) }}">@csrf<button class="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-primary-container disabled:cursor-not-allowed disabled:opacity-50">Approve APP</button></form>@endif</div>
-        <div class="flex flex-wrap items-start gap-3 border-b border-outline-variant/20 px-5 py-3">
+        <div class="flex flex-wrap items-center gap-3 border-b border-outline-variant/20 px-5 py-3">
             <a href="{{ route('planning.app.print', $appPlan) }}" target="_blank" rel="noopener" class="rounded-lg border border-outline-variant/60 bg-white px-3 py-2 text-xs font-semibold text-on-surface hover:bg-surface-low">Print APP</a>
+            @if($appPlan && auth()->user()->hasPermission('planning.manage'))
+            @php $appLocked = $appPlan->status === 'approved'; $appDangerText = $appLocked ? 'Unlocking turns the approved APP back into a draft so its items can be edited or removed. You approve it again afterwards.' : 'Deleting removes this draft APP and all of its items. Choose the SOB items again to build it.'; @endphp
+            <div class="ml-auto flex flex-wrap items-center justify-end gap-3 text-right">
+                <p class="max-w-md text-[11px] leading-snug text-on-surface-variant">{{ $appDangerText }}</p>
+                <form method="POST" action="{{ $appLocked ? route('planning.app.unlock', $appPlan) : route('planning.app.destroy', $appPlan) }}" onsubmit="return confirm('{{ $appLocked ? 'Unlock this APP? It becomes a draft so its items can be edited or removed, and you approve it again afterwards.' : 'Delete this draft APP and all its items? Choose the SOB items again to build it.' }}')">@csrf @if(! $appLocked)@method('DELETE')@endif<button title="{{ $appDangerText }}" class="inline-flex items-center gap-1 rounded-full border border-error/50 bg-white px-3 py-1.5 text-xs font-bold text-error hover:bg-error/10"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">{{ $appLocked ? 'lock_open' : 'delete' }}</span>{{ $appLocked ? 'Unlock APP' : 'Delete APP' }}</button></form>
+            </div>
+            @endif
         </div>
         <div class="overflow-x-auto"><table class="w-full min-w-[700px] text-left text-xs"><thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant"><tr><th class="px-5 py-3">Procurement Item</th><th class="px-4 py-3">Fund / Mode</th><th class="px-4 py-3 text-right">Planned Amount</th><th class="px-4 py-3">Requested (PR)</th><th class="px-5 py-3">Transaction / PR Status</th><th class="px-4 py-3"></th></tr></thead><tbody class="divide-y divide-outline-variant/20">@foreach(\App\Support\AppCategories::ALL as $categoryName)@php $categoryItems = $appPlan->items->filter(fn ($line) => \App\Support\AppCategories::of($line->category) === $categoryName); $catKey = \Illuminate\Support\Str::slug($categoryName); $catOpen = $appPlan->items->count() <= 10; @endphp @if($categoryItems->isNotEmpty())<tr class="cursor-pointer bg-primary text-white hover:bg-primary-container" data-app-cat="{{ $catKey }}" aria-expanded="{{ $catOpen ? 'true' : 'false' }}" tabindex="0" role="button"><td colspan="6" class="px-5 py-3"><span class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1"><span class="flex items-center gap-3"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">flag</span><span><span class="block text-[10px] font-semibold uppercase tracking-widest text-white/70">Category</span><span class="block text-base font-semibold normal-case tracking-normal">{{ $categoryName }}</span></span></span><span class="flex items-center gap-2 text-xs font-normal normal-case tracking-normal text-white/80 max-sm:basis-full max-sm:pl-9">{{ $categoryItems->count() }} item(s) · {{ $peso($categoryItems->sum('estimated_total_cost')) }}<span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] text-on-surface-variant transition-transform" aria-hidden="true">expand_more</span></span></span></td></tr>@foreach($categoryItems as $item)@php $transaction = $item->sobItem?->plan?->transaction ?? $item->ppmpItem?->plan?->transaction; $linkedPrs = $transaction?->procurementRequests ?? collect(); @endphp<tr data-app-cat-row="{{ $catKey }}" @if(! $catOpen) hidden @endif><td class="px-5 py-3"><span class="font-semibold">{{ $item->procurement_item }}</span><div class="mt-1 text-on-surface-variant">{{ $item->specifications ?: '—' }}</div></td><td class="px-4 py-3">{{ $item->fund_source ?: '—' }}<div class="mt-1 text-on-surface-variant">{{ $item->procurement_mode ?: 'Mode not set' }}</div></td><td class="px-4 py-3 text-right font-semibold">{{ $peso($item->estimated_total_cost) }}</td>@php $activeLines = $item->requestItems->filter(fn ($line) => $line->procurementRequest && ! in_array($line->procurementRequest->status, ['returned', 'rejected'])); @endphp<td class="px-4 py-3">{{ rtrim(rtrim(number_format((float) $activeLines->sum('quantity'), 2), '0'), '.') ?: '0' }} of {{ rtrim(rtrim(number_format((float) $item->quantity, 2), '0'), '.') }} {{ $item->unit }}<div class="mt-1 text-on-surface-variant">@forelse($activeLines->pluck('procurementRequest')->unique('id') as $linkedPr)<a class="font-semibold text-primary underline" href="{{ route('procurement.print', $linkedPr) }}">{{ $linkedPr->request_number }}</a>@if(! $loop->last), @endif @empty No PR yet @endforelse</div></td><td class="px-5 py-3">@if($transaction)<a class="font-semibold text-primary underline" href="{{ route('transactions.show', $transaction) }}">{{ $transaction->transaction_number }}</a><div class="mt-1 text-on-surface-variant">{{ $linkedPrs->count() }} linked PR(s) · {{ str($transaction->status)->replace('_', ' ')->title() }}</div>@else<span class="text-on-surface-variant">No transaction link</span>@endif</td>
                 <td class="whitespace-nowrap px-4 py-3 text-right">@if(auth()->user()->hasPermission('planning.manage'))
@@ -503,53 +489,119 @@
         });
     </script>
     @else<div class="px-5 py-8 text-center text-sm text-on-surface-variant">No APP yet for FY {{ $year }}. Approve an SOB, then choose its items for the APP.</div>@endif
-    @if($appPlan && auth()->user()->hasPermission('planning.manage'))
-    <details class="mx-5 mb-5 mt-4 rounded-lg border border-error/30 bg-error/5">
-        <summary class="flex cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center gap-2 px-4 py-3 text-xs font-bold uppercase tracking-wider text-error"><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] transition-transform" aria-hidden="true">expand_more</span>Danger zone</summary>
-        <div class="flex flex-wrap items-center justify-between gap-3 border-t border-error/20 px-4 py-3">
-            @if($appPlan->status === 'approved')
-                <p class="text-xs text-on-surface-variant">Unlocking turns the approved APP back into a draft so its items can be edited or removed. You approve it again afterwards.</p>
-                <form method="POST" action="{{ route('planning.app.unlock', $appPlan) }}" onsubmit="return confirm('Unlock this APP? It becomes a draft so its items can be edited or removed, and you approve it again afterwards.')">@csrf<button class="rounded-lg border border-error/50 bg-white px-4 py-2 text-xs font-semibold text-error hover:bg-error/10">Unlock APP</button></form>
-            @else
-                <p class="text-xs text-on-surface-variant">Deleting removes this draft APP and all of its items. Choose the SOB items again to build it.</p>
-                <form method="POST" action="{{ route('planning.app.destroy', $appPlan) }}" onsubmit="return confirm('Delete this draft APP and all its items? Choose the SOB items again to build it.')">@csrf @method('DELETE')<button class="rounded-lg border border-error/50 bg-white px-4 py-2 text-xs font-semibold text-error hover:bg-error/10">Delete APP</button></form>
-            @endif
-        </div>
-    </details>
-    @endif
 
 </section>
 
-{{-- Signatories of the APP: at the very bottom of the APP panel, after the APP-CSE (Procurement Service form). --}}
+{{-- Signatories of the APP: at the very bottom of the APP panel, at the very end of the APP panel. --}}
 @if($appPlan && auth()->user()->hasPermission('planning.manage'))
 <section class="mt-5 rounded-xl border border-outline-variant/40 bg-white p-5 shadow-sm">
     <h2 class="text-base font-semibold">APP signatories</h2>
     <form method="POST" action="{{ route('planning.app.signatories', $appPlan) }}" class="mt-3">@csrf @method('PUT')
         @php $appSlots = \App\Support\PlanningSignatories::slots([['prepared_by', 'Prepared by', 'Prepared by', null, null, null, null], ['recommended_by', 'Recommending Approval', 'Recommending Approval', null, null, null, null], ['approved_by', 'Approved by', 'Approved by', null, null, null, null]], $appPlan, \App\Support\PlanningSignatories::lastUsed($appPlan->school_id, ['prepared_by', 'recommended_by', 'approved_by'])); @endphp
-        @include('partials.signatory-editor', ['slots' => $appSlots, 'editable' => true, 'document' => 'APP', 'saveLabel' => 'Save signatories'])
+        @include('partials.signatory-editor', ['slots' => $appSlots, 'editable' => true, 'document' => 'APP', 'saveLabel' => 'Save signatories', 'horizontal' => true])
     </form>
 </section>
 @endif
+</div>
+
+<div data-panel="app-cse" class="hidden">
+<section id="app-cse" class="mb-5 rounded-xl border border-outline-variant/40 bg-white shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 bg-gradient-to-r from-primary/5 to-transparent px-5 py-4">
+        <div class="flex min-w-0 items-center gap-3">
+            <button type="button" title="Show or hide the APP-CSE plans" aria-label="Show or hide the APP-CSE plans" onclick="var list = document.querySelector('[data-app-cse-list]'); list.open = ! list.open; this.querySelector('span').style.transform = list.open ? 'rotate(180deg)' : '';" class="inline-flex h-8 w-8 shrink-0 items-center justify-center text-on-surface-variant"><span class="material-symbols-outlined text-[20px] transition-transform" @if($appCsePlans->count() <= 1) style="transform: rotate(180deg)" @endif aria-hidden="true">expand_more</span></button>
+        @include('partials.planning-panel-head', ['icon' => 'inventory_2', 'title' => 'APP-CSE (Procurement Service form)', 'text' => 'The Annual Procurement Plan for Common Supplies and Equipment: the Procurement Service catalog with a quantity for each month, printed as the official form. It is a separate plan from the APP below; its Part II lines come from the approved SOB (every category).', 'chips' => []])
+        </div>
+        @if(auth()->user()->hasPermission('planning.manage'))
+            <form id="app-cse-create" method="POST" action="{{ route('planning.app-cse.store') }}" class="flex items-end gap-2">@csrf<input type="hidden" name="school_id" value="{{ $selectedSchool->id }}">
+                <label class="text-xs font-semibold text-on-surface-variant">Fiscal year<input type="number" name="fiscal_year" value="{{ $year }}" min="2000" max="2100" required class="mt-1 block w-24 rounded border border-outline-variant/50 bg-white px-2.5 py-2 text-sm outline-none focus:border-primary"></label>
+                <button class="rounded-lg bg-primary px-3 py-2 text-xs font-bold text-white hover:bg-primary-container">Generate APP-CSE</button>
+            </form>
+        @endif
+    </div>
+    <details class="group" data-app-cse-list @if($appCsePlans->count() <= 1) open @endif>
+    <summary class="hidden">APP-CSE plans</summary>
+    @if($appCsePlans->isEmpty())
+        <div class="px-5 py-6 text-center text-sm text-on-surface-variant">No APP-CSE yet for this school.</div>
+    @else
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant"><tr><th class="px-5 py-3 font-semibold">Plan</th><th class="px-3 py-3 font-semibold">Catalog</th><th class="px-3 py-3 font-semibold">Status</th><th class="px-3 py-3 text-right font-semibold">Items</th><th class="px-3 py-3 text-right font-semibold">Grand total</th><th class="px-3 py-3 font-semibold">Created</th><th class="px-5 py-3"></th></tr></thead>
+                <tbody class="divide-y divide-outline-variant/20">
+                    @foreach($appCsePlans as $csePlan)
+                        <tr class="hover:bg-surface-low/60">
+                            <td class="px-5 py-3 font-semibold"><a href="{{ route('planning.app-cse.show', $csePlan) }}" class="hover:underline">APP-CSE FY {{ $csePlan->fiscal_year }}</a></td>
+                            <td class="px-3 py-3 text-on-surface-variant">PS {{ $csePlan->catalog_year }}</td>
+                            <td class="px-3 py-3"><span class="rounded-full px-2 py-0.5 text-[10px] font-bold {{ $csePlan->isApproved() ? 'bg-secondary/10 text-secondary' : 'bg-amber-100 text-amber-800' }}">{{ $csePlan->isApproved() ? 'Approved' : 'Draft' }}</span></td>
+                            <td class="px-3 py-3 text-right tabular-nums">{{ $csePlan->items_count }}</td>
+                            <td class="px-3 py-3 text-right font-semibold tabular-nums">{{ $peso(app(\App\Services\AppCseService::class)->totals($csePlan)['d']) }}</td>
+                            <td class="whitespace-nowrap px-3 py-3 text-on-surface-variant">{{ $csePlan->created_at?->format('M d, Y') }}</td>
+                            <td class="whitespace-nowrap px-5 py-3 text-right">
+                                <div class="flex items-center justify-end gap-1.5">
+                                    <a href="{{ route('planning.app-cse.print', $csePlan) }}" target="_blank" rel="noopener" title="Print" aria-label="Print the APP-CSE for FY {{ $csePlan->fiscal_year }}" class="inline-flex h-8 w-8 items-center justify-center rounded border border-outline-variant/60 bg-white text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">print</span></a>
+                                    <a href="{{ route('planning.app-cse.show', $csePlan) }}" title="Open" aria-label="Open the APP-CSE for FY {{ $csePlan->fiscal_year }}" class="inline-flex h-8 w-8 items-center justify-center rounded border border-primary bg-white text-primary hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">open_in_new</span></a>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
+    </details>
+</section>
 </div>
 
 @if(auth()->user()->hasPermission('planning.manage'))
 <div data-panel="settings" class="hidden">
 <section class="rounded-xl border border-outline-variant/40 bg-white shadow-sm">
 <div class="border-b border-outline-variant/20 bg-gradient-to-r from-primary/5 to-transparent px-5 py-4">@include('partials.planning-panel-head', ['icon' => 'tune', 'title' => 'Settings', 'text' => 'Fund sources and fiscal-year controls for this organization.', 'chips' => [$fundSources->count().' fund source'.($fundSources->count() === 1 ? '' : 's')]])</div>
-    <div class="p-5">
-        <div class="mb-4"><h2 class="font-semibold">Fund Sources & Fiscal Year</h2><p class="mt-1 text-xs text-on-surface-variant">These controls belong to {{ $selectedSchool->organization?->name ?? 'this organization' }}.</p></div>
-        <form method="POST" action="{{ route('planning.funds.store') }}" class="mb-5 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">@csrf<input type="hidden" name="school_id" value="{{ $selectedSchool->id }}">
-            <label class="text-xs font-semibold">Code<input name="code" required maxlength="50" placeholder="e.g. MOOE" class="{{ $inputClass }}"></label>
-            <label class="text-xs font-semibold">Fund Name<input name="name" required maxlength="255" placeholder="Maintenance and Other Operating Expenses" class="{{ $inputClass }}"></label>
-            <button class="self-end rounded border border-primary px-4 py-2.5 text-xs font-semibold text-primary">Save Fund</button>
-        </form>
-        <div class="mb-5 flex flex-wrap gap-2">@forelse($fundSources as $fund)<span class="rounded bg-surface-low px-3 py-1.5 text-xs {{ $fund->is_active ? '' : 'opacity-50 line-through' }}">{{ $fund->code }} · {{ $fund->name }}</span>@empty<span class="text-xs text-on-surface-variant">No fund sources configured.</span>@endforelse</div>
-        <form method="POST" action="{{ route('planning.fiscal-year.status') }}" class="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">@csrf<input type="hidden" name="school_id" value="{{ $selectedSchool->id }}">
-            <label class="text-xs font-semibold">Year<input type="number" name="year" required value="{{ $year }}" min="2000" max="2100" class="{{ $inputClass }}"></label>
-            <label class="text-xs font-semibold">Status<select name="status" class="{{ $inputClass }}"><option value="open">Open</option><option value="closed">Closed</option></select></label>
-            <button class="self-end rounded border border-primary px-4 py-2.5 text-xs font-semibold text-primary">Update</button>
-        </form>
-        <div class="mt-3 flex flex-wrap gap-2">@foreach($fiscalYears as $fiscalYear)<span class="rounded px-2.5 py-1 text-[11px] {{ $fiscalYear->isOpen() ? 'bg-secondary/10 text-secondary' : 'bg-error/10 text-error' }}">FY {{ $fiscalYear->year }} · {{ ucfirst($fiscalYear->status) }}</span>@endforeach</div>
+    <div class="grid gap-4 p-5 lg:grid-cols-2">
+        <div class="rounded-xl border border-outline-variant/40 bg-white shadow-sm">
+            <div class="flex items-start gap-3 border-b border-outline-variant/20 bg-surface-low/60 px-4 py-3">
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">payments</span></span>
+                <div><h2 class="font-semibold">Fund sources</h2><p class="text-xs text-on-surface-variant">The funds offered as "Source of fund" in the AIP and the SOB. Belongs to {{ $selectedSchool->organization?->name ?? 'this organization' }}.</p></div>
+            </div>
+            <div class="space-y-4 p-4">
+                <form method="POST" action="{{ route('planning.funds.store') }}" class="grid gap-3 sm:grid-cols-[1fr_2fr_auto]">@csrf<input type="hidden" name="school_id" value="{{ $selectedSchool->id }}">
+                    <label class="text-xs font-semibold">Code<input name="code" required maxlength="50" placeholder="e.g. MOOE" class="{{ $inputClass }}"></label>
+                    <label class="text-xs font-semibold">Fund Name<input name="name" required maxlength="255" placeholder="Maintenance and Other Operating Expenses" class="{{ $inputClass }}"></label>
+                    <button class="self-end rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Save Fund</button>
+                </form>
+                <div class="overflow-hidden rounded-lg border border-outline-variant/30">
+                    <p class="border-b border-outline-variant/30 bg-surface-low px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">{{ $fundSources->count() }} fund source{{ $fundSources->count() === 1 ? '' : 's' }}</p>
+                    @forelse($fundSources as $fund)
+                        <div class="flex items-center gap-3 border-b border-outline-variant/15 px-3 py-2.5 text-sm last:border-0 {{ $fund->is_active ? '' : 'opacity-50' }}">
+                            <span class="w-20 shrink-0 rounded bg-primary/10 px-2 py-1 text-center text-xs font-bold text-primary">{{ $fund->code }}</span>
+                            <span class="min-w-0 flex-1 {{ $fund->is_active ? '' : 'line-through' }}">{{ $fund->name }}</span>
+                            <span class="rounded-full px-2 py-0.5 text-[10px] font-bold {{ $fund->is_active ? 'bg-secondary/10 text-secondary' : 'bg-surface-high text-on-surface-variant' }}">{{ $fund->is_active ? 'Active' : 'Inactive' }}</span>
+                        </div>
+                    @empty
+                        <p class="px-3 py-5 text-center text-xs text-on-surface-variant">No fund sources configured.</p>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+        <div class="rounded-xl border border-outline-variant/40 bg-white shadow-sm">
+            <div class="flex items-start gap-3 border-b border-outline-variant/20 bg-surface-low/60 px-4 py-3">
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">event_available</span></span>
+                <div><h2 class="font-semibold">Fiscal year</h2><p class="text-xs text-on-surface-variant">A closed year is locked: its AIP, SOB and APP can no longer be changed. Reopen it to make a correction.</p></div>
+            </div>
+            <div class="space-y-4 p-4">
+                <form method="POST" action="{{ route('planning.fiscal-year.status') }}" class="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">@csrf<input type="hidden" name="school_id" value="{{ $selectedSchool->id }}">
+                    <label class="text-xs font-semibold">Year<input type="number" name="year" required value="{{ $year }}" min="2000" max="2100" class="{{ $inputClass }}"></label>
+                    <label class="text-xs font-semibold">Status<select name="status" class="{{ $inputClass }}"><option value="open">Open</option><option value="closed">Closed</option></select></label>
+                    <button class="self-end rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Update</button>
+                </form>
+                <div class="overflow-hidden rounded-lg border border-outline-variant/30">
+                    <p class="border-b border-outline-variant/30 bg-surface-low px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Fiscal years</p>
+                    @forelse($fiscalYears as $fiscalYear)
+                        <div class="flex items-center justify-between gap-3 border-b border-outline-variant/15 px-3 py-2.5 text-sm last:border-0"><span class="font-semibold">FY {{ $fiscalYear->year }}</span><span class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold {{ $fiscalYear->isOpen() ? 'bg-secondary/10 text-secondary' : 'bg-error/10 text-error' }}"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">{{ $fiscalYear->isOpen() ? 'lock_open' : 'lock' }}</span>{{ ucfirst($fiscalYear->status) }}</span></div>
+                    @empty
+                        <p class="px-3 py-5 text-center text-xs text-on-surface-variant">No fiscal year set yet.</p>
+                    @endforelse
+                </div>
+            </div>
+        </div>
     </div>
 </section>
 </div>
@@ -579,7 +631,6 @@
             tab.classList.toggle('ring-primary/30', on);
             tab.setAttribute('aria-pressed', on ? 'true' : 'false');
         });
-        document.querySelector('[data-goto="app-cse"]')?.setAttribute('aria-pressed', 'false');
         hint.classList.toggle('hidden', Boolean(name));
         document.getElementById('planning-glance')?.classList.toggle('hidden', Boolean(name));
         document.querySelector('[data-overview]')?.toggleAttribute('hidden', ! name);
@@ -588,7 +639,6 @@
     }
     tabs.forEach((tab) => tab.addEventListener('click', () => show(tab.classList.contains('ring-2') ? '' : tab.dataset.tab)));
     document.querySelector('[data-overview]')?.addEventListener('click', () => show(''));
-    document.querySelector('[data-goto="app-cse"]')?.addEventListener('click', (event) => { show('app'); event.currentTarget.setAttribute('aria-pressed', 'true'); document.getElementById('app-cse')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
     document.querySelectorAll('[data-toggle-form]').forEach((button) => {
         button.dataset.label = button.textContent;
         button.addEventListener('click', () => {

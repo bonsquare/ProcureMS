@@ -15,7 +15,7 @@
     $grandTotal = collect($grouped)->sum('total');
 @endphp
 <div class="mb-5">
-    <a href="{{ route('planning', ['school_id' => $plan->school_id, 'year' => $plan->fiscal_year]) }}#sob" class="text-xs font-semibold text-primary hover:underline">&larr; Back to Planning</a>
+    @include('partials.planning-jump', ['schoolId' => $plan->school_id, 'year' => $plan->fiscal_year, 'backTo' => 'sob'])
     <div class="mt-2 flex flex-wrap items-center justify-between gap-3">
         <div>
             <h1 class="text-[28px] font-semibold leading-9 tracking-tight">School Operating Budget · {{ $plan->quarterLabel() }}</h1>
@@ -92,7 +92,7 @@
 <details open class="group mb-5 overflow-hidden rounded-lg border border-outline-variant/40 bg-white">
     <summary class="flex cursor-pointer list-none [&::-webkit-details-marker]:hidden flex-wrap items-center justify-between gap-x-3 gap-y-1 bg-primary px-5 py-3 text-white">
         <span class="flex items-center gap-3"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">flag</span>
-            <span><span class="block text-[10px] font-semibold uppercase tracking-widest text-white/70">Pillar / Enabling Mechanism</span><h2 class="text-base font-semibold">{{ $pillar['pillar'] ?: 'Other' }}</h2></span></span>
+            <span><span class="block text-[10px] font-semibold uppercase tracking-widest text-white/70">Pillar</span><h2 class="text-base font-semibold">{{ $pillar['pillar'] ?: 'Other' }}</h2></span></span>
         <span class="flex items-center gap-2 text-xs text-white/80 max-sm:basis-full max-sm:pl-9">Sub-Total <strong class="text-white">{{ $peso($pillar['total']) }}</strong><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] transition-transform" aria-hidden="true">expand_more</span></span>
     </summary>
     @foreach($pillar['programs'] as $program)

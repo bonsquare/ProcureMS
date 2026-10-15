@@ -9,7 +9,7 @@
     $box = 'mt-1 w-full rounded border border-outline-variant/50 bg-white px-2.5 py-2 text-sm outline-none focus:border-primary';
 @endphp
 <div class="mb-5">
-    <a href="{{ route('planning', ['school_id' => $school->id]) }}#sip" class="text-xs font-semibold text-primary hover:underline">&larr; Back to Planning</a>
+    @include('partials.planning-jump', ['schoolId' => $school->id, 'backTo' => 'sip'])
     <h1 class="mt-2 text-[28px] font-semibold leading-9 tracking-tight">Import SIP from Excel</h1>
     <p class="mt-1 text-sm text-on-surface-variant">{{ $school->name }} · SIP {{ $state['plan']['planning_period'] ?? '' }}. Check what was read, correct anything that is wrong, then confirm. Nothing is saved until you confirm.</p>
 </div>

@@ -333,6 +333,19 @@ class AipController extends Controller
         return back()->with('success', 'KRA and its activities removed.');
     }
 
+    public function destroyActivity(Aip $aip, AipActivity $activity)
+    {
+        $this->authorizeManage();
+        $this->authorizeAip($aip);
+        abort_unless($activity->aip_id === $aip->id, 404);
+        $this->fiscalYears->assertOpen((int) $aip->organization_id, (int) $aip->fiscal_year);
+        $this->refuseWhenAnSobUses([$activity->id]);
+        $activity->delete();
+        $this->markRevised($aip);
+
+        return back()->with('success', 'Activity removed.');
+    }
+
     /** An approved SOB (and the APP and Purchase Requests built on it) must not lose lines because an AIP activity was removed. */
     private function refuseWhenAnSobUses(array $activityIds): void
     {

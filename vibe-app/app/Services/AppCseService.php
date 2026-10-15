@@ -239,6 +239,23 @@ class AppCseService
         return $plan->fresh();
     }
 
+    /** An approved APP-CSE goes back to a draft so its details and items can be changed; it is approved again afterwards. */
+    public function reopen(AppCsePlan $plan, User $user): AppCsePlan
+    {
+        if (! $plan->isApproved()) {
+            $this->fail('Only an approved APP-CSE can be reopened.');
+        }
+        $this->fiscalYears->assertOpen((int) $plan->organization_id, (int) $plan->fiscal_year);
+
+        return DB::transaction(function () use ($plan, $user) {
+            $plan->update(['status' => 'draft', 'approved_at' => null]);
+            $this->audit($plan, 'app_cse_reopened');
+            $this->event($plan, $user, 'reopened', 'approved', 'draft');
+
+            return $plan->fresh();
+        });
+    }
+
     public function approve(AppCsePlan $plan, User $user): AppCsePlan
     {
         $this->requireDraft($plan);

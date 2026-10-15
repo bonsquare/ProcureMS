@@ -10,7 +10,7 @@
             <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Makes the official form</p>
             <p class="mt-1 flex items-center gap-1.5 text-sm font-semibold"><span class="material-symbols-outlined text-[18px] text-primary" aria-hidden="true">description</span>{{ $strip['generates'] }}</p>
             @if(! empty($reopenUrl))
-                <form method="POST" action="{{ $reopenUrl }}" class="mt-2" onsubmit="return confirm('Reopen this SOB as a draft? The budget lines keep their amounts until you approve it again.')">@csrf<button class="rounded border border-primary px-4 py-2 text-xs font-bold text-primary hover:bg-primary hover:text-white">Reopen as a draft</button></form>
+                <form method="POST" action="{{ $reopenUrl }}" class="mt-2" onsubmit="return confirm({{ \Illuminate\Support\Js::from($reopenConfirm ?? 'Reopen this SOB as a draft? The budget lines keep their amounts until you approve it again.') }})">@csrf<button class="rounded border border-primary px-4 py-2 text-xs font-bold text-primary hover:bg-primary hover:text-white">Reopen as a draft</button></form>
             @endif
         </div>
         <div>
@@ -31,14 +31,28 @@
         </div>
     </div>
 
-    <details class="border-t border-outline-variant/20" data-strip-review>
-        <summary class="flex cursor-pointer flex-wrap items-center justify-between gap-2 px-4 py-3 text-xs font-semibold">
-            <span class="inline-flex items-center gap-1.5 text-primary"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">fact_check</span>Review before generating</span>
-            <span class="{{ $strip['missingRequired'] ? 'text-error' : 'text-secondary' }}">{{ $strip['ready'] }} of {{ count($strip['checks']) }} ready @if($strip['missingRequired']) · {{ $strip['missingRequired'] }} required missing @endif</span>
-        </summary>
-        <ul class="divide-y divide-outline-variant/15 border-t border-outline-variant/15">
+    {{-- Review and History open in a card window, so the page stays short. --}}
+    <div class="grid gap-3 border-t border-outline-variant/20 bg-surface-low/40 p-4 sm:grid-cols-2">
+        <button type="button" data-strip-review onclick="document.getElementById('{{ $stripId }}-review').showModal()" class="flex cursor-pointer items-center gap-3 rounded-xl border border-outline-variant/40 bg-white px-4 py-3 text-left shadow-sm transition hover:border-primary hover:shadow-md">
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><span class="material-symbols-outlined text-[22px]" aria-hidden="true">fact_check</span></span>
+            <span class="min-w-0 flex-1"><span class="block text-sm font-semibold text-primary">Review before generating</span><span class="block text-xs {{ $strip['missingRequired'] ? 'text-error' : 'text-secondary' }}">{{ $strip['ready'] }} of {{ count($strip['checks']) }} ready @if($strip['missingRequired']) · {{ $strip['missingRequired'] }} required missing @endif</span></span>
+            <span class="material-symbols-outlined shrink-0 text-[20px] text-on-surface-variant" aria-hidden="true">open_in_new</span>
+        </button>
+        <button type="button" data-strip-history onclick="document.getElementById('{{ $stripId }}-history').showModal()" class="flex cursor-pointer items-center gap-3 rounded-xl border border-outline-variant/40 bg-white px-4 py-3 text-left shadow-sm transition hover:border-primary hover:shadow-md">
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><span class="material-symbols-outlined text-[22px]" aria-hidden="true">history</span></span>
+            <span class="min-w-0 flex-1"><span class="block text-sm font-semibold text-primary">History</span><span class="block text-xs text-on-surface-variant">{{ $strip['events']->count() }} recorded event{{ $strip['events']->count() === 1 ? '' : 's' }}</span></span>
+            <span class="material-symbols-outlined shrink-0 text-[20px] text-on-surface-variant" aria-hidden="true">open_in_new</span>
+        </button>
+    </div>
+
+    <dialog id="{{ $stripId }}-review" data-native onclick="if (event.target === this) this.close()" class="w-[min(94vw,36rem)] rounded-2xl border border-outline-variant/60 p-0 shadow-2xl backdrop:bg-slate-900/40">
+        <div class="flex items-center justify-between gap-3 border-b border-outline-variant/30 bg-gradient-to-r from-primary/5 to-transparent px-5 py-4">
+            <div class="flex items-center gap-3"><span class="flex h-9 w-9 items-center justify-center rounded-lg bg-surface-low text-primary"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">fact_check</span></span><div><h3 class="text-base font-semibold">Review before generating</h3><p class="text-xs {{ $strip['missingRequired'] ? 'text-error' : 'text-secondary' }}">{{ $strip['ready'] }} of {{ count($strip['checks']) }} ready @if($strip['missingRequired']) · {{ $strip['missingRequired'] }} required missing @endif</p></div></div>
+            <form method="dialog"><button aria-label="Close" class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-low"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">close</span></button></form>
+        </div>
+        <ul class="max-h-[65vh] divide-y divide-outline-variant/15 overflow-y-auto">
             @foreach($strip['checks'] as $check)
-                <li class="flex items-start gap-2.5 px-4 py-2.5 text-sm">
+                <li class="flex items-start gap-2.5 px-5 py-3 text-sm">
                     @if($check['ok'])
                         <span class="material-symbols-outlined mt-0.5 text-[18px] text-secondary" aria-label="Ready">check_circle</span>
                     @else
@@ -48,23 +62,26 @@
                 </li>
             @endforeach
         </ul>
-    </details>
+    </dialog>
 
-    <details class="border-t border-outline-variant/20" data-strip-history>
-        <summary class="flex cursor-pointer items-center justify-between gap-2 px-4 py-3 text-xs font-semibold">
-            <span class="inline-flex items-center gap-1.5 text-primary"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">history</span>History</span>
-            <span class="text-on-surface-variant">{{ $strip['events']->count() }} recorded event{{ $strip['events']->count() === 1 ? '' : 's' }}</span>
-        </summary>
-        @forelse($strip['events'] as $event)
-            <div class="flex gap-3 border-t border-outline-variant/15 px-4 py-2.5 text-sm">
-                <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" aria-hidden="true"></span>
-                <div class="min-w-0 flex-1">
-                    <p class="flex flex-wrap items-baseline justify-between gap-x-3"><span class="font-semibold">{{ $event['what'] }}@if($event['change'])<span class="ml-2 text-xs font-normal text-on-surface-variant">{{ $event['change'] }}</span>@endif</span><span class="text-xs text-on-surface-variant">{{ $event['when'] }} · {{ $event['who'] }}</span></p>
-                    @if($event['remarks'])<p class="text-xs text-on-surface-variant">{{ $event['remarks'] }}</p>@endif
+    <dialog id="{{ $stripId }}-history" data-native onclick="if (event.target === this) this.close()" class="w-[min(94vw,36rem)] rounded-2xl border border-outline-variant/60 p-0 shadow-2xl backdrop:bg-slate-900/40">
+        <div class="flex items-center justify-between gap-3 border-b border-outline-variant/30 bg-gradient-to-r from-primary/5 to-transparent px-5 py-4">
+            <div class="flex items-center gap-3"><span class="flex h-9 w-9 items-center justify-center rounded-lg bg-surface-low text-primary"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">history</span></span><div><h3 class="text-base font-semibold">History</h3><p class="text-xs text-on-surface-variant">{{ $strip['events']->count() }} recorded event{{ $strip['events']->count() === 1 ? '' : 's' }}</p></div></div>
+            <form method="dialog"><button aria-label="Close" class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-low"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">close</span></button></form>
+        </div>
+        <div class="max-h-[65vh] overflow-y-auto">
+            @forelse($strip['events'] as $event)
+                <div class="flex gap-3 border-b border-outline-variant/15 px-5 py-3 text-sm last:border-0">
+                    <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" aria-hidden="true"></span>
+                    <div class="min-w-0 flex-1">
+                        <p class="font-semibold">{{ $event['what'] }}@if($event['change'])<span class="ml-2 text-xs font-normal text-on-surface-variant">{{ $event['change'] }}</span>@endif</p>
+                        <p class="text-xs text-on-surface-variant">{{ $event['when'] }} · {{ $event['who'] }}</p>
+                        @if($event['remarks'])<p class="mt-0.5 text-xs text-on-surface-variant">{{ $event['remarks'] }}</p>@endif
+                    </div>
                 </div>
-            </div>
-        @empty
-            <p class="border-t border-outline-variant/15 px-4 py-3 text-xs text-on-surface-variant">Nothing recorded yet.</p>
-        @endforelse
-    </details>
+            @empty
+                <p class="px-5 py-6 text-center text-sm text-on-surface-variant">Nothing recorded yet.</p>
+            @endforelse
+        </div>
+    </dialog>
 </section>

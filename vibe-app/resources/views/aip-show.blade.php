@@ -15,7 +15,7 @@
 @endphp
 <div class="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
     <div>
-        <a href="{{ route('planning', ['school_id' => $aip->school_id, 'year' => $aip->fiscal_year]) }}#aip" class="text-xs font-semibold text-primary hover:underline">&larr; Back to Planning</a>
+        @include('partials.planning-jump', ['schoolId' => $aip->school_id, 'year' => $aip->fiscal_year, 'backTo' => 'aip'])
         <h1 class="text-[28px] font-semibold leading-9 tracking-tight">Annual Implementation Plan · FY {{ $aip->fiscal_year }}</h1>
         <p class="mt-1 text-[15px] leading-6 text-on-surface-variant">{{ $aip->school?->name }} ·
             <span class="rounded-full px-2 py-0.5 text-xs font-semibold {{ $aip->status === 'approved' ? 'bg-secondary/10 text-secondary' : 'bg-amber-100 text-amber-800' }}">{{ \Illuminate\Support\Str::headline($aip->status) }}</span>
@@ -110,7 +110,7 @@
                         </div>
                         @if($canManage)
                             <div class="flex shrink-0 items-center gap-1">
-                                <a href="{{ route('aip.kras.edit', [$aip, $kra]) }}" class="mr-1 flex items-center gap-1 rounded bg-secondary px-3 py-2 text-xs font-semibold text-white hover:opacity-90"><span class="material-symbols-outlined text-[16px]">edit</span>Edit KRA &amp; Activities</a>
+                                <a href="{{ route('aip.kras.edit', [$aip, $kra]) }}" class="mr-1 flex items-center gap-1 rounded bg-secondary px-3 py-2 text-xs font-semibold text-white hover:opacity-90"><span class="material-symbols-outlined text-[16px]">edit</span>Edit KRA</a>
                                 <form method="POST" action="{{ route('aip.kras.destroy', [$aip, $kra]) }}" class="inline" onsubmit="return confirm('Remove this KRA and all of its activities?')">@csrf @method('DELETE')<button title="Delete KRA" aria-label="Delete KRA" class="{{ $icon }} text-error"><span class="material-symbols-outlined text-[20px]">delete</span></button></form>
                             </div>
                         @endif
@@ -125,6 +125,12 @@
                                         <p class="font-semibold">{{ $a->activity }}</p>
                                         <p class="mt-1 flex flex-wrap gap-2 text-xs text-on-surface-variant"><span class="rounded bg-surface-container px-2 py-0.5">Target: {{ $a->physical_target }}</span>@if($a->timeline)<span class="rounded bg-surface-container px-2 py-0.5">{{ $a->timeline }}</span>@endif</p>
                                     </div>
+                                    @if($canManage)
+                                        <div class="flex shrink-0 items-center gap-1">
+                                            <a href="{{ route('aip.kras.edit', [$aip, $kra]) }}#activity-{{ $loop->index }}" class="flex items-center gap-1 rounded bg-secondary px-3 py-2 text-xs font-semibold text-white hover:opacity-90"><span class="material-symbols-outlined text-[16px]">edit</span>Edit</a>
+                                            <form method="POST" action="{{ route('aip.activities.destroy', [$aip, $a]) }}" class="inline" onsubmit="return confirm('Remove this activity?')">@csrf @method('DELETE')<button title="Delete activity" aria-label="Delete activity" class="{{ $icon }} text-error"><span class="material-symbols-outlined text-[20px]">delete</span></button></form>
+                                        </div>
+                                    @endif
                                 </div>
 
                                 <div class="grid grid-cols-1 gap-4 p-4 lg:grid-cols-5">

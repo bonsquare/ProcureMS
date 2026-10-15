@@ -293,7 +293,7 @@ class SobRevisionTest extends TestCase
         $this->assertStringContainsString('History of SOB created', $html);
         $this->assertStringContainsString(route('planning.sob.show', $first), $html);
         $this->assertStringContainsString(route('planning.sob.show', $second), $html);
-        $this->assertStringContainsString('data-action="'.route('planning.sob.update', $first).'"', $html, 'a row has its own Edit');
+        $this->assertStringNotContainsString('data-action="'.route('planning.sob.update', $first).'"', $html, 'a row only has Open (no Edit or Delete icons)');
         $this->put(route('planning.sob.update', $first), ['fund_source' => 'SEF', 'quarter' => 3])->assertSessionHasNoErrors();
         $this->assertSame([3, 'SEF'], [$first->fresh()->quarter, $first->fresh()->fund_source]);
     }

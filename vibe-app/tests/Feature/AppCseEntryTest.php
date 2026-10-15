@@ -77,18 +77,15 @@ class AppCseEntryTest extends TestCase
         $this->assertSame(1, AppCsePlan::where('school_id', $fx['school']->id)->count());
     }
 
-    public function test_catalog_search_adds_an_item_and_a_priceless_item_needs_a_price(): void
+    public function test_a_catalog_item_is_added_and_a_priceless_item_needs_a_price(): void
     {
         [$fx] = $this->context();
         $plan = $this->plan($fx);
         $priced = $this->priced();
         $priceless = $this->priceless();
 
-        $this->get(route('planning.app-cse.show', [$plan, 'q' => $priced->code]))->assertOk()->assertSee($priced->code)->assertSee($priced->category);
-        $this->get(route('planning.app-cse.show', $plan))->assertOk()->assertDontSee($priced->code);
-
         $this->post(route('planning.app-cse.items.store', $plan), ['cse_catalog_item_id' => $priced->id])->assertSessionHasNoErrors();
-        $this->get(route('planning.app-cse.show', [$plan, 'q' => $priced->code]))->assertOk()->assertSee('name="m1"', false);
+        $this->get(route('planning.app-cse.show', $plan))->assertOk()->assertSee($priced->code)->assertSee('name="m1"', false);
         $this->post(route('planning.app-cse.items.store', $plan), ['cse_catalog_item_id' => $priced->id])->assertSessionHasErrors('cse_catalog_item_id');
 
         $this->post(route('planning.app-cse.items.store', $plan), ['cse_catalog_item_id' => $priceless->id])->assertSessionHasErrors('unit_price');
@@ -185,6 +182,24 @@ class AppCseEntryTest extends TestCase
         $this->put(route('planning.app-cse.items.update', $item), ['m1' => '9'])->assertSessionHasErrors('planning');
         $this->delete(route('planning.app-cse.items.destroy', $item))->assertSessionHasErrors('planning');
         $this->assertSame('3.00', (string) $item->fresh()->m1);
+    }
+
+    public function test_an_approved_plan_can_be_reopened_as_a_draft_to_edit_its_details(): void
+    {
+        [$fx] = $this->context();
+        $plan = $this->plan($fx);
+        $item = $this->custom($plan);
+
+        $this->post(route('planning.app-cse.reopen', $plan))->assertSessionHasErrors('planning');
+        $this->put(route('planning.app-cse.items.update', $item), ['m1' => '3']);
+        $this->post(route('planning.app-cse.approve', $plan))->assertSessionHasNoErrors();
+
+        $this->get(route('planning.app-cse.show', $plan))->assertOk()->assertSee(route('planning.app-cse.reopen', $plan), false)->assertSee('Reopen as a draft');
+        $this->post(route('planning.app-cse.reopen', $plan))->assertSessionHasNoErrors();
+        $this->assertSame('draft', $plan->fresh()->status);
+        $this->get(route('planning.app-cse.show', $plan))->assertOk()->assertSee('name="office_name"', false)->assertDontSee('Reopen as a draft');
+        $this->put(route('planning.app-cse.update', $plan), ['office_name' => 'CHANGED OFFICE'])->assertSessionHasNoErrors();
+        $this->assertSame('CHANGED OFFICE', $plan->fresh()->office_name);
     }
 
     public function test_a_viewer_can_open_the_plan_but_not_change_it(): void

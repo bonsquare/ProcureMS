@@ -7,7 +7,7 @@
     $knownFund = in_array($fund, $fundOptions, true);
     $name = fn ($key) => "activities[{$i}][{$key}]";
 @endphp
-<div data-activity class="rounded-lg border border-outline-variant/40 bg-white shadow-sm">
+<div data-activity id="activity-{{ $i }}" class="rounded-lg border border-outline-variant/40 bg-white shadow-sm">
     <div class="flex items-center justify-between border-b border-outline-variant/30 bg-surface-low/60 px-4 py-2.5">
         <p class="text-xs font-semibold uppercase tracking-widest text-on-surface-variant">Activity <span data-number></span></p>
         <button type="button" data-remove-activity class="flex items-center gap-1 rounded px-2 py-1 text-xs font-semibold text-error hover:bg-error/10"><span class="material-symbols-outlined text-[16px]">delete</span>Remove</button>
