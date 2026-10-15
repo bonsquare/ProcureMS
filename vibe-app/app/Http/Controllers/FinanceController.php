@@ -196,11 +196,20 @@ class FinanceController extends Controller
         $others = collect($request->input('deductions_other', []))
             ->map(fn ($row) => ['label' => trim((string) ($row['label'] ?? '')), 'amount' => round((float) ($row['amount'] ?? 0), 2)])
             ->filter(fn ($row) => $row['amount'] > 0 || $row['label'] !== '')->values();
+        if ($preview) {
+            // The preview is drawn while the form is still being typed: a half-typed deduction is left out.
+            $others = $others->reject(fn ($row) => $row['label'] === '' || $row['amount'] <= 0)->values();
+        }
         if ($others->contains(fn ($row) => $row['label'] === '' || $row['amount'] <= 0)) {
             throw ValidationException::withMessages(['deductions' => 'Give each other deduction a name and an amount.']);
         }
         if ($deductions->sum() + $others->sum('amount') >= (float) $liquidationReport->amount) {
-            throw ValidationException::withMessages(['deductions' => 'The deductions must be less than the amount of the DV.']);
+            if ($preview) {
+                $deductions = collect();
+                $others = collect();
+            } else {
+                throw ValidationException::withMessages(['deductions' => 'The deductions must be less than the amount of the DV.']);
+            }
         }
         $stored = $deductions->all() + ($others->isEmpty() ? [] : ['other' => $others->all()]);
         $data['dv_deductions'] = $stored === [] ? null : $stored;

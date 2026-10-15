@@ -187,6 +187,7 @@ class DvJournalEntryTest extends TestCase
             'journal' => [['account_code' => $c['expense'], 'debit' => '10000'], ['account_code' => $c['cash'], 'credit' => '10000']]];
 
         $this->actingAs($master)->post(route('accounting.dv.store', $report), $form + ['deductions_other' => [['label' => '', 'amount' => '100']]])->assertSessionHasErrors('deductions');
+        $this->post(route('accounting.dv.preview', $report), $form + ['deductions_other' => [['label' => 'Half typed', 'amount' => '']]])->assertOk()->assertSee('Disbursement', false)->assertDontSee('Give each other deduction');
         $this->post(route('accounting.dv.store', $report), $form + ['deductions_other' => array_fill(0, 3, ['label' => 'Penalty', 'amount' => '10'])])->assertSessionHasErrors('deductions_other');
         $this->assertNull($report->fresh()->dv_number);
 
