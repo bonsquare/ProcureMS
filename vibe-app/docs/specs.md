@@ -772,3 +772,44 @@ This refines 2 (procurement workflow), 24.5 and 30.
 - **Request for Quotation:** the line "you may contact the BAC Secretariat at ... or send email to ..." shows the **contact number and e-mail of the employee who holds the BAC Secretariat role** (School Settings -> Employees & roles has **Contact number** and **E-mail** for every employee), in bold and underlined; the school's contact is used when the employee has none. The Approved Budget of the Contract is split in two boxes, the amount in words and the amount in figures, level with In Words and In Figures.
 
 Tests: `PrAppLinkTest`, `SobAppTest`, `OrsStatusPrintTest`, `NtpDeliveryDaysTest`, `StaffStatusAndRolesTest`.
+
+## 32. ORS: date of the Purchase Order and the final look of the printed form (approved by the owner 2026-10-15)
+
+This refines 30.3 and 31.2. The printed ORS is `resources/views/ors-print.blade.php`.
+
+### 32.1 Date
+
+- The **date of the ORS is the date of its Purchase Order.** In the Create ORS window, choosing a Purchase Order sets the Date to the date of the PO and locks it (a small note says "The date of the Purchase Order."); with no PO the date is typed. The server does the same whatever the form sends: an ORS made from a PO takes the PO's date as its date (and as the date of the obligation), also in the preview.
+
+### 32.2 Printed ORS
+
+- **Font:** one font for the whole form, **Times New Roman** (labels, headings, data and signatures); the Particulars are 11.4px, the amounts 10.6px like the rest of the form.
+- **Title block:** the three lines (OBLIGATION REQUEST AND STATUS, DEPARTMENT OF EDUCATION, the Schools Division Office) are evenly spaced.
+- **Serial No., Date and Fund Cluster:** the three names are the same size (12) and right-aligned on their colons; the three values start on the same line, are the same size (12.5, smaller only when a value is too long), bold and underlined.
+- **Section C:** the headings **Reference**, **Amount** and **Balance** are bold, the same size (11.6) and centered over their columns.
+
+Tests: `OrsStatusPrintTest`.
+
+## 33. Accounting by the school and the printed Disbursement Voucher (approved by the owner 2026-10-15)
+
+### 33.1 Who processes
+
+- Accounting and Cash are **permission-based, not master-only**: a user with `accounting.approve` can review the ORS (Approve, Pending, Return) and create the DV; a user with `cash.pay` records the payment. A school administrator has both, so a school can process its own ORS to payment. Users without the permission see no buttons. The status chips on the Accounting page do not wrap.
+
+### 33.2 Printed DV (`resources/views/dv-print.blade.php`)
+
+- **Payee and Address:** bold, left aligned, centered vertically in their cells; a long text takes a smaller size and a second line instead of being cut. The TIN is bold under its label.
+- **C. Certified, D. Approved for Payment, E. Receipt of Payment:** the headings are centered vertically in their rows and left aligned. The Check/ADA number is bold and centered in its cell; the date of payment is bold on the same middle line.
+- **Signature blocks:** Signature, Printed Name, Position and Date rows have enough height; each label and each value is centered in its row; "Printed Name" is one line.
+
+### 33.3 Accounting Entry (journal)
+
+- Up to **4 lines** are bold and spread evenly in the table of the form (credit titles are indented a little).
+- **5 to 20 lines** are accepted (`FinanceController::JOURNAL_MAX_LINES`, validated on save; "The DV has room for 20 accounting entry lines."). From 5 lines the rows are smaller and closer, the table grows and everything under it (C, D, E, signatures, the optional Appropriation table and the side borders) moves down, with the column lines following. Beyond 10 lines the **Particulars box gives up part of its height** (at most 54, less when deductions are printed) so the form still fits the page; the rows then get smaller, to size 5.5 at the least. Total debit equals total credit equals the amount of the DV, as before.
+
+### 33.4 Less: Deductions
+
+- The Create DV window has an optional **Less: Deductions** box: Withholding Tax, Liquidated Damages, Retention, Mobilization (amounts typed by hand, saved in `liquidation_reports.dv_deductions`). Their total must be less than the amount of the DV.
+- The printed DV shows **Less:** and only the deductions that were typed, at the foot of the Particulars, before **Amount Due**; **Amount Due is the amount less the deductions**. The amount at the top of the Particulars stays whole. The journal entry still balances against the whole amount of the DV (the deductions are entered as credit lines).
+
+Tests: `DvJournalEntryTest`, `OrsStatusPrintTest`, `DvAppropriationPrintTest`.
