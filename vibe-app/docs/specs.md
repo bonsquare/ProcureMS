@@ -841,11 +841,14 @@ Tests: `LoginIdentifierTest`, `TurnstileTest`.
 
 ## 37. Cancelled checks (approved by the owner 2026-10-16)
 
-A paid check can be cancelled and the payment made again with a corrected ORS, DV and journal entry.
+A paid check can be cancelled and the payment made again after the ORS, DV and journal entry are corrected. The ORS goes through the usual steps again.
 
-- **Cancel (Cash > Paid tab, permission `cash.pay`):** the **Cancel Check** button asks for a reason and the signed-in user's own password. The check (check no., DV, ORS, mode, date paid, amount, reason, who and when) is saved in the **Cancelled Checks** register; the ORS loses its payment, goes back to For Review and is marked `reissue_pending`. The Allotment Registry follows by itself (it reads the payment from the ORS).
-- **Edit (Accounting, permission `accounting.approve`):** while `reissue_pending`, **Edit ORS / DV** changes the amount, purpose, payee, particulars, date, mode, deductions and journal entry (same checks as creating the DV: chart accounts, balanced, equal to the amount). Every save needs a reason and the user's own password; the old and new amount go to the audit log. An ORS that was not cancelled cannot be edited this way.
-- **Pay again:** approve the ORS again; it returns to Cash > DVs For Payment. Recording the new payment clears `reissue_pending` and locks the records as before.
+- **Cancel (Cash > Paid tab, permission `cash.pay`):** the **Cancel Check** button asks for a reason and the signed-in user's own password. The check (check no., DV, ORS, mode, date paid, amount, reason, who and when) is saved in the **Cancelled Checks** register. The ORS loses its payment, goes back to **For Review** and is marked `reissue_pending`; its DV and journal entry are removed (the old journal and deductions are kept in the audit log, the old DV number in the register). The Allotment Registry follows by itself (it reads the payment from the ORS).
+- **Edit ORS (Accounting > For Review, permission `accounting.approve`):** only for an ORS whose check was cancelled and that is not approved yet. It changes the amount, supplier (payee) and particulars; a reason and the user's own password are needed; the old and new values go to the audit log. Then the ORS is approved again.
+- **Ready for DV:** the DV and its journal entry are made again. The cancelled DV number is offered again, and the signatories chosen at the start are kept (the picker is not asked again).
+- **Edit DV (Accounting > With DV, permission `accounting.approve`):** on any DV that is not paid yet. It changes date, mode, payee, particulars, journal entry and deductions (same checks as creating the DV: chart accounts, balanced, equal to the ORS amount). A reason and the user's own password are needed on every save; the old values go to the audit log. A paid DV cannot be edited: cancel the check first.
+- **Pay again:** the ORS returns to Cash > DVs For Payment. Recording the new payment clears `reissue_pending` and locks the records as before.
+- **Rows of Accounting and Cash** show the supplier name in bold on top, then the ORS number and the PR, then the particulars. An ORS whose check was cancelled shows no Journal entry list and no Signatories button.
 - **Cancelled Checks tab (Cash):** read-only list, newest first, with the search box.
 
 Tests: `CancelledCheckTest`.
