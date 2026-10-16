@@ -10,6 +10,7 @@ use App\Models\Subscription;
 use App\Models\User;
 use App\Services\SchoolTakeoverService;
 use App\Support\PlaceNames;
+use App\Support\Turnstile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +31,7 @@ class AuthController extends Controller
 
     public function store(Request $request)
     {
+        Turnstile::verify($request);
         $credentials = $request->validate([
             'email' => ['required', 'string', 'max:255'],
             'password' => ['required', 'string'],
@@ -77,6 +79,7 @@ class AuthController extends Controller
 
     public function storeRegistration(Request $request)
     {
+        Turnstile::verify($request, 'name');
         if ($request->input('registration_type') === 'takeover') {
             return $this->storeTakeover($request);
         }

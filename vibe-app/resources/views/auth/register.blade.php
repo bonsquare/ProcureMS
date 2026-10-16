@@ -100,6 +100,8 @@
                 <label class="mt-3 flex items-start gap-2 text-sm font-semibold text-on-surface"><input type="checkbox" name="privacy_accepted" id="privacy-accepted" value="1" required @checked(old('privacy_accepted')) class="mt-0.5 h-4 w-4 shrink-0 rounded border-outline-variant"><span>I have read and accept the Privacy Policy, and I agree that my information may be collected and saved in the database.</span></label>
             </section>
 
+            <div class="md:col-span-2">@include('auth.partials-turnstile', ['action' => 'register'])</div>
+
             <div class="reg-actions flex flex-col-reverse gap-3 md:col-span-2 sm:flex-row sm:items-center sm:justify-between">
                 <a href="{{ route('login') }}" class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-outline-variant px-4 py-2.5 text-sm font-semibold text-primary hover:bg-surface-container"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_back</span>Back to login</a>
                 <button id="register-button" type="submit" class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-primary/25 hover:bg-primary-container"><span class="button-label">Submit pre-registration</span><span class="button-spinner hidden h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden="true"></span></button>
