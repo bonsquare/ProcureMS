@@ -19,7 +19,7 @@
         .masthead .line { font-size: 10px; font-weight: bold; text-transform: uppercase; }
         .masthead .school { font-size: 12px; font-weight: bold; text-transform: uppercase; margin-top: 2px; }
 
-        .school-id { margin-top: 3px; padding-bottom: 4px; border-bottom: 2px solid #111; font-size: 11px; text-align: center; }
+        .school-id { margin-top: 3px; padding-bottom: 4px; border-bottom: 2px solid #111; font-size: 12px; font-weight: bold; text-align: center; }
         .doc-title { text-align: center; margin: 10px 0 8px; line-height: 1.5; }
         .doc-title h1 { margin: 0; font-size: 13px; letter-spacing: .4px; }
         .doc-title p { margin: 2px 0; font-size: 10.5px; font-weight: bold; }
@@ -37,7 +37,7 @@
         tr.pillar-governance td { background: #548235; color: #fff; }
         tr.sub td { font-weight: bold; }
         tr.grand td { font-weight: bold; background: #92d050; }
-        tr.grand-total td { font-weight: bold; }
+        tr.grand-total td { font-weight: bold; background: #92d050; }
         tr.program-row td { font-weight: bold; }
         td.account { padding-left: 16px; }
         .masthead .line.district { font-weight: normal; text-transform: none; }
@@ -45,11 +45,11 @@
         .summary caption { text-align: left; font-weight: bold; padding-bottom: 3px; }
 
         .signatures { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 28px; margin-top: 22px; font-size: 10.5px; }
-        .signatures .name { margin-top: 30px; text-align: center; font-weight: bold; text-transform: uppercase; }
+        .signatures .name { margin-top: 30px; text-align: center; font-weight: bold; text-decoration: underline; text-transform: uppercase; }
         .signatures .position { text-align: center; }
 
         @media print {
-            thead th, tr.pillar-row td, tr.grand td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            thead th, tr.pillar-row td, tr.grand td, tr.grand-total td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             tr { break-inside: avoid; }
             thead { display: table-header-group; }
             .signatures, .summary { break-inside: avoid; }
@@ -121,7 +121,7 @@
                         @php $groupRows = $group['items']->count() + ($group['extras']->isNotEmpty() ? 1 : 0); @endphp
                         @foreach($group['items'] as $index => $item)
                             <tr>
-                                @if($index === 0)<td class="account" rowspan="{{ $groupRows }}"><div>{{ $group['account']?->title }}</div>@if($group['note'])<div>{{ $group['note'] }}</div>@endif</td>@endif
+                                @if($index === 0)<td class="account" rowspan="{{ $groupRows }}"><div>{{ $group['account']?->title }}</div>@if($group['note'])<div style="margin-top:1.3em">{{ $group['note'] }}</div>@endif</td>@endif
                                 <td>{{ $item->particulars }}</td>
                                 <td class="center">{{ $number($item->frequency) }}</td>
                                 <td class="center">{{ $number($item->quantity) }}</td>

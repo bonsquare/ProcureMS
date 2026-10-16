@@ -222,7 +222,7 @@ class SobItemGroupTest extends TestCase
 
         $this->assertSame(1, preg_match_all('/<td class="account"[^>]*><div>Electricity Expenses<\/div><\/td>/', $html), 'the account title is written once for its particulars');
         $this->assertMatchesRegularExpression('/<tr class="program-row"><td colspan="7">Program One<\/td><\/tr>/', $html, 'the program is its own bold row, as in the workbook');
-        $this->assertMatchesRegularExpression('/<td class="account" rowspan="\d+"><div>[^<]+<\/div><div>POW required<\/div><\/td>/', $html, 'the account title first, then the note under it');
+        $this->assertMatchesRegularExpression('/<td class="account" rowspan="\d+"><div>[^<]+<\/div><div[^>]*>POW required<\/div><\/td>/', $html, 'the account title first, then the note under it');
         $this->assertMatchesRegularExpression('/<td class="account" rowspan="\d+"><div>Electricity Expenses<\/div><\/td>/', $html);
         $this->assertStringContainsString('35% Labor', $html);
         $this->assertSame(2, substr_count($html, 'class="sub item-sub"'), 'only the Item that has other lines has a Sub-Total of its particulars and a Sub-Total with its other lines (the labor)');
