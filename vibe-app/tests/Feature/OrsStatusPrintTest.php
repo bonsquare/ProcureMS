@@ -208,7 +208,7 @@ class OrsStatusPrintTest extends TestCase
 
         $html = $this->get(route('liquidation.print', LiquidationReport::firstOrFail()))->assertOk()->getContent();
 
-        $this->assertMatchesRegularExpression('/class="ors-status" x="211"[^>]*>2026-0123<\/text>/', $html, 'ORS/JEV/Check/ADA/TRA No. shows the number only');
+        $this->assertMatchesRegularExpression('/class="ors-status" x="214.7"[^>]*>2026-0123<\/text>/', $html, 'ORS/JEV/Check/ADA/TRA No. shows the number only');
         $this->assertMatchesRegularExpression('/class="ors-status" x="293"[^>]*>1,000.00<\/text>/', $html, 'Obligation (a)');
         $this->assertMatchesRegularExpression('/class="ors-status" x="366"[^>]*>1,000.00<\/text>/', $html, 'Payable (b) is the same amount as the Obligation');
     }
@@ -277,9 +277,39 @@ class OrsStatusPrintTest extends TestCase
         $this->actingAs($user)->post(route('liquidation.store'), $this->payload($school))->assertSessionHasNoErrors();
         $html = $this->get(route('liquidation.print', LiquidationReport::firstOrFail()))->assertOk()->getContent();
 
-        $this->assertStringContainsString('class="ors-status" x="56" y="801" width="99"', $html);
-        $this->assertMatchesRegularExpression('/x="34\.2" y="810\.3"[^>]*>'.preg_quote(now()->format('M d,'), '/').'<\/text>/', $html);
-        $this->assertMatchesRegularExpression('/x="34\.2" y="821\.8"[^>]*>'.now()->format('Y').'<\/text>/', $html);
-        $this->assertSame(4, substr_count($html, 'y="816.8"'));
+        $this->assertStringContainsString('class="ors-status" x="84.7" y="801" width="87.3"', $html);
+        $this->assertMatchesRegularExpression('/x="49\.2" y="810\.3"[^>]*>'.preg_quote(now()->format('M d, Y'), '/').'<\/text>/', $html);
+        $this->assertSame(5, substr_count($html, 'y="810.3"'), 'the date and the four values share one top line');
+        $this->assertMatchesRegularExpression('/x="84.7" y="801" width="87.3" height="80.5"><div[^>]*font:bold 9\.5px/', $html);
+        foreach (['x="49\.2" y="810\.3"', 'x="214\.7" y="810\.3"', 'x="293" y="810\.3"'] as $position) {
+            $this->assertMatchesRegularExpression('/'.$position.'[^>]*font-weight="bold">/', $html);
+        }
+    }
+
+    public function test_the_signature_blocks_have_aligned_colons_and_the_date_of_the_ors(): void
+    {
+        [$school, $user] = $this->tenant();
+        $this->actingAs($user)->post(route('liquidation.store'), $this->payload($school))->assertSessionHasNoErrors();
+        $html = $this->get(route('liquidation.print', LiquidationReport::firstOrFail()))->assertOk()->getContent();
+
+        foreach ([602.08, 623.82, 641.93, 667.29] as $y) {
+            $this->assertStringContainsString('x="84.5" y="'.$y.'"', $html);
+            $this->assertStringContainsString('x="384.5" y="'.$y.'"', $html);
+        }
+        $date = preg_quote(now()->format('F d, Y'), '/');
+        $this->assertMatchesRegularExpression('/x="199\.3" y="667\.29" text-anchor="middle"[^>]*>'.$date.'<\/text>/', $html);
+        $this->assertMatchesRegularExpression('/x="492\.4" y="667\.29" text-anchor="middle"[^>]*>'.$date.'<\/text>/', $html);
+    }
+
+    public function test_the_certified_paragraphs_of_a_and_b_sit_a_little_higher(): void
+    {
+        [$school, $user] = $this->tenant();
+        $this->actingAs($user)->post(route('liquidation.store'), $this->payload($school))->assertSessionHasNoErrors();
+        $html = $this->get(route('liquidation.print', LiquidationReport::firstOrFail()))->assertOk()->getContent();
+
+        $this->assertSame(4, substr_count($html, 'y="518.28"'), 'Certified: and the first line of A and of B');
+        $this->assertSame(2, substr_count($html, 'y="532.05"'));
+        $this->assertSame(2, substr_count($html, 'y="545.09"'));
+        $this->assertStringNotContainsString('y="525.28"', $html);
     }
 }
