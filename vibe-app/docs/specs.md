@@ -843,6 +843,7 @@ Tests: `DvJournalEntryTest`, `OrsStatusPrintTest`, `DvAppropriationPrintTest`.
 - The row of an ORS with a DV has no journal entry list and no Signatories button: the journal entry is set in Create DV and shown by the documents, and the signatories are chosen when the DV is made. The Edit and Print icons of the Budget list sit side by side in one line at the right.
 - Each row starts with the supplier name in bold, with a storefront icon before it; under it, the document numbers as badges of their own colors: **ORS** (violet), **PR** (blue) and **PO** (amber; the number of the Purchase Order of the PR, shown only when the PR has one); then the particulars.
 - A DV number is shown as it is (it already starts with "DV-"), never as "DV DV-..."; a number typed without the letters gets "DV " in front of it. This holds in the rows, the Edit DV and Cancel Check windows, the Cancelled Checks register, the Stage column of the Budget page, the messages of Accounting and the references of the Allotment Registry; all of them use `LiquidationReport::dvLabel()`.
+- Status / DV column of Accounting (an ORS with a DV): the status badge, then the DV number on one line, the full date of the DV on its own line below it (never wrapped), then a sky-blue badge **Cash for Disbursement**.
 - Tests: `FinanceRowBadgesTest`.
 
 ## 34. APP-CSE: a disclosure for each category (approved by the owner 2026-10-15)

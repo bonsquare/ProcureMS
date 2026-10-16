@@ -110,7 +110,9 @@
                     @else
                         <span class="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-{{ $tone }}/10 px-2.5 py-1 text-xs font-bold text-{{ $tone }}"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">{{ $statusIcons[$r->status] ?? 'info' }}</span>{{ \Illuminate\Support\Str::headline($r->status) }}</span>
                         @if($r->dv_number)
-                            <div class="mt-1.5 text-xs font-bold text-secondary">{{ $dvLabel($r->dv_number) }}<span class="ml-1 font-normal text-on-surface-variant">· {{ $r->dv_date?->format('M d, Y') }}</span></div>
+                            <div class="mt-1.5 whitespace-nowrap text-xs font-bold text-secondary">{{ $dvLabel($r->dv_number) }}</div>
+                            <div class="whitespace-nowrap text-xs text-on-surface-variant">{{ $r->dv_date?->format('M d, Y') }}</div>
+                            <span class="mt-1.5 inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-sky-100 px-2.5 py-1 text-xs font-bold text-sky-800"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">account_balance_wallet</span>Cash for Disbursement</span>
                         @endif
                         @if($r->accounting_remarks)<div class="mt-1.5 max-w-[240px] rounded-lg border-l-2 border-amber-500 bg-amber-50 px-2 py-1 text-[11px] text-amber-900">{{ $r->accounting_remarks }}</div>@endif
                     @endif
