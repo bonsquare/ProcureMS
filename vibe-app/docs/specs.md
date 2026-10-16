@@ -828,3 +828,13 @@ Tests: `AppCse*` (the page still renders with its categories).
 - It is **off until both keys are set**: `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` (environment, read in `config/services.php`; listed in `.env.example`). With either one empty the forms show no widget and behave as before. The keys come from the owner's Cloudflare dashboard (Turnstile widget, with the live domain, and `localhost` to try it locally); they are never kept in the repository.
 
 Tests: `TurnstileTest`, `LoginIdentifierTest`.
+
+## 36. The sign-in page (approved by the owner 2026-10-16)
+
+`resources/views/auth/login.blade.php` is a two-part page:
+
+- **Brand panel (large screens only):** a navy gradient with the ProcureMS emblem and name, the line "One workspace, from the plan to the payment.", and four cards for the flow: **Plan** (SIP, AIP, SOB and APP), **Procure** (PR, RFQ, abstract, PO and delivery), **Account** (ORS, DV and journal entry), **Pay and liquidate** (cash payment and liquidation report). The panel carries no figures or promises that the system does not keep.
+- **Sign-in card:** "Welcome back", then email or username, password (with show/hide), the Cloudflare Turnstile check when it is on (section 35), Remember me, the Sign in button (with its "Signing in" spinner), a "New here" divider and the **Pre-register school** button. On a phone the panel is hidden and the emblem and name sit above the card.
+- Nothing about how sign-in works changed: the field names, the error messages, the Turnstile check, the link to pre-registration and the demo notes (local and demo copies only) are as before.
+
+Tests: `LoginIdentifierTest`, `TurnstileTest`.
