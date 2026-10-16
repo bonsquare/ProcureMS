@@ -17,6 +17,8 @@
     $navigation[]=['icon'=>'settings','label'=>'School Settings','route'=>'school-settings'];
     $sub = [['Budget','account_balance','budget','budget'],['Accounting','request_quote','accounting','accounting'],['Chart of Accounts','list_alt','chart-of-accounts','chart-of-accounts'],['Allotment Registry','menu_book','allotment-registry','allotment-registry'],['Cash','payments','cash','cash']];
     $peso = fn ($v) => '₱' . number_format((float) $v, 2);
+    // DV numbers already start with "DV-": show them as they are, never "DV DV-...".
+    $dvLabel = fn ($number) => preg_match('/^DV\b/i', (string) $number) ? $number : 'DV ' . $number;
     $tabs = $isCash
         ? ['unpaid' => 'DVs For Payment', 'paid' => 'Paid', 'cancelled' => 'Cancelled Checks']
         : ['for_review' => 'For Review', 'pending_documents' => 'Pending Documents', 'returned' => 'Returned', 'for_dv' => 'Ready for DV', 'with_dv' => 'With DV', 'all' => 'All'];
@@ -64,7 +66,7 @@
         @forelse($cancelledChecks as $c)
             <tr data-row class="align-top hover:bg-surface-low/60">
                 <td class="px-5 py-4 font-bold text-primary">{{ $c->check_number ?: '—' }}</td>
-                <td class="px-5 py-4 text-[13px]"><div class="font-semibold">DV {{ $c->dv_number }}</div><div class="text-xs text-on-surface-variant">{{ $c->ors_number }}</div></td>
+                <td class="px-5 py-4 text-[13px]"><div class="font-semibold">{{ $dvLabel($c->dv_number) }}</div><div class="text-xs text-on-surface-variant">{{ $c->ors_number }}</div></td>
                 <td class="px-5 py-4 text-[13px]">{{ $c->payment_mode }}</td>
                 <td class="px-5 py-4 text-[13px]">{{ $c->paid_at?->format('M d, Y') }}</td>
                 <td class="px-5 py-4 text-right text-[15px] font-bold tabular-nums">{{ $peso($c->amount) }}</td>
@@ -83,11 +85,12 @@
                 $tone = $tones[$r->status] ?? 'primary'; $label = $r->ors_number ?: $r->report_number;
                 $accent = $isCash ? ($r->paid_at ? 'border-l-secondary' : 'border-l-error') : ($r->dv_number ? 'border-l-primary' : ($accents[$r->status] ?? 'border-l-outline-variant'));
                 $payee = $r->payee ?: ($r->procurementRequest?->supplier_name ?? $r->school?->name);
+                $poNumber = $r->procurementRequest?->documents?->firstWhere('document_type', 'purchase_order')?->document_number;
             @endphp
             <tr data-row class="align-top border-l-4 {{ $accent }} hover:bg-surface-low/60">
                 <td class="px-5 py-4">
-                    <div class="font-bold text-primary">{{ $payee }}</div>
-                    <div class="mt-1 flex flex-wrap items-center gap-2"><span class="text-xs font-semibold text-on-surface">{{ $label }}</span>@if($r->procurementRequest)<span class="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">PR {{ $r->procurementRequest->request_number }}</span>@else<span class="rounded bg-surface-container px-1.5 py-0.5 text-[10px] font-bold uppercase text-on-surface-variant">No PR · Direct</span>@endif</div>
+                    <div class="flex items-center gap-1.5 font-bold text-primary"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">storefront</span>{{ $payee }}</div>
+                    <div class="mt-1 flex flex-wrap items-center gap-2"><span class="rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-bold text-violet-800">{{ $label }}</span>@if($r->procurementRequest)<span class="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">PR {{ $r->procurementRequest->request_number }}</span>@if($poNumber)<span class="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800">PO {{ $poNumber }}</span>@endif @else<span class="rounded bg-surface-container px-1.5 py-0.5 text-[10px] font-bold uppercase text-on-surface-variant">No PR · Direct</span>@endif</div>
                     <div class="mt-1 text-xs text-on-surface">{{ $r->purpose ?: ($r->procurementRequest?->title ?? 'General') }}</div>
                     <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-on-surface-variant"><span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[13px]" aria-hidden="true">schedule</span>{{ ($r->approved_at ?? $r->submitted_at ?? $r->created_at)?->diffForHumans() }}</span></div>
                 </td>
@@ -96,7 +99,7 @@
                 <td class="px-5 py-4 text-right text-[15px] font-bold tabular-nums">{{ $peso($r->amount) }}</td>
                 <td class="px-5 py-4">
                     @if($isCash)
-                        <div class="font-bold">DV {{ $r->dv_number }}</div>
+                        <div class="font-bold">{{ $dvLabel($r->dv_number) }}</div>
                         <div class="text-xs text-on-surface-variant">Payee: {{ $payee }}</div>
                         @if($r->paid_at)
                             <span class="mt-1 inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-secondary/10 px-2.5 py-1 text-xs font-bold text-secondary"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">check_circle</span>Paid {{ $r->paid_at->format('M d, Y') }}</span>
@@ -107,7 +110,7 @@
                     @else
                         <span class="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-{{ $tone }}/10 px-2.5 py-1 text-xs font-bold text-{{ $tone }}"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">{{ $statusIcons[$r->status] ?? 'info' }}</span>{{ \Illuminate\Support\Str::headline($r->status) }}</span>
                         @if($r->dv_number)
-                            <div class="mt-1.5 text-xs font-bold text-secondary">DV {{ $r->dv_number }}<span class="ml-1 font-normal text-on-surface-variant">· {{ $r->dv_date?->format('M d, Y') }}</span></div>
+                            <div class="mt-1.5 text-xs font-bold text-secondary">{{ $dvLabel($r->dv_number) }}<span class="ml-1 font-normal text-on-surface-variant">· {{ $r->dv_date?->format('M d, Y') }}</span></div>
                             @if($r->reissue_pending)
                             @elseif($r->journalLines->isNotEmpty())
                                 <details class="mt-1 max-w-[300px] rounded-lg bg-surface-low text-[11px]"><summary class="flex cursor-pointer list-none items-center gap-1 px-2 py-1 font-bold text-primary"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">balance</span>Journal entry · {{ $r->journalLines->count() }} lines<span class="material-symbols-outlined ml-auto text-[14px]" aria-hidden="true">expand_more</span></summary>
@@ -124,7 +127,7 @@
                         <button type="button" onclick="document.getElementById('cancel-{{ $r->id }}').showModal()" class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-error ring-1 ring-error/30 hover:bg-error hover:text-white"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">cancel</span>Cancel Check</button>
                         <dialog id="cancel-{{ $r->id }}" style="width:min(28rem,calc(100% - 2rem))" class="rounded bg-white p-0 text-left shadow-2xl backdrop:bg-black/50"><form method="POST" action="{{ route('cash.cancel', $r) }}" class="space-y-3 p-6">@csrf
                             <h2 class="text-lg font-semibold">Cancel check {{ $r->payment_reference }}</h2>
-                            <p class="text-xs text-on-surface-variant">{{ $label }} · DV {{ $r->dv_number }} · {{ $peso($r->amount) }}. The check goes to the Cancelled Checks register and the ORS, DV and journal entry open for editing.</p>
+                            <p class="text-xs text-on-surface-variant">{{ $label }} · {{ $dvLabel($r->dv_number) }} · {{ $peso($r->amount) }}. The check goes to the Cancelled Checks register and the ORS, DV and journal entry open for editing.</p>
                             <label class="block text-xs font-semibold text-on-surface-variant">Reason <span class="text-error">*</span><input name="reason" required maxlength="255" autocomplete="off" class="{{ $inputClass }}"></label>
                             <label class="block text-xs font-semibold text-on-surface-variant">Your password <span class="text-error">*</span><input type="password" name="password" required autocomplete="current-password" class="{{ $inputClass }}"></label>
                             <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-3"><button type="button" onclick="this.closest('dialog').close()" class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Close</button><button class="rounded bg-error px-4 py-2.5 text-xs font-bold text-white hover:opacity-90">Cancel Check</button></div>
@@ -147,7 +150,7 @@
                     @if(auth()->user()->hasPermission('accounting.approve') && ! $isCash && $r->dv_number && ! $r->paid_at)
                         <button type="button" onclick="document.getElementById('edit-dv-{{ $r->id }}').showModal()" class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-primary ring-1 ring-outline-variant/50 hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">edit</span>Edit DV</button>
                         <dialog id="edit-dv-{{ $r->id }}" style="width:min(48rem,calc(100% - 2rem))" class="max-h-[92vh] rounded bg-white p-0 text-left shadow-2xl backdrop:bg-black/50"><form method="POST" action="{{ route('accounting.dv.store', $r) }}" class="grid grid-cols-1 gap-3 p-6 md:grid-cols-2">@csrf
-                            <h2 class="text-lg font-semibold md:col-span-2">Edit DV {{ $r->dv_number }} · {{ $label }} · {{ $peso($r->amount) }}</h2>
+                            <h2 class="text-lg font-semibold md:col-span-2">Edit {{ $dvLabel($r->dv_number) }} · {{ $label }} · {{ $peso($r->amount) }}</h2>
                             <label class="text-xs font-semibold text-on-surface-variant">DV Date <span class="text-error">*</span><input type="date" name="dv_date" required max="{{ now()->toDateString() }}" value="{{ ($r->dv_date ?? now())->toDateString() }}" class="{{ $inputClass }}"></label>
                             <label class="text-xs font-semibold text-on-surface-variant">Mode of Payment <span class="text-error">*</span><select name="payment_mode" required class="{{ $inputClass }}">@foreach(\App\Http\Controllers\FinanceController::PAYMENT_MODES as $mode)<option @selected($mode === $r->payment_mode)>{{ $mode }}</option>@endforeach</select></label>
                             <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Payee <span class="text-error">*</span><input name="payee" required maxlength="255" value="{{ $payee }}" class="{{ $inputClass }}"></label>
