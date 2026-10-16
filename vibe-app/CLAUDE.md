@@ -204,7 +204,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 - 2026-10-16: Printed SOB: the account title is indented under the program row and stays above the note (POW required) instead of being replaced by it (docs/specs.md 26.5).
 - 2026-10-16: Printed SOB: one blank line between the account title and the note (POW), light-green Grand Total, underlined signature names, bold School ID in the size of the school name (docs/specs.md 26.5).
 - 2026-10-16: School profile has a DepEd School ID (School Settings > School details, `schools.deped_school_id`); the printed SOB shows the number typed on the SOB, else this one, else the system School ID (docs/specs.md 5, 26.5).
-- Live: Railway deployment 27ca8514 (2026-10-16 15:22), migrations through `drop_summary_label_from_sob_items_table`. All 841 tests pass.
+- Live: Railway deployment f1d44cd2 (2026-10-16 15:28), migrations through `add_deped_school_id_to_schools_table`. All 841 tests pass.
 - Still open before Phase 3 is complete: browser check of the PR form picker, PR numbering/status end-to-end validation, and deciding whether the APP link should be required for PRs.
 - The Planning page is `/planning`. The source is `resources/views/planning.blade.php`; the controller is `app/Http/Controllers/PlanningController.php`.
 - The last GitHub backup is commit `69d1d35` on `master`. Do not reset or discard local changes.
