@@ -201,6 +201,7 @@ class FinanceController extends Controller
             'dv_date' => ['required', 'date', 'before_or_equal:today'],
             'payee' => ['required', 'string', 'max:255'],
             'dv_particulars' => ['required', 'string', 'max:255'],
+            'dv_fund_cluster' => ['nullable', 'string', 'max:100'],
             'payment_mode' => ['required', Rule::in(self::PAYMENT_MODES)],
             'dv_include_appropriation' => ['nullable', 'boolean'],
             'deductions' => ['nullable', 'array'],

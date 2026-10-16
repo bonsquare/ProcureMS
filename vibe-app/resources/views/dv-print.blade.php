@@ -25,7 +25,7 @@
 @php
     $pr = $report->procurementRequest;
     $fit = fn ($s, $w, $size) => min($size, round($w / max(mb_strlen((string) $s), 1) / 0.5, 1));
-    $fund = $report->source_of_fund ?: $pr?->source_of_fund;
+    $fund = $report->dv_fund_cluster ?: ($report->source_of_fund ?: $pr?->source_of_fund);
     $date = $report->dv_date?->format('F d, Y');
     $payee = $report->payee;
     $tin = $report->payee_tin;
@@ -159,9 +159,9 @@
 <text x="531.56" y="34.66" font-family="'Times New Roman',Times,serif" font-size="12.0" font-style="italic" xml:space="preserve">Appendix 32</text>
 <text x="152.64" y="60.30" font-family="'Times New Roman',Times,serif" font-size="12.9" font-weight="bold" xml:space="preserve">DEPARTMENT OF EDUCATION</text>
 <text x="181.44" y="76.25" font-family="'Times New Roman',Times,serif" font-size="12.9" font-weight="bold" xml:space="preserve">COTABATO DIVISION</text>
-<text x="483.12" y="55.45" font-family="'Times New Roman',Times,serif" font-size="9.2" font-weight="bold" xml:space="preserve">Fund Cluster :</text>
-<text x="484.71" y="90.80" font-family="'Times New Roman',Times,serif" font-size="9.2" font-weight="bold" xml:space="preserve">Date :</text>
-<text x="485.90" y="104.66" font-family="'Times New Roman',Times,serif" font-size="9.2" font-weight="bold" xml:space="preserve">DV No. :</text>
+<text x="483.12" y="55.45" font-family="'Times New Roman',Times,serif" font-size="9.2" font-weight="bold" text-decoration="underline" xml:space="preserve">Fund Cluster :</text>
+<text x="484.71" y="90.80" font-family="'Times New Roman',Times,serif" font-size="9.2" font-weight="bold" text-decoration="underline" xml:space="preserve">Date :</text>
+<text x="485.90" y="104.66" font-family="'Times New Roman',Times,serif" font-size="9.2" font-weight="bold" text-decoration="underline" xml:space="preserve">DV No. :</text>
 <text x="20.10" y="135.86" font-family="'Times New Roman',Times,serif" font-size="9.2" font-weight="bold" xml:space="preserve">Mode of</text>
 <text x="20.10" y="146.95" font-family="'Times New Roman',Times,serif" font-size="9.2" font-weight="bold" xml:space="preserve">Payment</text>
 <text x="20.10" y="171.90" font-family="'Times New Roman',Times,serif" font-size="9.2" font-weight="bold" xml:space="preserve">Payee</text>
@@ -201,7 +201,7 @@
 <text transform="translate(0 {{ $shift }})" x="31.62" y="709.78" font-family="'Times New Roman',Times,serif" font-size="9.2" xml:space="preserve">Check/</text>
 <text transform="translate(0 {{ $shift }})" x="24.30" y="720.87" font-family="'Times New Roman',Times,serif" font-size="9.2" xml:space="preserve">ADA No. :</text>
 <text transform="translate(0 {{ $shift }})" x="215.57" y="712.2" dominant-baseline="central" font-family="'Times New Roman',Times,serif" font-size="9.2" xml:space="preserve">Date :</text>
-<text transform="translate(0 {{ $shift }})" x="316.07" y="715.32" font-family="'Times New Roman',Times,serif" font-size="9.2" xml:space="preserve">Bank Name &amp; Account Number:</text>
+<text transform="translate(0 {{ $shift }})" x="170" y="688.5" dominant-baseline="central" font-family="'Times New Roman',Times,serif" font-size="9.2" xml:space="preserve">Bank Name &amp; Account Number:</text>
 <text transform="translate(0 {{ $shift }})" x="24.56" y="748.59" font-family="'Times New Roman',Times,serif" font-size="9.2" xml:space="preserve">Signature :</text>
 <text transform="translate(0 {{ $shift }})" x="215.57" y="748.59" font-family="'Times New Roman',Times,serif" font-size="9.2" xml:space="preserve">Date :</text>
 <text transform="translate(0 {{ $shift }})" x="316.07" y="748.59" font-family="'Times New Roman',Times,serif" font-size="9.2" xml:space="preserve">Printed Name:</text>
