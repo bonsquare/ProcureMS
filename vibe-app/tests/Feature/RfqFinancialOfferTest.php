@@ -40,7 +40,7 @@ class RfqFinancialOfferTest extends TestCase
 
     public function test_the_typed_delivery_term_stands_under_the_title_of_the_quotation_page(): void
     {
-        $html = $this->printedRfq(['delivery_term' => '15 calendar days upon receipt of Notice to Proceed', 'terms_of_payment' => '15 days']);
+        $html = $this->printedRfq(['rfq_delivery_term' => '15 calendar days upon receipt of Notice to Proceed', 'terms_of_payment' => '15 days']);
 
         $this->assertStringContainsString('<p class="center">(Delivery: 15 calendar days upon receipt of Notice to Proceed)</p>', $html);
         $this->assertStringContainsString('Payment shall be made within <strong>15 days</strong> and after', $html, 'the payment term is its own field');
@@ -48,7 +48,8 @@ class RfqFinancialOfferTest extends TestCase
 
     public function test_without_typed_terms_the_delivery_and_payment_terms_use_their_defaults(): void
     {
-        $html = $this->printedRfq();
+        $html = $this->printedRfq(['delivery_term' => 'Pick-Up', 'payment_term' => '30 days']);
+        $this->assertStringNotContainsString('(Delivery: Pick-Up)', $html, 'the Pick-Up of the other documents is a different field');
 
         $this->assertStringContainsString('<p class="center">(Delivery: within thirty (30) calendar days from receipt of the Notice to Proceed (NTP))</p>', $html);
         $this->assertStringContainsString('Payment shall be made within <strong>30 days after the delivery</strong> and after', $html);
@@ -63,11 +64,11 @@ class RfqFinancialOfferTest extends TestCase
         $pr = ProcurementRequest::create(['organization_id' => $organization->id, 'school_id' => $school->id, 'requested_by' => $user->id, 'request_number' => 'PR-2026-RFQ', 'title' => 'Rice', 'amount' => 1500, 'status' => 'approved']);
         $pr->items()->create(['organization_id' => $organization->id, 'name' => 'RICE', 'quantity' => 1, 'unit' => 'piece', 'unit_price' => 1500, 'total' => 1500]);
 
-        $this->actingAs($user)->get(route('procurement.documents', $pr))->assertOk()->assertSee('name="terms_of_payment" data-default="30 days after the delivery"', false)->assertSee('name="delivery_term" data-default="within thirty (30) calendar days from receipt of the Notice to Proceed (NTP)"', false);
-        $this->post(route('procurement.documents.store', $pr), ['document_type' => 'request_for_quotation', 'document_date' => now()->toDateString(), 'supplier_or_recipient' => 'Lubas Trading', 'delivery_term' => '20 days', 'terms_of_payment' => '10 days'])->assertSessionHasNoErrors();
+        $this->actingAs($user)->get(route('procurement.documents', $pr))->assertOk()->assertSee('name="terms_of_payment" data-default="30 days after the delivery"', false)->assertSee('name="rfq_delivery_term" data-default="within thirty (30) calendar days from receipt of the Notice to Proceed (NTP)"', false);
+        $this->post(route('procurement.documents.store', $pr), ['document_type' => 'request_for_quotation', 'document_date' => now()->toDateString(), 'supplier_or_recipient' => 'Lubas Trading', 'rfq_delivery_term' => '20 days', 'terms_of_payment' => '10 days'])->assertSessionHasNoErrors();
 
         $rfq = $pr->documents()->where('document_type', 'request_for_quotation')->firstOrFail();
-        $this->assertSame('20 days', $rfq->metadata['delivery_term']);
+        $this->assertSame('20 days', $rfq->metadata['rfq_delivery_term']);
         $this->assertSame('10 days', $rfq->metadata['terms_of_payment']);
     }
 }
