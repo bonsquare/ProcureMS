@@ -62,6 +62,9 @@ class FormGeneratorTest extends TestCase
 
         $this->assertStringContainsString('Gym renovation', $html, 'the list of saved POWs');
         $this->assertStringContainsString('1ST QUARTER', $html);
+        $this->assertStringContainsString('aria-label="Edit Program of Works"', $html, 'edit icon');
+        $this->assertStringContainsString('aria-label="Print Program of Works"', $html, 'print icon');
+        $this->assertStringContainsString('aria-label="Delete Program of Works"', $html, 'delete icon for a user who manages planning');
     }
 
     public function test_the_sob_panel_links_to_the_form_generator(): void

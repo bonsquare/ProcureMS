@@ -5,8 +5,8 @@
 @section('content')
 @php
     $editing = $kra->exists;
-    $field = $inputClass;
-    $label = 'block text-xs font-semibold text-on-surface-variant';
+    $field = 'mt-1.5 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-on-surface shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15';
+    $label = 'block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant';
     $v = fn ($key) => old($key, $kra->{$key});
     $activities = collect($activities)->values();
 @endphp
@@ -25,8 +25,8 @@
 <form id="kra-page-form" method="POST" action="{{ $editing ? route('aip.kras.update', [$aip, $kra]) : route('aip.kras.store', $aip) }}" class="space-y-5">
     @csrf @if($editing) @method('PUT') @endif
 
-    <section class="overflow-hidden rounded-lg border border-outline-variant/40 bg-white">
-        <header class="flex items-center gap-3 bg-primary px-5 py-3 text-white"><span class="material-symbols-outlined text-[20px]">flag</span><h2 class="text-base font-semibold">Pillar and Key Result Area</h2></header>
+    <section class="overflow-hidden rounded-xl border border-outline-variant/60 bg-white shadow-sm">
+        <header class="flex items-center gap-3 border-b border-outline-variant/40 bg-[#eef4fa] px-5 py-3"><span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-white">1</span><div><h2 class="text-sm font-bold text-primary">Pillar and Key Result Area</h2><p class="text-xs text-on-surface-variant">The pillar, the KRA and the program these activities belong to.</p></div></header>
         <div class="grid grid-cols-1 gap-4 p-5 md:grid-cols-2">
             <label class="{{ $label }} md:col-span-2">Pillar / Enabling Mechanism
                 <input name="pillar" list="pillar-list" autocomplete="off" value="{{ $v('pillar') }}" placeholder="Choose from the list or type your own" class="{{ $field }}">
@@ -41,17 +41,17 @@
         </div>
     </section>
 
-    <section class="rounded-lg border border-outline-variant/40 border-l-4 border-l-secondary bg-surface-low/40 p-4">
-        <div class="mb-4 flex items-center justify-between">
-            <h2 class="text-base font-semibold">Activities under this KRA <span id="activity-count" class="ml-1 rounded-full bg-secondary/10 px-2 py-0.5 text-xs text-secondary"></span></h2>
-            <button type="button" id="add-activity" class="rounded bg-secondary px-4 py-2 text-xs font-semibold text-white hover:opacity-90">+ Add Activity</button>
+    <section class="overflow-hidden rounded-xl border border-outline-variant/60 bg-white shadow-sm">
+        <div class="flex items-center justify-between gap-3 border-b border-outline-variant/40 bg-[#eef4fa] px-5 py-3">
+            <div class="flex items-center gap-3"><span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-white">2</span><div><h2 class="text-sm font-bold text-primary">Activities under this KRA <span id="activity-count" class="ml-1 rounded-full bg-secondary/10 px-2 py-0.5 text-xs text-secondary"></span></h2><p class="text-xs text-on-surface-variant">Targets, quarter amounts, source of fund and who is responsible.</p></div></div>
+            <button type="button" id="add-activity" class="rounded-lg bg-secondary px-4 py-2 text-xs font-semibold text-white shadow-sm hover:opacity-90">+ Add Activity</button>
         </div>
-        <div id="activity-list" class="space-y-4">
+        <div id="activity-list" class="space-y-4 p-5">
             @foreach($activities as $i => $a)
                 @include('partials.aip-activity-card', ['i' => $i, 'a' => $a, 'accounts' => $accounts, 'fundOptions' => $fundOptions, 'field' => $field, 'label' => $label])
             @endforeach
         </div>
-        <p class="mt-4 text-right text-sm font-semibold">All activities: <span id="grand-total" class="tabular-nums">₱0.00</span></p>
+        <p class="border-t border-outline-variant/40 bg-[#eef4fa] px-5 py-3 text-right text-sm font-bold text-primary">All activities: <span id="grand-total" class="text-lg tabular-nums">₱0.00</span></p>
     </section>
 
     <div class="sticky bottom-0 -mx-4 flex justify-end gap-2 border-t border-outline-variant/30 bg-surface/95 px-4 py-3 backdrop-blur md:-mx-6 md:px-6 lg:-mx-8 lg:px-8">
@@ -92,7 +92,7 @@
             const index = card.dataset.index;
             const row = document.createElement('div');
             row.className = 'flex items-center gap-2';
-            row.innerHTML = '<input class="min-w-0 flex-1 rounded border border-outline-variant/50 bg-white px-3 py-2.5 text-sm outline-none focus:border-primary"><button type="button" data-remove-row aria-label="Remove" class="flex h-8 w-8 shrink-0 items-center justify-center rounded text-error hover:bg-error/10"><span class="material-symbols-outlined text-[18px]">close</span></button>';
+            row.innerHTML = '<input class="min-w-0 flex-1 rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"><button type="button" data-remove-row aria-label="Remove" class="flex h-8 w-8 shrink-0 items-center justify-center rounded text-error hover:bg-error/10"><span class="material-symbols-outlined text-[18px]">close</span></button>';
             const input = row.querySelector('input');
             input.name = 'activities[' + index + '][' + name + '][]';
             input.placeholder = group.dataset.placeholder;

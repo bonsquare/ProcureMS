@@ -210,6 +210,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 - 2026-10-16: Purchase Order: Fund Cluster field (default General Fund); Date of Delivery and Payment Term start from the RFQ's Delivery Term and Terms of Payment (docs/specs.md 31.3).
 - 2026-10-16: Printed PO: the Supplier value column is wider (37%) and the P.O. No. label column narrower (19%).
 - 2026-10-16: Printed ORS Section C: "Check No." and the check number under the ORS number once a check is recorded (docs/specs.md 30.3).
+- 2026-10-16: New form design standard (numbered section cards, uppercase labels, rounded inputs; docs/specs.md section 7) applied to the Program of Works, SOB, AIP KRA form and APP-CSE page; POW list actions are Edit / Print / Delete icons (38). Design only, no behavior changed. Other screens follow in batches.
 - Live: Railway deployment 0b2d7459 (2026-10-16 22:03), migrations through `create_pow_items_table`. All 874 tests pass.
 - Still open before Phase 3 is complete: browser check of the PR form picker, PR numbering/status end-to-end validation, and deciding whether the APP link should be required for PRs.
 - The Planning page is `/planning`. The source is `resources/views/planning.blade.php`; the controller is `app/Http/Controllers/PlanningController.php`.

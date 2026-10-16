@@ -61,7 +61,13 @@
             <tbody class="divide-y divide-outline-variant/20">
             @foreach($savedPows as $saved)
                 <tr><td class="px-5 py-3 font-semibold">{{ $saved->project_title }}</td><td class="px-3 py-3">{{ $saved->program }}</td><td class="px-3 py-3">{{ $saved->sobPlan?->quarterLabel() }} {{ $saved->sobPlan?->fiscal_year }}</td><td class="px-3 py-3 text-right tabular-nums">{{ $peso($saved->total) }}</td><td class="px-3 py-3">{{ ($saved->pow_date ?? $saved->created_at)?->format('M d, Y') }}</td>
-                    <td class="px-3 py-3 text-right"><a href="{{ route('planning.pow.show', $saved) }}" class="rounded-lg border border-outline-variant/60 px-2.5 py-1.5 text-xs font-semibold hover:bg-surface-low">Open</a> <a href="{{ route('planning.pow.print', $saved) }}" target="_blank" rel="noopener" class="rounded-lg border border-outline-variant/60 px-2.5 py-1.5 text-xs font-semibold hover:bg-surface-low">Print</a></td></tr>
+                    <td class="px-3 py-3 text-right"><div class="inline-flex items-center gap-1.5">
+                        <a href="{{ route('planning.pow.show', $saved) }}" title="Edit" aria-label="Edit Program of Works" class="grid h-8 w-8 place-items-center rounded-lg border border-outline-variant/60 hover:bg-surface-low"><span class="material-symbols-outlined text-[18px]">edit</span></a>
+                        <a href="{{ route('planning.pow.print', $saved) }}" target="_blank" rel="noopener" title="Print" aria-label="Print Program of Works" class="grid h-8 w-8 place-items-center rounded-lg border border-outline-variant/60 hover:bg-surface-low"><span class="material-symbols-outlined text-[18px]">print</span></a>
+                        @if(auth()->user()->hasPermission('planning.manage'))
+                            <form method="POST" action="{{ route('planning.pow.destroy', $saved) }}" onsubmit="return confirm('Delete this Program of Works?')" class="inline">@csrf @method('DELETE')<button type="submit" title="Delete" aria-label="Delete Program of Works" class="grid h-8 w-8 place-items-center rounded-lg border border-error/40 text-error hover:bg-error/10"><span class="material-symbols-outlined text-[18px]">delete</span></button></form>
+                        @endif
+                    </div></td></tr>
             @endforeach
             </tbody>
         </table></div>

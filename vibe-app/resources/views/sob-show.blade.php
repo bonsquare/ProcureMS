@@ -9,7 +9,7 @@
     $peso = fn ($value) => '₱'.number_format((float) $value, 2);
     // The choice is the Specific Program / Project of the AIP, nothing added.
     $programLabel = fn ($kra, $activity) => $kra->program ?: $kra->kra;
-    $box = 'mt-1 w-full rounded border border-outline-variant/50 bg-white px-2.5 py-2 text-sm outline-none focus:border-primary';
+    $box = 'mt-1.5 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-on-surface shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15';
     $draft = $plan->status === 'draft';
     $editable = $canManage;
     $grandTotal = collect($grouped)->sum('total');
@@ -58,10 +58,9 @@
 @if($editable)
 {{-- Add item: a chip on the right opens (and closes) the form under it. --}}
 <div class="mb-3 flex justify-end"><button type="button" data-toggle-item-form aria-controls="sob-item-form" aria-expanded="{{ $errors->any() || $plan->items->isEmpty() ? 'true' : 'false' }}" class="inline-flex items-center gap-1.5 rounded-full border border-primary bg-primary/10 px-4 py-1.5 text-xs font-semibold text-primary hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">add</span>Add item</button></div>
-<div class="mb-5 rounded border border-outline-variant/30 bg-white p-4 {{ $errors->any() || $plan->items->isEmpty() ? '' : 'hidden' }}" id="sob-item-form">
-    <h2 class="font-semibold">Add item</h2>
-    <p class="mt-1 text-xs text-on-surface-variant">Choose the Specific Program / Project and its activity, then what is bought for it. Use Add particulars for more than one, and Add other line for anything else (for example Labor). Each amount is frequency × quantity × unit cost.</p>
-    <form method="POST" action="{{ route('planning.sob.items.store', $plan) }}" class="sob-line-form mt-3 grid gap-3 md:grid-cols-6">@csrf
+<div class="mb-5 overflow-hidden rounded-xl border border-outline-variant/60 bg-white shadow-sm {{ $errors->any() || $plan->items->isEmpty() ? '' : 'hidden' }}" id="sob-item-form">
+    <div class="flex items-center gap-3 border-b border-outline-variant/40 bg-[#eef4fa] px-5 py-3"><span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-white">1</span><div><h2 class="text-sm font-bold text-primary">Add item</h2><p class="text-xs text-on-surface-variant">Choose the Specific Program / Project and its activity, then what is bought for it. Use Add particulars for more than one, and Add other line for anything else (for example Labor). Each amount is frequency × quantity × unit cost.</p></div></div>
+    <form method="POST" action="{{ route('planning.sob.items.store', $plan) }}" class="sob-line-form grid gap-4 p-5 md:grid-cols-6">@csrf
         <div class="md:col-span-3" data-full-text-box><label class="block text-xs font-semibold text-on-surface-variant">AIP activity (PPA)
             <select name="aip_activity_id" required class="{{ $box }}">
                 <option value="">Choose an activity</option>
@@ -160,12 +159,12 @@
 @endif
 
 @if($editable)
-<details class="group mb-5 rounded border border-outline-variant/30 bg-white p-4" @if($errors->any()) open @endif>
-    <summary class="flex cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center justify-between gap-2"><h2 class="font-semibold">Details and signatories</h2><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] transition-transform" aria-hidden="true">expand_more</span></summary>
-    <form method="POST" action="{{ route('planning.sob.update', $plan) }}" class="mt-3 grid gap-3 md:grid-cols-3">@csrf @method('PUT')
-        <label class="text-xs font-semibold text-on-surface-variant">Source of fund<select name="fund_source" class="{{ $box }}">@foreach($fundChoices as $fund)<option value="{{ $fund }}" @selected(old('fund_source', $plan->fund_source) === $fund)>{{ $fund }}</option>@endforeach</select></label>
-        <label class="text-xs font-semibold text-on-surface-variant">Quarter<select name="quarter" class="{{ $box }}">@foreach(\App\Models\SobPlan::QUARTERS as $number => $quarterName)<option value="{{ $number }}" @selected((int) old('quarter', $plan->quarter) === $number)>{{ $quarterName }}</option>@endforeach</select></label>
-        <label class="text-xs font-semibold text-on-surface-variant">School ID<input name="school_id_number" value="{{ old('school_id_number', $plan->school_id_number) }}" maxlength="50" placeholder="{{ $plan->school?->deped_school_id ?: 'Type the School ID' }}" class="{{ $box }}"></label>
+<details class="group mb-5 overflow-hidden rounded-xl border border-outline-variant/60 bg-white shadow-sm" @if($errors->any()) open @endif>
+    <summary class="flex cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center justify-between gap-3 bg-[#eef4fa] px-5 py-3"><span class="flex items-center gap-3"><span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-white">2</span><span><h2 class="text-sm font-bold text-primary">Details and signatories</h2><span class="block text-xs text-on-surface-variant">Source of fund, quarter, School ID and who signs the printed SOB.</span></span></span><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] text-primary transition-transform" aria-hidden="true">expand_more</span></summary>
+    <form method="POST" action="{{ route('planning.sob.update', $plan) }}" class="grid gap-4 border-t border-outline-variant/40 p-5 md:grid-cols-3">@csrf @method('PUT')
+        <label class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Source of fund<select name="fund_source" class="{{ $box }}">@foreach($fundChoices as $fund)<option value="{{ $fund }}" @selected(old('fund_source', $plan->fund_source) === $fund)>{{ $fund }}</option>@endforeach</select></label>
+        <label class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Quarter<select name="quarter" class="{{ $box }}">@foreach(\App\Models\SobPlan::QUARTERS as $number => $quarterName)<option value="{{ $number }}" @selected((int) old('quarter', $plan->quarter) === $number)>{{ $quarterName }}</option>@endforeach</select></label>
+        <label class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">School ID<input name="school_id_number" value="{{ old('school_id_number', $plan->school_id_number) }}" maxlength="50" placeholder="{{ $plan->school?->deped_school_id ?: 'Type the School ID' }}" class="{{ $box }}"></label>
         @php $sobSlots = \App\Support\PlanningSignatories::slots([['prepared_by', 'Prepared by', 'Prepared by', null, null, null, null], ['recommended_by', 'Recommending approval', 'Recommending Approval', null, null, null, null], ['approved_by', 'Approved by', 'APPROVED', null, null, null, null]], $plan, \App\Support\PlanningSignatories::lastUsed($plan->school_id, ['prepared_by', 'recommended_by', 'approved_by']), true); @endphp
         <div class="md:col-span-3">@include('partials.signatory-editor', ['slots' => $sobSlots, 'editable' => true, 'document' => 'SOB', 'open' => $errors->any()])</div>
         <div class="md:col-span-3"><button class="rounded border border-primary px-4 py-2 text-xs font-semibold text-primary hover:bg-primary hover:text-white">Save details</button></div>

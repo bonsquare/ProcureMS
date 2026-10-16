@@ -8,7 +8,7 @@
 @php
     $peso = fn ($value) => '₱'.number_format((float) $value, 2);
     $qty = fn ($value) => rtrim(rtrim(number_format((float) $value, 2, '.', ''), '0'), '.') ?: '0';
-    $box = 'mt-1 w-full rounded border border-outline-variant/50 bg-white px-2.5 py-2 text-sm outline-none focus:border-primary';
+    $box = 'mt-1.5 w-full rounded-lg border border-outline-variant bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-on-surface shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15';
     $small = 'w-full rounded border border-outline-variant/50 bg-white px-1.5 py-1 text-right text-xs outline-none focus:border-primary';
     $rowColumns = 'grid-template-columns: minmax(13rem, 2.2fr) 6rem repeat(12, minmax(2.6rem, 1fr)) 4rem 7rem;';
     $monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -32,28 +32,28 @@
 @include('partials.document-strip', ['strip' => \App\Support\DocumentStrip::appCse($plan), 'reopenUrl' => ($plan->isApproved() && $canManage) ? route('planning.app-cse.reopen', $plan) : null, 'reopenConfirm' => 'Reopen this APP-CSE as a draft? You can then change its details and items, and approve it again afterwards.'])
 
 <style>details[open] > summary .sum-chevron{transform:rotate(180deg)}</style>
-<details open id="plan-details" class="mb-5 rounded border border-outline-variant/30 bg-white p-4">
-    <summary class="flex cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center gap-2"><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] text-on-surface-variant transition-transform" aria-hidden="true">expand_more</span><h2 class="font-semibold">Details</h2></summary>
+<details open id="plan-details" class="mb-5 overflow-hidden rounded-xl border border-outline-variant/60 bg-white shadow-sm">
+    <summary class="flex cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center gap-3 bg-[#eef4fa] px-5 py-3"><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] text-primary transition-transform" aria-hidden="true">expand_more</span><span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-white">1</span><span><h2 class="text-sm font-bold text-primary">Details</h2><span class="block text-xs text-on-surface-variant">Office, contact person, date prepared and the approved budget.</span></span></summary>
     @if($editable)
-        <form method="POST" action="{{ route('planning.app-cse.update', $plan) }}" class="mt-3 grid gap-3 md:grid-cols-3">@csrf @method('PUT')
-            <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Department/Bureau/Office<input name="office_name" value="{{ old('office_name', $plan->office_name) }}" maxlength="255" class="{{ $box }}"></label>
-            <label class="text-xs font-semibold text-on-surface-variant">Agency Account Code<input name="account_code" value="{{ old('account_code', $plan->account_code) }}" maxlength="255" class="{{ $box }}"></label>
-            <label class="text-xs font-semibold text-on-surface-variant">Region<input name="region" value="{{ old('region', $plan->region) }}" maxlength="255" class="{{ $box }}"></label>
-            <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Address<input name="address" value="{{ old('address', $plan->address) }}" maxlength="500" class="{{ $box }}"></label>
-            <label class="text-xs font-semibold text-on-surface-variant">Organization Type<input name="organization_type" value="{{ old('organization_type', $plan->organization_type) }}" maxlength="255" class="{{ $box }}"></label>
-            <label class="text-xs font-semibold text-on-surface-variant">Contact Person<input name="contact_person" value="{{ old('contact_person', $plan->contact_person) }}" maxlength="255" class="{{ $box }}"></label>
-            <label class="text-xs font-semibold text-on-surface-variant">Position<input name="contact_position" value="{{ old('contact_position', $plan->contact_position) }}" maxlength="255" class="{{ $box }}"></label>
-            <label class="text-xs font-semibold text-on-surface-variant">E-mail<input name="contact_email" value="{{ old('contact_email', $plan->contact_email) }}" maxlength="255" class="{{ $box }}"></label>
-            <label class="text-xs font-semibold text-on-surface-variant">Telephone/Mobile Nos.<input name="contact_phone" value="{{ old('contact_phone', $plan->contact_phone) }}" maxlength="255" class="{{ $box }}"></label>
-            <label class="text-xs font-semibold text-on-surface-variant">Date Prepared<input type="date" name="date_prepared" value="{{ old('date_prepared', $plan->date_prepared?->toDateString()) }}" class="{{ $box }}"></label>
-            <label class="text-xs font-semibold text-on-surface-variant">E. Approved budget by the agency head (figures)<input type="number" name="approved_budget" step="0.01" min="0" value="{{ old('approved_budget', $plan->approved_budget) }}" class="{{ $box }}"></label>
-            <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">E. Approved budget (in words)<input name="approved_budget_words" value="{{ old('approved_budget_words', $plan->approved_budget_words) }}" maxlength="500" class="{{ $box }}"></label>
-            <div class="md:col-span-3"><button class="rounded-lg bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary-container">Save details</button></div>
+        <form method="POST" action="{{ route('planning.app-cse.update', $plan) }}" class="grid gap-4 border-t border-outline-variant/40 p-5 md:grid-cols-3">@csrf @method('PUT')
+            <label class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant md:col-span-2">Department/Bureau/Office<input name="office_name" value="{{ old('office_name', $plan->office_name) }}" maxlength="255" class="{{ $box }}"></label>
+            <label class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Agency Account Code<input name="account_code" value="{{ old('account_code', $plan->account_code) }}" maxlength="255" class="{{ $box }}"></label>
+            <label class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Region<input name="region" value="{{ old('region', $plan->region) }}" maxlength="255" class="{{ $box }}"></label>
+            <label class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant md:col-span-2">Address<input name="address" value="{{ old('address', $plan->address) }}" maxlength="500" class="{{ $box }}"></label>
+            <label class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Organization Type<input name="organization_type" value="{{ old('organization_type', $plan->organization_type) }}" maxlength="255" class="{{ $box }}"></label>
+            <label class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Contact Person<input name="contact_person" value="{{ old('contact_person', $plan->contact_person) }}" maxlength="255" class="{{ $box }}"></label>
+            <label class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Position<input name="contact_position" value="{{ old('contact_position', $plan->contact_position) }}" maxlength="255" class="{{ $box }}"></label>
+            <label class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">E-mail<input name="contact_email" value="{{ old('contact_email', $plan->contact_email) }}" maxlength="255" class="{{ $box }}"></label>
+            <label class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Telephone/Mobile Nos.<input name="contact_phone" value="{{ old('contact_phone', $plan->contact_phone) }}" maxlength="255" class="{{ $box }}"></label>
+            <label class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Date Prepared<input type="date" name="date_prepared" value="{{ old('date_prepared', $plan->date_prepared?->toDateString()) }}" class="{{ $box }}"></label>
+            <label class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">E. Approved budget by the agency head (figures)<input type="number" name="approved_budget" step="0.01" min="0" value="{{ old('approved_budget', $plan->approved_budget) }}" class="{{ $box }}"></label>
+            <label class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant md:col-span-2">E. Approved budget (in words)<input name="approved_budget_words" value="{{ old('approved_budget_words', $plan->approved_budget_words) }}" maxlength="500" class="{{ $box }}"></label>
+            <div class="md:col-span-3"><button class="rounded-lg bg-primary px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-primary-container">Save details</button></div>
         </form>
     @else
-        <dl class="mt-3 grid gap-2 text-sm md:grid-cols-3">
+        <dl class="grid gap-3 border-t border-outline-variant/40 p-5 text-sm md:grid-cols-3">
             @foreach([['Department/Bureau/Office', $plan->office_name], ['Agency Account Code', $plan->account_code], ['Region', $plan->region], ['Address', $plan->address], ['Organization Type', $plan->organization_type], ['Contact Person', $plan->contact_person], ['Position', $plan->contact_position], ['E-mail', $plan->contact_email], ['Telephone/Mobile Nos.', $plan->contact_phone], ['Date Prepared', $plan->date_prepared?->format('F d, Y')], ['Approved budget', $plan->approved_budget !== null ? $peso($plan->approved_budget) : null], ['Approved by', trim($plan->agency_head_name.' '.$plan->agency_head_position)]] as [$label, $value])
-                <div><dt class="text-xs font-semibold text-on-surface-variant">{{ $label }}</dt><dd>{{ $value ?: '—' }}</dd></div>
+                <div><dt class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">{{ $label }}</dt><dd>{{ $value ?: '—' }}</dd></div>
             @endforeach
         </dl>
     @endif
@@ -174,9 +174,9 @@
 
 @if($editable)
 {{-- Signatories of the APP-CSE: at the very bottom of the page, side by side (a form of their own: only the signatory fields are sent). --}}
-<section class="mb-8 rounded border border-outline-variant/30 bg-white p-4">
-    <h2 class="font-semibold">Signatories</h2>
-    <form method="POST" action="{{ route('planning.app-cse.update', $plan) }}" class="mt-3">@csrf @method('PUT')
+<section class="mb-8 overflow-hidden rounded-xl border border-outline-variant/60 bg-white shadow-sm">
+    <div class="flex items-center gap-3 border-b border-outline-variant/40 bg-[#eef4fa] px-5 py-3"><span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-white">4</span><div><h2 class="text-sm font-bold text-primary">Signatories</h2><p class="text-xs text-on-surface-variant">Who signs the printed APP-CSE.</p></div></div>
+    <form method="POST" action="{{ route('planning.app-cse.update', $plan) }}" class="p-5">@csrf @method('PUT')
         @php
             $cseDefs = [];
             foreach ([['prepared_by', 'Prepared by', 'Prepared by:', 'Property/Supply Officer'], ['noted_by', 'Noted by', 'NOTED:', 'School Head'], ['certified_by', 'Certified funds available', 'Certified Funds Available / Certified Appropriate Funds Available:', 'Accountant / Local Budget Officer']] as [$slotKey, $slotLegend, $slotTitle, $slotPosition]) {

@@ -7,9 +7,9 @@
     $knownFund = in_array($fund, $fundOptions, true);
     $name = fn ($key) => "activities[{$i}][{$key}]";
 @endphp
-<div data-activity id="activity-{{ $i }}" class="rounded-lg border border-outline-variant/40 bg-white shadow-sm">
-    <div class="flex items-center justify-between border-b border-outline-variant/30 bg-surface-low/60 px-4 py-2.5">
-        <p class="text-xs font-semibold uppercase tracking-widest text-on-surface-variant">Activity <span data-number></span></p>
+<div data-activity id="activity-{{ $i }}" class="overflow-hidden rounded-xl border border-outline-variant/50 border-l-4 border-l-primary bg-white shadow-sm">
+    <div class="flex items-center justify-between border-b border-outline-variant/40 bg-surface-low/60 px-4 py-2.5">
+        <p class="text-[11px] font-bold uppercase tracking-widest text-primary">Activity <span data-number></span></p>
         <button type="button" data-remove-activity class="flex items-center gap-1 rounded px-2 py-1 text-xs font-semibold text-error hover:bg-error/10"><span class="material-symbols-outlined text-[16px]">delete</span>Remove</button>
     </div>
     <div class="grid grid-cols-1 gap-4 p-4 md:grid-cols-2">
@@ -18,8 +18,8 @@
         <label class="{{ $label }}">Physical Target<input type="number" min="0" name="{{ $name('physical_target') }}" value="{{ $a['physical_target'] ?? 1 }}" class="{{ $field }}"></label>
         <label class="{{ $label }}">Specific Timeline<input name="{{ $name('timeline') }}" value="{{ $a['timeline'] ?? '' }}" placeholder="e.g. January - December" class="{{ $field }}"></label>
 
-        <fieldset class="rounded border border-outline-variant/40 p-3 md:col-span-2">
-            <legend class="px-2 text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Financial Target (₱ per quarter) · <span data-total class="tabular-nums">₱0.00</span></legend>
+        <fieldset class="rounded-xl border border-outline-variant/50 bg-surface-low/30 p-3 md:col-span-2">
+            <legend class="px-2 text-[11px] font-bold uppercase tracking-wider text-primary">Financial Target (₱ per quarter) · <span data-total class="tabular-nums">₱0.00</span></legend>
             <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
                 @foreach([1, 2, 3, 4] as $q)
                     <label class="{{ $label }}">{{ ['1st', '2nd', '3rd', '4th'][$q - 1] }} Quarter<input type="number" step="0.01" min="0" data-quarter name="{{ $name("q{$q}_amount") }}" value="{{ (float) ($a["q{$q}_amount"] ?? 0) ?: '' }}" class="{{ $field }}"></label>
@@ -44,15 +44,15 @@
             </select>
         </label>
 
-        <fieldset class="rounded border border-outline-variant/40 p-3">
-            <legend class="px-2 text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Responsible Persons</legend>
+        <fieldset class="rounded-xl border border-outline-variant/50 bg-surface-low/30 p-3">
+            <legend class="px-2 text-[11px] font-bold uppercase tracking-wider text-primary">Responsible Persons</legend>
             <div data-list="responsible_persons" data-placeholder="Name or position" class="space-y-2">
                 @foreach($persons ?: [''] as $person)<div class="flex items-center gap-2"><input name="{{ $name('responsible_persons') }}[]" value="{{ $person }}" placeholder="Name or position" class="min-w-0 flex-1 {{ $field }} !mt-0"><button type="button" data-remove-row aria-label="Remove" class="flex h-8 w-8 shrink-0 items-center justify-center rounded text-error hover:bg-error/10"><span class="material-symbols-outlined text-[18px]">close</span></button></div>@endforeach
             </div>
             <button type="button" data-add-row="responsible_persons" class="mt-3 text-xs font-semibold text-primary hover:underline">+ Add person</button>
         </fieldset>
-        <fieldset class="rounded border border-outline-variant/40 p-3">
-            <legend class="px-2 text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Remarks</legend>
+        <fieldset class="rounded-xl border border-outline-variant/50 bg-surface-low/30 p-3">
+            <legend class="px-2 text-[11px] font-bold uppercase tracking-wider text-primary">Remarks</legend>
             <div data-list="remarks_list" data-placeholder="Remark" class="space-y-2">
                 @foreach($remarks ?: [''] as $remark)<div class="flex items-center gap-2"><input name="{{ $name('remarks_list') }}[]" value="{{ $remark }}" placeholder="Remark" class="min-w-0 flex-1 {{ $field }} !mt-0"><button type="button" data-remove-row aria-label="Remove" class="flex h-8 w-8 shrink-0 items-center justify-center rounded text-error hover:bg-error/10"><span class="material-symbols-outlined text-[18px]">close</span></button></div>@endforeach
             </div>
