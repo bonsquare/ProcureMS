@@ -801,6 +801,7 @@ Tests: `OrsStatusPrintTest`.
 - **Payee and Address:** bold, left aligned, centered vertically in their cells; a long text takes a smaller size and a second line instead of being cut. The TIN is bold under its label.
 - **C. Certified, D. Approved for Payment, E. Receipt of Payment:** the headings are centered vertically in their rows and left aligned. The Check/ADA number is bold and centered in its cell; the date of payment is bold on the same middle line.
 - **Signature blocks:** Signature, Printed Name, Position and Date rows have enough height; each label and each value is centered in its row; "Printed Name" is one line.
+- **Header and Fund Cluster (2026-10-16):** the labels Fund Cluster, Date and DV No. are bold and underlined. The Fund Cluster is a field in Create DV and Edit DV (`dv_fund_cluster`), filled in from the fund of the ORS and printed as typed; left empty, the fund of the ORS is printed. In E. Receipt of Payment, "Bank Name & Account Number:" is in the top row of the box, beside the heading. Test: `DvFundClusterTest`.
 
 ### 33.3 Accounting Entry (journal)
 
