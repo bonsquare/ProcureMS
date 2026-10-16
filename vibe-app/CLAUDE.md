@@ -200,7 +200,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 - 2026-10-16: The Pillar column heading of the printed SIP and AIP reads "Pillar (Access, Equity, Quality, Resiliency and Well-Being) / Enabling Mechanism"; "Enabling Mechanism" is no longer underlined in the SIP (docs/specs.md 22.1, 23.1).
 - 2026-10-16: Status / DV column of Accounting: the DV number and its full date on separate lines, and a sky-blue "Cash for Disbursement" badge under them (docs/specs.md 33.5).
 - 2026-10-16: Record Payment has optional details (Fund Cluster, Check Date, Bank, Account Name, Account No., Received / Claimed by, Remarks), cleared on Cancel Check; Date Paid and Check Date default to the DV date, Fund Cluster to the DV's, and the bank details to the school's, which School Settings now holds (docs/specs.md 33.5, 5).
-- Live: Railway deployment fc68b82f (2026-10-16 14:09), migrations through `add_check_details_to_liquidation_reports_table`. All 841 tests pass.
+- Live: Railway deployment 0ea36b51 (2026-10-16 14:20), migrations through `add_bank_details_to_schools_and_payments`. All 841 tests pass.
 - Still open before Phase 3 is complete: browser check of the PR form picker, PR numbering/status end-to-end validation, and deciding whether the APP link should be required for PRs.
 - The Planning page is `/planning`. The source is `resources/views/planning.blade.php`; the controller is `app/Http/Controllers/PlanningController.php`.
 - The last GitHub backup is commit `69d1d35` on `master`. Do not reset or discard local changes.
