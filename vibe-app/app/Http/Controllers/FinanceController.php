@@ -138,6 +138,10 @@ class FinanceController extends Controller
             'payment_mode' => ['required', Rule::in(self::PAYMENT_MODES)],
             'payment_reference' => ['nullable', 'string', 'max:100'],
             'paid_at' => ['required', 'date', 'before_or_equal:today'],
+            'check_date' => ['nullable', 'date'],
+            'bank_name' => ['nullable', 'string', 'max:120'],
+            'received_by' => ['nullable', 'string', 'max:120'],
+            'payment_remarks' => ['nullable', 'string', 'max:255'],
         ]);
 
         $liquidationReport->update($data + ['paid_by' => $request->user()->id, 'reissue_pending' => false]);
@@ -172,6 +176,7 @@ class FinanceController extends Controller
             $liquidationReport->journalLines()->delete();
             $liquidationReport->update([
                 'paid_at' => null, 'payment_reference' => null, 'payment_mode' => null, 'paid_by' => null,
+                'check_date' => null, 'bank_name' => null, 'received_by' => null, 'payment_remarks' => null,
                 'dv_number' => null, 'dv_date' => null, 'dv_particulars' => null, 'dv_deductions' => null,
                 'status' => 'for_review', 'approved_at' => null, 'reissue_pending' => true,
             ]);

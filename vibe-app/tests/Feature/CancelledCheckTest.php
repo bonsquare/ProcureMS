@@ -254,6 +254,29 @@ class CancelledCheckTest extends TestCase
         $this->assertSame(9000.0, $totals()['disbursement']);
     }
 
+    public function test_the_optional_check_details_are_saved_and_cleared_when_the_check_is_cancelled(): void
+    {
+        [$report, $master] = $this->reissuedDv();
+
+        $this->actingAs($master)->post(route('cash.pay', $report), [
+            'payment_mode' => 'MDS Check', 'paid_at' => now()->toDateString(), 'check_date' => now()->toDateString(),
+            'bank_name' => 'Land Bank of the Philippines', 'received_by' => 'Juan Dela Cruz', 'payment_remarks' => 'Claimed at the cashier',
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $report->refresh();
+        $this->assertSame('Land Bank of the Philippines', $report->bank_name);
+        $this->assertSame('Juan Dela Cruz', $report->received_by);
+        $this->assertSame(now()->toDateString(), $report->check_date->toDateString());
+
+        $this->actingAs($master)->post(route('cash.cancel', $report), ['reason' => 'Wrong amount', 'password' => self::PASSWORD]);
+
+        $report->refresh();
+        $this->assertNull($report->bank_name);
+        $this->assertNull($report->received_by);
+        $this->assertNull($report->check_date);
+        $this->assertNull($report->payment_remarks);
+    }
+
     public function test_cancel_needs_cash_pay_and_the_ors_edit_needs_accounting_approve(): void
     {
         [$report] = $this->paidOrs();

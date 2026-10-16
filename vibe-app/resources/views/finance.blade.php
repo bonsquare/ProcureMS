@@ -104,6 +104,9 @@
                         @if($r->paid_at)
                             <span class="mt-1 inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-secondary/10 px-2.5 py-1 text-xs font-bold text-secondary"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">check_circle</span>Paid {{ $r->paid_at->format('M d, Y') }}</span>
                             <div class="mt-1 text-xs text-on-surface-variant">{{ $r->payment_mode }}@if($r->payment_reference) · {{ $r->payment_reference }}@endif</div>
+                            @if($r->check_date || $r->bank_name)<div class="text-xs text-on-surface-variant">@if($r->bank_name){{ $r->bank_name }}@endif @if($r->check_date)· Check dated {{ $r->check_date->format('M d, Y') }}@endif</div>@endif
+                            @if($r->received_by)<div class="text-xs text-on-surface-variant">Received by: {{ $r->received_by }}</div>@endif
+                            @if($r->payment_remarks)<div class="text-xs italic text-on-surface-variant">{{ $r->payment_remarks }}</div>@endif
                         @else
                             <span class="mt-1 inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-error/10 px-2.5 py-1 text-xs font-bold text-error"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">hourglass_top</span>Awaiting payment · {{ $r->payment_mode }}</span>
                         @endif
@@ -241,6 +244,10 @@
         <label class="text-xs font-semibold text-on-surface-variant">Mode of Payment <span class="text-error">*</span><select name="payment_mode" required class="{{ $inputClass }}"><option>MDS Check</option><option>Commercial Check</option><option>ADA</option><option>Others</option></select></label>
         <label class="text-xs font-semibold text-on-surface-variant">Check / ADA / OR Reference No.<input name="payment_reference" class="{{ $inputClass }}"></label>
         <label class="text-xs font-semibold text-on-surface-variant">Date Paid <span class="text-error">*</span><input type="date" name="paid_at" required max="{{ now()->toDateString() }}" value="{{ now()->toDateString() }}" class="{{ $inputClass }}"></label>
+        <label class="text-xs font-semibold text-on-surface-variant">Check Date<input type="date" name="check_date" class="{{ $inputClass }}"></label>
+        <label class="text-xs font-semibold text-on-surface-variant">Bank<input name="bank_name" maxlength="120" autocomplete="off" placeholder="e.g. Land Bank of the Philippines" class="{{ $inputClass }}"></label>
+        <label class="text-xs font-semibold text-on-surface-variant">Received / Claimed by<input name="received_by" maxlength="120" autocomplete="off" class="{{ $inputClass }}"></label>
+        <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Remarks<input name="payment_remarks" maxlength="255" autocomplete="off" class="{{ $inputClass }}"></label>
         <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-4 md:col-span-2"><button type="button" data-close class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Cancel</button><button class="rounded bg-secondary px-4 py-2.5 text-xs font-semibold text-white">Confirm Payment</button></div></form></div></div>
 
 <div id="dv-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/50 p-3" role="dialog" aria-modal="true"><div class="flex max-h-[94vh] w-full max-w-[1400px] flex-col overflow-hidden rounded bg-white shadow-2xl"><div class="shrink-0 border-b border-outline-variant/30 px-5 py-3"><h2 class="text-lg font-semibold">Create Disbursement Voucher</h2><p id="dv-title" class="mt-1 text-xs text-on-surface-variant"></p></div>
