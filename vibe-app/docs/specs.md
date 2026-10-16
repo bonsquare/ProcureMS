@@ -838,3 +838,14 @@ Tests: `TurnstileTest`, `LoginIdentifierTest`.
 - Nothing about how sign-in works changed: the field names, the error messages, the Turnstile check, the link to pre-registration and the demo notes (local and demo copies only) are as before.
 
 Tests: `LoginIdentifierTest`, `TurnstileTest`.
+
+## 37. Cancelled checks (approved by the owner 2026-10-16)
+
+A paid check can be cancelled and the payment made again with a corrected ORS, DV and journal entry.
+
+- **Cancel (Cash > Paid tab, permission `cash.pay`):** the **Cancel Check** button asks for a reason and the signed-in user's own password. The check (check no., DV, ORS, mode, date paid, amount, reason, who and when) is saved in the **Cancelled Checks** register; the ORS loses its payment, goes back to For Review and is marked `reissue_pending`. The Allotment Registry follows by itself (it reads the payment from the ORS).
+- **Edit (Accounting, permission `accounting.approve`):** while `reissue_pending`, **Edit ORS / DV** changes the amount, purpose, payee, particulars, date, mode, deductions and journal entry (same checks as creating the DV: chart accounts, balanced, equal to the amount). Every save needs a reason and the user's own password; the old and new amount go to the audit log. An ORS that was not cancelled cannot be edited this way.
+- **Pay again:** approve the ORS again; it returns to Cash > DVs For Payment. Recording the new payment clears `reissue_pending` and locks the records as before.
+- **Cancelled Checks tab (Cash):** read-only list, newest first, with the search box.
+
+Tests: `CancelledCheckTest`.
