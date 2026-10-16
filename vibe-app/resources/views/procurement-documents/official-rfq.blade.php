@@ -12,7 +12,8 @@
     $openingSchedule = $dateOpening
         ? trim(($timeOpening ? $timeOpening.' of ' : '').$dateOpening->format('F d, Y'))
         : '____________________________';
-    $termsOfPayment = trim($meta['terms_of_payment'] ?? $meta['payment_term'] ?? '30 days after delivery');
+    $termsOfPayment = trim($meta['terms_of_payment'] ?? $meta['payment_term'] ?? '') ?: '30 days after Delivery';
+    $deliveryTerm = trim($meta['delivery_term'] ?? '') ?: '30 days upon the receipt of Notice to Proceed';
 @endphp
 <style>
     .rfq-page{width:215.9mm;min-height:355.6mm;padding:12mm;font-size:10.5pt;line-height:1.42}.rfq-page .official-header{font-size:9.5pt}.rfq-page .official-header img{width:21mm;height:21mm}.rfq-title{margin:15px 0 12px;text-align:center;font-size:15pt;font-weight:700;text-decoration:underline}.rfq-fields{margin:16px 0 10px 2px}.rfq-fields .row{display:grid;grid-template-columns:74mm 1fr;margin:4px 0;font-style:italic}.rfq-fields .line{border-bottom:1px solid #111;min-height:17px}.rfq-p{text-align:justify;margin:10px 0}.rfq-sign{text-align:center;margin:24px auto 18px;width:80mm}.rfq-sign .name{font-weight:700;text-decoration:underline}.rfq-page h2{font-size:12pt;margin:12px 0 7px}.rfq-red{color:#000}.rfq-terms{margin-left:34px!important}.rfq-sub{display:block;margin-top:3px}.rfq-page ol{margin:5px 0 0 20px;padding:0}.rfq-page li{padding-left:2px;margin:3px 0;text-align:justify}.rfq-purpose{text-align:center;font-size:13pt;font-weight:700;margin:15px 0}.rfq-spec th,.rfq-spec td{padding:5px}.rfq-spec td{height:25px}.rfq-financial{margin-top:13px}.rfq-offer th,.rfq-offer td{padding:7px}.rfq-offer td{height:57px}.rfq-lines{margin-top:36px}.rfq-lines div{margin:22px 0}.rfq-lines span{display:inline-block;border-bottom:1px solid #111;width:115mm}.rfq-estimate th,.rfq-estimate td{padding:4px}.rfq-estimate td{height:22px}@media print{.rfq-page{margin:0;width:215.9mm;min-height:354mm;box-shadow:none}.rfq-page + .rfq-page{break-before:page;page-break-before:always}}
@@ -50,7 +51,7 @@
     @include('procurement-documents._header')
     <div class="bac">Bids and Awards Committee</div>
     <p class="bold" style="font-size:11pt">Please quote your BEST OFFER for the item/s below. Please do not leave any blank items. Indicate "0" if item being offered is for free.</p>
-    <div class="rfq-purpose">{{ $rfqPurpose }}</div><p class="center">(Delivery: upon receipt of Notice to Proceed)</p>
+    <div class="rfq-purpose">{{ $rfqPurpose }}</div><p class="center">(Delivery: {{ $deliveryTerm }})</p>
     <table class="doc-table rfq-offer"><thead><tr><th>Approved Budget of the Contract</th><th>Total Offered Quotation (Inclusive of VAT)</th></tr></thead><tbody><tr><td class="center bold" style="width:38%;vertical-align:middle">{{ $amountInWords }}</td><td>In Words:<div style="margin:24px 8mm 0;border-bottom:1px solid #111"></div><div style="margin:22px 8mm 0;border-bottom:1px solid #111"></div></td></tr><tr><td class="center bold" style="vertical-align:middle">Php {{ number_format((float)$procurementRequest->amount,2) }}</td><td>In Figures:<div style="margin:24px 8mm 0;width:58mm;border-bottom:1px solid #111"></div></td></tr></tbody></table>
     <div class="rfq-lines"><div>Signature over Printed Name: <span></span></div><div>Position/Designation: <span></span></div><div>Office Telephone / Fax / Mobile Nos.: <span style="width:85mm"></span></div><div>Email Address/es: <span style="width:105mm"></span></div></div>
 </section>
