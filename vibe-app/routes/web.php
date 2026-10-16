@@ -7,6 +7,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\BudgetAllocationController;
 use App\Http\Controllers\BudgetController;
+use App\Http\Controllers\CashReportController;
 use App\Http\Controllers\ChartOfAccountController;
 use App\Http\Controllers\DemoController;
 use App\Http\Controllers\DriveFileController;
@@ -186,6 +187,9 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::get('/cash', [FinanceController::class, 'cash'])->name('cash');
     Route::post('/cash/{liquidationReport}/pay', [FinanceController::class, 'pay'])->middleware('permission:cash.pay')->name('cash.pay');
     Route::post('/cash/{liquidationReport}/cancel', [FinanceController::class, 'cancelCheck'])->middleware('permission:cash.pay')->name('cash.cancel');
+    Route::post('/cash/fund-receipts', [CashReportController::class, 'storeReceipt'])->middleware('permission:cash.pay')->name('cash.fund.store');
+    Route::put('/cash/fund-receipts/{cashFundReceipt}', [CashReportController::class, 'updateReceipt'])->middleware('permission:cash.pay')->name('cash.fund.update')->whereNumber('cashFundReceipt');
+    Route::delete('/cash/fund-receipts/{cashFundReceipt}', [CashReportController::class, 'destroyReceipt'])->middleware('permission:cash.pay')->name('cash.fund.destroy')->whereNumber('cashFundReceipt');
     Route::get('/google-drive', [GoogleDriveController::class, 'show'])->name('google-drive');
     Route::get('/google-drive/connect', [GoogleDriveController::class, 'redirect'])->name('google-drive.redirect');
     Route::get('/google-drive/callback', [GoogleDriveController::class, 'callback'])->name('google-drive.callback');
