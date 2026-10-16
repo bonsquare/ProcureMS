@@ -16,7 +16,7 @@ A new page under the SOB, the **Form Generator**, makes official forms from the 
 - Materials = **all items** of the chosen Program and Activity, each with a checkbox to leave one out.
 - Every POW is **saved** (list, open, edit, print, delete).
 - Paper: **Folio** (210 x 330 mm) by default; the shared Paper Size toolbar lets the user switch to A4 when the POW is short. The POW is not locked to A4.
-- No logos (the workbook has none); not decided against, just not asked for.
+- Logos: the DepEd logo on the left and the school logo on the right, as the SOB print (added at the owner's request after the spec was written).
 
 ## Data (additive migrations; nothing existing is changed)
 
@@ -49,7 +49,7 @@ A new page under the SOB, the **Form Generator**, makes official forms from the 
 
 ## Not in this change
 
-- Logos on the POW; a POW without an SOB; numbering of POWs; approval workflow; attaching the POW to a Purchase Request; the other forms (they are added one by one when the owner supplies them).
+- A POW without an SOB; numbering of POWs; approval workflow; attaching the POW to a Purchase Request; the other forms (they are added one by one when the owner supplies them).
 
 ## Tests (each fails first)
 

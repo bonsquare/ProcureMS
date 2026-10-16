@@ -6,6 +6,7 @@ use App\Models\PowPlan;
 use App\Services\PowService;
 use App\Services\SobService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\Support\SobFixture;
 use Tests\TestCase;
 
@@ -68,14 +69,28 @@ class PowPrintTest extends TestCase
         $this->assertSame(2, substr_count($html, '74,250.00'), 'Budget Allocation and Total Project Cost');
     }
 
+    public function test_the_deped_logo_is_on_the_left_and_the_school_logo_on_the_right(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('logos/school.png', 'png');
+        [$fx, $pow] = $this->savedPow();
+        $fx['school']->update(['logo_path' => 'logos/school.png']);
+
+        $html = $this->printed($pow);
+
+        $this->assertMatchesRegularExpression('/class="masthead-logo masthead-logo-right"><img class="official-logo" src="[^"]*logos\/school\.png"/', $html);
+        $this->assertLessThan(strpos($html, 'Republic of the Philippines'), strpos($html, 'class="masthead-logo masthead-logo-left"'), 'the DepEd logo comes before the title block');
+        $this->assertGreaterThan(strpos($html, 'Republic of the Philippines'), strpos($html, 'class="masthead-logo masthead-logo-right"'), 'the school logo after it');
+    }
+
     public function test_the_school_id_is_the_deped_school_id_else_the_system_code(): void
     {
         [$fx, $pow] = $this->savedPow();
 
-        $this->assertStringContainsString('School ID: '.$fx['school']->code, $this->printed($pow));
+        $this->assertStringContainsString('<td class="label">School ID:</td><td>'.$fx['school']->code.'</td>', $this->printed($pow));
 
         $fx['school']->update(['deped_school_id' => '130059']);
-        $this->assertStringContainsString('School ID: 130059', $this->printed($pow));
+        $this->assertStringContainsString('<td class="label">School ID:</td><td>130059</td>', $this->printed($pow), 'the label and the ID number are separate cells');
     }
 
     public function test_the_optional_superintendent_signature_prints_only_when_filled(): void

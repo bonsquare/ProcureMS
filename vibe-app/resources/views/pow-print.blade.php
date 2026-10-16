@@ -9,7 +9,11 @@
         body { margin: 0; background: #fff; color: #111; font-family: Arial, Helvetica, sans-serif; font-size: 11px; line-height: 1.35; }
         .paper { width: 100%; margin: 0; padding: 0; background: #fff; }
 
-        .masthead { text-align: center; line-height: 1.45; }
+        .masthead { display: grid; grid-template-columns: 90px 1fr 90px; align-items: center; column-gap: 8px; text-align: center; line-height: 1.45; }
+        .masthead-logo { display: flex; align-items: center; min-height: 70px; }
+        .masthead-logo-left { justify-content: flex-start; }
+        .masthead-logo-right { justify-content: flex-end; }
+        .masthead-logo img { height: 74px; width: auto; max-width: 90px; object-fit: contain; }
         .masthead .dept { font-size: 14px; font-weight: bold; }
         .masthead .line { font-weight: bold; text-transform: uppercase; }
         .masthead .school { font-size: 13px; font-weight: bold; text-transform: uppercase; margin-top: 2px; }
@@ -56,18 +60,23 @@
     $address = $pow->school_address ?: $school->address;
     $sign = fn (string $slot) => $pow->signatories[$slot] ?? ['name' => '', 'position' => ''];
     $superintendent = $sign('division_superintendent');
+    [$leftLogo, $rightLogo] = \App\Support\OfficialDocument::logos($school, $agency);
 @endphp
 
 @include('partials.official-toolbar', ['closeUrl' => route('planning.pow.show', $pow), 'context' => 'Program of Works · '.$pow->project_title])
 
 <main class="paper" data-official-page data-sheets data-doc="pow" data-paper="folio" data-orientation="portrait" data-margin="10">
     <header class="masthead">
-        <div>Republic of the Philippines</div>
-        <div class="dept">Department of Education</div>
-        @if($region)<div class="line">{{ $region }}</div>@endif
-        @if($division)<div class="line">{{ $division }}</div>@endif
-        <div class="school">{{ $school->name }}</div>
-        @if($address)<div>{{ $address }}</div>@endif
+        <div class="masthead-logo masthead-logo-left">@if($leftLogo)<img class="official-logo" src="{{ $leftLogo }}" alt="" onerror="this.remove()">@endif</div>
+        <div>
+            <div>Republic of the Philippines</div>
+            <div class="dept">Department of Education</div>
+            @if($region)<div class="line">{{ $region }}</div>@endif
+            @if($division)<div class="line">{{ $division }}</div>@endif
+            <div class="school">{{ $school->name }}</div>
+            @if($address)<div>{{ $address }}</div>@endif
+        </div>
+        <div class="masthead-logo masthead-logo-right">@if($rightLogo)<img class="official-logo" src="{{ $rightLogo }}" alt="" onerror="this.remove()">@endif</div>
     </header>
 
     <div class="doc-title">
@@ -78,7 +87,7 @@
     <table class="info">
         <tr><td class="label">School:</td><td>{{ $school->name }}</td><td class="label">Date:</td><td>{{ $day($pow->pow_date) }}</td></tr>
         <tr><td class="label">School Address:</td><td>{{ $address }}</td><td class="label">Budget Allocation:</td><td>{{ $money($totals['total']) }}</td></tr>
-        <tr><td colspan="2">School ID: {{ $schoolId }}</td><td class="label">Date Started:</td><td>{{ $day($pow->date_started) }}</td></tr>
+        <tr><td class="label">School ID:</td><td>{{ $schoolId }}</td><td class="label">Date Started:</td><td>{{ $day($pow->date_started) }}</td></tr>
         <tr><td class="label">Region:</td><td>{{ $region }}</td><td class="label">Date of Completion:</td><td>{{ $day($pow->date_completed) }}</td></tr>
         <tr><td class="label">Division:</td><td>{{ $division }}</td><td class="label">Minimum Required Manpower:</td><td>{{ $pow->manpower }}</td></tr>
         <tr><td class="label">Project Title:</td><td>{{ $pow->project_title }}</td><td class="label">Minimum Required Equipment:</td><td>{{ $pow->equipment }}</td></tr>
