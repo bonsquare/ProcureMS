@@ -2440,6 +2440,7 @@ class HomeController extends Controller
             'school_head' => ['nullable', 'string', 'max:255'],
             'contact_email' => ['nullable', 'email', 'max:255'],
             'contact_number' => ['nullable', 'string', 'max:50'],
+            'deped_school_id' => ['nullable', 'string', 'max:30'],
             'bank_name' => ['nullable', 'string', 'max:120'],
             'bank_account_name' => ['nullable', 'string', 'max:120'],
             'bank_account_number' => ['nullable', 'string', 'max:60'],

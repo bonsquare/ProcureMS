@@ -10,7 +10,7 @@ class School extends Model
 {
     use HasFactory, BelongsToOrganization;
 
-    protected $fillable = ['organization_id', 'code', 'name', 'address', 'region', 'division', 'district', 'school_type', 'school_head', 'contact_email', 'contact_number', 'status', 'logo_path', 'bank_name', 'bank_account_name', 'bank_account_number'];
+    protected $fillable = ['organization_id', 'code', 'name', 'address', 'region', 'division', 'district', 'school_type', 'school_head', 'contact_email', 'contact_number', 'status', 'logo_path', 'bank_name', 'bank_account_name', 'bank_account_number', 'deped_school_id'];
 
     public function users()
     {

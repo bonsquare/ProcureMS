@@ -95,7 +95,7 @@
         </div>
         <div class="masthead-logo masthead-logo-right">@if($rightLogo)<img class="official-logo" src="{{ $rightLogo }}" alt="" onerror="this.remove()">@endif</div>
     </header>
-    <div class="school-id">School ID: <strong>{{ $plan->school_id_number ?: $school->code }}</strong></div>
+    <div class="school-id">School ID: <strong>{{ $plan->school_id_number ?: ($school->deped_school_id ?: $school->code) }}</strong></div>
 
     <div class="doc-title">
         <h1>SCHOOL OPERATING BUDGET</h1>

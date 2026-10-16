@@ -102,6 +102,21 @@ class SobPrintDesignTest extends TestCase
         $this->assertStringContainsString('School ID: <strong>'.$fx['school']->code.'</strong>', $this->printed($plan->fresh()), 'blank falls back to the school profile');
     }
 
+    public function test_the_deped_school_id_of_the_school_profile_is_printed_when_the_sob_has_none(): void
+    {
+        $fx = SobFixture::make();
+        $this->actingAs($fx['user']);
+        $plan = $this->service()->create($fx['school'], 2026, 1, 'MOOE', $fx['user']);
+
+        $this->post(route('school-settings.school'), ['school_id' => $fx['school']->id, 'name' => $fx['school']->name, 'deped_school_id' => '130059'])->assertSessionHasNoErrors();
+
+        $this->assertSame('130059', $fx['school']->fresh()->deped_school_id);
+        $this->assertStringContainsString('School ID: <strong>130059</strong>', $this->printed($plan->fresh()));
+
+        $this->put(route('planning.sob.update', $plan), ['school_id_number' => '999'])->assertSessionHasNoErrors();
+        $this->assertStringContainsString('School ID: <strong>999</strong>', $this->printed($plan->fresh()), 'the number typed on the SOB still wins');
+    }
+
     public function test_the_agency_logo_is_on_the_left_the_school_logo_on_the_right_and_the_footer_has_title_and_page_numbers(): void
     {
         $fx = SobFixture::make();

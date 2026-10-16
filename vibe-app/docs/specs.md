@@ -249,7 +249,7 @@ Each section is locked until **Edit** is pressed, then **Cancel** and **Save** (
 
 - **Public Header:** agency logo, republic name, department / agency, address, email, phone.
 - **Division Office Details:** division logo, region, school division office, division address, email, contact number; a small separator, then **District Office** (district office, address, email, contact no.). Only the division has a logo.
-- **School details:** school logo, **School ID (auto-generated, read-only)**, school name, type, address, contact no., email, and the school's **Bank**, **Account name** and **Account no.** (optional; the defaults of Record Payment, 33.5).
+- **School details:** school logo, **School ID (auto-generated, read-only)**, **DepEd School ID** (typed, optional; `schools.deped_school_id`), school name, type, address, contact no., email, and the school's **Bank**, **Account name** and **Account no.** (optional; the defaults of Record Payment, 33.5).
 - The School ID is generated when the school is created and never typed. The User ID is shown per account in System Users, not here.
 - Fiscal year and document numbering are not editable here; documents keep numbering as before.
 
@@ -681,6 +681,7 @@ Where a line below differs from 24.1 or 26.1, this one is the later decision.
 - The District line of the letterhead is in normal weight and in the case it was typed. The signature names are bold, capitals and **underlined**. The School ID line is bold, in the same size as the school name (12px).
 - The Summary per object of expenditure stays **per actual account title** (the Budget uses the same accounts); the workbook's own summary labels are not used.
 - Not done: a program and its only item on one row (the workbook does it for some programs and not for others, so it cannot be derived).
+- The School ID line of the printed SOB is, in this order: the number typed on the SOB (Details and signatories), the **DepEd School ID** of the school profile, then the system School ID (`code`).
 - Tests: `SobPrintDesignTest`, `SobItemGroupTest`.
 
 ## 27. Allotment Registry fund details and system-wide contrast (approved by the owner 2026-10-15)

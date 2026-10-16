@@ -7,7 +7,7 @@
     $schoolActive = $school->status === 'active';
     $detail = fn (string $label, $value, bool $wide = false) => compact('label', 'value', 'wide');
     $schoolFacts = [
-        $detail('School ID', $school->code), $detail('School type', $school->school_type), $detail('Region', $school->region),
+        $detail('School ID', $school->code), $detail('DepEd School ID', $school->deped_school_id ?: '—'), $detail('School type', $school->school_type), $detail('Region', $school->region),
         $detail('Division', $school->division), $detail('District', $school->district), $detail('School head', $school->school_head),
         $detail('Email', $school->contact_email), $detail('Contact number', $school->contact_number), $detail('Registered', $school->created_at?->format('M d, Y')),
         $detail('Address', $school->address, true),

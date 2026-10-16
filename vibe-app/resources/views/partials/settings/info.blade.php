@@ -109,6 +109,7 @@
                     {!! $logoBlock('logo-school', 'school_logo', 'School logo', $selectedSchool->logo_path) !!}
                     <div class="grid gap-3 sm:grid-cols-2">
                         <label class="block text-xs font-bold sm:col-span-2">School ID <span class="font-normal text-on-surface-variant">(auto-generated)</span><input value="{{ $selectedSchool->code }}" readonly tabindex="-1" class="{{ $readonly }}"></label>
+                        <label class="block text-xs font-bold sm:col-span-2">DepEd School ID <span class="font-normal text-on-surface-variant">(printed on the SOB and other forms)</span><input name="deped_school_id" maxlength="30" value="{{ old('deped_school_id', $selectedSchool->deped_school_id) }}" placeholder="e.g. 130059" class="{{ $input }}"></label>
                         <label class="block text-xs font-bold sm:col-span-2">School name<input name="name" required value="{{ old('name', $selectedSchool->name) }}" class="{{ $input }}"></label>
                         <label class="block text-xs font-bold sm:col-span-2">School type<input name="school_type" value="{{ old('school_type', $selectedSchool->school_type) }}" placeholder="Elementary / Integrated" class="{{ $input }}"></label>
                         <label class="block text-xs font-bold sm:col-span-2">School address<input name="address" value="{{ old('address', $selectedSchool->address) }}" class="{{ $input }}"></label>
@@ -119,7 +120,7 @@
                         <label class="block text-xs font-bold">Account no.<input name="bank_account_number" maxlength="60" value="{{ old('bank_account_number', $selectedSchool->bank_account_number) }}" class="{{ $input }}"></label>
                     </div>
                 </fieldset>
-                {!! $actions($filled([$selectedSchool->school_type, $selectedSchool->address, $selectedSchool->contact_number, $selectedSchool->contact_email, $selectedSchool->logo_path])) !!}
+                {!! $actions($filled([$selectedSchool->deped_school_id, $selectedSchool->school_type, $selectedSchool->address, $selectedSchool->contact_number, $selectedSchool->contact_email, $selectedSchool->logo_path])) !!}
             </section>
         </form>
     </div>

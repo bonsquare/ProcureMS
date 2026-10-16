@@ -64,7 +64,7 @@ class DocumentStrip
             self::check('At least one item', $items->isNotEmpty(), true, $items->isEmpty() ? 'Add the items of the programs that have a budget.' : $items->count().' items'),
             self::check('Every item has an amount', $items->isNotEmpty() && $noAmount->isEmpty(), true, $noAmount->count().' with no amount'),
             self::check('No program goes over the AIP amount', $over->isEmpty(), false, $over->count().' over (saving is still allowed)'),
-            self::check('School ID is typed (printed in the heading)', trim((string) $plan->school_id_number) !== '', false, 'Type it in Details and signatories.'),
+            self::check('School ID is typed (printed in the heading)', trim((string) ($plan->school_id_number ?: $plan->school?->deped_school_id)) !== '', false, 'Type it in Details and signatories.'),
             self::signatories($plan, ['prepared_by', 'recommended_by', 'approved_by']),
         ];
         $aip = Aip::query()->where('school_id', $plan->school_id)->where('fiscal_year', $plan->fiscal_year)->first();
