@@ -49,7 +49,7 @@ class DvFundClusterTest extends TestCase
         $this->get(route('accounting.dv.print', $report))->assertSee('>MOOE</text>', false);
     }
 
-    public function test_the_printed_dv_underlines_the_header_labels_and_has_the_bank_name_in_the_top_row_of_receipt_of_payment(): void
+    public function test_the_printed_dv_underlines_the_header_labels_and_has_the_bank_name_raised_in_its_own_cell(): void
     {
         [$report, $master] = $this->ors();
         $report->update(['dv_number' => 'DV-FC-1', 'dv_date' => now()->toDateString()]);
@@ -58,6 +58,6 @@ class DvFundClusterTest extends TestCase
         foreach (['Fund Cluster :', 'Date :', 'DV No. :'] as $label) {
             $this->assertMatchesRegularExpression('/font-weight="bold" text-decoration="underline"[^>]*>'.preg_quote($label, '/').'<\/text>/', $html);
         }
-        $this->assertMatchesRegularExpression('/x="170" y="688\.5"[^>]*>Bank Name &amp; Account Number:<\/text>/', $html);
+        $this->assertMatchesRegularExpression('/x="316\.07" y="707"[^>]*>Bank Name &amp; Account Number:<\/text>/', $html);
     }
 }

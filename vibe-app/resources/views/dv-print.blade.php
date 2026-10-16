@@ -201,7 +201,7 @@
 <text transform="translate(0 {{ $shift }})" x="31.62" y="709.78" font-family="'Times New Roman',Times,serif" font-size="9.2" xml:space="preserve">Check/</text>
 <text transform="translate(0 {{ $shift }})" x="24.30" y="720.87" font-family="'Times New Roman',Times,serif" font-size="9.2" xml:space="preserve">ADA No. :</text>
 <text transform="translate(0 {{ $shift }})" x="215.57" y="712.2" dominant-baseline="central" font-family="'Times New Roman',Times,serif" font-size="9.2" xml:space="preserve">Date :</text>
-<text transform="translate(0 {{ $shift }})" x="170" y="688.5" dominant-baseline="central" font-family="'Times New Roman',Times,serif" font-size="9.2" xml:space="preserve">Bank Name &amp; Account Number:</text>
+<text transform="translate(0 {{ $shift }})" x="316.07" y="707" font-family="'Times New Roman',Times,serif" font-size="9.2" xml:space="preserve">Bank Name &amp; Account Number:</text>
 <text transform="translate(0 {{ $shift }})" x="24.56" y="748.59" font-family="'Times New Roman',Times,serif" font-size="9.2" xml:space="preserve">Signature :</text>
 <text transform="translate(0 {{ $shift }})" x="215.57" y="748.59" font-family="'Times New Roman',Times,serif" font-size="9.2" xml:space="preserve">Date :</text>
 <text transform="translate(0 {{ $shift }})" x="316.07" y="748.59" font-family="'Times New Roman',Times,serif" font-size="9.2" xml:space="preserve">Printed Name:</text>
