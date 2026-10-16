@@ -675,6 +675,7 @@ Where a line below differs from 24.1 or 26.1, this one is the later decision.
 
 - Pillar names print as in the workbook: **RESILIENCY & WELL-BEING** (the stored name stays "Resiliency and Well-Being"). A pillar with no entries prints its bar only (no PPA row, no Sub-Total).
 - The program (PPA) is a **bold row of its own** across the table, printed once; under it each Item shows the account title (or its note) in the left column.
+- The account title of an Item is indented under the program row; when the Item has a note (for example POW required), the title comes first and the note is under it (the note no longer replaces the title).
 - Other lines (labor): the name (for example 35% Labor) in the left column and the word **Labor** in **bold**, right-aligned, in the Unit of Measure column; the amount in the Amount column.
 - **GRAND TOTAL** of the table is bold, right-aligned, with no fill. The summary table keeps its green GRAND TOTAL.
 - The District line of the letterhead is in normal weight and in the case it was typed. The signature names are bold and capitals, **not underlined**.

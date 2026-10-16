@@ -220,10 +220,10 @@ class SobItemGroupTest extends TestCase
 
         $html = $this->get(route('planning.sob.print', $plan))->assertOk()->getContent();
 
-        $this->assertSame(1, preg_match_all('/<td class="account"[^>]*>Electricity Expenses<\/td>/', $html), 'the account title is written once for its particulars');
+        $this->assertSame(1, preg_match_all('/<td class="account"[^>]*><div>Electricity Expenses<\/div><\/td>/', $html), 'the account title is written once for its particulars');
         $this->assertMatchesRegularExpression('/<tr class="program-row"><td colspan="7">Program One<\/td><\/tr>/', $html, 'the program is its own bold row, as in the workbook');
-        $this->assertMatchesRegularExpression('/<td class="account" rowspan="\d+">POW required<\/td>/', $html, 'the note stands in for the account title');
-        $this->assertMatchesRegularExpression('/<td class="account" rowspan="\d+">Electricity Expenses<\/td>/', $html);
+        $this->assertMatchesRegularExpression('/<td class="account" rowspan="\d+"><div>[^<]+<\/div><div>POW required<\/div><\/td>/', $html, 'the account title first, then the note under it');
+        $this->assertMatchesRegularExpression('/<td class="account" rowspan="\d+"><div>Electricity Expenses<\/div><\/td>/', $html);
         $this->assertStringContainsString('35% Labor', $html);
         $this->assertSame(2, substr_count($html, 'class="sub item-sub"'), 'only the Item that has other lines has a Sub-Total of its particulars and a Sub-Total with its other lines (the labor)');
     }

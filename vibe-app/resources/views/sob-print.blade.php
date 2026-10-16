@@ -39,6 +39,7 @@
         tr.grand td { font-weight: bold; background: #92d050; }
         tr.grand-total td { font-weight: bold; }
         tr.program-row td { font-weight: bold; }
+        td.account { padding-left: 16px; }
         .masthead .line.district { font-weight: normal; text-transform: none; }
         .summary { margin-top: 14px; width: 62%; }
         .summary caption { text-align: left; font-weight: bold; padding-bottom: 3px; }
@@ -120,7 +121,7 @@
                         @php $groupRows = $group['items']->count() + ($group['extras']->isNotEmpty() ? 1 : 0); @endphp
                         @foreach($group['items'] as $index => $item)
                             <tr>
-                                @if($index === 0)<td class="account" rowspan="{{ $groupRows }}">{{ $group['note'] ?: $group['account']?->title }}</td>@endif
+                                @if($index === 0)<td class="account" rowspan="{{ $groupRows }}"><div>{{ $group['account']?->title }}</div>@if($group['note'])<div>{{ $group['note'] }}</div>@endif</td>@endif
                                 <td>{{ $item->particulars }}</td>
                                 <td class="center">{{ $number($item->frequency) }}</td>
                                 <td class="center">{{ $number($item->quantity) }}</td>
