@@ -77,4 +77,40 @@ class FormGeneratorController extends Controller
 
         return redirect()->route('planning.pow.show', $pow)->with('success', 'The Program of Works was saved.');
     }
+
+    public function show(Request $request, PowPlan $powPlan): View
+    {
+        $this->canOpen($request);
+        $this->scoped($request, $powPlan->school_id);
+        $powPlan->load(['school', 'sobPlan', 'items']);
+        $lines = $powPlan->items->map(fn ($item) => ['description' => $item->description, 'unit' => $item->unit, 'quantity' => $item->quantity, 'unit_cost' => $item->unit_cost, 'sob_item_id' => $item->sob_item_id, 'include' => true])->all();
+        $blank = ['description' => '', 'unit' => '', 'quantity' => '', 'unit_cost' => '', 'sob_item_id' => null, 'include' => false];
+
+        return view('pow-show', [
+            'pow' => $powPlan, 'school' => $powPlan->school, 'plan' => $powPlan->sobPlan, 'lines' => [...$lines, $blank, $blank, $blank],
+            'labor' => (float) $powPlan->labor_cost, 'signatories' => $powPlan->signatories ?? [], 'program' => $powPlan->program, 'canManage' => $request->user()->hasPermission('planning.manage'),
+        ]);
+    }
+
+    public function update(Request $request, PowPlan $powPlan): RedirectResponse
+    {
+        $this->scoped($request, $powPlan->school_id);
+        $data = $request->only(['project_title', 'school_address', 'pow_date', 'date_started', 'date_completed', 'manpower', 'equipment', 'labor_cost', 'signatories']);
+        $data['lines'] = collect((array) $request->input('lines', []))->filter(fn ($line) => is_array($line) && ! empty($line['include']))->values()->all();
+
+        $this->pow->update($powPlan, $data, $request->user());
+        AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $powPlan->school_id, 'action' => 'pow_updated', 'auditable_type' => PowPlan::class, 'auditable_id' => $powPlan->id]);
+
+        return redirect()->route('planning.pow.show', $powPlan)->with('success', 'The Program of Works was saved.');
+    }
+
+    public function destroy(Request $request, PowPlan $powPlan): RedirectResponse
+    {
+        $this->scoped($request, $powPlan->school_id);
+        $sobPlanId = $powPlan->sob_plan_id;
+        AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $powPlan->school_id, 'action' => 'pow_deleted', 'auditable_type' => PowPlan::class, 'auditable_id' => $powPlan->id, 'metadata' => ['title' => $powPlan->project_title]]);
+        $powPlan->delete();
+
+        return redirect()->route('planning.forms', ['sob_plan_id' => $sobPlanId])->with('success', 'The Program of Works was deleted.');
+    }
 }

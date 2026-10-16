@@ -25,7 +25,7 @@
         @forelse($lines as $i => $line)
             <tr data-line>
                 <td class="px-3 py-2"><input type="checkbox" name="lines[{{ $i }}][include]" value="1" @checked(old("lines.$i.include", $line['include'] ?? true)) aria-label="Use this line"><input type="hidden" name="lines[{{ $i }}][sob_item_id]" value="{{ $line['sob_item_id'] ?? '' }}"></td>
-                <td class="px-3 py-2"><input name="lines[{{ $i }}][description]" required maxlength="255" value="{{ old("lines.$i.description", $line['description']) }}" class="{{ $box }} mt-0"></td>
+                <td class="px-3 py-2"><input name="lines[{{ $i }}][description]" maxlength="255" value="{{ old("lines.$i.description", $line['description']) }}" class="{{ $box }} mt-0"></td>
                 <td class="px-3 py-2"><input name="lines[{{ $i }}][unit]" maxlength="50" value="{{ old("lines.$i.unit", $line['unit'] ?? '') }}" class="{{ $box }} mt-0 w-20"></td>
                 <td class="px-3 py-2"><input type="number" step="0.01" min="0.01" name="lines[{{ $i }}][quantity]" data-qty value="{{ old("lines.$i.quantity", $line['quantity']) }}" class="{{ $box }} mt-0 w-24 text-right"></td>
                 <td class="px-3 py-2"><input type="number" step="0.01" min="0" name="lines[{{ $i }}][unit_cost]" data-cost value="{{ old("lines.$i.unit_cost", $line['unit_cost']) }}" class="{{ $box }} mt-0 w-28 text-right"></td>
