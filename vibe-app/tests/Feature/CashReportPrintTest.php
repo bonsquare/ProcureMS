@@ -2,8 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Models\BudgetAllocation;
+use App\Models\CancelledCheck;
+use App\Models\ChartOfAccount;
+use App\Models\LiquidationReport;
 use App\Models\Organization;
 use App\Models\School;
+use App\Models\SchoolStaff;
 use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -60,5 +65,71 @@ class CashReportPrintTest extends TestCase
         foreach (['unpaid', 'paid', 'cancelled'] as $tab) {
             $this->actingAs($user)->get(route('cash', ['tab' => $tab]))->assertOk();
         }
+    }
+
+    private function paid(School $school, string $check, string $paidAt, float $amount, string $code = '5020399000', string $title = 'Other Supplies Expenses', array $overrides = []): LiquidationReport
+    {
+        $account = ChartOfAccount::firstOrCreate(['organization_id' => $school->organization_id, 'code' => $code], ['title' => $title, 'category' => 'Expense']);
+        $line = BudgetAllocation::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'fiscal_year' => 2026, 'source_of_fund' => 'MOOE', 'particulars' => 'Line', 'chart_of_account_id' => $account->id, 'amount' => 100000, 'q1_amount' => 25000, 'q2_amount' => 25000, 'q3_amount' => 25000, 'q4_amount' => 25000]);
+
+        return LiquidationReport::create($overrides + [
+            'organization_id' => $school->organization_id, 'school_id' => $school->id, 'report_number' => 'LR-'.$check, 'ors_number' => 'ORS-2026-'.$check, 'dv_number' => 'DV-2026-'.$check,
+            'dv_date' => $paidAt, 'responsibility_center_code' => '19-001-01', 'amount' => $amount, 'status' => 'approved', 'payee' => 'Payee '.$check, 'purpose' => 'Purpose '.$check,
+            'payment_mode' => 'MDS Check', 'payment_reference' => $check, 'paid_at' => $paidAt, 'budget_allocation_id' => $line->id,
+        ]);
+    }
+
+    private function periodQuery(School $school, array $extra = []): array
+    {
+        return ['school_id' => $school->id, 'from' => '2026-07-01', 'to' => '2026-09-30'] + $extra;
+    }
+
+    public function test_the_roci_prints_header_lines_and_total(): void
+    {
+        [$school, $user] = $this->tenant('RO1');
+        $school->update(['bank_name' => 'LBP', 'bank_account_number' => '000742-1147-24']);
+        SchoolStaff::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'name' => 'Baby Joy I. Carbonell', 'position' => 'Teacher-In-Charge', 'document_role' => 'Disbursing Officer']);
+        $this->paid($school, '0001', '2026-09-29', 997.5);
+        $this->paid($school, '0002', '2026-09-30', 2.5, '5021299000', 'Janitorial / Other Gen. Services');
+
+        $this->actingAs($user)->get(route('cash.report.roci', $this->periodQuery($school, ['report_no' => '7'])))->assertOk()
+            ->assertSee('REPORT OF CHECKS ISSUED')->assertSee('Appendix 35')->assertSee('School RO1')
+            ->assertSee('000742-1147-24')->assertSee('BABY JOY I. CARBONELL')
+            ->assertSee('0001')->assertSee('DV-2026-0001')->assertSee('ORS-2026-0001')->assertSee('19-001-01')->assertSee('Payee 0001')
+            ->assertSee('5020399000')->assertSee('Other Supplies Expenses')->assertSee('997.50')->assertSee('1,000.00')
+            ->assertSee('data-official-page', false);
+    }
+
+    public function test_a_cancelled_check_prints_as_cancelled_check_with_no_amount(): void
+    {
+        [$school, $user] = $this->tenant('RO2');
+        $paid = $this->paid($school, '0010', '2026-08-05', 300);
+        CancelledCheck::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'liquidation_report_id' => $paid->id, 'ors_number' => 'ORS-2026-0010', 'dv_number' => 'DV-2026-0010', 'check_number' => '0009', 'payment_mode' => 'MDS Check', 'paid_at' => '2026-08-01', 'amount' => 300, 'reason' => 'Wrong amount', 'cancelled_by' => $user->id, 'cancelled_at' => '2026-08-04 10:00:00']);
+
+        $html = $this->actingAs($user)->get(route('cash.report.roci', $this->periodQuery($school)))->assertOk()->getContent();
+
+        $this->assertStringContainsString('Cancelled Check', $html);
+        $this->assertStringContainsString('0009', $html);
+        $this->assertSame(2, substr_count($html, '300.00'), 'the paid check line and the total only: the cancelled line has no amount');
+    }
+
+    public function test_the_roci_prints_with_no_payments_in_the_period(): void
+    {
+        [$school, $user] = $this->tenant('RO3');
+
+        $html = $this->actingAs($user)->get(route('cash.report.roci', $this->periodQuery($school)))->assertOk()->assertSee('REPORT OF CHECKS ISSUED')->getContent();
+
+        $document = substr($html, (int) strpos($html, '<main'));
+        $this->assertStringNotContainsString('NaN', $document);
+        $this->assertStringNotContainsString('undefined', $document);
+        $this->assertStringContainsString('No check was issued in this period.', $document);
+    }
+
+    public function test_ada_payments_are_not_listed_in_the_roci(): void
+    {
+        [$school, $user] = $this->tenant('RO4');
+        $this->paid($school, 'ADA9', '2026-08-05', 300, '5020399000', 'Other Supplies Expenses', ['payment_mode' => 'ADA']);
+
+        $this->actingAs($user)->get(route('cash.report.roci', $this->periodQuery($school)))->assertOk()->assertDontSee('ADA9');
     }
 }

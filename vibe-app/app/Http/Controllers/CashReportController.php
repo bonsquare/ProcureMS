@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AgencySetting;
 use App\Models\AuditLog;
 use App\Models\CashFundReceipt;
+use App\Models\LiquidationReport;
 use App\Models\School;
+use App\Models\SchoolStaff;
+use App\Services\CashReportService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -106,10 +110,44 @@ class CashReportController extends Controller
         ];
     }
 
+    /**
+     * Everything the three print pages share: the school, the agency, the Disbursing Officer, the bank, the fund cluster, the period text and the figures.
+     *
+     * @return array<string, mixed>
+     */
+    private function reportViewData(Request $request): array
+    {
+        $context = $this->reportContext($request);
+        $school = $context['school'];
+        $latestPayment = LiquidationReport::query()->where('school_id', $school->id)->whereNotNull('paid_at')->latest('paid_at')->first();
+        $bank = trim(($school->bank_name ?: $latestPayment?->bank_name).' / '.($school->bank_account_number ?: $latestPayment?->bank_account_number), ' /');
+
+        return [
+            'school' => $school,
+            'agency' => AgencySetting::withoutGlobalScopes()->where('organization_id', $school->organization_id)->first(),
+            'officer' => SchoolStaff::active()->where('school_id', $school->id)->get()->first(fn (SchoolStaff $staff) => $staff->hasRole('document_role', 'Disbursing Officer')),
+            'bank' => $bank,
+            'fundCluster' => $latestPayment?->payment_fund_cluster ?: 'General Fund',
+            'period' => $this->periodText($context['from'], $context['to']),
+            'reportNo' => $context['report_no'],
+            'sheetNo' => $context['sheet_no'],
+            'data' => app(CashReportService::class)->build($school, $context['from'], $context['to']),
+        ];
+    }
+
+    /** "3RD Quarter C.Y. 2026" when the dates are a whole quarter, else the two dates. */
+    private function periodText(Carbon $from, Carbon $to): string
+    {
+        if ($from->isSameDay($from->copy()->startOfQuarter()) && $to->isSameDay($from->copy()->endOfQuarter()) && $from->year === $to->year) {
+            return strtoupper(['1st', '2nd', '3rd', '4th'][$from->quarter - 1]).' Quarter C.Y. '.$from->year;
+        }
+
+        return $from->format('F j, Y').' to '.$to->format('F j, Y');
+    }
+
     public function roci(Request $request)
     {
-        $this->reportContext($request);
-        abort(501, 'The Report of Checks Issued is not built yet.');
+        return view('cash-report-roci', ['report' => $this->reportViewData($request)]);
     }
 
     public function checksAdvices(Request $request)
