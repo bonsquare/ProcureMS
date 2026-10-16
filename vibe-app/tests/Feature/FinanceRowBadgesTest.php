@@ -87,12 +87,13 @@ class FinanceRowBadgesTest extends TestCase
         $this->actingAs($master)->get(route('budget'))->assertOk()->assertSee('For Review Accounting');
     }
 
-    public function test_a_row_with_a_dv_does_not_list_its_journal_entry_because_the_documents_show_it(): void
+    public function test_a_row_with_a_dv_has_no_journal_entry_and_no_signatories_because_both_are_set_when_the_dv_is_made(): void
     {
         [$master] = $this->row('DV-2026-0001');
         DvJournalLine::create(['organization_id' => LiquidationReport::firstOrFail()->organization_id, 'liquidation_report_id' => LiquidationReport::firstOrFail()->id, 'line_no' => 1, 'account_code' => '1010404000', 'account_title' => 'Cash Account', 'debit' => 3000, 'credit' => 0]);
 
         $this->actingAs($master)->get(route('accounting', ['tab' => 'with_dv']))->assertOk()
-            ->assertDontSee('Journal entry ·')->assertDontSee('No journal entry')->assertDontSee('Cash Account');
+            ->assertDontSee('Journal entry ·')->assertDontSee('No journal entry')->assertDontSee('Cash Account')
+            ->assertDontSee('Signatories</summary>', false)->assertDontSee('Save signatories');
     }
 }

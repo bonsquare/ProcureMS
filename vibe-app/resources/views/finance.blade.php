@@ -202,15 +202,6 @@
                     @if($r->dv_number)
                         <a href="{{ route('accounting.dv.print', $r) }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-primary ring-1 ring-outline-variant/50 hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">print</span>DV</a>
                         @if(! $isCash && auth()->user()->hasPermission('accounting.approve'))<form method="POST" action="{{ route('accounting.dv.options', $r) }}">@csrf @method('PATCH')<input type="hidden" name="dv_include_appropriation" value="{{ $r->dv_include_appropriation ? 0 : 1 }}"><button class="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-on-surface-variant ring-1 ring-outline-variant/50 hover:bg-surface-low" title="Show or hide the APPROPRIATION table on the printed DV">Appropriation table: {{ $r->dv_include_appropriation ? 'On' : 'Off' }}</button></form>
-                        @if(! empty($dvRowPanels[$r->id]) && ! $r->reissue_pending)
-                            <details class="relative">
-                                <summary class="cursor-pointer list-none rounded-lg px-2.5 py-1.5 text-xs font-semibold text-on-surface-variant ring-1 ring-outline-variant/50 hover:bg-surface-low" title="Change who signs the printed DV">Signatories</summary>
-                                <form method="POST" action="{{ route('accounting.dv.options', $r) }}" class="absolute right-0 z-20 mt-2 w-72 space-y-3 rounded-lg border border-outline-variant/50 bg-white p-4 shadow-xl">@csrf @method('PATCH')
-                                    @include('partials.signatory-picker', ['rows' => $dvRowPanels[$r->id], 'enabled' => true])
-                                    <button class="rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-white hover:bg-primary-container">Save signatories</button>
-                                </form>
-                            </details>
-                        @endif
                     @endif
                     @endif
                     @if(auth()->user()->hasPermission('accounting.approve') && ! $isCash && ! $r->dv_number)
