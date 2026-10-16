@@ -39,7 +39,7 @@ class AllotmentRegistryService
             ]);
             if ($ors->paid_at) {
                 $entries->push([
-                    'date' => $ors->paid_at, 'type' => 'Disbursement', 'ref' => trim(($ors->dv_number ? 'DV '.$ors->dv_number : '').' '.$ors->payment_reference), 'payee' => $ors->payee,
+                    'date' => $ors->paid_at, 'type' => 'Disbursement', 'ref' => trim(($ors->dv_number ? LiquidationReport::dvLabel($ors->dv_number) : '').' '.$ors->payment_reference), 'payee' => $ors->payee,
                     'particulars' => $ors->dv_particulars ?: $ors->purpose, 'allotment' => 0.0, 'obligation' => 0.0, 'disbursement' => (float) $ors->amount, 'quarter' => $this->quarterOf($ors->paid_at),
                 ]);
             }

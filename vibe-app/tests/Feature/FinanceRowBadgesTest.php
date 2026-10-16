@@ -64,4 +64,17 @@ class FinanceRowBadgesTest extends TestCase
             ->assertSee('bg-violet-100 px-1.5 py-0.5 text-[10px] font-bold text-violet-800">ORS-RB-1', false)
             ->assertSee('storefront</span>Row Supplier', false);
     }
+
+    public function test_the_budget_stage_and_the_messages_do_not_double_the_dv_letters(): void
+    {
+        [$master] = $this->row('DV-2026-0001');
+
+        $html = $this->actingAs($master)->get(route('budget'))->assertOk()->getContent();
+        $this->assertStringContainsString('DV-2026-0001', $html);
+        $this->assertStringNotContainsString('DV DV-2026-0001', $html);
+
+        $this->assertSame('DV-2026-0001', LiquidationReport::dvLabel('DV-2026-0001'));
+        $this->assertSame('DV 2026-0002', LiquidationReport::dvLabel('2026-0002'));
+        $this->assertSame('DV', LiquidationReport::dvLabel(null));
+    }
 }

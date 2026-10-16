@@ -58,6 +58,14 @@ class LiquidationReport extends Model
         return $this->hasMany(CancelledCheck::class);
     }
 
+    /** A DV number as people read it: it usually starts with "DV-" already, so the letters are not put in front twice. */
+    public static function dvLabel(?string $number): string
+    {
+        $number = (string) $number;
+
+        return preg_match('/^DV\b/i', $number) ? $number : trim('DV '.$number);
+    }
+
     public function submitter()
     {
         return $this->belongsTo(User::class, 'submitted_by');

@@ -278,12 +278,12 @@ class FinanceController extends Controller
             $liquidationReport->transaction?->recordEvent('accounting', 'dv_edited', null, 'ready_for_payment', $data['dv_number'], $changes);
             AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $liquidationReport->school_id, 'action' => 'dv_edited', 'auditable_type' => LiquidationReport::class, 'auditable_id' => $liquidationReport->id, 'metadata' => ['dv' => $data['dv_number'], 'ors' => $liquidationReport->ors_number] + $changes]);
 
-            return redirect()->route('accounting', ['tab' => 'with_dv'])->with('success', "DV {$data['dv_number']} updated for {$liquidationReport->ors_number}.");
+            return redirect()->route('accounting', ['tab' => 'with_dv'])->with('success', LiquidationReport::dvLabel($data['dv_number'])." updated for {$liquidationReport->ors_number}.");
         }
         $liquidationReport->transaction?->recordEvent('accounting', 'dv_created', null, 'ready_for_payment', $data['dv_number'], ['dv_date' => $data['dv_date']]);
         AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $liquidationReport->school_id, 'action' => 'dv_created', 'auditable_type' => LiquidationReport::class, 'auditable_id' => $liquidationReport->id, 'metadata' => ['dv' => $data['dv_number'], 'ors' => $liquidationReport->ors_number]]);
 
-        return redirect()->route('accounting', ['tab' => 'with_dv'])->with('success', "DV {$data['dv_number']} created for {$liquidationReport->ors_number}. It is now queued in Cash for payment.");
+        return redirect()->route('accounting', ['tab' => 'with_dv'])->with('success', LiquidationReport::dvLabel($data['dv_number'])." created for {$liquidationReport->ors_number}. It is now queued in Cash for payment.");
     }
 
     /** Corrects the amount, purpose and payee of an ORS whose check was cancelled, while it is back in review. */
@@ -411,8 +411,8 @@ class FinanceController extends Controller
         $liquidationReport->update($changes);
 
         return back()->with('success', array_key_exists('dv_include_appropriation', $changes)
-            ? 'DV '.$liquidationReport->dv_number.': appropriation table '.($liquidationReport->dv_include_appropriation ? 'will be printed' : 'removed from the print').'.'
-            : 'DV '.$liquidationReport->dv_number.': signatories saved.');
+            ? LiquidationReport::dvLabel($liquidationReport->dv_number).': appropriation table '.($liquidationReport->dv_include_appropriation ? 'will be printed' : 'removed from the print').'.'
+            : LiquidationReport::dvLabel($liquidationReport->dv_number).': signatories saved.');
     }
 
     /** The report's saved signatories with its DV choices replaced; an empty list removes them and leaves the ORS ones alone. */
