@@ -25,7 +25,21 @@
 @php
     $pr = $report->procurementRequest;
     $fit = fn ($s, $w, $size) => min($size, round($w / max(mb_strlen((string) $s), 1) / 0.5, 1));
-    $fund = $report->dv_fund_cluster ?: ($report->source_of_fund ?: $pr?->source_of_fund);
+    $fund = $report->dv_fund_cluster ?: 'General Fund';
+    // A long Fund Cluster takes a second line (split at the space nearest the middle) instead of shrinking to nothing.
+    $fundLines = [$fund];
+    // A short Fund Cluster (General Fund, Fund 101) sits on the same line as its label; a longer one goes under it.
+    $fundHorizontal = mb_strlen(trim((string) $fund)) <= 12;
+    if (mb_strlen((string) $fund) > 22 && str_contains(trim((string) $fund), ' ')) {
+        $words = preg_split('/\s+/', trim((string) $fund));
+        $best = 1;
+        foreach (range(1, count($words) - 1) as $cut) {
+            if (abs(mb_strlen(implode(' ', array_slice($words, 0, $cut))) - mb_strlen(implode(' ', array_slice($words, $cut)))) < abs(mb_strlen(implode(' ', array_slice($words, 0, $best))) - mb_strlen(implode(' ', array_slice($words, $best))))) {
+                $best = $cut;
+            }
+        }
+        $fundLines = [implode(' ', array_slice($words, 0, $best)), implode(' ', array_slice($words, $best))];
+    }
     $date = $report->dv_date?->format('F d, Y');
     $payee = $report->payee;
     $tin = $report->payee_tin;
@@ -126,7 +140,7 @@
 <line x1="394.74" y1="129.62" x2="394.74" y2="142.79" stroke-width="0.69"/>
 <line x1="394.74" y1="{{ 435.29 - $cut }}" x2="394.74" y2="{{ 496.98 + $shift }}" stroke-width="0.69"/>
 <line transform="translate(0 {{ $shift }})" class="dv-appropriation" x1="416.92" y1="793.65" x2="416.92" y2="881.67" stroke-width="0.69"/>
-<line x1="480.69" y1="41.59" x2="480.69" y2="119.91" stroke-width="0.69"/>
+<line x1="460.69" y1="41.59" x2="460.69" y2="119.91" stroke-width="0.69"/>
 <line x1="480.69" y1="155.96" x2="480.69" y2="180.22" stroke-width="0.69"/>
 <line x1="480.69" y1="203.78" x2="480.69" y2="{{ 354.89 - $cut }}" stroke-width="0.69"/>
 <line transform="translate(0 {{ $shift }})" x1="18.02" y1="697.65" x2="481.04" y2="697.65" stroke-width="0.69"/>
@@ -141,7 +155,6 @@
 <line transform="translate(0 {{ $shift }})" class="dv-appropriation" x1="56.84" y1="866.08" x2="512.92" y2="866.08" stroke-width="0.69"/>
 <line transform="translate(0 {{ $shift }})" class="dv-appropriation" x1="56.84" y1="881.33" x2="512.92" y2="881.33" stroke-width="0.69"/>
 <line transform="translate(0 {{ $shift }})" class="dv-appropriation" x1="512.58" y1="793.65" x2="512.58" y2="881.67" stroke-width="0.69"/>
-<line x1="480.35" y1="79.36" x2="593.33" y2="79.36" stroke-width="0.69"/>
 <line x1="594.37" y1="181.60" x2="594.37" y2="202.40" stroke-width="0.69"/>
 <line x1="18.02" y1="225.62" x2="593.33" y2="225.62" stroke-width="0.69"/>
 <line transform="translate(0 {{ 0 - $cut }})" x1="480.35" y1="340.68" x2="593.33" y2="340.68" stroke-width="0.69"/>
@@ -159,9 +172,9 @@
 <text x="531.56" y="34.66" font-family="'Times New Roman',Times,serif" font-size="12.0" font-style="italic" xml:space="preserve">Appendix 32</text>
 <text x="152.64" y="60.30" font-family="'Times New Roman',Times,serif" font-size="12.9" font-weight="bold" xml:space="preserve">DEPARTMENT OF EDUCATION</text>
 <text x="181.44" y="76.25" font-family="'Times New Roman',Times,serif" font-size="12.9" font-weight="bold" xml:space="preserve">COTABATO DIVISION</text>
-<text x="483.12" y="55.45" font-family="'Times New Roman',Times,serif" font-size="9.2" font-weight="bold" text-decoration="underline" xml:space="preserve">Fund Cluster :</text>
-<text x="484.71" y="90.80" font-family="'Times New Roman',Times,serif" font-size="9.2" font-weight="bold" text-decoration="underline" xml:space="preserve">Date :</text>
-<text x="485.90" y="104.66" font-family="'Times New Roman',Times,serif" font-size="9.2" font-weight="bold" text-decoration="underline" xml:space="preserve">DV No. :</text>
+<text x="463" y="{{ $fundHorizontal ? 61 : 52 }}" font-family="'Times New Roman',Times,serif" font-size="10.5" xml:space="preserve">Fund Cluster :</text>
+<text x="463" y="{{ $fundHorizontal ? 81 : 90 }}" font-family="'Times New Roman',Times,serif" font-size="10.5" xml:space="preserve">Date :</text>
+<text x="463" y="{{ $fundHorizontal ? 101 : 106 }}" font-family="'Times New Roman',Times,serif" font-size="10.5" xml:space="preserve">DV No. :</text>
 <text x="20.10" y="135.86" font-family="'Times New Roman',Times,serif" font-size="9.2" font-weight="bold" xml:space="preserve">Mode of</text>
 <text x="20.10" y="146.95" font-family="'Times New Roman',Times,serif" font-size="9.2" font-weight="bold" xml:space="preserve">Payment</text>
 <text x="20.10" y="171.90" font-family="'Times New Roman',Times,serif" font-size="9.2" font-weight="bold" xml:space="preserve">Payee</text>
@@ -204,7 +217,7 @@
 <text transform="translate(0 {{ $shift }})" x="316.07" y="707" font-family="'Times New Roman',Times,serif" font-size="9.2" xml:space="preserve">Bank Name &amp; Account Number:</text>
 <text transform="translate(0 {{ $shift }})" x="24.56" y="748.59" font-family="'Times New Roman',Times,serif" font-size="9.2" xml:space="preserve">Signature :</text>
 <text transform="translate(0 {{ $shift }})" x="215.57" y="748.59" font-family="'Times New Roman',Times,serif" font-size="9.2" xml:space="preserve">Date :</text>
-<text transform="translate(0 {{ $shift }})" x="316.07" y="748.59" font-family="'Times New Roman',Times,serif" font-size="9.2" xml:space="preserve">Printed Name:</text>
+<text transform="translate(0 {{ $shift }})" x="316.07" y="737" font-family="'Times New Roman',Times,serif" font-size="9.2" xml:space="preserve">Printed Name:</text>
 <text transform="translate(0 {{ $shift }})" x="483.12" y="749.29" font-family="'Times New Roman',Times,serif" font-size="9.2" xml:space="preserve">Date</text>
 <text transform="translate(0 {{ $shift }})" x="20.10" y="776.32" font-family="'Times New Roman',Times,serif" font-size="9.2" xml:space="preserve">Official Receipt No. &amp; Date/Other Documents</text>
 <text x="463.71" y="151.80" font-family="'Times New Roman',Times,serif" font-size="9.2" xml:space="preserve">_________________</text>
@@ -221,9 +234,15 @@
 <text transform="translate(0 {{ $shift }})" class="dv-appropriation" x="362.98" y="802.66" font-family="Arial,Helvetica,sans-serif" font-size="8.3" font-weight="bold" xml:space="preserve">AMOUNT</text>
 <text transform="translate(0 {{ $shift }})" class="dv-appropriation" x="431.93" y="802.66" font-family="Arial,Helvetica,sans-serif" font-size="8.3" font-weight="bold" xml:space="preserve">EXPENSE CODE</text>
 <!-- header -->
-<text x="537.2" y="72.8" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($fund, 108, 9.2) }}">{{ $fund }}</text>
-<text x="510.75" y="90.8" font-family="'Times New Roman',Times,serif" font-size="9.2">{{ $date }}</text>
-<text x="522.69" y="104.7" font-family="'Times New Roman',Times,serif" font-size="9.2" font-weight="bold">{{ $report->dv_number }}</text>
+@if($fundHorizontal)
+<text x="527" y="61" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($fund, 65, 10.5) }}" font-weight="bold" text-decoration="underline">{{ $fund }}</text>
+@else
+@foreach($fundLines as $fundIndex => $fundLine)
+<text x="527" y="{{ count($fundLines) > 1 ? [64, 75][$fundIndex] : 67 }}" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($fundLine, 128, 10.5) }}" font-weight="bold" text-decoration="underline">{{ $fundLine }}</text>
+@endforeach
+@endif
+<text x="494" y="{{ $fundHorizontal ? 81 : 90 }}" font-family="'Times New Roman',Times,serif" font-size="10.5" font-weight="bold" text-decoration="underline">{{ $date }}</text>
+<text x="507" y="{{ $fundHorizontal ? 101 : 106 }}" font-family="'Times New Roman',Times,serif" font-size="10.5" font-weight="bold" text-decoration="underline">{{ $report->dv_number }}</text>
 <!-- mode of payment -->
 <text x="117.30" y="139.50" font-family="Arial,Helvetica,sans-serif" font-size="11" font-weight="bold" text-anchor="middle">{{ $mode === 'MDS Check' ? '✓' : '' }}</text>
 <text x="189.20" y="139.50" font-family="Arial,Helvetica,sans-serif" font-size="11" font-weight="bold" text-anchor="middle">{{ $mode === 'Commercial Check' ? '✓' : '' }}</text>

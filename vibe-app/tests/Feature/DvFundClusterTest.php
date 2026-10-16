@@ -37,7 +37,7 @@ class DvFundClusterTest extends TestCase
         ], $overrides);
     }
 
-    public function test_the_fund_cluster_typed_on_the_dv_is_printed_and_the_ors_fund_is_the_fallback(): void
+    public function test_the_fund_cluster_typed_on_the_dv_is_printed_and_general_fund_is_the_default(): void
     {
         [$report, $master] = $this->ors();
         $this->actingAs($master)->post(route('accounting.dv.store', $report), $this->form(['dv_fund_cluster' => 'Fund 101']))->assertSessionHasNoErrors();
@@ -46,18 +46,43 @@ class DvFundClusterTest extends TestCase
         $this->get(route('accounting.dv.print', $report))->assertOk()->assertSee('>Fund 101</text>', false);
 
         $report->update(['dv_fund_cluster' => null]);
-        $this->get(route('accounting.dv.print', $report))->assertSee('>MOOE</text>', false);
+        $this->get(route('accounting.dv.print', $report))->assertSee('>General Fund</text>', false);
     }
 
-    public function test_the_printed_dv_underlines_the_header_labels_and_has_the_bank_name_raised_in_its_own_cell(): void
+    public function test_the_printed_dv_header_has_plain_labels_and_bold_underlined_data_and_has_the_bank_name_raised_in_its_own_cell(): void
     {
         [$report, $master] = $this->ors();
         $report->update(['dv_number' => 'DV-FC-1', 'dv_date' => now()->toDateString()]);
         $html = $this->actingAs($master)->get(route('accounting.dv.print', $report))->assertOk()->getContent();
 
         foreach (['Fund Cluster :', 'Date :', 'DV No. :'] as $label) {
-            $this->assertMatchesRegularExpression('/font-weight="bold" text-decoration="underline"[^>]*>'.preg_quote($label, '/').'<\/text>/', $html);
+            $this->assertMatchesRegularExpression('/font-size="10\.5" xml:space="preserve">'.preg_quote($label, '/').'<\/text>/', $html);
         }
+        foreach (['General Fund', now()->format('F d, Y'), 'DV-FC-1'] as $value) {
+            $this->assertMatchesRegularExpression('/font-weight="bold" text-decoration="underline">'.preg_quote($value, '/').'<\/text>/', $html);
+        }
+        $this->assertMatchesRegularExpression('/x="316\.07" y="737"[^>]*>Printed Name:<\/text>/', $html);
+        $this->assertStringNotContainsString('>Fund Supplier</text>', $html);
         $this->assertMatchesRegularExpression('/x="316\.07" y="707"[^>]*>Bank Name &amp; Account Number:<\/text>/', $html);
+    }
+
+    public function test_a_long_fund_cluster_takes_two_lines_in_its_cell(): void
+    {
+        [$report, $master] = $this->ors();
+        $report->update(['dv_number' => 'DV-FC-1', 'dv_date' => now()->toDateString(), 'dv_fund_cluster' => 'Regular Agency Fund 101 Cash']);
+        $html = $this->actingAs($master)->get(route('accounting.dv.print', $report))->assertOk()->getContent();
+
+        $this->assertMatchesRegularExpression('/y="64"[^>]*>Regular Agency<\/text>/', $html);
+        $this->assertMatchesRegularExpression('/y="75"[^>]*>Fund 101 Cash<\/text>/', $html);
+    }
+
+    public function test_a_short_fund_cluster_sits_on_the_line_of_its_label(): void
+    {
+        [$report, $master] = $this->ors();
+        $report->update(['dv_number' => 'DV-FC-1', 'dv_date' => now()->toDateString()]);
+        $html = $this->actingAs($master)->get(route('accounting.dv.print', $report))->assertOk()->getContent();
+
+        $this->assertMatchesRegularExpression('/x="463" y="61"[^>]*>Fund Cluster :<\/text>/', $html);
+        $this->assertMatchesRegularExpression('/x="527" y="61"[^>]*>General Fund<\/text>/', $html);
     }
 }
