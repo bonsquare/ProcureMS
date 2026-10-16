@@ -51,7 +51,7 @@
     @include('procurement-documents._header')
     <div class="bac">Bids and Awards Committee</div>
     <p class="bold" style="font-size:11pt">Please quote your BEST OFFER for the item/s below. Please do not leave any blank items. Indicate "0" if item being offered is for free.</p>
-    <div class="rfq-purpose">{{ $rfqPurpose }}</div><p class="center">(Delivery: {{ $deliveryTerm }})</p>
+    <div class="rfq-purpose">{{ $rfqPurpose }}</div><p class="center">Delivery: {{ $deliveryTerm }}</p>
     <table class="doc-table rfq-offer"><thead><tr><th>Approved Budget of the Contract</th><th>Total Offered Quotation (Inclusive of VAT)</th></tr></thead><tbody><tr><td class="center bold" style="width:38%;vertical-align:middle">{{ $amountInWords }}</td><td>In Words:<div style="margin:24px 8mm 0;border-bottom:1px solid #111"></div><div style="margin:22px 8mm 0;border-bottom:1px solid #111"></div></td></tr><tr><td class="center bold" style="vertical-align:middle">Php {{ number_format((float)$procurementRequest->amount,2) }}</td><td>In Figures:<div style="margin:24px 8mm 0;width:58mm;border-bottom:1px solid #111"></div></td></tr></tbody></table>
     <div class="rfq-lines"><div>Signature over Printed Name: <span></span></div><div>Position/Designation: <span></span></div><div>Office Telephone / Fax / Mobile Nos.: <span style="width:85mm"></span></div><div>Email Address/es: <span style="width:105mm"></span></div></div>
 </section>
