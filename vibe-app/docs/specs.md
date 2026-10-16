@@ -669,6 +669,19 @@ These refine sections 24 and 25 and the Finance pages. Where a line below differ
 
 Tests: `SobItemGroupTest`, `SobFlowTest`, `AipActivityBudgetTest`, `PlanningFlowTest`.
 
+### 26.5 Printed SOB follows the owner's workbook (approved by the owner 2026-10-16; the file `SOB 4th 2026.xlsx` is the source of truth)
+
+Where a line below differs from 24.1 or 26.1, this one is the later decision.
+
+- Pillar names print as in the workbook: **RESILIENCY & WELL-BEING** (the stored name stays "Resiliency and Well-Being"). A pillar with no entries prints its bar only (no PPA row, no Sub-Total).
+- The program (PPA) is a **bold row of its own** across the table, printed once; under it each Item shows the account title (or its note) in the left column.
+- Other lines (labor): the name (for example 35% Labor) in the left column and the word **Labor** in **bold**, right-aligned, in the Unit of Measure column; the amount in the Amount column.
+- **GRAND TOTAL** of the table is bold, right-aligned, with no fill. The summary table keeps its green GRAND TOTAL.
+- The District line of the letterhead is in normal weight and in the case it was typed. The signature names are bold and capitals, **not underlined**.
+- **Summary label:** each Item has an optional **Summary label** (the SOB page, in the item form, under the Note; `summary_label` on `sob_items`). In the Summary per object of expenditure, rows with the same label (any capitals) are added together under that label; an Item without one is listed under its account title as before. The summary stays in the order of the account codes.
+- Not done: a program and its only item on one row (the workbook does it for some programs and not for others, so it cannot be derived).
+- Tests: `SobPrintDesignTest`, `SobItemGroupTest`.
+
 ## 27. Allotment Registry fund details and system-wide contrast (approved by the owner 2026-10-15)
 
 This refines 26.2 and the screen design standards (7).

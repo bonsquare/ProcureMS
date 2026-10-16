@@ -62,7 +62,7 @@ class SobPrintDesignTest extends TestCase
         $html = $this->printed($plan);
 
         preg_match_all('/<tr class="pillar-row pillar-([a-z-]+)"><td colspan="7">([^<]+)<\/td><\/tr>/', $html, $rows);
-        $this->assertSame(['ACCESS', 'QUALITY', 'EQUITY', 'RESILIENCY AND WELL-BEING', 'GOVERNANCE'], $rows[2], 'all five pillars, items or not');
+        $this->assertSame(['ACCESS', 'QUALITY', 'EQUITY', 'RESILIENCY &amp; WELL-BEING', 'GOVERNANCE'], $rows[2], 'all five pillars, items or not');
         foreach (['#ffff00' => 'access', '#2e75b5' => 'quality', '#f4af84' => 'equity', '#92d050' => 'resiliency', '#548235' => 'governance'] as $color => $pillar) {
             $this->assertMatchesRegularExpression('/pillar-'.$pillar.'[^}]*background:\s*'.$color.'/i', $html, "$pillar keeps its color");
         }

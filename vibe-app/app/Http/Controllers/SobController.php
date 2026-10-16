@@ -117,7 +117,7 @@ class SobController extends Controller
     {
         $this->scoped($request, $sobPlan);
         if (is_array($request->input('lines'))) {
-            $items = $this->sob->addItems($sobPlan, (string) $request->input('aip_activity_id'), (string) $request->input('chart_of_account_id'), $request->input('lines'), $request->input('note'), (array) $request->input('extras', []));
+            $items = $this->sob->addItems($sobPlan, (string) $request->input('aip_activity_id'), (string) $request->input('chart_of_account_id'), $request->input('lines'), $request->input('note'), (array) $request->input('extras', []), $request->input('summary_label'));
             $this->syncCse($request, $sobPlan);
 
             return back()->with('success', count($items) === 1 ? 'Item added.' : count($items).' lines added.');
@@ -149,7 +149,7 @@ class SobController extends Controller
     public function updateGroup(Request $request, SobPlan $sobPlan): RedirectResponse
     {
         $this->scoped($request, $sobPlan);
-        $this->sob->saveGroup($sobPlan, (int) $request->input('old_activity'), (int) $request->input('old_account'), $request->only(['aip_activity_id', 'chart_of_account_id', 'note', 'lines', 'extras']));
+        $this->sob->saveGroup($sobPlan, (int) $request->input('old_activity'), (int) $request->input('old_account'), $request->only(['aip_activity_id', 'chart_of_account_id', 'note', 'summary_label', 'lines', 'extras']));
         $this->syncCse($request, $sobPlan);
 
         return back()->with('success', 'Item saved.');

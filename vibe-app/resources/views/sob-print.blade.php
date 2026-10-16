@@ -37,11 +37,14 @@
         tr.pillar-governance td { background: #548235; color: #fff; }
         tr.sub td { font-weight: bold; }
         tr.grand td { font-weight: bold; background: #92d050; }
+        tr.grand-total td { font-weight: bold; }
+        tr.program-row td { font-weight: bold; }
+        .masthead .line.district { font-weight: normal; text-transform: none; }
         .summary { margin-top: 14px; width: 62%; }
         .summary caption { text-align: left; font-weight: bold; padding-bottom: 3px; }
 
         .signatures { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 28px; margin-top: 22px; font-size: 10.5px; }
-        .signatures .name { margin-top: 30px; text-align: center; font-weight: bold; text-decoration: underline; text-transform: uppercase; }
+        .signatures .name { margin-top: 30px; text-align: center; font-weight: bold; text-transform: uppercase; }
         .signatures .position { text-align: center; }
 
         @media print {
@@ -86,7 +89,7 @@
             <div class="dept">Department of Education</div>
             @if($region)<div class="line">{{ $region }}</div>@endif
             @if($division)<div class="line">{{ $division }}</div>@endif
-            @if($school->district)<div class="line">{{ $school->district }}</div>@endif
+            @if($school->district)<div class="line district">{{ $school->district }}</div>@endif
             <div class="school">{{ $school->name }}</div>
         </div>
         <div class="masthead-logo masthead-logo-right">@if($rightLogo)<img class="official-logo" src="{{ $rightLogo }}" alt="" onerror="this.remove()">@endif</div>
@@ -106,18 +109,18 @@
         </thead>
         <tbody>
         @foreach($pillarRows as $pillar)
-            <tr class="pillar-row pillar-{{ $pillarClass[$pillar['pillar']] ?? 'other' }}"><td colspan="7">{{ strtoupper($pillar['pillar'] ?: 'Other') }}</td></tr>
+            <tr class="pillar-row pillar-{{ $pillarClass[$pillar['pillar']] ?? 'other' }}"><td colspan="7">{{ str_replace(' AND ', ' & ', strtoupper($pillar['pillar'] ?: 'Other')) }}</td></tr>
             @foreach($pillar['programs'] as $program)
+                <tr class="program-row"><td colspan="7">{{ $program['program'] ?: 'No program' }}</td></tr>
                 @foreach($program['activities'] as $row)
                     @php
                         $activityRows = collect($row['accounts'])->sum(fn ($group) => $group['items']->count() + ($group['extras']->isNotEmpty() ? 2 + $group['extras']->count() : 0));
-                        $firstOfActivity = true;
                     @endphp
                     @foreach($row['accounts'] as $group)
                         @php $groupRows = $group['items']->count() + ($group['extras']->isNotEmpty() ? 1 : 0); @endphp
                         @foreach($group['items'] as $index => $item)
                             <tr>
-                                @if($index === 0)<td class="account" rowspan="{{ $groupRows }}">@if($firstOfActivity)<div>{{ $program['program'] ?: 'No program' }}</div>@php $firstOfActivity = false; @endphp<div style="margin-top:3px">{{ $group['note'] ?: $group['account']?->title }}</div>@else{{ $group['note'] ?: $group['account']?->title }}@endif</td>@endif
+                                @if($index === 0)<td class="account" rowspan="{{ $groupRows }}">{{ $group['note'] ?: $group['account']?->title }}</td>@endif
                                 <td>{{ $item->particulars }}</td>
                                 <td class="center">{{ $number($item->frequency) }}</td>
                                 <td class="center">{{ $number($item->quantity) }}</td>
@@ -129,7 +132,7 @@
                         @if($group['extras']->isNotEmpty())
                             <tr class="sub item-sub"><td colspan="5" style="text-align:right">Sub-Total</td><td class="num">{{ $money($group['items_total']) }}</td></tr>
                             @foreach($group['extras'] as $extra)
-                                <tr class="extra"><td>{{ $extra->particulars }}@if($extra->unit) ({{ $extra->unit }})@endif</td><td style="font-style:italic">Labor</td><td colspan="4"></td><td class="num">{{ $money($extra->amount) }}</td></tr>
+                                <tr class="extra"><td>{{ $extra->particulars }}@if($extra->unit) ({{ $extra->unit }})@endif</td><td colspan="3"></td><td style="text-align:right; font-weight:bold">Labor</td><td></td><td class="num">{{ $money($extra->amount) }}</td></tr>
                             @endforeach
                             <tr class="sub item-sub"><td colspan="6" style="text-align:right">Sub-Total</td><td class="num">{{ $money($group['total']) }}</td></tr>
                         @endif
@@ -139,7 +142,7 @@
             @php $pillarGroups = collect($pillar['programs'])->flatMap(fn ($program) => collect($program['activities'])->flatMap(fn ($activity) => $activity['accounts'])); $sameAsItemSubTotal = $pillarGroups->count() === 1 && $pillarGroups->first()['extras']->isNotEmpty(); @endphp
             @if(count($pillar['programs']) && ! $sameAsItemSubTotal)<tr class="sub pillar-sub"><td colspan="6" style="text-align:right">Sub-Total</td><td class="num">{{ $money($pillar['total']) }}</td></tr>@endif
         @endforeach
-            <tr class="grand"><td colspan="6">GRAND TOTAL</td><td class="num">{{ $money($grandTotal) }}</td></tr>
+            <tr class="grand-total"><td colspan="6" style="text-align:right">GRAND TOTAL</td><td class="num">{{ $money($grandTotal) }}</td></tr>
         </tbody>
     </table>
 

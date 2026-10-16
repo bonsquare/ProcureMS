@@ -221,7 +221,8 @@ class SobItemGroupTest extends TestCase
         $html = $this->get(route('planning.sob.print', $plan))->assertOk()->getContent();
 
         $this->assertSame(1, preg_match_all('/<td class="account"[^>]*>Electricity Expenses<\/td>/', $html), 'the account title is written once for its particulars');
-        $this->assertMatchesRegularExpression('/<td class="account" rowspan="\d+"><div>Program One<\/div><div[^>]*>POW required<\/div><\/td>/', $html, 'the program, and under it the note that stands in for the account title');
+        $this->assertMatchesRegularExpression('/<tr class="program-row"><td colspan="7">Program One<\/td><\/tr>/', $html, 'the program is its own bold row, as in the workbook');
+        $this->assertMatchesRegularExpression('/<td class="account" rowspan="\d+">POW required<\/td>/', $html, 'the note stands in for the account title');
         $this->assertMatchesRegularExpression('/<td class="account" rowspan="\d+">Electricity Expenses<\/td>/', $html);
         $this->assertStringContainsString('35% Labor', $html);
         $this->assertSame(2, substr_count($html, 'class="sub item-sub"'), 'only the Item that has other lines has a Sub-Total of its particulars and a Sub-Total with its other lines (the labor)');
@@ -241,5 +242,35 @@ class SobItemGroupTest extends TestCase
         $html = $this->get(route('planning.sob.print', $plan))->assertOk()->getContent();
 
         $this->assertSame(1, substr_count($html, '<tr class="sub pillar-sub">'), 'only Access has entries, so only it has a Sub-Total');
+    }
+
+    public function test_items_with_the_same_summary_label_are_added_together_in_the_summary(): void
+    {
+        $fx = SobFixture::make();
+        $this->actingAs($fx['user']);
+        $plan = $this->service()->create($fx['school'], 2026, 1, 'MOOE', $fx['user']);
+        $line = [['particulars' => 'Item', 'frequency' => 1, 'quantity' => 1, 'unit' => 'pcs', 'unit_cost' => 1000]];
+        $this->service()->addItems($plan, $fx['activities'][0]->id, $fx['account']->id, $line, null, [], 'Supplies and Materials expenses');
+        $this->service()->addItems($plan, $fx['activities'][0]->id, $this->otherAccount($fx)->id, $line, null, [], ' supplies and materials expenses ');
+        $this->service()->addItems($plan, $fx['activities'][1]->id ?? $fx['activities'][0]->id, $fx['account']->id, $line);
+
+        $summary = $this->service()->summaryByAccount($plan->fresh());
+
+        $this->assertSame(2, $summary->count());
+        $this->assertSame(2000.0, (float) $summary->firstWhere('title', 'Supplies and Materials expenses')['total']);
+        $this->assertStringContainsString('Supplies and Materials expenses', $this->get(route('planning.sob.print', $plan))->assertOk()->getContent());
+    }
+
+    public function test_an_empty_pillar_prints_its_bar_only(): void
+    {
+        $fx = SobFixture::make();
+        $this->actingAs($fx['user']);
+        $plan = $this->service()->create($fx['school'], 2026, 1, 'MOOE', $fx['user']);
+
+        $html = $this->get(route('planning.sob.print', $plan))->assertOk()->getContent();
+
+        $this->assertSame(5, substr_count($html, '<tr class="pillar-row'), 'every pillar is printed');
+        $this->assertSame(0, substr_count($html, 'class="program-row"'), 'a pillar without entries has no PPA row');
+        $this->assertSame(0, substr_count($html, 'class="sub '), 'and no Sub-Total');
     }
 }
