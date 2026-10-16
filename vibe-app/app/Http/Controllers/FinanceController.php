@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AgencySetting;
 use App\Models\AuditLog;
 use App\Models\CancelledCheck;
+use App\Models\CashFundReceipt;
 use App\Models\ChartOfAccount;
 use App\Models\DvJournalLine;
 use App\Models\LiquidationReport;
@@ -12,6 +13,8 @@ use App\Models\School;
 use App\Models\SchoolStaff;
 use App\Services\DocumentNumberService;
 use App\Support\SignatorySlots;
+use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -107,6 +110,9 @@ class FinanceController extends Controller
     public function cash(Request $request)
     {
         $tab = $request->query('tab', 'unpaid');
+        if ($tab === 'reports') {
+            abort_unless($request->user()->hasPermission('cash.pay'), 403);
+        }
         $all = $this->reports()->where('status', 'approved')->whereNotNull('dv_number')->get();
         $paid = $all->whereNotNull('paid_at');
         $unpaid = $all->whereNull('paid_at');
@@ -118,14 +124,41 @@ class FinanceController extends Controller
             'isMasterUser' => $this->isMaster(),
             'counts' => collect(['unpaid' => $unpaid->count(), 'paid' => $paid->count(), 'cancelled' => $cancelledChecks->count()]),
             'cancelledChecks' => $tab === 'cancelled' ? $cancelledChecks : collect(),
-            'rows' => $tab === 'cancelled' ? collect() : ($tab === 'paid' ? $paid : $unpaid)->sortByDesc($tab === 'paid' ? 'paid_at' : 'approved_at'),
+            'rows' => in_array($tab, ['cancelled', 'reports'], true) ? collect() : ($tab === 'paid' ? $paid : $unpaid)->sortByDesc($tab === 'paid' ? 'paid_at' : 'approved_at'),
             'metrics' => [
                 ['DVs For Payment', $unpaid->count(), 'schedule', 'error', false],
                 ['Payable Amount', $unpaid->sum('amount'), 'request_quote', 'primary', true],
                 ['Paid This Month', $paid->filter(fn ($r) => $r->paid_at->isSameMonth(now()))->sum('amount'), 'payments', 'secondary', true],
                 ['Total Disbursed', $paid->sum('amount'), 'account_balance_wallet', 'secondary', true],
             ],
-        ]);
+        ] + ($tab === 'reports' ? $this->reportsTabData($request) : []));
+    }
+
+    /** The school, the period and the fund received that the Reports tab of Cash shows (the period defaults to the current quarter). */
+    private function reportsTabData(Request $request): array
+    {
+        $schools = School::query()->whereIn('id', $this->schoolIds())->orderBy('name')->get();
+        $school = $schools->firstWhere('id', (int) $request->query('school_id')) ?? $schools->first();
+        $quarterStart = now()->startOfQuarter();
+        $from = $this->reportDate($request->query('from'), $quarterStart);
+        $to = $this->reportDate($request->query('to'), $quarterStart->copy()->endOfQuarter());
+
+        return [
+            'reportSchools' => $schools,
+            'reportSchool' => $school,
+            'reportFrom' => $from,
+            'reportTo' => $to,
+            'fundReceipts' => $school ? CashFundReceipt::query()->where('school_id', $school->id)->orderByDesc('received_at')->orderByDesc('id')->limit(50)->get() : collect(),
+        ];
+    }
+
+    private function reportDate(?string $value, CarbonInterface $default): CarbonInterface
+    {
+        try {
+            return $value ? Carbon::parse($value)->startOfDay() : $default->copy()->startOfDay();
+        } catch (\Throwable) {
+            return $default->copy()->startOfDay();
+        }
     }
 
     public function pay(Request $request, LiquidationReport $liquidationReport)

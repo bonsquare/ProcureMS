@@ -20,7 +20,7 @@
     // DV numbers already start with "DV-": show them as they are, never "DV DV-...".
     $dvLabel = fn ($number) => preg_match('/^DV\b/i', (string) $number) ? $number : 'DV ' . $number;
     $tabs = $isCash
-        ? ['unpaid' => 'DVs For Payment', 'paid' => 'Paid', 'cancelled' => 'Cancelled Checks']
+        ? ['unpaid' => 'DVs For Payment', 'paid' => 'Paid', 'cancelled' => 'Cancelled Checks'] + (auth()->user()?->hasPermission('cash.pay') ? ['reports' => 'Reports'] : [])
         : ['for_review' => 'For Review', 'pending_documents' => 'Pending Documents', 'returned' => 'Returned', 'for_dv' => 'Ready for DV', 'with_dv' => 'With DV', 'all' => 'All'];
     $tones = ['for_review' => 'error', 'pending_documents' => 'primary', 'approved' => 'secondary', 'returned' => 'error', 'draft' => 'on-surface-variant'];
     $inputClass = 'mt-1 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary';
@@ -43,7 +43,7 @@
         $tabMeta = [
             'for_review' => ['pending_actions', 'bg-error text-white'], 'pending_documents' => ['folder_open', 'bg-amber-500 text-white'], 'returned' => ['undo', 'bg-error/80 text-white'],
             'for_dv' => ['description', 'bg-secondary text-white'], 'with_dv' => ['task_alt', 'bg-primary text-white'], 'all' => ['list', 'bg-on-surface-variant text-white'],
-            'unpaid' => ['hourglass_top', 'bg-error text-white'], 'paid' => ['check_circle', 'bg-secondary text-white'], 'cancelled' => ['cancel', 'bg-on-surface-variant text-white'],
+            'unpaid' => ['hourglass_top', 'bg-error text-white'], 'paid' => ['check_circle', 'bg-secondary text-white'], 'cancelled' => ['cancel', 'bg-on-surface-variant text-white'], 'reports' => ['summarize', 'bg-primary text-white'],
         ];
         $statusIcons = ['for_review' => 'pending_actions', 'pending_documents' => 'folder_open', 'approved' => 'check_circle', 'returned' => 'undo', 'draft' => 'edit_note'];
         $accents = ['for_review' => 'border-l-error', 'pending_documents' => 'border-l-amber-500', 'approved' => 'border-l-secondary', 'returned' => 'border-l-error/60', 'draft' => 'border-l-outline-variant'];
@@ -52,7 +52,7 @@
         <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/30 bg-surface-low/60 p-3">
             <nav class="flex flex-wrap gap-1.5" aria-label="Views">
                 @foreach($tabs as $key => $label)
-                    @php [$tabIcon, $badge] = $tabMeta[$key] ?? ['list', 'bg-primary text-white']; $count = $key === 'all' ? null : $counts->get($key, 0); @endphp
+                    @php [$tabIcon, $badge] = $tabMeta[$key] ?? ['list', 'bg-primary text-white']; $count = in_array($key, ['all', 'reports'], true) ? null : $counts->get($key, 0); @endphp
                     <a href="{{ route($section, ['tab' => $key]) }}" @if($tab === $key) aria-current="page" @endif class="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition {{ $tab === $key ? 'bg-primary text-white shadow' : 'bg-white text-on-surface-variant ring-1 ring-outline-variant/40 hover:bg-surface-high' }}"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">{{ $tabIcon }}</span>{{ $label }}@if($count !== null)<span class="min-w-[1.25rem] rounded-full px-1.5 py-0.5 text-center text-[10px] leading-none {{ $tab === $key ? 'bg-white/25 text-white' : ($count > 0 ? $badge : 'bg-surface-high text-on-surface-variant') }}">{{ $count }}</span>@endif</a>
                 @endforeach
             </nav>
@@ -61,7 +61,9 @@
                 <span id="row-count" class="whitespace-nowrap text-xs text-on-surface-variant">{{ count($rows) }} shown</span>
             </div>
         </div>
-        @if($isCash && $tab === 'cancelled')
+        @if($isCash && $tab === 'reports')
+            @include('partials.cash-reports-tab')
+        @elseif($isCash && $tab === 'cancelled')
         <div class="overflow-x-auto"><table class="w-full min-w-[900px] text-left text-sm"><thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant"><tr><th class="px-5 py-3">Check No.</th><th class="px-5 py-3">DV / ORS</th><th class="px-5 py-3">Mode</th><th class="px-5 py-3">Date Paid</th><th class="px-5 py-3 text-right">Amount</th><th class="px-5 py-3">Reason</th><th class="px-5 py-3">Cancelled By</th></tr></thead><tbody class="divide-y divide-outline-variant/20">
         @forelse($cancelledChecks as $c)
             <tr data-row class="align-top hover:bg-surface-low/60">

@@ -190,6 +190,9 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::post('/cash/fund-receipts', [CashReportController::class, 'storeReceipt'])->middleware('permission:cash.pay')->name('cash.fund.store');
     Route::put('/cash/fund-receipts/{cashFundReceipt}', [CashReportController::class, 'updateReceipt'])->middleware('permission:cash.pay')->name('cash.fund.update')->whereNumber('cashFundReceipt');
     Route::delete('/cash/fund-receipts/{cashFundReceipt}', [CashReportController::class, 'destroyReceipt'])->middleware('permission:cash.pay')->name('cash.fund.destroy')->whereNumber('cashFundReceipt');
+    Route::get('/cash/reports/roci', [CashReportController::class, 'roci'])->middleware('permission:cash.pay')->name('cash.report.roci');
+    Route::get('/cash/reports/checks-advices', [CashReportController::class, 'checksAdvices'])->middleware('permission:cash.pay')->name('cash.report.checks');
+    Route::get('/cash/reports/register', [CashReportController::class, 'register'])->middleware('permission:cash.pay')->name('cash.report.register');
     Route::get('/google-drive', [GoogleDriveController::class, 'show'])->name('google-drive');
     Route::get('/google-drive/connect', [GoogleDriveController::class, 'redirect'])->name('google-drive.redirect');
     Route::get('/google-drive/callback', [GoogleDriveController::class, 'callback'])->name('google-drive.callback');

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AuditLog;
 use App\Models\CashFundReceipt;
 use App\Models\School;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -78,5 +79,48 @@ class CashReportController extends Controller
         $cashFundReceipt->delete();
 
         return $this->back($cashFundReceipt->school_id, 'The fund received was deleted.');
+    }
+
+    /**
+     * The school, the period and the numbers typed on a report page; refuses a school the user may not report on.
+     *
+     * @return array{school: School, from: Carbon, to: Carbon, report_no: string, sheet_no: string}
+     */
+    private function reportContext(Request $request): array
+    {
+        $data = $request->validate([
+            'school_id' => ['required', 'integer'],
+            'from' => ['required', 'date'],
+            'to' => ['required', 'date', 'after_or_equal:from'],
+            'report_no' => ['nullable', 'string', 'max:50'],
+            'sheet_no' => ['nullable', 'string', 'max:50'],
+        ]);
+        abort_unless($this->schoolIds()->contains((int) $data['school_id']), 403);
+
+        return [
+            'school' => School::findOrFail($data['school_id']),
+            'from' => Carbon::parse($data['from'])->startOfDay(),
+            'to' => Carbon::parse($data['to'])->startOfDay(),
+            'report_no' => (string) ($data['report_no'] ?? ''),
+            'sheet_no' => (string) ($data['sheet_no'] ?? ''),
+        ];
+    }
+
+    public function roci(Request $request)
+    {
+        $this->reportContext($request);
+        abort(501, 'The Report of Checks Issued is not built yet.');
+    }
+
+    public function checksAdvices(Request $request)
+    {
+        $this->reportContext($request);
+        abort(501, 'The Checks and Advices record is not built yet.');
+    }
+
+    public function register(Request $request)
+    {
+        $this->reportContext($request);
+        abort(501, 'The Cash Disbursement Register is not built yet.');
     }
 }
