@@ -368,6 +368,7 @@
                 </{{ $quarterTag }}>
             @endforeach
         </div>
+        <div class="flex items-center"><a href="{{ route('planning.forms', ['school_id' => $selectedSchool->id, 'year' => $year]) }}" class="inline-flex items-center gap-1.5 rounded-lg border border-outline-variant/60 bg-white px-3.5 py-2 text-xs font-bold text-on-surface hover:bg-surface-low"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">description</span>Form Generator</a></div>
         @if($canStart)
             <div class="flex items-center"><button type="button" data-open-sob-create class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 text-xs font-bold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">add</span>Create SOB</button></div>
         @endif
