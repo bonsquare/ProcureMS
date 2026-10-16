@@ -1250,6 +1250,7 @@ class HomeController extends Controller
             'delivery_days' => ['nullable', 'integer', 'min:1', 'max:365', Rule::requiredIf(fn () => $request->input('document_type') === 'notice_to_proceed' && in_array($request->input('template_variant'), ['mooe', 'thirty_days'], true))],
             'deadline_date' => ['nullable', 'date'],
             'source_of_fund' => ['nullable', 'string', 'max:255'],
+            'fund_cluster' => ['nullable', 'string', 'max:100'],
             'place_of_delivery' => ['nullable', 'string', 'max:255'],
             'delivery_schedule' => ['nullable', 'string', 'max:500'],
             'manually_encode_document_number' => ['nullable', 'boolean'],
@@ -1515,7 +1516,7 @@ class HomeController extends Controller
                 'metadata' => array_merge(collect($data)->only([
                     'supplier_address', 'tin', 'mode_of_procurement', 'delivery_term',
                     'payment_term', 'delivery_days', 'deadline_date', 'source_of_fund',
-                    'place_of_delivery', 'delivery_schedule',
+                    'place_of_delivery', 'delivery_schedule', 'fund_cluster',
                     'second_bidder', 'third_bidder', 'template_variant',
                     'bidder_1_name', 'bidder_2_name', 'bidder_3_name',
                     'bidder_1_prices', 'bidder_2_prices', 'bidder_3_prices',

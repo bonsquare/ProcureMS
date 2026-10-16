@@ -34,7 +34,7 @@
         <div class="po-accounting">
             <div class="po-account-left">
                 <div class="po-account-lines">
-                    Fund Cluster : <strong>{{ ($meta['source_of_fund'] ?? null) ?: ($procurementRequest->source_of_fund ?: 'General Fund') }}</strong><br>
+                    Fund Cluster : <strong>{{ ($meta['fund_cluster'] ?? null) ?: 'General Fund' }}</strong><br>
                     Funds Available :
                 </div>
                 <div class="po-disbursing">
