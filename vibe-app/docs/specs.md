@@ -791,6 +791,7 @@ This refines 30.3 and 31.2. The printed ORS is `resources/views/ors-print.blade.
 - **Section C spacing (2026-10-16):** the line under STATUS OF OBLIGATION is higher, so the row of Reference and Amount is taller and the headings sit in its middle; Balance is raised a little. The details row starts one line below its top line, and its content is bold and on one top line: the Date (65 points wide; the date of the ORS, which is the date of its Purchase Order, 32.1, on one line, never wrapped), the Particulars (up to 7 lines), the ORS number and the amounts. The ORS/JEV/Check/ADA/TRA No. column is narrower (79 points) to give room to the Date and the Particulars. Its heading is centered in the column in a smaller size (9.4), clear of the lines.
 - **Signature blocks (2026-10-16):** in both blocks the labels Signature, Printed Name, Position and Date are aligned at the left, with their colons in one vertical line; the Date under each block is the date of the ORS, centered like the name and the position.
 - **A. and B. Certified (2026-10-16):** the two Certified paragraphs sit 7 points higher in their boxes.
+- **UACS Object Code (2026-10-16):** the code is centered in its column, under the heading.
 
 Tests: `OrsStatusPrintTest`.
 
