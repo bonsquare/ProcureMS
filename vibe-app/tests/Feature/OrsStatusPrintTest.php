@@ -247,4 +247,39 @@ class OrsStatusPrintTest extends TestCase
         $this->assertStringContainsString('y2="883.92"', $html);
         $this->assertStringContainsString('STATUS OF OBLIGATION', $html);
     }
+
+    public function test_the_payee_office_and_address_are_printed_bold(): void
+    {
+        [$school, $user] = $this->tenant();
+        $this->actingAs($user)->post(route('liquidation.store'), $this->payload($school, ['payee_office' => 'Kidapawan Branch Office', 'payee_address' => 'Poblacion, Kidapawan City']))->assertSessionHasNoErrors();
+        $html = $this->get(route('liquidation.print', LiquidationReport::firstOrFail()))->assertOk()->getContent();
+
+        foreach (['Ors Supplier', 'Kidapawan Branch Office', 'Poblacion, Kidapawan City'] as $value) {
+            $this->assertMatchesRegularExpression('/font-weight="bold">'.preg_quote($value, '/').'<\/text>/', $html);
+        }
+    }
+
+    public function test_the_reference_amount_and_balance_headings_have_room(): void
+    {
+        [$school, $user] = $this->tenant();
+        $this->actingAs($user)->post(route('liquidation.store'), $this->payload($school))->assertSessionHasNoErrors();
+        $html = $this->get(route('liquidation.print', LiquidationReport::firstOrFail()))->assertOk()->getContent();
+
+        $this->assertStringContainsString('y1="703" x2="594.84" y2="703"', $html);
+        foreach (['x="139" y="716.3"[^>]*>Reference', 'x="424" y="716.3"[^>]*>Amount', 'x="527" y="732.4"[^>]*>Balance'] as $pattern) {
+            $this->assertMatchesRegularExpression('/'.$pattern.'/', $html);
+        }
+    }
+
+    public function test_the_status_of_obligation_details_start_one_line_below_the_top_of_the_row(): void
+    {
+        [$school, $user] = $this->tenant();
+        $this->actingAs($user)->post(route('liquidation.store'), $this->payload($school))->assertSessionHasNoErrors();
+        $html = $this->get(route('liquidation.print', LiquidationReport::firstOrFail()))->assertOk()->getContent();
+
+        $this->assertStringContainsString('class="ors-status" x="56" y="801" width="99"', $html);
+        $this->assertMatchesRegularExpression('/x="34\.2" y="810\.3"[^>]*>'.preg_quote(now()->format('M d,'), '/').'<\/text>/', $html);
+        $this->assertMatchesRegularExpression('/x="34\.2" y="821\.8"[^>]*>'.now()->format('Y').'<\/text>/', $html);
+        $this->assertSame(4, substr_count($html, 'y="816.8"'));
+    }
 }

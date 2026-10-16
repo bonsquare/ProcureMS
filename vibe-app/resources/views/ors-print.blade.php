@@ -39,6 +39,9 @@
     $amount = number_format((float) $report->amount, 2);
     $paidAmount = $report->paid_at ? $amount : '';
     $statusParticulars = $report->purpose;
+    // The Date column of Section C holds the date of the ORS, which is the date of its Purchase Order (specs 32.1), on two lines to fit the narrow column.
+    $statusDay = $report->submitted_at ?? $report->created_at;
+    $statusDateLines = [$statusDay?->format('M d,') ?? '', $statusDay?->format('Y') ?? ''];
     $orsReference = preg_replace('/^ORS-?/i', '', (string) $report->ors_number); // the ORS/JEV/Check/ADA/TRA No. of Section C: the ORS number, without the letters
     $requesterName = strtoupper((string) ($requester?->name ?: $report->school?->school_head));
     $requesterRole = $requester?->position ?: 'School Head';
@@ -52,8 +55,8 @@
 <line x1="17.39" y1="44.92" x2="17.39" y2="{{ $showStatus ? '883.92' : '683.23' }}" stroke-width="1.45"/>
 <line x1="16.66" y1="528.18" x2="52.17" y2="528.18" stroke-width="1.45"/>
 <line x1="51.44" y1="496.30" x2="51.44" y2="528.91" stroke-width="1.45"/>
-<line class="ors-status" x1="51.44" y1="682.51" x2="51.44" y2="709.31" stroke-width="1.45"/>
-<line class="ors-status" x1="254.31" y1="707.86" x2="254.31" y2="883.92" stroke-width="1.45"/>
+<line class="ors-status" x1="51.44" y1="682.51" x2="51.44" y2="703.7" stroke-width="1.45"/>
+<line class="ors-status" x1="254.31" y1="702.3" x2="254.31" y2="883.92" stroke-width="1.45"/>
 <line x1="81.15" y1="626.72" x2="318.07" y2="626.72" stroke-width="1.45"/>
 <line x1="317.34" y1="496.30" x2="317.34" y2="683.95" stroke-width="1.45"/>
 <line x1="316.62" y1="528.18" x2="355.74" y2="528.18" stroke-width="1.45"/>
@@ -66,7 +69,7 @@
 <line x1="16.66" y1="497.03" x2="594.84" y2="497.03" stroke-width="1.45"/>
 <line x1="390.52" y1="626.72" x2="594.84" y2="626.72" stroke-width="1.45"/>
 <line x1="16.66" y1="683.23" x2="594.84" y2="683.23" stroke-width="1.45"/>
-<line class="ors-status" x1="16.66" y1="708.59" x2="594.84" y2="708.59" stroke-width="1.45"/>
+<line class="ors-status" x1="16.66" y1="703" x2="594.84" y2="703" stroke-width="1.45"/>
 <line class="ors-status" x1="16.66" y1="721.63" x2="594.84" y2="721.63" stroke-width="1.45"/>
 <line class="ors-status" x1="253.58" y1="768.72" x2="594.84" y2="768.72" stroke-width="1.45"/>
 <line class="ors-status" x1="16.66" y1="786.84" x2="594.84" y2="786.84" stroke-width="1.45"/>
@@ -125,7 +128,7 @@
 <text class="ors-status" x="263.47" y="749.16" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Obligation</text>
 <text class="ors-status" x="337.48" y="749.16" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Payable</text>
 <text class="ors-status" x="408.52" y="749.16" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Payment</text>
-<text class="ors-status" x="527" y="733.8" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="11.6" font-weight="bold" xml:space="preserve">Balance</text>
+<text class="ors-status" x="527" y="732.4" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="11.6" font-weight="bold" xml:space="preserve">Balance</text>
 <text class="ors-status" x="468.25" y="757.13" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Not Yet Due</text>
 <text class="ors-status" x="542.22" y="750.61" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Due and</text>
 <text class="ors-status" x="533.22" y="763.65" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Demandable</text>
@@ -149,10 +152,10 @@
 <text x="331.31" y="515.86" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold" xml:space="preserve">B.</text>
 <text x="61.57" y="525.28" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold" xml:space="preserve">Certified:</text>
 <text x="357.92" y="525.28" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold" xml:space="preserve">Certified:</text>
-<text class="ors-status" x="29.25" y="699.17" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold" xml:space="preserve">C.</text>
-<text class="ors-status" x="258.44" y="699.17" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold" xml:space="preserve">STATUS OF OBLIGATION</text>
-<text class="ors-status" x="139" y="720.4" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="11.6" font-weight="bold" xml:space="preserve">Reference</text>
-<text class="ors-status" x="424" y="720.4" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="11.6" font-weight="bold" xml:space="preserve">Amount</text>
+<text class="ors-status" x="29.25" y="696.4" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold" xml:space="preserve">C.</text>
+<text class="ors-status" x="258.44" y="696.4" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold" xml:space="preserve">STATUS OF OBLIGATION</text>
+<text class="ors-status" x="139" y="716.3" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="11.6" font-weight="bold" xml:space="preserve">Reference</text>
+<text class="ors-status" x="424" y="716.3" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="11.6" font-weight="bold" xml:space="preserve">Amount</text>
 <!-- header fields -->
 <text x="466.4" y="67.4" text-anchor="end" font-family="'Times New Roman',Times,serif" font-size="12" xml:space="preserve">Serial No. :</text>
 <text x="472" y="67.4" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($report->ors_number ?: '______________', 116, 12.5) }}" font-weight="bold" text-decoration="underline" xml:space="preserve">{{ $report->ors_number ?: '______________' }}</text>
@@ -161,9 +164,9 @@
 <text x="472" y="108.7" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($fund, 116, 12.5) }}" font-weight="bold" text-decoration="underline">{{ $fund }}</text>
 <text x="204" y="111.6" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="11.6" font-weight="bold">{{ $division }}</text>
 <!-- payee / office / address -->
-<text x="118.1" y="137.7" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($payee, 470, 11.6) }}">{{ $payee }}</text>
-<text x="118.1" y="163.7" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($office, 470, 11.6) }}">{{ $office }}</text>
-<text x="118.1" y="188.4" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($address, 470, 11.6) }}">{{ $address }}</text>
+<text x="118.1" y="137.7" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($payee, 470, 11.6) }}" font-weight="bold">{{ $payee }}</text>
+<text x="118.1" y="163.7" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($office, 470, 11.6) }}" font-weight="bold">{{ $office }}</text>
+<text x="118.1" y="188.4" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($address, 470, 11.6) }}" font-weight="bold">{{ $address }}</text>
 <!-- responsibility center / particulars -->
 <text x="66.3" y="263.7" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($rc, 92, 10.6) }}">{{ $rc }}</text>
 <text x="362.5" y="263.7" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($pap, 58, 9) }}">{{ $pap }}</text>
@@ -181,11 +184,13 @@
 <text x="492.4" y="622.4" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($certifierName, 190, 10.6) }}" font-weight="bold">{{ $certifierName }}</text>
 <text x="492.4" y="641.9" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($certifierRole, 190, 10.6) }}">{{ $certifierRole }}</text>
 <!-- C. status of obligation -->
-<foreignObject class="ors-status" x="53" y="822.5" width="105" height="58"><div xmlns="http://www.w3.org/1999/xhtml" style="font:9.5px/11.5px 'Times New Roman',Times,serif;color:#000;text-align:center;overflow:hidden;height:58px;word-wrap:break-word;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical">{{ $statusParticulars }}</div></foreignObject>
-<text class="ors-status" x="211" y="838.3" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($orsReference, 90, 10.6) }}">{{ $orsReference }}</text>
-<text class="ors-status" x="293" y="838.3" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="10.6">{{ $amount }}</text>
-<text class="ors-status" x="366" y="838.3" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="10.6">{{ $amount }}</text>
-<text class="ors-status" x="438.7" y="838.3" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="10.6">{{ $paidAmount }}</text>
+<text class="ors-status" x="34.2" y="810.3" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="9">{{ $statusDateLines[0] }}</text>
+<text class="ors-status" x="34.2" y="821.8" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="9">{{ $statusDateLines[1] }}</text>
+<foreignObject class="ors-status" x="56" y="801" width="99" height="58"><div xmlns="http://www.w3.org/1999/xhtml" style="font:9.5px/11.5px 'Times New Roman',Times,serif;color:#000;text-align:center;overflow:hidden;height:58px;word-wrap:break-word;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical">{{ $statusParticulars }}</div></foreignObject>
+<text class="ors-status" x="211" y="816.8" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($orsReference, 90, 10.6) }}">{{ $orsReference }}</text>
+<text class="ors-status" x="293" y="816.8" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="10.6">{{ $amount }}</text>
+<text class="ors-status" x="366" y="816.8" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="10.6">{{ $amount }}</text>
+<text class="ors-status" x="438.7" y="816.8" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="10.6">{{ $paidAmount }}</text>
 
 </g>
 </svg></div>
