@@ -9,30 +9,58 @@
 @include('partials.input-fixes')
 @include('partials.favicon')
 </head>
-<body class="flex min-h-screen items-center justify-center bg-gradient-to-b from-surface to-[#e4ebf1] px-4 py-8 font-inter text-on-surface">
-    <main class="w-full max-w-md rounded-2xl border border-outline-variant/40 bg-white p-8 shadow-xl sm:p-10">
-        @include('partials.brand', ['style' => 'login'])
-        <h1 class="text-center text-[28px] font-semibold leading-9 tracking-tight">Sign in</h1><p class="mt-2 text-center text-sm text-on-surface-variant">Access your procurement, accounting, budget, and cash workspace.</p>
-        @if(session('success'))<div class="mt-5 rounded border border-secondary/30 bg-secondary/10 px-4 py-3 text-sm font-medium text-secondary">{{ session('success') }}</div>@endif
-        <form id="login-form" method="POST" action="{{ route('login.store') }}" class="mt-8 space-y-5">@csrf
+<body class="min-h-screen bg-surface font-inter text-on-surface">
+<div class="grid min-h-screen lg:grid-cols-[minmax(0,5fr)_minmax(0,4fr)]">
+    {{-- Brand panel: shown from large screens up --}}
+    <aside class="relative hidden overflow-hidden bg-gradient-to-br from-[#0b2a52] via-primary to-[#174b82] px-12 py-12 text-white lg:flex lg:flex-col lg:justify-between">
+        <div class="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-white/5"></div>
+        <div class="pointer-events-none absolute -bottom-40 -left-24 h-[28rem] w-[28rem] rounded-full bg-secondary/15"></div>
+        <div class="relative flex items-center gap-4">
+            <img src="{{ asset('images/procurems-emblem.svg') }}" alt="" class="h-14 w-14 shrink-0">
+            <div><p class="text-2xl font-bold leading-tight tracking-tight">Procure<span class="text-[#6fd3b0]">MS</span></p><p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/60">School Procurement &amp; Liquidation</p></div>
+        </div>
+        <div class="relative max-w-xl">
+            <h2 class="text-[40px] font-semibold leading-[1.15] tracking-tight">One workspace, from the plan to the payment.</h2>
+            <p class="mt-4 text-base leading-relaxed text-white/75">Planning, budget, procurement, accounting, cash and liquidation of the school, linked in one record that is traceable from the first plan to the last receipt.</p>
+            <ul class="mt-9 grid gap-4 sm:grid-cols-2">
+                @foreach([['account_tree', 'Plan', 'SIP, AIP, SOB and APP'], ['shopping_cart', 'Procure', 'PR, RFQ, abstract, PO and delivery'], ['receipt_long', 'Account', 'ORS, DV and journal entry'], ['payments', 'Pay and liquidate', 'Cash payment and liquidation report']] as [$icon, $title, $text])
+                    <li class="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.06] px-4 py-3.5 backdrop-blur-sm"><span class="material-symbols-outlined mt-0.5 text-[22px] text-[#6fd3b0]" aria-hidden="true">{{ $icon }}</span><span><span class="block text-sm font-semibold">{{ $title }}</span><span class="block text-xs leading-relaxed text-white/65">{{ $text }}</span></span></li>
+                @endforeach
+            </ul>
+        </div>
+        <p class="relative text-xs text-white/50">Multi-School Procurement System · Secure operational workspace</p>
+    </aside>
+
+    {{-- Sign in --}}
+    <main class="flex items-center justify-center bg-gradient-to-b from-surface to-[#e4ebf1] px-4 py-10 sm:px-8">
+        <div class="w-full max-w-md">
+            <div class="mb-8 flex items-center justify-center gap-3 lg:hidden"><img src="{{ asset('images/procurems-emblem.svg') }}" alt="" class="h-12 w-12 shrink-0"><div><p class="text-xl font-bold leading-tight tracking-tight text-primary">Procure<span class="text-secondary">MS</span></p><p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant">School Procurement &amp; Liquidation</p></div></div>
+            <div class="rounded-2xl border border-outline-variant/40 bg-white p-7 shadow-xl shadow-primary/5 sm:p-9">
+                <h1 class="text-[28px] font-semibold leading-9 tracking-tight">Welcome back</h1>
+                <p class="mt-1.5 text-sm text-on-surface-variant">Sign in to your procurement, accounting, budget, and cash workspace.</p>
+                @if(session('success'))<div class="mt-5 rounded-lg border border-secondary/30 bg-secondary/10 px-4 py-3 text-sm font-medium text-secondary">{{ session('success') }}</div>@endif
+                <form id="login-form" method="POST" action="{{ route('login.store') }}" class="mt-7 space-y-5">@csrf
             <div><label for="email" class="text-xs font-semibold text-on-surface-variant">Email or username</label><input id="email" name="email" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Email address or username" value="{{ old('email') }}" required autofocus class="mt-2 w-full rounded-lg border border-outline-variant/50 bg-surface px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10">@error('email')<p class="mt-1 text-xs text-error">{{ $message }}</p>@enderror</div>
             <div><label for="password" class="text-xs font-semibold text-on-surface-variant">Password</label><div class="relative mt-2"><input id="password" name="password" type="password" required class="w-full rounded-lg border border-outline-variant/50 bg-surface py-2.5 pl-3 pr-11 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"><button type="button" id="toggle-password" aria-label="Show password" aria-pressed="false" class="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-r text-on-surface-variant hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">visibility</span></button></div>@error('password')<p class="mt-1 text-xs text-error">{{ $message }}</p>@enderror</div>
             @include('auth.partials-turnstile', ['action' => 'login'])
-            <label class="flex items-center gap-2 text-xs text-on-surface-variant"><input type="checkbox" name="remember" value="1" class="h-4 w-4 accent-primary">Remember me</label>
-            <button id="sign-in-button" type="submit" class="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-white hover:bg-primary-container"><span class="button-label">Sign in</span><span class="button-spinner hidden h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden="true"></span></button>
-        </form>
-        <div class="mt-5 rounded-xl border border-outline-variant/40 bg-surface px-4 py-4 text-center">
-            <p class="text-xs text-on-surface-variant">New school or office?</p>
-            <a href="{{ route('register') }}" class="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-primary px-4 py-2.5 text-sm font-semibold text-primary hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[18px]">app_registration</span>Pre-register school</a>
+                    <label class="flex items-center gap-2 text-xs text-on-surface-variant"><input type="checkbox" name="remember" value="1" class="h-4 w-4 accent-primary">Remember me</label>
+                    <button id="sign-in-button" type="submit" class="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-white shadow-md shadow-primary/20 transition hover:bg-primary-container focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"><span class="button-label">Sign in</span><span class="button-spinner hidden h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden="true"></span></button>
+                </form>
+                <div class="my-6 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant/70"><span class="h-px flex-1 bg-outline-variant/50"></span>New here<span class="h-px flex-1 bg-outline-variant/50"></span></div>
+                <a href="{{ route('register') }}" class="flex w-full items-center justify-center gap-2 rounded-lg border border-primary px-4 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">app_registration</span>Pre-register school</a>
+                <p class="mt-2 text-center text-xs text-on-surface-variant">New school or office? Start with a pre-registration.</p>
+                @if(app()->environment('local'))
+                <p class="mt-6 border-t border-outline-variant/20 pt-5 text-xs text-on-surface-variant">Demo Master Admin: <span class="font-semibold">admin@procurems.test</span> / <span class="font-semibold">password</span></p>
+                @endif
+                @if(config('app.demo'))
+                {{-- A client sees only the school administrator; the master and Sub-master demo accounts are not advertised. --}}
+                <p class="mt-6 border-t border-outline-variant/20 pt-5 text-xs text-on-surface-variant">Demo School Admin: <span class="font-semibold">demo@gmail.com</span> / <span class="font-semibold">password</span></p>
+                @endif
+            </div>
+            <p class="mt-6 text-center text-[11px] text-on-surface-variant/80">Secure sign-in · Your session is protected</p>
         </div>
-        @if(app()->environment('local'))
-        <p class="mt-6 border-t border-outline-variant/20 pt-5 text-xs text-on-surface-variant">Demo Master Admin: <span class="font-semibold">admin@procurems.test</span> / <span class="font-semibold">password</span></p>
-        @endif
-        @if(config('app.demo'))
-        {{-- A client sees only the school administrator; the master and Sub-master demo accounts are not advertised. --}}
-        <p class="mt-6 border-t border-outline-variant/20 pt-5 text-xs text-on-surface-variant">Demo School Admin: <span class="font-semibold">demo@gmail.com</span> / <span class="font-semibold">password</span></p>
-        @endif
     </main>
+</div>
 <script>
     document.getElementById('login-form').addEventListener('submit', () => {
         const button = document.getElementById('sign-in-button');
