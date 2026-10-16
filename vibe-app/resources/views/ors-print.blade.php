@@ -179,7 +179,7 @@
 <!-- responsibility center / particulars -->
 <text x="66.3" y="263.7" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($rc, 92, 10.6) }}">{{ $rc }}</text>
 <text x="362.5" y="263.7" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($pap, 58, 9) }}">{{ $pap }}</text>
-<text x="432.5" y="263.7" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($uacs, 64, 10) }}">{{ $uacs }}</text>
+<text x="427.1" y="263.7" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($uacs, 64, 10) }}">{{ $uacs }}</text>
 <foreignObject x="123.1" y="253.7" width="188" height="240"><div xmlns="http://www.w3.org/1999/xhtml" style="font:11.4px/13.05px 'Times New Roman',Times,serif;color:#000;overflow:hidden;height:240px;white-space:pre-wrap;word-wrap:break-word">{{ $particulars }}</div></foreignObject>
 <!-- amount -->
 <text x="469.1" y="263.7" font-family="'Times New Roman',Times,serif" font-size="10.6">₱</text>

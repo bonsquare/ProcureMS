@@ -228,6 +228,7 @@ class OrsStatusPrintTest extends TestCase
         $this->post(route('liquidation.store'), $this->payload($school, ['budget_allocation_id' => $line->id]))->assertSessionHasNoErrors();
         $ticked = $this->get(route('liquidation.print', LiquidationReport::firstOrFail()))->assertOk()->getContent();
         $this->assertStringContainsString('5020301000', $ticked);
+        $this->assertMatchesRegularExpression('/x="427\.1" y="263\.7" text-anchor="middle"[^>]*>5020301000<\/text>/', $ticked, 'the code is centered in its column (390.88 to 463.34)');
         $this->assertStringNotContainsString('A PROGRAM NAME', $ticked, 'MFO/PAP is left blank');
 
         $this->post(route('liquidation.store'), $this->payload($school, ['budget_allocation_id' => $line->id, 'ors_show_uacs' => '0']))->assertSessionHasNoErrors();
