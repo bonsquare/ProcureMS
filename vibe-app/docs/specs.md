@@ -797,7 +797,7 @@ This refines 2 (procurement workflow), 24.5 and 30.
 
 ### 31.3 Procurement documents
 
-- **Abstract of Bids or Quotation** window: the supplier price comparison comes first, then the Signatories, then Save; the other documents also end with Signatories, Notes and Save. The price of each bidder is a small right-aligned box ("Price/unit").
+- **Abstract of Bids or Quotation** window: the supplier price comparison comes first, then the Signatories, then Save; the other documents also end with Signatories, Notes and Save. The price of each bidder is a small right-aligned box ("Price/unit"). Each bidder also has a **Status** (Qualified by default, Disqualified, No Response; `bidders.*.status`): the printed **TOTAL BID QUOTATION** cell shows DISQUALIFIED or NO RESPONSE instead of the amount, and such a bidder never becomes the Lowest Bid Winner or the awarded supplier. Test: `AbstractPreviewTest`.
 - **Notice to Proceed:** the NTP Template and the Calendar days to deliver are side by side. Its preview is drawn with a blank line for the days until they are typed (saving still needs them).
 - **Request for Quotation:** the line "you may contact the BAC Secretariat at ... or send email to ..." shows the **contact number and e-mail of the employee who holds the BAC Secretariat role** (School Settings -> Employees & roles has **Contact number** and **E-mail** for every employee), in bold and underlined; the school's contact is used when the employee has none. The Approved Budget of the Contract is split in two boxes, the amount in words and the amount in figures, level with In Words and In Figures.
 

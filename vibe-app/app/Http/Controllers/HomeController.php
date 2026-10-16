@@ -1267,6 +1267,7 @@ class HomeController extends Controller
             'bidder_3_prices.*' => ['nullable', 'numeric', 'min:0'],
             'bidders' => ['nullable', 'array', 'max:10'],
             'bidders.*.name' => ['nullable', 'string', 'max:255'],
+            'bidders.*.status' => ['nullable', 'in:disqualified,no_response'],
             'bidders.*.prices' => ['nullable', 'array'],
             'bidders.*.prices.*' => ['nullable', 'numeric', 'min:0'],
             'template_variant' => ['nullable', 'in:mooe,sbfp,scheduled_delivery,thirty_days'],
@@ -1693,7 +1694,7 @@ class HomeController extends Controller
         ];
         $items = $procurementRequest->relationLoaded('items') ? $procurementRequest->items : $procurementRequest->items()->get();
         $bidders = collect($meta['bidders'] ?? $legacy)
-            ->filter(fn ($bidder) => ! empty($bidder['name']))
+            ->filter(fn ($bidder) => ! empty($bidder['name']) && empty($bidder['status']))
             ->map(function (array $bidder) use ($items) {
                 $prices = $bidder['prices'] ?? [];
                 $hasCurrentItemPrice = $items->contains(fn ($item) => array_key_exists((string) $item->id, $prices));
