@@ -312,4 +312,14 @@ class OrsStatusPrintTest extends TestCase
         $this->assertSame(2, substr_count($html, 'y="545.09"'));
         $this->assertStringNotContainsString('y="525.28"', $html);
     }
+
+    public function test_the_reference_number_heading_is_centered_in_its_column_and_clear_of_the_lines(): void
+    {
+        [$school, $user] = $this->tenant();
+        $this->actingAs($user)->post(route('liquidation.store'), $this->payload($school))->assertSessionHasNoErrors();
+        $html = $this->get(route('liquidation.print', LiquidationReport::firstOrFail()))->assertOk()->getContent();
+
+        $this->assertMatchesRegularExpression('/x="214\.65" y="751\.34" text-anchor="middle"[^>]*font-size="9\.4"[^>]*>ORS\/JEV\/Check\/<\/text>/', $html);
+        $this->assertMatchesRegularExpression('/x="214\.65" y="764\.38" text-anchor="middle"[^>]*font-size="9\.4"[^>]*>ADA\/TRA No\.<\/text>/', $html);
+    }
 }

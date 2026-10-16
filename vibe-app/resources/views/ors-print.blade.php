@@ -121,8 +121,8 @@
 <text x="402.15" y="518.28" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">  Allotment available and obligated</text>
 <text class="ors-status" x="39.2" y="757.86" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Date</text>
 <text class="ors-status" x="105.3" y="757.86" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Particulars</text>
-<text class="ors-status" x="179.7" y="751.34" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">ORS/JEV/Check/</text>
-<text class="ors-status" x="188.7" y="764.38" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">ADA/TRA No.</text>
+<text class="ors-status" x="214.65" y="751.34" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="9.4" xml:space="preserve">ORS/JEV/Check/</text>
+<text class="ors-status" x="214.65" y="764.38" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="9.4" xml:space="preserve">ADA/TRA No.</text>
 <text class="ors-status" x="263.47" y="749.16" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Obligation</text>
 <text class="ors-status" x="337.48" y="749.16" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Payable</text>
 <text class="ors-status" x="408.52" y="749.16" font-family="'Times New Roman',Times,serif" font-size="10.6" xml:space="preserve">Payment</text>
