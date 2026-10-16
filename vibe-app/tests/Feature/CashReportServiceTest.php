@@ -96,17 +96,36 @@ class CashReportServiceTest extends TestCase
         $this->assertSame(0.0, $report['opening']);
     }
 
-    public function test_money_and_payments_before_the_period_make_the_opening_balance(): void
+    public function test_nothing_is_carried_forward_from_an_earlier_period(): void
     {
         $account = $this->account('5020301000', 'Office Supplies Expenses');
         CashFundReceipt::create(['organization_id' => $this->organization->id, 'school_id' => $this->school->id, 'received_at' => '2026-04-01', 'kind' => 'opening_balance', 'fund_cluster' => 'General Fund', 'amount' => 10000, 'created_by' => $this->user->id]);
         $this->paid('0001', '2026-05-10', 2500, $account);
+        CashFundReceipt::create(['organization_id' => $this->organization->id, 'school_id' => $this->school->id, 'received_at' => '2026-07-01', 'kind' => 'opening_balance', 'fund_cluster' => 'General Fund', 'amount' => 7500, 'created_by' => $this->user->id]);
 
         $report = $this->build();
 
-        $this->assertSame(7500.0, $report['opening']);
-        $this->assertSame(7500.0, $report['ending']);
-        $this->assertCount(0, $report['lines']);
+        $this->assertSame(0.0, $report['opening']);
+        $this->assertSame(7500.0, $report['ending'], 'only the balance typed for this quarter counts');
+    }
+
+    public function test_a_cancelled_ada_is_an_ada_line_not_a_check(): void
+    {
+        $account = $this->account('5020301000', 'Office Supplies Expenses');
+        $paid = $this->paid('ADA2', '2026-08-05', 300, $account, ['payment_mode' => 'ADA']);
+        CancelledCheck::create(['organization_id' => $this->organization->id, 'school_id' => $this->school->id, 'liquidation_report_id' => $paid->id, 'ors_number' => 'ORS-2026-ADA2', 'dv_number' => 'DV-2026-ADA2', 'check_number' => 'ADA-01', 'payment_mode' => 'ADA', 'paid_at' => '2026-08-01', 'amount' => 300, 'reason' => 'Wrong amount', 'cancelled_by' => $this->user->id, 'cancelled_at' => '2026-08-04 10:00:00']);
+
+        $this->assertSame(['ada', 'ada'], $this->build()['lines']->pluck('mode')->all());
+    }
+
+    public function test_an_others_payment_is_neither_a_check_nor_an_ada(): void
+    {
+        $this->paid('OR-123', '2026-08-05', 300, $this->account('5020301000', 'Office Supplies Expenses'), ['payment_mode' => 'Others']);
+
+        $line = $this->build()['lines']->first();
+
+        $this->assertSame('other', $line['mode']);
+        $this->assertSame(300.0, $line['amount'], 'it still counts as a payment of the working fund');
     }
 
     public function test_a_cancelled_check_is_a_zero_line_and_the_new_payment_is_a_second_line(): void

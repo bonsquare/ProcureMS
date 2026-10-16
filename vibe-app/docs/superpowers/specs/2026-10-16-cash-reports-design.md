@@ -28,7 +28,7 @@ All three share a header: Entity Name, Fund Cluster, Bank Name / Account No., Ac
 
 1. **Check lines:** paid DVs with `paid_at` in the period (mode check) plus the Cancelled Checks of the period as "Cancelled Check" lines with no amount, ordered by date then check number. An unpaid ORS never appears. A payment by ADA appears in the ADA Issued column.
 2. **Responsibility center, UACS code, nature of payment:** from the ORS and its budget line (account code and title).
-3. **Balance:** opening balance plus fund received up to that line minus payments up to that line.
+3. **Balance:** the fund received typed for the period up to that line minus payments up to that line (nothing is carried forward from an earlier period).
 4. **Account columns of the register:** only the accounts actually paid in the period, each headed by title and UACS code. When there are more columns than the paper takes, the register continues in a second column group.
 
 ## Screen and print

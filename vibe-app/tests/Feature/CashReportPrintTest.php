@@ -238,4 +238,23 @@ class CashReportPrintTest extends TestCase
         $this->assertStringNotContainsString('undefined', $document);
         $this->assertStringContainsString('No payment was made in this period.', $document);
     }
+
+    public function test_others_payments_and_cancelled_adas_stay_out_of_the_roci_and_the_bank_balance_of_the_record(): void
+    {
+        [$school, $user] = $this->tenant('CX1');
+        CashFundReceipt::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'received_at' => '2026-07-01', 'kind' => 'opening_balance', 'fund_cluster' => 'General Fund', 'amount' => 10000, 'created_by' => $user->id]);
+        $this->paid($school, 'OR-123', '2026-08-05', 300, '5020301000', 'Office Supplies Expenses', ['payment_mode' => 'Others']);
+        $ada = $this->paid($school, 'ADA3', '2026-08-06', 200, '5020301000', 'Office Supplies Expenses', ['payment_mode' => 'ADA']);
+        CancelledCheck::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'liquidation_report_id' => $ada->id, 'ors_number' => 'ORS-2026-ADA3', 'dv_number' => 'DV-2026-ADA3', 'check_number' => 'ADA-OLD', 'payment_mode' => 'ADA', 'paid_at' => '2026-08-01', 'amount' => 200, 'reason' => 'Wrong amount', 'cancelled_by' => $user->id, 'cancelled_at' => '2026-08-04 10:00:00']);
+
+        $this->actingAs($user)->get(route('cash.report.roci', $this->periodQuery($school)))->assertOk()->assertDontSee('OR-123')->assertDontSee('ADA-OLD')->assertDontSee('ADA3');
+
+        $record = $this->actingAs($user)->get(route('cash.report.checks', $this->periodQuery($school)))->assertOk()->assertDontSee('OR-123')->getContent();
+        $document = substr($record, (int) strpos($record, '<main'));
+        $this->assertStringContainsString('9,800.00', $document, 'the bank balance follows the ADA only (10,000 - 200), not the cash payment');
+        $this->assertStringNotContainsString('9,500.00', $document);
+
+        $register = $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school)))->assertOk()->assertSee('OR-123')->getContent();
+        $this->assertStringContainsString('9,500.00', substr($register, (int) strpos($register, '<main')), 'the working fund pays the cash payment too');
+    }
 }

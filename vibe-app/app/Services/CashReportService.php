@@ -37,11 +37,8 @@ class CashReportService
         $receipts = CashFundReceipt::query()->where('school_id', $school->id)->orderBy('received_at')->orderBy('id')->get();
 
         $before = fn ($date) => $date->lt($from);
-        $opening = round(
-            (float) $receipts->filter(fn ($receipt) => $before($receipt->received_at))->sum('amount')
-            - (float) $all->filter(fn (array $line) => $before($line['date']))->sum(fn (array $line) => $line['amount'] ?? 0),
-            2
-        );
+        // The opening balance is typed for each quarter (a fund received), so nothing is carried forward from an earlier period.
+        $opening = 0.0;
 
         $periodReceipts = $receipts->filter(fn ($receipt) => ! $before($receipt->received_at) && $receipt->received_at->lte($to))->values();
         $lines = $all
@@ -104,7 +101,7 @@ class CashReportService
             'uacs_code' => $code,
             'nature' => $title,
             'amount' => round((float) $report->amount, 2),
-            'mode' => $report->payment_mode === 'ADA' ? 'ada' : 'check',
+            'mode' => $this->modeOf($report->payment_mode),
             'cancelled' => false,
         ];
     }
@@ -124,8 +121,18 @@ class CashReportService
             'uacs_code' => '',
             'nature' => '',
             'amount' => null,
-            'mode' => 'check',
+            'mode' => $this->modeOf($check->payment_mode),
             'cancelled' => true,
         ];
+    }
+
+    /** 'ada' for an ADA, 'other' for the Others mode (cash and the like), else 'check' (also an old record with no mode). */
+    private function modeOf(?string $paymentMode): string
+    {
+        return match ($paymentMode) {
+            'ADA' => 'ada',
+            'Others' => 'other',
+            default => 'check',
+        };
     }
 }

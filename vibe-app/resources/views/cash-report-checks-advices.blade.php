@@ -15,9 +15,10 @@
     $school = $report['school'];
     // The receipts and the checks / ADAs of the period in date order (money received first on the same day), with the running balance.
     $entries = $data['receipts']->map(fn ($receipt) => ['type' => 'receipt', 'date' => $receipt->received_at, 'receipt' => $receipt])
-        ->concat($data['lines']->map(fn (array $line) => ['type' => 'line', 'date' => $line['date'], 'line' => $line]))
+        ->concat($data['lines']->reject(fn (array $line) => $line['mode'] === 'other')->map(fn (array $line) => ['type' => 'line', 'date' => $line['date'], 'line' => $line]))
         ->sortBy(fn (array $entry) => $entry['date']->format('Ymd').($entry['type'] === 'receipt' ? '0' : '1'))
         ->values();
+    // The balance is the bank balance: a payment in cash (mode Others) does not touch it, so it is not listed here (the register has it).
     $balance = $data['opening'];
     $totalCheck = $data['lines']->where('mode', 'check')->sum(fn (array $line) => $line['amount'] ?? 0);
     $totalAda = $data['lines']->where('mode', 'ada')->sum(fn (array $line) => $line['amount'] ?? 0);
@@ -65,7 +66,7 @@
                 </tr>
             @endif
         @endforeach
-        @if($data['lines']->isEmpty())
+        @if($entries->where('type', 'line')->isEmpty())
             <tr class="muted"><td colspan="13" class="center">No check or ADA was issued in this period.</td></tr>
         @endif
             <tr class="total"><td colspan="9" class="num">TOTAL</td><td class="num">{{ $money($data['total_received']) }}</td><td class="num">{{ $money($totalCheck) }}</td><td class="num">{{ $money($totalAda) }}</td><td class="num">{{ $money($balance) }}</td></tr>
