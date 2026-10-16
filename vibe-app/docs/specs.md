@@ -826,7 +826,7 @@ Tests: `DvJournalEntryTest`, `OrsStatusPrintTest`, `DvAppropriationPrintTest`.
 ### 33.5 Rows of Accounting and Cash (2026-10-16)
 
 - Each row starts with the supplier name in bold, with a storefront icon before it; under it, the document numbers as badges of their own colors: **ORS** (violet), **PR** (blue) and **PO** (amber; the number of the Purchase Order of the PR, shown only when the PR has one); then the particulars.
-- A DV number is shown as it is (it already starts with "DV-"), never as "DV DV-..."; a number typed without the letters gets "DV " in front of it. This holds in the rows, the Edit DV and Cancel Check windows and the Cancelled Checks register.
+- A DV number is shown as it is (it already starts with "DV-"), never as "DV DV-..."; a number typed without the letters gets "DV " in front of it. This holds in the rows, the Edit DV and Cancel Check windows, the Cancelled Checks register, the Stage column of the Budget page, the messages of Accounting and the references of the Allotment Registry; all of them use `LiquidationReport::dvLabel()`.
 - Tests: `FinanceRowBadgesTest`.
 
 ## 34. APP-CSE: a disclosure for each category (approved by the owner 2026-10-15)
