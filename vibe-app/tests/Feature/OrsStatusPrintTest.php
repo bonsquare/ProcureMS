@@ -323,4 +323,25 @@ class OrsStatusPrintTest extends TestCase
         $this->assertMatchesRegularExpression('/x="214\.65" y="751\.34" text-anchor="middle"[^>]*font-size="9\.4"[^>]*>ORS\/JEV\/Check\/<\/text>/', $html);
         $this->assertMatchesRegularExpression('/x="214\.65" y="764\.38" text-anchor="middle"[^>]*font-size="9\.4"[^>]*>ADA\/TRA No\.<\/text>/', $html);
     }
+
+    public function test_the_fund_cluster_of_an_ors_defaults_to_101101_and_can_be_changed(): void
+    {
+        [$school, $user] = $this->tenant();
+        $this->actingAs($user);
+        $line = BudgetAllocation::create([
+            'organization_id' => $school->organization_id, 'school_id' => $school->id, 'office' => $school->name, 'fiscal_year' => now()->year, 'program' => 'A PROGRAM NAME',
+            'start_date' => now()->year.'-01-01', 'end_date' => now()->year.'-12-31', 'source_of_fund' => 'MOOE', 'uacs_code' => '5020301000', 'particulars' => 'Test line',
+            'amount' => 5000, 'q1_amount' => 5000, 'q2_amount' => 0, 'q3_amount' => 0, 'q4_amount' => 0, 'created_by' => $user->id, 'budget_ref_no' => 'BA-TEST-3',
+        ]);
+        $this->get(route('budget'))->assertOk()->assertSee('name="ors_fund_cluster" maxlength="100" value="101101"', false);
+
+        $this->post(route('liquidation.store'), $this->payload($school, ['budget_allocation_id' => $line->id]))->assertSessionHasNoErrors();
+        $default = $this->get(route('liquidation.print', LiquidationReport::firstOrFail()))->assertOk()->getContent();
+        $this->assertMatchesRegularExpression('/font-weight="bold" text-decoration="underline"[^>]*>101101<\/text>/', $default);
+
+        $this->post(route('liquidation.store'), $this->payload($school, ['budget_allocation_id' => $line->id, 'ors_fund_cluster' => '101102']))->assertSessionHasNoErrors();
+        $changed = $this->get(route('liquidation.print', LiquidationReport::orderByDesc('id')->firstOrFail()))->assertOk()->getContent();
+        $this->assertMatchesRegularExpression('/font-weight="bold" text-decoration="underline"[^>]*>101102<\/text>/', $changed);
+        $this->assertStringNotContainsString('>101101</text>', $changed);
+    }
 }

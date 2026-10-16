@@ -27,7 +27,7 @@
     $fit = fn ($s, $w, $size) => min($size, round($w / max(mb_strlen((string) $s), 1) / 0.5, 1));
     $date = ($report->submitted_at ?? $report->created_at)?->format('F d, Y');
     $line = $report->chargedLine();
-    $fund = $report->source_of_fund ?: $pr?->source_of_fund ?: $line?->source_of_fund;
+    $fund = $report->ors_fund_cluster ?: '101101';
     $division = $report->school?->division ?: ($agency->division_name ?: $agency->division_office);
     $payee = $report->payee ?: ($pr?->school?->name ?? $report->school?->name);
     $office = $report->payee_office; // the Payee, Office and Address lines all describe the payee

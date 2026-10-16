@@ -14,7 +14,7 @@ class LiquidationReport extends Model
     /** The "Less:" deductions a DV can carry, by key. */
     public const DV_DEDUCTIONS = ['withholding_tax' => 'Withholding Tax', 'liquidated_damages' => 'Liquidated Damages', 'retention' => 'Retention', 'mobilization' => 'Mobilization'];
 
-    protected $fillable = ['dv_deductions', 'dv_include_appropriation', 'ors_include_status', 'payee_office', 'ors_show_uacs', 'organization_id', 'school_id', 'master_transaction_id', 'procurement_request_id', 'submitted_by', 'report_number', 'ors_number', 'source_of_fund', 'payee', 'payee_address', 'payee_tin', 'responsibility_center_code', 'purpose', 'amount', 'status', 'notes', 'accounting_remarks', 'dv_number', 'dv_date', 'dv_particulars', 'payment_mode', 'payment_reference', 'paid_at', 'paid_by', 'submitted_at', 'approved_at', 'budget_allocation_id', 'signatories', 'reissue_pending', 'dv_fund_cluster'];
+    protected $fillable = ['dv_deductions', 'dv_include_appropriation', 'ors_include_status', 'payee_office', 'ors_show_uacs', 'organization_id', 'school_id', 'master_transaction_id', 'procurement_request_id', 'submitted_by', 'report_number', 'ors_number', 'source_of_fund', 'payee', 'payee_address', 'payee_tin', 'responsibility_center_code', 'purpose', 'amount', 'status', 'notes', 'accounting_remarks', 'dv_number', 'dv_date', 'dv_particulars', 'payment_mode', 'payment_reference', 'paid_at', 'paid_by', 'submitted_at', 'approved_at', 'budget_allocation_id', 'signatories', 'reissue_pending', 'dv_fund_cluster', 'ors_fund_cluster'];
 
     protected function casts(): array
     {

@@ -1933,6 +1933,7 @@ class HomeController extends Controller
             'notes' => ['nullable', 'string', 'max:1000'],
             'ors_date' => ['nullable', 'date'],
             'ors_show_uacs' => ['nullable', 'boolean'],
+            'ors_fund_cluster' => ['nullable', 'string', 'max:100'],
         ], [], ['ors_number' => 'ORS serial number', 'manually_encode_ors_number' => 'manual ORS serial option']);
         abort_unless($schoolIds->contains((int) $data['school_id']), 403);
         if (! empty($data['procurement_request_id'])) {
@@ -2003,6 +2004,7 @@ class HomeController extends Controller
                 'payee_address' => $data['payee_address'] ?? null,
                 'payee_office' => $data['payee_office'] ?? null,
                 'ors_show_uacs' => $data['ors_show_uacs'] ?? true,
+                'ors_fund_cluster' => $data['ors_fund_cluster'] ?? null,
                 'payee_tin' => $data['payee_tin'] ?? null,
                 'responsibility_center_code' => $data['responsibility_center_code'] ?? null,
                 'purpose' => $data['purpose'],
