@@ -212,7 +212,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 - 2026-10-16: Printed ORS Section C: "Check No." and the check number under the ORS number once a check is recorded (docs/specs.md 30.3).
 - 2026-10-16: New form design standard (numbered section cards, uppercase labels, rounded inputs; docs/specs.md section 7) applied to the Program of Works, SOB, AIP KRA form and APP-CSE page; POW list actions are Edit / Print / Delete icons (38). Design only, no behavior changed. Other screens follow in batches.
 - 2026-10-16: **Cash reports** (39): Cash > Reports tab prints the Report of Checks Issued (Appendix 35), the Checks and Advices to Debit Account Disbursement Record and the Cash Disbursement Register from the paid ORS/DV, the Cancelled Checks and the typed Fund received (`cash_fund_receipts`); `CashReportService`, `CashReportController`. Design: docs/superpowers/specs/2026-10-16-cash-reports-design.md.
-- Live: Railway deployment a4a3d027 (2026-10-16 22:26), migrations through `create_pow_items_table`. All 874 tests pass.
+- Live: Railway deployment ac040c1c (2026-10-16 23:05), migrations through `create_cash_fund_receipts_table`. All 911 tests pass.
 - Still open before Phase 3 is complete: browser check of the PR form picker, PR numbering/status end-to-end validation, and deciding whether the APP link should be required for PRs.
 - The Planning page is `/planning`. The source is `resources/views/planning.blade.php`; the controller is `app/Http/Controllers/PlanningController.php`.
 - The last GitHub backup is commit `69d1d35` on `master`. Do not reset or discard local changes.
