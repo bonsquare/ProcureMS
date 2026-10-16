@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AgencySetting;
 use App\Models\AuditLog;
+use App\Models\CancelledCheck;
 use App\Models\ChartOfAccount;
 use App\Models\DvJournalLine;
 use App\Models\LiquidationReport;
@@ -109,13 +110,15 @@ class FinanceController extends Controller
         $all = $this->reports()->where('status', 'approved')->whereNotNull('dv_number')->get();
         $paid = $all->whereNotNull('paid_at');
         $unpaid = $all->whereNull('paid_at');
+        $cancelledChecks = CancelledCheck::with('canceller')->whereIn('school_id', $this->schoolIds())->latest('cancelled_at')->get();
 
         return view('finance', [
             'section' => 'cash',
             'tab' => $tab,
             'isMasterUser' => $this->isMaster(),
-            'counts' => collect(['unpaid' => $unpaid->count(), 'paid' => $paid->count()]),
-            'rows' => ($tab === 'paid' ? $paid : $unpaid)->sortByDesc($tab === 'paid' ? 'paid_at' : 'approved_at'),
+            'counts' => collect(['unpaid' => $unpaid->count(), 'paid' => $paid->count(), 'cancelled' => $cancelledChecks->count()]),
+            'cancelledChecks' => $tab === 'cancelled' ? $cancelledChecks : collect(),
+            'rows' => $tab === 'cancelled' ? collect() : ($tab === 'paid' ? $paid : $unpaid)->sortByDesc($tab === 'paid' ? 'paid_at' : 'approved_at'),
             'metrics' => [
                 ['DVs For Payment', $unpaid->count(), 'schedule', 'error', false],
                 ['Payable Amount', $unpaid->sum('amount'), 'request_quote', 'primary', true],
@@ -137,12 +140,42 @@ class FinanceController extends Controller
             'paid_at' => ['required', 'date', 'before_or_equal:today'],
         ]);
 
-        $liquidationReport->update($data + ['paid_by' => $request->user()->id]);
+        $liquidationReport->update($data + ['paid_by' => $request->user()->id, 'reissue_pending' => false]);
         $liquidationReport->transaction?->update(['status' => 'completed']);
         $liquidationReport->transaction?->recordEvent('cash', 'payment_recorded', 'unpaid', 'paid', $data['payment_reference'] ?? null, ['payment_mode' => $data['payment_mode'], 'paid_at' => $data['paid_at']]);
         AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $liquidationReport->school_id, 'action' => 'ors_paid', 'auditable_type' => LiquidationReport::class, 'auditable_id' => $liquidationReport->id, 'metadata' => ['dv' => $liquidationReport->dv_number, 'mode' => $data['payment_mode']]]);
 
         return redirect()->route('cash')->with('success', "Payment recorded for {$liquidationReport->ors_number} (DV {$liquidationReport->dv_number}).");
+    }
+
+    /** Cancels a paid check: it goes to the Cancelled Checks register and the ORS, DV and journal entry open for editing. */
+    public function cancelCheck(Request $request, LiquidationReport $liquidationReport)
+    {
+        abort_unless($request->user()->hasPermission('cash.pay') && $this->schoolIds()->contains($liquidationReport->school_id), 403);
+        abort_unless($liquidationReport->paid_at, 422, 'Only a paid check can be cancelled.');
+
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'max:255'],
+            'password' => ['required', 'current_password'],
+        ]);
+
+        DB::transaction(function () use ($request, $liquidationReport, $data) {
+            CancelledCheck::create([
+                'organization_id' => $liquidationReport->organization_id, 'school_id' => $liquidationReport->school_id, 'liquidation_report_id' => $liquidationReport->id,
+                'ors_number' => $liquidationReport->ors_number, 'dv_number' => $liquidationReport->dv_number, 'check_number' => $liquidationReport->payment_reference,
+                'payment_mode' => $liquidationReport->payment_mode, 'paid_at' => $liquidationReport->paid_at, 'amount' => $liquidationReport->amount,
+                'reason' => $data['reason'], 'cancelled_by' => $request->user()->id, 'cancelled_at' => now(),
+            ]);
+            $liquidationReport->update([
+                'paid_at' => null, 'payment_reference' => null, 'payment_mode' => null, 'paid_by' => null,
+                'status' => 'for_review', 'approved_at' => null, 'reissue_pending' => true,
+            ]);
+            $liquidationReport->transaction?->update(['status' => 'liquidation']);
+        });
+        $liquidationReport->transaction?->recordEvent('cash', 'check_cancelled', 'paid', 'unpaid', $liquidationReport->dv_number, ['reason' => $data['reason']]);
+        AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $liquidationReport->school_id, 'action' => 'check_cancelled', 'auditable_type' => LiquidationReport::class, 'auditable_id' => $liquidationReport->id, 'metadata' => ['dv' => $liquidationReport->dv_number, 'reason' => $data['reason']]]);
+
+        return redirect()->route('cash', ['tab' => 'cancelled'])->with('success', "Check cancelled for {$liquidationReport->ors_number} (DV {$liquidationReport->dv_number}). Edit it in Accounting, approve it again, then record the new payment.");
     }
 
     private function nextDvNumber(): string
@@ -154,11 +187,14 @@ class FinanceController extends Controller
     public function createDv(Request $request, LiquidationReport $liquidationReport, bool $preview = false)
     {
         abort_unless($request->user()->hasPermission('accounting.approve') && $this->schoolIds()->contains($liquidationReport->school_id), 403);
-        abort_unless($liquidationReport->status === 'approved', 422, 'Approve the ORS before creating a disbursement voucher.');
-        abort_if($liquidationReport->dv_number, 422, 'A DV already exists for this ORS.');
+        $reissue = (bool) $liquidationReport->reissue_pending;
+        if (! $reissue) {
+            abort_unless($liquidationReport->status === 'approved', 422, 'Approve the ORS before creating a disbursement voucher.');
+            abort_if($liquidationReport->dv_number, 422, 'A DV already exists for this ORS.');
+        }
 
         $data = $request->validate([
-            'dv_number' => ['nullable', 'string', 'max:100', Rule::unique('liquidation_reports', 'dv_number')->where('organization_id', $liquidationReport->organization_id)],
+            'dv_number' => ['nullable', 'string', 'max:100', Rule::unique('liquidation_reports', 'dv_number')->where('organization_id', $liquidationReport->organization_id)->ignore($liquidationReport->id)],
             'dv_date' => ['required', 'date', 'before_or_equal:today'],
             'payee' => ['required', 'string', 'max:255'],
             'dv_particulars' => ['required', 'string', 'max:255'],
@@ -173,11 +209,24 @@ class FinanceController extends Controller
             'journal.*.account_code' => [$preview ? 'nullable' : 'required', 'string', 'max:50'],
             'journal.*.debit' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
             'journal.*.credit' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
-        ], [
+        ] + ($reissue ? [
+            'amount' => ['required', 'numeric', 'min:0.01', 'max:999999999999'],
+            'purpose' => ['nullable', 'string', 'max:255'],
+            'reason' => [$preview ? 'nullable' : 'required', 'string', 'max:255'],
+            'password' => [$preview ? 'nullable' : 'required', 'current_password'],
+        ] : []), [
             'journal.required' => 'Add the journal entry: at least one debit and one credit line.',
             'journal.min' => 'The journal entry needs at least two lines (a debit and a credit).',
             'journal.max' => 'The DV has room for '.self::JOURNAL_MAX_LINES.' accounting entry lines.',
         ]);
+        $previous = ['amount' => $liquidationReport->amount, 'purpose' => $liquidationReport->purpose];
+        if ($reissue) {
+            // The journal entry and deductions are checked against the corrected amount, which is saved with the DV.
+            $liquidationReport->amount = round((float) $data['amount'], 2);
+            if (array_key_exists('purpose', $data)) {
+                $liquidationReport->purpose = $data['purpose'];
+            }
+        }
         $signatories = $request->has('signatories')
             ? SignatorySlots::validated('disbursement_voucher', $request->input('signatories'), (int) $liquidationReport->school_id)
             : null;
@@ -190,7 +239,7 @@ class FinanceController extends Controller
             }
             $lines = [];
         }
-        unset($data['journal'], $data['deductions'], $data['deductions_other']);
+        unset($data['journal'], $data['deductions'], $data['deductions_other'], $data['reason'], $data['password']);
         $deductions = collect(LiquidationReport::DV_DEDUCTIONS)->keys()
             ->mapWithKeys(fn ($key) => [$key => round((float) $request->input('deductions.'.$key, 0), 2)])->filter(fn ($value) => $value > 0);
         $others = collect($request->input('deductions_other', []))
@@ -218,14 +267,24 @@ class FinanceController extends Controller
         }
         $data['dv_include_appropriation'] = (bool) ($data['dv_include_appropriation'] ?? false);
 
-        $data['dv_number'] ??= app(DocumentNumberService::class)
-            ->next((int) $liquidationReport->organization_id, 'disbursement_voucher', 'DV');
-        DB::transaction(function () use ($liquidationReport, $data, $lines) {
+        $data['dv_number'] = $reissue ? $liquidationReport->dv_number : ($data['dv_number'] ?? app(DocumentNumberService::class)
+            ->next((int) $liquidationReport->organization_id, 'disbursement_voucher', 'DV'));
+        DB::transaction(function () use ($liquidationReport, $data, $lines, $reissue) {
+            if ($reissue) {
+                $liquidationReport->journalLines()->delete();
+            }
             $liquidationReport->update($data);
             foreach ($lines as $number => $line) {
                 DvJournalLine::create($line + ['organization_id' => $liquidationReport->organization_id, 'liquidation_report_id' => $liquidationReport->id, 'line_no' => $number + 1]);
             }
         });
+        if ($reissue) {
+            $changes = ['reason' => $request->input('reason'), 'old_amount' => $previous['amount'], 'new_amount' => $liquidationReport->amount, 'old_purpose' => $previous['purpose'], 'new_purpose' => $liquidationReport->purpose];
+            $liquidationReport->transaction?->recordEvent('accounting', 'dv_edited', 'reissue_pending', 'reissue_pending', $data['dv_number'], $changes);
+            AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $liquidationReport->school_id, 'action' => 'dv_edited', 'auditable_type' => LiquidationReport::class, 'auditable_id' => $liquidationReport->id, 'metadata' => ['dv' => $data['dv_number'], 'ors' => $liquidationReport->ors_number] + $changes]);
+
+            return redirect()->route('accounting')->with('success', "DV {$data['dv_number']} updated for {$liquidationReport->ors_number}. Approve the ORS again to queue it in Cash.");
+        }
         $liquidationReport->transaction?->recordEvent('accounting', 'dv_created', null, 'ready_for_payment', $data['dv_number'], ['dv_date' => $data['dv_date']]);
         AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $liquidationReport->school_id, 'action' => 'dv_created', 'auditable_type' => LiquidationReport::class, 'auditable_id' => $liquidationReport->id, 'metadata' => ['dv' => $data['dv_number'], 'ors' => $liquidationReport->ors_number]]);
 

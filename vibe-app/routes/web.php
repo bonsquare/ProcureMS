@@ -175,6 +175,7 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::get('/accounting/{liquidationReport}/dv-print', [FinanceController::class, 'printDv'])->name('accounting.dv.print');
     Route::get('/cash', [FinanceController::class, 'cash'])->name('cash');
     Route::post('/cash/{liquidationReport}/pay', [FinanceController::class, 'pay'])->middleware('permission:cash.pay')->name('cash.pay');
+    Route::post('/cash/{liquidationReport}/cancel', [FinanceController::class, 'cancelCheck'])->middleware('permission:cash.pay')->name('cash.cancel');
     Route::get('/google-drive', [GoogleDriveController::class, 'show'])->name('google-drive');
     Route::get('/google-drive/connect', [GoogleDriveController::class, 'redirect'])->name('google-drive.redirect');
     Route::get('/google-drive/callback', [GoogleDriveController::class, 'callback'])->name('google-drive.callback');
