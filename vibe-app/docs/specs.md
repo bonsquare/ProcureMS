@@ -821,3 +821,10 @@ Tests: `DvJournalEntryTest`, `OrsStatusPrintTest`, `DvAppropriationPrintTest`.
 - In the APP-CSE entry page (`/planning/app-cse/{id}`), each **category band** (Common Office Supply, Construction Components & Supplies, Other categories, and so on) is a disclosure with its arrow on the left: it folds and opens the month headings and the items of that category. Every category is open when the page opens. It is the same in Part I, Part II and in the folded list of items with no quantity yet. The printed APP-CSE does not change.
 
 Tests: `AppCse*` (the page still renders with its categories).
+
+## 35. Cloudflare Turnstile on sign-in and registration (approved by the owner 2026-10-16)
+
+- The **Sign in** and **Register** forms carry the Cloudflare **Turnstile** human check, above the Sign in button and above the Register button. The server verifies the answer with Cloudflare (`App\Support\Turnstile`, called first in `AuthController::store` and `storeRegistration`); without a passing answer the sign-in or registration is refused with "Please complete the security check and try again." (also when Cloudflare cannot be reached).
+- It is **off until both keys are set**: `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` (environment, read in `config/services.php`; listed in `.env.example`). With either one empty the forms show no widget and behave as before. The keys come from the owner's Cloudflare dashboard (Turnstile widget, with the live domain, and `localhost` to try it locally); they are never kept in the repository.
+
+Tests: `TurnstileTest`, `LoginIdentifierTest`.
