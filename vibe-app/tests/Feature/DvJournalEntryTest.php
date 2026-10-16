@@ -234,7 +234,7 @@ class DvJournalEntryTest extends TestCase
         $this->actingAs($master)->get(route('cash'))->assertOk()->assertSee('Cash');
     }
 
-    public function test_the_accounting_tab_shows_counts_search_and_the_journal_summary(): void
+    public function test_the_accounting_tab_shows_counts_and_search_but_not_the_journal_summary(): void
     {
         [$report, $master] = $this->ors(10000);
         $c = $this->codes();
@@ -247,6 +247,6 @@ class DvJournalEntryTest extends TestCase
             'journal' => [['account_code' => $c['expense'], 'debit' => '10000'], ['account_code' => $c['cash'], 'credit' => '10000']],
         ]);
 
-        $this->get(route('accounting', ['tab' => 'with_dv']))->assertOk()->assertSee('Journal entry · 2 lines')->assertSee('Cash-Modified Disbursement System')->assertSee('Dr')->assertSee('Cr')->assertSee('DV-');
+        $this->get(route('accounting', ['tab' => 'with_dv']))->assertOk()->assertSee('DV-')->assertDontSee('Journal entry · 2 lines', false);
     }
 }

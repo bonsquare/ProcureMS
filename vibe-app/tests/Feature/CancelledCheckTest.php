@@ -295,11 +295,12 @@ class CancelledCheckTest extends TestCase
         $this->assertStringNotContainsString('current-password', $cash);
     }
 
-    public function test_the_edit_dv_window_can_preview_the_official_dv_with_the_changes_without_saving(): void
+    public function test_the_edit_dv_window_shows_the_official_dv_beside_the_form_and_previews_without_saving(): void
     {
         [$report, $master] = $this->reissuedDv();
         $this->actingAs($master)->get(route('accounting', ['tab' => 'with_dv']))->assertOk()
-            ->assertSee('formaction="'.route('accounting.dv.preview', $report).'" formtarget="_blank" formnovalidate', false);
+            ->assertSee('data-ors-edit data-split data-preview="'.route('accounting.dv.preview', $report).'"', false)
+            ->assertSee('Edit Disbursement Voucher')->assertSee('Official DV (updates as you edit)');
 
         $html = $this->post(route('accounting.dv.preview', $report), $this->dvForm(9000, ['dv_particulars' => 'Preview only particulars']))->assertOk()->getContent();
 

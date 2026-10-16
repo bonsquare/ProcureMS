@@ -2133,6 +2133,31 @@ class HomeController extends Controller
         return back()->with('success', ($liquidationReport->ors_number ?: $liquidationReport->report_number).' corrected and sent back to Accounting for review.');
     }
 
+    /** The official ORS drawn with the corrections typed so far: the correction is made inside a transaction that is rolled back, so nothing is saved. */
+    public function previewReturnedOrs(Request $request, LiquidationReport $liquidationReport)
+    {
+        abort_unless($request->user()->canCreateObligation() && $this->scopedSchoolIds()->contains($liquidationReport->school_id), 403);
+
+        DB::beginTransaction();
+        try {
+            $this->updateReturnedOrs($request, $liquidationReport);
+            session()->forget(['success', 'errors', '_old_input']);
+
+            return response($this->printOrs($liquidationReport->fresh())->render());
+        } catch (ValidationException) {
+            session()->forget(['success', 'errors', '_old_input']);
+            // Something typed is not valid yet (an empty purpose, an amount over the budget): the ORS is still drawn, with what is valid.
+            $liquidationReport->forceFill(array_filter([
+                'payee' => $request->input('payee'), 'payee_office' => $request->input('payee_office'), 'payee_address' => $request->input('payee_address'),
+                'payee_tin' => $request->input('payee_tin'), 'purpose' => $request->input('purpose'), 'ors_fund_cluster' => $request->input('ors_fund_cluster'),
+            ], fn ($value) => $value !== null));
+
+            return response($this->printOrs($liquidationReport)->render());
+        } finally {
+            DB::rollBack();
+        }
+    }
+
     public function updateLiquidationStatus(Request $request, LiquidationReport $liquidationReport)
     {
         abort_unless(request()->user()?->hasAccess('liquidation'), 403);

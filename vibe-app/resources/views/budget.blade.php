@@ -44,25 +44,50 @@
     </div>
 
     <details open class="mt-4 overflow-hidden rounded border border-outline-variant/30 bg-white"><summary class="flex cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden border-b border-outline-variant/30 p-5"><div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center min-w-0 flex-1"><div><h2 class="text-lg font-semibold">Obligation Requests (ORS) · FY {{ $year }}</h2><p class="mt-1 text-xs text-on-surface-variant">Created here → reviewed in Accounting → DV created → paid in Cash.</p></div><button type="button" data-open-ors class="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]">add</span>Create ORS</button></div><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] text-on-surface-variant transition-transform" aria-hidden="true">expand_more</span></summary><div class="overflow-x-auto"><table class="w-full min-w-[900px] text-left text-sm"><thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant"><tr><th class="px-4 py-3">ORS No.</th><th class="px-4 py-3">School</th><th class="px-4 py-3">Fund</th><th class="px-4 py-3">Particulars</th><th class="px-4 py-3">PR</th><th class="px-4 py-3 text-right">Amount</th><th class="px-4 py-3">Stage</th><th class="px-4 py-3"></th></tr></thead><tbody class="divide-y divide-outline-variant/20">
-        @forelse($orsList as $o)@php $stage = $o->paid_at ? ['Paid', 'secondary'] : ($o->dv_number ? [\App\Models\LiquidationReport::dvLabel($o->dv_number), 'primary'] : ($o->status === 'approved' ? ['Approved · awaiting DV', 'primary'] : [$o->status === 'for_review' ? 'For Review Accounting' : \Illuminate\Support\Str::headline($o->status), in_array($o->status, ['returned', 'for_review']) ? 'error' : 'primary'])); @endphp<tr><td class="px-4 py-3 font-semibold text-primary">{{ $o->ors_number }}</td><td class="px-4 py-3">{{ $o->school?->name }}</td><td class="px-4 py-3">{{ $o->source_of_fund ?: '—' }}@if($line = $o->chargedLine())<span class="block text-[11px] text-on-surface-variant">{{ $line->uacs_code }} · {{ $line->particulars }}</span>@endif</td><td class="px-4 py-3">{{ $o->purpose }}</td><td class="px-4 py-3">{{ $o->procurementRequest?->request_number ?: 'No PR' }}</td><td class="px-4 py-3 text-right tabular-nums">{{ $peso($o->amount) }}</td><td class="px-4 py-3"><span class="inline-flex items-center whitespace-nowrap rounded-full bg-{{ $stage[1] }}/10 px-3 py-1 text-xs font-bold text-{{ $stage[1] }}">{{ $stage[0] }}</span>@if($o->accounting_remarks && in_array($o->status, ['returned', 'pending_documents']))<span class="mt-1 block max-w-[220px] text-[11px] text-on-surface-variant">{{ $o->accounting_remarks }}</span>@endif</td><td class="px-4 py-3 text-right">@if(auth()->user()->canCreateObligation() && in_array($o->status, ['returned', 'pending_documents']) && ! $o->dv_number && ! $o->paid_at)<button type="button" onclick="document.getElementById('ors-edit-{{ $o->id }}').showModal()" title="Edit ORS" aria-label="Edit ORS {{ $o->ors_number }}" class="mr-1.5 inline-flex h-8 w-8 items-center justify-center rounded border border-outline-variant/60 bg-white text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">edit</span></button>
-                        <dialog id="ors-edit-{{ $o->id }}" style="width:min(40rem,calc(100% - 2rem))" class="rounded-lg bg-white p-0 text-left shadow-2xl backdrop:bg-black/50"><form method="POST" action="{{ route('liquidation.update', $o) }}" class="flex flex-col" style="max-height:92vh">@csrf @method('PATCH')
-                            <div class="shrink-0 border-b border-outline-variant/30 px-6 py-4"><h2 class="text-lg font-semibold">Edit {{ $o->ors_number }}</h2><p class="mt-0.5 text-xs text-on-surface-variant">Accounting returned this ORS. Correct it and it goes back to For Review Accounting.</p></div>
-                            <div class="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
-                                @if($o->accounting_remarks)<div class="rounded-lg border border-amber-300/70 bg-amber-50 px-4 py-3 text-xs text-amber-900"><span class="font-bold uppercase tracking-wider">Accounting remarks</span><p class="mt-1 text-sm">{{ $o->accounting_remarks }}</p></div>@endif
-                                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                    <label class="text-xs font-semibold text-on-surface-variant sm:col-span-2">Payee / Supplier<input name="payee" maxlength="255" value="{{ $o->payee }}" class="{{ $inputClass }}"></label>
-                                    <label class="text-xs font-semibold text-on-surface-variant">Payee Office<input name="payee_office" maxlength="255" value="{{ $o->payee_office }}" class="{{ $inputClass }}"></label>
-                                    <label class="text-xs font-semibold text-on-surface-variant">Payee TIN<input name="payee_tin" maxlength="100" value="{{ $o->payee_tin }}" class="{{ $inputClass }}"></label>
-                                    <label class="text-xs font-semibold text-on-surface-variant sm:col-span-2">Payee Address<input name="payee_address" maxlength="255" value="{{ $o->payee_address }}" class="{{ $inputClass }}"></label>
-                                    <label class="text-xs font-semibold text-on-surface-variant sm:col-span-2">Purpose / Particulars <span class="text-error">*</span><input name="purpose" required maxlength="255" value="{{ $o->purpose }}" class="{{ $inputClass }}"></label>
-                                    <label class="text-xs font-semibold text-on-surface-variant">Amount (₱) <span class="text-error">*</span><input type="number" step="0.01" min="0.01" name="amount" required value="{{ number_format((float) $o->amount, 2, '.', '') }}" @if($o->procurement_request_id) readonly title="The amount of an ORS made from a Purchase Order is the amount of the PO." @endif class="{{ $inputClass }} text-right"></label>
-                                    <label class="text-xs font-semibold text-on-surface-variant">Fund Cluster<input name="ors_fund_cluster" maxlength="100" value="{{ $o->ors_fund_cluster ?: '101101' }}" class="{{ $inputClass }}"></label>
-                                    <label class="text-xs font-semibold text-on-surface-variant sm:col-span-2">Notes<textarea name="notes" rows="2" maxlength="1000" class="{{ $inputClass }}">{{ $o->notes }}</textarea></label>
+        @forelse($orsList as $o)@php $stage = $o->paid_at ? ['Paid', 'secondary'] : ($o->dv_number ? [\App\Models\LiquidationReport::dvLabel($o->dv_number), 'primary'] : ($o->status === 'approved' ? ['Approved · awaiting DV', 'primary'] : [$o->status === 'for_review' ? 'For Review Accounting' : \Illuminate\Support\Str::headline($o->status), in_array($o->status, ['returned', 'for_review']) ? 'error' : 'primary'])); @endphp<tr><td class="px-4 py-3 font-semibold text-primary">{{ $o->ors_number }}</td><td class="px-4 py-3">{{ $o->school?->name }}</td><td class="px-4 py-3">{{ $o->source_of_fund ?: '—' }}@if($line = $o->chargedLine())<span class="block text-[11px] text-on-surface-variant">{{ $line->uacs_code }} · {{ $line->particulars }}</span>@endif</td><td class="px-4 py-3">{{ $o->purpose }}</td><td class="px-4 py-3">{{ $o->procurementRequest?->request_number ?: 'No PR' }}</td><td class="px-4 py-3 text-right tabular-nums">{{ $peso($o->amount) }}</td><td class="px-4 py-3"><span class="inline-flex items-center whitespace-nowrap rounded-full bg-{{ $stage[1] }}/10 px-3 py-1 text-xs font-bold text-{{ $stage[1] }}">{{ $stage[0] }}</span>@if($o->accounting_remarks && in_array($o->status, ['returned', 'pending_documents']))<span class="mt-1 block max-w-[220px] text-[11px] text-on-surface-variant">{{ $o->accounting_remarks }}</span>@endif</td><td class="px-4 py-3 text-right"><div class="flex items-center justify-end gap-1.5 whitespace-nowrap">@if(auth()->user()->canCreateObligation() && in_array($o->status, ['returned', 'pending_documents']) && ! $o->dv_number && ! $o->paid_at)<button type="button" data-ors-edit-open="ors-edit-{{ $o->id }}" title="Edit ORS" aria-label="Edit ORS {{ $o->ors_number }}" class="inline-flex h-8 w-8 items-center justify-center rounded border border-outline-variant/60 bg-white text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">edit</span></button>
+                        <dialog id="ors-edit-{{ $o->id }}" data-ors-edit data-split data-preview="{{ route('liquidation.update.preview', $o) }}" class="rounded bg-white p-0 text-left shadow-2xl backdrop:bg-black/50">
+                            <div class="flex max-h-[94vh] w-full flex-col overflow-hidden rounded bg-white">
+                                <div class="flex shrink-0 items-center justify-between border-b border-outline-variant/30 px-5 py-3"><div><h2 class="text-lg font-semibold">Edit Obligation Request and Status (ORS)</h2><p class="mt-1 text-xs text-on-surface-variant">{{ $o->ors_number }} was returned by Accounting. Correct it here; saving sends it back to For Review Accounting.</p></div><button type="button" onclick="this.closest('dialog').close()" aria-label="Close" class="rounded p-2 hover:bg-primary hover:text-white"><span class="material-symbols-outlined">close</span></button></div>
+                                <div class="ors-edit-body">
+                                    <aside class="ors-edit-preview" aria-label="Official ORS preview"><div class="ors-edit-bar"><span>Official ORS (updates as you edit)</span><span class="flex items-center gap-3"><small data-status>Updates as you type</small><select data-zoom aria-label="Preview zoom" class="rounded border border-outline-variant/60 bg-white px-2 py-1 text-xs font-semibold"><option value="fit">Fit width</option><option value="0.5">50%</option><option value="0.75">75%</option><option value="1">100%</option></select></span></div><iframe title="Official ORS preview"></iframe></aside>
+                                    <div class="ors-edit-pane">
+                                    <form id="ors-edit-form-{{ $o->id }}" method="POST" action="{{ route('liquidation.update', $o) }}" class="ors-edit-form grid grid-cols-1 gap-3 p-4 md:grid-cols-2">@csrf @method('PATCH')
+                                        @if($o->accounting_remarks)<div class="rounded-lg border border-amber-300/70 bg-amber-50 px-4 py-3 text-xs text-amber-900 md:col-span-2"><span class="font-bold uppercase tracking-wider">Accounting remarks</span><p class="mt-1 text-sm">{{ $o->accounting_remarks }}</p></div>@endif
+                                        <section class="rounded-lg border border-outline-variant/30 bg-white p-3 md:col-span-2">
+                                            <h3 class="mb-2 text-[11px] font-bold uppercase tracking-wider text-primary">Document</h3>
+                                            <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                                <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">ORS Serial No.<input disabled value="{{ $o->ors_number }}" class="{{ $inputClass }} bg-surface-low"></label>
+                                                <label class="text-xs font-semibold text-on-surface-variant">Date<input type="date" disabled value="{{ ($o->submitted_at ?? $o->created_at)?->toDateString() }}" class="{{ $inputClass }} bg-surface-low"></label>
+                                                <label class="text-xs font-semibold text-on-surface-variant">Purchase Order<input disabled value="{{ ($po = $o->procurementRequest?->purchaseOrder()?->document_number) ? $po : 'No PO — direct expense' }}" class="{{ $inputClass }} bg-surface-low"></label>
+                                            </div>
+                                        </section>
+                                        <section class="rounded-lg border border-outline-variant/30 bg-white p-3 md:col-span-2">
+                                            <h3 class="mb-2 text-[11px] font-bold uppercase tracking-wider text-primary">Payee</h3>
+                                            <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                                <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Payee / Supplier<input name="payee" maxlength="255" value="{{ $o->payee }}" class="{{ $inputClass }}"></label>
+                                                <label class="text-xs font-semibold text-on-surface-variant">Payee Office<input name="payee_office" maxlength="255" value="{{ $o->payee_office }}" placeholder="Office or branch of the payee" class="{{ $inputClass }}"></label>
+                                                <label class="text-xs font-semibold text-on-surface-variant">Payee TIN<input name="payee_tin" maxlength="100" value="{{ $o->payee_tin }}" class="{{ $inputClass }}"></label>
+                                                <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Payee Address<input name="payee_address" maxlength="255" value="{{ $o->payee_address }}" class="{{ $inputClass }}"></label>
+                                            </div>
+                                        </section>
+                                        <section class="rounded-lg border border-outline-variant/30 bg-white p-3 md:col-span-2">
+                                            <h3 class="mb-2 text-[11px] font-bold uppercase tracking-wider text-primary">Obligation</h3>
+                                            <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                                <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Purpose / Particulars <span class="text-error">*</span><input name="purpose" required maxlength="255" value="{{ $o->purpose }}" class="{{ $inputClass }}"></label>
+                                                <label class="text-xs font-semibold text-on-surface-variant">Amount (₱) <span class="text-error">*</span><input type="number" step="0.01" min="0.01" name="amount" required value="{{ number_format((float) $o->amount, 2, '.', '') }}" @if($o->procurement_request_id) readonly title="The amount of an ORS made from a Purchase Order is the amount of the PO." @endif class="{{ $inputClass }}"></label>
+                                                <label class="text-xs font-semibold text-on-surface-variant">Fund Cluster<input name="ors_fund_cluster" maxlength="100" value="{{ $o->ors_fund_cluster ?: '101101' }}" class="{{ $inputClass }}"></label>
+                                                <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Responsibility Center Code<input disabled value="{{ $o->responsibility_center_code }}" class="{{ $inputClass }} bg-surface-low"></label>
+                                                <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Charge to Budget Line (Fund · Account Code)<input disabled value="{{ ($chargeLine = $o->chargedLine()) ? $chargeLine->source_of_fund.' · '.$chargeLine->uacs_code.' '.$chargeLine->particulars : '' }}" class="{{ $inputClass }} bg-surface-low"></label>
+                                            </div>
+                                        </section>
+                                        <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Notes<textarea name="notes" rows="2" maxlength="1000" class="{{ $inputClass }}">{{ $o->notes }}</textarea></label>
+                                    </form>
+                                    </div>
                                 </div>
+                                <div class="flex shrink-0 justify-end gap-2 border-t border-outline-variant/30 bg-white px-5 py-3"><button type="button" onclick="this.closest('dialog').close()" class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Cancel</button><button type="submit" form="ors-edit-form-{{ $o->id }}" class="rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Save and send to Accounting</button></div>
                             </div>
-                            <div class="flex shrink-0 justify-end gap-2 border-t border-outline-variant/30 bg-white px-6 py-4"><button type="button" onclick="this.closest('dialog').close()" class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Close</button><button class="rounded bg-primary px-4 py-2.5 text-xs font-bold text-white hover:bg-primary-container">Save and send to Accounting</button></div>
-                        </form></dialog>
-                    @endif<a href="{{ route('liquidation.print', $o) }}" target="_blank" rel="noopener" title="Print ORS" aria-label="Print ORS {{ $o->ors_number }}" class="inline-flex h-8 w-8 items-center justify-center rounded border border-outline-variant/60 bg-white text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">print</span></a></td></tr>@empty<tr><td colspan="8" class="px-4 py-10 text-center text-on-surface-variant">No ORS created for FY {{ $year }}. Click Create ORS to obligate funds.</td></tr>@endforelse</tbody></table></div></details>
+                        </dialog>
+                    @endif<a href="{{ route('liquidation.print', $o) }}" target="_blank" rel="noopener" title="Print ORS" aria-label="Print ORS {{ $o->ors_number }}" class="inline-flex h-8 w-8 items-center justify-center rounded border border-outline-variant/60 bg-white text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">print</span></a></div></td></tr>@empty<tr><td colspan="8" class="px-4 py-10 text-center text-on-surface-variant">No ORS created for FY {{ $year }}. Click Create ORS to obligate funds.</td></tr>@endforelse</tbody></table></div></details>
     <details open class="mt-4 overflow-hidden rounded border border-outline-variant/30 bg-white"><summary class="flex cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden border-b border-outline-variant/30 p-5"><div class=" min-w-0 flex-1"><h2 class="text-lg font-semibold">Obligations &amp; Transactions · FY {{ $year }}</h2><p class="mt-1 text-xs text-on-surface-variant">Every procurement request and direct (no-PR) ORS charged against your funds. Click a reference to open it.</p></div><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] text-on-surface-variant transition-transform" aria-hidden="true">expand_more</span></summary><div class="overflow-x-auto"><table class="w-full text-left text-sm"><thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant"><tr><th class="px-4 py-3">Date</th><th class="px-4 py-3">Type</th><th class="px-4 py-3">Reference</th><th class="px-4 py-3">Description</th><th class="px-4 py-3">School</th><th class="px-4 py-3">Fund</th><th class="px-4 py-3 text-right">Amount</th><th class="px-4 py-3">Status</th></tr></thead><tbody class="divide-y divide-outline-variant/20">
         @forelse($transactions as $t)<tr><td class="px-4 py-3">{{ $t['date']->format('M d, Y') }}</td><td class="px-4 py-3"><span class="rounded bg-surface-container px-1.5 py-0.5 text-[10px] font-semibold uppercase">{{ $t['type'] }}</span></td><td class="px-4 py-3"><a href="{{ $t['url'] }}" class="font-semibold text-primary hover:underline">{{ $t['ref'] }}</a></td><td class="px-4 py-3">{{ $t['description'] }}</td><td class="px-4 py-3">{{ $schoolNames[$t['school_id']] ?? '' }}</td><td class="px-4 py-3">{{ $t['fund'] }}</td><td class="px-4 py-3 text-right tabular-nums">{{ $peso($t['amount']) }}</td><td class="px-4 py-3">{{ \Illuminate\Support\Str::headline($t['status']) }}</td></tr>@empty<tr><td colspan="8" class="px-4 py-8 text-center text-on-surface-variant">No obligations for FY {{ $year }}.</td></tr>@endforelse</tbody></table></div></details>
 </div></main></div>
@@ -245,6 +270,65 @@
         f('payee_address').dispatchEvent(new Event('input', { bubbles: true }));
     });
     @if($errors->any() || request('pr') || request('new')) openOrs(); document.getElementById('ors-pr').dispatchEvent(new Event('change')); @endif
+</script>
+<style>
+    dialog[data-ors-edit]{padding:0}
+    .ors-edit-body{display:flex;flex-direction:row-reverse;min-height:0;flex:1;overflow:hidden}
+    .ors-edit-preview{display:flex;min-width:0;flex:1 1 52%;flex-direction:column;background:#d9dee5;border-left:1px solid #cbd7e1}
+    .ors-edit-bar{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:#fff;border-bottom:1px solid #cbd7e1;font-size:12px;font-weight:700;color:#103967}
+    .ors-edit-bar small{font-weight:400;color:#536273}
+    .ors-edit-preview iframe{width:100%;flex:1;min-height:60vh;border:0;background:#d9dee5}
+    .ors-edit-pane{flex:1 1 48%;min-width:0;overflow-y:auto;max-height:calc(94vh - 4.5rem)}
+    .ors-edit-form label{display:block;line-height:1.2}
+    .ors-edit-form input:not([type=checkbox]),.ors-edit-form select,.ors-edit-form textarea{display:block;width:100%;margin-top:.25rem;padding-top:.4rem;padding-bottom:.4rem;font-size:.8125rem}
+    @media(max-width:1023px){.ors-edit-body{flex-direction:column-reverse;overflow-y:auto}.ors-edit-preview{flex:none}.ors-edit-pane{max-height:none;overflow:visible}}
+</style>
+<script>
+    // Edit ORS window: the official ORS on the right is drawn from the form on the left as it is now (nothing is saved).
+    (() => {
+        const hideChrome = '<style>.official-toolbar{display:none!important}body{background:#d9dee5!important}.official-sheet{zoom:var(--pz,1)!important;margin-top:12px!important;margin-bottom:12px!important}</style>';
+        document.querySelectorAll('dialog[data-ors-edit]').forEach((dialog) => {
+            const form = dialog.querySelector('form');
+            const frame = dialog.querySelector('iframe');
+            const status = dialog.querySelector('[data-status]');
+            const zoomSelect = dialog.querySelector('[data-zoom]');
+            let timer = null; let controller = null;
+            const applyZoom = () => {
+                const doc = frame.contentDocument;
+                const sheet = doc && doc.querySelector('.official-sheet, [data-official-page]');
+                if (! sheet) return;
+                let zoom = parseFloat(zoomSelect.value);
+                if (zoomSelect.value === 'fit') {
+                    doc.documentElement.style.setProperty('--pz', 1);
+                    const box = sheet.getBoundingClientRect();
+                    zoom = Math.min(0.72, Math.max(0.3, (frame.clientWidth - 48) / (Math.max(sheet.scrollWidth, box.width) || 1)));
+                }
+                doc.documentElement.style.setProperty('--pz', zoom);
+            };
+            frame.addEventListener('load', () => setTimeout(applyZoom, 350));
+            zoomSelect.addEventListener('change', applyZoom);
+            const refresh = async () => {
+                if (! dialog.open) return;
+                if (controller) controller.abort();
+                controller = new AbortController();
+                status.textContent = 'Updating preview...';
+                const body = new FormData(form);
+                body.delete('_method');
+                try {
+                    const response = await fetch(dialog.dataset.preview, { method: 'POST', body, signal: controller.signal, headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' } });
+                    const html = await response.text();
+                    frame.srcdoc = /<head[^>]*>/i.test(html) ? html.replace(/(<head[^>]*>)/i, '$1' + hideChrome) : hideChrome + html;
+                    status.textContent = response.ok ? 'Updates as you type' : 'Preview unavailable (HTTP ' + response.status + ')';
+                } catch (error) {
+                    if (error.name !== 'AbortError') status.textContent = 'Preview unavailable. Change a field to retry';
+                }
+            };
+            const schedule = () => { clearTimeout(timer); timer = setTimeout(refresh, 900); };
+            form.addEventListener('input', schedule);
+            form.addEventListener('change', schedule);
+            document.querySelectorAll('[data-ors-edit-open="' + dialog.id + '"]').forEach((button) => button.addEventListener('click', () => { dialog.showModal(); refresh(); }));
+        });
+    })();
 </script>
 @include('partials.profile-menu')
 @include('partials.mobile-nav')

@@ -51,7 +51,7 @@ class ReturnedOrsEditTest extends TestCase
         [$report, $user] = $this->returnedOrs();
 
         $this->actingAs($user)->get(route('budget'))->assertOk()
-            ->assertSee('aria-label="Edit ORS ORS-RO-1"', false)->assertSee('edit</span></button>', false)->assertSee(route('liquidation.update', $report))->assertSee('Wrong supplier name');
+            ->assertSee('aria-label="Edit ORS ORS-RO-1"', false)->assertSee('flex items-center justify-end gap-1.5 whitespace-nowrap', false)->assertSee('edit</span></button>', false)->assertSee(route('liquidation.update', $report))->assertSee('Wrong supplier name');
 
         $report->update(['status' => 'approved']);
         $this->get(route('budget'))->assertOk()->assertDontSee(route('liquidation.update', $report));
@@ -131,5 +131,39 @@ class ReturnedOrsEditTest extends TestCase
 
         $this->assertSame('returned', $report->fresh()->status);
         $this->assertSame('Wrong Supplier', $report->fresh()->payee);
+    }
+
+    public function test_the_window_shows_the_official_ors_beside_the_form_and_previews_without_saving(): void
+    {
+        [$report, $user] = $this->returnedOrs();
+        $this->actingAs($user)->get(route('budget'))->assertOk()
+            ->assertSee('data-ors-edit data-split data-preview="'.route('liquidation.update.preview', $report).'"', false)->assertSee('Official ORS (updates as you edit)')
+            ->assertSee('Edit Obligation Request and Status (ORS)')->assertSee('tracking-wider text-primary">Document</h3>', false)->assertSee('tracking-wider text-primary">Payee</h3>', false)->assertSee('tracking-wider text-primary">Obligation</h3>', false);
+
+        $html = $this->post(route('liquidation.update.preview', $report), $this->form(['payee' => 'Preview Supplier', 'purpose' => 'Preview purpose']))->assertOk()->getContent();
+
+        $this->assertStringContainsString('Preview Supplier', $html);
+        $this->assertStringContainsString('Preview purpose', $html);
+        $fresh = $report->fresh();
+        $this->assertSame('returned', $fresh->status);
+        $this->assertSame('Wrong Supplier', $fresh->payee);
+        $this->assertSame('3000.00', $fresh->amount);
+    }
+
+    public function test_the_preview_is_still_drawn_when_something_typed_is_not_valid_yet(): void
+    {
+        [$report, $user] = $this->returnedOrs();
+
+        $html = $this->actingAs($user)->post(route('liquidation.update.preview', $report), $this->form(['purpose' => '', 'payee' => 'Half typed supplier']))->assertOk()->getContent();
+
+        $this->assertStringContainsString('Half typed supplier', $html);
+        $this->assertSame('Wrong Supplier', $report->fresh()->payee);
+    }
+
+    public function test_the_preview_follows_the_same_rules_as_the_edit(): void
+    {
+        [$report, $user] = $this->returnedOrs();
+        $report->update(['status' => 'approved']);
+        $this->actingAs($user)->post(route('liquidation.update.preview', $report), $this->form())->assertStatus(422);
     }
 }

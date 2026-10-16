@@ -111,13 +111,6 @@
                         <span class="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-{{ $tone }}/10 px-2.5 py-1 text-xs font-bold text-{{ $tone }}"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">{{ $statusIcons[$r->status] ?? 'info' }}</span>{{ \Illuminate\Support\Str::headline($r->status) }}</span>
                         @if($r->dv_number)
                             <div class="mt-1.5 text-xs font-bold text-secondary">{{ $dvLabel($r->dv_number) }}<span class="ml-1 font-normal text-on-surface-variant">· {{ $r->dv_date?->format('M d, Y') }}</span></div>
-                            @if($r->reissue_pending)
-                            @elseif($r->journalLines->isNotEmpty())
-                                <details class="mt-1 max-w-[300px] rounded-lg bg-surface-low text-[11px]"><summary class="flex cursor-pointer list-none items-center gap-1 px-2 py-1 font-bold text-primary"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">balance</span>Journal entry · {{ $r->journalLines->count() }} lines<span class="material-symbols-outlined ml-auto text-[14px]" aria-hidden="true">expand_more</span></summary>
-                                    <ul class="space-y-0.5 border-t border-outline-variant/30 px-2 py-1.5">@foreach($r->journalLines as $line)<li class="flex items-start justify-between gap-2"><span class="{{ $line->credit > 0 ? 'pl-3' : '' }} text-on-surface-variant"><span class="font-semibold text-on-surface">{{ $line->account_code }}</span> {{ \Illuminate\Support\Str::limit($line->account_title, 34) }}</span><span class="whitespace-nowrap tabular-nums"><span class="font-bold {{ $line->debit > 0 ? 'text-primary' : 'text-secondary' }}">{{ $line->debit > 0 ? 'Dr' : 'Cr' }}</span> {{ number_format((float) ($line->debit > 0 ? $line->debit : $line->credit), 2) }}</span></li>@endforeach</ul></details>
-                            @else
-                                <div class="mt-1 text-[11px] text-on-surface-variant">No journal entry (created before it was required)</div>
-                            @endif
                         @endif
                         @if($r->accounting_remarks)<div class="mt-1.5 max-w-[240px] rounded-lg border-l-2 border-amber-500 bg-amber-50 px-2 py-1 text-[11px] text-amber-900">{{ $r->accounting_remarks }}</div>@endif
                     @endif
@@ -148,10 +141,14 @@
                         </form></dialog>
                     @endif
                     @if(auth()->user()->hasPermission('accounting.approve') && ! $isCash && $r->dv_number && ! $r->paid_at)
-                        <button type="button" onclick="document.getElementById('edit-dv-{{ $r->id }}').showModal()" class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-primary ring-1 ring-outline-variant/50 hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">edit</span>Edit DV</button>
-                        <dialog id="edit-dv-{{ $r->id }}" style="width:min(52rem,calc(100% - 2rem))" class="rounded-lg bg-white p-0 text-left shadow-2xl backdrop:bg-black/50"><form method="POST" action="{{ route('accounting.dv.store', $r) }}" class="flex flex-col" style="max-height:92vh">@csrf
-                            <div class="shrink-0 border-b border-outline-variant/30 px-6 py-4"><h2 class="text-lg font-semibold">Edit {{ $dvLabel($r->dv_number) }}</h2><p class="mt-0.5 text-xs text-on-surface-variant">{{ $label }} · {{ $payee }} · <strong class="text-on-surface">{{ $peso($r->amount) }}</strong></p></div>
-                            <div class="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5">
+                        <button type="button" data-ors-edit-open="edit-dv-{{ $r->id }}" class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-primary ring-1 ring-outline-variant/50 hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">edit</span>Edit DV</button>
+                        <dialog id="edit-dv-{{ $r->id }}" data-ors-edit data-split data-preview="{{ route('accounting.dv.preview', $r) }}" class="rounded bg-white p-0 text-left shadow-2xl backdrop:bg-black/50">
+                            <div class="flex max-h-[94vh] w-full flex-col overflow-hidden rounded bg-white">
+                                <div class="flex shrink-0 items-center justify-between border-b border-outline-variant/30 px-5 py-3"><div><h2 class="text-lg font-semibold">Edit Disbursement Voucher</h2><p class="mt-1 text-xs text-on-surface-variant">{{ $dvLabel($r->dv_number) }} · {{ $label }} · {{ $payee }} · {{ $peso($r->amount) }}</p></div><button type="button" onclick="this.closest('dialog').close()" aria-label="Close" class="rounded p-2 hover:bg-primary hover:text-white"><span class="material-symbols-outlined">close</span></button></div>
+                                <div class="ors-edit-body">
+                                    <aside class="ors-edit-preview" aria-label="Official DV preview"><div class="ors-edit-bar"><span>Official DV (updates as you edit)</span><span class="flex items-center gap-3"><small data-status>Updates as you type</small><select data-zoom aria-label="Preview zoom" class="rounded border border-outline-variant/60 bg-white px-2 py-1 text-xs font-semibold"><option value="fit">Fit width</option><option value="0.5">50%</option><option value="0.75">75%</option><option value="1">100%</option></select></span></div><iframe title="Official DV preview"></iframe></aside>
+                                    <div class="ors-edit-pane">
+                                    <form id="edit-dv-form-{{ $r->id }}" method="POST" action="{{ route('accounting.dv.store', $r) }}" class="ors-edit-form space-y-4 p-4">@csrf
                                 <section>
                                     <h3 class="mb-2 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Voucher</h3>
                                     <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -191,9 +188,13 @@
                                         <label class="text-xs font-semibold text-on-surface-variant">Your password <span class="text-error">*</span><input type="password" name="password" required autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly')" class="{{ $inputClass }}"></label>
                                     </div>
                                 </section>
+                            
+                                    </form>
+                                    </div>
+                                </div>
+                                <div class="flex shrink-0 justify-end gap-2 border-t border-outline-variant/30 bg-white px-5 py-3"><button type="button" onclick="this.closest('dialog').close()" class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Cancel</button><button type="submit" form="edit-dv-form-{{ $r->id }}" class="rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Save changes</button></div>
                             </div>
-                            <div class="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-outline-variant/30 bg-white px-6 py-4"><button type="submit" formaction="{{ route('accounting.dv.preview', $r) }}" formtarget="_blank" formnovalidate class="inline-flex items-center gap-1 rounded border border-outline-variant/60 px-3 py-2.5 text-xs font-semibold text-primary hover:bg-surface-low" title="Opens the official DV with the changes above, in a new tab. Nothing is saved."><span class="material-symbols-outlined text-[16px]" aria-hidden="true">preview</span>Preview official DV</button><span class="flex gap-2"><button type="button" onclick="this.closest('dialog').close()" class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Close</button><button class="rounded bg-primary px-4 py-2.5 text-xs font-bold text-white hover:bg-primary-container">Save changes</button></span></div>
-                        </form></dialog>
+                        </dialog>
                     @endif
                     @if(auth()->user()->hasPermission('accounting.approve') && ! $isCash && $r->status === 'approved' && ! $r->dv_number)<button type="button" data-dv="{{ route('accounting.dv.store', $r) }}" data-dv-number="{{ $r->cancelledChecks->sortByDesc('cancelled_at')->first()?->dv_number }}" @if($r->reissue_pending) data-keep-signatories="1" @endif data-school="{{ $r->school_id }}" data-label="{{ $label }}" data-amount="{{ $peso($r->amount) }}" data-amount-raw="{{ number_format((float) $r->amount, 2, '.', '') }}" data-expense-code="{{ $r->chargedLine()?->account?->code ?? $r->chargedLine()?->uacs_code }}" data-payee="{{ $r->payee ?: ($r->procurementRequest?->supplier_name ?? $r->school?->name) }}" data-particulars="{{ $r->purpose ?: $r->procurementRequest?->title }}" class="inline-flex items-center gap-1 rounded-lg bg-secondary px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:opacity-90"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">receipt_long</span>Create DV</button>@endif
                     @if(auth()->user()->hasPermission('accounting.approve') && ! $isCash && ! $r->dv_number && $r->status !== 'approved')<form method="POST" action="{{ route('accounting.review', $r) }}">@csrf @method('PATCH')<input type="hidden" name="status" value="approved"><button class="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-primary-container"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">check</span>Approve</button></form>@endif
@@ -307,6 +308,66 @@
         <label class="text-xs font-semibold text-on-surface-variant">Remarks <span class="text-error">*</span><textarea name="accounting_remarks" required maxlength="255" rows="3" placeholder="What is missing or wrong?" class="{{ $inputClass }}"></textarea></label>
         <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-4"><button type="button" data-close class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Cancel</button><button class="rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white">Submit</button></div></form></div></div>
 
+<style>
+    dialog[data-ors-edit]{padding:0}
+    .ors-edit-body{display:flex;flex-direction:row-reverse;min-height:0;flex:1;overflow:hidden}
+    .ors-edit-preview{display:flex;min-width:0;flex:1 1 52%;flex-direction:column;background:#d9dee5;border-left:1px solid #cbd7e1}
+    .ors-edit-bar{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:#fff;border-bottom:1px solid #cbd7e1;font-size:12px;font-weight:700;color:#103967}
+    .ors-edit-bar small{font-weight:400;color:#536273}
+    .ors-edit-preview iframe{width:100%;flex:1;min-height:60vh;border:0;background:#d9dee5}
+    .ors-edit-pane{flex:1 1 48%;min-width:0;overflow-y:auto;max-height:calc(94vh - 4.5rem)}
+    .ors-edit-form label{display:block;line-height:1.2}
+    .ors-edit-form input:not([type=checkbox]),.ors-edit-form select,.ors-edit-form textarea{display:block;width:100%;margin-top:.25rem;padding-top:.4rem;padding-bottom:.4rem;font-size:.8125rem}
+    @media(max-width:1023px){.ors-edit-body{flex-direction:column-reverse;overflow-y:auto}.ors-edit-preview{flex:none}.ors-edit-pane{max-height:none;overflow:visible}}
+</style>
+<script>
+    // Edit window: the official document on the right is drawn from the form on the left as it is now (nothing is saved).
+    (() => {
+        const hideChrome = '<style>.official-toolbar{display:none!important}body{background:#d9dee5!important}.official-sheet{zoom:var(--pz,1)!important;margin-top:12px!important;margin-bottom:12px!important}</style>';
+        document.querySelectorAll('dialog[data-ors-edit]').forEach((dialog) => {
+            const form = dialog.querySelector('form');
+            const frame = dialog.querySelector('iframe');
+            const status = dialog.querySelector('[data-status]');
+            const zoomSelect = dialog.querySelector('[data-zoom]');
+            let timer = null; let controller = null;
+            const applyZoom = () => {
+                const doc = frame.contentDocument;
+                const sheet = doc && doc.querySelector('.official-sheet, [data-official-page]');
+                if (! sheet) return;
+                let zoom = parseFloat(zoomSelect.value);
+                if (zoomSelect.value === 'fit') {
+                    doc.documentElement.style.setProperty('--pz', 1);
+                    const box = sheet.getBoundingClientRect();
+                    zoom = Math.min(0.72, Math.max(0.3, (frame.clientWidth - 48) / (Math.max(sheet.scrollWidth, box.width) || 1)));
+                }
+                doc.documentElement.style.setProperty('--pz', zoom);
+            };
+            frame.addEventListener('load', () => setTimeout(applyZoom, 350));
+            zoomSelect.addEventListener('change', applyZoom);
+            const refresh = async () => {
+                if (! dialog.open) return;
+                if (controller) controller.abort();
+                controller = new AbortController();
+                status.textContent = 'Updating preview...';
+                const body = new FormData(form);
+                body.delete('_method');
+                body.delete('password'); // the preview never needs the password
+                try {
+                    const response = await fetch(dialog.dataset.preview, { method: 'POST', body, signal: controller.signal, headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' } });
+                    const html = await response.text();
+                    frame.srcdoc = /<head[^>]*>/i.test(html) ? html.replace(/(<head[^>]*>)/i, '$1' + hideChrome) : hideChrome + html;
+                    status.textContent = response.ok ? 'Updates as you type' : 'Preview unavailable (HTTP ' + response.status + ')';
+                } catch (error) {
+                    if (error.name !== 'AbortError') status.textContent = 'Preview unavailable. Change a field to retry';
+                }
+            };
+            const schedule = () => { clearTimeout(timer); timer = setTimeout(refresh, 900); };
+            form.addEventListener('input', schedule);
+            form.addEventListener('change', schedule);
+            document.querySelectorAll('[data-ors-edit-open="' + dialog.id + '"]').forEach((button) => button.addEventListener('click', () => { dialog.showModal(); refresh(); }));
+        });
+    })();
+</script>
 @include('partials.profile-menu')
 @include('partials.mobile-nav')
 <script>
