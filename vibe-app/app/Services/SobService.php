@@ -10,6 +10,7 @@ use App\Models\AuditLog;
 use App\Models\BudgetAllocation;
 use App\Models\ChartOfAccount;
 use App\Models\MasterTransaction;
+use App\Models\PowPlan;
 use App\Models\School;
 use App\Models\SipPlan;
 use App\Models\SobItem;
@@ -230,6 +231,9 @@ class SobService
     public function deletePlan(SobPlan $plan): void
     {
         $this->requireEditable($plan);
+        if (PowPlan::query()->where('sob_plan_id', $plan->id)->exists()) {
+            $this->fail('This SOB has a Program of Works. Delete the Program of Works first.');
+        }
         if ($plan->status !== 'approved') {
             DB::transaction(fn () => $this->removePlan($plan, 'draft'));
 

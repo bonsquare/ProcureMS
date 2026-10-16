@@ -204,6 +204,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 - 2026-10-16: Printed SOB: the account title is indented under the program row and stays above the note (POW required) instead of being replaced by it (docs/specs.md 26.5).
 - 2026-10-16: Printed SOB: one blank line between the account title and the note (POW), light-green Grand Total, underlined signature names, bold School ID in the size of the school name (docs/specs.md 26.5).
 - 2026-10-16: School profile has a DepEd School ID (School Settings > School details, `schools.deped_school_id`); the printed SOB shows the number typed on the SOB, else this one, else the system School ID (docs/specs.md 5, 26.5).
+- 2026-10-16: **Form Generator and Program of Works** (38): Planning > SOB > Form Generator (`/planning/forms`) makes a saved POW from the SOB items of a program and activity (`pow_plans`, `pow_items`, `PowService`, `FormGeneratorController`), edited on `/planning/pow/{id}` and printed on Folio paper (A4 by the toolbar). Design: docs/superpowers/specs/2026-10-16-form-generator-pow-design.md.
 - Live: Railway deployment f1d44cd2 (2026-10-16 15:28), migrations through `add_deped_school_id_to_schools_table`. All 841 tests pass.
 - Still open before Phase 3 is complete: browser check of the PR form picker, PR numbering/status end-to-end validation, and deciding whether the APP link should be required for PRs.
 - The Planning page is `/planning`. The source is `resources/views/planning.blade.php`; the controller is `app/Http/Controllers/PlanningController.php`.

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\PowPlan;
+use App\Models\SobPlan;
 use App\Models\User;
 use App\Services\PowService;
 use App\Services\SobService;
@@ -87,6 +88,16 @@ class PowPageTest extends TestCase
         $this->actingAs($viewer)->get(route('planning.pow.show', $pow))->assertOk();
         $this->put(route('planning.pow.update', $pow), $this->body())->assertForbidden();
         $this->delete(route('planning.pow.destroy', $pow))->assertForbidden();
+        $this->assertSame(1, PowPlan::count());
+    }
+
+    public function test_an_sob_that_has_a_pow_cannot_be_deleted(): void
+    {
+        [$fx, $pow] = $this->savedPow();
+
+        $this->delete(route('planning.sob.destroy', $pow->sob_plan_id))->assertSessionHasErrors();
+
+        $this->assertNotNull(SobPlan::find($pow->sob_plan_id));
         $this->assertSame(1, PowPlan::count());
     }
 }
