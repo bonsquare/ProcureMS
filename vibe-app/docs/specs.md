@@ -822,6 +822,12 @@ Tests: `OrsStatusPrintTest`.
 
 Tests: `DvJournalEntryTest`, `OrsStatusPrintTest`, `DvAppropriationPrintTest`.
 
+### 33.5 Rows of Accounting and Cash (2026-10-16)
+
+- Each row starts with the supplier name in bold, with a storefront icon before it; under it, the document numbers as badges of their own colors: **ORS** (violet), **PR** (blue) and **PO** (amber; the number of the Purchase Order of the PR, shown only when the PR has one); then the particulars.
+- A DV number is shown as it is (it already starts with "DV-"), never as "DV DV-..."; a number typed without the letters gets "DV " in front of it. This holds in the rows, the Edit DV and Cancel Check windows and the Cancelled Checks register.
+- Tests: `FinanceRowBadgesTest`.
+
 ## 34. APP-CSE: a disclosure for each category (approved by the owner 2026-10-15)
 
 - In the APP-CSE entry page (`/planning/app-cse/{id}`), each **category band** (Common Office Supply, Construction Components & Supplies, Other categories, and so on) is a disclosure with its arrow on the left: it folds and opens the month headings and the items of that category. Every category is open when the page opens. It is the same in Part I, Part II and in the folded list of items with no quantity yet. The printed APP-CSE does not change.
