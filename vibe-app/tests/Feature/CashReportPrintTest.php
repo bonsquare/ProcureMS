@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\BudgetAllocation;
 use App\Models\CancelledCheck;
+use App\Models\CashFundReceipt;
 use App\Models\ChartOfAccount;
 use App\Models\LiquidationReport;
 use App\Models\Organization;
@@ -131,5 +132,38 @@ class CashReportPrintTest extends TestCase
         $this->paid($school, 'ADA9', '2026-08-05', 300, '5020399000', 'Other Supplies Expenses', ['payment_mode' => 'ADA']);
 
         $this->actingAs($user)->get(route('cash.report.roci', $this->periodQuery($school)))->assertOk()->assertDontSee('ADA9');
+    }
+
+    public function test_the_record_shows_opening_balance_receipts_checks_ada_and_running_balance(): void
+    {
+        [$school, $user] = $this->tenant('CA1');
+        SchoolStaff::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'name' => 'Baby Joy I. Carbonell', 'position' => 'Teacher-In-Charge', 'document_role' => 'Disbursing Officer']);
+        CashFundReceipt::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'received_at' => '2026-07-01', 'kind' => 'opening_balance', 'fund_cluster' => 'General Fund', 'amount' => 181500, 'created_by' => $user->id]);
+        $this->paid($school, '0001', '2026-07-10', 1000);
+        $this->paid($school, 'ADA7', '2026-07-11', 500, '5020301000', 'Office Supplies Expenses', ['payment_mode' => 'ADA']);
+
+        $html = $this->actingAs($user)->get(route('cash.report.checks', $this->periodQuery($school)))->assertOk()
+            ->assertSee('CHECKS AND ADVICES TO DEBIT ACCOUNT DISBURSEMENT RECORD')->assertSee('Accountable Officer')->assertSee('BABY JOY I. CARBONELL')
+            ->assertSee('data-official-page', false)->getContent();
+        $document = substr($html, (int) strpos($html, '<main'));
+
+        $this->assertStringContainsString('181,500.00', $document, 'the opening balance and the NCA received');
+        $this->assertStringContainsString('180,500.00', $document, 'balance after the check');
+        $this->assertStringContainsString('180,000.00', $document, 'balance after the ADA');
+        $this->assertMatchesRegularExpression('/data-col="check"[^>]*>1,000\.00</', $document, 'Check Issued column');
+        $this->assertMatchesRegularExpression('/data-col="ada"[^>]*>500\.00</', $document, 'ADA Issued column');
+        $this->assertStringContainsString('ADA7', $document);
+    }
+
+    public function test_the_record_prints_with_no_payments(): void
+    {
+        [$school, $user] = $this->tenant('CA2');
+
+        $html = $this->actingAs($user)->get(route('cash.report.checks', $this->periodQuery($school)))->assertOk()->getContent();
+        $document = substr($html, (int) strpos($html, '<main'));
+
+        $this->assertStringNotContainsString('NaN', $document);
+        $this->assertStringNotContainsString('undefined', $document);
+        $this->assertStringContainsString('No check or ADA was issued in this period.', $document);
     }
 }

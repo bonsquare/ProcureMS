@@ -128,6 +128,8 @@ class CashReportController extends Controller
             'officer' => SchoolStaff::active()->where('school_id', $school->id)->get()->first(fn (SchoolStaff $staff) => $staff->hasRole('document_role', 'Disbursing Officer')),
             'bank' => $bank,
             'fundCluster' => $latestPayment?->payment_fund_cluster ?: 'General Fund',
+            'from' => $context['from'],
+            'to' => $context['to'],
             'period' => $this->periodText($context['from'], $context['to']),
             'reportNo' => $context['report_no'],
             'sheetNo' => $context['sheet_no'],
@@ -152,8 +154,7 @@ class CashReportController extends Controller
 
     public function checksAdvices(Request $request)
     {
-        $this->reportContext($request);
-        abort(501, 'The Checks and Advices record is not built yet.');
+        return view('cash-report-checks-advices', ['report' => $this->reportViewData($request)]);
     }
 
     public function register(Request $request)

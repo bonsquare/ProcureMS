@@ -76,6 +76,7 @@ class CashReportServiceTest extends TestCase
         $this->assertSame('Other Supplies Expenses', $line['nature']);
         $this->assertSame(997.5, $line['amount']);
         $this->assertSame('check', $line['mode']);
+        $this->assertSame('2026-09-29', $line['dv_date']?->toDateString());
         $this->assertFalse($line['cancelled']);
         $this->assertSame(997.5, $report['total_paid']);
     }

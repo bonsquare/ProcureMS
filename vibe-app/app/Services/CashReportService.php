@@ -95,6 +95,7 @@ class CashReportService
         return [
             'date' => ($report->check_date ?? $report->paid_at)->copy()->startOfDay(),
             'released' => $report->paid_at,
+            'dv_date' => $report->dv_date,
             'check_no' => (string) $report->payment_reference,
             'dv_no' => (string) $report->dv_number,
             'ors_no' => (string) $report->ors_number,
@@ -114,6 +115,7 @@ class CashReportService
         return [
             'date' => $check->paid_at->copy()->startOfDay(),
             'released' => $check->paid_at,
+            'dv_date' => null,
             'check_no' => (string) $check->check_number,
             'dv_no' => (string) $check->dv_number,
             'ors_no' => (string) $check->ors_number,
