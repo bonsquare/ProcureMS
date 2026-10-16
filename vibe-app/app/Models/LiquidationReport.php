@@ -53,6 +53,11 @@ class LiquidationReport extends Model
         return $this->hasMany(DvJournalLine::class)->orderBy('line_no');
     }
 
+    public function cancelledChecks()
+    {
+        return $this->hasMany(CancelledCheck::class);
+    }
+
     public function submitter()
     {
         return $this->belongsTo(User::class, 'submitted_by');

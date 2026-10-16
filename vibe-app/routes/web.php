@@ -171,6 +171,7 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::patch('/accounting/{liquidationReport}', [FinanceController::class, 'review'])->middleware('permission:accounting.approve')->name('accounting.review');
     Route::post('/accounting/{liquidationReport}/dv/preview', [FinanceController::class, 'previewDv'])->middleware('permission:accounting.approve')->name('accounting.dv.preview');
     Route::post('/accounting/{liquidationReport}/dv', [FinanceController::class, 'createDv'])->middleware('permission:accounting.approve')->name('accounting.dv.store');
+    Route::patch('/accounting/{liquidationReport}/ors-edit', [FinanceController::class, 'updateReissuedOrs'])->middleware('permission:accounting.approve')->name('accounting.ors.update');
     Route::patch('/accounting/{liquidationReport}/dv-options', [FinanceController::class, 'updateDvOptions'])->middleware('permission:accounting.approve')->name('accounting.dv.options');
     Route::get('/accounting/{liquidationReport}/dv-print', [FinanceController::class, 'printDv'])->name('accounting.dv.print');
     Route::get('/cash', [FinanceController::class, 'cash'])->name('cash');

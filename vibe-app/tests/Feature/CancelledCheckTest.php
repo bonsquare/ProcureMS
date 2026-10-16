@@ -46,7 +46,45 @@ class CancelledCheckTest extends TestCase
         return ['expense' => collect(ChartOfAccount::standardAccounts())->firstWhere('category', 'MOOE')['code'], 'cash' => '1010404000'];
     }
 
-    public function test_cancelling_records_the_check_and_reopens_the_ors(): void
+    private function cancelled(float $amount = 10000): array
+    {
+        [$report, $master, $organization] = $this->paidOrs($amount);
+        $this->actingAs($master)->post(route('cash.cancel', $report), ['reason' => 'Wrong amount', 'password' => self::PASSWORD]);
+
+        return [$report->fresh(), $master, $organization];
+    }
+
+    private function orsEdit(array $overrides = []): array
+    {
+        return array_replace(['amount' => '9000', 'payee' => 'Check Supplier', 'purpose' => 'Office supplies', 'reason' => 'Corrected amount', 'password' => self::PASSWORD], $overrides);
+    }
+
+    private function dvForm(float $amount = 9000, array $overrides = []): array
+    {
+        $c = $this->codes();
+
+        return array_replace([
+            'dv_date' => now()->toDateString(), 'payee' => 'Check Supplier', 'dv_particulars' => 'Office supplies', 'payment_mode' => 'MDS Check',
+            'journal' => [
+                ['account_code' => $c['expense'], 'debit' => (string) $amount, 'credit' => ''],
+                ['account_code' => $c['cash'], 'debit' => '', 'credit' => (string) $amount],
+            ],
+        ], $overrides);
+    }
+
+    /** Cancelled, the ORS edited to 9000, approved again and its DV made again. */
+    private function reissuedDv(): array
+    {
+        [$report, $master, $organization] = $this->cancelled(10000);
+        $this->actingAs($master);
+        $this->patch(route('accounting.ors.update', $report), $this->orsEdit())->assertSessionHasNoErrors();
+        $this->patch(route('accounting.review', $report), ['status' => 'approved'])->assertSessionHasNoErrors();
+        $this->post(route('accounting.dv.store', $report), $this->dvForm(9000, ['dv_number' => 'DV-CC-1']))->assertSessionHasNoErrors();
+
+        return [$report->fresh(), $master, $organization];
+    }
+
+    public function test_cancelling_records_the_check_and_sends_the_ors_back_to_review_without_its_dv(): void
     {
         [$report, $master] = $this->paidOrs(10000);
 
@@ -64,6 +102,8 @@ class CancelledCheckTest extends TestCase
         $this->assertNull($report->paid_at);
         $this->assertNull($report->payment_reference);
         $this->assertNull($report->paid_by);
+        $this->assertNull($report->dv_number);
+        $this->assertSame(0, DvJournalLine::count());
         $this->assertSame('for_review', $report->status);
         $this->assertNull($report->approved_at);
         $this->assertTrue($report->reissue_pending);
@@ -78,6 +118,7 @@ class CancelledCheckTest extends TestCase
 
         $this->assertSame(0, CancelledCheck::count());
         $this->assertNotNull($report->fresh()->paid_at);
+        $this->assertSame(2, DvJournalLine::count());
     }
 
     public function test_an_unpaid_ors_cannot_be_cancelled(): void
@@ -89,120 +130,107 @@ class CancelledCheckTest extends TestCase
         $this->assertSame(0, CancelledCheck::count());
     }
 
-    private function cancelled(float $amount = 10000): array
-    {
-        [$report, $master, $organization] = $this->paidOrs($amount);
-        $this->actingAs($master)->post(route('cash.cancel', $report), ['reason' => 'Wrong amount', 'password' => self::PASSWORD]);
-
-        return [$report->fresh(), $master, $organization];
-    }
-
-    private function edit(array $overrides = []): array
-    {
-        $c = $this->codes();
-
-        return array_replace([
-            'dv_date' => now()->toDateString(), 'payee' => 'Check Supplier', 'dv_particulars' => 'Office supplies', 'payment_mode' => 'MDS Check',
-            'amount' => '9000', 'purpose' => 'Office supplies', 'reason' => 'Corrected amount', 'password' => self::PASSWORD,
-            'journal' => [
-                ['account_code' => $c['expense'], 'debit' => '9000', 'credit' => ''],
-                ['account_code' => $c['cash'], 'debit' => '', 'credit' => '9000'],
-            ],
-        ], $overrides);
-    }
-
-    public function test_a_reopened_ors_can_be_edited_with_a_new_amount_and_journal(): void
+    public function test_the_ors_of_a_cancelled_check_can_be_edited_while_it_is_in_review(): void
     {
         [$report, $master] = $this->cancelled(10000);
 
-        $this->actingAs($master)->post(route('accounting.dv.store', $report), $this->edit())->assertSessionHasNoErrors();
+        $this->actingAs($master)->patch(route('accounting.ors.update', $report), $this->orsEdit(['payee' => 'Other Supplier']))->assertSessionHasNoErrors();
 
         $report->refresh();
         $this->assertSame('9000.00', $report->amount);
-        $this->assertSame('DV-CC-1', $report->dv_number);
+        $this->assertSame('Other Supplier', $report->payee);
         $this->assertSame('for_review', $report->status);
+    }
+
+    public function test_the_ors_edit_needs_a_reason_and_the_users_own_password(): void
+    {
+        [$report, $master] = $this->cancelled(10000);
+
+        $this->actingAs($master)->patch(route('accounting.ors.update', $report), $this->orsEdit(['reason' => '']))->assertSessionHasErrors('reason');
+        $this->patch(route('accounting.ors.update', $report), $this->orsEdit(['password' => 'wrong-password']))->assertSessionHasErrors('password');
+
+        $this->assertSame('10000.00', $report->fresh()->amount);
+    }
+
+    public function test_an_ors_that_was_not_cancelled_cannot_be_edited_this_way(): void
+    {
+        [$report, $master] = $this->paidOrs();
+
+        $this->actingAs($master)->patch(route('accounting.ors.update', $report), $this->orsEdit())->assertStatus(422);
+        $this->assertSame('10000.00', $report->fresh()->amount);
+    }
+
+    public function test_after_the_edit_the_ors_is_approved_and_the_dv_is_made_again_with_the_same_number(): void
+    {
+        [$report] = $this->reissuedDv();
+
+        $this->assertSame('DV-CC-1', $report->dv_number);
+        $this->assertSame('9000.00', $report->amount);
+        $this->assertSame('approved', $report->status);
         $this->assertSame(2, DvJournalLine::count());
         $this->assertSame('9000.00', $report->journalLines->first()->debit);
         $this->assertTrue($report->reissue_pending);
     }
 
-    public function test_the_edit_is_refused_when_the_ors_was_not_cancelled(): void
+    public function test_a_dv_that_is_not_paid_can_be_edited_with_a_reason_and_password(): void
     {
-        [$report, $master] = $this->paidOrs();
-
-        $this->actingAs($master)->post(route('accounting.dv.store', $report), $this->edit())->assertStatus(422);
-        $this->assertSame('10000.00', $report->fresh()->amount);
-    }
-
-    public function test_the_edit_needs_a_reason_and_the_users_own_password(): void
-    {
-        [$report, $master] = $this->cancelled(10000);
-
-        $this->actingAs($master)->post(route('accounting.dv.store', $report), $this->edit(['reason' => '']))->assertSessionHasErrors('reason');
-        $this->post(route('accounting.dv.store', $report), $this->edit(['password' => 'wrong-password']))->assertSessionHasErrors('password');
-
-        $this->assertSame('10000.00', $report->fresh()->amount);
-    }
-
-    public function test_a_journal_that_does_not_match_the_new_amount_keeps_the_old_lines(): void
-    {
-        [$report, $master] = $this->cancelled(10000);
+        [$report, $master] = $this->reissuedDv();
         $c = $this->codes();
+        $corrected = $this->dvForm(9000, ['dv_particulars' => 'Corrected particulars', 'journal' => [
+            ['account_code' => $c['expense'], 'debit' => '9000', 'credit' => ''],
+            ['account_code' => $c['cash'], 'debit' => '', 'credit' => '8500'],
+            ['account_code' => '2020101000', 'debit' => '', 'credit' => '500'],
+        ]]);
 
-        $this->actingAs($master)->post(route('accounting.dv.store', $report), $this->edit(['journal' => [
-            ['account_code' => $c['expense'], 'debit' => '10000', 'credit' => ''],
-            ['account_code' => $c['cash'], 'debit' => '', 'credit' => '10000'],
-        ]]))->assertSessionHasErrors('journal');
+        $this->actingAs($master)->post(route('accounting.dv.store', $report), $corrected + ['reason' => '', 'password' => self::PASSWORD])->assertSessionHasErrors('reason');
+        $this->post(route('accounting.dv.store', $report), $corrected + ['reason' => 'Tax missed', 'password' => 'wrong-password'])->assertSessionHasErrors('password');
+        $this->assertSame(2, DvJournalLine::count());
 
-        $this->assertSame('10000.00', $report->fresh()->amount);
-        $this->assertSame('10000.00', $report->fresh()->journalLines->first()->debit);
+        $this->post(route('accounting.dv.store', $report), $corrected + ['reason' => 'Tax missed', 'password' => self::PASSWORD])->assertSessionHasNoErrors();
+
+        $report->refresh();
+        $this->assertSame('DV-CC-1', $report->dv_number);
+        $this->assertSame('Corrected particulars', $report->dv_particulars);
+        $this->assertSame(3, DvJournalLine::count());
     }
 
-    public function test_approving_and_paying_again_locks_the_ors(): void
+    public function test_an_edit_whose_journal_does_not_match_the_amount_keeps_the_old_lines(): void
     {
-        [$report, $master] = $this->cancelled(10000);
-        $this->actingAs($master)->post(route('accounting.dv.store', $report), $this->edit())->assertSessionHasNoErrors();
+        [$report, $master] = $this->reissuedDv();
 
-        $this->patch(route('accounting.review', $report), ['status' => 'approved'])->assertSessionHasNoErrors();
-        $this->post(route('cash.pay', $report), ['payment_mode' => 'MDS Check', 'payment_reference' => 'CHK-2', 'paid_at' => now()->toDateString()])->assertRedirect();
+        $this->actingAs($master)->post(route('accounting.dv.store', $report), $this->dvForm(10000) + ['reason' => 'Typo', 'password' => self::PASSWORD])->assertSessionHasErrors('journal');
+
+        $this->assertSame(2, DvJournalLine::count());
+        $this->assertSame('9000.00', $report->fresh()->journalLines->first()->debit);
+    }
+
+    public function test_a_paid_dv_cannot_be_edited_and_paying_again_locks_the_ors(): void
+    {
+        [$report, $master] = $this->reissuedDv();
+
+        $this->actingAs($master)->post(route('cash.pay', $report), ['payment_mode' => 'MDS Check', 'payment_reference' => 'CHK-2', 'paid_at' => now()->toDateString()])->assertRedirect();
 
         $report->refresh();
         $this->assertFalse($report->reissue_pending);
         $this->assertSame('CHK-2', $report->payment_reference);
         $this->assertSame(1, CancelledCheck::count());
-        $this->post(route('accounting.dv.store', $report), $this->edit(['amount' => '8000']))->assertStatus(422);
+        $this->post(route('accounting.dv.store', $report), $this->dvForm(9000) + ['reason' => 'Late', 'password' => self::PASSWORD])->assertStatus(422);
     }
 
-    public function test_the_cancelled_checks_tab_lists_the_register(): void
-    {
-        [$report, $master] = $this->cancelled(10000);
-
-        $this->actingAs($master)->get(route('cash', ['tab' => 'cancelled']))
-            ->assertOk()->assertSee('CHK-1')->assertSee('DV-CC-1')->assertSee('Wrong amount')->assertSee('₱10,000.00');
-    }
-
-    public function test_the_paid_tab_offers_cancel_and_the_reopened_ors_offers_edit(): void
+    public function test_the_register_and_the_screens_show_the_new_flow(): void
     {
         [$report, $master] = $this->paidOrs();
         $this->actingAs($master)->get(route('cash', ['tab' => 'paid']))->assertOk()->assertSee(route('cash.cancel', $report));
 
         $this->post(route('cash.cancel', $report), ['reason' => 'Wrong amount', 'password' => self::PASSWORD]);
-        $this->get(route('accounting', ['tab' => 'with_dv']))->assertOk()->assertSee('Edit ORS / DV')->assertSee('name="amount"', false);
-    }
+        $this->get(route('cash', ['tab' => 'cancelled']))->assertOk()->assertSee('CHK-1')->assertSee('DV-CC-1')->assertSee('Wrong amount')->assertSee('₱10,000.00');
+        $this->get(route('accounting', ['tab' => 'for_review']))->assertOk()->assertSee('Edit ORS')->assertSee(route('accounting.ors.update', $report));
 
-    public function test_cancel_needs_cash_pay_and_the_edit_needs_accounting_approve(): void
-    {
-        [$report] = $this->paidOrs();
-        $viewer = User::factory()->create(['role' => 'viewer', 'organization_id' => $report->organization_id, 'school_id' => $report->school_id, 'password' => Hash::make(self::PASSWORD)]);
+        $this->patch(route('accounting.review', $report), ['status' => 'approved']);
+        $this->get(route('accounting', ['tab' => 'for_dv']))->assertOk()->assertSee('data-dv-number="DV-CC-1"', false)->assertSee('data-keep-signatories', false);
 
-        $this->actingAs($viewer)->post(route('cash.cancel', $report), ['reason' => 'x', 'password' => self::PASSWORD])->assertForbidden();
-        $this->assertNotNull($report->fresh()->paid_at);
-
-        Subscription::create(['organization_id' => $report->organization_id, 'school_id' => $report->school_id, 'plan' => 'professional', 'billing_cycle' => 'monthly', 'amount' => 0, 'payment_status' => 'paid', 'starts_at' => now()->subDay(), 'ends_at' => now()->addMonth()]);
-        $cashier = User::factory()->create(['role' => 'cashier', 'organization_id' => $report->organization_id, 'school_id' => $report->school_id, 'password' => Hash::make(self::PASSWORD)]);
-        $this->actingAs($cashier)->post(route('cash.cancel', $report), ['reason' => 'Wrong amount', 'password' => self::PASSWORD])->assertRedirect();
-        $this->post(route('accounting.dv.store', $report), $this->edit())->assertForbidden();
-        $this->assertSame('10000.00', $report->fresh()->amount);
+        $this->post(route('accounting.dv.store', $report), $this->dvForm(10000, ['dv_number' => 'DV-CC-1']));
+        $this->get(route('accounting', ['tab' => 'with_dv']))->assertOk()->assertSee('Edit DV')->assertDontSee('Journal entry ·')->assertDontSee('Signatories</summary>', false);
     }
 
     public function test_the_allotment_registry_follows_the_cancel_and_the_new_amount(): void
@@ -218,11 +246,27 @@ class CancelledCheckTest extends TestCase
         $this->assertSame(0.0, $totals()['disbursement']);
         $this->assertSame(10000.0, $totals()['obligation']);
 
-        $this->post(route('accounting.dv.store', $report), $this->edit())->assertSessionHasNoErrors();
+        $this->patch(route('accounting.ors.update', $report), $this->orsEdit())->assertSessionHasNoErrors();
         $this->patch(route('accounting.review', $report), ['status' => 'approved']);
+        $this->post(route('accounting.dv.store', $report), $this->dvForm(9000, ['dv_number' => 'DV-CC-1']))->assertSessionHasNoErrors();
         $this->post(route('cash.pay', $report), ['payment_mode' => 'MDS Check', 'payment_reference' => 'CHK-2', 'paid_at' => now()->toDateString()]);
         $this->assertSame(9000.0, $totals()['obligation']);
         $this->assertSame(9000.0, $totals()['disbursement']);
+    }
+
+    public function test_cancel_needs_cash_pay_and_the_ors_edit_needs_accounting_approve(): void
+    {
+        [$report] = $this->paidOrs();
+        $viewer = User::factory()->create(['role' => 'viewer', 'organization_id' => $report->organization_id, 'school_id' => $report->school_id, 'password' => Hash::make(self::PASSWORD)]);
+
+        $this->actingAs($viewer)->post(route('cash.cancel', $report), ['reason' => 'x', 'password' => self::PASSWORD])->assertForbidden();
+        $this->assertNotNull($report->fresh()->paid_at);
+
+        Subscription::create(['organization_id' => $report->organization_id, 'school_id' => $report->school_id, 'plan' => 'professional', 'billing_cycle' => 'monthly', 'amount' => 0, 'payment_status' => 'paid', 'starts_at' => now()->subDay(), 'ends_at' => now()->addMonth()]);
+        $cashier = User::factory()->create(['role' => 'cashier', 'organization_id' => $report->organization_id, 'school_id' => $report->school_id, 'password' => Hash::make(self::PASSWORD)]);
+        $this->actingAs($cashier)->post(route('cash.cancel', $report), ['reason' => 'Wrong amount', 'password' => self::PASSWORD])->assertRedirect();
+        $this->patch(route('accounting.ors.update', $report), $this->orsEdit())->assertForbidden();
+        $this->assertSame('10000.00', $report->fresh()->amount);
     }
 
     public function test_another_organization_cannot_cancel(): void
