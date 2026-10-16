@@ -211,6 +211,12 @@ class OrsStatusPrintTest extends TestCase
         $this->assertMatchesRegularExpression('/class="ors-status" x="214.7"[^>]*>2026-0123<\/text>/', $html, 'ORS/JEV/Check/ADA/TRA No. shows the number only');
         $this->assertMatchesRegularExpression('/class="ors-status" x="293"[^>]*>1,000.00<\/text>/', $html, 'Obligation (a)');
         $this->assertMatchesRegularExpression('/class="ors-status" x="366"[^>]*>1,000.00<\/text>/', $html, 'Payable (b) is the same amount as the Obligation');
+        $this->assertStringNotContainsString('Check No.', $html, 'no check line before a payment is recorded');
+
+        LiquidationReport::firstOrFail()->update(['payment_reference' => '0012345678']);
+
+        $this->get(route('liquidation.print', LiquidationReport::firstOrFail()))->assertOk()
+            ->assertSee('y="833.3"', false)->assertSee('>Check No.</text>', false)->assertSee('>0012345678</text>', false);
     }
 
     public function test_the_uacs_code_is_written_on_the_ors_only_when_its_box_is_ticked_and_mfo_pap_is_blank(): void

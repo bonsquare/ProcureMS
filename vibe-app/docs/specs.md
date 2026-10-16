@@ -776,7 +776,7 @@ This refines 24.2, 25.5, 25.6, 28 and 29, and records the ORS (Create ORS window
 - The **Serial No., the Date and the Fund Cluster** values are bold and underlined.
 - The **Payee, Office and Address** lines all describe the payee: Office is the Payee Office and Address is the Payee Address (the school's name and address are not used there).
 - **Responsibility Center, Particulars, MFO/PAP, UACS Object Code and Amount** start two lines below the heading line (the Particulars a little away from the left line) and the Amount is on the same line as the first line of the Particulars. **MFO/PAP is left blank.**
-- Section C: the column **ORS/JEV/Check/ADA/TRA No.** shows the ORS number without the letters (2026-0001), and **Payable (b)** is the same amount as the **Obligation (a)**.
+- Section C: the column **ORS/JEV/Check/ADA/TRA No.** shows the ORS number without the letters (2026-0001), and **Payable (b)** is the same amount as the **Obligation (a)**. Once a check is recorded in Cash, the same column prints **Check No.** and, on the line under it, the check number (`payment_reference`), one blank line below the ORS number; before payment, or after the check is cancelled, there is no check line.
 
 Tests: `OrsStatusPrintTest`, `SobFlowTest`, `PlanningFlowTest`, `AppCseEntryTest`.
 

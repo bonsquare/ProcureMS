@@ -41,6 +41,7 @@
     $statusParticulars = $report->purpose;
     // The Date column of Section C holds the date of the ORS, which is the date of its Purchase Order (specs 32.1), on one line.
     $statusDate = ($report->submitted_at ?? $report->created_at)?->format('M d, Y');
+    $checkLine = (string) $report->payment_reference; // the check number, on its own line two lines under the ORS number
     $orsReference = preg_replace('/^ORS-?/i', '', (string) $report->ors_number); // the ORS/JEV/Check/ADA/TRA No. of Section C: the ORS number, without the letters
     $requesterName = strtoupper((string) ($requester?->name ?: $report->school?->school_head));
     $requesterRole = $requester?->position ?: 'School Head';
@@ -196,6 +197,7 @@
 <text class="ors-status" x="49.2" y="810.3" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($statusDate, 58, 9.4) }}" font-weight="bold">{{ $statusDate }}</text>
 <foreignObject class="ors-status" x="84.7" y="801" width="87.3" height="80.5"><div xmlns="http://www.w3.org/1999/xhtml" style="font:bold 9.5px/11.5px 'Times New Roman',Times,serif;color:#000;text-align:center;overflow:hidden;height:80.5px;word-wrap:break-word;display:-webkit-box;-webkit-line-clamp:7;-webkit-box-orient:vertical">{{ $statusParticulars }}</div></foreignObject>
 <text class="ors-status" x="214.7" y="810.3" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($orsReference, 72, 10.6) }}" font-weight="bold">{{ $orsReference }}</text>
+@if($checkLine)<text class="ors-status" x="214.7" y="833.3" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold">Check No.</text><text class="ors-status" x="214.7" y="845.3" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($checkLine, 72, 10.6) }}" font-weight="bold">{{ $checkLine }}</text>@endif
 <text class="ors-status" x="293" y="810.3" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold">{{ $amount }}</text>
 <text class="ors-status" x="366" y="810.3" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold">{{ $amount }}</text>
 <text class="ors-status" x="438.7" y="810.3" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold">{{ $paidAmount }}</text>

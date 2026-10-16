@@ -209,6 +209,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 - 2026-10-16: Abstract of Bids: each bidder has a Status (Qualified, Disqualified, No Response); the printed Total Bid Quotation shows DISQUALIFIED / NO RESPONSE and such a bidder cannot win (docs/specs.md 31.3).
 - 2026-10-16: Purchase Order: Fund Cluster field (default General Fund); Date of Delivery and Payment Term start from the RFQ's Delivery Term and Terms of Payment (docs/specs.md 31.3).
 - 2026-10-16: Printed PO: the Supplier value column is wider (37%) and the P.O. No. label column narrower (19%).
+- 2026-10-16: Printed ORS Section C: "Check No." and the check number under the ORS number once a check is recorded (docs/specs.md 30.3).
 - Live: Railway deployment cc5414d6 (2026-10-16 21:56), migrations through `create_pow_items_table`. All 874 tests pass.
 - Still open before Phase 3 is complete: browser check of the PR form picker, PR numbering/status end-to-end validation, and deciding whether the APP link should be required for PRs.
 - The Planning page is `/planning`. The source is `resources/views/planning.blade.php`; the controller is `app/Http/Controllers/PlanningController.php`.
