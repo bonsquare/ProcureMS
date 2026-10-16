@@ -787,6 +787,8 @@ This refines 30.3 and 31.2. The printed ORS is `resources/views/ors-print.blade.
 - **Title block:** the three lines (OBLIGATION REQUEST AND STATUS, DEPARTMENT OF EDUCATION, the Schools Division Office) are evenly spaced.
 - **Serial No., Date and Fund Cluster:** the three names are the same size (12) and right-aligned on their colons; the three values start on the same line, are the same size (12.5, smaller only when a value is too long), bold and underlined.
 - **Section C:** the headings **Reference**, **Amount** and **Balance** are bold, the same size (11.6) and centered over their columns.
+- **Payee, Office and Address (2026-10-16):** the three values are bold, also the Office when it is typed later.
+- **Section C spacing (2026-10-16):** the line under STATUS OF OBLIGATION is higher, so the row of Reference and Amount is taller and the headings sit in its middle; Balance is raised a little. The details row starts one line below its top line: the Date column holds the date of the ORS (the date of its Purchase Order, 32.1) on two lines, the Particulars have 3 points of room from the lines at both sides, and the ORS number and the amounts are level with them.
 
 Tests: `OrsStatusPrintTest`.
 
