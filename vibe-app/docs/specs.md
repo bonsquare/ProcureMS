@@ -741,6 +741,17 @@ This refines 24.2, 25.5, 25.6, 28 and 29, and records the ORS (Create ORS window
 - The tick box "Include Section C" is gone: **Section C, Status of Obligation, is always part of the ORS.**
 - **Show the UACS code on the ORS** is a tick box beside Charge to Budget Line (Fund · Account Code), ticked by default; unticked, the UACS Object Code column is left empty.
 
+- **Layout (2026-10-16):** the form has three framed parts with a heading each: **Document** (Serial No. with "Manually encode", School for the administrator, Date, Purchase Order), **Payee** (Payee / Supplier, Office, TIN, Address) and **Obligation** (Purpose / Particulars, Amount, Fund Cluster, Responsibility Center Code, Charge to Budget Line with the UACS tick box); then Signatories, Notes and the buttons.
+- **No Source of Fund field (2026-10-16):** it is not typed any more. It follows the budget line chosen (or the PO) and is MOOE when neither gives one; it still drives the budget check.
+- **Fund Cluster** is a field of the form, 101101 by default and free to change (see 32.2).
+
+### 30.4 An ORS that Accounting returned (2026-10-16)
+
+- In the list of ORS on the Budget page, an ORS that is **Returned** or **Pending Documents** (no DV, not paid) has an **Edit ORS** icon button beside Print, for whoever can create ORS. The Accounting remarks are shown under its Stage and in the window.
+- The window changes Payee, Office, Address, TIN, Purpose / Particulars, Amount, Fund Cluster and Notes (not the School, PO, budget line, serial number or date). The amount of an ORS made from a PO is the PO's and cannot change; the amount of a direct ORS is checked again against its budget line without counting the ORS twice.
+- Saving sends the ORS back to **For Review Accounting**; the remarks stay as history and the old values go to the audit log. Test: `ReturnedOrsEditTest`.
+- The Stage of an ORS waiting in Accounting reads "For Review Accounting".
+
 ### 30.3 Printed ORS
 
 - The **Serial No., the Date and the Fund Cluster** values are bold and underlined.
@@ -860,6 +871,7 @@ A paid check can be cancelled and the payment made again after the ORS, DV and j
 - **Edit ORS (Accounting > For Review, permission `accounting.approve`):** only for an ORS whose check was cancelled and that is not approved yet. It changes the amount, supplier (payee) and particulars; a reason and the user's own password are needed; the old and new values go to the audit log. Then the ORS is approved again.
 - **Ready for DV:** the DV and its journal entry are made again. The cancelled DV number is offered again, and the signatories chosen at the start are kept (the picker is not asked again).
 - **Edit DV (Accounting > With DV, permission `accounting.approve`):** on any DV that is not paid yet. It changes date, mode, payee, particulars, journal entry and deductions (same checks as creating the DV: chart accounts, balanced, equal to the ORS amount). A reason and the user's own password are needed on every save; the old values go to the audit log. A paid DV cannot be edited: cancel the check first.
+- **Edit DV window (2026-10-16):** a header with the DV number, the ORS, the supplier and the amount; parts for Voucher, Journal entry (with Account, Debit and Credit headings), Less: Deductions and **Confirm the change** (reason and the user's own password, in a framed box); the buttons stay at the bottom while the middle scrolls. **Preview official DV** (bottom left) opens the official DV with the changes in a new tab and saves nothing. The reason and the password are not filled in by the browser (the password field is `new-password`, and both are read only until they are clicked); the same holds in the Cancel Check and Edit ORS windows. The show/hide eye of every password field is centered in its field.
 - **Pay again:** the ORS returns to Cash > DVs For Payment. Recording the new payment clears `reissue_pending` and locks the records as before.
 - **Rows of Accounting and Cash** show the supplier name in bold on top, then the ORS number and the PR, then the particulars. An ORS whose check was cancelled shows no Journal entry list and no Signatories button.
 - **Cancelled Checks tab (Cash):** read-only list, newest first, with the search box.
