@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AgencySetting;
 use App\Models\AuditLog;
 use App\Models\PowPlan;
 use App\Models\School;
@@ -89,6 +90,17 @@ class FormGeneratorController extends Controller
         return view('pow-show', [
             'pow' => $powPlan, 'school' => $powPlan->school, 'plan' => $powPlan->sobPlan, 'lines' => [...$lines, $blank, $blank, $blank],
             'labor' => (float) $powPlan->labor_cost, 'signatories' => $powPlan->signatories ?? [], 'program' => $powPlan->program, 'canManage' => $request->user()->hasPermission('planning.manage'),
+        ]);
+    }
+
+    public function print(Request $request, PowPlan $powPlan): View
+    {
+        $this->canOpen($request);
+        $this->scoped($request, $powPlan->school_id);
+        $powPlan->load(['school', 'sobPlan', 'items']);
+
+        return view('pow-print', [
+            'pow' => $powPlan, 'school' => $powPlan->school, 'plan' => $powPlan->sobPlan, 'agency' => AgencySetting::first(), 'totals' => $this->pow->totals($powPlan),
         ]);
     }
 
