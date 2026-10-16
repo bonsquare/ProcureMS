@@ -197,10 +197,15 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 - 2026-10-16: **Cancelled checks** (37): Cash > Paid > Cancel Check (reason and own password) records the check in the Cancelled Checks register and sends the ORS back to For Review without its DV; Edit ORS (Accounting), then Ready for DV (same DV number), then Edit DV while unpaid (reason and own password); the Allotment Registry follows by itself. Tables `cancelled_checks`, column `liquidation_reports.reissue_pending`.
 - 2026-10-16: Fund Cluster on the DV (`dv_fund_cluster`, "General Fund") and on the ORS (`ors_fund_cluster`, 101101), no Source of Fund field in Create ORS, Create ORS form in parts, an ORS that Accounting returned is edited on the Budget page with the official ORS beside the form (30.2, 30.4, 32.2); printed DV and ORS refinements (33.2); Edit DV and Edit ORS windows look like the create windows; DV rows have no journal list and no Signatories button; row badges for ORS, PR and PO; `LiquidationReport::dvLabel()` so "DV-" is never doubled (33.5, 37).
 - 2026-10-16: SOB categories are Common Office Supplies, Drugs and Medicines, Construction Components and Supplies, Paper Materials and Products, Common ICT Equipment, Consumables, Other Categories, plus "-" (a particulars that is not goods is kept out of the APP and the APP-CSE); the old names were renamed by a migration (docs/specs.md, SOB section).
+- 2026-10-16: The Pillar column heading of the printed SIP and AIP reads "Pillar (Access, Equity, Quality, Resiliency and Well-Being) / Enabling Mechanism"; "Enabling Mechanism" is no longer underlined in the SIP (docs/specs.md 22.1, 23.1).
 - Live: Railway deployment 1184a0a7 (2026-10-16 13:34), migrations through `rename_app_categories_and_add_consumables`. All 841 tests pass.
 - Still open before Phase 3 is complete: browser check of the PR form picker, PR numbering/status end-to-end validation, and deciding whether the APP link should be required for PRs.
 - The Planning page is `/planning`. The source is `resources/views/planning.blade.php`; the controller is `app/Http/Controllers/PlanningController.php`.
 - The last GitHub backup is commit `69d1d35` on `master`. Do not reset or discard local changes.
+
+## Standing workflow (owner's instruction 2026-10-16)
+
+When the owner says **commit**, **push** or **deploy** (alone or together), do the whole chain without asking again: update `docs/specs.md` and the status list of this file for the change, commit, push to GitHub, and deploy with `railway up --detach --service procurems` from `vibe-app` (set `MSYS_NO_PATHCONV=1` in Git Bash), then verify with `railway deployment list --service procurems` and give the owner a per-step checklist. A push alone does not deploy; deploy only when the owner says deploy.
 
 ## Specifications
 

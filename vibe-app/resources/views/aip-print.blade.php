@@ -98,7 +98,7 @@
         </colgroup>
         <thead>
             <tr>
-                <th rowspan="2">Pillar / Enabling Mechanism</th><th rowspan="2">KRA</th><th rowspan="2">Intermediate Outcome</th><th rowspan="2">Strategy</th><th rowspan="2">5-Point Agenda</th><th rowspan="2">Specific Program / Project</th><th rowspan="2">Activity</th>
+                <th rowspan="2">Pillar (Access, Equity, Quality, Resiliency and Well-Being) / Enabling Mechanism</th><th rowspan="2">KRA</th><th rowspan="2">Intermediate Outcome</th><th rowspan="2">Strategy</th><th rowspan="2">5-Point Agenda</th><th rowspan="2">Specific Program / Project</th><th rowspan="2">Activity</th>
                 <th rowspan="2">Physical Targets</th><th rowspan="2">Specific Timeline</th>
                 <th colspan="4">Financial Target (Monthly Disbursement Program)</th>
                 <th rowspan="2">Source of Fund<div class="fund-note">(School: MOOE, SEF, IGP, others; Division Office Proper: MOOE-GASS, MOOE-HRTD, MOOE-Sub-ARO, School MOOE, SEF, others.)</div></th><th rowspan="2">Responsible Person</th><th rowspan="2">Remarks</th>

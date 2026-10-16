@@ -167,7 +167,7 @@
         </colgroup>
         <thead>
             <tr>
-                <th rowspan="2" style="font-size:.72rem; padding-left:.1rem; padding-right:.1rem">Pillar (Access, Equity, Quality, Resiliency and Well-Being) / <u>Enabling Mechanism</u></th>
+                <th rowspan="2" style="font-size:.72rem; padding-left:.1rem; padding-right:.1rem">Pillar (Access, Equity, Quality, Resiliency and Well-Being) / Enabling Mechanism</th>
                 <th rowspan="2">KRA</th><th rowspan="2" style="background:#f8cbad">DepEd Organizational Outcomes</th><th rowspan="2">Strategy (Processes)</th><th rowspan="2">5-Point Agenda</th><th rowspan="2">Specific Program / Project</th><th rowspan="2">Activity</th>
                 <th colspan="3" class="physical">Physical Targets</th><th colspan="3" class="financial">Financial Target</th>
                 <th rowspan="2">Source of Fund<div class="fund-note">(School: MOOE, SEF, IGP, others; Division Office Proper: MOOE-GASS, MOOE-HRTD, MOOE-Sub-ARO, School MOOE, SEF, others.)</div></th>
