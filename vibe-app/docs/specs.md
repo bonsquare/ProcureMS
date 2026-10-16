@@ -678,7 +678,7 @@ Where a line below differs from 24.1 or 26.1, this one is the later decision.
 - Other lines (labor): the name (for example 35% Labor) in the left column and the word **Labor** in **bold**, right-aligned, in the Unit of Measure column; the amount in the Amount column.
 - **GRAND TOTAL** of the table is bold, right-aligned, with no fill. The summary table keeps its green GRAND TOTAL.
 - The District line of the letterhead is in normal weight and in the case it was typed. The signature names are bold and capitals, **not underlined**.
-- **Summary label:** each Item has an optional **Summary label** (the SOB page, in the item form, under the Note; `summary_label` on `sob_items`). In the Summary per object of expenditure, rows with the same label (any capitals) are added together under that label; an Item without one is listed under its account title as before. The summary stays in the order of the account codes.
+- The Summary per object of expenditure stays **per actual account title** (the Budget uses the same accounts); the workbook's own summary labels are not used.
 - Not done: a program and its only item on one row (the workbook does it for some programs and not for others, so it cannot be derived).
 - Tests: `SobPrintDesignTest`, `SobItemGroupTest`.
 

@@ -86,7 +86,7 @@ class SobService
      * @param  array<int, array<string, mixed>>  $extras  label (particulars), unit and amount of each other line
      * @return array<int, SobItem>
      */
-    public function addItems(SobPlan $plan, int|string $activityId, int|string $accountId, array $lines, ?string $note = null, array $extras = [], ?string $summaryLabel = null): array
+    public function addItems(SobPlan $plan, int|string $activityId, int|string $accountId, array $lines, ?string $note = null, array $extras = []): array
     {
         $this->requireEditable($plan);
         $lines = $this->filledRows($lines);
@@ -94,15 +94,14 @@ class SobService
             throw ValidationException::withMessages(['lines' => 'Add at least one particulars.']);
         }
         $note = $this->cleanNote($note);
-        $label = ['summary_label' => $this->cleanSummaryLabel($summaryLabel)];
 
-        return $this->revise($plan, fn () => DB::transaction(function () use ($plan, $activityId, $accountId, $lines, $note, $extras, $label) {
+        return $this->revise($plan, fn () => DB::transaction(function () use ($plan, $activityId, $accountId, $lines, $note, $extras) {
             $created = [];
             foreach ($lines as $line) {
-                $created[] = $this->writeRow($plan, null, $this->itemValues($plan, ['aip_activity_id' => $activityId, 'chart_of_account_id' => $accountId] + $line) + $label, $note, false);
+                $created[] = $this->writeRow($plan, null, $this->itemValues($plan, ['aip_activity_id' => $activityId, 'chart_of_account_id' => $accountId] + $line), $note, false);
             }
             foreach ($this->filledExtras($extras) as $extra) {
-                $created[] = $this->writeRow($plan, null, $this->extraValues($activityId, $accountId, $extra) + $label, $note, true);
+                $created[] = $this->writeRow($plan, null, $this->extraValues($activityId, $accountId, $extra), $note, true);
             }
 
             return $created;
@@ -127,18 +126,17 @@ class SobService
             throw ValidationException::withMessages(['lines' => 'An item needs at least one particulars.']);
         }
         $note = $this->cleanNote($data['note'] ?? null);
-        $label = ['summary_label' => $this->cleanSummaryLabel($data['summary_label'] ?? null)];
         $target = ['aip_activity_id' => $data['aip_activity_id'] ?? null, 'chart_of_account_id' => $data['chart_of_account_id'] ?? null];
 
-        $this->revise($plan, fn () => DB::transaction(function () use ($plan, $existing, $lines, $data, $note, $target, $label) {
+        $this->revise($plan, fn () => DB::transaction(function () use ($plan, $existing, $lines, $data, $note, $target) {
             $keep = [];
             foreach ($lines as $line) {
                 $row = $existing->first(fn (SobItem $item) => ! $item->is_extra && (int) $item->id === (int) ($line['id'] ?? 0));
-                $keep[] = $this->writeRow($plan, $row, $this->itemValues($plan, $target + $line) + $label, $note, false)->id;
+                $keep[] = $this->writeRow($plan, $row, $this->itemValues($plan, $target + $line), $note, false)->id;
             }
             foreach ($this->filledExtras($data['extras'] ?? []) as $extra) {
                 $row = $existing->first(fn (SobItem $item) => $item->is_extra && (int) $item->id === (int) ($extra['id'] ?? 0));
-                $keep[] = $this->writeRow($plan, $row, $this->extraValues($target['aip_activity_id'], $target['chart_of_account_id'], $extra) + $label, $note, true)->id;
+                $keep[] = $this->writeRow($plan, $row, $this->extraValues($target['aip_activity_id'], $target['chart_of_account_id'], $extra), $note, true)->id;
             }
             $plan->items()->whereIn('id', $existing->pluck('id'))->whereNotIn('id', $keep)->delete();
         }), $existing);
@@ -180,14 +178,6 @@ class SobService
     private function filledExtras(array $extras): array
     {
         return array_values(array_filter($extras, fn ($extra) => is_array($extra) && (trim((string) ($extra['particulars'] ?? '')) !== '' || trim((string) ($extra['amount'] ?? '')) !== '')));
-    }
-
-    private function cleanSummaryLabel(?string $label): ?string
-    {
-        $label = trim((string) $label);
-        Validator::make(['summary_label' => $label], ['summary_label' => ['max:120']])->validate();
-
-        return $label === '' ? null : $label;
     }
 
     private function cleanNote(?string $note): ?string
@@ -484,9 +474,8 @@ class SobService
     /** @return Collection<int, array{code: string, title: string, total: float}> the summary per object of expenditure, by account code */
     public function summaryByAccount(SobPlan $plan): Collection
     {
-        return $plan->items()->with('account')->get()
-            ->groupBy(fn (SobItem $item) => filled($item->summary_label) ? 'label:'.mb_strtolower(trim($item->summary_label)) : 'account:'.$item->chart_of_account_id)
-            ->map(fn (Collection $items) => ['code' => $items->first()->account->code, 'title' => $items->first()->summary_label ?: $items->first()->account->title, 'total' => round((float) $items->sum('amount'), 2)])
+        return $plan->items()->with('account')->get()->groupBy('chart_of_account_id')
+            ->map(fn (Collection $items) => ['code' => $items->first()->account->code, 'title' => $items->first()->account->title, 'total' => round((float) $items->sum('amount'), 2)])
             ->sortBy('code')->values();
     }
 
@@ -537,7 +526,7 @@ class SobService
             $extras = $rows->filter->is_extra->values();
 
             return [
-                'account' => $rows->first()->account, 'note' => $rows->pluck('note')->filter()->first(), 'summary_label' => $rows->pluck('summary_label')->filter()->first(), 'items' => $purchased, 'extras' => $extras,
+                'account' => $rows->first()->account, 'note' => $rows->pluck('note')->filter()->first(), 'items' => $purchased, 'extras' => $extras,
                 'items_total' => round((float) $purchased->sum('amount'), 2), 'total' => round((float) $rows->sum('amount'), 2),
             ];
         })->values()->all();

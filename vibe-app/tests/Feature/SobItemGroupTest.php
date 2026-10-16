@@ -244,23 +244,6 @@ class SobItemGroupTest extends TestCase
         $this->assertSame(1, substr_count($html, '<tr class="sub pillar-sub">'), 'only Access has entries, so only it has a Sub-Total');
     }
 
-    public function test_items_with_the_same_summary_label_are_added_together_in_the_summary(): void
-    {
-        $fx = SobFixture::make();
-        $this->actingAs($fx['user']);
-        $plan = $this->service()->create($fx['school'], 2026, 1, 'MOOE', $fx['user']);
-        $line = [['particulars' => 'Item', 'frequency' => 1, 'quantity' => 1, 'unit' => 'pcs', 'unit_cost' => 1000]];
-        $this->service()->addItems($plan, $fx['activities'][0]->id, $fx['account']->id, $line, null, [], 'Supplies and Materials expenses');
-        $this->service()->addItems($plan, $fx['activities'][0]->id, $this->otherAccount($fx)->id, $line, null, [], ' supplies and materials expenses ');
-        $this->service()->addItems($plan, $fx['activities'][1]->id ?? $fx['activities'][0]->id, $fx['account']->id, $line);
-
-        $summary = $this->service()->summaryByAccount($plan->fresh());
-
-        $this->assertSame(2, $summary->count());
-        $this->assertSame(2000.0, (float) $summary->firstWhere('title', 'Supplies and Materials expenses')['total']);
-        $this->assertStringContainsString('Supplies and Materials expenses', $this->get(route('planning.sob.print', $plan))->assertOk()->getContent());
-    }
-
     public function test_an_empty_pillar_prints_its_bar_only(): void
     {
         $fx = SobFixture::make();
