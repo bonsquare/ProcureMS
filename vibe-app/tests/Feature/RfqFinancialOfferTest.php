@@ -50,8 +50,8 @@ class RfqFinancialOfferTest extends TestCase
     {
         $html = $this->printedRfq();
 
-        $this->assertStringContainsString('<p class="center">(Delivery: 30 days upon the receipt of Notice to Proceed)</p>', $html);
-        $this->assertStringContainsString('Payment shall be made within <strong>30 days after Delivery</strong> and after', $html);
+        $this->assertStringContainsString('<p class="center">(Delivery: within thirty (30) calendar days from receipt of the Notice to Proceed (NTP))</p>', $html);
+        $this->assertStringContainsString('Payment shall be made within <strong>30 days after the delivery</strong> and after', $html);
     }
 
     public function test_the_document_form_has_a_delivery_term_and_the_terms_are_saved(): void
@@ -63,7 +63,7 @@ class RfqFinancialOfferTest extends TestCase
         $pr = ProcurementRequest::create(['organization_id' => $organization->id, 'school_id' => $school->id, 'requested_by' => $user->id, 'request_number' => 'PR-2026-RFQ', 'title' => 'Rice', 'amount' => 1500, 'status' => 'approved']);
         $pr->items()->create(['organization_id' => $organization->id, 'name' => 'RICE', 'quantity' => 1, 'unit' => 'piece', 'unit_price' => 1500, 'total' => 1500]);
 
-        $this->actingAs($user)->get(route('procurement.documents', $pr))->assertOk()->assertSee('name="delivery_term"', false);
+        $this->actingAs($user)->get(route('procurement.documents', $pr))->assertOk()->assertSee('name="terms_of_payment" data-default="30 days after the delivery"', false)->assertSee('name="delivery_term" data-default="within thirty (30) calendar days from receipt of the Notice to Proceed (NTP)"', false);
         $this->post(route('procurement.documents.store', $pr), ['document_type' => 'request_for_quotation', 'document_date' => now()->toDateString(), 'supplier_or_recipient' => 'Lubas Trading', 'delivery_term' => '20 days', 'terms_of_payment' => '10 days'])->assertSessionHasNoErrors();
 
         $rfq = $pr->documents()->where('document_type', 'request_for_quotation')->firstOrFail();
