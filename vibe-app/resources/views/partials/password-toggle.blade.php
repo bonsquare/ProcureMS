@@ -26,12 +26,9 @@
             button.setAttribute('aria-pressed', 'false');
             button.title = 'Show password';
             button.innerHTML = eye;
-            button.style.cssText = 'position:absolute;right:.5rem;display:grid;place-items:center;width:2rem;height:2rem;color:#536273;border-radius:.375rem;background:transparent;border:0;cursor:pointer';
+            button.style.cssText = 'position:absolute;right:.5rem;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:2rem;height:2rem;color:#536273;border-radius:.375rem;background:transparent;border:0;cursor:pointer';
             wrapper.appendChild(button);
 
-            const place = () => { button.style.top = (input.offsetTop + (input.offsetHeight - button.offsetHeight) / 2) + 'px'; };
-            place();
-            window.addEventListener('resize', place);
             button.addEventListener('click', () => {
                 const showing = input.type === 'text';
                 input.type = showing ? 'password' : 'text';

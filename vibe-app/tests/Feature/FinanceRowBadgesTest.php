@@ -77,4 +77,12 @@ class FinanceRowBadgesTest extends TestCase
         $this->assertSame('DV 2026-0002', LiquidationReport::dvLabel('2026-0002'));
         $this->assertSame('DV', LiquidationReport::dvLabel(null));
     }
+
+    public function test_the_budget_stage_of_an_ors_waiting_for_accounting_says_for_review_accounting(): void
+    {
+        [$master] = $this->row('DV-2026-0001');
+        LiquidationReport::query()->update(['status' => 'for_review', 'dv_number' => null]);
+
+        $this->actingAs($master)->get(route('budget'))->assertOk()->assertSee('For Review Accounting');
+    }
 }

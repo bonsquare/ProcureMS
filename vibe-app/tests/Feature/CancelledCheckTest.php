@@ -280,4 +280,31 @@ class CancelledCheckTest extends TestCase
         $this->assertSame(0, CancelledCheck::count());
         $this->assertNotNull($report->fresh()->paid_at);
     }
+
+    public function test_the_dialogs_do_not_let_the_browser_fill_the_reason_or_the_password(): void
+    {
+        [$report, $master] = $this->reissuedDv();
+        $accounting = $this->actingAs($master)->get(route('accounting', ['tab' => 'with_dv']))->assertOk()->getContent();
+
+        $this->assertStringContainsString('Confirm the change', $accounting);
+        $this->assertStringNotContainsString('current-password', $accounting);
+        $this->assertStringContainsString('autocomplete="new-password" readonly', $accounting);
+        $this->assertStringContainsString('name="reason" required maxlength="255" autocomplete="off" readonly', $accounting);
+
+        $cash = $this->get(route('cash', ['tab' => 'paid']))->assertOk()->getContent();
+        $this->assertStringNotContainsString('current-password', $cash);
+    }
+
+    public function test_the_edit_dv_window_can_preview_the_official_dv_with_the_changes_without_saving(): void
+    {
+        [$report, $master] = $this->reissuedDv();
+        $this->actingAs($master)->get(route('accounting', ['tab' => 'with_dv']))->assertOk()
+            ->assertSee('formaction="'.route('accounting.dv.preview', $report).'" formtarget="_blank" formnovalidate', false);
+
+        $html = $this->post(route('accounting.dv.preview', $report), $this->dvForm(9000, ['dv_particulars' => 'Preview only particulars']))->assertOk()->getContent();
+
+        $this->assertStringContainsString('Preview only particulars', $html);
+        $this->assertSame('Office supplies', $report->fresh()->dv_particulars);
+        $this->assertSame(2, DvJournalLine::count());
+    }
 }

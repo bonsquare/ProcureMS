@@ -1921,7 +1921,7 @@ class HomeController extends Controller
             'manually_encode_ors_number' => ['nullable', 'boolean'],
             'ors_number' => ['nullable', 'required_if:manually_encode_ors_number,1', 'string', 'max:100', Rule::unique('liquidation_reports', 'ors_number')->where('organization_id', $this->organizationIdForSchool((int) $request->input('school_id')))],
             'redirect_to' => ['nullable', 'in:budget'],
-            'source_of_fund' => ['required', 'string', 'max:255'],
+            'source_of_fund' => ['nullable', 'string', 'max:255'],
             'budget_allocation_id' => ['nullable', 'integer', 'exists:budget_allocations,id'],
             'payee' => ['nullable', 'string', 'max:255'],
             'payee_address' => ['nullable', 'string', 'max:255'],
@@ -1949,6 +1949,9 @@ class HomeController extends Controller
                 $data['payee_tin'] ??= $awarded['tin'];
             }
         }
+
+        // The Source of Fund is no longer typed on the form: it follows the budget line (or the PO), and is MOOE when neither gives one.
+        $data['source_of_fund'] = $data['source_of_fund'] ?: (BudgetAllocation::whereKey($data['budget_allocation_id'] ?? 0)->value('source_of_fund') ?: 'MOOE');
 
         $signatories = SignatorySlots::validated('obligation_request', $request->input('signatories'), (int) $data['school_id']);
 
@@ -2090,6 +2093,44 @@ class HomeController extends Controller
             'agency' => AgencySetting::first() ?? new AgencySetting,
             ...SignatorySlots::defaults('obligation_request', $staff),
         ], $liquidationReport->signatories['ors'] ?? null));
+    }
+
+    /** An ORS that Accounting returned (or asked documents for) is corrected by whoever made it, and goes back to Accounting for review. */
+    public function updateReturnedOrs(Request $request, LiquidationReport $liquidationReport)
+    {
+        abort_unless($request->user()->canCreateObligation() && $this->scopedSchoolIds()->contains($liquidationReport->school_id), 403);
+        abort_unless(in_array($liquidationReport->status, ['returned', 'pending_documents'], true) && ! $liquidationReport->dv_number && ! $liquidationReport->paid_at, 422, 'Only an ORS that Accounting returned can be edited here.');
+
+        $data = $request->validate([
+            'payee' => ['nullable', 'string', 'max:255'],
+            'payee_office' => ['nullable', 'string', 'max:255'],
+            'payee_address' => ['nullable', 'string', 'max:255'],
+            'payee_tin' => ['nullable', 'string', 'max:100'],
+            'purpose' => ['required', 'string', 'max:255'],
+            'amount' => ['required', 'numeric', 'min:0.01'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+            'ors_fund_cluster' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        // The amount of an ORS made from a Purchase Order is the PO's; only a direct ORS can change it, and the budget is checked again without counting this ORS twice.
+        $amount = $liquidationReport->procurement_request_id ? (float) $liquidationReport->amount : round((float) $data['amount'], 2);
+        if (! $liquidationReport->procurement_request_id && $amount !== (float) $liquidationReport->amount) {
+            $budget = ['school_id' => $liquidationReport->school_id, 'source_of_fund' => $liquidationReport->source_of_fund, 'budget_allocation_id' => $liquidationReport->budget_allocation_id];
+            app(BudgetService::class)->assertAvailable('amount', (int) $liquidationReport->school_id, $liquidationReport->source_of_fund, $amount, null, null, $liquidationReport->id);
+            $this->assertBudgetItem($budget, $amount, null, $liquidationReport->id);
+        }
+
+        $before = $liquidationReport->only(['amount', 'payee', 'purpose']);
+        $previousStatus = $liquidationReport->status;
+        $liquidationReport->update([
+            'payee' => $data['payee'] ?? null, 'payee_office' => $data['payee_office'] ?? null, 'payee_address' => $data['payee_address'] ?? null, 'payee_tin' => $data['payee_tin'] ?? null,
+            'purpose' => $data['purpose'], 'amount' => $amount, 'notes' => $data['notes'] ?? null, 'ors_fund_cluster' => $data['ors_fund_cluster'] ?? null,
+            'status' => 'for_review', 'approved_at' => null,
+        ]);
+        $liquidationReport->transaction?->recordEvent('budget', 'ors_resubmitted', $previousStatus, 'for_review', $liquidationReport->ors_number, ['before' => $before]);
+        AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $liquidationReport->school_id, 'action' => 'ors_resubmitted', 'auditable_type' => LiquidationReport::class, 'auditable_id' => $liquidationReport->id, 'metadata' => ['ors' => $liquidationReport->ors_number, 'before' => $before, 'after' => $liquidationReport->only(['amount', 'payee', 'purpose'])]]);
+
+        return back()->with('success', ($liquidationReport->ors_number ?: $liquidationReport->report_number).' corrected and sent back to Accounting for review.');
     }
 
     public function updateLiquidationStatus(Request $request, LiquidationReport $liquidationReport)

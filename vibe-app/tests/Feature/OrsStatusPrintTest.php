@@ -344,4 +344,25 @@ class OrsStatusPrintTest extends TestCase
         $this->assertMatchesRegularExpression('/font-weight="bold" text-decoration="underline"[^>]*>101102<\/text>/', $changed);
         $this->assertStringNotContainsString('>101101</text>', $changed);
     }
+
+    public function test_the_create_ors_form_has_no_source_of_fund_field_and_the_fund_follows_the_budget_line(): void
+    {
+        [$school, $user] = $this->tenant();
+        $this->actingAs($user);
+        $line = BudgetAllocation::create([
+            'organization_id' => $school->organization_id, 'school_id' => $school->id, 'office' => $school->name, 'fiscal_year' => now()->year, 'program' => 'A PROGRAM NAME',
+            'start_date' => now()->year.'-01-01', 'end_date' => now()->year.'-12-31', 'source_of_fund' => 'Canteen Fund', 'uacs_code' => '5020301000', 'particulars' => 'Test line',
+            'amount' => 5000, 'q1_amount' => 5000, 'q2_amount' => 0, 'q3_amount' => 0, 'q4_amount' => 0, 'created_by' => $user->id, 'budget_ref_no' => 'BA-TEST-4',
+        ]);
+
+        $page = $this->get(route('budget'))->assertOk()->getContent();
+        $this->assertStringNotContainsString('Source of Fund <span', $page);
+        $this->assertStringContainsString('type="hidden" name="source_of_fund"', $page);
+        foreach (['Document', 'Payee', 'Obligation'] as $heading) {
+            $this->assertStringContainsString('tracking-wider text-primary">'.$heading.'</h3>', $page);
+        }
+
+        $this->post(route('liquidation.store'), $this->payload($school, ['budget_allocation_id' => $line->id, 'source_of_fund' => null]))->assertSessionHasNoErrors();
+        $this->assertSame('Canteen Fund', LiquidationReport::firstOrFail()->source_of_fund);
+    }
 }
