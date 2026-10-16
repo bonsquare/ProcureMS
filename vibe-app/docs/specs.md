@@ -792,6 +792,7 @@ This refines 30.3 and 31.2. The printed ORS is `resources/views/ors-print.blade.
 - **Signature blocks (2026-10-16):** in both blocks the labels Signature, Printed Name, Position and Date are aligned at the left, with their colons in one vertical line; the Date under each block is the date of the ORS, centered like the name and the position.
 - **A. and B. Certified (2026-10-16):** the two Certified paragraphs sit 7 points higher in their boxes.
 - **UACS Object Code (2026-10-16):** the code is centered in its column, under the heading.
+- **Fund Cluster (2026-10-16):** the Create ORS window has a Fund Cluster field (`ors_fund_cluster`), filled in with 101101 and free to change. The printed ORS shows what was typed; left empty, 101101 is printed (also for ORS made before this field). It is separate from the Source of Fund, which still drives the budget. Test: `OrsStatusPrintTest`.
 
 Tests: `OrsStatusPrintTest`.
 
