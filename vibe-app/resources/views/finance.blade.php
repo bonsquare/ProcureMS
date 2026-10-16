@@ -104,7 +104,8 @@
                         @if($r->paid_at)
                             <span class="mt-1 inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-secondary/10 px-2.5 py-1 text-xs font-bold text-secondary"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">check_circle</span>Paid {{ $r->paid_at->format('M d, Y') }}</span>
                             <div class="mt-1 text-xs text-on-surface-variant">{{ $r->payment_mode }}@if($r->payment_reference) · {{ $r->payment_reference }}@endif</div>
-                            @if($r->check_date || $r->bank_name)<div class="text-xs text-on-surface-variant">@if($r->bank_name){{ $r->bank_name }}@endif @if($r->check_date)· Check dated {{ $r->check_date->format('M d, Y') }}@endif</div>@endif
+                            @if($r->check_date || $r->bank_name)<div class="text-xs text-on-surface-variant">@if($r->bank_name){{ $r->bank_name }}@if($r->bank_account_name || $r->bank_account_number) · {{ $r->bank_account_name }} {{ $r->bank_account_number }}@endif @endif @if($r->check_date)· Check dated {{ $r->check_date->format('M d, Y') }}@endif</div>@endif
+                            @if($r->payment_fund_cluster)<div class="text-xs text-on-surface-variant">Fund Cluster: {{ $r->payment_fund_cluster }}</div>@endif
                             @if($r->received_by)<div class="text-xs text-on-surface-variant">Received by: {{ $r->received_by }}</div>@endif
                             @if($r->payment_remarks)<div class="text-xs italic text-on-surface-variant">{{ $r->payment_remarks }}</div>@endif
                         @else
@@ -131,7 +132,7 @@
                             <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-3"><button type="button" onclick="this.closest('dialog').close()" class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Close</button><button class="rounded bg-error px-4 py-2.5 text-xs font-bold text-white hover:opacity-90">Cancel Check</button></div>
                         </form></dialog>
                     @endif
-                    @if(auth()->user()->hasPermission('cash.pay') && $isCash && ! $r->paid_at)<button type="button" data-pay="{{ route('cash.pay', $r) }}" data-label="{{ $label }}" data-amount="{{ $peso($r->amount) }}" data-mode="{{ $r->payment_mode }}" class="inline-flex items-center gap-1 rounded-lg bg-secondary px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:opacity-90"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">payments</span>Record Payment</button>@endif
+                    @if(auth()->user()->hasPermission('cash.pay') && $isCash && ! $r->paid_at)<button type="button" data-pay="{{ route('cash.pay', $r) }}" data-label="{{ $label }}" data-amount="{{ $peso($r->amount) }}" data-mode="{{ $r->payment_mode }}" data-dv-date="{{ $r->dv_date?->toDateString() }}" data-fund-cluster="{{ $r->dv_fund_cluster ?: 'General Fund' }}" data-bank="{{ $r->school?->bank_name }}" data-account-name="{{ $r->school?->bank_account_name }}" data-account-number="{{ $r->school?->bank_account_number }}" class="inline-flex items-center gap-1 rounded-lg bg-secondary px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:opacity-90"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">payments</span>Record Payment</button>@endif
                     @if(auth()->user()->hasPermission('accounting.approve') && ! $isCash && $r->reissue_pending && ! $r->dv_number && $r->status !== 'approved')
                         <button type="button" onclick="document.getElementById('edit-ors-{{ $r->id }}').showModal()" class="inline-flex items-center gap-1 rounded-lg bg-secondary px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:opacity-90"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">edit</span>Edit ORS</button>
                         <dialog id="edit-ors-{{ $r->id }}" style="width:min(32rem,calc(100% - 2rem))" class="rounded bg-white p-0 text-left shadow-2xl backdrop:bg-black/50"><form method="POST" action="{{ route('accounting.ors.update', $r) }}" class="space-y-3 p-6">@csrf @method('PATCH')
@@ -244,8 +245,11 @@
         <label class="text-xs font-semibold text-on-surface-variant">Mode of Payment <span class="text-error">*</span><select name="payment_mode" required class="{{ $inputClass }}"><option>MDS Check</option><option>Commercial Check</option><option>ADA</option><option>Others</option></select></label>
         <label class="text-xs font-semibold text-on-surface-variant">Check / ADA / OR Reference No.<input name="payment_reference" class="{{ $inputClass }}"></label>
         <label class="text-xs font-semibold text-on-surface-variant">Date Paid <span class="text-error">*</span><input type="date" name="paid_at" required max="{{ now()->toDateString() }}" value="{{ now()->toDateString() }}" class="{{ $inputClass }}"></label>
+        <label class="text-xs font-semibold text-on-surface-variant">Fund Cluster<input name="payment_fund_cluster" maxlength="100" autocomplete="off" value="General Fund" class="{{ $inputClass }}"></label>
         <label class="text-xs font-semibold text-on-surface-variant">Check Date<input type="date" name="check_date" class="{{ $inputClass }}"></label>
         <label class="text-xs font-semibold text-on-surface-variant">Bank<input name="bank_name" maxlength="120" autocomplete="off" placeholder="e.g. Land Bank of the Philippines" class="{{ $inputClass }}"></label>
+        <label class="text-xs font-semibold text-on-surface-variant">Account Name<input name="bank_account_name" maxlength="120" autocomplete="off" class="{{ $inputClass }}"></label>
+        <label class="text-xs font-semibold text-on-surface-variant">Account No.<input name="bank_account_number" maxlength="60" autocomplete="off" class="{{ $inputClass }}"></label>
         <label class="text-xs font-semibold text-on-surface-variant">Received / Claimed by<input name="received_by" maxlength="120" autocomplete="off" class="{{ $inputClass }}"></label>
         <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Remarks<input name="payment_remarks" maxlength="255" autocomplete="off" class="{{ $inputClass }}"></label>
         <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-4 md:col-span-2"><button type="button" data-close class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Cancel</button><button class="rounded bg-secondary px-4 py-2.5 text-xs font-semibold text-white">Confirm Payment</button></div></form></div></div>
@@ -398,6 +402,9 @@
         document.getElementById('pay-form').action = b.dataset.pay;
         document.getElementById('pay-title').textContent = b.dataset.label + ' · ' + b.dataset.amount;
         if (b.dataset.mode) document.querySelector('#pay-form [name=payment_mode]').value = b.dataset.mode;
+        const payField = (name, value) => { const el = document.querySelector('#pay-form [name=' + name + ']'); if (el) el.value = value || ''; };
+        if (b.dataset.dvDate) { payField('paid_at', b.dataset.dvDate); payField('check_date', b.dataset.dvDate); }
+        payField('payment_fund_cluster', b.dataset.fundCluster || 'General Fund'); payField('bank_name', b.dataset.bank); payField('bank_account_name', b.dataset.accountName); payField('bank_account_number', b.dataset.accountNumber);
         show(payModal);
     }));
     document.querySelectorAll('[data-review]').forEach((b) => b.addEventListener('click', () => {

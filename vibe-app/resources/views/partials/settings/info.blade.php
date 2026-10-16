@@ -114,6 +114,9 @@
                         <label class="block text-xs font-bold sm:col-span-2">School address<input name="address" value="{{ old('address', $selectedSchool->address) }}" class="{{ $input }}"></label>
                         <label class="block text-xs font-bold">Contact no.<input name="contact_number" value="{{ old('contact_number', $selectedSchool->contact_number) }}" class="{{ $input }}"></label>
                         <label class="block text-xs font-bold">Email<input type="email" name="contact_email" value="{{ old('contact_email', $selectedSchool->contact_email) }}" class="{{ $input }}"></label>
+                        <label class="block text-xs font-bold sm:col-span-2">Bank <span class="font-normal text-on-surface-variant">(default for Record Payment)</span><input name="bank_name" maxlength="120" value="{{ old('bank_name', $selectedSchool->bank_name) }}" placeholder="e.g. Land Bank of the Philippines" class="{{ $input }}"></label>
+                        <label class="block text-xs font-bold">Account name<input name="bank_account_name" maxlength="120" value="{{ old('bank_account_name', $selectedSchool->bank_account_name) }}" class="{{ $input }}"></label>
+                        <label class="block text-xs font-bold">Account no.<input name="bank_account_number" maxlength="60" value="{{ old('bank_account_number', $selectedSchool->bank_account_number) }}" class="{{ $input }}"></label>
                     </div>
                 </fieldset>
                 {!! $actions($filled([$selectedSchool->school_type, $selectedSchool->address, $selectedSchool->contact_number, $selectedSchool->contact_email, $selectedSchool->logo_path])) !!}

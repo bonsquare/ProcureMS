@@ -2440,6 +2440,9 @@ class HomeController extends Controller
             'school_head' => ['nullable', 'string', 'max:255'],
             'contact_email' => ['nullable', 'email', 'max:255'],
             'contact_number' => ['nullable', 'string', 'max:50'],
+            'bank_name' => ['nullable', 'string', 'max:120'],
+            'bank_account_name' => ['nullable', 'string', 'max:120'],
+            'bank_account_number' => ['nullable', 'string', 'max:60'],
             'status' => ['nullable', 'in:active,inactive'],
             'school_logo' => ['nullable', 'mimes:png,jpg,jpeg,webp,gif', 'max:2048'],
         ], $logoMessages);

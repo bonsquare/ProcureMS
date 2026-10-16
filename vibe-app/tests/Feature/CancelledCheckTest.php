@@ -260,12 +260,14 @@ class CancelledCheckTest extends TestCase
 
         $this->actingAs($master)->post(route('cash.pay', $report), [
             'payment_mode' => 'MDS Check', 'paid_at' => now()->toDateString(), 'check_date' => now()->toDateString(),
-            'bank_name' => 'Land Bank of the Philippines', 'received_by' => 'Juan Dela Cruz', 'payment_remarks' => 'Claimed at the cashier',
+            'bank_name' => 'Land Bank of the Philippines', 'bank_account_name' => 'Lubas ES MOOE', 'bank_account_number' => '1234-5678-90', 'payment_fund_cluster' => 'General Fund', 'received_by' => 'Juan Dela Cruz', 'payment_remarks' => 'Claimed at the cashier',
         ])->assertRedirect()->assertSessionHasNoErrors();
 
         $report->refresh();
         $this->assertSame('Land Bank of the Philippines', $report->bank_name);
         $this->assertSame('Juan Dela Cruz', $report->received_by);
+        $this->assertSame('1234-5678-90', $report->bank_account_number);
+        $this->assertSame('General Fund', $report->payment_fund_cluster);
         $this->assertSame(now()->toDateString(), $report->check_date->toDateString());
 
         $this->actingAs($master)->post(route('cash.cancel', $report), ['reason' => 'Wrong amount', 'password' => self::PASSWORD]);
@@ -273,6 +275,8 @@ class CancelledCheckTest extends TestCase
         $report->refresh();
         $this->assertNull($report->bank_name);
         $this->assertNull($report->received_by);
+        $this->assertNull($report->bank_account_name);
+        $this->assertNull($report->payment_fund_cluster);
         $this->assertNull($report->check_date);
         $this->assertNull($report->payment_remarks);
     }

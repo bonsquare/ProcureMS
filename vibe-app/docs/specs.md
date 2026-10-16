@@ -249,7 +249,7 @@ Each section is locked until **Edit** is pressed, then **Cancel** and **Save** (
 
 - **Public Header:** agency logo, republic name, department / agency, address, email, phone.
 - **Division Office Details:** division logo, region, school division office, division address, email, contact number; a small separator, then **District Office** (district office, address, email, contact no.). Only the division has a logo.
-- **School details:** school logo, **School ID (auto-generated, read-only)**, school name, type, address, contact no., email.
+- **School details:** school logo, **School ID (auto-generated, read-only)**, school name, type, address, contact no., email, and the school's **Bank**, **Account name** and **Account no.** (optional; the defaults of Record Payment, 33.5).
 - The School ID is generated when the school is created and never typed. The User ID is shown per account in System Users, not here.
 - Fiscal year and document numbering are not editable here; documents keep numbering as before.
 
@@ -844,7 +844,7 @@ Tests: `DvJournalEntryTest`, `OrsStatusPrintTest`, `DvAppropriationPrintTest`.
 - Each row starts with the supplier name in bold, with a storefront icon before it; under it, the document numbers as badges of their own colors: **ORS** (violet), **PR** (blue) and **PO** (amber; the number of the Purchase Order of the PR, shown only when the PR has one); then the particulars.
 - A DV number is shown as it is (it already starts with "DV-"), never as "DV DV-..."; a number typed without the letters gets "DV " in front of it. This holds in the rows, the Edit DV and Cancel Check windows, the Cancelled Checks register, the Stage column of the Budget page, the messages of Accounting and the references of the Allotment Registry; all of them use `LiquidationReport::dvLabel()`.
 - Status / DV column of Accounting (an ORS with a DV): the status badge, then the DV number on one line, the full date of the DV on its own line below it (never wrapped), then a sky-blue badge **Cash for Disbursement**.
-- **Record Payment** (Cash) asks, besides Mode of Payment and Date Paid (required) and the reference no., for four optional details: Check Date, Bank, Received / Claimed by and Remarks (`check_date`, `bank_name`, `received_by`, `payment_remarks` on `liquidation_reports`). They show under the payment in the Cash row when filled and are cleared when the check is cancelled (37).
+- **Record Payment** (Cash) asks Mode of Payment and Date Paid (required), the reference no., and optional details: Fund Cluster, Check Date, Bank, Account Name, Account No., Received / Claimed by and Remarks (`payment_fund_cluster`, `check_date`, `bank_name`, `bank_account_name`, `bank_account_number`, `received_by`, `payment_remarks` on `liquidation_reports`). **Defaults:** Date Paid and Check Date are the date of the DV; Fund Cluster is the DV's (General Fund when empty); Bank, Account Name and Account No. are the school's from School Settings; each can be changed. They show under the payment in the Cash row when filled and are cleared when the check is cancelled (37).
 - Tests: `FinanceRowBadgesTest`, `CancelledCheckTest`.
 
 ## 34. APP-CSE: a disclosure for each category (approved by the owner 2026-10-15)
