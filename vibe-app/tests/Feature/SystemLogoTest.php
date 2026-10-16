@@ -36,12 +36,14 @@ class SystemLogoTest extends TestCase
         }
     }
 
-    public function test_the_login_page_shows_the_full_logo(): void
+    /** The sign-in page was redesigned (specs section 36): the brand panel and the phone header carry the round emblem with the ProcureMS name, not the full logo. */
+    public function test_the_login_page_shows_the_emblem_with_the_system_name(): void
     {
         $html = $this->get(route('login'))->assertOk()->getContent();
 
-        $this->assertStringContainsString(self::LOGO, $html);
-        $this->assertMatchesRegularExpression('/<img[^>]*src="[^"]*'.preg_quote(self::LOGO, '/').'"[^>]*alt="ProcureMS[^"]*"/', $html);
+        $this->assertStringContainsString(self::EMBLEM, $html);
+        $this->assertStringContainsString('ProcureMS', $html);
+        $this->assertStringNotContainsString(self::LOGO, $html);
     }
 
     public function test_the_register_page_shows_the_emblem_with_its_text(): void
