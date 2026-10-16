@@ -166,4 +166,76 @@ class CashReportPrintTest extends TestCase
         $this->assertStringNotContainsString('undefined', $document);
         $this->assertStringContainsString('No check or ADA was issued in this period.', $document);
     }
+
+    private function registerDocument(School $school, User $user): string
+    {
+        $html = $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school)))->assertOk()->assertSee('CASH DISBURSEMENT REGISTER')->getContent();
+
+        return substr($html, (int) strpos($html, '<main'));
+    }
+
+    public function test_the_register_has_a_column_per_paid_account_with_its_uacs_code(): void
+    {
+        [$school, $user] = $this->tenant('CR1');
+        $this->paid($school, '0001', '2026-08-01', 1000, '5020101000', 'Traveling Expenses');
+        $this->paid($school, '0002', '2026-08-02', 250.5, '5020301000', 'Office Supplies Expense');
+
+        $document = $this->registerDocument($school, $user);
+
+        $this->assertStringContainsString('Traveling Expenses', $document);
+        $this->assertStringContainsString('5020301000', $document);
+        $this->assertMatchesRegularExpression('/data-account="5020101000"[^>]*>1,000\.00</', $document);
+        $this->assertMatchesRegularExpression('/data-account="5020301000"[^>]*>250\.50</', $document);
+        $this->assertMatchesRegularExpression('/data-total-account="5020101000"[^>]*>1,000\.00</', $document);
+        $this->assertMatchesRegularExpression('/data-col="total-payments"[^>]*>1,250\.50</', $document);
+    }
+
+    public function test_the_register_balance_follows_the_payments(): void
+    {
+        [$school, $user] = $this->tenant('CR2');
+        CashFundReceipt::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'received_at' => '2026-07-01', 'kind' => 'opening_balance', 'fund_cluster' => 'General Fund', 'amount' => 181500, 'created_by' => $user->id]);
+        $this->paid($school, '0001', '2026-08-01', 1000);
+        $this->paid($school, '0002', '2026-08-02', 500);
+
+        $document = $this->registerDocument($school, $user);
+
+        $this->assertMatchesRegularExpression('/data-col="advance"[^>]*>181,500\.00</', $document, 'cash advance');
+        $this->assertMatchesRegularExpression('/data-col="balance"[^>]*>180,500\.00</', $document);
+        $this->assertMatchesRegularExpression('/data-col="balance"[^>]*>180,000\.00</', $document);
+    }
+
+    public function test_more_than_eight_accounts_continue_in_a_second_table(): void
+    {
+        [$school, $user] = $this->tenant('CR3');
+        foreach (range(1, 9) as $number) {
+            $this->paid($school, sprintf('%04d', $number), '2026-08-0'.$number, 100, '50200'.$number.'0000', 'Account '.$number);
+        }
+
+        $document = $this->registerDocument($school, $user);
+
+        $this->assertSame(2, substr_count($document, '<table class="report'), 'one table of eight account columns and a second one for the rest');
+        $this->assertStringContainsString('Account 9', $document);
+    }
+
+    public function test_a_very_long_payee_wraps(): void
+    {
+        [$school, $user] = $this->tenant('CR4');
+        $this->paid($school, '0001', '2026-08-01', 100, '5020301000', 'Office Supplies Expense', ['payee' => 'A very long payee name that has to wrap inside its cell without breaking the register']);
+
+        $document = $this->registerDocument($school, $user);
+
+        $this->assertStringContainsString('A very long payee name that has to wrap', $document);
+        $this->assertDoesNotMatchRegularExpression('/<td[^>]*nowrap[^>]*>A very long payee/', $document);
+    }
+
+    public function test_the_register_prints_with_no_payments(): void
+    {
+        [$school, $user] = $this->tenant('CR5');
+
+        $document = $this->registerDocument($school, $user);
+
+        $this->assertStringNotContainsString('NaN', $document);
+        $this->assertStringNotContainsString('undefined', $document);
+        $this->assertStringContainsString('No payment was made in this period.', $document);
+    }
 }

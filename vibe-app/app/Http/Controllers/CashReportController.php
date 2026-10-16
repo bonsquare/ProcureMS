@@ -159,7 +159,6 @@ class CashReportController extends Controller
 
     public function register(Request $request)
     {
-        $this->reportContext($request);
-        abort(501, 'The Cash Disbursement Register is not built yet.');
+        return view('cash-report-register', ['report' => $this->reportViewData($request)]);
     }
 }
