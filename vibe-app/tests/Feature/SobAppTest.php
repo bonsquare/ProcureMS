@@ -47,14 +47,14 @@ class SobAppTest extends TestCase
     {
         $fx = SobFixture::make();
         $this->actingAs($fx['user']);
-        $plan = $this->approvedSob($fx, [$this->line($fx, ['category' => 'Common Office Supply', 'frequency' => 2])]);
+        $plan = $this->approvedSob($fx, [$this->line($fx, ['category' => 'Common Office Supplies', 'frequency' => 2])]);
 
         $paper = AppItem::withoutGlobalScopes()->sole();
-        $this->assertSame(['Bond paper', 'Common Office Supply', 'ream', 'MOOE'], [$paper->procurement_item, $paper->category, $paper->unit, $paper->fund_source]);
+        $this->assertSame(['Bond paper', 'Common Office Supplies', 'ream', 'MOOE'], [$paper->procurement_item, $paper->category, $paper->unit, $paper->fund_source]);
         $this->assertEquals([20, 250, 5000], [$paper->quantity, $paper->estimated_unit_cost, $paper->estimated_total_cost]);
         $this->assertSame('draft', AppPlan::withoutGlobalScopes()->sole()->status);
 
-        app(SobService::class)->addItem($plan->fresh(), $this->line($fx, ['particulars' => 'Folder', 'category' => 'Common Office Supply', 'quantity' => 5, 'unit' => 'box', 'unit_cost' => 100]));
+        app(SobService::class)->addItem($plan->fresh(), $this->line($fx, ['particulars' => 'Folder', 'category' => 'Common Office Supplies', 'quantity' => 5, 'unit' => 'box', 'unit_cost' => 100]));
 
         $this->assertSame(['Bond paper', 'Folder'], AppItem::withoutGlobalScopes()->orderBy('id')->pluck('procurement_item')->all(), 'an item added to the approved SOB goes into the APP too');
     }

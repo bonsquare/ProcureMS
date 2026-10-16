@@ -56,7 +56,7 @@ class PlanningController extends Controller
             // Older PPMPs stay in the database; they only keep their AIP from being deleted.
             'legacyPpmpAipIds' => PpmpPlan::where('school_id', $selectedSchool->id)->pluck('aip_id')->all(),
             'appPlan' => AppPlan::with(['items.ppmpItem.plan.transaction.procurementRequests', 'items.sobItem.plan.transaction.procurementRequests', 'items.requestItems.procurementRequest'])->where('school_id', $selectedSchool->id)->where('fiscal_year', $year)->first(),
-            'appCandidates' => SobItem::with(['plan', 'activity'])->where('is_extra', false)
+            'appCandidates' => SobItem::with(['plan', 'activity'])->where('is_extra', false)->whereNotNull('category')->where('category', '!=', '')
                 ->whereHas('plan', fn (Builder $query) => $query->where('school_id', $selectedSchool->id)->where('fiscal_year', $year)->where('status', 'approved'))
                 ->whereDoesntHave('appItems', fn (Builder $query) => $query->whereHas('plan', fn (Builder $plan) => $plan->where('school_id', $selectedSchool->id)->where('fiscal_year', $year)))
                 ->orderBy('id')->get()->groupBy('sob_plan_id'),
@@ -339,7 +339,7 @@ class PlanningController extends Controller
         ]);
         $school = School::whereKey($data['school_id'])->firstOrFail();
         app(FiscalYearService::class)->assertOpen((int) $school->organization_id, (int) $data['fiscal_year']);
-        $approvedItems = SobItem::with(['plan', 'activity'])->where('is_extra', false)
+        $approvedItems = SobItem::with(['plan', 'activity'])->where('is_extra', false)->whereNotNull('category')->where('category', '!=', '')
             ->whereHas('plan', fn (Builder $query) => $query->where('school_id', $school->id)->where('fiscal_year', $data['fiscal_year'])->where('status', 'approved'))
             ->orderBy('id')
             ->get();

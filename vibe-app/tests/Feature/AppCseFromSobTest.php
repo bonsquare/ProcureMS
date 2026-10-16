@@ -13,7 +13,7 @@ use Illuminate\Validation\ValidationException;
 use Tests\Support\SobFixture;
 use Tests\TestCase;
 
-/** The SOB particulars of the Common Office Supply category are saved in the APP-CSE, and lines with no quantity are not shown or printed. */
+/** The SOB particulars of the Common Office Supplies category are saved in the APP-CSE, and lines with no quantity are not shown or printed. */
 class AppCseFromSobTest extends TestCase
 {
     use RefreshDatabase;
@@ -42,8 +42,8 @@ class AppCseFromSobTest extends TestCase
         $q4 = app(SobService::class)->create($fx['school'], 2026, 4, 'MOOE', $fx['user']);
 
         $this->addLines($fx, $q4, [
-            ['particulars' => 'Bond Paper', 'frequency' => 1, 'quantity' => 10, 'unit' => 'Ream', 'unit_cost' => 300, 'category' => 'Common Office Supply'],
-            ['particulars' => 'Laptop', 'frequency' => 1, 'quantity' => 1, 'unit' => 'unit', 'unit_cost' => 40000, 'category' => 'Common ICT Equipments'],
+            ['particulars' => 'Bond Paper', 'frequency' => 1, 'quantity' => 10, 'unit' => 'Ream', 'unit_cost' => 300, 'category' => 'Common Office Supplies'],
+            ['particulars' => 'Laptop', 'frequency' => 1, 'quantity' => 1, 'unit' => 'unit', 'unit_cost' => 40000, 'category' => 'Common ICT Equipment'],
         ]);
         $this->assertSame([], $this->fromSob(), 'a draft SOB is not in the APP-CSE yet');
         $this->approve($q4);
@@ -57,7 +57,22 @@ class AppCseFromSobTest extends TestCase
         $this->assertSame([['Bond Paper', 'Ream', 300.0, $october], ['Laptop', 'unit', 40000.0, $laptop]], $this->fromSob(), 'every category, in October, at the SOB unit cost');
         $lines = AppCseItem::where('from_sob', true)->orderBy('sort_order')->get();
         $this->assertTrue($lines->every->isCustom(), 'Part II lines');
-        $this->assertSame(['Common Office Supply', 'Common ICT Equipments'], $lines->pluck('category')->all(), 'each under its own category');
+        $this->assertSame(['Common Office Supplies', 'Common ICT Equipment'], $lines->pluck('category')->all(), 'each under its own category');
+    }
+
+    public function test_a_line_left_at_a_dash_is_not_written_into_the_app_cse(): void
+    {
+        $fx = SobFixture::make();
+        $this->actingAs($fx['user']);
+        $q4 = app(SobService::class)->create($fx['school'], 2026, 4, 'MOOE', $fx['user']);
+
+        $this->addLines($fx, $q4, [
+            ['particulars' => 'Bond Paper', 'frequency' => 1, 'quantity' => 10, 'unit' => 'Ream', 'unit_cost' => 300, 'category' => 'Common Office Supplies'],
+            ['particulars' => 'Travel Budget', 'frequency' => 1, 'quantity' => 1, 'unit' => 'lot', 'unit_cost' => 5000, 'category' => ''],
+        ]);
+        $this->approve($q4);
+
+        $this->assertSame(['Bond Paper'], array_column($this->fromSob(), 0), 'a line that is not goods ("-") is not in the APP-CSE');
     }
 
     public function test_the_lines_follow_the_sob_when_it_changes_and_the_same_particulars_are_added_up(): void
@@ -67,8 +82,8 @@ class AppCseFromSobTest extends TestCase
         $service = app(SobService::class);
         $q1 = $service->create($fx['school'], 2026, 1, 'MOOE', $fx['user']);
         $q2 = $service->create($fx['school'], 2026, 2, 'MOOE', $fx['user']);
-        $this->addLines($fx, $q1, [['particulars' => 'Bond Paper', 'frequency' => 2, 'quantity' => 5, 'unit' => 'Ream', 'unit_cost' => 300, 'category' => 'Common Office Supply']]);
-        $this->addLines($fx, $q2, [['particulars' => 'bond paper ', 'frequency' => 1, 'quantity' => 4, 'unit' => 'ream', 'unit_cost' => 300, 'category' => 'Common Office Supply']]);
+        $this->addLines($fx, $q1, [['particulars' => 'Bond Paper', 'frequency' => 2, 'quantity' => 5, 'unit' => 'Ream', 'unit_cost' => 300, 'category' => 'Common Office Supplies']]);
+        $this->addLines($fx, $q2, [['particulars' => 'bond paper ', 'frequency' => 1, 'quantity' => 4, 'unit' => 'ream', 'unit_cost' => 300, 'category' => 'Common Office Supplies']]);
         $this->approve($q1);
         $this->approve($q2);
 
@@ -94,7 +109,7 @@ class AppCseFromSobTest extends TestCase
         $fx = SobFixture::make();
         $this->actingAs($fx['user']);
         $q1 = app(SobService::class)->create($fx['school'], 2026, 1, 'MOOE', $fx['user']);
-        $this->addLines($fx, $q1, [['particulars' => 'Bond Paper', 'frequency' => 1, 'quantity' => 10, 'unit' => 'Ream', 'unit_cost' => 300, 'category' => 'Common Office Supply']]);
+        $this->addLines($fx, $q1, [['particulars' => 'Bond Paper', 'frequency' => 1, 'quantity' => 10, 'unit' => 'Ream', 'unit_cost' => 300, 'category' => 'Common Office Supplies']]);
         $this->approve($q1);
         $line = AppCseItem::where('from_sob', true)->firstOrFail();
 
@@ -111,7 +126,7 @@ class AppCseFromSobTest extends TestCase
         app(AppCseService::class)->syncFromSob($fx['school'], 2026, $fx['user']);
         $this->assertSame('approved', $line->plan->fresh()->status, 'nothing changed in the SOB: the approved APP-CSE is left as it is');
 
-        $this->addLines($fx, $q1, [['particulars' => 'Folder', 'frequency' => 1, 'quantity' => 3, 'unit' => 'pc', 'unit_cost' => 10, 'category' => 'Common Office Supply']]);
+        $this->addLines($fx, $q1, [['particulars' => 'Folder', 'frequency' => 1, 'quantity' => 3, 'unit' => 'pc', 'unit_cost' => 10, 'category' => 'Common Office Supplies']]);
         $this->assertCount(2, $this->fromSob(), 'a new line of the SOB comes into the APP-CSE');
         $this->assertSame('draft', $line->plan->fresh()->status, 'and the approved APP-CSE goes back to a draft so it follows the SOB');
     }

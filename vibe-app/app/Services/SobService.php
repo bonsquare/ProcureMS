@@ -570,7 +570,8 @@ class SobService
         return [
             'aip_activity_id' => (int) $values['aip_activity_id'], 'chart_of_account_id' => (int) $values['chart_of_account_id'], 'particulars' => trim($values['particulars']),
             'frequency' => $frequency, 'quantity' => $quantity, 'unit' => trim($values['unit']), 'unit_cost' => $cost, 'amount' => round($frequency * $quantity * $cost, 2),
-            'category' => AppCategories::of($values['category'] ?? null),
+            // The form always sends the category: "-" (empty) means no category, so no APP line. A line that is made without one (by code) is filed under Other Categories.
+            'category' => array_key_exists('category', $data) ? (filled($values['category'] ?? null) ? $values['category'] : null) : AppCategories::DEFAULT,
         ];
     }
 
@@ -591,10 +592,11 @@ class SobService
             $locked = SobPlan::withoutGlobalScopes()->lockForUpdate()->findOrFail($plan->id);
             $locked->update(['allotment_snapshot' => $locked->allotment_snapshot ?: $this->snapshotOf($locked)]);
             $this->guardApprovedChange($locked, $affected ?? $locked->items()->get());
+            $outsideApp = $locked->items()->where('is_extra', false)->whereNull('category')->pluck('id')->all();
 
             $result = $change();
 
-            $this->resyncApproved($locked->fresh());
+            $this->resyncApproved($locked->fresh(), $outsideApp);
 
             return $result;
         });
@@ -623,7 +625,9 @@ class SobService
      */
     private function placeInApp(SobPlan $plan, Collection $items, MasterTransaction $transaction, ?User $user): int
     {
-        if ($items->reject->is_extra->isEmpty()) {
+        // An other line (such as Labor) and a line with no category ("-", such as a travel budget) are not goods: they are not put in the APP.
+        $items = $items->reject->is_extra->filter(fn (SobItem $item) => filled($item->category))->values();
+        if ($items->isEmpty()) {
             return 0;
         }
         $appPlan = AppPlan::withoutGlobalScopes()->firstOrCreate(
@@ -631,7 +635,7 @@ class SobService
             ['organization_id' => $plan->organization_id, 'status' => 'draft', 'created_by' => $user?->id ?? $plan->created_by],
         );
         $added = 0;
-        foreach ($items->reject->is_extra as $item) {
+        foreach ($items as $item) {
             $appItem = AppItem::withoutGlobalScopes()->firstOrCreate(
                 ['app_plan_id' => $appPlan->id, 'sob_item_id' => $item->id],
                 [
@@ -659,7 +663,8 @@ class SobService
     }
 
     /** After a change to an approved SOB: the Budget allotments, the APP lines, the audit log and the transaction history follow. */
-    private function resyncApproved(SobPlan $plan): void
+    /** @param  array<int, int>  $outsideApp  the ids of the lines that had no category (so were not in the APP) before this change */
+    private function resyncApproved(SobPlan $plan, array $outsideApp = []): void
     {
         $user = auth()->user() ?? User::withoutGlobalScopes()->find($plan->created_by);
         $items = $plan->items()->with(['activity.kra', 'account'])->get();
@@ -669,6 +674,13 @@ class SobService
         $plan->update(['allotment_snapshot' => ['fund' => $plan->fund_source, 'quarter' => (int) $plan->quarter, 'groups' => $keys]]);
         foreach (AppItem::withoutGlobalScopes()->whereIn('sob_item_id', $items->reject->is_extra->pluck('id'))->get() as $appItem) {
             $item = $items->firstWhere('id', $appItem->sob_item_id);
+            if (blank($item->category)) {
+                // The line was changed to "-": it leaves the APP (the change was refused before if a Purchase Request or an approved APP holds it).
+                $transaction->recordEvent('app', 'removed_from_app', 'planned', null, $item->particulars, ['app_plan_id' => $appItem->app_plan_id]);
+                $appItem->delete();
+
+                continue;
+            }
             $appItem->update([
                 'procurement_item' => $item->particulars, 'specifications' => $item->activity?->activity, 'quantity' => round((float) $item->frequency * (float) $item->quantity, 2),
                 'unit' => $item->unit, 'estimated_unit_cost' => $item->unit_cost, 'estimated_total_cost' => $item->amount, 'fund_source' => $plan->fund_source,
@@ -676,7 +688,7 @@ class SobService
             ]);
         }
         // Only an item added after the approval goes in (an item the user took out of the APP is not brought back by an edit).
-        $this->placeInApp($plan, $items->filter(fn (SobItem $item) => $plan->approved_at && $item->created_at && $item->created_at->gte($plan->approved_at)), $transaction, $user);
+        $this->placeInApp($plan, $items->filter(fn (SobItem $item) => in_array($item->id, $outsideApp, true) || ($plan->approved_at && $item->created_at && $item->created_at->gte($plan->approved_at))), $transaction, $user);
         $this->audit($plan, $user, 'sob_revised', ['created' => $created, 'updated' => $updated]);
         $transaction->recordEvent('sob', 'revised', 'approved', 'approved', $this->title($plan), ['sob_plan_id' => $plan->id, 'created_allocations' => $created, 'updated_allocations' => $updated]);
     }

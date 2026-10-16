@@ -23,7 +23,7 @@ class SobController extends Controller
 {
     public function __construct(private SobService $sob, private AppCseService $cse) {}
 
-    /** The Common Office Supply particulars of the approved SOBs go to the APP-CSE of the year; written again after every change of an SOB. */
+    /** The particulars with a category of the approved SOBs go to the APP-CSE of the year; written again after every change of an SOB. */
     private function syncCse(Request $request, SobPlan $plan): void
     {
         $this->cse->syncFromSob(School::withoutGlobalScopes()->findOrFail($plan->school_id), (int) $plan->fiscal_year, $request->user());

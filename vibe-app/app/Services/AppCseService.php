@@ -113,15 +113,15 @@ class AppCseService
     }
 
     /**
-     * The particulars of the school's approved SOBs, of every category (Common Office Supply, Drugs and Medicine, Construction Components & Supplies,
-     * Paper and Products, Common ICT Equipments, Other categories), written into the APP-CSE of the same fiscal year as Part II lines under their
+     * The particulars of the school's approved SOBs, of every category (Common Office Supplies, Drugs and Medicines, Construction Components and Supplies,
+     * Paper Materials and Products, Common ICT Equipment, Consumables, Other Categories; not a line left at "-"), written into the APP-CSE of the same fiscal year as Part II lines under their
      * category: the quantity (frequency x quantity) goes in the first month of the SOB's quarter, one line per category, particulars, unit and unit cost.
      * The lines are written again on every change of an SOB, so they follow it; an approved APP-CSE is locked and left as it is.
      * An APP-CSE is created for the year when there is none yet.
      */
     public function syncFromSob(School $school, int $fiscalYear, ?User $user): void
     {
-        $items = SobItem::withoutGlobalScopes()->with('plan')->where('is_extra', false)
+        $items = SobItem::withoutGlobalScopes()->with('plan')->where('is_extra', false)->whereNotNull('category')->where('category', '!=', '')
             ->whereHas('plan', fn ($query) => $query->withoutGlobalScopes()->where('school_id', $school->id)->where('fiscal_year', $fiscalYear)->where('status', 'approved'))
             ->orderBy('id')->get()
             ->sortBy(fn (SobItem $item) => (array_search(AppCategories::of($item->category), AppCategories::ALL, true) * 1000000) + $item->id)->values();
@@ -341,7 +341,7 @@ class AppCseService
     private function requireOwnLine(AppCseItem $item): void
     {
         if ($item->from_sob) {
-            $this->fail('This line comes from the SOB (Common Office Supply). Change it in the SOB.');
+            $this->fail('This line comes from the SOB. Change it in the SOB.');
         }
     }
 
