@@ -951,6 +951,7 @@ Design: `docs/superpowers/specs/2026-10-16-cash-reports-design.md`. The owner's 
 - **Reports** (`/reports`) needs `reports.view`. The **New Purchase Request** form (`/procurement/create`) needs `procurement.create`. The **Chart of Accounts** page needs `accounting.view` or `accounting.manage` (the Budget Officer manages it with `accounting.manage`). A role without the permission is refused with 403.
 - The dashboard diagnostics (`/dashboard/diagnostics`) stays open to every signed-in user: it only says whether the database and storage work.
 - The AIP page rule is in 23.2. Tests: `RoutePermissionGapsTest`.
+- **The Reports page** (`/reports`) shows no figures, charts or sample content. It is one list of links to the real reports: the Annual Implementation Plan, the 12 budget reports (screen and CSV), the Allotment Registry, the Chart of Accounts, Accounting (ORS and DV) and the Cash reports. A link is shown only to a role that can open it (`planning.view`, `budget.view`, `accounting.view` or `accounting.manage`, `cash.pay`); a role with none sees a plain message. Owner's decision 2026-10-17. Tests: `ReportsPageTest`.
 
 ## 42. Delivery, inspection and the Disbursement Voucher (owner's decision 2026-10-17)
 
