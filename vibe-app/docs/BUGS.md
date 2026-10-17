@@ -22,6 +22,7 @@ Created 2026-10-17. No defect has been reproduced in the running app yet: the fu
 | B-015 | School isolation | Access checks (`scopedSchoolIds`, AIP `schoolIds`) allow every school of the user's organization, not only the user's own school. Registration creates one organization per school, so this is harmless today; it matters if one organization holds several schools. | Low | Put two schools in one organization; sign in as one school's user; open the other school's AIP. | CONFIRM intended | Expected to open (code reading) | OPEN, CONFIRM with owner |
 | B-016 | Operations | The backup holds the database file only. Uploaded logos and files live on the Railway volume at `/data/public` and are not in it, so restoring a backup on a new volume would bring back records but not the uploaded logos (they would need uploading again; a missing logo prints blank). | Low | Read `DatabaseBackupService` and `deploy/entrypoint.sh`. | CONFIRM whether files must be backed up too | Database only | OPEN, CONFIRM with owner |
 | B-017 | Procurement | On the New Purchase Request form, a master user sees a PR Number preview (PR-2026-003) that is for no organization: choosing a school does not update it, and the number saved was the chosen school's next number (PR-2026-002). Cause by code reading: `nextPurchaseRequestNumber(false)` uses the signed-in user's organization, which a master user does not have. The field is display only (it has no name and is not submitted), so the saved number is correct. | Low | Sign in as master, open Procurement > New Request, choose Lubas Elementary School, compare the preview with the saved PR number. Reproduced 2026-10-17. | The preview shows the chosen school's next number | Shows another sequence's number | CONFIRMED in browser; not fixed (needs owner approval) |
+| B-018 | Reports | The Reports page (`/reports`, `HomeController::reports`, view `reports.blade.php`) shows hard-coded sample content and reads nothing from the database: the four tiles (Total Procurement ₱4.82M, Total Liquidated ₱3.96M, Outstanding Balance ₱860K across 14 reports, Average Processing 4.2 days), the monthly chart (labelled 2025), "Spending by School" with five fixed school names and amounts, and "Recent Exports" with fake files (for example "Q3 Accounting Compliance.pdf"). A user with `reports.view` reads these as real figures. The real reports are elsewhere (appendix 5). | Medium | Sign in as a school admin, open Reports, compare with the school's own data. Read from the code 2026-10-17; the controller passes no data and the view has no database reference. | Figures from the school's own records, or no figures | Fixed sample figures | FIXED 2026-10-17 by the owner's decision D13: the sample figures, the fake period and Export button, the chart, the school list, the Custom Report button and the fake exports are gone; the page lists only links to real reports, each shown to roles that can open it (`ReportsPageTest`, 4 tests; full suite passes) |
 
 ## Appendix: T-001 result (2026-10-17)
 
@@ -97,3 +98,43 @@ Read only; nothing changed. Sources: `HomeController` (`storeProcurementDocument
 | Tests | `ProcurementReceivingWorkspaceTest`, `ProcurementWorkspaceTest`, `ProcurementDocumentCenterTest` cover the Receiving page and documents. |
 
 Gaps for the owner to rule on (D5, D6): no accepted/rejected quantity, no separate deliveries, a blank counts as fully received, no payment gate, and `inspection.*` unused.
+
+## Appendix 5: T-030a and T-050 results, Accounting, Cash and reports as built (2026-10-17)
+
+Read only; nothing changed. Sources: `routes/web.php`, `FinanceController`, `BudgetAllocationController`, `CashReportController`, `CashReportService`, `DashboardKpiService`, `HomeController::reports`, `reports.blade.php`.
+
+**Accounting (T-030a)**
+
+| Feature | State |
+|---------|-------|
+| Chart of accounts per organization (standard accounts, add/edit/delete with `accounting.manage`) | Built |
+| ORS (obligation) from a PO or by hand; review by Accounting (for review, pending documents, approved, returned) | Built |
+| DV with deductions, journal entry (at least one debit and one credit; stored per line in `dv_journal_lines`: account code, title, debit, credit) | Built |
+| Journal totals check | Per DV only: the form needs at least two lines; whether debits equal credits is checked per DV (not re-verified in this inventory) |
+| General ledger, subsidiary ledgers, trial balance | **Not present.** No route, query or view adds the journal lines up by account. `DvJournalLine` is read only by the DV print and by `CashReportService` (first debit line, for the Cash Disbursement Register). |
+| Budget side | Allotment Registry, Budget Allocation, 12 budget reports with CSV (below), `budget/balance` position per school and fund |
+
+**Cash**
+
+| Report or screen | Where | State |
+|------------------|-------|-------|
+| Pay and cancel check, cancelled checks register, cash fund receipts | Cash tab | Built, tested |
+| Report of Checks Issued (Appendix 35), Checks and Advices, Cash Disbursement Register, Bank Reconciliation | `cash.report.*`, need `cash.pay` | Built, tested (`CashReportPrintTest`, `CashReportServiceTest`) |
+
+**Reports that exist and read real data**
+
+| Report | Where |
+|--------|-------|
+| 12 budget reports: Annual Allocation, Quarterly Utilization, Budget vs Obligation, Budget vs Liquidation, Remaining Balance, Fund Source Summary, Expense Item Summary, Office/Department, Over Budget / Near Limit Alerts, Obligated but Not Yet Liquidated, Liquidated Expenses, Chart of Accounts Budget Report (screen and CSV) | `budget.allocation.report` |
+| Dashboard KPIs (procurement, liquidation, budget, suppliers, planning steps) | `DashboardKpiService`, `DashboardKpiTest` |
+| Official prints: SIP, AIP, SOB, APP, APP-CSE, POW, PR, procurement documents, ORS, DV, delivery reconciliation | Each module |
+
+**Reports that do not exist or are not real**
+
+| Item | State |
+|------|-------|
+| The Reports page (`/reports`) | Sample content only (B-018) |
+| Procurement expenditure report, Accounting compliance report, liquidation register, supplier report, subscription report | Named on the Reports page as "Available Reports" but only AIP, Budget, Allotment Registry, Chart of Accounts, Accounting and Cash have links; the others have no data behind them (UNVERIFIED which tile has no link; the page carries no data at all) |
+| Audit log (screen and CSV export) | Built for the master and Sub-master with `users` |
+
+For the owner to rule on: D8 (ledgers and trial balance) and D13 (Reports page: show real figures, link the real reports, or leave).
