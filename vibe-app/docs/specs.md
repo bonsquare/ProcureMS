@@ -547,6 +547,7 @@ The AIP print (`/aip/{aip}/print`, `resources/views/aip-print.blade.php`), the A
 - Financial target per quarter: the four amount boxes and the Total box are aligned on the same line.
 - Frequency (timeline): follows the quarters that have an amount whenever an amount changes (same rule as the print). A frequency typed by hand is kept when the quarters are not changed.
 - Order of the page: pillars and KRAs, Financial Target per Source of Fund, Allotments created from this AIP (when there are any), then Signatories at the very bottom, shown horizontally (three columns, `horizontal` option of `partials/signatory-editor`).
+- Access (owner's decision 2026-10-17): the AIP page, its print and its live previews need the `aip.view` permission; a role without it (for example `office_user`, `encoder`, `bac_user`, `procurement_officer`) is refused with 403. Changing, approving and deleting an AIP stay with the Budget Officer or an administrator (`budget.manage`); each school has one user, so the School Head role is not used for this. Tests: `RoutePermissionGapsTest`.
 
 ### 23.3 AIP list in Planning
 
