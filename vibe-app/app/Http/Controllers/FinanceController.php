@@ -270,12 +270,21 @@ class FinanceController extends Controller
         return redirect()->route('accounting', ['tab' => 'for_dv', 'open_dv' => $report->id])->with('success', "{$report->report_number} started without an ORS. Complete its disbursement voucher.");
     }
 
+    /** An ORS made from a Purchase Order whose request has no Inspection and Acceptance Report yet. An ORS without a PO (utilities, travel) is never held. */
+    private function awaitingAcceptedDelivery(LiquidationReport $report): bool
+    {
+        $types = $report->procurementRequest?->documents()->pluck('document_type');
+
+        return $types !== null && $types->contains('purchase_order') && ! $types->contains('inspection_acceptance_report');
+    }
+
     public function createDv(Request $request, LiquidationReport $liquidationReport, bool $preview = false)
     {
         abort_unless($request->user()->hasPermission('accounting.approve') && $this->schoolIds()->contains($liquidationReport->school_id), 403);
         abort_unless($liquidationReport->status === 'approved', 422, 'Approve the ORS before creating a disbursement voucher.');
         abort_if($liquidationReport->paid_at, 422, 'A paid DV cannot be edited. Cancel the check first.');
         $editing = (bool) $liquidationReport->dv_number;
+        abort_if(! $editing && $this->awaitingAcceptedDelivery($liquidationReport), 422, 'Prepare the Inspection and Acceptance Report of the Purchase Request first: a disbursement voucher for goods follows an accepted delivery.');
 
         $data = $request->validate([
             'dv_number' => ['nullable', 'string', 'max:100', Rule::unique('liquidation_reports', 'dv_number')->where('organization_id', $liquidationReport->organization_id)->ignore($liquidationReport->id)],

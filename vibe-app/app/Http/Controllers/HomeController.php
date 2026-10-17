@@ -1237,6 +1237,12 @@ class HomeController extends Controller
     public function storeProcurementDocument(Request $request, ProcurementRequest $procurementRequest)
     {
         $this->authorizeProcurementAccess($procurementRequest);
+        // Inspection officers may save the Inspection and Acceptance Report only; every other document needs procurement.edit.
+        abort_unless(
+            $request->user()->hasPermission('procurement.edit') || ($request->input('document_type') === 'inspection_acceptance_report' && $request->user()->hasPermission('inspection.edit')),
+            403,
+            'Your role does not have permission to perform this action.',
+        );
 
         $types = $this->procurementDocumentTypes();
         $data = $request->validate([
@@ -1422,7 +1428,10 @@ class HomeController extends Controller
             $data['supplier_or_recipient'] = $purchaseOrder->supplier_or_recipient;
             foreach ($procurementRequest->items as $item) {
                 $receivedQuantity = data_get($data, 'received_items.'.$item->id);
-                if ($receivedQuantity !== null && $receivedQuantity !== '' && (float) $receivedQuantity > (float) $item->quantity) {
+                if ($receivedQuantity === null || $receivedQuantity === '') {
+                    return back()->withErrors(['received_items' => "Type the actual received quantity for {$item->name} (type the full quantity if everything arrived, 0 if none)."])->withInput();
+                }
+                if ((float) $receivedQuantity > (float) $item->quantity) {
                     return back()->withErrors(['received_items' => "The actual received quantity for {$item->name} cannot exceed the Purchase Order quantity."])->withInput();
                 }
             }

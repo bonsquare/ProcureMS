@@ -66,10 +66,10 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::patch('/procurement/{procurementRequest}/status', [HomeController::class, 'updateProcurementStatus'])->name('procurement.status');
     Route::get('/procurement/{procurementRequest}/print', [HomeController::class, 'printProcurement'])->name('procurement.print');
     Route::get('/procurement/{procurementRequest}/documents', [HomeController::class, 'procurementDocuments'])->name('procurement.documents');
-    Route::post('/procurement/{procurementRequest}/documents', [HomeController::class, 'storeProcurementDocument'])->middleware('permission:procurement.edit')->name('procurement.documents.store');
+    Route::post('/procurement/{procurementRequest}/documents', [HomeController::class, 'storeProcurementDocument'])->middleware('permission:procurement.edit|inspection.edit')->name('procurement.documents.store');
     Route::post('/procurement/{procurementRequest}/documents/not-required', [HomeController::class, 'markDocumentNotRequired'])->middleware('permission:procurement.edit')->whereNumber('procurementRequest')->name('procurement.documents.not-required');
     Route::post('/procurement/{procurementRequest}/documents/required-again', [HomeController::class, 'markDocumentRequiredAgain'])->middleware('permission:procurement.edit')->whereNumber('procurementRequest')->name('procurement.documents.required-again');
-    Route::post('/procurement/{procurementRequest}/documents/preview', [HomeController::class, 'previewProcurementDocument'])->middleware('permission:procurement.edit')->name('procurement.documents.preview');
+    Route::post('/procurement/{procurementRequest}/documents/preview', [HomeController::class, 'previewProcurementDocument'])->middleware('permission:procurement.edit|inspection.edit')->name('procurement.documents.preview');
     Route::get('/procurement/{procurementRequest}/documents/{procurementDocument}/print', [HomeController::class, 'printProcurementDocument'])->name('procurement.documents.print');
     Route::get('/procurement/{procurementRequest}/delivery-reconciliation', [HomeController::class, 'printDeliveryReconciliation'])->name('procurement.delivery-reconciliation');
     Route::get('/liquidation', [HomeController::class, 'liquidation'])->name('liquidation');

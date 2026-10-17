@@ -10,7 +10,8 @@ class EnsurePermission
 {
     public function handle(Request $request, Closure $next, string $permission): Response
     {
-        abort_unless($request->user()?->hasPermission($permission), 403, 'Your role does not have permission to perform this action.');
+        // "a|b" lets a role that has either permission through.
+        abort_unless(collect(explode('|', $permission))->contains(fn (string $one) => $request->user()?->hasPermission($one)), 403, 'Your role does not have permission to perform this action.');
 
         return $next($request);
     }
