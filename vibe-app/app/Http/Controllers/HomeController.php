@@ -18,6 +18,7 @@ use App\Models\SharedLogo;
 use App\Models\StaffRoleOption;
 use App\Models\Subscription;
 use App\Models\Supplier;
+use App\Models\SystemSetting;
 use App\Models\Unit;
 use App\Models\User;
 use App\Services\AppItemLinkService;
@@ -147,6 +148,7 @@ class HomeController extends Controller
             'pendingProcurements' => ProcurementRequest::whereIn('school_id', $schoolIds)->whereIn('status', ['submitted', 'pending_approval'])->count(),
             'isMasterUser' => $this->isMasterUser($user),
             'kpi' => app(DashboardKpiService::class)->forSchools($schoolIds),
+            'screenOff' => SystemSetting::screenIsOff(),
             'server' => $user?->isMaster() && request('view') === 'server' ? app(ServerDashboardService::class)->snapshot() : null,
             'systemKpi' => $this->systemKpi($user, $schoolIds, $pendingPreRegistrations),
             'currentSchool' => $this->isMasterUser($user) ? null : $schools->first(),

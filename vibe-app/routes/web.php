@@ -20,6 +20,7 @@ use App\Http\Controllers\PlanningController;
 use App\Http\Controllers\SchoolManagementController;
 use App\Http\Controllers\SchoolSettingsController;
 use App\Http\Controllers\SchoolTakeoverController;
+use App\Http\Controllers\ScreenController;
 use App\Http\Controllers\SipImportController;
 use App\Http\Controllers\SobController;
 use App\Http\Controllers\StationTransferController;
@@ -216,6 +217,7 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::post('/user-management/users/{user}/deactivate', [UserDirectoryController::class, 'deactivate'])->name('user-management.users.deactivate')->whereNumber('user');
     Route::post('/user-management/users/{user}/reactivate', [UserDirectoryController::class, 'reactivate'])->name('user-management.users.reactivate')->whereNumber('user');
     Route::get('/audit-logs', [UserDirectoryController::class, 'auditLog'])->name('audit-logs.index');
+    Route::put('/screen', [ScreenController::class, 'update'])->name('screen.update');
     Route::put('/user-management/master-user', [MasterUserController::class, 'update'])->name('master-user.update');
     Route::put('/user-management/master-user/password', [MasterUserController::class, 'password'])->name('master-user.password');
     Route::post('/user-management/sub-masters', [SubMasterController::class, 'store'])->name('master-user.sub-masters.store');
