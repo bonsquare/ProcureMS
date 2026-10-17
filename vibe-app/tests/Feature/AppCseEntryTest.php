@@ -260,4 +260,25 @@ class AppCseEntryTest extends TestCase
         $this->put(route('planning.app-cse.update', $plan), ['office_name' => 'x'])->assertSessionHasErrors('fiscal_year');
         $this->assertSame('0.00', (string) $item->fresh()->m1);
     }
+
+    public function test_part_i_catalog_search_finds_by_typed_words_and_skips_items_already_added(): void
+    {
+        [$fx, $otherPlan] = $this->context();
+        $plan = $this->plan($fx);
+        $item = $this->priced();
+        $word = strtolower(explode(' ', trim(preg_replace('/[^A-Za-z ]/', ' ', $item->description)))[0]);
+
+        $found = $this->getJson(route('planning.app-cse.catalog', ['appCsePlan' => $plan, 'q' => $word]))->assertOk()->json();
+        $this->assertContains($item->id, array_column($found, 'id'));
+        $this->assertLessThanOrEqual(25, count($found));
+
+        $this->getJson(route('planning.app-cse.catalog', ['appCsePlan' => $plan, 'q' => 'x']))->assertOk()->assertExactJson([]);
+
+        app(AppCseService::class)->addCatalogItem($plan, $item->id);
+        $after = $this->getJson(route('planning.app-cse.catalog', ['appCsePlan' => $plan, 'q' => $item->code]))->assertOk()->json();
+        $this->assertNotContains($item->id, array_column($after, 'id'));
+
+        $this->getJson(route('planning.app-cse.catalog', ['appCsePlan' => $otherPlan, 'q' => $word]))->assertNotFound();
+        $this->get(route('planning.app-cse.show', $plan))->assertOk()->assertSee('data-cse-search', false);
+    }
 }

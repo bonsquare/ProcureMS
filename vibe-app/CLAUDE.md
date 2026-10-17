@@ -227,6 +227,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 - Still open before Phase 3 is complete: browser check of the PR form picker, PR numbering/status end-to-end validation, and deciding whether the APP link should be required for PRs.
 - The Planning page is `/planning`. The source is `resources/views/planning.blade.php`; the controller is `app/Http/Controllers/PlanningController.php`.
 - The last GitHub backup is commit `69d1d35` on `master`. Do not reset or discard local changes.
+- 2026-10-18: **APP-CSE Part I by search and partial deliveries** (docs/specs.md section 43): Part I has a type-to-search box over the Procurement Service catalog (`planning.app-cse.catalog`); the IAR form records each delivery on top of the total received (`deliveries` in the IAR metadata, history shown in the form). The DV rule is unchanged: its amount is the ORS obligation and the journal must balance and equal it.
 
 ## Standing workflow (owner's instruction 2026-10-16)
 

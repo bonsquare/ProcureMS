@@ -114,6 +114,7 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::get('/planning/pow/{powPlan}/print', [FormGeneratorController::class, 'print'])->name('planning.pow.print')->whereNumber('powPlan');
     Route::post('/planning/app-cse', [AppCseController::class, 'store'])->middleware('permission:planning.manage')->name('planning.app-cse.store');
     Route::get('/planning/app-cse/{appCsePlan}', [AppCseController::class, 'show'])->name('planning.app-cse.show')->whereNumber('appCsePlan');
+    Route::get('/planning/app-cse/{appCsePlan}/catalog', [AppCseController::class, 'catalog'])->middleware('permission:planning.manage')->name('planning.app-cse.catalog')->whereNumber('appCsePlan');
     Route::get('/planning/app-cse/{appCsePlan}/print', [AppCseController::class, 'print'])->name('planning.app-cse.print')->whereNumber('appCsePlan');
     Route::post('/planning/app-cse/{appCsePlan}/preview', [AppCseController::class, 'previewPlan'])->middleware('permission:planning.manage')->name('planning.app-cse.preview')->whereNumber('appCsePlan');
     Route::post('/planning/app-cse/{appCsePlan}/items/preview', [AppCseController::class, 'previewItem'])->middleware('permission:planning.manage')->name('planning.app-cse.items.preview')->whereNumber('appCsePlan');

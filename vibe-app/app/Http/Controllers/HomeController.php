@@ -1454,6 +1454,25 @@ class HomeController extends Controller
                 'supplier_business_permit_no' => $poMetadata['supplier_business_permit_no'] ?? null,
                 'supplier_philgeps_no' => $poMetadata['supplier_philgeps_no'] ?? null,
             ], fn ($value) => $value !== null && $value !== '');
+
+            // Partial deliveries: the IAR keeps the total received so far; each save that changes it adds a line to the delivery history
+            // (the quantities that arrived, or were corrected, in that delivery).
+            $savedIar = $procurementRequest->documents()->where('document_type', 'inspection_acceptance_report')->first();
+            $savedTotals = $savedIar?->metadata['received_items'] ?? [];
+            $deliveries = $savedIar?->metadata['deliveries'] ?? [];
+            $arrived = [];
+            foreach ($procurementRequest->items as $item) {
+                $change = round((float) data_get($data, 'received_items.'.$item->id) - (float) ($savedTotals[$item->id] ?? $savedTotals[(string) $item->id] ?? 0), 2);
+                if ($change != 0.0) {
+                    $arrived[$item->id] = $change;
+                }
+            }
+            if ($arrived !== []) {
+                $deliveries[] = ['date' => $data['document_date'], 'by' => $request->user()?->name, 'items' => $arrived];
+            }
+            if ($deliveries !== []) {
+                $linkedDocumentMetadata['deliveries'] = $deliveries;
+            }
         }
         if (in_array($data['document_type'], ['notice_to_award', 'purchase_order', 'notice_to_proceed'], true)) {
             $winner = $this->abstractWinner($procurementRequest);

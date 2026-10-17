@@ -165,4 +165,22 @@ class DeliveryAcceptanceRulesTest extends TestCase
 
         $this->assertSame('Office supplies', $report->fresh()->dv_particulars);
     }
+
+    public function test_each_save_that_changes_the_received_total_adds_a_delivery_to_the_history(): void
+    {
+        [$organization, $school, $request, $item] = $this->purchase();
+        $this->actingAs($this->userOf($organization, $school, 'school_admin'));
+        $iar = fn () => ProcurementDocument::where('document_type', 'inspection_acceptance_report')->firstOrFail()->metadata;
+
+        $this->post(route('procurement.documents.store', $request), $this->iar([$item->id => '4']))->assertSessionHasNoErrors();
+        $this->post(route('procurement.documents.store', $request), $this->iar([$item->id => '4']))->assertSessionHasNoErrors();
+        $this->post(route('procurement.documents.store', $request), ['document_date' => '2026-03-20'] + $this->iar([$item->id => '10']))->assertSessionHasNoErrors();
+        $this->post(route('procurement.documents.store', $request), $this->iar([$item->id => '9']))->assertSessionHasNoErrors();
+
+        $deliveries = $iar()['deliveries'];
+        $this->assertCount(3, $deliveries, 'a save that changes nothing adds no delivery');
+        $this->assertEquals([4, 6, -1], array_map(fn ($delivery) => $delivery['items'][$item->id], $deliveries));
+        $this->assertEquals(9, $iar()['received_items'][$item->id]);
+        $this->assertSame('2026-03-20', $deliveries[1]['date']);
+    }
 }

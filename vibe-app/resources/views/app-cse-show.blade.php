@@ -62,6 +62,44 @@
 @foreach([['Part I · Available at Procurement Service stores', $partOne], ['Part II · Other items not available at PS', $partTwo]] as [$partTitle, $partItems])
 <details open class="mb-5 rounded border border-outline-variant/30 bg-white">
     <summary class="flex cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center gap-2 border-b border-outline-variant/20 px-4 py-3"><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] text-on-surface-variant transition-transform" aria-hidden="true">expand_more</span><h2 class="font-semibold">{{ $partTitle }}</h2></summary>
+    @if($loop->first && $editable)
+    <div class="border-b border-outline-variant/20 bg-primary/5 px-4 py-3" data-cse-search data-url="{{ route('planning.app-cse.catalog', $plan) }}" data-add="{{ route('planning.app-cse.items.store', $plan) }}" data-token="{{ csrf_token() }}">
+        <label class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Find an item sold by the Procurement Service<input type="search" autocomplete="off" maxlength="100" placeholder="Type a description, category or code, e.g. bond paper" class="{{ $box }}"></label>
+        <p class="mt-1 text-xs text-on-surface-variant">Not in the list? It is not available at PS: it belongs in Part II.</p>
+        <div data-results class="mt-2"></div>
+    </div>
+    <script>
+    (function () {
+        var box = document.currentScript.previousElementSibling, input = box.querySelector('input'), out = box.querySelector('[data-results]'), timer, seq = 0;
+        function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+        function row(item) {
+            var f = el('form', 'flex flex-wrap items-center gap-3 border-b border-outline-variant/10 py-2 text-sm'); f.method = 'POST'; f.action = box.dataset.add;
+            [['_token', box.dataset.token], ['cse_catalog_item_id', item.id]].forEach(function (p) { var h = el('input'); h.type = 'hidden'; h.name = p[0]; h.value = p[1]; f.appendChild(h); });
+            var label = el('span', 'min-w-0 flex-1'); label.appendChild(el('span', 'font-mono text-xs text-on-surface-variant', item.code + ' '));
+            label.appendChild(document.createTextNode(item.description + ' '));
+            label.appendChild(el('span', 'text-xs text-on-surface-variant', '· ' + (item.category || '') + ' · ' + item.unit + ' · ' + (item.price !== null ? '₱' + Number(item.price).toLocaleString('en-PH', {minimumFractionDigits: 2}) : 'no price in the catalog')));
+            f.appendChild(label);
+            if (item.price === null) { var p = el('input', 'w-28 rounded border border-outline-variant/50 bg-white px-2 py-1.5 text-sm'); p.type = 'number'; p.name = 'unit_price'; p.step = '0.01'; p.min = '0.01'; p.required = true; p.placeholder = 'Price'; f.appendChild(p); }
+            var b = el('button', 'rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-white hover:bg-primary-container', 'Add to Part I'); f.appendChild(b);
+            return f;
+        }
+        input.addEventListener('input', function () {
+            clearTimeout(timer);
+            timer = setTimeout(function () {
+                var mine = ++seq, q = input.value.trim();
+                if (q.length < 2) { out.replaceChildren(); return; }
+                fetch(box.dataset.url + '?q=' + encodeURIComponent(q), {headers: {'Accept': 'application/json'}, credentials: 'same-origin'})
+                    .then(function (r) { return r.ok ? r.json() : []; })
+                    .then(function (items) {
+                        if (mine !== seq) { return; }
+                        if (!items.length) { out.replaceChildren(el('p', 'text-sm text-on-surface-variant', 'No catalog item matches "' + q + '" that is not already in the plan.')); return; }
+                        out.replaceChildren.apply(out, items.map(row));
+                    });
+            }, 250);
+        });
+    })();
+    </script>
+    @endif
     @php
         $withQuantity = $partItems->filter(fn ($item) => $item->totalQuantity() > 0);
         $atZero = $partItems->reject(fn ($item) => $item->totalQuantity() > 0);
