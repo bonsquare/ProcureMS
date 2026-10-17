@@ -951,3 +951,10 @@ Design: `docs/superpowers/specs/2026-10-16-cash-reports-design.md`. The owner's 
 - **Reports** (`/reports`) needs `reports.view`. The **New Purchase Request** form (`/procurement/create`) needs `procurement.create`. The **Chart of Accounts** page needs `accounting.view` or `accounting.manage` (the Budget Officer manages it with `accounting.manage`). A role without the permission is refused with 403.
 - The dashboard diagnostics (`/dashboard/diagnostics`) stays open to every signed-in user: it only says whether the database and storage work.
 - The AIP page rule is in 23.2. Tests: `RoutePermissionGapsTest`.
+
+## 42. Delivery, inspection and the Disbursement Voucher (owner's decision 2026-10-17)
+
+- **Inspection and Acceptance Report (IAR):** a new IAR needs the actual received quantity typed for every line (0 if nothing arrived, the full quantity if everything arrived); a blank is refused, and the quantity cannot exceed the Purchase Order quantity. There is still one IAR per request; separate deliveries and an accepted-versus-rejected quantity are not built.
+- **Who saves it:** a role with `procurement.edit` or `inspection.edit` (the Inspector role). An inspection officer can save and preview the IAR only; every other procurement document still needs `procurement.edit`.
+- **Disbursement Voucher:** the first DV of an ORS made from a Purchase Order is refused (422, also in the DV preview) until the request has an IAR: a DV for goods follows an accepted delivery. Not held: an ORS without a Purchase Order (utilities, travel), **New DV (no ORS)**, and editing a DV that already exists. The DV amount is not tied to the received amount.
+- Tests: `DeliveryAcceptanceRulesTest`.
