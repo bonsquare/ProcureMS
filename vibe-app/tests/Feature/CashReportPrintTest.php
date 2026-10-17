@@ -95,7 +95,7 @@ class CashReportPrintTest extends TestCase
         $foreign = SchoolStaff::create(['organization_id' => $otherSchool->organization_id, 'school_id' => $otherSchool->id, 'name' => 'Pedro Outsider', 'position' => 'Clerk']);
 
         $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school, ['fund_cluster' => 'Trust Fund', 'bank_name' => 'DBP', 'bank_account' => '123-456', 'remarks' => 'For audit', 'officer_id' => $chosen->id, 'received_by_id' => $foreign->id])))->assertOk()
-            ->assertSee('Trust Fund')->assertSee('DBP / 123-456')->assertSee('For audit')->assertSee('MARIA SANTOS')->assertDontSee('BABY JOY I. CARBONELL')->assertDontSee('PEDRO OUTSIDER');
+            ->assertSee('Trust Fund')->assertSee('For audit')->assertSee('MARIA SANTOS')->assertDontSee('BABY JOY I. CARBONELL')->assertDontSee('PEDRO OUTSIDER');
     }
 
     public function test_the_bank_reconciliation_runs_the_balance_and_compares_with_the_statement(): void
@@ -127,6 +127,13 @@ class CashReportPrintTest extends TestCase
         $this->assertStringContainsString('data-sheet-no', $html);
 
         $this->actingAs($user)->get(route('cash.report.roci', $this->periodQuery($school, ['report_no' => '2026-10-007', 'sheet_no' => '2 of 3'])))->assertOk()->assertSee('2026-10-007')->assertSee('2 of 3');
+    }
+
+    public function test_the_typed_bank_prints_on_the_roci(): void
+    {
+        [$school, $user] = $this->tenant('RB1');
+
+        $this->actingAs($user)->get(route('cash.report.roci', $this->periodQuery($school, ['bank_name' => 'DBP', 'bank_account' => '123-456'])))->assertOk()->assertSee('DBP / 123-456');
     }
 
     public function test_the_roci_prints_header_lines_and_total(): void
@@ -248,16 +255,16 @@ class CashReportPrintTest extends TestCase
         $this->assertMatchesRegularExpression('/data-col="balance"[^>]*>180,000\.00</', $document);
     }
 
-    public function test_more_than_eight_accounts_continue_in_a_second_table(): void
+    public function test_more_than_nine_accounts_continue_in_a_second_table(): void
     {
         [$school, $user] = $this->tenant('CR3');
-        foreach (range(1, 9) as $number) {
-            $this->paid($school, sprintf('%04d', $number), '2026-08-0'.$number, 100, '50200'.$number.'0000', 'Account '.$number);
+        foreach (range(1, 10) as $number) {
+            $this->paid($school, sprintf('%04d', $number), '2026-08-'.sprintf('%02d', $number), 100, '502'.sprintf('%02d', $number).'00000', 'Account '.$number);
         }
 
         $document = $this->registerDocument($school, $user);
 
-        $this->assertSame(2, substr_count($document, '<table class="report'), 'one table of eight account columns and a second one for the rest');
+        $this->assertSame(2, substr_count($document, '<table class="report'), 'one table of nine account columns and a second one for the rest');
         $this->assertStringContainsString('Account 9', $document);
     }
 

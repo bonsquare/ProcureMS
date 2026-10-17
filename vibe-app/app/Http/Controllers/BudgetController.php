@@ -35,7 +35,7 @@ class BudgetController extends Controller
         $allocations = BudgetAllocation::with('school')->where('fiscal_year', $year)->tap($schoolFilter)->latest()->get();
         $obligations = ProcurementRequest::with('liquidationReports', 'documents')->whereYear('created_at', $year)->tap($schoolFilter)->get();
 
-        $directOrs = LiquidationReport::whereNull('procurement_request_id')->whereYear('created_at', $year)->tap($schoolFilter)->get();
+        $directOrs = LiquidationReport::withOrs()->whereNull('procurement_request_id')->whereYear('created_at', $year)->tap($schoolFilter)->get();
 
         // Utilization per school + fund source.
         $lines = $allocations->groupBy(fn ($a) => $a->school_id.'|'.$a->source_of_fund)->map(function ($group) use ($obligations, $directOrs) {
@@ -65,7 +65,7 @@ class BudgetController extends Controller
             ->concat($directOrs->map(fn ($o) => ['date' => $o->created_at, 'type' => 'ORS (no PR)', 'ref' => $o->ors_number, 'description' => $o->purpose, 'school_id' => $o->school_id, 'fund' => $o->source_of_fund, 'amount' => $o->amount, 'status' => $o->status, 'url' => route('liquidation', ['search' => $o->ors_number])]))
             ->sortByDesc('date')->values();
 
-        $orsList = LiquidationReport::with(['school', 'procurementRequest.budgetAllocation', 'budgetAllocation'])->whereYear('created_at', $year)->tap($schoolFilter)->latest()->get();
+        $orsList = LiquidationReport::withOrs()->with(['school', 'procurementRequest.budgetAllocation', 'budgetAllocation'])->whereYear('created_at', $year)->tap($schoolFilter)->latest()->get();
         $availableProcurements = ProcurementRequest::with('school', 'documents', 'budgetAllocation')->whereIn('school_id', $schoolIds)->whereHas('documents', fn ($query) => $query->where('document_type', 'purchase_order'))->whereDoesntHave('liquidationReports')->latest()->get();
 
         return view('budget', [

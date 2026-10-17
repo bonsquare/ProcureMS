@@ -179,6 +179,7 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::put('/accounting/chart-of-accounts/{chartOfAccount}', [ChartOfAccountController::class, 'update'])->middleware('permission:accounting.manage')->name('chart-of-accounts.update');
     Route::delete('/accounting/chart-of-accounts/{chartOfAccount}', [ChartOfAccountController::class, 'destroy'])->middleware('permission:accounting.manage')->name('chart-of-accounts.destroy');
     Route::patch('/accounting/{liquidationReport}', [FinanceController::class, 'review'])->middleware('permission:accounting.approve')->name('accounting.review');
+    Route::post('/accounting/dv-manual', [FinanceController::class, 'storeManualDv'])->middleware('permission:accounting.approve')->name('accounting.dv.manual');
     Route::post('/accounting/{liquidationReport}/dv/preview', [FinanceController::class, 'previewDv'])->middleware('permission:accounting.approve')->name('accounting.dv.preview');
     Route::post('/accounting/{liquidationReport}/dv', [FinanceController::class, 'createDv'])->middleware('permission:accounting.approve')->name('accounting.dv.store');
     Route::patch('/accounting/{liquidationReport}/ors-edit', [FinanceController::class, 'updateReissuedOrs'])->middleware('permission:accounting.approve')->name('accounting.ors.update');

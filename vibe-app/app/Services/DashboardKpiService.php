@@ -31,7 +31,7 @@ class DashboardKpiService
         $schoolIds = $schoolIds->values();
 
         $requests = ProcurementRequest::withoutGlobalScopes()->whereIn('school_id', $schoolIds)->whereYear('created_at', $year)->get(['id', 'school_id', 'request_number', 'title', 'status', 'amount', 'created_at']);
-        $reports = LiquidationReport::withoutGlobalScopes()->whereIn('school_id', $schoolIds)->whereYear('created_at', $year)->get(['id', 'school_id', 'status', 'amount']);
+        $reports = LiquidationReport::withoutGlobalScopes()->withOrs()->whereIn('school_id', $schoolIds)->whereYear('created_at', $year)->get(['id', 'school_id', 'status', 'amount']);
         $allocations = BudgetAllocation::withoutGlobalScopes()->whereIn('school_id', $schoolIds)->where('fiscal_year', $year)->get();
         $matrix = $allocations->isEmpty() ? collect() : $this->budget->matrix($allocations);
         $suppliers = Supplier::withoutGlobalScopes()->whereIn('school_id', $schoolIds)->get(['id', 'status', 'business_permit_expiry', 'philgeps_expiry']);

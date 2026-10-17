@@ -57,6 +57,7 @@
                 @endforeach
             </nav>
             <div class="flex items-center gap-2">
+                @if(! $isCash && auth()->user()->hasPermission('accounting.approve'))<button type="button" id="manual-dv-open" class="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-2 text-xs font-bold text-white shadow-sm hover:bg-primary-container"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">add</span>New DV (no ORS)</button>@endif
                 <label class="relative"><span class="material-symbols-outlined pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[18px] text-on-surface-variant" aria-hidden="true">search</span><input id="row-search" type="search" placeholder="Search ORS, payee, school, DV…" class="w-64 rounded-lg border border-outline-variant/50 bg-white py-2 pl-9 pr-3 text-xs outline-none focus:border-primary"></label>
                 <span id="row-count" class="whitespace-nowrap text-xs text-on-surface-variant">{{ count($rows) }} shown</span>
             </div>
@@ -204,9 +205,9 @@
                             </div>
                         </dialog>
                     @endif
-                    @if(auth()->user()->hasPermission('accounting.approve') && ! $isCash && $r->status === 'approved' && ! $r->dv_number)<button type="button" data-dv="{{ route('accounting.dv.store', $r) }}" data-dv-number="{{ $r->cancelledChecks->sortByDesc('cancelled_at')->first()?->dv_number }}" @if($r->reissue_pending) data-keep-signatories="1" @endif data-school="{{ $r->school_id }}" data-label="{{ $label }}" data-amount="{{ $peso($r->amount) }}" data-amount-raw="{{ number_format((float) $r->amount, 2, '.', '') }}" data-expense-code="{{ $r->chargedLine()?->account?->code ?? $r->chargedLine()?->uacs_code }}" data-payee="{{ $r->payee ?: ($r->procurementRequest?->supplier_name ?? $r->school?->name) }}" data-particulars="{{ $r->purpose ?: $r->procurementRequest?->title }}" class="inline-flex items-center gap-1 rounded-lg bg-secondary px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:opacity-90"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">receipt_long</span>Create DV</button>@endif
+                    @if(auth()->user()->hasPermission('accounting.approve') && ! $isCash && $r->status === 'approved' && ! $r->dv_number)<button type="button" data-report-id="{{ $r->id }}" data-dv="{{ route('accounting.dv.store', $r) }}" data-dv-number="{{ $r->cancelledChecks->sortByDesc('cancelled_at')->first()?->dv_number }}" @if($r->reissue_pending) data-keep-signatories="1" @endif data-school="{{ $r->school_id }}" data-label="{{ $label }}" data-amount="{{ $peso($r->amount) }}" data-amount-raw="{{ number_format((float) $r->amount, 2, '.', '') }}" data-expense-code="{{ $r->chargedLine()?->account?->code ?? $r->chargedLine()?->uacs_code }}" data-payee="{{ $r->payee ?: ($r->procurementRequest?->supplier_name ?? $r->school?->name) }}" data-particulars="{{ $r->purpose ?: $r->procurementRequest?->title }}" class="inline-flex items-center gap-1 rounded-lg bg-secondary px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:opacity-90"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">receipt_long</span>Create DV</button>@endif
                     @if(auth()->user()->hasPermission('accounting.approve') && ! $isCash && ! $r->dv_number && $r->status !== 'approved')<form method="POST" action="{{ route('accounting.review', $r) }}">@csrf @method('PATCH')<input type="hidden" name="status" value="approved"><button class="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-primary-container"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">check</span>Approve</button></form>@endif
-                    <a href="{{ route('liquidation.print', $r) }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-primary ring-1 ring-outline-variant/50 hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">print</span>ORS</a>
+                    @if($r->ors_number)<a href="{{ route('liquidation.print', $r) }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-primary ring-1 ring-outline-variant/50 hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">print</span>ORS</a>@endif
                     @if($r->dv_number)
                         <a href="{{ route('accounting.dv.print', $r) }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-primary ring-1 ring-outline-variant/50 hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">print</span>DV</a>
                         @if(! $isCash && auth()->user()->hasPermission('accounting.approve'))<form method="POST" action="{{ route('accounting.dv.options', $r) }}">@csrf @method('PATCH')<input type="hidden" name="dv_include_appropriation" value="{{ $r->dv_include_appropriation ? 0 : 1 }}"><button class="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-on-surface-variant ring-1 ring-outline-variant/50 hover:bg-surface-low" title="Show or hide the APPROPRIATION table on the printed DV">Appropriation table: {{ $r->dv_include_appropriation ? 'On' : 'Off' }}</button></form>
@@ -256,6 +257,20 @@
         <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Remarks<input name="payment_remarks" maxlength="255" autocomplete="off" class="{{ $inputClass }}"></label>
         <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-4 md:col-span-2"><button type="button" data-close class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Cancel</button><button class="rounded bg-secondary px-4 py-2.5 text-xs font-semibold text-white">Confirm Payment</button></div></form></div></div>
 
+@if(! $isCash && auth()->user()->hasPermission('accounting.approve'))
+<div id="manual-dv-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/50 p-3" role="dialog" aria-modal="true" aria-labelledby="manual-dv-title">
+    <form method="POST" action="{{ route('accounting.dv.manual') }}" class="w-full max-w-lg overflow-hidden rounded-xl bg-white shadow-2xl">@csrf
+        <div class="border-b border-outline-variant/30 px-5 py-4"><p class="text-xs font-semibold uppercase tracking-wider text-primary">Disbursement Voucher</p><h2 id="manual-dv-title" class="mt-1 text-lg font-semibold">New DV without an ORS</h2><p class="mt-1 text-xs text-on-surface-variant">It is a payment only: it does not count as an obligation in the Budget. The next window completes the DV (journal entry, deductions and signatories from the school's staff roles).</p></div>
+        <div class="grid gap-4 p-5">
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">School<select name="school_id" required class="{{ $inputClass }}">@foreach($manualDvSchools as $school)<option value="{{ $school->id }}">{{ $school->name }}</option>@endforeach</select></label>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Payee<input name="payee" required maxlength="255" class="{{ $inputClass }}"></label>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Particulars<input name="purpose" required maxlength="255" class="{{ $inputClass }}"></label>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Amount<input type="number" name="amount" required step="0.01" min="0.01" class="{{ $inputClass }} text-right tabular-nums"></label>
+        </div>
+        <div class="flex justify-end gap-2 border-t border-outline-variant/30 px-5 py-4"><button type="button" id="manual-dv-cancel" class="rounded border border-outline-variant/50 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Cancel</button><button class="rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Continue to the DV</button></div>
+    </form>
+</div>
+@endif
 <div id="dv-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/50 p-3" role="dialog" aria-modal="true"><div class="flex max-h-[94vh] w-full max-w-[1400px] flex-col overflow-hidden rounded bg-white shadow-2xl"><div class="shrink-0 border-b border-outline-variant/30 px-5 py-3"><h2 class="text-lg font-semibold">Create Disbursement Voucher</h2><p id="dv-title" class="mt-1 text-xs text-on-surface-variant"></p></div>
     <div id="dv-split"><aside id="dv-preview-pane" aria-label="DV preview"><div id="dv-preview-bar"><span>Official DV (updates as you edit)</span><span class="flex items-center gap-3"><small id="dv-preview-status">Updates as you type</small><select id="dv-preview-zoom" aria-label="Preview zoom" class="rounded border border-outline-variant/60 bg-white px-2 py-1 text-xs font-semibold"><option value="fit">Fit width</option><option value="0.5">50%</option><option value="0.75">75%</option><option value="1">100%</option></select></span></div><iframe id="dv-preview-frame" title="Official DV preview"></iframe></aside><div id="dv-form-pane">
     <form id="dv-form" method="POST" class="grid grid-cols-1 gap-3 p-4 md:grid-cols-2">@csrf
@@ -380,6 +395,12 @@
     const show = (m) => { m.classList.remove('hidden'); m.classList.add('flex'); };
     const hide = (m) => { m.classList.add('hidden'); m.classList.remove('flex'); };
     const payModal = document.getElementById('pay-modal'), reviewModal = document.getElementById('review-modal'), dvModal = document.getElementById('dv-modal');
+    const manualDv = document.getElementById('manual-dv-modal');
+    if (manualDv) {
+        document.getElementById('manual-dv-open')?.addEventListener('click', () => show(manualDv));
+        document.getElementById('manual-dv-cancel').addEventListener('click', () => hide(manualDv));
+        manualDv.addEventListener('click', (event) => { if (event.target === manualDv) hide(manualDv); });
+    }
     document.querySelectorAll('[data-dv]').forEach((b) => b.addEventListener('click', () => {
         document.getElementById('dv-form').action = b.dataset.dv;
         // Each school has its own staff, so only the signatory selects of this report's school are shown and posted.
@@ -602,6 +623,13 @@
         });
         document.getElementById('journal-add').addEventListener('click', () => addRow());
         form.addEventListener('submit', (event) => { refresh(); if (submit.disabled) event.preventDefault(); });
+    })();
+</script>
+<script>
+    // A DV started without an ORS opens its Create DV window straight away.
+    (() => {
+        const id = new URLSearchParams(window.location.search).get('open_dv');
+        if (id) document.querySelector('[data-dv][data-report-id="' + CSS.escape(id) + '"]')?.click();
     })();
 </script>
 </body>

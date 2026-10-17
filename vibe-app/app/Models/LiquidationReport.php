@@ -71,6 +71,12 @@ class LiquidationReport extends Model
         return $this->belongsTo(User::class, 'submitted_by');
     }
 
+    /** The records that have an ORS; a manual DV (no ORS number) is a payment only and never an obligation. */
+    public function scopeWithOrs($query)
+    {
+        return $query->whereNotNull('ors_number');
+    }
+
     /** Next system-generated ORS serial number for the current year, e.g. ORS-2026-0007. */
     public static function nextOrsNumber(?int $organizationId = null): string
     {

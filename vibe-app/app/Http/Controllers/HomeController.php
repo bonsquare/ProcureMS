@@ -1861,7 +1861,7 @@ class HomeController extends Controller
         $status = request('status', 'all');
         $search = trim((string) request('search'));
 
-        $liquidations = LiquidationReport::with(['school', 'submitter', 'procurementRequest', 'transaction'])
+        $liquidations = LiquidationReport::withOrs()->with(['school', 'submitter', 'procurementRequest', 'transaction'])
             ->whereIn('school_id', $schoolIds)
             ->when($selectedSchoolId && $schoolIds->contains((int) $selectedSchoolId), fn ($query) => $query->where('school_id', $selectedSchoolId))
             ->when($status !== 'all', fn ($query) => $query->where('status', $status))
@@ -1878,7 +1878,7 @@ class HomeController extends Controller
             ->latest()
             ->get();
 
-        $allLiquidations = LiquidationReport::whereIn('school_id', $schoolIds)->get();
+        $allLiquidations = LiquidationReport::withOrs()->whereIn('school_id', $schoolIds)->get();
         $approvedThisMonth = $allLiquidations
             ->where('status', 'approved')
             ->filter(fn ($report) => $report->approved_at?->isSameMonth(now()))

@@ -65,6 +65,7 @@ class FinanceController extends Controller
         return view('finance', [
             'section' => 'accounting',
             'tab' => $tab,
+            'manualDvSchools' => School::query()->whereIn('id', $this->schoolIds())->orderBy('name')->get(['id', 'name']),
             'dvDialogPanels' => $forDv->pluck('school_id')->unique()->mapWithKeys(fn ($schoolId) => [$schoolId => $panel((int) $schoolId, null)])->all(),
             'dvRowPanels' => $withDv->mapWithKeys(fn ($report) => [$report->id => $panel((int) $report->school_id, $report->signatories['dv'] ?? null)])->all(),
             'isMasterUser' => $this->isMaster(),
@@ -238,6 +239,35 @@ class FinanceController extends Controller
     {
         return app(DocumentNumberService::class)
             ->preview((int) request()->user()->organization_id, 'disbursement_voucher', 'DV');
+    }
+
+    /**
+     * A disbursement voucher made by hand, with no ORS: it is a record that has no ORS number, already approved, waiting for its
+     * DV in Ready for DV (the Create DV window opens for it). It never counts as an obligation in the Budget or the Allotment Registry.
+     */
+    public function storeManualDv(Request $request)
+    {
+        abort_unless($request->user()->hasPermission('accounting.approve'), 403);
+        $data = $request->validate([
+            'school_id' => ['required', 'integer'],
+            'payee' => ['required', 'string', 'max:255'],
+            'purpose' => ['required', 'string', 'max:255'],
+            'amount' => ['required', 'numeric', 'min:0.01', 'max:999999999999'],
+        ]);
+        abort_unless($this->schoolIds()->contains((int) $data['school_id']), 403);
+        $school = School::findOrFail($data['school_id']);
+
+        $report = DB::transaction(fn () => LiquidationReport::create($data + [
+            'organization_id' => $school->organization_id,
+            'submitted_by' => $request->user()->id,
+            'report_number' => app(DocumentNumberService::class)->next((int) $school->organization_id, 'liquidation_report', 'LR'),
+            'status' => 'approved',
+            'submitted_at' => now(),
+            'approved_at' => now(),
+        ]));
+        AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $report->school_id, 'action' => 'dv_manual_started', 'auditable_type' => LiquidationReport::class, 'auditable_id' => $report->id, 'metadata' => ['report' => $report->report_number, 'payee' => $report->payee, 'amount' => $report->amount]]);
+
+        return redirect()->route('accounting', ['tab' => 'for_dv', 'open_dv' => $report->id])->with('success', "{$report->report_number} started without an ORS. Complete its disbursement voucher.");
     }
 
     public function createDv(Request $request, LiquidationReport $liquidationReport, bool $preview = false)
