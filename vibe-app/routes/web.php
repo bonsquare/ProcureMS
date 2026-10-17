@@ -53,7 +53,7 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::get('/procurement/units', [UnitController::class, 'index'])->name('units.index');
     Route::post('/procurement/units', [UnitController::class, 'store'])->middleware('permission:supplier.manage')->name('units.store');
     Route::delete('/procurement/units/{unit}', [UnitController::class, 'destroy'])->middleware('permission:supplier.manage')->name('units.destroy');
-    Route::get('/procurement/create', [HomeController::class, 'createProcurement'])->name('procurement.create');
+    Route::get('/procurement/create', [HomeController::class, 'createProcurement'])->middleware('permission:procurement.create')->name('procurement.create');
     Route::get('/procurement/requests', [HomeController::class, 'procurementRequests'])->name('procurement.requests');
     Route::get('/procurement/documents', [HomeController::class, 'procurementDocumentIndex'])->name('procurement.documents.index');
     Route::get('/procurement/receiving', [HomeController::class, 'procurementReceiving'])->name('procurement.receiving');
@@ -207,7 +207,7 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::get('/drive-files', [DriveFileController::class, 'index'])->name('drive-files.index');
     Route::post('/drive-files', [DriveFileController::class, 'store'])->middleware('drive.connected')->name('drive-files.store');
     Route::delete('/drive-files/{driveFile}', [DriveFileController::class, 'destroy'])->whereNumber('driveFile')->name('drive-files.destroy');
-    Route::get('/reports', [HomeController::class, 'reports'])->name('reports');
+    Route::get('/reports', [HomeController::class, 'reports'])->middleware('permission:reports.view')->name('reports');
     Route::post('/demo/reset', [DemoController::class, 'reset'])->name('demo.reset');
     Route::get('/user-management', [UserDirectoryController::class, 'index'])->name('user-management');
     Route::post('/user-management/users', [UserDirectoryController::class, 'store'])->name('user-management.users.store');

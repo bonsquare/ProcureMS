@@ -21,6 +21,8 @@ class ChartOfAccountController extends Controller
 
     public function index()
     {
+        abort_unless(request()->user()->hasPermission('accounting.view') || request()->user()->hasPermission('accounting.manage'), 403, 'Your role does not have permission to perform this action.');
+
         ChartOfAccount::ensureDefaults($this->organizationId());
 
         $accounts = ChartOfAccount::query()->where('organization_id', $this->organizationId())->orderBy('code')->get();

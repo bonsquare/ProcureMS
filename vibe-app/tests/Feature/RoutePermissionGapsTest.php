@@ -14,8 +14,8 @@ use Tests\TestCase;
 
 /**
  * Routes without a `permission:` middleware for roles that the permission table (config/permissions.php) does not list
- * (BUGS.md B-010, B-011, B-012). B-010 was decided by the owner (AIP view needs `aip.view`) and is enforced; B-011 and B-012
- * still describe current behavior: if the owner decides a route must be refused, the matching assertion is the one to flip.
+ * (BUGS.md B-010, B-011, B-012). B-010 (AIP view needs `aip.view`) and B-012 (Reports, Chart of Accounts and the PR form need their permission;
+ * diagnostics stays open) were decided by the owner and are enforced; B-011 was decided as no change and still describes current behavior.
  */
 class RoutePermissionGapsTest extends TestCase
 {
@@ -96,23 +96,42 @@ class RoutePermissionGapsTest extends TestCase
         $this->assertSame('draft', $aip->fresh()->status);
     }
 
-    public function test_b012_get_pages_without_a_permission_check_open_for_roles_the_table_does_not_list(): void
+    public function test_b012_reports_chart_of_accounts_and_the_pr_form_refuse_roles_without_the_permission(): void
     {
         [$user] = $this->setUpAip('office_user');
         $this->assertFalse($user->hasPermission('reports.view'));
         $this->assertFalse($user->hasPermission('accounting.view'));
+        $this->assertFalse($user->hasPermission('accounting.manage'));
 
-        $this->actingAs($user)->get(route('reports'))->assertOk();
-        $this->actingAs($user)->get(route('dashboard.diagnostics'))->assertOk();
-        $this->actingAs($user)->get(route('chart-of-accounts'))->assertOk();
+        $this->actingAs($user)->get(route('reports'))->assertForbidden();
+        $this->actingAs($user)->get(route('chart-of-accounts'))->assertForbidden();
+
+        [$viewer] = $this->setUpAip('viewer');
+        $this->assertFalse($viewer->hasPermission('procurement.create'));
+        $this->actingAs($viewer)->get(route('procurement.create'))->assertForbidden();
+        $this->actingAs($viewer)->post(route('procurement.store'), [])->assertForbidden();
     }
 
-    public function test_b012_the_procurement_form_opens_for_a_viewer_but_saving_is_refused(): void
+    public function test_b012_roles_with_the_permission_still_open_these_pages(): void
     {
-        [$user] = $this->setUpAip('viewer');
-        $this->assertFalse($user->hasPermission('procurement.create'));
+        foreach (['viewer', 'budget_officer', 'school_admin'] as $role) {
+            [$user] = $this->setUpAip($role);
+            $this->actingAs($user)->get(route('reports'))->assertOk();
+        }
+        foreach (['auditor', 'cashier', 'accounting_officer', 'budget_officer', 'school_admin'] as $role) {
+            [$user] = $this->setUpAip($role);
+            $this->actingAs($user)->get(route('chart-of-accounts'))->assertOk();
+        }
+        foreach (['office_user', 'encoder', 'procurement_officer', 'administrative_officer', 'school_admin'] as $role) {
+            [$user] = $this->setUpAip($role);
+            $this->actingAs($user)->get(route('procurement.create'))->assertOk();
+        }
+    }
 
-        $this->actingAs($user)->get(route('procurement.create'))->assertOk();
-        $this->actingAs($user)->post(route('procurement.store'), [])->assertForbidden();
+    public function test_b012_the_diagnostics_page_stays_open_to_every_signed_in_role(): void
+    {
+        [$user] = $this->setUpAip('office_user');
+
+        $this->actingAs($user)->get(route('dashboard.diagnostics'))->assertOk();
     }
 }
