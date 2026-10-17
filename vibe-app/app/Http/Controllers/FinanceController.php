@@ -148,6 +148,7 @@ class FinanceController extends Controller
             'reportSchool' => $school,
             'reportFrom' => $from,
             'reportTo' => $to,
+            'reportStaff' => SchoolStaff::active()->whereIn('school_id', $schools->pluck('id'))->orderBy('name')->get(['id', 'school_id', 'name', 'position'])->groupBy('school_id')->map(fn ($members) => $members->map(fn ($member) => ['id' => $member->id, 'label' => $member->name.($member->position ? ' - '.$member->position : '')])->values()),
             'fundReceipts' => $school ? CashFundReceipt::query()->where('school_id', $school->id)->orderByDesc('received_at')->orderByDesc('id')->limit(50)->get() : collect(),
         ];
     }

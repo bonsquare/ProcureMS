@@ -47,6 +47,8 @@
         </tbody>
     </table>
 
+    @if($report['remarks'] !== '')<p style="margin:10px 0 0"><strong>Remarks:</strong> {{ $report['remarks'] }}</p>@endif
+
     <div class="certify">
         <h2>C E R T I F I C A T I O N</h2>
         <p>I hereby certify on my official oath that this Report of Checks Issued in ____ sheet(s) is a full, true and correct statement of all checks issued by me during the period stated above for which Check Nos. <strong>{{ $checkNos->first() ?? '__________' }}</strong> to <strong>{{ $checkNos->last() ?? '__________' }}</strong> inclusive, were actually issued by me in payment for obligation shown in the attached disbursement vouchers / payroll.</p>

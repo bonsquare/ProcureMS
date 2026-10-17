@@ -4,9 +4,9 @@
     $label = 'block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant';
     $head = fn (int $number, string $title, string $hint) => '<div class="flex items-center gap-3 border-b border-outline-variant/40 bg-[#eef4fa] px-5 py-3"><span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-white">'.$number.'</span><div><h2 class="text-sm font-bold text-primary">'.e($title).'</h2><p class="text-xs text-on-surface-variant">'.e($hint).'</p></div></div>';
     $reportLinks = [
-        ['cash.report.roci', 'Report of Checks Issued', 'Appendix 35: every check of the period, cancelled checks included.', 'fact_check'],
-        ['cash.report.checks', 'Checks and Advices to Debit Account', 'Disbursement record with the check and ADA columns and the running balance.', 'account_balance'],
-        ['cash.report.register', 'Cash Disbursement Register', 'Working fund, payments and the breakdown per expense account.', 'menu_book'],
+        ['cash.report.roci', 'Report of Checks Issued', 'Appendix 35: every check of the period, cancelled checks included.', 'fact_check', ['officer_id' => 'Disbursing Officer / Cashier']],
+        ['cash.report.checks', 'Checks and Advices to Debit Account', 'Disbursement record with the check and ADA columns and the running balance.', 'account_balance', ['officer_id' => 'Disbursing Officer']],
+        ['cash.report.register', 'Cash Disbursement Register', 'Working fund, payments and the breakdown per expense account.', 'menu_book', ['officer_id' => 'Certified correct (Accountable Officer)', 'received_by_id' => 'Received by']],
     ];
 @endphp
 <div class="space-y-5 p-5">
@@ -25,8 +25,8 @@
             <div class="flex items-end"><button class="rounded-lg border border-primary bg-white px-4 py-2 text-xs font-bold text-primary hover:bg-primary hover:text-white">Apply period</button></div>
         </form>
         <div class="grid gap-4 border-t border-outline-variant/40 p-5 md:grid-cols-3">
-            @foreach($reportLinks as [$routeName, $title, $hint, $icon])
-                <button type="button" data-cash-report-open data-url="{{ route($routeName, ['school_id' => $reportSchool->id, 'from' => $reportFrom->toDateString(), 'to' => $reportTo->toDateString()]) }}" data-title="{{ $title }}" class="group flex items-start gap-3 rounded-xl border border-outline-variant/50 border-l-4 border-l-primary bg-white p-4 text-left shadow-sm transition hover:bg-[#eef4fa]">
+            @foreach($reportLinks as [$routeName, $title, $hint, $icon, $slots])
+                <button type="button" data-cash-report-open data-url="{{ route($routeName) }}" data-slots='@json($slots)' data-title="{{ $title }}" class="group flex items-start gap-3 rounded-xl border border-outline-variant/50 border-l-4 border-l-primary bg-white p-4 text-left shadow-sm transition hover:bg-[#eef4fa]">
                     <span class="material-symbols-outlined text-[24px] text-primary" aria-hidden="true">{{ $icon }}</span>
                     <span><span class="block text-sm font-bold text-primary">{{ $title }}</span><span class="mt-1 block text-xs text-on-surface-variant">{{ $hint }}</span></span>
                 </button>
@@ -103,9 +103,31 @@
             </aside>
             <div class="overflow-y-auto p-5 lg:flex-[0_0_min(34%,420px)]">
                 <div class="space-y-4">
-                    <p class="text-xs text-on-surface-variant">{{ $reportSchool->name }} · {{ $reportFrom->format('M d, Y') }} to {{ $reportTo->format('M d, Y') }}</p>
-                    <label class="{{ $label }}">Report No. <span class="font-normal normal-case tracking-normal">(printed on the form)</span><input id="cash-report-no" maxlength="50" class="{{ $box }}"></label>
-                    <label class="{{ $label }}">Sheet No. <span class="font-normal normal-case tracking-normal">(printed on the form)</span><input id="cash-sheet-no" maxlength="50" placeholder="1 of 1" class="{{ $box }}"></label>
+                    <section class="rounded-xl border border-outline-variant/50 p-4">
+                        <h3 class="text-[11px] font-bold uppercase tracking-wider text-primary">School and period</h3>
+                        <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                            <label class="{{ $label }} sm:col-span-2">School<select id="cash-report-school" class="{{ $box }}">@foreach($reportSchools as $option)<option value="{{ $option->id }}" @selected($option->id === $reportSchool->id)>{{ $option->name }}</option>@endforeach</select></label>
+                            <label class="{{ $label }}">From<input type="date" id="cash-report-from" value="{{ $reportFrom->toDateString() }}" class="{{ $box }}"></label>
+                            <label class="{{ $label }}">To<input type="date" id="cash-report-to" value="{{ $reportTo->toDateString() }}" class="{{ $box }}"></label>
+                        </div>
+                    </section>
+                    <section class="rounded-xl border border-outline-variant/50 p-4">
+                        <h3 class="text-[11px] font-bold uppercase tracking-wider text-primary">Header of the form</h3>
+                        <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                            <label class="{{ $label }}">Report No.<input id="cash-report-no" maxlength="50" class="{{ $box }}"></label>
+                            <label class="{{ $label }}">Sheet No.<input id="cash-sheet-no" maxlength="50" placeholder="1 of 1" class="{{ $box }}"></label>
+                            <label class="{{ $label }}">Fund Cluster<input id="cash-report-cluster" maxlength="100" placeholder="Default from the last payment" class="{{ $box }}"></label>
+                            <label class="{{ $label }}">Bank Name / Account No.<input id="cash-report-bank" maxlength="150" placeholder="Default from School Settings" class="{{ $box }}"></label>
+                        </div>
+                    </section>
+                    <section class="rounded-xl border border-outline-variant/50 p-4">
+                        <h3 class="text-[11px] font-bold uppercase tracking-wider text-primary">Signatories</h3>
+                        <div id="cash-report-slots" class="mt-3 space-y-3"></div>
+                    </section>
+                    <section class="rounded-xl border border-outline-variant/50 p-4">
+                        <h3 class="text-[11px] font-bold uppercase tracking-wider text-primary">Remarks</h3>
+                        <label class="{{ $label }} mt-3">Printed above the signature<textarea id="cash-report-remarks" rows="3" maxlength="500" class="{{ $box }}"></textarea></label>
+                    </section>
                     <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-4">
                         <button type="button" id="cash-report-cancel" class="rounded border border-outline-variant/50 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Close</button>
                         <a id="cash-report-open" href="#" target="_blank" rel="noopener" class="rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Open to print</a>
@@ -125,22 +147,51 @@
         if (!modal) return;
         const frame = document.getElementById('cash-report-frame');
         const status = document.getElementById('cash-report-status');
-        const reportNo = document.getElementById('cash-report-no');
-        const sheetNo = document.getElementById('cash-sheet-no');
         const printLink = document.getElementById('cash-report-open');
+        const field = (id) => document.getElementById(id);
+        const staffBySchool = @json($reportStaff);
+        const slotBox = field('cash-report-slots');
         const hideChrome = '<style>.official-toolbar{display:none!important}body{background:#d9dee5!important}</style>';
         let baseUrl = ''; let timer = null; let controller = null;
-        const urlWithNumbers = () => {
+        const schedule = () => { clearTimeout(timer); timer = setTimeout(() => refresh(), 600); };
+        const buildSlots = () => {
+            const kept = {};
+            slotBox.querySelectorAll('select').forEach((select) => { kept[select.dataset.slot] = select.value; });
+            slotBox.innerHTML = '';
+            Object.entries(JSON.parse(slotBox.dataset.slots || '{}')).forEach(([key, text]) => {
+                const label = document.createElement('label');
+                label.className = @json($label);
+                label.append(text);
+                const select = document.createElement('select');
+                select.className = @json($box);
+                select.dataset.slot = key;
+                select.add(new Option(key === 'officer_id' ? 'Default (Disbursing Officer)' : 'Leave blank', ''));
+                (staffBySchool[field('cash-report-school').value] || []).forEach((member) => select.add(new Option(member.label, member.id)));
+                select.value = [...select.options].some((option) => option.value === kept[key]) ? kept[key] : '';
+                select.addEventListener('change', schedule);
+                label.append(select);
+                slotBox.append(label);
+            });
+        };
+        const urlWithFields = () => {
             const url = new URL(baseUrl, window.location.origin);
-            reportNo.value.trim() ? url.searchParams.set('report_no', reportNo.value.trim()) : url.searchParams.delete('report_no');
-            sheetNo.value.trim() ? url.searchParams.set('sheet_no', sheetNo.value.trim()) : url.searchParams.delete('sheet_no');
+            const set = (name, value) => { value ? url.searchParams.set(name, value) : url.searchParams.delete(name); };
+            set('school_id', field('cash-report-school').value);
+            set('from', field('cash-report-from').value);
+            set('to', field('cash-report-to').value);
+            set('report_no', field('cash-report-no').value.trim());
+            set('sheet_no', field('cash-sheet-no').value.trim());
+            set('fund_cluster', field('cash-report-cluster').value.trim());
+            set('bank', field('cash-report-bank').value.trim());
+            set('remarks', field('cash-report-remarks').value.trim());
+            ['officer_id', 'received_by_id'].forEach((name) => set(name, slotBox.querySelector('[data-slot="' + name + '"]')?.value || ''));
             return url.pathname + url.search;
         };
         const refresh = async () => {
             if (modal.classList.contains('hidden')) return;
             if (controller) controller.abort();
             controller = new AbortController();
-            const target = urlWithNumbers();
+            const target = urlWithFields();
             printLink.setAttribute('href', target);
             status.textContent = 'Updating preview...';
             try {
@@ -153,11 +204,14 @@
         const close = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); };
         document.querySelectorAll('[data-cash-report-open]').forEach((button) => button.addEventListener('click', () => {
             baseUrl = button.dataset.url;
+            slotBox.dataset.slots = button.dataset.slots;
+            buildSlots();
             document.getElementById('cash-report-title').textContent = button.dataset.title;
             modal.classList.remove('hidden'); modal.classList.add('flex');
             refresh();
         }));
-        [reportNo, sheetNo].forEach((input) => input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(refresh, 600); }));
+        field('cash-report-school').addEventListener('change', () => { buildSlots(); schedule(); });
+        ['cash-report-from', 'cash-report-to', 'cash-report-no', 'cash-sheet-no', 'cash-report-cluster', 'cash-report-bank', 'cash-report-remarks'].forEach((id) => field(id).addEventListener('input', schedule));
         document.getElementById('cash-report-close').addEventListener('click', close);
         document.getElementById('cash-report-cancel').addEventListener('click', close);
         modal.addEventListener('click', (event) => { if (event.target === modal) close(); });

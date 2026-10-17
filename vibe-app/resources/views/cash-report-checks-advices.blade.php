@@ -73,6 +73,8 @@
         </tbody>
     </table>
 
+    @if($report['remarks'] !== '')<p style="margin:10px 0 0"><strong>Remarks:</strong> {{ $report['remarks'] }}</p>@endif
+
     <div class="certify">
         <h2>C E R T I F I C A T I O N</h2>
         <p>I hereby certify on my official oath that the foregoing is a correct and complete record of all checks / ADAs issued by me in my capacity as {{ $report['officer']?->position ?: 'Disbursing Officer' }} of <strong>{{ strtoupper($school->name) }}</strong> during the period from <strong>{{ $report['from']->format('F j, Y') }}</strong> to <strong>{{ $report['to']->format('F j, Y') }}</strong> inclusive as indicated in the corresponding columns.</p>

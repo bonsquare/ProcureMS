@@ -37,7 +37,7 @@ class CashReportPrintTest extends TestCase
 
         $this->assertStringContainsString('Fund received', $html);
         foreach (['cash.report.roci', 'cash.report.checks', 'cash.report.register'] as $name) {
-            $this->assertStringContainsString(e(route($name, ['school_id' => $school->id])), $html, $name);
+            $this->assertStringContainsString(e(route($name)), $html, $name);
         }
         $this->assertStringContainsString(route('cash.fund.store'), $html);
     }
@@ -83,6 +83,18 @@ class CashReportPrintTest extends TestCase
     private function periodQuery(School $school, array $extra = []): array
     {
         return ['school_id' => $school->id, 'from' => '2026-07-01', 'to' => '2026-09-30'] + $extra;
+    }
+
+    public function test_the_typed_header_the_chosen_signatories_and_the_remarks_print_and_a_foreign_staff_is_ignored(): void
+    {
+        [$school, $user] = $this->tenant('RS1');
+        [$otherSchool] = $this->tenant('RS2');
+        SchoolStaff::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'name' => 'Baby Joy I. Carbonell', 'position' => 'Teacher-In-Charge', 'document_role' => 'Disbursing Officer']);
+        $chosen = SchoolStaff::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'name' => 'Maria Santos', 'position' => 'Cashier']);
+        $foreign = SchoolStaff::create(['organization_id' => $otherSchool->organization_id, 'school_id' => $otherSchool->id, 'name' => 'Pedro Outsider', 'position' => 'Clerk']);
+
+        $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school, ['fund_cluster' => 'Trust Fund', 'bank' => 'DBP 123', 'remarks' => 'For audit', 'officer_id' => $chosen->id, 'received_by_id' => $foreign->id])))->assertOk()
+            ->assertSee('Trust Fund')->assertSee('DBP 123')->assertSee('For audit')->assertSee('MARIA SANTOS')->assertDontSee('BABY JOY I. CARBONELL')->assertDontSee('PEDRO OUTSIDER');
     }
 
     public function test_the_roci_prints_header_lines_and_total(): void

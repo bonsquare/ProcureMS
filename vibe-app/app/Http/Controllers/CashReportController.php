@@ -88,7 +88,7 @@ class CashReportController extends Controller
     /**
      * The school, the period and the numbers typed on a report page; refuses a school the user may not report on.
      *
-     * @return array{school: School, from: Carbon, to: Carbon, report_no: string, sheet_no: string}
+     * @return array{school: School, from: Carbon, to: Carbon, report_no: string, sheet_no: string, fund_cluster: string, bank: string, remarks: string, officer_id: ?int, received_by_id: ?int}
      */
     private function reportContext(Request $request): array
     {
@@ -98,6 +98,11 @@ class CashReportController extends Controller
             'to' => ['required', 'date', 'after_or_equal:from'],
             'report_no' => ['nullable', 'string', 'max:50'],
             'sheet_no' => ['nullable', 'string', 'max:50'],
+            'fund_cluster' => ['nullable', 'string', 'max:100'],
+            'bank' => ['nullable', 'string', 'max:150'],
+            'remarks' => ['nullable', 'string', 'max:500'],
+            'officer_id' => ['nullable', 'integer'],
+            'received_by_id' => ['nullable', 'integer'],
         ]);
         abort_unless($this->schoolIds()->contains((int) $data['school_id']), 403);
 
@@ -107,6 +112,11 @@ class CashReportController extends Controller
             'to' => Carbon::parse($data['to'])->startOfDay(),
             'report_no' => (string) ($data['report_no'] ?? ''),
             'sheet_no' => (string) ($data['sheet_no'] ?? ''),
+            'fund_cluster' => (string) ($data['fund_cluster'] ?? ''),
+            'bank' => (string) ($data['bank'] ?? ''),
+            'remarks' => (string) ($data['remarks'] ?? ''),
+            'officer_id' => $data['officer_id'] ?? null,
+            'received_by_id' => $data['received_by_id'] ?? null,
         ];
     }
 
@@ -122,12 +132,16 @@ class CashReportController extends Controller
         $latestPayment = LiquidationReport::query()->where('school_id', $school->id)->whereNotNull('paid_at')->latest('paid_at')->first();
         $bank = trim(($school->bank_name ?: $latestPayment?->bank_name).' / '.($school->bank_account_number ?: $latestPayment?->bank_account_number), ' /');
 
+        $staffOf = fn (?int $id) => $id ? SchoolStaff::active()->where('school_id', $school->id)->find($id) : null;
+
         return [
             'school' => $school,
             'agency' => AgencySetting::withoutGlobalScopes()->where('organization_id', $school->organization_id)->first(),
-            'officer' => SchoolStaff::active()->where('school_id', $school->id)->get()->first(fn (SchoolStaff $staff) => $staff->hasRole('document_role', 'Disbursing Officer')),
-            'bank' => $bank,
-            'fundCluster' => $latestPayment?->payment_fund_cluster ?: 'General Fund',
+            'officer' => $staffOf($context['officer_id']) ?? SchoolStaff::active()->where('school_id', $school->id)->get()->first(fn (SchoolStaff $staff) => $staff->hasRole('document_role', 'Disbursing Officer')),
+            'receivedBy' => $staffOf($context['received_by_id']),
+            'bank' => $context['bank'] !== '' ? $context['bank'] : $bank,
+            'fundCluster' => $context['fund_cluster'] !== '' ? $context['fund_cluster'] : ($latestPayment?->payment_fund_cluster ?: 'General Fund'),
+            'remarks' => $context['remarks'],
             'from' => $context['from'],
             'to' => $context['to'],
             'period' => $this->periodText($context['from'], $context['to']),

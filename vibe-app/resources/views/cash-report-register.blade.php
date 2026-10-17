@@ -94,9 +94,11 @@
         </table>
     @endforeach
 
+    @if($report['remarks'] !== '')<p style="margin:10px 0 0"><strong>Remarks:</strong> {{ $report['remarks'] }}</p>@endif
+
     <div class="sign-row">
         <div class="box"><div style="text-align:left;font-weight:bold">CERTIFIED CORRECT:</div><div class="name">{{ mb_strtoupper($report['officer']?->name ?? '') }}&nbsp;</div><div>{{ $report['officer']?->position }}</div><div style="margin-top:8px;text-align:left">Date: ______________________</div></div>
-        <div class="box"><div style="text-align:left;font-weight:bold">RECEIVED BY:</div><div class="name">&nbsp;</div><div>&nbsp;</div><div style="margin-top:8px;text-align:left">Date: ______________________</div></div>
+        <div class="box"><div style="text-align:left;font-weight:bold">RECEIVED BY:</div><div class="name">{{ mb_strtoupper($report['receivedBy']?->name ?? '') }}&nbsp;</div><div>{{ $report['receivedBy']?->position ?: '' }}&nbsp;</div><div style="margin-top:8px;text-align:left">Date: ______________________</div></div>
     </div>
 </main>
 </body>
