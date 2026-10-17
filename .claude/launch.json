@@ -1,0 +1,27 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "laravel",
+      "runtimeExecutable": "php",
+      "runtimeArgs": [
+        "-d",
+        "zend_extension=opcache",
+        "-d",
+        "opcache.enable_cli=1",
+        "-d",
+        "upload_tmp_dir=C:/Users/Bonifacio Orong/Documents/ChatGPT/Liquidation and Procurement System/vibe-app/storage/framework/uploads-tmp",
+        "-d",
+        "upload_max_filesize=20M",
+        "-d",
+        "post_max_size=24M",
+        "-S",
+        "127.0.0.1:8000",
+        "-t",
+        "vibe-app/public",
+        "vibe-app/dev-server.php"
+      ],
+      "port": 8000
+    }
+  ]
+}
