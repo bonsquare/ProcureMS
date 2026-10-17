@@ -83,8 +83,8 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::get('/budget/balance', [BudgetController::class, 'balance'])->name('budget.balance');
     Route::get('/aip', [AipController::class, 'index'])->name('aip');
     Route::post('/aip', [AipController::class, 'store'])->name('aip.store');
-    Route::get('/aip/{aip}', [AipController::class, 'show'])->name('aip.show')->whereNumber('aip');
-    Route::get('/aip/{aip}/print', [AipController::class, 'print'])->name('aip.print')->whereNumber('aip');
+    Route::get('/aip/{aip}', [AipController::class, 'show'])->middleware('permission:aip.view')->name('aip.show')->whereNumber('aip');
+    Route::get('/aip/{aip}/print', [AipController::class, 'print'])->middleware('permission:aip.view')->name('aip.print')->whereNumber('aip');
     Route::put('/aip/{aip}', [AipController::class, 'update'])->name('aip.update')->whereNumber('aip');
     Route::delete('/aip/{aip}', [AipController::class, 'destroy'])->name('aip.destroy')->whereNumber('aip');
     Route::post('/aip/{aip}/approve', [AipController::class, 'approve'])->name('aip.approve')->whereNumber('aip');
@@ -158,8 +158,8 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::put('/aip/{aip}/kras/{kra}', [AipController::class, 'updateKra'])->name('aip.kras.update')->whereNumber(['aip', 'kra']);
     Route::delete('/aip/{aip}/kras/{kra}', [AipController::class, 'destroyKra'])->name('aip.kras.destroy')->whereNumber(['aip', 'kra']);
     Route::put('/aip/{aip}/activities/{activity}/fund', [AipController::class, 'updateActivityFund'])->name('aip.activities.fund')->whereNumber(['aip', 'activity']);
-    Route::post('/aip/{aip}/activities/{activity}/budget/preview', [AipController::class, 'previewActivityBudget'])->name('aip.activities.budget.preview')->whereNumber(['aip', 'activity']);
-    Route::post('/aip/{aip}/activities/{activity}/fund/preview', [AipController::class, 'previewActivityFund'])->name('aip.activities.fund.preview')->whereNumber(['aip', 'activity']);
+    Route::post('/aip/{aip}/activities/{activity}/budget/preview', [AipController::class, 'previewActivityBudget'])->middleware('permission:aip.view')->name('aip.activities.budget.preview')->whereNumber(['aip', 'activity']);
+    Route::post('/aip/{aip}/activities/{activity}/fund/preview', [AipController::class, 'previewActivityFund'])->middleware('permission:aip.view')->name('aip.activities.fund.preview')->whereNumber(['aip', 'activity']);
     Route::delete('/aip/{aip}/activities/{activity}', [AipController::class, 'destroyActivity'])->name('aip.activities.destroy')->whereNumber(['aip', 'activity']);
     Route::put('/aip/{aip}/activities/{activity}/budget', [AipController::class, 'updateActivityBudget'])->name('aip.activities.budget')->whereNumber(['aip', 'activity']);
     Route::get('/allotment-registry', [AllotmentRegistryController::class, 'index'])->name('allotment-registry');

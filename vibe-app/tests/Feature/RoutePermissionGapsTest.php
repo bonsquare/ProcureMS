@@ -13,9 +13,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
- * Pins down what the routes without a `permission:` middleware do today for roles that the permission table
- * (config/permissions.php) does not list (BUGS.md B-010, B-011, B-012). These tests describe current behavior;
- * if the owner decides a route must be refused, the matching assertion is the one to flip.
+ * Routes without a `permission:` middleware for roles that the permission table (config/permissions.php) does not list
+ * (BUGS.md B-010, B-011, B-012). B-010 was decided by the owner (AIP view needs `aip.view`) and is enforced; B-011 and B-012
+ * still describe current behavior: if the owner decides a route must be refused, the matching assertion is the one to flip.
  */
 class RoutePermissionGapsTest extends TestCase
 {
@@ -23,6 +23,7 @@ class RoutePermissionGapsTest extends TestCase
 
     private function setUpAip(string $role): array
     {
+        auth()->logout(); // set up each tenant as a system actor, not as the previous tenant's user
         $key = uniqid('gap');
         $organization = Organization::create(['name' => $key, 'slug' => $key, 'status' => 'active', 'fiscal_year' => 2026]);
         $school = School::create(['organization_id' => $organization->id, 'code' => strtoupper($key), 'name' => 'Gap School', 'status' => 'active']);
@@ -38,19 +39,34 @@ class RoutePermissionGapsTest extends TestCase
         return [$user, $aip, $activity];
     }
 
-    public function test_b010_a_role_without_aip_view_can_open_the_aip_and_its_print(): void
-    {
-        [$user, $aip] = $this->setUpAip('office_user');
-        $this->assertFalse($user->hasPermission('aip.view'));
-
-        $this->actingAs($user)->get(route('aip.show', $aip))->assertOk();
-        $this->actingAs($user)->get(route('aip.print', $aip))->assertOk();
-    }
-
-    public function test_b010_the_aip_previews_work_without_manage_rights_and_save_nothing(): void
+    public function test_b010_a_role_without_aip_view_cannot_open_the_aip_its_print_or_its_previews(): void
     {
         [$user, $aip, $activity] = $this->setUpAip('office_user');
-        $this->assertFalse($user->canManageBudget());
+        $this->assertFalse($user->hasPermission('aip.view'));
+
+        $this->actingAs($user)->get(route('aip.show', $aip))->assertForbidden();
+        $this->actingAs($user)->get(route('aip.print', $aip))->assertForbidden();
+        $this->actingAs($user)->post(route('aip.activities.budget.preview', [$aip, $activity]), ['q1_amount' => 99999])->assertForbidden();
+        $this->actingAs($user)->post(route('aip.activities.fund.preview', [$aip, $activity]), ['source_of_fund' => 'MOOE'])->assertForbidden();
+
+        $this->assertEquals(1000, $activity->fresh()->q1_amount);
+        $this->assertSame('draft', $aip->fresh()->status);
+    }
+
+    public function test_b010_roles_with_aip_view_still_open_the_aip_and_its_print(): void
+    {
+        foreach (['viewer', 'school_head', 'budget_officer', 'school_admin'] as $role) {
+            [$user, $aip] = $this->setUpAip($role);
+            $this->assertTrue($user->hasPermission('aip.view'), $role);
+
+            $this->actingAs($user)->get(route('aip.show', $aip))->assertOk();
+            $this->actingAs($user)->get(route('aip.print', $aip))->assertOk();
+        }
+    }
+
+    public function test_b010_the_aip_previews_work_for_a_budget_officer_and_save_nothing(): void
+    {
+        [$user, $aip, $activity] = $this->setUpAip('budget_officer');
 
         $this->actingAs($user)->post(route('aip.activities.budget.preview', [$aip, $activity]), ['q1_amount' => 99999])->assertOk();
         $this->actingAs($user)->post(route('aip.activities.fund.preview', [$aip, $activity]), ['source_of_fund' => 'MOOE'])->assertOk();
