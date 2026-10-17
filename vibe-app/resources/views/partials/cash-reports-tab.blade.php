@@ -14,17 +14,8 @@
         <p class="rounded-lg border border-outline-variant/40 bg-white px-4 py-6 text-center text-sm text-on-surface-variant">No school to report on.</p>
     @else
     <section class="overflow-hidden rounded-xl border border-outline-variant/60 bg-white shadow-sm">
-        {!! $head(1, 'Period and reports', 'Choose the school and the period, then open a report on its official form.') !!}
-        <form method="GET" action="{{ route('cash') }}" id="cash-report-period" class="grid gap-4 p-5 md:grid-cols-4">
-            <input type="hidden" name="tab" value="reports">
-            <label class="{{ $label }}">School
-                <select name="school_id" onchange="this.form.submit()" class="{{ $box }}">@foreach($reportSchools as $option)<option value="{{ $option->id }}" @selected($option->id === $reportSchool->id)>{{ $option->name }}</option>@endforeach</select>
-            </label>
-            <label class="{{ $label }}">From<input type="date" name="from" value="{{ $reportFrom->toDateString() }}" class="{{ $box }}"></label>
-            <label class="{{ $label }}">To<input type="date" name="to" value="{{ $reportTo->toDateString() }}" class="{{ $box }}"></label>
-            <div class="flex items-end"><button class="rounded-lg border border-primary bg-white px-4 py-2 text-xs font-bold text-primary hover:bg-primary hover:text-white">Apply period</button></div>
-        </form>
-        <div class="grid gap-4 border-t border-outline-variant/40 p-5 md:grid-cols-3">
+        {!! $head(1, 'Reports', 'Choose a report to fill in its form and see it on its official form.') !!}
+        <div class="grid gap-4 p-5 md:grid-cols-3">
             @foreach($reportLinks as [$routeName, $title, $hint, $icon, $slots])
                 <button type="button" data-cash-report-open data-url="{{ route($routeName) }}" data-slots='@json($slots)' data-title="{{ $title }}" class="group flex items-start gap-3 rounded-xl border border-outline-variant/50 border-l-4 border-l-primary bg-white p-4 text-left shadow-sm transition hover:bg-[#eef4fa]">
                     <span class="material-symbols-outlined text-[24px] text-primary" aria-hidden="true">{{ $icon }}</span>
@@ -36,6 +27,12 @@
 
     <section class="overflow-hidden rounded-xl border border-outline-variant/60 bg-white shadow-sm">
         {!! $head(2, 'Fund received', 'The opening balance, NCA or cash advance the reports start from. Type one for each quarter.') !!}
+        @if($reportSchools->count() > 1)
+            <form method="GET" action="{{ route('cash') }}" class="border-b border-outline-variant/40 px-5 py-3">
+                <input type="hidden" name="tab" value="reports">
+                <label class="{{ $label }}">School<select name="school_id" onchange="this.form.submit()" class="{{ $box }} max-w-md">@foreach($reportSchools as $option)<option value="{{ $option->id }}" @selected($option->id === $reportSchool->id)>{{ $option->name }}</option>@endforeach</select></label>
+            </form>
+        @endif
         <form method="POST" action="{{ route('cash.fund.store') }}" class="grid gap-4 p-5 md:grid-cols-6">@csrf
             <input type="hidden" name="school_id" value="{{ $reportSchool->id }}">
             <label class="{{ $label }}">Date<input type="date" name="received_at" required value="{{ old('received_at', $reportFrom->toDateString()) }}" class="{{ $box }}"></label>
