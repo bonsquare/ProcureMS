@@ -18,18 +18,17 @@
         ->concat($data['lines']->reject(fn (array $line) => $line['mode'] === 'other')->map(fn (array $line) => ['type' => 'line', 'date' => $line['date'], 'line' => $line]))
         ->sortBy(fn (array $entry) => $entry['date']->format('Ymd').($entry['type'] === 'receipt' ? '0' : '1'))
         ->values();
-    $balance = $data['opening'];
+    // The balance carried forward from before the period is the cash downloaded less the checks and ADAs paid until then.
+    $balance = $data['opening_bank'];
     $totalDownloaded = (float) $data['receipts']->sum('amount');
     $totalPaid = (float) $data['lines']->reject(fn (array $line) => $line['mode'] === 'other')->sum(fn (array $line) => $line['amount'] ?? 0);
-    $bookBalance = round($data['opening'] + $totalDownloaded - $totalPaid, 2);
-    $hasStatement = $report['statementBalance'] !== null;
-    $adjusted = round((float) $report['statementBalance'] - (float) $report['outstandingChecks'], 2);
+    $bookBalance = round($data['opening_bank'] + $totalDownloaded - $totalPaid, 2);
 @endphp
 
 @include('partials.official-toolbar', ['closeUrl' => route('cash', ['tab' => 'reports', 'school_id' => $school->id]), 'context' => 'Bank Reconciliation · '.$report['period']])
 
 <main class="paper" data-official-page data-sheets data-doc="cash-bank-recon" data-paper="longbond" data-orientation="landscape" data-margin="10">
-    @include('partials.cash-report-header', ['title' => 'BANK RECONCILIATION', 'showOfficer' => true])
+    @include('partials.cash-report-header', ['title' => 'BANK RECONCILIATION', 'minimal' => true])
 
     <table class="report" data-paginate>
         <colgroup><col style="width:10%"><col style="width:12%"><col style="width:12%"><col style="width:26%"><col style="width:13%"><col style="width:13%"><col style="width:14%"></colgroup>
@@ -70,24 +69,6 @@
         </tbody>
     </table>
 
-    <table class="report" style="margin-top:12px;width:55%">
-        <tbody>
-            <tr><td>Balance per books (bank book)</td><td class="num">{{ $money($bookBalance) }}</td></tr>
-            @if($hasStatement)
-                <tr><td>Balance per bank statement</td><td class="num">{{ $money($report['statementBalance']) }}</td></tr>
-                <tr><td>Less: outstanding checks / ADAs</td><td class="num">{{ $money($report['outstandingChecks']) }}</td></tr>
-                <tr><td>Adjusted bank balance</td><td class="num">{{ $money($adjusted) }}</td></tr>
-                <tr class="total"><td>Difference (books less adjusted bank balance)</td><td class="num">{{ $money($bookBalance - $adjusted) }}</td></tr>
-            @endif
-        </tbody>
-    </table>
-
-    @if($report['remarks'] !== '')<p style="margin:10px 0 0"><strong>Remarks:</strong> {{ $report['remarks'] }}</p>@endif
-
-    <div class="sign-row">
-        <div class="box"><div style="text-align:left;font-weight:bold">PREPARED BY:</div><div class="name">{{ mb_strtoupper($report['officer']?->name ?? '') }}&nbsp;</div><div>{{ $report['officer']?->position }}</div><div style="margin-top:8px;text-align:left">Date: ______________________</div></div>
-        <div class="box"><div style="text-align:left;font-weight:bold">NOTED BY:</div><div class="name">{{ mb_strtoupper($report['receivedBy']?->name ?? '') }}&nbsp;</div><div>{{ $report['receivedBy']?->position ?: '' }}&nbsp;</div><div style="margin-top:8px;text-align:left">Date: ______________________</div></div>
-    </div>
 </main>
 </body>
 </html>

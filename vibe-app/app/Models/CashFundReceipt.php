@@ -10,7 +10,7 @@ class CashFundReceipt extends Model
 {
     use BelongsToOrganization;
 
-    public const KINDS = ['opening_balance' => 'Opening balance', 'nca' => 'NCA received', 'cash_advance' => 'Cash advance'];
+    public const KINDS = ['opening_balance' => 'Opening balance', 'balance_forwarded' => 'Balance forwarded', 'nca' => 'NCA received', 'cash_advance' => 'Cash advance'];
 
     protected $fillable = ['organization_id', 'school_id', 'received_at', 'kind', 'fund_cluster', 'bank_account_number', 'amount', 'reference', 'note', 'created_by'];
 

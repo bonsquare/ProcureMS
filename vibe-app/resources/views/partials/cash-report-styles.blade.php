@@ -23,6 +23,11 @@
     table.info.compact td.label { width: 11%; white-space: nowrap; }
     table.info.compact tr:first-child td:nth-child(2) { width: 56%; }
     table.info.compact tr:first-child td:nth-child(3) { width: 12%; }
+    table.info.compact.officer tr:first-child td:first-child { width: 15%; }
+    table.info.compact.officer tr:first-child td:nth-child(2) { width: 42%; }
+    table.info.compact td { vertical-align: bottom; }
+    table.info.compact.officer td.value.underlined { text-decoration: none; border-bottom: 1px solid #000; }
+    table.info.compact.officer tr:first-child td:nth-child(3) { width: 15%; }
     table.info.compact td.label:nth-child(3) { text-align: right; padding-right: 6px; }
     table.info.compact td.value.underlined, table.info.compact td.bank-line .value { text-decoration: underline; text-underline-offset: 2px; }
     .signature-row { display: flex; align-items: flex-end; justify-content: flex-end; gap: 16px; margin: 26px 0 0 auto; width: 100%; break-inside: avoid; }

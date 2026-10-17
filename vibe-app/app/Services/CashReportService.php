@@ -13,7 +13,7 @@ use Illuminate\Support\Collection;
 class CashReportService
 {
     /**
-     * @return array{opening: float, receipts: Collection, lines: Collection, total_paid: float, total_received: float, ending: float, accounts: array<string, string>}
+     * @return array{opening: float, opening_bank: float, receipts: Collection, lines: Collection, total_paid: float, total_received: float, ending: float, accounts: array<string, string>}
      */
     public function build(School $school, CarbonInterface $from, CarbonInterface $to): array
     {
@@ -37,8 +37,12 @@ class CashReportService
         $receipts = CashFundReceipt::query()->where('school_id', $school->id)->orderBy('received_at')->orderBy('id')->get();
 
         $before = fn ($date) => $date->lt($from);
-        // The opening balance is typed for each quarter (a fund received), so nothing is carried forward from an earlier period.
-        $opening = 0.0;
+        // The balance of the Bank Reconciliation (cash downloaded less what was paid) before the period starts is the beginning balance of the other reports.
+        // The bank book leaves out a payment in cash (mode Others); the working fund of the register does not.
+        $receiptsBefore = (float) $receipts->filter(fn ($receipt) => $before($receipt->received_at))->sum('amount');
+        $paidBefore = $all->filter(fn (array $line) => $before($line['date']));
+        $opening = round($receiptsBefore - (float) $paidBefore->sum(fn (array $line) => $line['amount'] ?? 0), 2);
+        $openingBank = round($receiptsBefore - (float) $paidBefore->reject(fn (array $line) => $line['mode'] === 'other')->sum(fn (array $line) => $line['amount'] ?? 0), 2);
 
         $periodReceipts = $receipts->filter(fn ($receipt) => ! $before($receipt->received_at) && $receipt->received_at->lte($to))->values();
         $lines = $all
@@ -68,6 +72,7 @@ class CashReportService
 
         return [
             'opening' => $opening,
+            'opening_bank' => $openingBank,
             'receipts' => $periodReceipts,
             'lines' => $lines,
             'total_paid' => $totalPaid,

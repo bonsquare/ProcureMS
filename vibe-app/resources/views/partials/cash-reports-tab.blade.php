@@ -7,7 +7,7 @@
         ['cash.report.roci', 'Report of Checks Issued', 'Appendix 35: every check of the period, cancelled checks included.', 'fact_check', ['officer_id' => 'Disbursing Officer / Cashier'], false],
         ['cash.report.checks', 'Checks and Advices to Debit Account', 'Disbursement record with the check and ADA columns and the running balance.', 'account_balance', ['officer_id' => 'Disbursing Officer'], false],
         ['cash.report.register', 'Cash Disbursement Register', 'Working fund, payments and the breakdown per expense account.', 'menu_book', ['officer_id' => 'Certified correct (Accountable Officer)', 'received_by_id' => 'Received by'], false],
-        ['cash.report.bank', 'Bank Reconciliation', 'Bank book: cash downloaded, checks and ADAs paid, the running balance and the comparison with the bank statement.', 'account_balance_wallet', ['officer_id' => 'Prepared by (Disbursing Officer)', 'received_by_id' => 'Noted by'], true],
+        ['cash.report.bank', 'Bank Reconciliation', 'Cash downloaded to the account and the checks and ADAs paid, with the running balance. The other reports start from it.', 'account_balance_wallet', [], true],
     ];
 @endphp
 <div class="space-y-5 p-5">
@@ -18,7 +18,7 @@
         {!! $head(1, 'Reports', 'Choose a report to fill in its form and see it on its official form.') !!}
         <div class="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-4">
             @foreach($reportLinks as [$routeName, $title, $hint, $icon, $slots, $isBank])
-                <button type="button" data-cash-report-open data-url="{{ route($routeName) }}" data-slots='@json($slots)' data-bank="{{ ($isBank ?? false) ? 1 : 0 }}" data-report-no="{{ $routeName === 'cash.report.roci' ? now()->format('Y-m').'-001' : '' }}" data-title="{{ $title }}" class="group flex items-start gap-3 rounded-xl border border-outline-variant/50 border-l-4 border-l-primary bg-white p-4 text-left shadow-sm transition hover:bg-[#eef4fa]">
+                <button type="button" data-cash-report-open data-url="{{ route($routeName) }}" data-slots='@json($slots)' data-bank="{{ ($isBank ?? false) ? 1 : 0 }}" data-register="{{ $routeName === 'cash.report.register' ? 1 : 0 }}" data-form="{{ $routeName === 'cash.report.register' ? 'r' : ($routeName === 'cash.report.checks' ? 'c' : 'o') }}" data-report-no="{{ $routeName === 'cash.report.roci' ? now()->format('Y-m').'-001' : '' }}" data-title="{{ $title }}" class="group flex items-start gap-3 rounded-xl border border-outline-variant/50 border-l-4 border-l-primary bg-white p-4 text-left shadow-sm transition hover:bg-[#eef4fa]">
                     <span class="material-symbols-outlined text-[24px] text-primary" aria-hidden="true">{{ $icon }}</span>
                     <span><span class="block text-sm font-bold text-primary">{{ $title }}</span><span class="mt-1 block text-xs text-on-surface-variant">{{ $hint }}</span></span>
                 </button>
@@ -51,28 +51,28 @@
                             <label class="{{ $label }}">To<input type="date" id="cash-report-to" value="{{ $reportTo->toDateString() }}" class="{{ $box }}"></label>
                         </div>
                     </section>
-                    <section class="rounded-xl border border-outline-variant/50 p-4">
+                    <section data-hide-bank class="rounded-xl border border-outline-variant/50 p-4">
                         <h3 class="text-[11px] font-bold uppercase tracking-wider text-primary">Header of the form</h3>
-                        <div class="mt-3 grid gap-3 sm:grid-cols-2">
-                            <label class="{{ $label }}">Report No.<input id="cash-report-no" maxlength="50" class="{{ $box }}"></label>
-                            <label class="{{ $label }}">Sheet No.<input id="cash-sheet-no" maxlength="50" placeholder="1 of 1" class="{{ $box }}"></label>
-                            <label class="{{ $label }} sm:col-span-2">Fund Cluster<input id="cash-report-cluster" maxlength="100" class="{{ $box }}"></label>
-                            <div class="grid gap-3 sm:col-span-2 sm:grid-cols-[3fr_2fr]">
+                        <div id="cash-report-header" class="mt-3 grid gap-3 sm:grid-cols-2">
+                            <label data-o="1" class="{{ $label }}">Report No.<input id="cash-report-no" maxlength="50" class="{{ $box }}"></label>
+                            <label data-o="2" data-r="9" data-c="4" class="{{ $label }}">Sheet No.<input id="cash-sheet-no" maxlength="50" placeholder="1 of 1" class="{{ $box }}"></label>
+                            <label data-o="3" data-r="4" data-c="3" class="{{ $label }} sm:col-span-2">Fund Cluster<input id="cash-report-cluster" maxlength="100" class="{{ $box }}"></label>
+                            <div data-o="4" data-c="2" class="grid gap-3 sm:col-span-2 sm:grid-cols-[3fr_2fr]">
                                 <label class="{{ $label }}">Bank Name<input id="cash-report-bank-name" maxlength="100" class="{{ $box }}"></label>
                                 <label class="{{ $label }}">Bank Account No.<input id="cash-report-bank-account" maxlength="60" class="{{ $box }}"></label>
                             </div>
+                            <label data-r="1" data-c="1" class="{{ $label }} sm:col-span-2">Entity Name<input id="cash-report-entity" maxlength="150" class="{{ $box }}"></label>
+                            <label data-r="2" class="{{ $label }} sm:col-span-2">Sub Office / District / Division<input id="cash-report-district" maxlength="150" class="{{ $box }}"></label>
+                            <label data-r="3" class="{{ $label }} sm:col-span-2">Municipality / City / Province<input id="cash-report-municipality" maxlength="200" class="{{ $box }}"></label>
+                            <label data-r="5" data-c="5" class="{{ $label }} sm:col-span-2">Name of Accountable Officer<input id="cash-report-officer-name" maxlength="150" class="{{ $box }}"></label>
+                            <label data-r="6" data-c="6" class="{{ $label }} sm:col-span-2">Official Designation<input id="cash-report-officer-position" maxlength="150" class="{{ $box }}"></label>
+                            <label data-r="7" data-c="7" class="{{ $label }}">Station<input id="cash-report-station" maxlength="150" class="{{ $box }}"></label>
+                            <label data-r="8" class="{{ $label }}">Registered No.<input id="cash-report-registered" maxlength="50" class="{{ $box }}"></label>
                         </div>
                     </section>
-                    <section class="rounded-xl border border-outline-variant/50 p-4">
+                    <section data-hide-bank class="rounded-xl border border-outline-variant/50 p-4">
                         <h3 class="text-[11px] font-bold uppercase tracking-wider text-primary">Signatories</h3>
                         <div id="cash-report-slots" class="mt-3 space-y-3"></div>
-                    </section>
-                    <section data-bank-only class="hidden rounded-xl border border-outline-variant/50 p-4">
-                        <h3 class="text-[11px] font-bold uppercase tracking-wider text-primary">Bank statement</h3>
-                        <div class="mt-3 grid gap-3 sm:grid-cols-2">
-                            <label class="{{ $label }}">Balance per bank statement<input type="number" step="0.01" id="cash-report-statement" class="{{ $box }} text-right tabular-nums"></label>
-                            <label class="{{ $label }}">Outstanding checks / ADAs<input type="number" step="0.01" min="0" id="cash-report-outstanding" class="{{ $box }} text-right tabular-nums"></label>
-                        </div>
                     </section>
                     <section data-bank-only class="hidden rounded-xl border border-outline-variant/50 p-4">
                         <h3 class="text-[11px] font-bold uppercase tracking-wider text-primary">Cash downloaded</h3>
@@ -94,7 +94,7 @@
                             <div class="flex justify-end gap-2 sm:col-span-2"><button type="button" id="cash-fund-reset" class="hidden rounded border border-outline-variant/50 px-3 py-2 text-xs font-semibold hover:bg-surface-low">Cancel edit</button><button class="rounded-lg bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary-container" id="cash-fund-save">Add</button></div>
                         </form>
                     </section>
-                    <section class="rounded-xl border border-outline-variant/50 p-4">
+                    <section data-hide-bank class="rounded-xl border border-outline-variant/50 p-4">
                         <h3 class="text-[11px] font-bold uppercase tracking-wider text-primary">Remarks</h3>
                         <label class="{{ $label }} mt-3">Printed above the signature<textarea id="cash-report-remarks" rows="3" maxlength="500" class="{{ $box }}"></textarea></label>
                     </section>
@@ -121,9 +121,9 @@
         const bankDefaults = @json($reportBankDefaults);
         const slotBox = field('cash-report-slots');
         const hideChrome = '<style>.official-toolbar{display:none!important}body{background:#d9dee5!important}</style>';
-        let baseUrl = ''; let timer = null; let controller = null;
+        let baseUrl = ''; let timer = null; let controller = null; let registerOn = false; let formKey = 'o';
         // Fund Cluster, Bank Name and Bank Account No. start from the school's settings (and its last payment); a value the user typed is kept.
-        const defaultFields = { 'cash-report-cluster': 'fund_cluster', 'cash-report-bank-name': 'bank_name', 'cash-report-bank-account': 'bank_account' };
+        const defaultFields = { 'cash-report-cluster': 'fund_cluster', 'cash-report-bank-name': 'bank_name', 'cash-report-bank-account': 'bank_account', 'cash-report-entity': 'entity_name', 'cash-report-district': 'district', 'cash-report-municipality': 'municipality', 'cash-report-registered': 'registered_no', 'cash-report-officer-name': 'officer_name', 'cash-report-officer-position': 'officer_position' };
         const fillDefaults = () => {
             const defaults = bankDefaults[field('cash-report-school').value] || {};
             Object.entries(defaultFields).forEach(([id, key]) => { if (!field(id).dataset.typed) field(id).value = defaults[key] || ''; });
@@ -165,9 +165,10 @@
         }));
         syncQuarter();
         const schedule = () => { clearTimeout(timer); timer = setTimeout(() => refresh(), 600); };
+        const manualKey = { officer_id: 'officer', received_by_id: 'received_by' };
         const buildSlots = () => {
             const kept = {};
-            slotBox.querySelectorAll('select').forEach((select) => { kept[select.dataset.slot] = select.value; });
+            slotBox.querySelectorAll('[data-slot]').forEach((control) => { kept[control.dataset.slot + (control.dataset.part || '')] = control.value; });
             slotBox.innerHTML = '';
             Object.entries(JSON.parse(slotBox.dataset.slots || '{}')).forEach(([key, text]) => {
                 const label = document.createElement('label');
@@ -177,12 +178,48 @@
                 select.className = @json($box);
                 select.dataset.slot = key;
                 select.add(new Option(key === 'officer_id' ? 'Default (Disbursing Officer)' : 'Leave blank', ''));
+                select.add(new Option('Type a name (not in the staff list)', 'manual'));
                 (staffBySchool[field('cash-report-school').value] || []).forEach((member) => select.add(new Option(member.label, member.id)));
                 select.value = [...select.options].some((option) => option.value === kept[key]) ? kept[key] : '';
-                select.addEventListener('change', schedule);
                 label.append(select);
                 slotBox.append(label);
+
+                // A person who is not in the school's staff (for example the one who receives the payment) is typed by hand.
+                const manual = document.createElement('div');
+                manual.className = 'grid gap-2 sm:grid-cols-2';
+                ['name', 'position'].forEach((part) => {
+                    const input = document.createElement('input');
+                    input.className = @json($box);
+                    input.maxLength = 150;
+                    input.placeholder = part === 'name' ? 'Full name' : 'Position';
+                    input.dataset.slot = key;
+                    input.dataset.part = part;
+                    input.value = kept[key + part] || '';
+                    input.addEventListener('input', () => { syncHeaderOfficer(key); schedule(); });
+                    manual.append(input);
+                });
+                const showManual = () => manual.classList.toggle('hidden', select.value !== 'manual');
+                showManual();
+                slotBox.append(manual);
+
+                select.addEventListener('change', () => { showManual(); syncHeaderOfficer(key); schedule(); });
             });
+        };
+        // The accountable officer of the header follows the officer chosen (or typed) for the certification unless it was typed by hand.
+        const syncHeaderOfficer = (key) => {
+            if (key !== 'officer_id') return;
+            const select = slotBox.querySelector('select[data-slot="officer_id"]');
+            if (!select) return;
+            const defaults = bankDefaults[field('cash-report-school').value] || {};
+            let name = defaults.officer_name || ''; let position = defaults.officer_position || '';
+            if (select.value === 'manual') {
+                name = slotBox.querySelector('input[data-slot="officer_id"][data-part="name"]').value;
+                position = slotBox.querySelector('input[data-slot="officer_id"][data-part="position"]').value;
+            } else if (select.value) {
+                [name, position] = select.selectedOptions[0].text.split(' - ');
+            }
+            if (!field('cash-report-officer-name').dataset.typed) field('cash-report-officer-name').value = name || '';
+            if (!field('cash-report-officer-position').dataset.typed) field('cash-report-officer-position').value = position || '';
         };
         const urlWithFields = () => {
             const url = new URL(baseUrl, window.location.origin);
@@ -196,7 +233,19 @@
             set('bank_name', field('cash-report-bank-name').value.trim());
             set('bank_account', field('cash-report-bank-account').value.trim());
             set('remarks', field('cash-report-remarks').value.trim());
-            ['officer_id', 'received_by_id'].forEach((name) => set(name, slotBox.querySelector('[data-slot="' + name + '"]')?.value || ''));
+            if (formKey !== 'o') {
+                set('entity_name', field('cash-report-entity').value.trim()); set('station', field('cash-report-station').value.trim());
+                set('officer_name', field('cash-report-officer-name').value.trim()); set('officer_position', field('cash-report-officer-position').value.trim());
+            }
+            if (registerOn) {
+                set('district', field('cash-report-district').value.trim()); set('municipality', field('cash-report-municipality').value.trim());
+                set('registered_no', field('cash-report-registered').value.trim());
+            }
+            ['officer_id', 'received_by_id'].forEach((name) => {
+                const choice = slotBox.querySelector('select[data-slot="' + name + '"]')?.value || '';
+                set(name, choice);
+                ['name', 'position'].forEach((part) => set(manualKey[name] + '_manual_' + part, choice === 'manual' ? (slotBox.querySelector('input[data-slot="' + name + '"][data-part="' + part + '"]')?.value.trim() || '') : ''));
+            });
             return url.pathname + url.search;
         };
         const refresh = async () => {
@@ -213,7 +262,7 @@
                 status.textContent = response.ok ? 'Updates as you type' : 'Preview unavailable (HTTP ' + response.status + ')';
             } catch (error) { if (error.name !== 'AbortError') status.textContent = 'Preview unavailable. Reopen the report to retry'; }
         };
-        // Bank Reconciliation only: the bank statement figures and the records of the cash downloaded to the account.
+        // Bank Reconciliation only: the records of the cash downloaded to the account.
         const csrf = document.querySelector('meta[name="csrf-token"]')?.content || @json(csrf_token());
         const receiptsUrl = @json(route('cash.fund.index'));
         const receiptsStore = @json(route('cash.fund.store'));
@@ -293,6 +342,14 @@
             slotBox.dataset.slots = button.dataset.slots;
             field('cash-report-no').placeholder = button.dataset.reportNo || '';
             toggleBank(button.dataset.bank === '1');
+            modal.querySelectorAll('[data-hide-bank]').forEach((box) => box.classList.toggle('hidden', button.dataset.bank === '1'));
+            registerOn = button.dataset.register === '1';
+            formKey = button.dataset.form || 'o';
+            modal.querySelectorAll('#cash-report-header > [data-o], #cash-report-header > [data-r], #cash-report-header > [data-c]').forEach((item) => {
+                const place = item.dataset[formKey];
+                item.classList.toggle('hidden', !place);
+                item.style.order = place || 0;
+            });
             buildSlots();
             fillDefaults();
             document.getElementById('cash-report-title').textContent = button.dataset.title;
@@ -300,7 +357,7 @@
             refresh();
         }));
         field('cash-report-school').addEventListener('change', () => { buildSlots(); fillDefaults(); schedule(); });
-        ['cash-report-statement', 'cash-report-outstanding', 'cash-report-from', 'cash-report-to', 'cash-report-no', 'cash-sheet-no', 'cash-report-cluster', 'cash-report-bank-name', 'cash-report-bank-account', 'cash-report-remarks'].forEach((id) => field(id).addEventListener('input', schedule));
+        ['cash-report-entity', 'cash-report-district', 'cash-report-municipality', 'cash-report-station', 'cash-report-registered', 'cash-report-officer-name', 'cash-report-officer-position', 'cash-report-from', 'cash-report-to', 'cash-report-no', 'cash-sheet-no', 'cash-report-cluster', 'cash-report-bank-name', 'cash-report-bank-account', 'cash-report-remarks'].forEach((id) => field(id).addEventListener('input', schedule));
         document.getElementById('cash-report-close').addEventListener('click', close);
         document.getElementById('cash-report-cancel').addEventListener('click', close);
         modal.addEventListener('click', (event) => { if (event.target === modal) close(); });

@@ -28,6 +28,13 @@
     .cdr table.report tr.beginning td { font-size: 9.5px; }
     .cdr table.report tr.grand td { height: 17px; font-size: 10.5px; font-weight: normal; border-top: 1px solid #000; }
     .cdr table.report tr.grand td.label { font-size: 12px; text-align: left; border-right: 0; }
+    .cdr table.cdr-info td:first-child { padding-right: 12px; }
+    .cdr table.report.dense tbody td, .cdr table.report.dense tr.grand td { font-size: 8px; padding: 0 1px; }
+    .cdr table.report.denser tbody td, .cdr table.report.denser tr.grand td { font-size: 6.5px; padding: 0 1px; }
+    .cdr table.report.dense thead tr.acct-title th { font-size: 7px; padding: 1px; }
+    .cdr table.report.denser thead tr.acct-title th { font-size: 6px; padding: 1px; }
+    .cdr table.report.dense thead tr.acct-code th { font-size: 6.5px; }
+    .cdr table.report.denser thead tr.acct-code th { font-size: 5.5px; }
     .cdr .frame { border: 1px solid #000; border-top: 0; }
     .cdr table.recap td { padding: 0 3px; height: 14px; font-size: 8.5px; }
     .cdr table.recap td.head { font-size: 10.5px; }
@@ -64,11 +71,10 @@
     $school = $report['school'];
     $agency = $report['agency'];
     $accounts = $data['accounts'];
-    // Nine expense accounts fit beside the working fund (as in the workbook); any more continue in a table below with the same rows.
-    $accountGroups = array_chunk($accounts, 9, true);
-    if ($accountGroups === []) {
-        $accountGroups = [[]];
-    }
+    // One table: a column for every account paid in the period (at least the nine of the workbook), however many there are; the columns narrow as they grow.
+    $accountGroups = [$accounts];
+    $accountCount = max(9, count($accounts));
+    $density = $accountCount > 13 ? 'denser' : ($accountCount > 9 ? 'dense' : '');
     // Money received and the payments of the period in date order (money first on the same day), with the running balance of the working fund.
     $entries = $data['receipts']->map(fn ($receipt) => ['type' => 'receipt', 'date' => $receipt->received_at, 'receipt' => $receipt])
         ->concat($data['lines']->map(fn (array $line) => ['type' => 'line', 'date' => $line['date'], 'line' => $line]))
@@ -91,8 +97,6 @@
     $totalAdvance = round($data['opening'] + collect($rows)->sum(fn (array $row) => $row['advance'] ?? 0), 2);
     $blank = fn ($value) => ($value === null || (float) $value == 0.0) ? '' : $money($value);
     $officer = $report['officer'];
-    $district = $school->district ?: ($agency?->district_name ?: ($agency?->division_name ?: $school->division));
-    $registeredNo = $school->deped_school_id ?: $school->code;
 @endphp
 
 @include('partials.official-toolbar', ['closeUrl' => route('cash', ['tab' => 'reports', 'school_id' => $school->id]), 'context' => 'Cash Disbursement Register · '.$report['period']])
@@ -101,21 +105,21 @@
     <h1>CASH DISBURSEMENT REGISTER</h1>
 
     <table class="cdr-info">
-        <colgroup><col style="width:9%"><col style="width:28%"><col style="width:17%"><col style="width:13.5%"><col style="width:26.5%"><col style="width:6%"></colgroup>
-        <tr><td colspan="3"></td><td>Name of Accountable Officer:</td><td class="value">{{ $officer?->name ? mb_strtoupper($officer->name) : '' }}</td><td></td></tr>
-        <tr><td>Entity Name:</td><td class="value" colspan="1">{{ mb_strtoupper($school->name) }}</td><td></td><td>Official Designation:</td><td class="value">{{ $officer?->position }}</td><td></td></tr>
-        <tr><td colspan="1">Sub Office/ District/ Division:</td><td class="value">{{ $district ? mb_strtoupper($district) : '' }}</td><td></td><td>Station:</td><td class="value"></td><td></td></tr>
-        <tr><td colspan="1">Municipality/ City/ Province:</td><td class="value">{{ $school->address ? mb_strtoupper($school->address) : '' }}</td><td></td><td>Registered No.:</td><td class="value" style="text-align:center">{{ $registeredNo }}</td><td></td></tr>
-        <tr><td>Fund Cluster</td><td style="padding-left:12px">{{ $report['fundCluster'] }}</td><td></td><td>Sheet No.:</td><td style="text-align:center">@if($report['sheetNo'] !== ''){{ $report['sheetNo'] }}@else<span data-sheet-no>1 of 1</span>@endif</td><td></td></tr>
+        <colgroup><col style="width:15%"><col style="width:28%"><col style="width:11%"><col style="width:12%"><col style="width:28%"><col style="width:6%"></colgroup>
+        <tr><td colspan="3"></td><td>Name of Accountable Officer:</td><td class="value">{{ mb_strtoupper($report['officerName']) }}</td><td></td></tr>
+        <tr><td>Entity Name:</td><td class="value" colspan="1">{{ mb_strtoupper($report['entityName']) }}</td><td></td><td>Official Designation:</td><td class="value">{{ $report['officerPosition'] }}</td><td></td></tr>
+        <tr><td colspan="1">Sub Office/ District/ Division:</td><td class="value">{{ mb_strtoupper($report['district']) }}</td><td></td><td>Station:</td><td class="value">{{ $report['station'] }}</td><td></td></tr>
+        <tr><td colspan="1">Municipality/ City/ Province:</td><td class="value">{{ mb_strtoupper($report['municipality']) }}</td><td></td><td>Registered No.:</td><td class="value">{{ $report['registeredNo'] }}</td><td></td></tr>
+        <tr><td>Fund Cluster</td><td style="padding-left:3px">{{ $report['fundCluster'] }}</td><td></td><td>Sheet No.:</td><td>@if($report['sheetNo'] !== ''){{ $report['sheetNo'] }}@else<span data-sheet-no>1 of 1</span>@endif</td><td></td></tr>
     </table>
 
     @foreach($accountGroups as $groupIndex => $group)
-        @php $first = $groupIndex === 0; $count = 9; $codes = array_keys($group); $titles = array_values($group); @endphp
+        @php $first = $groupIndex === 0; $count = $accountCount; $codes = array_keys($group); $titles = array_values($group); @endphp
         @if(! $first)<p style="margin:14px 0 4px;font-weight:bold">BREAKDOWN OF PAYMENTS, CONTINUED</p>@endif
-        <table class="report{{ $first ? '' : ' continued' }}" data-paginate>
+        <table class="report {{ $density }}" data-paginate>
             <colgroup>
                 <col style="width:4.8%"><col style="width:5.6%">
-                @if($first)<col style="width:24%"><col style="width:6.1%"><col style="width:5.6%"><col style="width:5.6%">@endif
+                @if($first)<col style="width:{{ $density === '' ? 24 : ($density === 'dense' ? 17 : 14) }}%"><col style="width:{{ $density === '' ? 6.1 : 5.4 }}%"><col style="width:{{ $density === '' ? 5.6 : 5.2 }}%"><col style="width:{{ $density === '' ? 5.6 : 5.2 }}%">@endif
                 @for($i = 0; $i < $count; $i++)<col>@endfor
             </colgroup>
             <thead>

@@ -93,7 +93,7 @@ class CashReportController extends Controller
     /**
      * The school, the period and the numbers typed on a report page; refuses a school the user may not report on.
      *
-     * @return array{school: School, from: Carbon, to: Carbon, report_no: string, sheet_no: string, fund_cluster: string, bank_name: string, bank_account: string, remarks: string, officer_id: ?int, received_by_id: ?int, statement_balance: ?float, outstanding_checks: float}
+     * @return array{school: School, from: Carbon, to: Carbon, report_no: string, sheet_no: string, fund_cluster: string, entity_name: string, district: string, municipality: string, station: string, registered_no: string, officer_name: string, officer_position: string, bank_name: string, bank_account: string, remarks: string, officer_id: ?string, received_by_id: ?string, officer_manual: array{name: string, position: string}, received_by_manual: array{name: string, position: string}, statement_balance: ?float, outstanding_checks: float}
      */
     private function reportContext(Request $request): array
     {
@@ -104,11 +104,22 @@ class CashReportController extends Controller
             'report_no' => ['nullable', 'string', 'max:50'],
             'sheet_no' => ['nullable', 'string', 'max:50'],
             'fund_cluster' => ['nullable', 'string', 'max:100'],
+            'entity_name' => ['nullable', 'string', 'max:150'],
+            'district' => ['nullable', 'string', 'max:150'],
+            'municipality' => ['nullable', 'string', 'max:200'],
+            'station' => ['nullable', 'string', 'max:150'],
+            'registered_no' => ['nullable', 'string', 'max:50'],
+            'officer_name' => ['nullable', 'string', 'max:150'],
+            'officer_position' => ['nullable', 'string', 'max:150'],
             'bank_name' => ['nullable', 'string', 'max:100'],
             'bank_account' => ['nullable', 'string', 'max:60'],
             'remarks' => ['nullable', 'string', 'max:500'],
-            'officer_id' => ['nullable', 'integer'],
-            'received_by_id' => ['nullable', 'integer'],
+            'officer_id' => ['nullable', 'string', 'max:20'],
+            'received_by_id' => ['nullable', 'string', 'max:20'],
+            'officer_manual_name' => ['nullable', 'string', 'max:150'],
+            'officer_manual_position' => ['nullable', 'string', 'max:150'],
+            'received_by_manual_name' => ['nullable', 'string', 'max:150'],
+            'received_by_manual_position' => ['nullable', 'string', 'max:150'],
             'statement_balance' => ['nullable', 'numeric', 'min:-999999999999', 'max:999999999999'],
             'outstanding_checks' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
         ]);
@@ -121,11 +132,20 @@ class CashReportController extends Controller
             'report_no' => (string) ($data['report_no'] ?? ''),
             'sheet_no' => (string) ($data['sheet_no'] ?? ''),
             'fund_cluster' => (string) ($data['fund_cluster'] ?? ''),
+            'entity_name' => (string) ($data['entity_name'] ?? ''),
+            'district' => (string) ($data['district'] ?? ''),
+            'municipality' => (string) ($data['municipality'] ?? ''),
+            'station' => (string) ($data['station'] ?? ''),
+            'registered_no' => (string) ($data['registered_no'] ?? ''),
+            'officer_name' => (string) ($data['officer_name'] ?? ''),
+            'officer_position' => (string) ($data['officer_position'] ?? ''),
             'bank_name' => (string) ($data['bank_name'] ?? ''),
             'bank_account' => (string) ($data['bank_account'] ?? ''),
             'remarks' => (string) ($data['remarks'] ?? ''),
             'officer_id' => $data['officer_id'] ?? null,
             'received_by_id' => $data['received_by_id'] ?? null,
+            'officer_manual' => ['name' => (string) ($data['officer_manual_name'] ?? ''), 'position' => (string) ($data['officer_manual_position'] ?? '')],
+            'received_by_manual' => ['name' => (string) ($data['received_by_manual_name'] ?? ''), 'position' => (string) ($data['received_by_manual_position'] ?? '')],
             'statement_balance' => isset($data['statement_balance']) ? (float) $data['statement_balance'] : null,
             'outstanding_checks' => (float) ($data['outstanding_checks'] ?? 0),
         ];
@@ -136,6 +156,26 @@ class CashReportController extends Controller
      *
      * @return array<string, mixed>
      */
+    /**
+     * What the header of the Cash Disbursement Register starts from, read from the school's profile and the agency settings; the window can change each value.
+     *
+     * @return array{entity_name: string, district: string, municipality: string, registered_no: string, officer_name: string, officer_position: string}
+     */
+    public static function headerDefaults(School $school): array
+    {
+        $agency = AgencySetting::withoutGlobalScopes()->where('organization_id', $school->organization_id)->first();
+        $officer = SchoolStaff::active()->where('school_id', $school->id)->get()->first(fn (SchoolStaff $staff) => $staff->hasRole('document_role', 'Disbursing Officer'));
+
+        return [
+            'entity_name' => (string) $school->name,
+            'district' => (string) ($school->district ?: ($agency?->district_name ?: ($agency?->division_name ?: $school->division))),
+            'municipality' => (string) $school->address,
+            'registered_no' => (string) ($school->deped_school_id ?: $school->code),
+            'officer_name' => (string) $officer?->name,
+            'officer_position' => (string) $officer?->position,
+        ];
+    }
+
     private function reportViewData(Request $request): array
     {
         $context = $this->reportContext($request);
@@ -145,13 +185,25 @@ class CashReportController extends Controller
         $bankAccount = $context['bank_account'] !== '' ? $context['bank_account'] : (string) ($school->bank_account_number ?: $latestPayment?->bank_account_number);
         $bank = trim($bankName.' / '.$bankAccount, ' /');
 
-        $staffOf = fn (?int $id) => $id ? SchoolStaff::active()->where('school_id', $school->id)->find($id) : null;
+        $defaults = self::headerDefaults($school);
+        // A signatory is a staff member of the school, or a person typed by hand (the choice 'manual') who is not in the staff list.
+        $staffOf = fn (?string $id, array $manual) => $id === 'manual'
+            ? ($manual['name'] !== '' ? (object) $manual : null)
+            : ($id !== null && ctype_digit($id) ? SchoolStaff::active()->where('school_id', $school->id)->find((int) $id) : null);
+        $officer = $staffOf($context['officer_id'], $context['officer_manual']) ?? SchoolStaff::active()->where('school_id', $school->id)->get()->first(fn (SchoolStaff $staff) => $staff->hasRole('document_role', 'Disbursing Officer'));
 
         return [
             'school' => $school,
             'agency' => AgencySetting::withoutGlobalScopes()->where('organization_id', $school->organization_id)->first(),
-            'officer' => $staffOf($context['officer_id']) ?? SchoolStaff::active()->where('school_id', $school->id)->get()->first(fn (SchoolStaff $staff) => $staff->hasRole('document_role', 'Disbursing Officer')),
-            'receivedBy' => $staffOf($context['received_by_id']),
+            'officer' => $officer,
+            'receivedBy' => $staffOf($context['received_by_id'], $context['received_by_manual']),
+            'entityName' => $context['entity_name'] !== '' ? $context['entity_name'] : $defaults['entity_name'],
+            'district' => $context['district'] !== '' ? $context['district'] : $defaults['district'],
+            'municipality' => $context['municipality'] !== '' ? $context['municipality'] : $defaults['municipality'],
+            'station' => $context['station'],
+            'registeredNo' => $context['registered_no'] !== '' ? $context['registered_no'] : $defaults['registered_no'],
+            'officerName' => $context['officer_name'] !== '' ? $context['officer_name'] : (string) $officer?->name,
+            'officerPosition' => $context['officer_position'] !== '' ? $context['officer_position'] : (string) $officer?->position,
             'bank' => $bank,
             'bankName' => $bankName,
             'bankAccount' => $bankAccount,

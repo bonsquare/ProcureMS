@@ -98,14 +98,43 @@ class CashReportPrintTest extends TestCase
             ->assertSee('Trust Fund')->assertSee('For audit')->assertSee('MARIA SANTOS')->assertDontSee('BABY JOY I. CARBONELL')->assertDontSee('PEDRO OUTSIDER');
     }
 
-    public function test_the_bank_reconciliation_runs_the_balance_and_compares_with_the_statement(): void
+    public function test_the_bank_reconciliation_is_only_the_cash_downloaded_and_the_running_balance(): void
     {
         [$school, $user] = $this->tenant('BK1');
         CashFundReceipt::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'received_at' => '2026-09-01', 'kind' => 'nca', 'fund_cluster' => 'General Fund', 'amount' => 5000, 'reference' => 'NCA-77', 'created_by' => $user->id]);
         $this->paid($school, '0001', '2026-09-05', 1000);
 
-        $this->actingAs($user)->get(route('cash.report.bank', $this->periodQuery($school, ['statement_balance' => '4200', 'outstanding_checks' => '200'])))->assertOk()
-            ->assertSee('BANK RECONCILIATION')->assertSee('NCA-77')->assertSee('5,000.00')->assertSee('4,000.00')->assertSee('Balance per bank statement')->assertSee('4,200.00')->assertSee('Adjusted bank balance');
+        $this->actingAs($user)->get(route('cash.report.bank', $this->periodQuery($school)))->assertOk()
+            ->assertSee('BANK RECONCILIATION')->assertSee('NCA-77')->assertSee('5,000.00')->assertSee('4,000.00')
+            ->assertDontSee('Balance per bank statement')->assertDontSee('PREPARED BY')->assertDontSee('Fund Cluster');
+    }
+
+    public function test_the_balance_before_the_period_is_the_beginning_balance_of_the_other_reports(): void
+    {
+        [$school, $user] = $this->tenant('BK3');
+        CashFundReceipt::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'received_at' => '2026-06-15', 'kind' => 'nca', 'fund_cluster' => 'General Fund', 'amount' => 10000, 'created_by' => $user->id]);
+        $this->paid($school, '0001', '2026-06-20', 2500);
+        $this->paid($school, '0002', '2026-09-05', 1000);
+
+        $register = $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school)))->assertOk()->getContent();
+        $this->assertMatchesRegularExpression('/data-col="balance"[^>]*>7,500\.00</', $register, 'the working fund starts from what was left on 30 June');
+        $this->assertMatchesRegularExpression('/data-col="balance"[^>]*>6,500\.00</', $register);
+
+        $checks = $this->actingAs($user)->get(route('cash.report.checks', $this->periodQuery($school)))->assertOk()->getContent();
+        $this->assertMatchesRegularExpression('/data-col="balance"[^>]*>7,500\.00</', $checks);
+        $this->assertMatchesRegularExpression('/data-col="balance"[^>]*>6,500\.00</', $checks);
+
+        $bank = $this->actingAs($user)->get(route('cash.report.bank', $this->periodQuery($school)))->assertOk()->getContent();
+        $this->assertMatchesRegularExpression('/data-col="balance"[^>]*>7,500\.00</', $bank);
+        $this->assertMatchesRegularExpression('/data-col="balance"[^>]*>6,500\.00</', $bank);
+    }
+
+    public function test_a_balance_forwarded_can_be_recorded_and_counts_as_cash_downloaded(): void
+    {
+        [$school, $user] = $this->tenant('BF1');
+        $this->actingAs($user)->postJson(route('cash.fund.store'), ['school_id' => $school->id, 'received_at' => '2026-09-01', 'kind' => 'balance_forwarded', 'amount' => 3000])->assertOk();
+
+        $this->actingAs($user)->get(route('cash.report.bank', $this->periodQuery($school)))->assertOk()->assertSee('Balance forwarded')->assertSee('3,000.00');
     }
 
     public function test_the_downloaded_cash_is_listed_and_saved_as_json_for_the_window(): void
@@ -127,6 +156,25 @@ class CashReportPrintTest extends TestCase
         $this->assertStringContainsString('data-sheet-no', $html);
 
         $this->actingAs($user)->get(route('cash.report.roci', $this->periodQuery($school, ['report_no' => '2026-10-007', 'sheet_no' => '2 of 3'])))->assertOk()->assertSee('2026-10-007')->assertSee('2 of 3');
+    }
+
+    public function test_a_signatory_who_is_not_staff_can_be_typed_by_hand(): void
+    {
+        [$school, $user] = $this->tenant('MN1');
+
+        $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school, ['received_by_id' => 'manual', 'received_by_manual_name' => 'Honey Grace R. Ofalsa', 'received_by_manual_position' => 'Administrative Assistant III', 'officer_id' => 'manual', 'officer_manual_name' => 'Typed Officer', 'officer_manual_position' => 'School Head'])))->assertOk()
+            ->assertSee('HONEY GRACE R. OFALSA')->assertSee('Administrative Assistant III')->assertSee('TYPED OFFICER')->assertSee('School Head');
+
+        $this->actingAs($user)->get(route('cash.report.roci', $this->periodQuery($school, ['officer_id' => 'manual', 'officer_manual_name' => 'Roci Typed'])))->assertOk()->assertSee('ROCI TYPED');
+        $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school, ['received_by_id' => 'manual'])))->assertOk();
+    }
+
+    public function test_the_checks_and_advices_prints_the_typed_header_and_officer(): void
+    {
+        [$school, $user] = $this->tenant('CK1');
+
+        $this->actingAs($user)->get(route('cash.report.checks', $this->periodQuery($school, ['entity_name' => 'Typed Entity', 'station' => 'Typed Station', 'officer_name' => 'Typed Officer', 'officer_position' => 'Principal I', 'sheet_no' => '2 of 3'])))->assertOk()
+            ->assertSee('CHECKS AND ADVICES TO DEBIT ACCOUNT DISBURSEMENT RECORD')->assertSee('TYPED ENTITY')->assertSee('TYPED STATION')->assertSee('TYPED OFFICER')->assertSee('Principal I')->assertSee('2 of 3')->assertSee('CERTIFICATION');
     }
 
     public function test_the_typed_bank_prints_on_the_roci(): void
@@ -255,7 +303,7 @@ class CashReportPrintTest extends TestCase
         $this->assertMatchesRegularExpression('/data-col="balance"[^>]*>180,000\.00</', $document);
     }
 
-    public function test_more_than_nine_accounts_continue_in_a_second_table(): void
+    public function test_every_account_gets_a_column_in_one_table_however_many_there_are(): void
     {
         [$school, $user] = $this->tenant('CR3');
         foreach (range(1, 10) as $number) {
@@ -264,8 +312,10 @@ class CashReportPrintTest extends TestCase
 
         $document = $this->registerDocument($school, $user);
 
-        $this->assertSame(2, substr_count($document, '<table class="report'), 'one table of nine account columns and a second one for the rest');
-        $this->assertStringContainsString('Account 9', $document);
+        $this->assertSame(1, substr_count($document, '<table class="report'), 'one table, with a column for every account');
+        $this->assertSame(10, substr_count($document, 'data-total-account='));
+        $this->assertStringContainsString('Account 10', $document);
+        $this->assertStringContainsString('report dense', $document, 'the columns narrow when there are more than nine');
     }
 
     public function test_a_very_long_payee_wraps(): void

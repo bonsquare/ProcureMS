@@ -96,7 +96,7 @@ class CashReportServiceTest extends TestCase
         $this->assertSame(0.0, $report['opening']);
     }
 
-    public function test_nothing_is_carried_forward_from_an_earlier_period(): void
+    public function test_the_balance_of_an_earlier_period_is_carried_forward(): void
     {
         $account = $this->account('5020301000', 'Office Supplies Expenses');
         CashFundReceipt::create(['organization_id' => $this->organization->id, 'school_id' => $this->school->id, 'received_at' => '2026-04-01', 'kind' => 'opening_balance', 'fund_cluster' => 'General Fund', 'amount' => 10000, 'created_by' => $this->user->id]);
@@ -105,8 +105,9 @@ class CashReportServiceTest extends TestCase
 
         $report = $this->build();
 
-        $this->assertSame(0.0, $report['opening']);
-        $this->assertSame(7500.0, $report['ending'], 'only the balance typed for this quarter counts');
+        $this->assertSame(7500.0, $report['opening'], 'what was downloaded before the period less what was paid before it');
+        $this->assertSame(7500.0, $report['opening_bank']);
+        $this->assertSame(15000.0, $report['ending'], 'the carried balance plus the cash downloaded in this quarter');
     }
 
     public function test_a_cancelled_ada_is_an_ada_line_not_a_check(): void
