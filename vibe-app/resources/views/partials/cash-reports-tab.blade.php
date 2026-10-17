@@ -24,16 +24,12 @@
             <label class="{{ $label }}">To<input type="date" name="to" value="{{ $reportTo->toDateString() }}" class="{{ $box }}"></label>
             <div class="flex items-end"><button class="rounded-lg border border-primary bg-white px-4 py-2 text-xs font-bold text-primary hover:bg-primary hover:text-white">Apply period</button></div>
         </form>
-        <div class="grid gap-4 border-t border-outline-variant/40 p-5 md:grid-cols-2">
-            <label class="{{ $label }}">Report No. <span class="font-normal normal-case tracking-normal">(printed on the form)</span><input id="cash-report-no" maxlength="50" class="{{ $box }}"></label>
-            <label class="{{ $label }}">Sheet No. <span class="font-normal normal-case tracking-normal">(printed on the form)</span><input id="cash-sheet-no" maxlength="50" placeholder="1 of 1" class="{{ $box }}"></label>
-        </div>
         <div class="grid gap-4 border-t border-outline-variant/40 p-5 md:grid-cols-3">
             @foreach($reportLinks as [$routeName, $title, $hint, $icon])
-                <a href="{{ route($routeName, ['school_id' => $reportSchool->id, 'from' => $reportFrom->toDateString(), 'to' => $reportTo->toDateString()]) }}" target="_blank" rel="noopener" data-cash-report-link class="group flex items-start gap-3 rounded-xl border border-outline-variant/50 border-l-4 border-l-primary bg-white p-4 shadow-sm transition hover:bg-[#eef4fa]">
+                <button type="button" data-cash-report-open data-url="{{ route($routeName, ['school_id' => $reportSchool->id, 'from' => $reportFrom->toDateString(), 'to' => $reportTo->toDateString()]) }}" data-title="{{ $title }}" class="group flex items-start gap-3 rounded-xl border border-outline-variant/50 border-l-4 border-l-primary bg-white p-4 text-left shadow-sm transition hover:bg-[#eef4fa]">
                     <span class="material-symbols-outlined text-[24px] text-primary" aria-hidden="true">{{ $icon }}</span>
                     <span><span class="block text-sm font-bold text-primary">{{ $title }}</span><span class="mt-1 block text-xs text-on-surface-variant">{{ $hint }}</span></span>
-                </a>
+                </button>
             @endforeach
         </div>
     </section>
@@ -93,16 +89,78 @@
     </section>
     @endif
 </div>
+@if($reportSchool)
+<div id="cash-report-modal" role="dialog" aria-modal="true" aria-labelledby="cash-report-title" class="fixed inset-0 z-[80] hidden items-center justify-center bg-black/50 p-3 md:left-60">
+    <div class="flex max-h-[96vh] w-full max-w-[1500px] flex-col overflow-hidden rounded bg-white shadow-2xl">
+        <div class="flex shrink-0 items-center justify-between border-b border-outline-variant/30 bg-white px-5 py-4">
+            <div><p class="text-xs font-semibold uppercase tracking-wider text-primary">Cash Report</p><h2 id="cash-report-title" class="mt-1 text-lg font-semibold"></h2></div>
+            <button type="button" id="cash-report-close" aria-label="Close report form" class="rounded p-2 hover:bg-primary hover:text-white"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div class="flex min-h-0 flex-1 flex-col-reverse lg:flex-row-reverse">
+            <aside class="flex min-w-0 flex-[1_1_60%] flex-col border-l border-outline-variant/40 bg-[#d9dee5]">
+                <div class="flex items-center justify-between border-b border-outline-variant/40 bg-white px-4 py-2 text-xs font-bold text-primary"><span>Report (updates as you edit)</span><small id="cash-report-status" class="font-normal text-on-surface-variant"></small></div>
+                <iframe id="cash-report-frame" title="Cash report preview" class="min-h-[60vh] w-full flex-1 border-0 bg-[#d9dee5]"></iframe>
+            </aside>
+            <div class="overflow-y-auto p-5 lg:flex-[0_0_min(34%,420px)]">
+                <div class="space-y-4">
+                    <p class="text-xs text-on-surface-variant">{{ $reportSchool->name }} · {{ $reportFrom->format('M d, Y') }} to {{ $reportTo->format('M d, Y') }}</p>
+                    <label class="{{ $label }}">Report No. <span class="font-normal normal-case tracking-normal">(printed on the form)</span><input id="cash-report-no" maxlength="50" class="{{ $box }}"></label>
+                    <label class="{{ $label }}">Sheet No. <span class="font-normal normal-case tracking-normal">(printed on the form)</span><input id="cash-sheet-no" maxlength="50" placeholder="1 of 1" class="{{ $box }}"></label>
+                    <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-4">
+                        <button type="button" id="cash-report-cancel" class="rounded border border-outline-variant/50 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Close</button>
+                        <a id="cash-report-open" href="#" target="_blank" rel="noopener" class="rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Open to print</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 <script>
     document.querySelectorAll('[data-edit-receipt]').forEach((button) => button.addEventListener('click', () => document.getElementById('edit-receipt-' + button.dataset.editReceipt)?.classList.toggle('hidden')));
     document.querySelectorAll('[data-cancel-receipt]').forEach((button) => button.addEventListener('click', () => document.getElementById('edit-receipt-' + button.dataset.cancelReceipt)?.classList.add('hidden')));
-    // The Report No. and Sheet No. typed here travel with the report link.
-    document.querySelectorAll('[data-cash-report-link]').forEach((link) => link.addEventListener('click', () => {
-        const url = new URL(link.getAttribute('href'), window.location.origin);
-        const reportNo = document.getElementById('cash-report-no')?.value.trim();
-        const sheetNo = document.getElementById('cash-sheet-no')?.value.trim();
-        reportNo ? url.searchParams.set('report_no', reportNo) : url.searchParams.delete('report_no');
-        sheetNo ? url.searchParams.set('sheet_no', sheetNo) : url.searchParams.delete('sheet_no');
-        link.setAttribute('href', url.pathname + url.search);
-    }));
+    // Each report opens as a split view: Report No. and Sheet No. on the left, the real report on the right.
+    (() => {
+        const modal = document.getElementById('cash-report-modal');
+        if (!modal) return;
+        const frame = document.getElementById('cash-report-frame');
+        const status = document.getElementById('cash-report-status');
+        const reportNo = document.getElementById('cash-report-no');
+        const sheetNo = document.getElementById('cash-sheet-no');
+        const printLink = document.getElementById('cash-report-open');
+        const hideChrome = '<style>.official-toolbar{display:none!important}body{background:#d9dee5!important}</style>';
+        let baseUrl = ''; let timer = null; let controller = null;
+        const urlWithNumbers = () => {
+            const url = new URL(baseUrl, window.location.origin);
+            reportNo.value.trim() ? url.searchParams.set('report_no', reportNo.value.trim()) : url.searchParams.delete('report_no');
+            sheetNo.value.trim() ? url.searchParams.set('sheet_no', sheetNo.value.trim()) : url.searchParams.delete('sheet_no');
+            return url.pathname + url.search;
+        };
+        const refresh = async () => {
+            if (modal.classList.contains('hidden')) return;
+            if (controller) controller.abort();
+            controller = new AbortController();
+            const target = urlWithNumbers();
+            printLink.setAttribute('href', target);
+            status.textContent = 'Updating preview...';
+            try {
+                const response = await fetch(target, { signal: controller.signal, headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' } });
+                const html = await response.text();
+                frame.srcdoc = /<head[^>]*>/i.test(html) ? html.replace(/(<head[^>]*>)/i, '$1' + hideChrome) : hideChrome + html;
+                status.textContent = response.ok ? 'Updates as you type' : 'Preview unavailable (HTTP ' + response.status + ')';
+            } catch (error) { if (error.name !== 'AbortError') status.textContent = 'Preview unavailable. Reopen the report to retry'; }
+        };
+        const close = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); };
+        document.querySelectorAll('[data-cash-report-open]').forEach((button) => button.addEventListener('click', () => {
+            baseUrl = button.dataset.url;
+            document.getElementById('cash-report-title').textContent = button.dataset.title;
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+            refresh();
+        }));
+        [reportNo, sheetNo].forEach((input) => input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(refresh, 600); }));
+        document.getElementById('cash-report-close').addEventListener('click', close);
+        document.getElementById('cash-report-cancel').addEventListener('click', close);
+        modal.addEventListener('click', (event) => { if (event.target === modal) close(); });
+        document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !modal.classList.contains('hidden')) close(); });
+    })();
 </script>
