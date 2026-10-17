@@ -94,8 +94,8 @@ class CashReportPrintTest extends TestCase
         $chosen = SchoolStaff::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'name' => 'Maria Santos', 'position' => 'Cashier']);
         $foreign = SchoolStaff::create(['organization_id' => $otherSchool->organization_id, 'school_id' => $otherSchool->id, 'name' => 'Pedro Outsider', 'position' => 'Clerk']);
 
-        $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school, ['fund_cluster' => 'Trust Fund', 'bank' => 'DBP 123', 'remarks' => 'For audit', 'officer_id' => $chosen->id, 'received_by_id' => $foreign->id])))->assertOk()
-            ->assertSee('Trust Fund')->assertSee('DBP 123')->assertSee('For audit')->assertSee('MARIA SANTOS')->assertDontSee('BABY JOY I. CARBONELL')->assertDontSee('PEDRO OUTSIDER');
+        $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school, ['fund_cluster' => 'Trust Fund', 'bank_name' => 'DBP', 'bank_account' => '123-456', 'remarks' => 'For audit', 'officer_id' => $chosen->id, 'received_by_id' => $foreign->id])))->assertOk()
+            ->assertSee('Trust Fund')->assertSee('DBP / 123-456')->assertSee('For audit')->assertSee('MARIA SANTOS')->assertDontSee('BABY JOY I. CARBONELL')->assertDontSee('PEDRO OUTSIDER');
     }
 
     public function test_the_bank_reconciliation_runs_the_balance_and_compares_with_the_statement(): void
@@ -125,7 +125,6 @@ class CashReportPrintTest extends TestCase
         $html = $this->actingAs($user)->get(route('cash.report.roci', $this->periodQuery($school)))->assertOk()->getContent();
         $this->assertStringContainsString(now()->format('Y-m').'-001', $html);
         $this->assertStringContainsString('data-sheet-no', $html);
-        $this->assertStringContainsString('class="info-tight"', $html);
 
         $this->actingAs($user)->get(route('cash.report.roci', $this->periodQuery($school, ['report_no' => '2026-10-007', 'sheet_no' => '2 of 3'])))->assertOk()->assertSee('2026-10-007')->assertSee('2 of 3');
     }

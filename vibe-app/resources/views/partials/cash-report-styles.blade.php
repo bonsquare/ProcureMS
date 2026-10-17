@@ -19,11 +19,21 @@
     table.info td { padding: 2px 4px; vertical-align: top; overflow-wrap: break-word; }
     table.info td.label { width: 17%; font-weight: bold; }
     table.info td.value { font-weight: bold; text-transform: uppercase; }
-    .info-tight { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 28px; margin: 4px 0; }
-    .info-tight .field { display: flex; align-items: baseline; gap: 6px; min-height: 1.3em; }
-    .info-tight .label { font-weight: bold; white-space: nowrap; }
-    .info-tight .value { flex: 1; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #222; padding: 0 4px; min-height: 1.2em; }
-    .info-tight .field:empty { display: block; }
+    .masthead-compact { width: 640px; max-width: 100%; margin-left: auto; margin-right: auto; }
+    table.info.compact td.label { width: 11%; white-space: nowrap; }
+    table.info.compact tr:first-child td:nth-child(2) { width: 56%; }
+    table.info.compact tr:first-child td:nth-child(3) { width: 12%; }
+    table.info.compact td.label:nth-child(3) { text-align: right; padding-right: 6px; }
+    table.info.compact td.value.underlined, table.info.compact td.bank-line .value { text-decoration: underline; text-underline-offset: 2px; }
+    .signature-row { display: flex; align-items: flex-end; justify-content: flex-end; gap: 16px; margin: 26px 0 0 auto; width: 100%; break-inside: avoid; }
+    .signature-row .signature { margin: 0; }
+    .signature-row .date { white-space: nowrap; padding-bottom: 2px; }
+    .signature.short { width: 340px; }
+    .signature.short .name { display: inline-block; padding: 0 14px 3px; }
+    table.info.compact td.bank-line { white-space: normal; }
+    table.info.compact td.bank-line .label, table.info.compact td.bank-line .value { font-weight: bold; }
+    table.info.compact td.bank-line .value { text-transform: uppercase; }
+    table.info.compact td.bank-line .label { display: inline; }
     table.report th, table.report td { border: 1px solid #222; padding: 3px 4px; vertical-align: top; overflow-wrap: break-word; }
     table.report th { text-align: center; font-weight: bold; vertical-align: middle; }
     table.report td.num { text-align: right; white-space: nowrap; }
@@ -33,7 +43,8 @@
     .certify { border: 1px solid #222; border-top: 0; padding: 8px 10px; text-align: justify; }
     .certify h2 { margin: 0 0 6px; text-align: center; font-size: 11px; letter-spacing: 3px; }
     .signature { margin: 26px 0 0 auto; width: 45%; text-align: center; }
-    .signature .name { font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #222; padding: 0 6px; }
+    .signature .name { font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #222; padding: 0 6px 3px; }
+    .signature .date.centered { text-align: center; }
     .signature .role { margin-top: 2px; }
     .signature .date { margin-top: 10px; text-align: left; }
     .sign-row { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 14px; }

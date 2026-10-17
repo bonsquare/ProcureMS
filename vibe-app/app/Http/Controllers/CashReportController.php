@@ -93,7 +93,7 @@ class CashReportController extends Controller
     /**
      * The school, the period and the numbers typed on a report page; refuses a school the user may not report on.
      *
-     * @return array{school: School, from: Carbon, to: Carbon, report_no: string, sheet_no: string, fund_cluster: string, bank: string, remarks: string, officer_id: ?int, received_by_id: ?int, statement_balance: ?float, outstanding_checks: float}
+     * @return array{school: School, from: Carbon, to: Carbon, report_no: string, sheet_no: string, fund_cluster: string, bank_name: string, bank_account: string, remarks: string, officer_id: ?int, received_by_id: ?int, statement_balance: ?float, outstanding_checks: float}
      */
     private function reportContext(Request $request): array
     {
@@ -104,7 +104,8 @@ class CashReportController extends Controller
             'report_no' => ['nullable', 'string', 'max:50'],
             'sheet_no' => ['nullable', 'string', 'max:50'],
             'fund_cluster' => ['nullable', 'string', 'max:100'],
-            'bank' => ['nullable', 'string', 'max:150'],
+            'bank_name' => ['nullable', 'string', 'max:100'],
+            'bank_account' => ['nullable', 'string', 'max:60'],
             'remarks' => ['nullable', 'string', 'max:500'],
             'officer_id' => ['nullable', 'integer'],
             'received_by_id' => ['nullable', 'integer'],
@@ -120,7 +121,8 @@ class CashReportController extends Controller
             'report_no' => (string) ($data['report_no'] ?? ''),
             'sheet_no' => (string) ($data['sheet_no'] ?? ''),
             'fund_cluster' => (string) ($data['fund_cluster'] ?? ''),
-            'bank' => (string) ($data['bank'] ?? ''),
+            'bank_name' => (string) ($data['bank_name'] ?? ''),
+            'bank_account' => (string) ($data['bank_account'] ?? ''),
             'remarks' => (string) ($data['remarks'] ?? ''),
             'officer_id' => $data['officer_id'] ?? null,
             'received_by_id' => $data['received_by_id'] ?? null,
@@ -139,7 +141,9 @@ class CashReportController extends Controller
         $context = $this->reportContext($request);
         $school = $context['school'];
         $latestPayment = LiquidationReport::query()->where('school_id', $school->id)->whereNotNull('paid_at')->latest('paid_at')->first();
-        $bank = trim(($school->bank_name ?: $latestPayment?->bank_name).' / '.($school->bank_account_number ?: $latestPayment?->bank_account_number), ' /');
+        $bankName = $context['bank_name'] !== '' ? $context['bank_name'] : (string) ($school->bank_name ?: $latestPayment?->bank_name);
+        $bankAccount = $context['bank_account'] !== '' ? $context['bank_account'] : (string) ($school->bank_account_number ?: $latestPayment?->bank_account_number);
+        $bank = trim($bankName.' / '.$bankAccount, ' /');
 
         $staffOf = fn (?int $id) => $id ? SchoolStaff::active()->where('school_id', $school->id)->find($id) : null;
 
@@ -148,7 +152,9 @@ class CashReportController extends Controller
             'agency' => AgencySetting::withoutGlobalScopes()->where('organization_id', $school->organization_id)->first(),
             'officer' => $staffOf($context['officer_id']) ?? SchoolStaff::active()->where('school_id', $school->id)->get()->first(fn (SchoolStaff $staff) => $staff->hasRole('document_role', 'Disbursing Officer')),
             'receivedBy' => $staffOf($context['received_by_id']),
-            'bank' => $context['bank'] !== '' ? $context['bank'] : $bank,
+            'bank' => $bank,
+            'bankName' => $bankName,
+            'bankAccount' => $bankAccount,
             'fundCluster' => $context['fund_cluster'] !== '' ? $context['fund_cluster'] : ($latestPayment?->payment_fund_cluster ?: 'General Fund'),
             'remarks' => $context['remarks'],
             'statementBalance' => $context['statement_balance'],

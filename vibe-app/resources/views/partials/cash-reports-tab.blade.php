@@ -45,6 +45,7 @@
                         <h3 class="text-[11px] font-bold uppercase tracking-wider text-primary">School and period</h3>
                         <div class="mt-3 grid gap-3 sm:grid-cols-2">
                             <label class="{{ $label }} sm:col-span-2">School<select id="cash-report-school" class="{{ $box }}">@foreach($reportSchools as $option)<option value="{{ $option->id }}" @selected($option->id === $reportSchool->id)>{{ $option->name }}</option>@endforeach</select></label>
+                            <label class="{{ $label }} sm:col-span-2">Period covered<select id="cash-report-quarter" data-native class="{{ $box }}"></select></label>
                             <label class="{{ $label }}">From<input type="date" id="cash-report-from" value="{{ $reportFrom->toDateString() }}" class="{{ $box }}"></label>
                             <label class="{{ $label }}">To<input type="date" id="cash-report-to" value="{{ $reportTo->toDateString() }}" class="{{ $box }}"></label>
                         </div>
@@ -54,8 +55,11 @@
                         <div class="mt-3 grid gap-3 sm:grid-cols-2">
                             <label class="{{ $label }}">Report No.<input id="cash-report-no" maxlength="50" class="{{ $box }}"></label>
                             <label class="{{ $label }}">Sheet No.<input id="cash-sheet-no" maxlength="50" placeholder="1 of 1" class="{{ $box }}"></label>
-                            <label class="{{ $label }}">Fund Cluster<input id="cash-report-cluster" maxlength="100" placeholder="Default from the last payment" class="{{ $box }}"></label>
-                            <label class="{{ $label }}">Bank Name / Account No.<input id="cash-report-bank" maxlength="150" placeholder="Default from School Settings" class="{{ $box }}"></label>
+                            <label class="{{ $label }} sm:col-span-2">Fund Cluster<input id="cash-report-cluster" maxlength="100" class="{{ $box }}"></label>
+                            <div class="grid gap-3 sm:col-span-2 sm:grid-cols-[3fr_2fr]">
+                                <label class="{{ $label }}">Bank Name<input id="cash-report-bank-name" maxlength="100" class="{{ $box }}"></label>
+                                <label class="{{ $label }}">Bank Account No.<input id="cash-report-bank-account" maxlength="60" class="{{ $box }}"></label>
+                            </div>
                         </div>
                     </section>
                     <section class="rounded-xl border border-outline-variant/50 p-4">
@@ -113,9 +117,39 @@
         const printLink = document.getElementById('cash-report-open');
         const field = (id) => document.getElementById(id);
         const staffBySchool = @json($reportStaff);
+        const bankDefaults = @json($reportBankDefaults);
         const slotBox = field('cash-report-slots');
         const hideChrome = '<style>.official-toolbar{display:none!important}body{background:#d9dee5!important}</style>';
         let baseUrl = ''; let timer = null; let controller = null;
+        // Fund Cluster, Bank Name and Bank Account No. start from the school's settings (and its last payment); a value the user typed is kept.
+        const defaultFields = { 'cash-report-cluster': 'fund_cluster', 'cash-report-bank-name': 'bank_name', 'cash-report-bank-account': 'bank_account' };
+        const fillDefaults = () => {
+            const defaults = bankDefaults[field('cash-report-school').value] || {};
+            Object.entries(defaultFields).forEach(([id, key]) => { if (!field(id).dataset.typed) field(id).value = defaults[key] || ''; });
+        };
+        Object.keys(defaultFields).forEach((id) => field(id).addEventListener('input', () => { field(id).dataset.typed = '1'; }));
+        // Period covered: a quarter of the calendar year of the From date fills From and To; typed dates that make a whole quarter pick it, anything else is Custom.
+        const quarterSelect = field('cash-report-quarter');
+        const quarterNames = ['1st', '2nd', '3rd', '4th'];
+        const pad = (number) => String(number).padStart(2, '0');
+        const quarterDates = (year, quarter) => [year + '-' + pad(quarter * 3 + 1) + '-01', year + '-' + pad(quarter * 3 + 3) + '-' + (quarter === 0 || quarter === 3 ? '31' : '30')];
+        const syncQuarter = () => {
+            const year = parseInt((field('cash-report-from').value || '').slice(0, 4), 10) || new Date().getFullYear();
+            quarterSelect.innerHTML = '';
+            quarterNames.forEach((name, quarter) => quarterSelect.add(new Option(name + ' Quarter C.Y. ' + year, quarter)));
+            quarterSelect.add(new Option('Custom dates', 'custom'));
+            const match = [0, 1, 2, 3].find((quarter) => { const [from, to] = quarterDates(year, quarter); return field('cash-report-from').value === from && field('cash-report-to').value === to; });
+            quarterSelect.value = match === undefined ? 'custom' : String(match);
+        };
+        quarterSelect.addEventListener('change', () => {
+            if (quarterSelect.value === 'custom') return;
+            const year = parseInt((field('cash-report-from').value || '').slice(0, 4), 10) || new Date().getFullYear();
+            [field('cash-report-from').value, field('cash-report-to').value] = quarterDates(year, parseInt(quarterSelect.value, 10));
+            if (!modal.querySelector('[data-bank-only]').classList.contains('hidden')) loadFund();
+            schedule();
+        });
+        ['cash-report-from', 'cash-report-to'].forEach((id) => field(id).addEventListener('input', syncQuarter));
+        syncQuarter();
         const schedule = () => { clearTimeout(timer); timer = setTimeout(() => refresh(), 600); };
         const buildSlots = () => {
             const kept = {};
@@ -145,7 +179,8 @@
             set('report_no', field('cash-report-no').value.trim());
             set('sheet_no', field('cash-sheet-no').value.trim());
             set('fund_cluster', field('cash-report-cluster').value.trim());
-            set('bank', field('cash-report-bank').value.trim());
+            set('bank_name', field('cash-report-bank-name').value.trim());
+            set('bank_account', field('cash-report-bank-account').value.trim());
             set('remarks', field('cash-report-remarks').value.trim());
             ['officer_id', 'received_by_id'].forEach((name) => set(name, slotBox.querySelector('[data-slot="' + name + '"]')?.value || ''));
             return url.pathname + url.search;
@@ -245,12 +280,13 @@
             field('cash-report-no').placeholder = button.dataset.reportNo || '';
             toggleBank(button.dataset.bank === '1');
             buildSlots();
+            fillDefaults();
             document.getElementById('cash-report-title').textContent = button.dataset.title;
             modal.classList.remove('hidden'); modal.classList.add('flex');
             refresh();
         }));
-        field('cash-report-school').addEventListener('change', () => { buildSlots(); schedule(); });
-        ['cash-report-statement', 'cash-report-outstanding', 'cash-report-from', 'cash-report-to', 'cash-report-no', 'cash-sheet-no', 'cash-report-cluster', 'cash-report-bank', 'cash-report-remarks'].forEach((id) => field(id).addEventListener('input', schedule));
+        field('cash-report-school').addEventListener('change', () => { buildSlots(); fillDefaults(); schedule(); });
+        ['cash-report-statement', 'cash-report-outstanding', 'cash-report-from', 'cash-report-to', 'cash-report-no', 'cash-sheet-no', 'cash-report-cluster', 'cash-report-bank-name', 'cash-report-bank-account', 'cash-report-remarks'].forEach((id) => field(id).addEventListener('input', schedule));
         document.getElementById('cash-report-close').addEventListener('click', close);
         document.getElementById('cash-report-cancel').addEventListener('click', close);
         modal.addEventListener('click', (event) => { if (event.target === modal) close(); });

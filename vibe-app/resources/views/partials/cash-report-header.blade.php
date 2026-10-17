@@ -7,7 +7,8 @@
     [$leftLogo, $rightLogo] = \App\Support\OfficialDocument::logos($school, $agency);
     $officer = $report['officer'];
 @endphp
-<header class="masthead">
+@if(! empty($appendix))<div class="appendix">{{ $appendix }}</div>@endif
+<header class="masthead{{ ! empty($compact) ? ' masthead-compact' : '' }}">
     <div class="masthead-logo masthead-logo-left">@if($leftLogo)<img class="official-logo" src="{{ $leftLogo }}" alt="" onerror="this.remove()">@endif</div>
     <div>
         <div>Republic of the Philippines</div>
@@ -17,28 +18,15 @@
     </div>
     <div class="masthead-logo masthead-logo-right">@if($rightLogo)<img class="official-logo" src="{{ $rightLogo }}" alt="" onerror="this.remove()">@endif</div>
 </header>
-@if(! empty($appendix))<div class="appendix">{{ $appendix }}</div>@endif
 <div class="doc-title">
     <h1>{{ $title }}</h1>
     <p>Period Covered: {{ $report['period'] }}</p>
 </div>
-@if(! empty($tight))
-@php $sheetText = $report['sheetNo'] !== '' ? $report['sheetNo'] : null; @endphp
-<div class="info-tight">
-    <div class="field"><span class="label">Entity Name:</span><span class="value">{{ $school->name }}</span></div>
-    <div class="field"><span class="label">Report No.:</span><span class="value">{{ $report['reportNo'] }}</span></div>
-    <div class="field"><span class="label">Fund Cluster:</span><span class="value">{{ $report['fundCluster'] }}</span></div>
-    <div class="field"><span class="label">Sheet No.:</span><span class="value">@if($sheetText){{ $sheetText }}@else<span data-sheet-no>1 of 1</span>@endif</span></div>
-    <div class="field"><span class="label">Bank Name / Account No.:</span><span class="value">{{ $report['bank'] }}</span></div>
-    <div class="field"></div>
-</div>
-@else
-<table class="info">
-    <tr><td class="label">Entity Name:</td><td class="value">{{ $school->name }}</td><td class="label" style="width:20%">Report No.:</td><td class="value">{{ $report['reportNo'] }}</td></tr>
-    <tr><td class="label">Fund Cluster:</td><td class="value">{{ $report['fundCluster'] }}</td><td class="label">Sheet No.:</td><td class="value">{{ $report['sheetNo'] }}</td></tr>
-    <tr><td class="label">Bank Name / Account No.:</td><td class="value">{{ $report['bank'] }}</td>@if(! empty($showOfficer))<td class="label">Accountable Officer:</td><td class="value">{{ $officer?->name }}</td>@else<td></td><td></td>@endif</tr>
+<table class="info{{ ! empty($compact) ? ' compact' : '' }}">
+    <tr><td class="label">Entity Name:</td><td class="value underlined">{{ $school->name }}</td><td class="label" @if(empty($compact)) style="width:20%" @endif>Report No.:</td><td class="value underlined">{{ $report['reportNo'] }}</td></tr>
+    <tr><td class="label">Fund Cluster:</td><td class="value underlined">{{ $report['fundCluster'] }}</td><td class="label">Sheet No.:</td><td class="value underlined">@if($report['sheetNo'] === '' && ! empty($autoSheet))<span data-sheet-no>1 of 1</span>@else{{ $report['sheetNo'] }}@endif</td></tr>
+    <tr>@if(! empty($compact))<td colspan="2" class="bank-line"><span class="label">Bank Name / Account No.:</span> <span class="value">{{ $report['bank'] }}</span></td>@else<td class="label">Bank Name / Account No.:</td><td class="value">{{ $report['bank'] }}</td>@endif @if(! empty($showOfficer))<td class="label">Accountable Officer:</td><td class="value">{{ $officer?->name }}</td>@else<td></td><td></td>@endif</tr>
     @if(! empty($showOfficer))
     <tr><td class="label">Station:</td><td class="value">{{ $school->name }}</td><td class="label">Official Designation:</td><td class="value">{{ $officer?->position }}</td></tr>
     @endif
 </table>
-@endif

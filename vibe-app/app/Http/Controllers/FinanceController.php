@@ -148,6 +148,15 @@ class FinanceController extends Controller
             'reportSchool' => $school,
             'reportFrom' => $from,
             'reportTo' => $to,
+            'reportBankDefaults' => $schools->mapWithKeys(function (School $each) {
+                $latestPayment = LiquidationReport::query()->where('school_id', $each->id)->whereNotNull('paid_at')->latest('paid_at')->first();
+
+                return [$each->id => [
+                    'bank_name' => (string) ($each->bank_name ?: $latestPayment?->bank_name),
+                    'bank_account' => (string) ($each->bank_account_number ?: $latestPayment?->bank_account_number),
+                    'fund_cluster' => (string) ($latestPayment?->payment_fund_cluster ?: 'General Fund'),
+                ]];
+            }),
             'reportStaff' => SchoolStaff::active()->whereIn('school_id', $schools->pluck('id'))->orderBy('name')->get(['id', 'school_id', 'name', 'position'])->groupBy('school_id')->map(fn ($members) => $members->map(fn ($member) => ['id' => $member->id, 'label' => $member->name.($member->position ? ' - '.$member->position : '')])->values()),
             'fundReceipts' => $school ? CashFundReceipt::query()->where('school_id', $school->id)->orderByDesc('received_at')->orderByDesc('id')->limit(50)->get() : collect(),
         ];
