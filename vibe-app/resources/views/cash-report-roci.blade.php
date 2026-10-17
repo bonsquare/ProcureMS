@@ -19,7 +19,7 @@
 @include('partials.official-toolbar', ['closeUrl' => route('cash', ['tab' => 'reports', 'school_id' => $report['school']->id]), 'context' => 'Report of Checks Issued · '.$report['period']])
 
 <main class="paper" data-official-page data-sheets data-doc="cash-roci" data-paper="longbond" data-orientation="landscape" data-margin="10">
-    @include('partials.cash-report-header', ['title' => 'REPORT OF CHECKS ISSUED', 'appendix' => 'Appendix 35'])
+    @include('partials.cash-report-header', ['title' => 'REPORT OF CHECKS ISSUED', 'appendix' => 'Appendix 35', 'tight' => true])
 
     <table class="report" data-paginate>
         <colgroup><col style="width:8%"><col style="width:10%"><col style="width:11%"><col style="width:11%"><col style="width:10%"><col style="width:17%"><col style="width:10%"><col style="width:13%"><col style="width:10%"></colgroup>
@@ -51,7 +51,7 @@
 
     <div class="certify">
         <h2>C E R T I F I C A T I O N</h2>
-        <p>I hereby certify on my official oath that this Report of Checks Issued in ____ sheet(s) is a full, true and correct statement of all checks issued by me during the period stated above for which Check Nos. <strong>{{ $checkNos->first() ?? '__________' }}</strong> to <strong>{{ $checkNos->last() ?? '__________' }}</strong> inclusive, were actually issued by me in payment for obligation shown in the attached disbursement vouchers / payroll.</p>
+        <p>I hereby certify on my official oath that this Report of Checks Issued in <strong data-sheet-total>1</strong> sheet(s) is a full, true and correct statement of all checks issued by me during the period stated above for which Check Nos. <strong>{{ $checkNos->first() ?? '__________' }}</strong> to <strong>{{ $checkNos->last() ?? '__________' }}</strong> inclusive, were actually issued by me in payment for obligation shown in the attached disbursement vouchers / payroll.</p>
         <div class="signature">
             <div class="name">{{ mb_strtoupper($report['officer']?->name ?? '') }}&nbsp;</div>
             <div class="role">Name and Signature of Disbursing Officer / Cashier</div>
@@ -59,5 +59,23 @@
         </div>
     </div>
 </main>
+<script>
+    // Sheet No. is "1 of N" and the certification names N, where N is the number of printed pages the table runs to.
+    (function () {
+        function update() {
+            var page = document.querySelector('[data-official-page]');
+            var total = page ? Math.max(1, page.querySelectorAll(':scope > .doc-page').length) : 1;
+            document.querySelectorAll('[data-sheet-no]').forEach(function (element) { element.textContent = '1 of ' + total; });
+            document.querySelectorAll('[data-sheet-total]').forEach(function (element) { element.textContent = total; });
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            var page = document.querySelector('[data-official-page]');
+            if (page) { new MutationObserver(update).observe(page, { childList: true }); }
+            window.addEventListener('beforeprint', update);
+            window.addEventListener('load', function () { setTimeout(update, 50); });
+            update();
+        });
+    })();
+</script>
 </body>
 </html>

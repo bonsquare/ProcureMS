@@ -10,6 +10,7 @@ use App\Models\School;
 use App\Models\SchoolStaff;
 use App\Services\CashReportService;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -40,13 +41,17 @@ class CashReportController extends Controller
             'note' => ['nullable', 'string', 'max:255'],
         ]);
         abort_unless($this->schoolIds()->contains((int) $data['school_id']), 403);
-        $data['fund_cluster'] = $data['fund_cluster'] ?: 'General Fund';
+        $data['fund_cluster'] = (($data['fund_cluster'] ?? null) ?: 'General Fund');
 
         return $data;
     }
 
-    private function back(int $schoolId, string $message): RedirectResponse
+    private function back(int $schoolId, string $message): RedirectResponse|JsonResponse
     {
+        if (request()->expectsJson()) {
+            return response()->json(['message' => $message]);
+        }
+
         return redirect()->route('cash', ['tab' => 'reports', 'school_id' => $schoolId])->with('success', $message);
     }
 
@@ -55,7 +60,7 @@ class CashReportController extends Controller
         AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $receipt->school_id, 'action' => $action, 'auditable_type' => CashFundReceipt::class, 'auditable_id' => $receipt->id, 'metadata' => ['kind' => $receipt->kind, 'amount' => $receipt->amount, 'received_at' => $receipt->received_at?->toDateString()]]);
     }
 
-    public function storeReceipt(Request $request): RedirectResponse
+    public function storeReceipt(Request $request): RedirectResponse|JsonResponse
     {
         $data = $this->validatedReceipt($request);
         $school = School::findOrFail($data['school_id']);
@@ -65,7 +70,7 @@ class CashReportController extends Controller
         return $this->back($receipt->school_id, 'The fund received was recorded.');
     }
 
-    public function updateReceipt(Request $request, CashFundReceipt $cashFundReceipt): RedirectResponse
+    public function updateReceipt(Request $request, CashFundReceipt $cashFundReceipt): RedirectResponse|JsonResponse
     {
         abort_unless($this->schoolIds()->contains($cashFundReceipt->school_id), 403);
         $data = $this->validatedReceipt($request);
@@ -76,7 +81,7 @@ class CashReportController extends Controller
         return $this->back($cashFundReceipt->school_id, 'The fund received was updated.');
     }
 
-    public function destroyReceipt(Request $request, CashFundReceipt $cashFundReceipt): RedirectResponse
+    public function destroyReceipt(Request $request, CashFundReceipt $cashFundReceipt): RedirectResponse|JsonResponse
     {
         abort_unless($this->schoolIds()->contains($cashFundReceipt->school_id), 403);
         $this->audit($request, 'cash_fund_deleted', $cashFundReceipt);
@@ -88,7 +93,7 @@ class CashReportController extends Controller
     /**
      * The school, the period and the numbers typed on a report page; refuses a school the user may not report on.
      *
-     * @return array{school: School, from: Carbon, to: Carbon, report_no: string, sheet_no: string, fund_cluster: string, bank: string, remarks: string, officer_id: ?int, received_by_id: ?int}
+     * @return array{school: School, from: Carbon, to: Carbon, report_no: string, sheet_no: string, fund_cluster: string, bank: string, remarks: string, officer_id: ?int, received_by_id: ?int, statement_balance: ?float, outstanding_checks: float}
      */
     private function reportContext(Request $request): array
     {
@@ -103,6 +108,8 @@ class CashReportController extends Controller
             'remarks' => ['nullable', 'string', 'max:500'],
             'officer_id' => ['nullable', 'integer'],
             'received_by_id' => ['nullable', 'integer'],
+            'statement_balance' => ['nullable', 'numeric', 'min:-999999999999', 'max:999999999999'],
+            'outstanding_checks' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
         ]);
         abort_unless($this->schoolIds()->contains((int) $data['school_id']), 403);
 
@@ -117,6 +124,8 @@ class CashReportController extends Controller
             'remarks' => (string) ($data['remarks'] ?? ''),
             'officer_id' => $data['officer_id'] ?? null,
             'received_by_id' => $data['received_by_id'] ?? null,
+            'statement_balance' => isset($data['statement_balance']) ? (float) $data['statement_balance'] : null,
+            'outstanding_checks' => (float) ($data['outstanding_checks'] ?? 0),
         ];
     }
 
@@ -142,6 +151,8 @@ class CashReportController extends Controller
             'bank' => $context['bank'] !== '' ? $context['bank'] : $bank,
             'fundCluster' => $context['fund_cluster'] !== '' ? $context['fund_cluster'] : ($latestPayment?->payment_fund_cluster ?: 'General Fund'),
             'remarks' => $context['remarks'],
+            'statementBalance' => $context['statement_balance'],
+            'outstandingChecks' => $context['outstanding_checks'],
             'from' => $context['from'],
             'to' => $context['to'],
             'period' => $this->periodText($context['from'], $context['to']),
@@ -163,7 +174,13 @@ class CashReportController extends Controller
 
     public function roci(Request $request)
     {
-        return view('cash-report-roci', ['report' => $this->reportViewData($request)]);
+        $report = $this->reportViewData($request);
+        // Report No. is the year and month of the day the report is made, then the sequence: 2026-10-001. A number typed in the window replaces it.
+        if ($report['reportNo'] === '') {
+            $report['reportNo'] = now()->format('Y-m').'-001';
+        }
+
+        return view('cash-report-roci', ['report' => $report]);
     }
 
     public function checksAdvices(Request $request)
@@ -174,5 +191,26 @@ class CashReportController extends Controller
     public function register(Request $request)
     {
         return view('cash-report-register', ['report' => $this->reportViewData($request)]);
+    }
+
+    public function bank(Request $request)
+    {
+        return view('cash-report-bank-recon', ['report' => $this->reportViewData($request)]);
+    }
+
+    /** The downloaded cash (fund received) of a school in a period, for the Bank Reconciliation window. */
+    public function receipts(Request $request): JsonResponse
+    {
+        $data = $request->validate(['school_id' => ['required', 'integer'], 'from' => ['required', 'date'], 'to' => ['required', 'date', 'after_or_equal:from']]);
+        abort_unless($this->schoolIds()->contains((int) $data['school_id']), 403);
+
+        return response()->json(CashFundReceipt::query()->where('school_id', $data['school_id'])
+            ->whereBetween('received_at', [Carbon::parse($data['from'])->startOfDay(), Carbon::parse($data['to'])->endOfDay()])
+            ->orderBy('received_at')->orderBy('id')->get()
+            ->map(fn (CashFundReceipt $receipt) => [
+                'id' => $receipt->id, 'received_at' => $receipt->received_at->toDateString(), 'date_label' => $receipt->received_at->format('M d, Y'),
+                'kind' => $receipt->kind, 'kind_label' => $receipt->kindLabel(), 'amount' => (string) $receipt->amount, 'amount_label' => number_format((float) $receipt->amount, 2),
+                'reference' => (string) $receipt->reference, 'note' => (string) $receipt->note, 'fund_cluster' => (string) $receipt->fund_cluster, 'bank_account_number' => (string) $receipt->bank_account_number,
+            ])->values());
     }
 }

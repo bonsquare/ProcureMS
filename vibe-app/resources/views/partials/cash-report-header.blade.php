@@ -22,6 +22,17 @@
     <h1>{{ $title }}</h1>
     <p>Period Covered: {{ $report['period'] }}</p>
 </div>
+@if(! empty($tight))
+@php $sheetText = $report['sheetNo'] !== '' ? $report['sheetNo'] : null; @endphp
+<div class="info-tight">
+    <div class="field"><span class="label">Entity Name:</span><span class="value">{{ $school->name }}</span></div>
+    <div class="field"><span class="label">Report No.:</span><span class="value">{{ $report['reportNo'] }}</span></div>
+    <div class="field"><span class="label">Fund Cluster:</span><span class="value">{{ $report['fundCluster'] }}</span></div>
+    <div class="field"><span class="label">Sheet No.:</span><span class="value">@if($sheetText){{ $sheetText }}@else<span data-sheet-no>1 of 1</span>@endif</span></div>
+    <div class="field"><span class="label">Bank Name / Account No.:</span><span class="value">{{ $report['bank'] }}</span></div>
+    <div class="field"></div>
+</div>
+@else
 <table class="info">
     <tr><td class="label">Entity Name:</td><td class="value">{{ $school->name }}</td><td class="label" style="width:20%">Report No.:</td><td class="value">{{ $report['reportNo'] }}</td></tr>
     <tr><td class="label">Fund Cluster:</td><td class="value">{{ $report['fundCluster'] }}</td><td class="label">Sheet No.:</td><td class="value">{{ $report['sheetNo'] }}</td></tr>
@@ -30,3 +41,4 @@
     <tr><td class="label">Station:</td><td class="value">{{ $school->name }}</td><td class="label">Official Designation:</td><td class="value">{{ $officer?->position }}</td></tr>
     @endif
 </table>
+@endif

@@ -19,6 +19,11 @@
     table.info td { padding: 2px 4px; vertical-align: top; overflow-wrap: break-word; }
     table.info td.label { width: 17%; font-weight: bold; }
     table.info td.value { font-weight: bold; text-transform: uppercase; }
+    .info-tight { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 28px; margin: 4px 0; }
+    .info-tight .field { display: flex; align-items: baseline; gap: 6px; min-height: 1.3em; }
+    .info-tight .label { font-weight: bold; white-space: nowrap; }
+    .info-tight .value { flex: 1; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #222; padding: 0 4px; min-height: 1.2em; }
+    .info-tight .field:empty { display: block; }
     table.report th, table.report td { border: 1px solid #222; padding: 3px 4px; vertical-align: top; overflow-wrap: break-word; }
     table.report th { text-align: center; font-weight: bold; vertical-align: middle; }
     table.report td.num { text-align: right; white-space: nowrap; }

@@ -35,11 +35,12 @@ class CashReportPrintTest extends TestCase
 
         $html = $this->actingAs($user)->get(route('cash', ['tab' => 'reports']))->assertOk()->getContent();
 
-        $this->assertStringContainsString('Fund received', $html);
-        foreach (['cash.report.roci', 'cash.report.checks', 'cash.report.register'] as $name) {
+        $this->assertStringContainsString('Bank Reconciliation', $html);
+        $this->assertStringNotContainsString('Fund received</h2>', $html);
+        foreach (['cash.report.roci', 'cash.report.checks', 'cash.report.register', 'cash.report.bank'] as $name) {
             $this->assertStringContainsString(e(route($name)), $html, $name);
         }
-        $this->assertStringContainsString(route('cash.fund.store'), $html);
+        $this->assertStringContainsString(str_replace('/', '\/', route('cash.fund.store')), $html);
     }
 
     public function test_the_reports_tab_needs_cash_permission(): void
@@ -95,6 +96,38 @@ class CashReportPrintTest extends TestCase
 
         $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school, ['fund_cluster' => 'Trust Fund', 'bank' => 'DBP 123', 'remarks' => 'For audit', 'officer_id' => $chosen->id, 'received_by_id' => $foreign->id])))->assertOk()
             ->assertSee('Trust Fund')->assertSee('DBP 123')->assertSee('For audit')->assertSee('MARIA SANTOS')->assertDontSee('BABY JOY I. CARBONELL')->assertDontSee('PEDRO OUTSIDER');
+    }
+
+    public function test_the_bank_reconciliation_runs_the_balance_and_compares_with_the_statement(): void
+    {
+        [$school, $user] = $this->tenant('BK1');
+        CashFundReceipt::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'received_at' => '2026-09-01', 'kind' => 'nca', 'fund_cluster' => 'General Fund', 'amount' => 5000, 'reference' => 'NCA-77', 'created_by' => $user->id]);
+        $this->paid($school, '0001', '2026-09-05', 1000);
+
+        $this->actingAs($user)->get(route('cash.report.bank', $this->periodQuery($school, ['statement_balance' => '4200', 'outstanding_checks' => '200'])))->assertOk()
+            ->assertSee('BANK RECONCILIATION')->assertSee('NCA-77')->assertSee('5,000.00')->assertSee('4,000.00')->assertSee('Balance per bank statement')->assertSee('4,200.00')->assertSee('Adjusted bank balance');
+    }
+
+    public function test_the_downloaded_cash_is_listed_and_saved_as_json_for_the_window(): void
+    {
+        [$school, $user] = $this->tenant('BK2');
+        $this->actingAs($user)->postJson(route('cash.fund.store'), ['school_id' => $school->id, 'received_at' => '2026-10-02', 'kind' => 'opening_balance', 'amount' => 750.5])->assertOk();
+
+        $this->actingAs($user)->getJson(route('cash.fund.index', ['school_id' => $school->id, 'from' => '2026-10-01', 'to' => '2026-12-31']))->assertOk()
+            ->assertJsonCount(1)->assertJsonPath('0.amount_label', '750.50')->assertJsonPath('0.kind_label', 'Opening balance');
+        $this->actingAs($user)->getJson(route('cash.fund.index', ['school_id' => $school->id, 'from' => '2027-01-01', 'to' => '2027-03-31']))->assertOk()->assertJsonCount(0);
+    }
+
+    public function test_the_roci_report_number_defaults_to_year_month_and_sequence_and_the_sheet_number_counts_pages(): void
+    {
+        [$school, $user] = $this->tenant('RN1');
+
+        $html = $this->actingAs($user)->get(route('cash.report.roci', $this->periodQuery($school)))->assertOk()->getContent();
+        $this->assertStringContainsString(now()->format('Y-m').'-001', $html);
+        $this->assertStringContainsString('data-sheet-no', $html);
+        $this->assertStringContainsString('class="info-tight"', $html);
+
+        $this->actingAs($user)->get(route('cash.report.roci', $this->periodQuery($school, ['report_no' => '2026-10-007', 'sheet_no' => '2 of 3'])))->assertOk()->assertSee('2026-10-007')->assertSee('2 of 3');
     }
 
     public function test_the_roci_prints_header_lines_and_total(): void

@@ -193,6 +193,8 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::get('/cash/reports/roci', [CashReportController::class, 'roci'])->middleware('permission:cash.pay')->name('cash.report.roci');
     Route::get('/cash/reports/checks-advices', [CashReportController::class, 'checksAdvices'])->middleware('permission:cash.pay')->name('cash.report.checks');
     Route::get('/cash/reports/register', [CashReportController::class, 'register'])->middleware('permission:cash.pay')->name('cash.report.register');
+    Route::get('/cash/reports/bank-reconciliation', [CashReportController::class, 'bank'])->middleware('permission:cash.pay')->name('cash.report.bank');
+    Route::get('/cash/fund-receipts', [CashReportController::class, 'receipts'])->middleware('permission:cash.pay')->name('cash.fund.index');
     Route::get('/google-drive', [GoogleDriveController::class, 'show'])->name('google-drive');
     Route::get('/google-drive/connect', [GoogleDriveController::class, 'redirect'])->name('google-drive.redirect');
     Route::get('/google-drive/callback', [GoogleDriveController::class, 'callback'])->name('google-drive.callback');
