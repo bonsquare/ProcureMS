@@ -945,3 +945,9 @@ Design: `docs/superpowers/specs/2026-10-16-cash-reports-design.md`. The owner's 
 - While it is off, `EnsureScreenIsOn` (before the sign-in check) answers every visitor and every signed-in user except the master with a plain page that says only **Link is not available** (HTTP 503, no sign-in form, `noindex`), including the plain `/login`.
 - The master signs in at **`/login?master`** (the sign-in submit, `/logout` and the health check `/up` stay open), then turns the screen back on. A school user who signs in meanwhile sees the same message.
 - Tests: `tests/Feature/ScreenSwitchTest.php`.
+
+## 41. Page access by permission (owner's decision 2026-10-17)
+
+- **Reports** (`/reports`) needs `reports.view`. The **New Purchase Request** form (`/procurement/create`) needs `procurement.create`. The **Chart of Accounts** page needs `accounting.view` or `accounting.manage` (the Budget Officer manages it with `accounting.manage`). A role without the permission is refused with 403.
+- The dashboard diagnostics (`/dashboard/diagnostics`) stays open to every signed-in user: it only says whether the database and storage work.
+- The AIP page rule is in 23.2. Tests: `RoutePermissionGapsTest`.
