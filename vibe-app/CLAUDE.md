@@ -172,6 +172,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 5. Use organization ID consistently for organization-owned data and school ID consistently for school-owned data. Validate both ownership and permission before writes.
 6. Do not seed or invent production data. Test fixtures and the Lubas supplier seed data must remain clearly separated from production setup.
 7. Before declaring a phase complete, verify the happy path, permission failures, organization isolation, migration behavior, and the relevant reports/documents.
+8. **Form boxes are always aligned (owner's rule 2026-10-18).** Inputs, selects and their labels in a row must line up on the same top and baseline; a note, hint or status line under a box must never push that box out of line with its neighbours (put it where it takes no height from the row, for example absolutely positioned in the row gap). Check every form row you add or change before reporting it done.
 
 ## Current implementation status
 
