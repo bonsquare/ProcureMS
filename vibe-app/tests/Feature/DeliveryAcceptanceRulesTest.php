@@ -216,4 +216,42 @@ class DeliveryAcceptanceRulesTest extends TestCase
         $page = $this->get(route('accounting', ['tab' => 'with_dv']))->assertOk();
         $page->assertSee('Accepted so far', false);
     }
+
+    public function test_the_suggested_dv_number_is_the_next_one_of_the_ors_own_organization_even_for_a_master_user(): void
+    {
+        [$organization, $school] = $this->purchase();
+        $year = now()->year;
+        LiquidationReport::create([
+            'organization_id' => $organization->id, 'school_id' => $school->id, 'report_number' => 'LR-D-7', 'ors_number' => 'ORS-D-7', 'amount' => 100, 'status' => 'approved',
+            'payee' => 'Someone', 'purpose' => 'Earlier', 'dv_number' => "DV-{$year}-0007", 'dv_date' => now()->toDateString(), 'payment_mode' => 'MDS Check',
+        ]);
+        $this->approvedOrs($organization, $school, null);
+        $master = User::factory()->create(['role' => 'master_user', 'organization_id' => null, 'school_id' => null]);
+
+        $this->actingAs($master)->get(route('accounting', ['tab' => 'for_dv']))->assertOk()->assertSee('data-next-dv="DV-'.$year.'-0008"', false);
+    }
+
+    public function test_the_liquidation_page_cannot_return_an_ors_that_is_paid_or_already_has_a_dv(): void
+    {
+        [$organization, $school] = $this->purchase();
+        $master = User::factory()->create(['role' => 'master_user', 'organization_id' => null, 'school_id' => null]);
+        $this->actingAs($master);
+        $plain = $this->approvedOrs($organization, $school, null);
+        $withDv = LiquidationReport::create([
+            'organization_id' => $organization->id, 'school_id' => $school->id, 'report_number' => 'LR-D-2', 'ors_number' => 'ORS-D-2', 'amount' => 100, 'status' => 'approved',
+            'payee' => 'X', 'purpose' => 'Y', 'dv_number' => 'DV-D-2', 'dv_date' => now()->toDateString(), 'payment_mode' => 'MDS Check',
+        ]);
+        $paid = LiquidationReport::create([
+            'organization_id' => $organization->id, 'school_id' => $school->id, 'report_number' => 'LR-D-3', 'ors_number' => 'ORS-D-3', 'amount' => 100, 'status' => 'approved',
+            'payee' => 'X', 'purpose' => 'Y', 'dv_number' => 'DV-D-3', 'dv_date' => now()->toDateString(), 'payment_mode' => 'MDS Check', 'paid_at' => now(),
+        ]);
+
+        $this->patch(route('liquidation.status', $paid), ['status' => 'returned'])->assertStatus(422);
+        $this->patch(route('liquidation.status', $withDv), ['status' => 'pending_documents'])->assertStatus(422);
+        $this->assertSame('approved', $paid->fresh()->status);
+        $this->assertSame('approved', $withDv->fresh()->status);
+
+        $this->patch(route('liquidation.status', $plain), ['status' => 'returned'])->assertSessionHasNoErrors();
+        $this->assertSame('returned', $plain->fresh()->status);
+    }
 }

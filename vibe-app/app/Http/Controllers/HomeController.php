@@ -2213,6 +2213,9 @@ class HomeController extends Controller
         $data = $request->validate([
             'status' => ['required', Rule::in(['for_review', 'pending_documents', 'approved', 'returned'])],
         ]);
+        // An ORS that is paid, or already has its DV, is past review: changing its status here would pull it out of Cash and the Budget.
+        abort_if($liquidationReport->paid_at && $data['status'] !== 'approved', 422, 'A paid ORS cannot be reopened.');
+        abort_if($liquidationReport->dv_number && $data['status'] !== 'approved', 422, 'This ORS already has its DV. Edit the DV in Accounting instead.');
         $previousStatus = $liquidationReport->status;
         $liquidationReport->update([
             'status' => $data['status'],
