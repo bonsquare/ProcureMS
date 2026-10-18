@@ -238,6 +238,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 - 2026-10-18: Walk-through fixes (docs/specs.md section 45): the suggested DV number follows the ORS's organization; the Liquidation page can no longer return an ORS that is paid or has a DV.
 - 2026-10-18: Local walk of the Reports links and the cancelled-check cycle found no defect (docs/specs.md section 45).
 - 2026-10-18: **Liquidation papers checklist** (docs/specs.md section 46): kinds goods, direct, travel, other; papers needed before the ORS is approved and before the DV is created; manual papers can be Received or Not required; Accounting's Papers window; Approve and Create DV refuse while a paper is missing. A school's own extra papers (School Settings > Liquidation Papers) and the read-only Papers list on the Liquidation page are built too.
+- 2026-10-18: Owner decided Phase 11 is not needed (see the Next work sequence).
 
 ## Standing workflow (owner's instruction 2026-10-16)
 
@@ -300,7 +301,7 @@ The planning, procurement, delivery, accounting, cash, liquidation, report and m
 1. Walk the live flow end to end with the demo school: SIP → AIP → SOB → APP / APP-CSE → PR → RFQ, Abstract, NOA, PO → IAR (partial deliveries) → ORS → DV → payment → liquidation.
 2. Fix only confirmed defects; keep changes additive and tenant-safe.
 3. Add a focused feature test for each corrected workflow and each permission or isolation failure.
-4. Check each phase against the completion standard below before it is called complete; Phase 11 (notifications, analytics, support access, configurable approvals, performance monitoring) is not started.
+4. Check each phase against the completion standard below before it is called complete; Phase 11 (notifications, analytics, support access, configurable approvals, performance monitoring) is **not needed** (owner's decision 2026-10-18): do not build or propose it unless the owner asks again.
 5. Update this handoff and docs/specs.md after every meaningful milestone.
 
 ## Completion standard
