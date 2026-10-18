@@ -106,7 +106,7 @@ class DeliveryAcceptanceRulesTest extends TestCase
     private function approvedOrs(Organization $organization, School $school, ?ProcurementRequest $request): LiquidationReport
     {
         return LiquidationReport::create([
-            'organization_id' => $organization->id, 'school_id' => $school->id, 'procurement_request_id' => $request?->id, 'report_number' => 'LR-D-1', 'ors_number' => 'ORS-D-1',
+            'organization_id' => $organization->id, 'school_id' => $school->id, 'procurement_request_id' => $request?->id, 'report_number' => 'LR-D-1', 'ors_number' => 'ORS-D-1', 'ors_kind' => 'other',
             'amount' => 2500, 'status' => 'approved', 'payee' => 'Winning Trading', 'purpose' => 'Office supplies',
         ]);
     }

@@ -171,6 +171,7 @@ class OrsStatusPrintTest extends TestCase
         $ors = LiquidationReport::firstOrFail();
 
         $this->get(route('accounting'))->assertOk()->assertSee(route('accounting.review', $ors), false);
+        \App\Models\LiquidationDocumentCheck::create(['organization_id' => $ors->organization_id, 'liquidation_report_id' => $ors->id, 'item_key' => 'billing_statement', 'state' => 'received']);
         $this->patch(route('accounting.review', $ors), ['status' => 'approved'])->assertSessionHasNoErrors();
         $this->assertSame('approved', $ors->fresh()->status);
         $this->get(route('accounting', ['tab' => 'for_dv']))->assertOk()->assertSee(route('accounting.dv.store', $ors), false);

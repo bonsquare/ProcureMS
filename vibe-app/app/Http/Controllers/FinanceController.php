@@ -12,6 +12,8 @@ use App\Models\LiquidationReport;
 use App\Models\School;
 use App\Models\SchoolStaff;
 use App\Services\DocumentNumberService;
+use App\Services\LiquidationChecklistService;
+use App\Support\LiquidationChecklist;
 use App\Support\SignatorySlots;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
@@ -46,7 +48,7 @@ class FinanceController extends Controller
 
     private function reports()
     {
-        return LiquidationReport::with(['school', 'procurementRequest.documents', 'submitter', 'journalLines', 'cancelledChecks'])->whereIn('school_id', $this->schoolIds());
+        return LiquidationReport::with(['school', 'procurementRequest.documents', 'submitter', 'journalLines', 'cancelledChecks', 'documentChecks'])->whereIn('school_id', $this->schoolIds());
     }
 
     public function accounting(Request $request)
@@ -92,9 +94,16 @@ class FinanceController extends Controller
         abort_unless($request->user()->hasPermission('accounting.approve') && $this->schoolIds()->contains($liquidationReport->school_id), 403);
         $data = $request->validate([
             'status' => ['required', Rule::in(['for_review', 'pending_documents', 'approved', 'returned'])],
-            'accounting_remarks' => [Rule::requiredIf(in_array($request->input('status'), ['pending_documents', 'returned'])), 'nullable', 'string', 'max:255'],
+            'accounting_remarks' => [Rule::requiredIf(in_array($request->input('status'), ['pending_documents', 'returned']) && ! ($request->input('status') === 'pending_documents' && $this->papers()->missing($liquidationReport, 'ors')->isNotEmpty())), 'nullable', 'string', 'max:255'],
         ]);
         abort_if($liquidationReport->paid_at && $data['status'] !== 'approved', 422, 'A paid ORS cannot be reopened.');
+        if ($data['status'] === 'approved' && $liquidationReport->status !== 'approved') {
+            $this->papers()->require($liquidationReport, 'ors', 'approve this ORS');
+        }
+        // Pending Documents with no typed remark says which papers are missing.
+        if ($data['status'] === 'pending_documents' && blank($data['accounting_remarks'] ?? null)) {
+            $data['accounting_remarks'] = \Illuminate\Support\Str::limit('Missing papers: '.$this->papers()->missing($liquidationReport, 'ors')->implode(', '), 250);
+        }
 
         $previousStatus = $liquidationReport->status;
         $liquidationReport->update([
@@ -235,6 +244,27 @@ class FinanceController extends Controller
         return redirect()->route('cash', ['tab' => 'cancelled'])->with('success', "Check cancelled for {$liquidationReport->ors_number} (DV {$dvNumber}). Edit the ORS in Accounting (For Review), approve it, create the DV again, then record the new payment.");
     }
 
+    private function papers(): LiquidationChecklistService
+    {
+        return app(LiquidationChecklistService::class);
+    }
+
+    /** Saves the kind of expense and the ticks of the manual papers of an ORS (the person who manages Accounting only). */
+    public function savePapers(Request $request, LiquidationReport $liquidationReport)
+    {
+        abort_unless($request->user()->hasPermission('accounting.approve') && $this->schoolIds()->contains($liquidationReport->school_id), 403);
+        abort_if($liquidationReport->dv_number && $liquidationReport->paid_at, 422, 'A paid ORS cannot be changed.');
+        $data = $request->validate([
+            'ors_kind' => ['required', Rule::in(array_keys(LiquidationChecklist::KINDS))],
+            'papers' => ['nullable', 'array'],
+            'papers.*.state' => ['nullable', Rule::in(['received', 'not_required', 'missing'])],
+            'papers.*.note' => ['nullable', 'string', 'max:255'],
+        ]);
+        $this->papers()->save($liquidationReport, $data['ors_kind'], $data['papers'] ?? [], $request->user());
+
+        return back()->with('success', 'Papers of '.($liquidationReport->ors_number ?: $liquidationReport->report_number).' saved.');
+    }
+
     private function nextDvNumber(): string
     {
         return app(DocumentNumberService::class)
@@ -284,6 +314,9 @@ class FinanceController extends Controller
         abort_unless($liquidationReport->status === 'approved', 422, 'Approve the ORS before creating a disbursement voucher.');
         abort_if($liquidationReport->paid_at, 422, 'A paid DV cannot be edited. Cancel the check first.');
         $editing = (bool) $liquidationReport->dv_number;
+        if (! $editing && ! $preview) {
+            $this->papers()->require($liquidationReport, 'dv', 'create the DV');
+        }
         abort_if(! $editing && $this->awaitingAcceptedDelivery($liquidationReport), 422, 'Prepare the Inspection and Acceptance Report of the Purchase Request first: a disbursement voucher for goods follows an accepted delivery.');
 
         $data = $request->validate([

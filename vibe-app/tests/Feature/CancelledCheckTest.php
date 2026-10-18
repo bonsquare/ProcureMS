@@ -29,11 +29,12 @@ class CancelledCheckTest extends TestCase
         $school = School::create(['organization_id' => $organization->id, 'code' => 'CC', 'name' => 'Check School', 'status' => 'active']);
         $master = User::factory()->create(['role' => 'master_user', 'organization_id' => null, 'school_id' => null, 'password' => Hash::make(self::PASSWORD)]);
         $report = LiquidationReport::create([
-            'organization_id' => $organization->id, 'school_id' => $school->id, 'report_number' => 'LR-CC-1', 'ors_number' => 'ORS-CC-1',
+            'organization_id' => $organization->id, 'school_id' => $school->id, 'report_number' => 'LR-CC-1', 'ors_number' => 'ORS-CC-1', 'ors_kind' => 'other',
             'amount' => $amount, 'status' => 'approved', 'payee' => 'Check Supplier', 'purpose' => 'Office supplies',
             'dv_number' => 'DV-CC-1', 'dv_date' => now()->toDateString(), 'dv_particulars' => 'Office supplies',
             'payment_mode' => 'MDS Check', 'payment_reference' => 'CHK-1', 'paid_at' => now()->toDateString(), 'paid_by' => $master->id,
         ]);
+        \App\Models\LiquidationDocumentCheck::create(['organization_id' => $organization->id, 'liquidation_report_id' => $report->id, 'item_key' => 'supporting_paper', 'state' => 'received']);
         foreach ([[$this->codes()['expense'], $amount, 0], [$this->codes()['cash'], 0, $amount]] as $number => [$code, $debit, $credit]) {
             DvJournalLine::create(['organization_id' => $organization->id, 'liquidation_report_id' => $report->id, 'line_no' => $number + 1, 'account_code' => $code, 'account_title' => 'Account', 'debit' => $debit, 'credit' => $credit]);
         }

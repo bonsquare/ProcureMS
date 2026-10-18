@@ -149,6 +149,43 @@
                             <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-3"><button type="button" onclick="this.closest('dialog').close()" class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Close</button><button class="rounded bg-primary px-4 py-2.5 text-xs font-bold text-white hover:bg-primary-container">Save changes</button></div>
                         </form></dialog>
                     @endif
+                    @php $paperMissing = 0; $paperStage = null; @endphp
+                    @if(auth()->user()->hasPermission('accounting.approve') && ! $isCash && $r->ors_number && ! $r->paid_at)
+                        @php
+                            $paperService = app(\App\Services\LiquidationChecklistService::class);
+                            $paperItems = $paperService->items($r);
+                            $paperKind = $paperService->kind($r);
+                            $paperStage = $r->status === 'approved' ? 'dv' : 'ors';
+                            $paperMissing = $paperItems->where('stage', $paperStage)->where('state', 'missing')->count();
+                        @endphp
+                        <button type="button" onclick="document.getElementById('papers-{{ $r->id }}').showModal()" class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold ring-1 {{ $paperMissing ? 'text-error ring-error/40 hover:bg-error hover:text-white' : 'text-secondary ring-secondary/40 hover:bg-secondary hover:text-white' }}" title="{{ $paperMissing ? $paperMissing.' paper(s) missing '.($paperStage === 'ors' ? 'before the ORS can be approved' : 'before the DV can be created') : 'All papers needed now are in' }}"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">checklist</span>Papers{{ $paperMissing ? ' · '.$paperMissing : '' }}</button>
+                        <dialog id="papers-{{ $r->id }}" style="width:min(44rem,calc(100% - 2rem))" class="rounded bg-white p-0 text-left shadow-2xl backdrop:bg-black/50"><form method="POST" action="{{ route('accounting.papers', $r) }}" class="space-y-4 p-6">@csrf @method('PUT')
+                            <div><h2 class="text-lg font-semibold">Papers of {{ $label }}</h2><p class="text-xs text-on-surface-variant">The papers the system makes itself are checked by themselves. Tick the others when they are received, or mark them not required for this transaction.</p></div>
+                            <label class="block max-w-xs text-xs font-semibold text-on-surface-variant">Type of expense<select name="ors_kind" class="{{ $inputClass }}">@foreach(\App\Support\LiquidationChecklist::KINDS as $kindKey => $kindLabel)<option value="{{ $kindKey }}" @selected($paperKind === $kindKey)>{{ $kindLabel }}</option>@endforeach</select><span class="mt-1 block text-[11px] font-normal">Save to refresh the list after changing it.</span></label>
+                            @foreach(\App\Support\LiquidationChecklist::STAGES as $stageKey => $stageLabel)
+                                @php $stageItems = $paperItems->where('stage', $stageKey); @endphp
+                                @if($stageItems->isNotEmpty())
+                                <section>
+                                    <h3 class="mb-2 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">{{ $stageLabel }}</h3>
+                                    <div class="space-y-2">
+                                    @foreach($stageItems as $paper)
+                                        <div class="grid grid-cols-1 items-center gap-2 rounded border border-outline-variant/40 p-2 sm:grid-cols-[1fr_11rem_1fr]">
+                                            <p class="text-xs font-semibold">{{ $paper['label'] }}@if($paper['auto'])<span class="ml-1 font-normal text-on-surface-variant">(from the system)</span>@endif</p>
+                                            @if($paper['auto'])
+                                                <p class="text-xs font-bold {{ $paper['state'] === 'missing' ? 'text-error' : 'text-secondary' }} sm:col-span-2">{{ ['received' => 'Prepared', 'not_required' => 'Not required for this transaction', 'missing' => 'Not prepared yet'][$paper['state']] }}</p>
+                                            @else
+                                                <select name="papers[{{ $paper['key'] }}][state]" class="{{ $inputClass }} mt-0"><option value="missing" @selected($paper['state'] === 'missing')>Missing</option><option value="received" @selected($paper['state'] === 'received')>Received</option><option value="not_required" @selected($paper['state'] === 'not_required')>Not required</option></select>
+                                                <input name="papers[{{ $paper['key'] }}][note]" maxlength="255" value="{{ $paper['note'] }}" placeholder="Note (optional)" class="{{ $inputClass }} mt-0">
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                    </div>
+                                </section>
+                                @endif
+                            @endforeach
+                            <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-3"><button type="button" onclick="this.closest('dialog').close()" class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Close</button><button class="rounded bg-primary px-4 py-2.5 text-xs font-bold text-white hover:bg-primary-container">Save papers</button></div>
+                        </form></dialog>
+                    @endif
                     @if(auth()->user()->hasPermission('accounting.approve') && ! $isCash && $r->dv_number && ! $r->paid_at)
                         <button type="button" data-ors-edit-open="edit-dv-{{ $r->id }}" class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-primary ring-1 ring-outline-variant/50 hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">edit</span>Edit DV</button>
                         <dialog id="edit-dv-{{ $r->id }}" data-ors-edit data-split data-preview="{{ route('accounting.dv.preview', $r) }}" class="rounded bg-white p-0 text-left shadow-2xl backdrop:bg-black/50">
@@ -208,7 +245,7 @@
                         </dialog>
                     @endif
                     @if(auth()->user()->hasPermission('accounting.approve') && ! $isCash && $r->status === 'approved' && ! $r->dv_number)<button type="button" data-report-id="{{ $r->id }}" data-dv="{{ route('accounting.dv.store', $r) }}" data-dv-number="{{ $r->cancelledChecks->sortByDesc('cancelled_at')->first()?->dv_number }}" data-next-dv="{{ app(\App\Services\DocumentNumberService::class)->preview((int) $r->organization_id, 'disbursement_voucher', 'DV') }}" @if($r->reissue_pending) data-keep-signatories="1" @endif data-school="{{ $r->school_id }}" data-label="{{ $label }}" data-amount="{{ $peso($r->amount) }}" data-amount-raw="{{ number_format((float) $r->amount, 2, '.', '') }}" data-accepted-note="{{ app(\App\Services\ProcurementWorkspaceService::class)->acceptedNote($r->procurementRequest, (float) $r->amount) }}" data-expense-code="{{ $r->chargedLine()?->account?->code ?? $r->chargedLine()?->uacs_code }}" data-payee="{{ $r->payee ?: ($r->procurementRequest?->supplier_name ?? $r->school?->name) }}" data-particulars="{{ $r->purpose ?: $r->procurementRequest?->title }}" class="inline-flex items-center gap-1 rounded-lg bg-secondary px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:opacity-90"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">receipt_long</span>Create DV</button>@endif
-                    @if(auth()->user()->hasPermission('accounting.approve') && ! $isCash && ! $r->dv_number && $r->status !== 'approved')<form method="POST" action="{{ route('accounting.review', $r) }}">@csrf @method('PATCH')<input type="hidden" name="status" value="approved"><button class="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-primary-container"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">check</span>Approve</button></form>@endif
+                    @if(auth()->user()->hasPermission('accounting.approve') && ! $isCash && ! $r->dv_number && $r->status !== 'approved')<form method="POST" action="{{ route('accounting.review', $r) }}">@csrf @method('PATCH')<input type="hidden" name="status" value="approved"><button @disabled(($paperMissing ?? 0) > 0 && ($paperStage ?? '') === 'ors') title="{{ (($paperMissing ?? 0) > 0 && ($paperStage ?? '') === 'ors') ? 'Tick the missing papers under Papers first.' : '' }}" class="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-primary-container disabled:cursor-not-allowed disabled:opacity-50"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">check</span>Approve</button></form>@endif
                     @if($r->ors_number)<a href="{{ route('liquidation.print', $r) }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-primary ring-1 ring-outline-variant/50 hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">print</span>ORS</a>@endif
                     @if($r->dv_number)
                         <a href="{{ route('accounting.dv.print', $r) }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-primary ring-1 ring-outline-variant/50 hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">print</span>DV</a>

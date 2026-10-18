@@ -20,7 +20,7 @@ class DvFundClusterTest extends TestCase
         $school = School::create(['organization_id' => $organization->id, 'code' => 'FC', 'name' => 'Fund School', 'status' => 'active']);
         $master = User::factory()->create(['role' => 'master_user', 'organization_id' => null, 'school_id' => null]);
         $report = LiquidationReport::create([
-            'organization_id' => $organization->id, 'school_id' => $school->id, 'report_number' => 'LR-FC-1', 'ors_number' => 'ORS-FC-1',
+            'organization_id' => $organization->id, 'school_id' => $school->id, 'report_number' => 'LR-FC-1', 'ors_number' => 'ORS-FC-1', 'ors_kind' => 'other',
             'amount' => 5000, 'status' => 'approved', 'payee' => 'Fund Supplier', 'purpose' => 'Supplies', 'source_of_fund' => 'MOOE',
         ]);
 

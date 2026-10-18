@@ -1,6 +1,6 @@
 # Liquidation documents checklist: plan
 
-Status: plan only, nothing built. Decisions of the owner on 2026-10-18 are listed first; the open items at the end still need an answer.
+Status: built in part on 2026-10-18 (see docs/specs.md section 46). Not built yet: the school's own extra papers and the read-only school view. Decisions of the owner on 2026-10-18 are listed first; the open items at the end still need an answer.
 
 ## Owner decisions (2026-10-18)
 
@@ -62,3 +62,12 @@ Status: plan only, nothing built. Decisions of the owner on 2026-10-18 are liste
 2. **Goods manual papers:** which are always required: sales invoice / official receipt, delivery receipt, anything else?
 3. **Existing ORS:** after this, should an ORS that is already **For Review** with missing papers be blocked at approval too (recommended), or only new ones?
 4. **Who may tick:** only Accounting (as planned), or also the school's own admin for the papers it holds?
+
+## Answers of the owner to the open questions (2026-10-18)
+1. Travel: all of those papers, but which apply depends on the trip. So every manual paper can be marked **Not required for this transaction**.
+2. Goods: it depends on the transaction, the same way.
+3. An ORS already For Review is blocked too.
+4. Only the admin who manages Accounting ticks the papers (only one user does it).
+
+## Change found while building
+Delivery and trip papers cannot be required before the ORS is approved (they only exist later), so each paper has a stage: before the ORS is approved, or before the DV is created.

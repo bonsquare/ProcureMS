@@ -21,7 +21,7 @@ class DvJournalEntryTest extends TestCase
         $school = School::create(['organization_id' => $organization->id, 'code' => 'JV', 'name' => 'Journal School', 'status' => 'active']);
         $master = User::factory()->create(['role' => 'master_user', 'organization_id' => null, 'school_id' => null]);
         $report = LiquidationReport::create([
-            'organization_id' => $organization->id, 'school_id' => $school->id, 'report_number' => 'LR-JV-1', 'ors_number' => 'ORS-JV-1',
+            'organization_id' => $organization->id, 'school_id' => $school->id, 'report_number' => 'LR-JV-1', 'ors_number' => 'ORS-JV-1', 'ors_kind' => 'other',
             'amount' => $amount, 'status' => 'approved', 'payee' => 'Journal Supplier', 'purpose' => 'Office supplies',
         ]);
 

@@ -428,7 +428,7 @@ class DocumentSignatoriesTest extends TestCase
     private function orsFor(School $school, array $extra = []): LiquidationReport
     {
         return LiquidationReport::create($extra + [
-            'organization_id' => $school->organization_id, 'school_id' => $school->id, 'report_number' => 'LR-SIG-1', 'ors_number' => 'ORS-SIG-1',
+            'organization_id' => $school->organization_id, 'school_id' => $school->id, 'report_number' => 'LR-SIG-1', 'ors_number' => 'ORS-SIG-1', 'ors_kind' => 'other',
             'amount' => 1000, 'status' => 'approved', 'payee' => 'Sig Supplier', 'purpose' => 'Office supplies',
         ]);
     }
