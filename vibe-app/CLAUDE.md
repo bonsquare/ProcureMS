@@ -236,6 +236,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 - 2026-10-18: IAR form: the Inspection Officer / Committee Name box is removed; the signatory picker at the bottom is the only place (docs/specs.md section 43).
 - 2026-10-18: Local walk-through done (APP-CSE Part I search and add, SOB catalog pick and Category sync, IAR accepted/rejected form); IAR items are compact blocks, the SOB search list is wider (docs/specs.md section 44).
 - 2026-10-18: Walk-through fixes (docs/specs.md section 45): the suggested DV number follows the ORS's organization; the Liquidation page can no longer return an ORS that is paid or has a DV.
+- 2026-10-18: Local walk of the Reports links and the cancelled-check cycle found no defect (docs/specs.md section 45).
 
 ## Standing workflow (owner's instruction 2026-10-16)
 
