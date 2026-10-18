@@ -113,6 +113,29 @@ class SchoolSettingsController extends Controller
         return $this->back($school, 'staff', $staff->name.' saved.');
     }
 
+    /** A paper the school adds to the liquidation checklist of one kind of expense (see Accounting > Papers). */
+    public function storeChecklistItem(Request $request): RedirectResponse
+    {
+        $school = $this->school($request);
+        $data = $request->validate([
+            'ors_kind' => ['required', \Illuminate\Validation\Rule::in(array_keys(\App\Support\LiquidationChecklist::KINDS))],
+            'stage' => ['required', \Illuminate\Validation\Rule::in(array_keys(\App\Support\LiquidationChecklist::STAGES))],
+            'label' => ['required', 'string', 'max:120'],
+        ]);
+        \App\Models\SchoolChecklistItem::create($data + ['organization_id' => $school->organization_id, 'school_id' => $school->id, 'is_active' => true]);
+
+        return $this->back($school, 'papers', $data['label'].' added to the liquidation papers.');
+    }
+
+    public function destroyChecklistItem(Request $request, \App\Models\SchoolChecklistItem $item): RedirectResponse
+    {
+        $school = $this->school($request, $item->school_id);
+        $label = $item->label;
+        $item->delete();
+
+        return $this->back($school, 'papers', $label.' removed from the liquidation papers.');
+    }
+
     public function destroyStaff(Request $request, SchoolStaff $staff): RedirectResponse
     {
         $school = $this->school($request, $staff->school_id);

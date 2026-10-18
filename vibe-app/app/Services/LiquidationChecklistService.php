@@ -28,7 +28,7 @@ class LiquidationChecklistService
         $documents = $request?->documents ?? collect();
         $checks = $report->documentChecks->keyBy('item_key');
 
-        return collect(LiquidationChecklist::standard($this->kind($report)))->map(function (array $item) use ($request, $documents, $checks) {
+        return $this->definitions($report, $this->kind($report))->map(function (array $item) use ($request, $documents, $checks) {
             if ($item['doc'] !== null) {
                 $state = $documents->contains('document_type', $item['doc']) ? 'received' : (isset(($request?->not_required_documents ?? [])[$item['doc']]) ? 'not_required' : 'missing');
 
@@ -38,6 +38,15 @@ class LiquidationChecklistService
 
             return $item + ['auto' => false, 'state' => $check?->state ?? 'missing', 'note' => $check?->note];
         })->values();
+    }
+
+    /** The standard papers of a kind plus the ones the school added for it. @return Collection<int, array{key: string, label: string, stage: string, doc: ?string}> */
+    private function definitions(LiquidationReport $report, string $kind): Collection
+    {
+        $extras = ($report->school?->checklistItems ?? collect())->where('is_active', true)->where('ors_kind', $kind)
+            ->map(fn ($item) => ['key' => $item->key(), 'label' => $item->label, 'stage' => $item->stage, 'doc' => null, 'own' => true]);
+
+        return collect(LiquidationChecklist::standard($kind))->concat($extras)->values();
     }
 
     /** @return Collection<int, string> the labels of the papers still missing at that stage */
@@ -68,7 +77,7 @@ class LiquidationChecklistService
     {
         $report->update(['ors_kind' => $kind]);
         $report->unsetRelation('documentChecks');
-        $manual = collect(LiquidationChecklist::standard($kind))->where('doc', null)->pluck('key')->all();
+        $manual = $this->definitions($report, $kind)->where('doc', null)->pluck('key')->all();
 
         foreach ($manual as $key) {
             $state = $ticks[$key]['state'] ?? 'missing';

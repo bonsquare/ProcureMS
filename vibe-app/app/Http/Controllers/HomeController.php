@@ -1905,7 +1905,7 @@ class HomeController extends Controller
         $status = request('status', 'all');
         $search = trim((string) request('search'));
 
-        $liquidations = LiquidationReport::withOrs()->with(['school', 'submitter', 'procurementRequest', 'transaction'])
+        $liquidations = LiquidationReport::withOrs()->with(['school.checklistItems', 'submitter', 'procurementRequest.documents', 'transaction', 'documentChecks'])
             ->whereIn('school_id', $schoolIds)
             ->when($selectedSchoolId && $schoolIds->contains((int) $selectedSchoolId), fn ($query) => $query->where('school_id', $selectedSchoolId))
             ->when($status !== 'all', fn ($query) => $query->where('status', $status))
@@ -2307,7 +2307,7 @@ class HomeController extends Controller
             'agency' => $agency,
             'sharedDepartmentLogo' => $sharedDepartmentLogo,
             'sharedDivisionLogo' => $sharedDivisionLogo,
-            'tab' => in_array(request('tab'), $isMasterUser ? ['info', 'users', 'staff'] : ['info', 'users', 'staff', 'transfer'], true) ? request('tab') : 'info',
+            'tab' => in_array(request('tab'), $isMasterUser ? ['info', 'users', 'staff', 'papers'] : ['info', 'users', 'staff', 'papers', 'transfer'], true) ? request('tab') : 'info',
             'systemUsers' => $systemUsers,
             'roleCatalog' => $roleCatalog,
             'roleGroups' => SchoolStaff::ROLE_GROUPS,

@@ -12,6 +12,11 @@ class School extends Model
 
     protected $fillable = ['organization_id', 'code', 'name', 'address', 'region', 'division', 'district', 'school_type', 'school_head', 'contact_email', 'contact_number', 'status', 'logo_path', 'bank_name', 'bank_account_name', 'bank_account_number', 'deped_school_id'];
 
+    public function checklistItems()
+    {
+        return $this->hasMany(SchoolChecklistItem::class);
+    }
+
     public function users()
     {
         return $this->hasMany(User::class);

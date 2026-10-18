@@ -237,7 +237,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 - 2026-10-18: Local walk-through done (APP-CSE Part I search and add, SOB catalog pick and Category sync, IAR accepted/rejected form); IAR items are compact blocks, the SOB search list is wider (docs/specs.md section 44).
 - 2026-10-18: Walk-through fixes (docs/specs.md section 45): the suggested DV number follows the ORS's organization; the Liquidation page can no longer return an ORS that is paid or has a DV.
 - 2026-10-18: Local walk of the Reports links and the cancelled-check cycle found no defect (docs/specs.md section 45).
-- 2026-10-18: **Liquidation papers checklist** (docs/specs.md section 46): kinds goods, direct, travel, other; papers needed before the ORS is approved and before the DV is created; manual papers can be Received or Not required; Accounting's Papers window; Approve and Create DV refuse while a paper is missing. A school's own extra papers and the read-only school view are not built yet.
+- 2026-10-18: **Liquidation papers checklist** (docs/specs.md section 46): kinds goods, direct, travel, other; papers needed before the ORS is approved and before the DV is created; manual papers can be Received or Not required; Accounting's Papers window; Approve and Create DV refuse while a paper is missing. A school's own extra papers (School Settings > Liquidation Papers) and the read-only Papers list on the Liquidation page are built too.
 
 ## Standing workflow (owner's instruction 2026-10-16)
 

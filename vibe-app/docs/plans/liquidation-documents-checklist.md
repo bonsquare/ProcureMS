@@ -1,6 +1,6 @@
 # Liquidation documents checklist: plan
 
-Status: built in part on 2026-10-18 (see docs/specs.md section 46). Not built yet: the school's own extra papers and the read-only school view. Decisions of the owner on 2026-10-18 are listed first; the open items at the end still need an answer.
+Status: built on 2026-10-18 (see docs/specs.md section 46), including the school's own papers and the read-only school view. Decisions of the owner on 2026-10-18 are listed first; the open items at the end still need an answer.
 
 ## Owner decisions (2026-10-18)
 

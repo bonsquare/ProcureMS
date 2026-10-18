@@ -239,6 +239,8 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::put('/school-settings/users/{user}/password', [SchoolSettingsController::class, 'changePassword'])->middleware('permission:organization.settings')->name('school-settings.users.password');
     Route::post('/school-settings/employees', [SchoolSettingsController::class, 'storeStaff'])->middleware('permission:organization.settings')->name('school-settings.employees.store');
     Route::put('/school-settings/employees/{staff}', [SchoolSettingsController::class, 'updateStaff'])->middleware('permission:organization.settings')->name('school-settings.employees.update');
+    Route::post('/school-settings/papers', [SchoolSettingsController::class, 'storeChecklistItem'])->middleware('permission:organization.settings')->name('school-settings.papers.store');
+    Route::delete('/school-settings/papers/{item}', [SchoolSettingsController::class, 'destroyChecklistItem'])->middleware('permission:organization.settings')->name('school-settings.papers.destroy')->whereNumber('item');
     Route::delete('/school-settings/employees/{staff}', [SchoolSettingsController::class, 'destroyStaff'])->middleware('permission:organization.settings')->name('school-settings.employees.destroy');
     Route::post('/school-settings/roles', [SchoolSettingsController::class, 'storeRole'])->middleware('permission:organization.settings')->name('school-settings.roles.store');
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');

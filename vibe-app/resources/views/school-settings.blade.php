@@ -14,6 +14,7 @@
         'info' => ['School Information', 'domain'],
         'users' => ['System Users', 'manage_accounts'],
         'staff' => ['Employees & Roles', 'badge'],
+        'papers' => ['Liquidation Papers', 'checklist'],
     ];
     if (! $isMasterUser) {
         $tabs['transfer'] = ['Official Station Management', 'swap_horiz'];
@@ -81,6 +82,8 @@
     @include('partials.settings.users')
 @elseif($tab === 'staff')
     @include('partials.settings.staff')
+@elseif($tab === 'papers')
+    @include('partials.settings.papers')
 @elseif($tab === 'transfer')
     @include('partials.settings.transfer')
 @else

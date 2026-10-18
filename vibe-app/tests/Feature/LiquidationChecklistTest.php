@@ -22,7 +22,10 @@ class LiquidationChecklistTest extends TestCase
     {
         $organization = Organization::firstOrCreate(['slug' => 'papers-org'], ['name' => 'Papers Org', 'status' => 'active']);
 
-        return School::firstOrCreate(['code' => 'PPR'], ['organization_id' => $organization->id, 'name' => 'Papers School', 'status' => 'active']);
+        $school = School::firstOrCreate(['code' => 'PPR'], ['organization_id' => $organization->id, 'name' => 'Papers School', 'status' => 'active']);
+        \App\Models\Subscription::firstOrCreate(['organization_id' => $organization->id, 'school_id' => $school->id], ['plan' => 'professional', 'status' => 'active', 'starts_at' => now()->subMonth(), 'subscription_end' => now()->addMonth()]);
+
+        return $school;
     }
 
     private function ors(array $extra = [], ?ProcurementRequest $request = null): LiquidationReport
@@ -126,5 +129,54 @@ class LiquidationChecklistTest extends TestCase
 
         $this->actingAs($this->master());
         $this->save($report, 'nonsense')->assertSessionHasErrors('ors_kind');
+    }
+
+    public function test_a_school_adds_its_own_paper_which_then_holds_the_approval_until_it_is_ticked(): void
+    {
+        $school = $this->school();
+        $admin = User::factory()->create(['role' => 'school_admin', 'organization_id' => $school->organization_id, 'school_id' => $school->id]);
+        $this->actingAs($admin);
+
+        $this->post(route('school-settings.papers.store'), ['school_id' => $school->id, 'ors_kind' => 'direct', 'stage' => 'ors', 'label' => 'Barangay clearance'])->assertSessionHasNoErrors();
+        $this->post(route('school-settings.papers.store'), ['school_id' => $school->id, 'ors_kind' => 'nonsense', 'stage' => 'ors', 'label' => 'X'])->assertSessionHasErrors('ors_kind');
+        $item = $school->checklistItems()->firstOrFail();
+
+        $report = $this->ors(['ors_kind' => 'direct']);
+        $service = app(LiquidationChecklistService::class);
+        $this->assertContains('Barangay clearance', $service->missing($this->fresh($report)->load('school.checklistItems'), 'ors')->all());
+        $this->assertNotContains('Barangay clearance', $service->missing($this->fresh($this->ors(['ors_kind' => 'travel']))->load('school.checklistItems'), 'ors')->all(), 'only for its own kind');
+
+        $this->save($report, 'direct', ['billing_statement' => ['state' => 'received'], $item->key() => ['state' => 'received', 'note' => 'Brgy 5']])->assertSessionHasNoErrors();
+        $this->assertCount(0, $service->missing($this->fresh($report)->load('school.checklistItems'), 'ors'));
+        $this->assertSame('Brgy 5', $report->documentChecks()->where('item_key', $item->key())->value('note'));
+
+        $this->delete(route('school-settings.papers.destroy', $item), ['school_id' => $school->id])->assertSessionHasNoErrors();
+        $this->assertSame(0, $school->checklistItems()->count());
+    }
+
+    public function test_only_the_school_that_owns_a_paper_can_remove_it_and_a_viewer_cannot_add_one(): void
+    {
+        $school = $this->school();
+        $item = \App\Models\SchoolChecklistItem::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'ors_kind' => 'goods', 'stage' => 'dv', 'label' => 'Warranty card']);
+        $otherOrg = Organization::create(['name' => 'Other Org', 'slug' => 'other-papers-org', 'status' => 'active']);
+        $otherSchool = School::create(['organization_id' => $otherOrg->id, 'code' => 'OTH', 'name' => 'Other School', 'status' => 'active']);
+        \App\Models\Subscription::create(['organization_id' => $otherOrg->id, 'school_id' => $otherSchool->id, 'plan' => 'professional', 'status' => 'active', 'starts_at' => now()->subMonth(), 'subscription_end' => now()->addMonth()]);
+        $outsider = User::factory()->create(['role' => 'school_admin', 'organization_id' => $otherOrg->id, 'school_id' => $otherSchool->id]);
+        $viewer = User::factory()->create(['role' => 'viewer', 'organization_id' => $school->organization_id, 'school_id' => $school->id]);
+
+        $this->actingAs($outsider)->delete(route('school-settings.papers.destroy', $item), ['school_id' => $otherSchool->id])->assertNotFound();
+        $this->actingAs($viewer)->post(route('school-settings.papers.store'), ['school_id' => $school->id, 'ors_kind' => 'goods', 'stage' => 'dv', 'label' => 'Y'])->assertForbidden();
+        $this->assertSame(1, \App\Models\SchoolChecklistItem::count());
+    }
+
+    public function test_the_liquidation_page_and_the_settings_tab_list_the_papers_read_only(): void
+    {
+        $school = $this->school();
+        $admin = User::factory()->create(['role' => 'school_admin', 'organization_id' => $school->organization_id, 'school_id' => $school->id]);
+        $this->ors(['ors_kind' => 'travel']);
+        \App\Models\SchoolChecklistItem::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'ors_kind' => 'travel', 'stage' => 'ors', 'label' => 'Memorandum of travel']);
+
+        $this->actingAs($admin)->get(route('liquidation'))->assertOk()->assertSee('Papers 0 of 5')->assertSee('Travel order')->assertSee('Memorandum of travel');
+        $this->get(route('school-settings', ['ui' => 'staff-save-v7', 'tab' => 'papers', 'school_id' => $school->id]))->assertOk()->assertSee('Memorandum of travel')->assertSee('Add a paper');
     }
 }
