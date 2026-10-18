@@ -50,7 +50,7 @@ class SobController extends Controller
         $this->scoped($request, $sobPlan);
         $year = $this->cse->catalogYearFor((int) $sobPlan->fiscal_year);
 
-        return response()->json($year === null ? [] : $this->cse->searchCatalog($year, (string) $request->query('q')));
+        return response()->json($year === null ? [] : $this->cse->searchCatalog($year, (string) $request->query('q'), [], (int) $sobPlan->organization_id));
     }
 
     public function show(Request $request, SobPlan $sobPlan): View

@@ -564,7 +564,7 @@ class SobService
             'quantity' => ['required', 'numeric', 'gt:0'],
             'unit' => ['required', 'string', 'max:50'],
             'unit_cost' => ['required', 'numeric', 'min:0'],
-            'category' => ['nullable', 'string', Rule::in(AppCategories::ALL)],
+            'category' => ['nullable', 'string', Rule::in(AppCategories::allowed())],
             'cse_catalog_item_id' => ['nullable', 'integer', Rule::exists('cse_catalog_items', 'id')],
         ], ['aip_activity_id.exists' => 'Choose an activity of this school\'s AIP.', 'chart_of_account_id.exists' => 'Choose an account from the chart of accounts.'])->validate();
 
@@ -652,7 +652,7 @@ class SobService
                     'estimated_unit_cost' => $item->unit_cost,
                     'estimated_total_cost' => $item->amount,
                     'fund_source' => $plan->fund_source,
-                    'category' => $item->category,
+                    'category' => AppCategories::of($item->category),
                 ],
             );
             if ($appItem->wasRecentlyCreated) {
@@ -689,7 +689,7 @@ class SobService
             $appItem->update([
                 'procurement_item' => $item->particulars, 'specifications' => $item->activity?->activity, 'quantity' => round((float) $item->frequency * (float) $item->quantity, 2),
                 'unit' => $item->unit, 'estimated_unit_cost' => $item->unit_cost, 'estimated_total_cost' => $item->amount, 'fund_source' => $plan->fund_source,
-                'category' => $item->category,
+                'category' => AppCategories::of($item->category),
             ]);
         }
         // Only an item added after the approval goes in (an item the user took out of the APP is not brought back by an edit).

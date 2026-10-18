@@ -52,7 +52,7 @@ class AppCseController extends Controller
         $query = trim((string) $request->query('q'));
         $added = $items->pluck('cse_catalog_item_id')->filter()->all();
 
-        $results = $query === '' ? collect() : CseCatalogItem::where('catalog_year', $appCsePlan->catalog_year)
+        $results = $query === '' ? collect() : CseCatalogItem::visibleTo($appCsePlan->organization_id)->where('catalog_year', $appCsePlan->catalog_year)
             ->where(fn ($where) => $where->where('description', 'like', '%'.$query.'%')->orWhere('code', 'like', '%'.$query.'%'))
             ->whereNotIn('id', $added)->orderBy('sort_order')->limit(25)->get();
         $staff = SchoolStaff::active()->where('school_id', $appCsePlan->school_id)->get();
@@ -77,7 +77,7 @@ class AppCseController extends Controller
     {
         $this->scoped($request, $appCsePlan);
 
-        return response()->json($this->service->searchCatalog((int) $appCsePlan->catalog_year, (string) $request->query('q'), $appCsePlan->items()->whereNotNull('cse_catalog_item_id')->pluck('cse_catalog_item_id')->all()));
+        return response()->json($this->service->searchCatalog((int) $appCsePlan->catalog_year, (string) $request->query('q'), $appCsePlan->items()->whereNotNull('cse_catalog_item_id')->pluck('cse_catalog_item_id')->all(), (int) $appCsePlan->organization_id));
     }
 
     /** The official form: every catalog row of the plan's catalog year, the plan's own items, the totals and the signatures. */
@@ -92,7 +92,7 @@ class AppCseController extends Controller
 
         return view('app-cse-print', [
             'plan' => $appCsePlan,
-            'catalog' => CseCatalogItem::where('catalog_year', $appCsePlan->catalog_year)->orderBy('sort_order')->get(),
+            'catalog' => CseCatalogItem::visibleTo($appCsePlan->organization_id)->where('catalog_year', $appCsePlan->catalog_year)->orderBy('sort_order')->orderBy('id')->get(),
             'byCatalog' => $items->reject(fn (AppCseItem $item) => $item->isCustom())->keyBy('cse_catalog_item_id'),
             'partTwo' => $items->filter(fn (AppCseItem $item) => $item->isCustom())->values(),
             'totals' => $this->service->totals($appCsePlan),

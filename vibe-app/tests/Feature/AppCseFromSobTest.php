@@ -193,4 +193,32 @@ class AppCseFromSobTest extends TestCase
         $this->assertSame(1, AppCseItem::where('cse_catalog_item_id', $entry->id)->count(), 'one Part I line for the catalog item');
         $this->assertSame(1, AppCseItem::where('from_sob', true)->whereNull('cse_catalog_item_id')->count(), 'the SOB line went to Part II');
     }
+
+    public function test_a_particulars_typed_by_hand_under_a_part_one_category_goes_to_part_one_at_the_sob_price(): void
+    {
+        $fx = SobFixture::make();
+        $this->actingAs($fx['user']);
+        $q4 = app(SobService::class)->create($fx['school'], 2026, 4, 'MOOE', $fx['user']);
+        $entry = CseCatalogItem::where('catalog_year', 2026)->whereNotNull('price')->whereNull('organization_id')->orderBy('sort_order')->firstOrFail();
+        $before = CseCatalogItem::count();
+
+        $this->addLines($fx, $q4, [
+            ['particulars' => 'New PS ballpen, blue', 'frequency' => 1, 'quantity' => 5, 'unit' => 'box', 'unit_cost' => 123.45, 'category' => $entry->category],
+            ['particulars' => $entry->description, 'frequency' => 1, 'quantity' => 2, 'unit' => $entry->unit, 'unit_cost' => 999, 'category' => $entry->category, 'cse_catalog_item_id' => $entry->id],
+            ['particulars' => 'Bond Paper', 'frequency' => 1, 'quantity' => 1, 'unit' => 'ream', 'unit_cost' => 300, 'category' => 'Common Office Supplies'],
+        ]);
+        $this->approve($q4);
+
+        $own = CseCatalogItem::where('description', 'New PS ballpen, blue')->firstOrFail();
+        $this->assertSame($fx['school']->organization_id, $own->organization_id, 'only this organization sees it');
+        $this->assertSame($before + 1, CseCatalogItem::count());
+        $partOne = AppCseItem::where('from_sob', true)->whereNotNull('cse_catalog_item_id')->get()->keyBy('cse_catalog_item_id');
+        $this->assertEquals(123.45, (float) $partOne[$own->id]->unit_price);
+        $this->assertEquals(999.0, (float) $partOne[$entry->id]->unit_price, 'the price typed in the SOB wins over the catalog price');
+        $this->assertSame(['Bond Paper'], AppCseItem::where('from_sob', true)->whereNull('cse_catalog_item_id')->pluck('description')->all());
+
+        app(AppCseService::class)->syncFromSob($fx['school'], 2026, $fx['user']);
+        $this->assertSame($before + 1, CseCatalogItem::count(), 'a second write does not add the catalog item again');
+        $this->assertContains($own->id, array_column($this->getJson(route('planning.sob.catalog', ['sobPlan' => $q4, 'q' => 'ballpen']))->json(), 'id'), 'and it can be searched next time');
+    }
 }

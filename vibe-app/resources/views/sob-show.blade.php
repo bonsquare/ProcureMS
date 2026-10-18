@@ -116,7 +116,7 @@
                     </div>
                     <div class="overflow-x-auto" data-item-view><table class="w-full min-w-[720px] text-left text-xs"><thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant"><tr><th class="px-3 py-1.5">Category</th><th class="px-3 py-1.5">Particulars</th><th class="px-2 text-right">Frequency</th><th class="px-2 text-right">Quantity</th><th class="px-2">Unit</th><th class="px-2 text-right">Unit cost</th><th class="px-3 text-right">Amount</th></tr></thead><tbody class="divide-y divide-outline-variant/20">
                     @foreach($group['items'] as $item)
-                        <tr><td class="px-3 py-1.5">{{ filled($item->category) ? \App\Support\AppCategories::of($item->category) : '-' }}</td><td class="px-3 py-1.5">{{ $item->particulars }}</td><td class="px-2 text-right">{{ rtrim(rtrim(number_format((float) $item->frequency, 2, '.', ''), '0'), '.') }}</td><td class="px-2 text-right">{{ rtrim(rtrim(number_format((float) $item->quantity, 2, '.', ''), '0'), '.') }}</td><td class="px-2">{{ $item->unit }}</td><td class="px-2 text-right">{{ number_format((float) $item->unit_cost, 2) }}</td><td class="px-3 text-right font-semibold">{{ number_format((float) $item->amount, 2) }}</td></tr>
+                        <tr><td class="px-3 py-1.5">{{ \App\Support\AppCategories::label($item->category) }}</td><td class="px-3 py-1.5">{{ $item->particulars }}</td><td class="px-2 text-right">{{ rtrim(rtrim(number_format((float) $item->frequency, 2, '.', ''), '0'), '.') }}</td><td class="px-2 text-right">{{ rtrim(rtrim(number_format((float) $item->quantity, 2, '.', ''), '0'), '.') }}</td><td class="px-2">{{ $item->unit }}</td><td class="px-2 text-right">{{ number_format((float) $item->unit_cost, 2) }}</td><td class="px-3 text-right font-semibold">{{ number_format((float) $item->amount, 2) }}</td></tr>
                     @endforeach
                     @if($group['extras']->isNotEmpty())
                         <tr class="bg-surface-low/60"><td colspan="6" class="px-3 py-1.5 text-right italic">Sub-Total</td><td class="px-3 text-right font-semibold">{{ number_format((float) $group['items_total'], 2) }}</td></tr>
@@ -250,16 +250,18 @@
     const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) { e.className = cls; } if (text !== undefined) { e.textContent = text; } return e; };
     const state = (row, picked) => {
         const note = row.querySelector('[data-catalog-state]');
-        note.textContent = picked ? 'Sold by the Procurement Service: APP-CSE Part I' : 'Not from the PS catalog: APP-CSE Part II';
+        note.textContent = picked ? 'APP-CSE Part I (Procurement Service item)' : 'APP-CSE Part II (not available at PS)';
         note.classList.toggle('text-secondary', picked);
         note.classList.toggle('text-on-surface-variant', !picked);
     };
+    const partOne = (row) => !!row.querySelector('[data-category] option:checked[data-part-one]');
+    document.addEventListener('change', (event) => { if (event.target.matches('[data-category]')) { const row = event.target.closest('[data-row]'); state(row, partOne(row) || !!row.querySelector('[data-catalog-id]').value); } });
     const set = (row, name, value) => { const input = row.querySelector('[name$="[' + name + ']"]'); if (input) { input.value = value; input.dispatchEvent(new Event('input', { bubbles: true })); } };
     document.addEventListener('input', (event) => {
         const box = event.target.closest('[data-catalog-search]');
         if (!box) { return; }
         const row = box.closest('[data-row]'), list = row.querySelector('[data-catalog-list]'), id = row.querySelector('[data-catalog-id]');
-        if (id.value && box.value.trim() !== (box.dataset.picked || '')) { id.value = ''; state(row, false); }
+        if (id.value && box.value.trim() !== (box.dataset.picked || '')) { id.value = ''; state(row, partOne(row)); }
         clearTimeout(timer);
         timer = setTimeout(() => {
             const mine = ++seq, text = box.value.trim();
@@ -277,6 +279,8 @@
                         choice.appendChild(el('span', 'block text-xs text-on-surface-variant', item.code + ' · ' + (item.category || '') + ' · ' + item.unit + ' · ' + (item.price !== null ? '₱' + peso(item.price) : 'no price in the catalog')));
                         choice.addEventListener('click', () => {
                             box.value = item.description; box.dataset.picked = item.description; id.value = item.id;
+                            const category = row.querySelector('[data-category]');
+                            if (category && [...category.options].some((option) => option.value === item.category)) { category.value = item.category; }
                             set(row, 'unit', item.unit);
                             if (item.price !== null) { set(row, 'unit_cost', Number(item.price).toFixed(2)); }
                             state(row, true); list.classList.add('hidden');

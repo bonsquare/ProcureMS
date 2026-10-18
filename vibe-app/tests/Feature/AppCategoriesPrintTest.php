@@ -76,7 +76,11 @@ class AppCategoriesPrintTest extends TestCase
         $this->assertCount(2, $selects[1], 'the add form and the edit form');
         foreach ($selects[1] as $select) {
             preg_match_all('/<option[^>]*>([^<]*)<\/option>/', $select, $options);
-            $this->assertSame(['-', ...self::CATEGORIES], array_map(fn ($text) => html_entity_decode(trim($text)), $options[1]));
+            // A dash, the seven Part II categories first, then the Part I (Procurement Service) categories.
+            $texts = array_map(fn ($text) => html_entity_decode(trim($text)), $options[1]);
+            $this->assertSame(['-', ...self::CATEGORIES], array_slice($texts, 0, 8));
+            $this->assertSame(\App\Support\AppCategories::partOne(), array_slice($texts, 8));
+            $this->assertNotEmpty(\App\Support\AppCategories::partOne());
         }
         $this->assertMatchesRegularExpression('/<option value="Drugs and Medicines" selected>/', $html, 'the saved category is selected when editing');
     }

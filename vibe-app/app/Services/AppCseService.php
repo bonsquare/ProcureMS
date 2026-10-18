@@ -69,13 +69,13 @@ class AppCseService
     }
 
     /** The catalog items of a catalog year whose description, code or category contain every typed word (25 at most). */
-    public function searchCatalog(int $catalogYear, string $text, array $exceptIds = [])
+    public function searchCatalog(int $catalogYear, string $text, array $exceptIds = [], ?int $organizationId = null)
     {
         $words = preg_split('/\s+/', trim($text), -1, PREG_SPLIT_NO_EMPTY);
         if ($words === [] || mb_strlen(implode('', $words)) < 2) {
             return collect();
         }
-        $query = CseCatalogItem::where('catalog_year', $catalogYear)->whereNotIn('id', $exceptIds);
+        $query = CseCatalogItem::visibleTo($organizationId)->where('catalog_year', $catalogYear)->whereNotIn('id', $exceptIds);
         foreach (array_slice($words, 0, 6) as $word) {
             $like = '%'.addcslashes($word, '%_\\').'%';
             $query->where(fn ($where) => $where->where('description', 'like', $like)->orWhere('code', 'like', $like)->orWhere('category', 'like', $like));
@@ -95,7 +95,7 @@ class AppCseService
     public function addCatalogItem(AppCsePlan $plan, int $catalogItemId, ?float $price = null): AppCseItem
     {
         $this->requireDraft($plan);
-        $catalog = CseCatalogItem::find($catalogItemId);
+        $catalog = CseCatalogItem::visibleTo($plan->organization_id)->find($catalogItemId);
         if (! $catalog || (int) $catalog->catalog_year !== (int) $plan->catalog_year) {
             $this->fail('That item is not in the '.$plan->catalog_year.' catalog.', 'cse_catalog_item_id');
         }
@@ -161,17 +161,21 @@ class AppCseService
             }
         }
 
-        // A particulars picked from the Procurement Service catalog goes to Part I (the catalog's description, unit and price); every other one to Part II.
-        // A catalog item already typed into Part I by hand stays as it is, and the SOB line goes to Part II.
-        $catalog = CseCatalogItem::where('catalog_year', $plan->catalog_year)->whereIn('id', $items->pluck('cse_catalog_item_id')->filter()->all())->get()->keyBy('id');
+        // A particulars goes to Part I when it was picked from the Procurement Service catalog or filed under a Part I category (its description, unit and the
+        // price typed in the SOB, since PS items and prices change); a Part I item that is not in the catalog yet is added to the school's own catalog items.
+        // Every other particulars goes to Part II. A catalog item already typed into Part I by hand stays as it is, and the SOB line goes to Part II.
+        $catalog = CseCatalogItem::visibleTo($plan->organization_id)->where('catalog_year', $plan->catalog_year)->get()->keyBy('id');
         $handAdded = AppCseItem::withoutGlobalScopes()->where('app_cse_plan_id', $plan->id)->where('from_sob', false)->whereNotNull('cse_catalog_item_id')->pluck('cse_catalog_item_id')->all();
         $lines = [];
         foreach ($items as $item) {
             $month = 'm'.((((int) $item->plan->quarter) - 1) * 3 + 1);
             $entry = $item->cse_catalog_item_id ? $catalog->get($item->cse_catalog_item_id) : null;
+            if (! $entry && ! in_array($item->category, AppCategories::ALL, true) && filled($item->category)) {
+                $entry = $this->partOneEntry($plan, $item, $catalog);
+            }
             if ($entry && ! in_array($entry->id, $handAdded, true)) {
                 $key = 'catalog|'.$entry->id;
-                $lines[$key] ??= ['catalog_id' => $entry->id, 'sort_order' => (int) $entry->sort_order, 'category' => $entry->category, 'description' => $entry->description, 'unit' => $entry->unit, 'unit_price' => (float) ($entry->price ?? $item->unit_cost), 'months' => []];
+                $lines[$key] ??= ['catalog_id' => $entry->id, 'sort_order' => (int) $entry->sort_order, 'category' => $entry->category, 'description' => $entry->description, 'unit' => $entry->unit, 'unit_price' => (float) $item->unit_cost, 'months' => []];
             } else {
                 $category = AppCategories::of($item->category);
                 $key = $category.'|'.mb_strtolower(trim((string) $item->particulars)).'|'.mb_strtolower(trim((string) $item->unit)).'|'.number_format((float) $item->unit_cost, 2, '.', '');
@@ -204,6 +208,25 @@ class AppCseService
                 ]);
             }
         });
+    }
+
+    /** The catalog item of a Part I particulars typed by hand: the one with the same words in that category, else a new one that only this school's organization sees. */
+    private function partOneEntry(AppCsePlan $plan, SobItem $item, $catalog): CseCatalogItem
+    {
+        $description = trim((string) $item->particulars);
+        $found = $catalog->first(fn (CseCatalogItem $entry) => $entry->category === $item->category && mb_strtolower($entry->description) === mb_strtolower($description));
+        if ($found) {
+            return $found;
+        }
+        $own = CseCatalogItem::create([
+            'organization_id' => $plan->organization_id, 'catalog_year' => $plan->catalog_year, 'group_heading' => null, 'category' => $item->category,
+            'code' => 'OWN-'.str_pad((string) (1 + CseCatalogItem::where('organization_id', $plan->organization_id)->where('catalog_year', $plan->catalog_year)->count()), 3, '0', STR_PAD_LEFT),
+            'description' => $description, 'unit' => trim((string) $item->unit), 'price' => $item->unit_cost,
+            'sort_order' => (int) (CseCatalogItem::where('catalog_year', $plan->catalog_year)->where('category', $item->category)->max('sort_order') ?? CseCatalogItem::where('catalog_year', $plan->catalog_year)->max('sort_order') + 1),
+        ]);
+        $catalog->put($own->id, $own);
+
+        return $own;
     }
 
     /** @param  array<string, mixed>  $data  m1..m12; for a Part II item also category, description, unit and unit_price; for a catalog item unit_price only when the catalog has none */
