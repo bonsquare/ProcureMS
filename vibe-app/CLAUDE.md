@@ -234,6 +234,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 - 2026-10-18: **Accepted/rejected deliveries, delivery history on the reconciliation print, Part II entry box on the APP-CSE page, DV notice when accepted is below the obligation** (docs/specs.md section 44); the Next work sequence of this file was rewritten.
 - 2026-10-18: IAR form: the **Accepted before** figure is editable so a wrong accepted quantity can be corrected (docs/specs.md section 43).
 - 2026-10-18: IAR form: the Inspection Officer / Committee Name box is removed; the signatory picker at the bottom is the only place (docs/specs.md section 43).
+- 2026-10-18: Local walk-through done (APP-CSE Part I search and add, SOB catalog pick and Category sync, IAR accepted/rejected form); IAR items are compact blocks, the SOB search list is wider (docs/specs.md section 44).
 
 ## Standing workflow (owner's instruction 2026-10-16)
 
