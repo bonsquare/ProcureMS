@@ -49,8 +49,8 @@ class ScreenSwitchTest extends TestCase
     {
         SystemSetting::put(SystemSetting::SCREEN_OFF, '1');
 
-        $this->get('/')->assertStatus(503)->assertSee('Link is not available');
-        $this->actingAs($this->schoolUser())->get(route('home'))->assertStatus(503)->assertSee('Link is not available');
+        $this->get('/')->assertStatus(503)->assertSee('System Under Maintenance', false);
+        $this->actingAs($this->schoolUser())->get(route('home'))->assertStatus(503)->assertSee('System Under Maintenance', false);
 
         $this->actingAs($this->master())->get(route('home'))->assertOk();
     }
@@ -68,5 +68,43 @@ class ScreenSwitchTest extends TestCase
     {
         $this->actingAs($this->schoolUser())->put(route('screen.update'), ['screen' => 'off'])->assertForbidden();
         $this->assertFalse(SystemSetting::screenIsOff());
+    }
+
+    public function test_the_master_switches_single_tabs_off_and_users_see_that_tab_under_maintenance_while_the_rest_works(): void
+    {
+        $master = $this->master();
+        $this->actingAs($master)->put(route('screen.tabs'), ['sections' => ['budget', 'chart_of_accounts']])->assertSessionHasNoErrors();
+        $this->assertSame(['budget', 'chart_of_accounts'], SystemSetting::sectionsOff());
+        $this->assertSame(1, \App\Models\AuditLog::where('action', 'screen_tabs_changed')->count());
+        $this->get(route('home', ['view' => 'screen']))->assertOk()->assertSee('2 tabs are under maintenance');
+        $this->actingAs($master)->get('/budget')->assertOk()->assertDontSee('is temporarily unavailable');
+
+        auth()->logout();
+        $this->get('/budget')->assertStatus(503)->assertSee('This Site is Under Maintenance', false)->assertSee('Budget is temporarily unavailable')->assertSee('Back to Dashboard');
+        $this->get('/accounting/chart-of-accounts')->assertStatus(503)->assertSee('Chart of Accounts is temporarily unavailable');
+        $this->get('/accounting')->assertRedirect(route('login'));
+        $this->get(route('login'))->assertOk();
+
+        $user = $this->schoolUser();
+        $this->actingAs($user)->get('/budget')->assertStatus(503);
+        $this->assertNotSame(503, $this->actingAs($user)->get('/cash')->getStatusCode(), 'a tab that is on keeps working');
+    }
+
+    public function test_only_the_master_switches_tabs_and_unknown_tabs_are_refused(): void
+    {
+        $this->actingAs($this->schoolUser())->put(route('screen.tabs'), ['sections' => ['budget']])->assertForbidden();
+        $this->assertSame([], SystemSetting::sectionsOff());
+
+        $this->actingAs($this->master())->put(route('screen.tabs'), ['sections' => ['nonsense']])->assertSessionHasErrors('sections.0');
+        $this->put(route('screen.tabs'), [])->assertSessionHasNoErrors();
+        $this->assertSame([], SystemSetting::sectionsOff());
+    }
+
+    public function test_the_whole_system_off_wins_over_the_tabs(): void
+    {
+        SystemSetting::put(SystemSetting::SCREEN_OFF, '1');
+        SystemSetting::put(SystemSetting::SCREEN_OFF_SECTIONS, json_encode(['budget']));
+
+        $this->get('/budget')->assertStatus(503)->assertSee('System Under Maintenance', false);
     }
 }
