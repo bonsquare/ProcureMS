@@ -280,5 +280,6 @@ class AppCseEntryTest extends TestCase
 
         $this->getJson(route('planning.app-cse.catalog', ['appCsePlan' => $otherPlan, 'q' => $word]))->assertNotFound();
         $this->get(route('planning.app-cse.show', $plan))->assertOk()->assertSee('data-cse-search', false);
+        $this->get(route('planning.app-cse.show', $plan))->assertSee(route('planning.app-cse.custom.store', $plan), false)->assertSee('Add my own item to Part II');
     }
 }

@@ -1295,6 +1295,8 @@ class HomeController extends Controller
             'inspection_officer_name' => ['nullable', 'string', 'max:255'],
             'received_items' => ['nullable', 'array'],
             'received_items.*' => ['nullable', 'numeric', 'min:0'],
+            'rejected_items' => ['nullable', 'array'],
+            'rejected_items.*' => ['nullable', 'numeric', 'min:0'],
             'iars_assignments' => ['nullable', 'array', 'max:30'],
             'iars_assignments.*.staff_id' => ['required_with:iars_assignments', 'integer'],
             'iars_assignments.*.items' => ['nullable', 'array'],
@@ -1459,19 +1461,31 @@ class HomeController extends Controller
             // (the quantities that arrived, or were corrected, in that delivery).
             $savedIar = $procurementRequest->documents()->where('document_type', 'inspection_acceptance_report')->first();
             $savedTotals = $savedIar?->metadata['received_items'] ?? [];
+            $savedRejected = $savedIar?->metadata['rejected_items'] ?? [];
             $deliveries = $savedIar?->metadata['deliveries'] ?? [];
             $arrived = [];
+            $refused = [];
+            $rejectedTotals = [];
             foreach ($procurementRequest->items as $item) {
                 $change = round((float) data_get($data, 'received_items.'.$item->id) - (float) ($savedTotals[$item->id] ?? $savedTotals[(string) $item->id] ?? 0), 2);
                 if ($change != 0.0) {
                     $arrived[$item->id] = $change;
                 }
+                // Rejected: goods that arrived but were not accepted (they stay in the balance until delivered again).
+                $rejectedTotals[$item->id] = round((float) data_get($data, 'rejected_items.'.$item->id, 0), 2);
+                $refusedChange = round($rejectedTotals[$item->id] - (float) ($savedRejected[$item->id] ?? $savedRejected[(string) $item->id] ?? 0), 2);
+                if ($refusedChange != 0.0) {
+                    $refused[$item->id] = $refusedChange;
+                }
             }
-            if ($arrived !== []) {
-                $deliveries[] = ['date' => $data['document_date'], 'by' => $request->user()?->name, 'items' => $arrived];
+            if ($arrived !== [] || $refused !== []) {
+                $deliveries[] = array_filter(['date' => $data['document_date'], 'by' => $request->user()?->name, 'items' => $arrived, 'rejected' => $refused], fn ($value) => $value !== []);
             }
             if ($deliveries !== []) {
                 $linkedDocumentMetadata['deliveries'] = $deliveries;
+            }
+            if (array_sum($rejectedTotals) > 0) {
+                $linkedDocumentMetadata['rejected_items'] = $rejectedTotals;
             }
         }
         if (in_array($data['document_type'], ['notice_to_award', 'purchase_order', 'notice_to_proceed'], true)) {

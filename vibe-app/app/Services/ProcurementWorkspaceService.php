@@ -133,6 +133,20 @@ class ProcurementWorkspaceService
         ];
     }
 
+    /** A note for the DV when the request has an IAR and less was accepted than the obligation (a partial or rejected delivery); null otherwise. The DV itself still follows the obligation. */
+    public function acceptedNote(?ProcurementRequest $request, float $obligated): ?string
+    {
+        if (! $request || ! $request->documents->contains('document_type', 'inspection_acceptance_report')) {
+            return null;
+        }
+        $accepted = $this->receiving($request->loadMissing('items'))['total_received_amount'];
+        if (round($accepted, 2) >= round($obligated, 2)) {
+            return null;
+        }
+
+        return 'Accepted so far: ₱'.number_format($accepted, 2).' of the ₱'.number_format($obligated, 2).' obligated (a partial or rejected delivery). The DV follows the obligation; the journal entry must equal it.';
+    }
+
     public function receiving(ProcurementRequest $request): array
     {
         $documents = $request->relationLoaded('documents') ? $request->documents : collect();

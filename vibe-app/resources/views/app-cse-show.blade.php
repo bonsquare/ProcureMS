@@ -62,6 +62,17 @@
 @foreach([['Part I · Available at Procurement Service stores', $partOne], ['Part II · Other items not available at PS', $partTwo]] as [$partTitle, $partItems])
 <details open class="mb-5 rounded border border-outline-variant/30 bg-white">
     <summary class="flex cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center gap-2 border-b border-outline-variant/20 px-4 py-3"><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] text-on-surface-variant transition-transform" aria-hidden="true">expand_more</span><h2 class="font-semibold">{{ $partTitle }}</h2></summary>
+    @if(! $loop->first && $editable)
+    <div class="border-b border-outline-variant/20 bg-primary/5 px-4 py-3">
+        <form method="POST" action="{{ route('planning.app-cse.custom.store', $plan) }}" class="grid items-end gap-3 md:grid-cols-6">@csrf
+            <label class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant md:col-span-2">Category<select name="category" required class="{{ $box }}">@foreach(\App\Support\AppCategories::ALL as $categoryChoice)<option value="{{ $categoryChoice }}" @selected(old('category', \App\Support\AppCategories::DEFAULT) === $categoryChoice)>{{ $categoryChoice }}</option>@endforeach</select></label>
+            <label class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant md:col-span-2">Description<input name="description" required maxlength="500" value="{{ old('description') }}" class="{{ $box }}"></label>
+            <label class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Unit<input name="unit" required maxlength="50" value="{{ old('unit') }}" class="{{ $box }}"></label>
+            <label class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Price<input type="number" name="unit_price" step="0.01" min="0" required value="{{ old('unit_price') }}" class="{{ $box }}"></label>
+            <div class="md:col-span-6"><button class="rounded-lg bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary-container">Add my own item to Part II</button><span class="ml-3 text-xs text-on-surface-variant">An item not available at the Procurement Service. Items from the SOB are added by themselves.</span></div>
+        </form>
+    </div>
+    @endif
     @if($loop->first && $editable)
     <div class="border-b border-outline-variant/20 bg-primary/5 px-4 py-3" data-cse-search data-url="{{ route('planning.app-cse.catalog', $plan) }}" data-add="{{ route('planning.app-cse.items.store', $plan) }}" data-token="{{ csrf_token() }}">
         <label class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Find an item sold by the Procurement Service<input type="search" autocomplete="off" maxlength="100" placeholder="Type a description, category or code, e.g. bond paper" class="{{ $box }}"></label>

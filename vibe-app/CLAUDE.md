@@ -231,6 +231,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 - 2026-10-18: **APP-CSE Part I by search and partial deliveries** (docs/specs.md section 43): Part I has a type-to-search box over the Procurement Service catalog (`planning.app-cse.catalog`); the IAR form records each delivery on top of the total received (`deliveries` in the IAR metadata, history shown in the form). The DV rule is unchanged: its amount is the ORS obligation and the journal must balance and equal it.
 - 2026-10-18: **SOB feeds APP-CSE Part I and II** (docs/specs.md section 43): the SOB Particulars box searches the PS catalog (`planning.sob.catalog`, column `sob_items.cse_catalog_item_id`); approved SOB lines picked from the catalog are written to Part I, the rest to Part II.
 - 2026-10-18: **SOB Category decides Part I or II** (docs/specs.md section 43): the dropdown lists Part II first, then the PS categories (Part I); a Part I item may be typed by hand at the SOB price and is kept as an organization-only catalog item (`cse_catalog_items.organization_id`).
+- 2026-10-18: **Accepted/rejected deliveries, delivery history on the reconciliation print, Part II entry box on the APP-CSE page, DV notice when accepted is below the obligation** (docs/specs.md section 44); the Next work sequence of this file was rewritten.
 
 ## Standing workflow (owner's instruction 2026-10-16)
 
@@ -288,12 +289,13 @@ Implement email/SMS notifications, analytics, support access, configurable appro
 
 ## Next work sequence
 
-1. Run the application and inspect the current routes/database state.
-2. Validate the full Phase 2 and partial Phase 3 flow: SIP → AIP → PPMP → APP → PR.
-3. Fix only confirmed defects; keep changes additive and tenant-safe.
-4. Add focused feature tests for each corrected workflow and permission/isolation failure.
-5. Finish Phase 3 before starting Phase 4 supplier/RFQ work.
-6. Update this handoff and the phase checklist after every meaningful milestone.
+The planning, procurement, delivery, accounting, cash, liquidation, report and master/Sub-master parts are built (see the status list above and docs/specs.md); the sequence is now to confirm and close, not to start Phase 2 again.
+
+1. Walk the live flow end to end with the demo school: SIP → AIP → SOB → APP / APP-CSE → PR → RFQ, Abstract, NOA, PO → IAR (partial deliveries) → ORS → DV → payment → liquidation.
+2. Fix only confirmed defects; keep changes additive and tenant-safe.
+3. Add a focused feature test for each corrected workflow and each permission or isolation failure.
+4. Check each phase against the completion standard below before it is called complete; Phase 11 (notifications, analytics, support access, configurable approvals, performance monitoring) is not started.
+5. Update this handoff and docs/specs.md after every meaningful milestone.
 
 ## Completion standard
 

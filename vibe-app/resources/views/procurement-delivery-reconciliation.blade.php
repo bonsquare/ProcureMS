@@ -115,6 +115,25 @@
         </table>
     @endif
 
+    @php
+        $deliveries = collect($iar->metadata['deliveries'] ?? []);
+        $itemNames = $procurementRequest->items->pluck('name', 'id');
+        $listing = fn ($quantities) => collect($quantities ?? [])->map(fn ($qty, $id) => ($itemNames[$id] ?? '#'.$id).' '.($qty > 0 ? '+' : '').rtrim(rtrim(number_format((float) $qty, 2), '0'), '.'))->implode('; ');
+    @endphp
+    <div class="section-title">Delivery History</div>
+    @if($deliveries->isEmpty())
+        <div class="empty">No delivery history recorded.</div>
+    @else
+        <table class="report-table" data-paginate>
+            <thead><tr><th style="width:5%">#</th><th style="width:14%">Date</th><th>Accepted</th><th>Rejected</th><th style="width:16%">Recorded by</th></tr></thead>
+            <tbody>
+                @foreach($deliveries as $delivery)
+                    <tr><td class="center">{{ $loop->iteration }}</td><td class="center">{{ \Illuminate\Support\Carbon::parse($delivery['date'] ?? now())->format('M d, Y') }}</td><td>{{ $listing($delivery['items'] ?? []) ?: '-' }}</td><td>{{ $listing($delivery['rejected'] ?? []) ?: '-' }}</td><td>{{ $delivery['by'] ?? '' }}</td></tr>
+                @endforeach
+            </tbody>
+        </table>
+    @endif
+
     <section class="signatures">
         <div><div class="sign-line">Prepared by</div></div>
         <div><div class="sign-line">Reviewed by</div></div>

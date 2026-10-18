@@ -183,4 +183,37 @@ class DeliveryAcceptanceRulesTest extends TestCase
         $this->assertEquals(9, $iar()['received_items'][$item->id]);
         $this->assertSame('2026-03-20', $deliveries[1]['date']);
     }
+
+    public function test_rejected_quantity_is_recorded_stays_in_the_balance_and_is_printed_in_the_history(): void
+    {
+        [$organization, $school, $request, $item] = $this->purchase();
+        $this->actingAs($this->userOf($organization, $school, 'school_admin'));
+        $iar = fn () => ProcurementDocument::where('document_type', 'inspection_acceptance_report')->firstOrFail()->metadata;
+
+        $this->post(route('procurement.documents.store', $request), $this->iar([$item->id => '6']) + ['rejected_items' => [$item->id => '2']])->assertSessionHasNoErrors();
+        $this->post(route('procurement.documents.store', $request), $this->iar([$item->id => '6']) + ['rejected_items' => [$item->id => '2']])->assertSessionHasNoErrors();
+        $this->post(route('procurement.documents.store', $request), $this->iar([$item->id => '6']) + ['rejected_items' => [$item->id => '-1']])->assertSessionHasErrors('rejected_items.'.$item->id);
+
+        $this->assertEquals(2, $iar()['rejected_items'][$item->id]);
+        $this->assertCount(1, $iar()['deliveries'], 'the second identical save adds nothing');
+        $this->assertEquals([$item->id => 2], array_map('floatval', $iar()['deliveries'][0]['rejected']));
+        $this->assertEquals(6, $iar()['received_items'][$item->id], 'received_items holds what was accepted: the balance is 4');
+
+        $this->get(route('procurement.delivery-reconciliation', $request))->assertOk()->assertSee('Delivery History')->assertSee('Bond paper +6')->assertSee('Bond paper +2');
+    }
+
+    public function test_the_dv_form_says_when_less_was_accepted_than_the_obligation(): void
+    {
+        [$organization, $school, $request, $item] = $this->purchase();
+        $master = User::factory()->create(['role' => 'master_user', 'organization_id' => null, 'school_id' => null]);
+        $this->actingAs($master);
+        $this->post(route('procurement.documents.store', $request), $this->iar([$item->id => '4']))->assertSessionHasNoErrors();
+        $report = $this->approvedOrs($organization, $school, $request);
+        // Not yet with a DV: the note rides on the Create DV button.
+        $this->get(route('accounting', ['tab' => 'for_dv']))->assertOk()->assertSee('data-accepted-note="Accepted so far: ₱1,000.00 of the ₱2,500.00 obligated', false);
+
+        $report->forceFill(['dv_number' => 'DV-D-9', 'dv_date' => now()->toDateString(), 'dv_particulars' => 'Supplies', 'payment_mode' => 'MDS Check'])->save();
+        $page = $this->get(route('accounting', ['tab' => 'with_dv']))->assertOk();
+        $page->assertSee('Accepted so far', false);
+    }
 }
