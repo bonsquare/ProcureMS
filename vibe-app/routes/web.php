@@ -98,6 +98,7 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::delete('/planning/sob/{sobPlan}', [SobController::class, 'destroy'])->middleware('permission:planning.manage')->name('planning.sob.destroy')->whereNumber('sobPlan');
     Route::post('/planning/sob/{sobPlan}/approve', [SobController::class, 'approve'])->middleware('permission:planning.manage')->name('planning.sob.approve')->whereNumber('sobPlan');
     Route::post('/planning/sob/{sobPlan}/reopen', [SobController::class, 'reopen'])->middleware('permission:planning.manage')->name('planning.sob.reopen')->whereNumber('sobPlan');
+    Route::get('/planning/sob/{sobPlan}/catalog', [SobController::class, 'catalog'])->middleware('permission:planning.manage')->name('planning.sob.catalog')->whereNumber('sobPlan');
     Route::post('/planning/sob/{sobPlan}/items', [SobController::class, 'storeItem'])->middleware('permission:planning.manage')->name('planning.sob.items.store')->whereNumber('sobPlan');
     Route::post('/planning/sob/{sobPlan}/items/preview', [SobController::class, 'previewItem'])->middleware('permission:planning.manage')->name('planning.sob.items.preview')->whereNumber('sobPlan');
     Route::post('/planning/sob/items/{sobItem}/preview', [SobController::class, 'previewItemUpdate'])->middleware('permission:planning.manage')->name('planning.sob.items.update.preview')->whereNumber('sobItem');

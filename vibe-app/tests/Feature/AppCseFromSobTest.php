@@ -152,4 +152,45 @@ class AppCseFromSobTest extends TestCase
         $this->assertSame(2, substr_count($page, '1 item with no quantity yet (not printed)'), 'one folded in Part I and one in Part II');
         $this->assertStringContainsString(route('planning.app-cse.items.update', $zeroOwn), $page, 'still there to be given a quantity');
     }
+
+    public function test_a_line_picked_from_the_catalog_goes_to_part_one_and_the_others_to_part_two(): void
+    {
+        $fx = SobFixture::make();
+        $this->actingAs($fx['user']);
+        $q4 = app(SobService::class)->create($fx['school'], 2026, 4, 'MOOE', $fx['user']);
+        $entry = CseCatalogItem::where('catalog_year', 2026)->whereNotNull('price')->orderBy('sort_order')->firstOrFail();
+
+        $this->getJson(route('planning.sob.catalog', ['sobPlan' => $q4, 'q' => $entry->code]))->assertOk()->assertJsonFragment(['id' => $entry->id]);
+        $this->getJson(route('planning.sob.catalog', ['sobPlan' => $q4, 'q' => 'a']))->assertOk()->assertExactJson([]);
+
+        $this->addLines($fx, $q4, [
+            ['particulars' => $entry->description, 'frequency' => 1, 'quantity' => 3, 'unit' => $entry->unit, 'unit_cost' => (float) $entry->price, 'category' => 'Common Office Supplies', 'cse_catalog_item_id' => $entry->id],
+            ['particulars' => 'Tie wire, own supplier', 'frequency' => 1, 'quantity' => 2, 'unit' => 'kg', 'unit_cost' => 80, 'category' => 'Other Categories'],
+        ]);
+        $this->approve($q4);
+
+        $partOne = AppCseItem::where('from_sob', true)->whereNotNull('cse_catalog_item_id')->get();
+        $partTwo = AppCseItem::where('from_sob', true)->whereNull('cse_catalog_item_id')->get();
+        $this->assertSame([$entry->id], $partOne->pluck('cse_catalog_item_id')->all(), 'the catalog line is Part I');
+        $this->assertEquals(3.0, $partOne->first()->totalQuantity());
+        $this->assertEquals((float) $entry->price, (float) $partOne->first()->unit_price);
+        $this->assertSame(['Tie wire, own supplier'], $partTwo->pluck('description')->all(), 'the other line is Part II');
+        $this->assertSame($entry->id, SobItem::where('particulars', $entry->description)->firstOrFail()->cse_catalog_item_id);
+    }
+
+    public function test_a_catalog_item_already_added_by_hand_to_part_one_is_not_doubled_by_the_sob(): void
+    {
+        $fx = SobFixture::make();
+        $this->actingAs($fx['user']);
+        $q4 = app(SobService::class)->create($fx['school'], 2026, 4, 'MOOE', $fx['user']);
+        $entry = CseCatalogItem::where('catalog_year', 2026)->whereNotNull('price')->orderBy('sort_order')->firstOrFail();
+        $plan = app(AppCseService::class)->create($fx['school'], 2026, $fx['user']);
+        app(AppCseService::class)->addCatalogItem($plan, $entry->id);
+
+        $this->addLines($fx, $q4, [['particulars' => $entry->description, 'frequency' => 1, 'quantity' => 3, 'unit' => $entry->unit, 'unit_cost' => (float) $entry->price, 'category' => 'Common Office Supplies', 'cse_catalog_item_id' => $entry->id]]);
+        $this->approve($q4);
+
+        $this->assertSame(1, AppCseItem::where('cse_catalog_item_id', $entry->id)->count(), 'one Part I line for the catalog item');
+        $this->assertSame(1, AppCseItem::where('from_sob', true)->whereNull('cse_catalog_item_id')->count(), 'the SOB line went to Part II');
+    }
 }

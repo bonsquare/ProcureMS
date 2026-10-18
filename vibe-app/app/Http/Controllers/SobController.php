@@ -43,6 +43,16 @@ class SobController extends Controller
         return redirect()->route('planning.sob.show', $plan)->with('success', 'The '.$plan->quarterLabel().' SOB was created. Pick the AIP activities that have a budget and add their items.');
     }
 
+    /** Type-ahead for a particulars: the Procurement Service catalog items (those of the catalog the year's APP-CSE uses) that match the typed words. */
+    public function catalog(Request $request, SobPlan $sobPlan)
+    {
+        abort_unless($request->user()->hasPermission('planning.manage'), 403);
+        $this->scoped($request, $sobPlan);
+        $year = $this->cse->catalogYearFor((int) $sobPlan->fiscal_year);
+
+        return response()->json($year === null ? [] : $this->cse->searchCatalog($year, (string) $request->query('q')));
+    }
+
     public function show(Request $request, SobPlan $sobPlan): View
     {
         abort_unless($request->user()->hasPermission('planning.view') || $request->user()->hasPermission('planning.manage'), 403);

@@ -565,6 +565,7 @@ class SobService
             'unit' => ['required', 'string', 'max:50'],
             'unit_cost' => ['required', 'numeric', 'min:0'],
             'category' => ['nullable', 'string', Rule::in(AppCategories::ALL)],
+            'cse_catalog_item_id' => ['nullable', 'integer', Rule::exists('cse_catalog_items', 'id')],
         ], ['aip_activity_id.exists' => 'Choose an activity of this school\'s AIP.', 'chart_of_account_id.exists' => 'Choose an account from the chart of accounts.'])->validate();
 
         $frequency = round((float) $values['frequency'], 2);
@@ -576,7 +577,7 @@ class SobService
             'frequency' => $frequency, 'quantity' => $quantity, 'unit' => trim($values['unit']), 'unit_cost' => $cost, 'amount' => round($frequency * $quantity * $cost, 2),
             // The form always sends the category: "-" (empty) means no category, so no APP line. A line that is made without one (by code) is filed under Other Categories.
             'category' => array_key_exists('category', $data) ? (filled($values['category'] ?? null) ? $values['category'] : null) : AppCategories::DEFAULT,
-        ];
+        ] + (array_key_exists('cse_catalog_item_id', $data) ? ['cse_catalog_item_id' => filled($values['cse_catalog_item_id'] ?? null) ? (int) $values['cse_catalog_item_id'] : null] : []);
     }
 
     /**

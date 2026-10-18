@@ -242,6 +242,56 @@
 })();
 </script>
 <script>
+// Particulars: type to find an item sold by the Procurement Service. Picking one fills the unit and the price and files the line under Part I of the APP-CSE; typing anything else makes it a Part II line.
+(() => {
+    const url = @json(route('planning.sob.catalog', $plan));
+    const peso = (value) => Number(value).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    let timer, seq = 0;
+    const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) { e.className = cls; } if (text !== undefined) { e.textContent = text; } return e; };
+    const state = (row, picked) => {
+        const note = row.querySelector('[data-catalog-state]');
+        note.textContent = picked ? 'Sold by the Procurement Service: APP-CSE Part I' : 'Not from the PS catalog: APP-CSE Part II';
+        note.classList.toggle('text-secondary', picked);
+        note.classList.toggle('text-on-surface-variant', !picked);
+    };
+    const set = (row, name, value) => { const input = row.querySelector('[name$="[' + name + ']"]'); if (input) { input.value = value; input.dispatchEvent(new Event('input', { bubbles: true })); } };
+    document.addEventListener('input', (event) => {
+        const box = event.target.closest('[data-catalog-search]');
+        if (!box) { return; }
+        const row = box.closest('[data-row]'), list = row.querySelector('[data-catalog-list]'), id = row.querySelector('[data-catalog-id]');
+        if (id.value && box.value.trim() !== (box.dataset.picked || '')) { id.value = ''; state(row, false); }
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+            const mine = ++seq, text = box.value.trim();
+            if (text.length < 2) { list.classList.add('hidden'); return; }
+            fetch(url + '?q=' + encodeURIComponent(text), { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
+                .then((response) => (response.ok ? response.json() : []))
+                .then((items) => {
+                    if (mine !== seq) { return; }
+                    list.replaceChildren();
+                    if (!items.length) { list.appendChild(el('p', 'px-3 py-2 text-xs text-on-surface-variant', 'Not sold by the Procurement Service: keep typing your own particulars (Part II).')); }
+                    items.forEach((item) => {
+                        const choice = el('button', 'block w-full border-b border-outline-variant/20 px-3 py-2 text-left hover:bg-primary/10');
+                        choice.type = 'button';
+                        choice.appendChild(el('span', 'block font-semibold', item.description));
+                        choice.appendChild(el('span', 'block text-xs text-on-surface-variant', item.code + ' · ' + (item.category || '') + ' · ' + item.unit + ' · ' + (item.price !== null ? '₱' + peso(item.price) : 'no price in the catalog')));
+                        choice.addEventListener('click', () => {
+                            box.value = item.description; box.dataset.picked = item.description; id.value = item.id;
+                            set(row, 'unit', item.unit);
+                            if (item.price !== null) { set(row, 'unit_cost', Number(item.price).toFixed(2)); }
+                            state(row, true); list.classList.add('hidden');
+                        });
+                        list.appendChild(choice);
+                    });
+                    list.classList.remove('hidden');
+                });
+        }, 250);
+    });
+    document.addEventListener('click', (event) => { if (!event.target.closest('[data-catalog-list]') && !event.target.closest('[data-catalog-search]')) { document.querySelectorAll('[data-catalog-list]').forEach((list) => list.classList.add('hidden')); } });
+    document.addEventListener('focusin', (event) => { const box = event.target.closest('[data-catalog-search]'); if (box) { box.dataset.picked = box.closest('[data-row]').querySelector('[data-catalog-id]').value ? box.value.trim() : ''; } });
+})();
+</script>
+<script>
 // A long activity or account title is cut with "..." inside the closed dropdown box: the complete text of the chosen one is its tooltip (it is not written again under the box).
 document.querySelectorAll('[data-full-text-box]').forEach((box) => {
     const select = box.querySelector('select');

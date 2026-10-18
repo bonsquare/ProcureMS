@@ -68,6 +68,30 @@ class AppCseService
         });
     }
 
+    /** The catalog items of a catalog year whose description, code or category contain every typed word (25 at most). */
+    public function searchCatalog(int $catalogYear, string $text, array $exceptIds = [])
+    {
+        $words = preg_split('/\s+/', trim($text), -1, PREG_SPLIT_NO_EMPTY);
+        if ($words === [] || mb_strlen(implode('', $words)) < 2) {
+            return collect();
+        }
+        $query = CseCatalogItem::where('catalog_year', $catalogYear)->whereNotIn('id', $exceptIds);
+        foreach (array_slice($words, 0, 6) as $word) {
+            $like = '%'.addcslashes($word, '%_\\').'%';
+            $query->where(fn ($where) => $where->where('description', 'like', $like)->orWhere('code', 'like', $like)->orWhere('category', 'like', $like));
+        }
+
+        return $query->orderBy('sort_order')->limit(25)->get(['id', 'category', 'code', 'description', 'unit', 'price']);
+    }
+
+    /** The catalog year an APP-CSE of that fiscal year uses (the latest catalog not after it). */
+    public function catalogYearFor(int $fiscalYear): ?int
+    {
+        $year = CseCatalogItem::where('catalog_year', '<=', $fiscalYear)->max('catalog_year') ?? CseCatalogItem::max('catalog_year');
+
+        return $year === null ? null : (int) $year;
+    }
+
     public function addCatalogItem(AppCsePlan $plan, int $catalogItemId, ?float $price = null): AppCseItem
     {
         $this->requireDraft($plan);
@@ -137,21 +161,31 @@ class AppCseService
             }
         }
 
+        // A particulars picked from the Procurement Service catalog goes to Part I (the catalog's description, unit and price); every other one to Part II.
+        // A catalog item already typed into Part I by hand stays as it is, and the SOB line goes to Part II.
+        $catalog = CseCatalogItem::where('catalog_year', $plan->catalog_year)->whereIn('id', $items->pluck('cse_catalog_item_id')->filter()->all())->get()->keyBy('id');
+        $handAdded = AppCseItem::withoutGlobalScopes()->where('app_cse_plan_id', $plan->id)->where('from_sob', false)->whereNotNull('cse_catalog_item_id')->pluck('cse_catalog_item_id')->all();
         $lines = [];
         foreach ($items as $item) {
-            $category = AppCategories::of($item->category);
-            $key = $category.'|'.mb_strtolower(trim((string) $item->particulars)).'|'.mb_strtolower(trim((string) $item->unit)).'|'.number_format((float) $item->unit_cost, 2, '.', '');
             $month = 'm'.((((int) $item->plan->quarter) - 1) * 3 + 1);
-            $lines[$key] ??= ['category' => $category, 'description' => trim((string) $item->particulars), 'unit' => trim((string) $item->unit), 'unit_price' => (float) $item->unit_cost, 'months' => []];
+            $entry = $item->cse_catalog_item_id ? $catalog->get($item->cse_catalog_item_id) : null;
+            if ($entry && ! in_array($entry->id, $handAdded, true)) {
+                $key = 'catalog|'.$entry->id;
+                $lines[$key] ??= ['catalog_id' => $entry->id, 'sort_order' => (int) $entry->sort_order, 'category' => $entry->category, 'description' => $entry->description, 'unit' => $entry->unit, 'unit_price' => (float) ($entry->price ?? $item->unit_cost), 'months' => []];
+            } else {
+                $category = AppCategories::of($item->category);
+                $key = $category.'|'.mb_strtolower(trim((string) $item->particulars)).'|'.mb_strtolower(trim((string) $item->unit)).'|'.number_format((float) $item->unit_cost, 2, '.', '');
+                $lines[$key] ??= ['catalog_id' => null, 'category' => $category, 'description' => trim((string) $item->particulars), 'unit' => trim((string) $item->unit), 'unit_price' => (float) $item->unit_cost, 'months' => []];
+            }
             $lines[$key]['months'][$month] = ($lines[$key]['months'][$month] ?? 0) + (float) $item->frequency * (float) $item->quantity;
         }
 
         // An approved APP-CSE is left alone while the SOB lines are the same; when they are not (an item came or changed), it goes back to a draft so it follows the SOB.
         if ($plan->isApproved()) {
             $written = AppCseItem::withoutGlobalScopes()->where('app_cse_plan_id', $plan->id)->where('from_sob', true)->get()
-                ->map(fn (AppCseItem $item) => $item->category.'|'.mb_strtolower($item->description).'|'.mb_strtolower($item->unit).'|'.number_format((float) $item->unit_price, 2, '.', '').'|'.collect(range(1, 12))->map(fn ($month) => number_format((float) $item->{'m'.$month}, 2, '.', ''))->implode(','))
+                ->map(fn (AppCseItem $item) => $item->cse_catalog_item_id.'|'.$item->category.'|'.mb_strtolower($item->description).'|'.mb_strtolower($item->unit).'|'.number_format((float) $item->unit_price, 2, '.', '').'|'.collect(range(1, 12))->map(fn ($month) => number_format((float) $item->{'m'.$month}, 2, '.', ''))->implode(','))
                 ->sort()->values()->all();
-            $wanted = collect($lines)->map(fn (array $line) => $line['category'].'|'.mb_strtolower($line['description']).'|'.mb_strtolower($line['unit']).'|'.number_format($line['unit_price'], 2, '.', '').'|'.collect(range(1, 12))->map(fn ($month) => number_format((float) ($line['months']['m'.$month] ?? 0), 2, '.', ''))->implode(','))
+            $wanted = collect($lines)->map(fn (array $line) => $line['catalog_id'].'|'.$line['category'].'|'.mb_strtolower($line['description']).'|'.mb_strtolower($line['unit']).'|'.number_format($line['unit_price'], 2, '.', '').'|'.collect(range(1, 12))->map(fn ($month) => number_format((float) ($line['months']['m'.$month] ?? 0), 2, '.', ''))->implode(','))
                 ->sort()->values()->all();
             if ($written === $wanted) {
                 return;
@@ -165,8 +199,8 @@ class AppCseService
             $order = (int) AppCseItem::withoutGlobalScopes()->where('app_cse_plan_id', $plan->id)->whereNull('cse_catalog_item_id')->max('sort_order');
             foreach ($lines as $line) {
                 AppCseItem::withoutGlobalScopes()->create(array_map(fn ($quantity) => round($quantity, 2), $line['months']) + array_fill_keys(['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9', 'm10', 'm11', 'm12'], 0) + [
-                    'organization_id' => $plan->organization_id, 'app_cse_plan_id' => $plan->id, 'cse_catalog_item_id' => null, 'category' => $line['category'],
-                    'description' => $line['description'], 'unit' => $line['unit'], 'unit_price' => $line['unit_price'], 'sort_order' => ++$order, 'from_sob' => true,
+                    'organization_id' => $plan->organization_id, 'app_cse_plan_id' => $plan->id, 'cse_catalog_item_id' => $line['catalog_id'], 'category' => $line['category'],
+                    'description' => $line['description'], 'unit' => $line['unit'], 'unit_price' => $line['unit_price'], 'sort_order' => $line['catalog_id'] ? $line['sort_order'] : ++$order, 'from_sob' => true,
                 ]);
             }
         });

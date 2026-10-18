@@ -76,18 +76,8 @@ class AppCseController extends Controller
     public function catalog(Request $request, AppCsePlan $appCsePlan)
     {
         $this->scoped($request, $appCsePlan);
-        $words = preg_split('/\s+/', trim((string) $request->query('q')), -1, PREG_SPLIT_NO_EMPTY);
-        if ($words === [] || mb_strlen(implode('', $words)) < 2) {
-            return response()->json([]);
-        }
-        $query = CseCatalogItem::where('catalog_year', $appCsePlan->catalog_year)
-            ->whereNotIn('id', $appCsePlan->items()->whereNotNull('cse_catalog_item_id')->pluck('cse_catalog_item_id'));
-        foreach (array_slice($words, 0, 6) as $word) {
-            $like = '%'.addcslashes($word, '%_\\').'%';
-            $query->where(fn ($where) => $where->where('description', 'like', $like)->orWhere('code', 'like', $like)->orWhere('category', 'like', $like));
-        }
 
-        return response()->json($query->orderBy('sort_order')->limit(25)->get(['id', 'category', 'code', 'description', 'unit', 'price']));
+        return response()->json($this->service->searchCatalog((int) $appCsePlan->catalog_year, (string) $request->query('q'), $appCsePlan->items()->whereNotNull('cse_catalog_item_id')->pluck('cse_catalog_item_id')->all()));
     }
 
     /** The official form: every catalog row of the plan's catalog year, the plan's own items, the totals and the signatures. */
