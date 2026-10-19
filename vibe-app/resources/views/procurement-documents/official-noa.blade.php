@@ -63,7 +63,7 @@
 
     <div class="noa-salutation">Dear {{ str_ends_with(strtolower(trim($addressee)), 'manager') ? 'Manager' : trim($addressee) }} :</div>
 
-    <p class="noa-message"><span class="intro">We are pleased to inform you that your Bid for execution by the</span> <strong><em>{{ strtoupper($supplier) }}</em></strong> relative to the project <strong>{{ $procurementRequest->title }}</strong> for the contract price of equivalent to <span class="noa-award-amount">{{ $awardAmountWords }} (Php {{ number_format($awardAmount, 2) }})</span> is hereby accepted.</p>
+    <p class="noa-message"><span class="intro">We are pleased to inform you that your Bid for execution by the</span> <strong><em>{{ strtoupper($supplier) }}</em></strong> relative to the project <strong>{{ trim(($procurementRequest->transaction_description ? $procurementRequest->transaction_description.' of ' : '').$procurementRequest->title.' of '.$schoolName) }}</strong> for the contract price of equivalent to <span class="noa-award-amount">{{ $awardAmountWords }} (Php {{ number_format($awardAmount, 2) }})</span> is hereby accepted.</p>
 
     <div class="noa-signature">
         <div>Very truly yours,</div>

@@ -1001,3 +1001,7 @@ Design: `docs/superpowers/specs/2026-10-16-cash-reports-design.md`. The owner's 
 
 - The New Purchase Request form lists every validation error in a red box at the top of the form. Before, errors on the items or the Budget line (for example "Add the items from the SOB activity") had no place on the page and the form reloaded blank, so the PR looked as if it would not save.
 - No rule changed: the PR still needs the items of an SOB activity.
+
+## 48. Notice of Award project line (owner's decision 2026-10-19)
+
+- The Notice of Award names the project as the transaction description, then the Project Title, then the school: "Procurement of Office Supplies of 3rd Quarter MOOE CY 2026 of Lubas Elementary School". Without a transaction description it starts with the Project Title. The year is only what is typed in the title. Nothing else on the NOA changed.
