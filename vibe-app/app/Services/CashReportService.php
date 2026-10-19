@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\BudgetAllocation;
 use App\Models\CancelledCheck;
 use App\Models\CashFundReceipt;
 use App\Models\LiquidationReport;
@@ -83,10 +84,20 @@ class CashReportService
         $totalReceived = round((float) $periodReceipts->sum('amount'), 2);
         $totalPaid = round((float) $lines->sum(fn (array $line) => $line['amount'] ?? 0), 2);
 
-        $accounts = $lines->filter(fn (array $line) => ! $line['cancelled'] && $line['uacs_code'] !== '')
+        // The accounts of the payments (of the chosen fund only), and, for one fund, the accounts budgeted for it in the SOB even when nothing was paid from them.
+        $accounts = $lines->filter(fn (array $line) => ! $line['cancelled'] && $line['uacs_code'] !== '' && $line['amount'] !== null)
             ->mapWithKeys(fn (array $line) => [$line['uacs_code'] => $line['nature']])
-            ->sortKeys()
             ->all();
+        if ($fund !== null) {
+            $budgeted = BudgetAllocation::query()->with('account')->where('school_id', $school->id)->where('fiscal_year', $from->year)->whereRaw('lower(source_of_fund) = ?', [strtolower($fund)])->get();
+            foreach ($budgeted as $allocation) {
+                $code = (string) ($allocation->account?->code ?? $allocation->uacs_code ?? '');
+                if ($code !== '' && ! isset($accounts[$code])) {
+                    $accounts[$code] = (string) ($allocation->account?->title ?? $allocation->particulars ?? '');
+                }
+            }
+        }
+        ksort($accounts);
 
         return [
             'opening' => $opening,

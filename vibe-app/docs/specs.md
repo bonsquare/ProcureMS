@@ -1057,3 +1057,7 @@ Design: `docs/superpowers/specs/2026-10-16-cash-reports-design.md`. The owner's 
 ## 58. Cash Disbursement Register: the cash advance row names its fund and quarter (owner's decision 2026-10-19)
 
 - Like the owner's actual register, the row of each cash downloaded reads "<fund> <kind> <quarter> qrtr. <year>", for example "MOOE Cash Advance 4th qrtr. 2025" (the quarter is that of the date of the record; no fund, no first word). Nothing else of the register changed; the cash reports stay final (section 56).
+
+## 59. Cash Disbursement Register: budgeted accounts without payments (owner's decision 2026-10-19)
+
+- When a Source of Fund is chosen, the UACS columns and the Recapitulation of the Cash Disbursement Register also list the accounts budgeted for that fund in the year of the period (the school's budget lines of the fund) even when nothing was paid from them: the Recapitulation shows "-" and the column is blank. The accounts of the other funds are not listed. The order of the accounts stays by UACS code. The cash reports stay final (section 56).

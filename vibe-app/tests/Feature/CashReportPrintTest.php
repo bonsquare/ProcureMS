@@ -195,6 +195,19 @@ class CashReportPrintTest extends TestCase
         $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school, ['source_of_fund' => 'MOOE'])))->assertOk()->assertSee('MOOE Cash Advance 3rd qrtr. 2026')->assertSee('145,750.00');
     }
 
+    public function test_the_register_of_one_fund_lists_its_budgeted_accounts_even_without_payments(): void
+    {
+        [$school, $user] = $this->tenant('BK4');
+        $this->paid($school, '0301', '2026-08-05', 1000, overrides: ['source_of_fund' => 'MOOE']);
+        $account = ChartOfAccount::firstOrCreate(['organization_id' => $school->organization_id, 'code' => '5020502000'], ['title' => 'Communication Expenses', 'category' => 'Expense']);
+        BudgetAllocation::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'fiscal_year' => 2026, 'source_of_fund' => 'MOOE', 'particulars' => 'Communication', 'chart_of_account_id' => $account->id, 'amount' => 5000, 'q1_amount' => 0, 'q2_amount' => 0, 'q3_amount' => 5000, 'q4_amount' => 0]);
+        $other = ChartOfAccount::firstOrCreate(['organization_id' => $school->organization_id, 'code' => '5021304000'], ['title' => 'Repairs', 'category' => 'Expense']);
+        BudgetAllocation::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'fiscal_year' => 2026, 'source_of_fund' => 'ARAL', 'particulars' => 'Repairs', 'chart_of_account_id' => $other->id, 'amount' => 5000, 'q1_amount' => 0, 'q2_amount' => 0, 'q3_amount' => 5000, 'q4_amount' => 0]);
+
+        $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school, ['source_of_fund' => 'MOOE'])))->assertOk()
+            ->assertSee('Communication Expenses')->assertSee('5020502000')->assertSee('data-recap="5020502000">-', false)->assertDontSee('5021304000');
+    }
+
     public function test_the_bank_reconciliation_names_the_fund_of_each_downloaded_amount(): void
     {
         [$school, $user] = $this->tenant('BK9');
