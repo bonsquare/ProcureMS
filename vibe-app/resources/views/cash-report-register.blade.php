@@ -85,7 +85,7 @@
     foreach ($entries as $entry) {
         if ($entry['type'] === 'receipt') {
             $balance = round($balance + (float) $entry['receipt']->amount, 2);
-            $rows[] = ['date' => $entry['date'], 'reference' => $entry['receipt']->reference, 'particulars' => $entry['receipt']->kindLabel(), 'advance' => (float) $entry['receipt']->amount, 'payment' => null, 'balance' => $balance, 'code' => null];
+            $rows[] = ['date' => $entry['date'], 'reference' => $entry['receipt']->reference, 'particulars' => trim(trim((string) $entry['receipt']->source_of_fund).' '.($entry['receipt']->kind === 'cash_advance' ? 'Cash Advance' : $entry['receipt']->kindLabel()).' '.['1st', '2nd', '3rd', '4th'][$entry['receipt']->received_at->quarter - 1].' qrtr. '.$entry['receipt']->received_at->year), 'advance' => (float) $entry['receipt']->amount, 'payment' => null, 'balance' => $balance, 'code' => null];
         } else {
             $line = $entry['line'];
             $balance = round($balance - ($line['amount'] ?? 0), 2);

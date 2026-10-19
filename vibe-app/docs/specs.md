@@ -1053,3 +1053,7 @@ Design: `docs/superpowers/specs/2026-10-16-cash-reports-design.md`. The owner's 
 - The beginning balance of a report is that fund's own: the cash downloaded of the fund before the period less the fund's payments before it. A balance forwarded recorded in the period for the fund is the beginning balance and the carried-over balance is not added to it, so the Register, the Checks and Advices, the Report of Checks Issued and the Bank Reconciliation agree.
 - The series of checks stays complete; only the checks of the chosen fund carry an amount. Cash downloaded without a fund ("Not specified") belongs to no fund until it is edited.
 - The cash reports remain final (section 56): no change without the owner's explicit permission for that exact change.
+
+## 58. Cash Disbursement Register: the cash advance row names its fund and quarter (owner's decision 2026-10-19)
+
+- Like the owner's actual register, the row of each cash downloaded reads "<fund> <kind> <quarter> qrtr. <year>", for example "MOOE Cash Advance 4th qrtr. 2025" (the quarter is that of the date of the record; no fund, no first word). Nothing else of the register changed; the cash reports stay final (section 56).

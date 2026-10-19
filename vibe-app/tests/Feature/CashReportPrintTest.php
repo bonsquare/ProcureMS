@@ -187,6 +187,14 @@ class CashReportPrintTest extends TestCase
         $this->assertStringNotContainsString('9,000.00', $bank);
     }
 
+    public function test_the_register_names_the_fund_the_kind_and_the_quarter_of_the_cash_advance(): void
+    {
+        [$school, $user] = $this->tenant('BK5');
+        CashFundReceipt::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'received_at' => '2026-08-03', 'kind' => 'cash_advance', 'source_of_fund' => 'MOOE', 'fund_cluster' => 'General Fund', 'amount' => 145750, 'created_by' => $user->id]);
+
+        $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school, ['source_of_fund' => 'MOOE'])))->assertOk()->assertSee('MOOE Cash Advance 3rd qrtr. 2026')->assertSee('145,750.00');
+    }
+
     public function test_the_bank_reconciliation_names_the_fund_of_each_downloaded_amount(): void
     {
         [$school, $user] = $this->tenant('BK9');
