@@ -1017,3 +1017,8 @@ Design: `docs/superpowers/specs/2026-10-16-cash-reports-design.md`. The owner's 
 ## 51. IAR Items received as one row per item (owner's decision 2026-10-19)
 
 - On the Inspection and Acceptance Report form the Items received block is a table: one row per item (Item, Ordered, Accepted before, This delivery accepted and rejected, Total accepted, Total rejected, Balance), a scroll bar when it is wide, and the Item column frozen on the left. Layout only; the rules of sections 42 to 44 are unchanged.
+
+## 52. IARS window like the other document windows, RIS summary without items (owner's decision 2026-10-19)
+
+- The Inventory and Acknowledgement Receipt of Supplies window has the same size, form width and text size as the other document windows; its staff table scrolls sideways and keeps Full screen. Layout only.
+- The RIS generation summary lists each staff member (name, designation) and the RIS number only; the items are not repeated there because the document view shows them.
