@@ -168,6 +168,25 @@ class CashReportPrintTest extends TestCase
         $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school)))->assertOk()->assertSee('0101')->assertSee('0202')->assertDontSee('Source of Fund:');
     }
 
+    public function test_each_source_of_fund_has_its_own_beginning_balance_and_a_recorded_balance_forwarded_replaces_the_carried_over_one(): void
+    {
+        [$school, $user] = $this->tenant('BK6');
+        foreach ([['2026-06-10', 'nca', 'MOOE', 9000], ['2026-06-11', 'nca', 'ARAL', 4000], ['2026-09-01', 'balance_forwarded', 'MOOE', 500]] as [$date, $kind, $fund, $amount]) {
+            CashFundReceipt::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'received_at' => $date, 'kind' => $kind, 'source_of_fund' => $fund, 'fund_cluster' => 'General Fund', 'amount' => $amount, 'created_by' => $user->id]);
+        }
+
+        $aral = $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school, ['source_of_fund' => 'ARAL'])))->assertOk()->getContent();
+        $this->assertMatchesRegularExpression('/Beginning Balance[^<]*<\/td><td class="num" data-col="advance">4,000\.00/', $aral, 'ARAL begins with its own downloaded cash');
+
+        $moooe = $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school, ['source_of_fund' => 'MOOE'])))->assertOk()->getContent();
+        $this->assertDoesNotMatchRegularExpression('/Beginning Balance[^<]*<\/td><td class="num" data-col="advance">9,/', $moooe, 'the recorded balance forwarded replaces the carried-over balance');
+        $this->assertMatchesRegularExpression('/data-col="balance"[^>]*>500\.00</', $moooe);
+
+        $bank = $this->actingAs($user)->get(route('cash.report.bank', $this->periodQuery($school, ['source_of_fund' => 'MOOE'])))->assertOk()->getContent();
+        $this->assertMatchesRegularExpression('/data-col="balance"[^>]*>500\.00</', $bank);
+        $this->assertStringNotContainsString('9,000.00', $bank);
+    }
+
     public function test_the_bank_reconciliation_names_the_fund_of_each_downloaded_amount(): void
     {
         [$school, $user] = $this->tenant('BK9');

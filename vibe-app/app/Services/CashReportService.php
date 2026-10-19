@@ -61,6 +61,13 @@ class CashReportService
             ->sortBy(fn (array $line) => $line['date']->format('Ymd').'|'.$line['check_no'])
             ->values();
 
+        // A balance forwarded recorded in the period is the beginning balance of the report; the carried-over balance is not added to it.
+        if ($periodReceipts->contains(fn ($receipt) => $receipt->kind === 'balance_forwarded')) {
+            $opening = 0.0;
+            $openingBank = 0.0;
+            $openingBankByFund = [];
+        }
+
         $balance = $opening;
         $pending = $periodReceipts->all();
         $lines = $lines->map(function (array $line) use (&$balance, &$pending) {

@@ -22,12 +22,11 @@
         ->sortBy(fn (array $entry) => $entry['date']->format('Ymd').($entry['type'] === 'receipt' ? '0' : '1'))
         ->values();
     // The balance carried forward from before the period is the cash downloaded less the checks and ADAs paid until then.
-    // When the user recorded a balance forwarded, those rows are the beginning of the report and the automatic one is left out.
-    $openingBank = $forwarded->isEmpty() ? (float) $data['opening_bank'] : 0.0;
+    $openingBank = (float) $data['opening_bank'];
     $balance = $openingBank;
     $fundOf = fn ($fund) => trim((string) $fund);
     $fundLabel = fn ($fund) => $fund === '' ? 'Not specified' : $fund;
-    $funds = ($forwarded->isEmpty() ? $data['opening_bank_by_fund']->keys() : collect())
+    $funds = $data['opening_bank_by_fund']->keys()
         ->merge($data['receipts']->map(fn ($receipt) => $fundOf($receipt->source_of_fund)))
         ->merge($data['lines']->reject(fn (array $line) => $line['mode'] === 'other' || $line['cancelled'])->map(fn (array $line) => $fundOf($line['fund'])))
         ->unique()->sort()->values();

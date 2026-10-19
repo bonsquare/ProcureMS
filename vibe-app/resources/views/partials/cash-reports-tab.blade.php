@@ -18,7 +18,7 @@
         {!! $head(1, 'Reports', 'Choose a report to fill in its form and see it on its official form.') !!}
         <div class="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-4">
             @foreach($reportLinks as [$routeName, $title, $hint, $icon, $slots, $isBank])
-                <button type="button" data-cash-report-open data-url="{{ route($routeName) }}" data-slots='@json($slots)' data-bank="{{ ($isBank ?? false) ? 1 : 0 }}" data-register="{{ $routeName === 'cash.report.register' ? 1 : 0 }}" data-form="{{ $routeName === 'cash.report.register' ? 'r' : ($routeName === 'cash.report.checks' ? 'c' : 'o') }}" data-report-no="{{ $routeName === 'cash.report.roci' ? now()->format('Y-m').'-001' : '' }}" data-title="{{ $title }}" class="group flex items-start gap-3 rounded-xl border border-outline-variant/50 border-l-4 border-l-primary bg-white p-4 text-left shadow-sm transition hover:bg-[#eef4fa]">
+                <button type="button" data-cash-report-open data-url="{{ route($routeName) }}" data-slots='@json($slots)' data-bank="{{ ($isBank ?? false) ? 1 : 0 }}" data-register="{{ $routeName === 'cash.report.register' ? 1 : 0 }}" data-form="{{ $routeName === 'cash.report.register' ? 'r' : ($routeName === 'cash.report.checks' ? 'c' : (($isBank ?? false) ? 'b' : 'o')) }}" data-report-no="{{ $routeName === 'cash.report.roci' ? now()->format('Y-m').'-001' : '' }}" data-title="{{ $title }}" class="group flex items-start gap-3 rounded-xl border border-outline-variant/50 border-l-4 border-l-primary bg-white p-4 text-left shadow-sm transition hover:bg-[#eef4fa]">
                     <span class="material-symbols-outlined text-[24px] text-primary" aria-hidden="true">{{ $icon }}</span>
                     <span><span class="block text-sm font-bold text-primary">{{ $title }}</span><span class="mt-1 block text-xs text-on-surface-variant">{{ $hint }}</span></span>
                 </button>
@@ -51,16 +51,14 @@
                             <label class="{{ $label }}">To<input type="date" id="cash-report-to" value="{{ $reportTo->toDateString() }}" class="{{ $box }}"></label>
                         </div>
                     </section>
-                    <section data-hide-bank class="rounded-xl border border-outline-variant/50 p-4">
+                    <section class="rounded-xl border border-outline-variant/50 p-4">
                         <h3 class="text-[11px] font-bold uppercase tracking-wider text-primary">Header of the form</h3>
                         <div id="cash-report-header" class="mt-3 grid gap-3 sm:grid-cols-2">
                             <label data-o="1" class="{{ $label }}">Report No.<input id="cash-report-no" maxlength="50" class="{{ $box }}"></label>
                             <label data-o="2" data-r="9" data-c="4" class="{{ $label }}">Sheet No.<input id="cash-sheet-no" maxlength="50" placeholder="1 of 1" class="{{ $box }}"></label>
-                            <div data-o="3" data-r="4" data-c="3" class="grid gap-3 sm:col-span-2 sm:grid-cols-2">
-                                <label class="{{ $label }}">Fund Cluster<input id="cash-report-cluster" maxlength="100" class="{{ $box }}"></label>
-                                <label data-hide-bank class="{{ $label }}">Source of Fund<select id="cash-report-source" class="{{ $box }}"><option value="">All funds</option>@foreach(\App\Models\CashFundReceipt::FUNDS as $fundName)<option value="{{ $fundName }}">{{ $fundName }}</option>@endforeach</select></label>
-                                <label id="cash-report-source-other-wrap" data-hide-bank class="{{ $label }} hidden sm:col-span-2">Specify the fund<input id="cash-report-source-other" maxlength="50" placeholder="Name of the fund" class="{{ $box }}"></label>
-                            </div>
+                            <label data-o="3" data-r="4" data-c="3" class="{{ $label }}">Fund Cluster<input id="cash-report-cluster" maxlength="100" class="{{ $box }}"></label>
+                            <label data-o="3" data-r="4" data-c="3" data-b="3" class="{{ $label }}">Source of Fund<select id="cash-report-source" class="{{ $box }}">@foreach(\App\Models\CashFundReceipt::FUNDS as $fundName)<option value="{{ $fundName }}">{{ $fundName }}</option>@endforeach</select></label>
+                            <label id="cash-report-source-other-wrap" data-o="3" data-r="4" data-c="3" data-b="3" class="{{ $label }} hidden sm:col-span-2">Specify the fund<input id="cash-report-source-other" maxlength="50" placeholder="Name of the fund" class="{{ $box }}"></label>
                             <div data-o="4" data-c="2" class="grid gap-3 sm:col-span-2 sm:grid-cols-[3fr_2fr]">
                                 <label class="{{ $label }}">Bank Name<input id="cash-report-bank-name" maxlength="100" class="{{ $box }}"></label>
                                 <label class="{{ $label }}">Bank Account No.<input id="cash-report-bank-account" maxlength="60" class="{{ $box }}"></label>
@@ -363,11 +361,12 @@
             modal.querySelectorAll('[data-hide-bank]').forEach((box) => box.classList.toggle('hidden', button.dataset.bank === '1'));
             registerOn = button.dataset.register === '1';
             formKey = button.dataset.form || 'o';
-            modal.querySelectorAll('#cash-report-header > [data-o], #cash-report-header > [data-r], #cash-report-header > [data-c]').forEach((item) => {
+            modal.querySelectorAll('#cash-report-header > [data-o], #cash-report-header > [data-r], #cash-report-header > [data-c], #cash-report-header > [data-b]').forEach((item) => {
                 const place = item.dataset[formKey];
                 item.classList.toggle('hidden', !place);
                 item.style.order = place || 0;
             });
+            field('cash-report-source-other-wrap').classList.toggle('hidden', field('cash-report-source').value !== 'Others');
             buildSlots();
             fillDefaults();
             document.getElementById('cash-report-title').textContent = button.dataset.title;

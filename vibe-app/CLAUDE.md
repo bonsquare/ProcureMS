@@ -251,6 +251,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 - 2026-10-19: Inventory Custodian Slip: item row prints again, row fits its content, optional Description per item instead of the PR item description, preview fills a placeholder custodian (docs/specs.md section 54).
 - 2026-10-19: **The procurement documents and all other official documents are FINAL (owner's decision; docs/specs.md section 55). Do not edit their forms, previews, printed layouts, wording, fields or rules without the owner's explicit permission for that exact change.**
 - 2026-10-19: **Source of fund in the cash reports** (docs/specs.md section 56): every cash downloaded names its fund (MOOE, ARAL, SBFP, SEF, IGP, Others typed), the Bank Reconciliation shows a recorded balance forwarded at the top and a Fund column, and the other cash reports filter by Source of Fund keeping the whole series of checks. **The cash reports are FINAL (owner's decision): do not edit them without the owner's explicit permission for that exact change.**
+- 2026-10-19: **One source of fund per cash report** (docs/specs.md section 57): the Source of Fund is required in the form of the four cash reports, each fund has its own beginning balance, and a recorded balance forwarded replaces the carried-over one so the reports agree. The cash reports stay FINAL.
 
 ## Standing workflow (owner's instruction 2026-10-16)
 
