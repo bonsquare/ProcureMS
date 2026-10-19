@@ -28,6 +28,7 @@
 <table class="info{{ ! empty($compact) ? ' compact' : '' }}{{ ! empty($compact) && ! empty($showOfficer) ? ' officer' : '' }}">
     <tr><td class="label">Entity Name:</td><td class="value underlined">{{ $school->name }}</td><td class="label" @if(empty($compact)) style="width:20%" @endif>Report No.:</td><td class="value underlined">{{ $report['reportNo'] }}</td></tr>
     <tr><td class="label">Fund Cluster:</td><td class="value underlined">{{ $report['fundCluster'] }}</td><td class="label">Sheet No.:</td><td class="value underlined">@if($report['sheetNo'] === '' && ! empty($autoSheet))<span data-sheet-no>1 of 1</span>@else{{ $report['sheetNo'] }}@endif</td></tr>
+    @if(! empty($report['sourceOfFund']))<tr><td class="label">Source of Fund:</td><td class="value underlined">{{ $report['sourceOfFund'] }}</td><td></td><td></td></tr>@endif
     <tr>@if(! empty($compact) && empty($showOfficer))<td colspan="2" class="bank-line"><span class="label">Bank Name / Account No.:</span> <span class="value">{{ $report['bank'] }}</span></td>@else<td class="label">Bank Name / Account No.:</td><td class="value{{ ! empty($compact) ? ' underlined' : '' }}">{{ $report['bank'] }}</td>@endif @if(! empty($showOfficer))<td class="label">Accountable Officer:</td><td class="value underlined">{{ $officer?->name }}</td>@else<td></td><td></td>@endif</tr>
     @if(! empty($showOfficer))
     <tr><td class="label">Station:</td><td class="value underlined">{{ $school->name }}</td><td class="label">Official Designation:</td><td class="value underlined">{{ $officer?->position }}</td></tr>

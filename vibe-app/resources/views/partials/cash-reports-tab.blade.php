@@ -56,7 +56,11 @@
                         <div id="cash-report-header" class="mt-3 grid gap-3 sm:grid-cols-2">
                             <label data-o="1" class="{{ $label }}">Report No.<input id="cash-report-no" maxlength="50" class="{{ $box }}"></label>
                             <label data-o="2" data-r="9" data-c="4" class="{{ $label }}">Sheet No.<input id="cash-sheet-no" maxlength="50" placeholder="1 of 1" class="{{ $box }}"></label>
-                            <label data-o="3" data-r="4" data-c="3" class="{{ $label }} sm:col-span-2">Fund Cluster<input id="cash-report-cluster" maxlength="100" class="{{ $box }}"></label>
+                            <div data-o="3" data-r="4" data-c="3" class="grid gap-3 sm:col-span-2 sm:grid-cols-2">
+                                <label class="{{ $label }}">Fund Cluster<input id="cash-report-cluster" maxlength="100" class="{{ $box }}"></label>
+                                <label data-hide-bank class="{{ $label }}">Source of Fund<select id="cash-report-source" class="{{ $box }}"><option value="">All funds</option>@foreach(\App\Models\CashFundReceipt::FUNDS as $fundName)<option value="{{ $fundName }}">{{ $fundName }}</option>@endforeach</select></label>
+                                <label id="cash-report-source-other-wrap" data-hide-bank class="{{ $label }} hidden sm:col-span-2">Specify the fund<input id="cash-report-source-other" maxlength="50" placeholder="Name of the fund" class="{{ $box }}"></label>
+                            </div>
                             <div data-o="4" data-c="2" class="grid gap-3 sm:col-span-2 sm:grid-cols-[3fr_2fr]">
                                 <label class="{{ $label }}">Bank Name<input id="cash-report-bank-name" maxlength="100" class="{{ $box }}"></label>
                                 <label class="{{ $label }}">Bank Account No.<input id="cash-report-bank-account" maxlength="60" class="{{ $box }}"></label>
@@ -87,6 +91,8 @@
                             <input type="hidden" id="cash-fund-id">
                             <label class="{{ $label }}">Date<input type="date" id="cash-fund-date" required class="{{ $box }}"></label>
                             <label class="{{ $label }}">Kind<select id="cash-fund-kind" class="{{ $box }}">@foreach(\App\Models\CashFundReceipt::KINDS as $key => $kindLabel)<option value="{{ $key }}">{{ $kindLabel }}</option>@endforeach</select></label>
+                            <label class="{{ $label }}">Fund<select id="cash-fund-source" required class="{{ $box }}"><option value="">Select the fund</option>@foreach(\App\Models\CashFundReceipt::FUNDS as $fundName)<option value="{{ $fundName }}">{{ $fundName }}</option>@endforeach</select></label>
+                            <label id="cash-fund-other-wrap" class="{{ $label }} hidden sm:col-span-2">Specify the fund<input id="cash-fund-other" maxlength="50" placeholder="Name of the fund" class="{{ $box }}"></label>
                             <label class="{{ $label }}">Amount<input type="number" step="0.01" min="0.01" id="cash-fund-amount" required class="{{ $box }} text-right tabular-nums"></label>
                             <label class="{{ $label }}">Reference<input id="cash-fund-reference" maxlength="100" class="{{ $box }}"></label>
                             <label class="{{ $label }} sm:col-span-2">Note<input id="cash-fund-note" maxlength="255" class="{{ $box }}"></label>
@@ -230,6 +236,7 @@
             set('report_no', field('cash-report-no').value.trim());
             set('sheet_no', field('cash-sheet-no').value.trim());
             set('fund_cluster', field('cash-report-cluster').value.trim());
+            set('source_of_fund', field('cash-report-source').value === 'Others' ? field('cash-report-source-other').value.trim() : field('cash-report-source').value);
             set('bank_name', field('cash-report-bank-name').value.trim());
             set('bank_account', field('cash-report-bank-account').value.trim());
             set('remarks', field('cash-report-remarks').value.trim());
@@ -271,8 +278,10 @@
         const fundForm = field('cash-fund-form');
         const fundError = field('cash-fund-error');
         let fundList = [];
+        const fundNames = @json(\App\Models\CashFundReceipt::FUNDS);
+        const showFundOther = () => field('cash-fund-other-wrap').classList.toggle('hidden', field('cash-fund-source').value !== 'Others');
         const resetFund = () => {
-            fundForm.reset(); field('cash-fund-id').value = '';
+            fundForm.reset(); field('cash-fund-id').value = ''; showFundOther();
             field('cash-fund-save').textContent = 'Add'; field('cash-fund-reset').classList.add('hidden'); fundError.classList.add('hidden');
         };
         const renderFund = () => {
@@ -283,7 +292,7 @@
             }
             fundList.forEach((item) => {
                 const row = document.createElement('tr');
-                [item.date_label, item.kind_label, item.reference || '-', item.amount_label].forEach((text, index) => {
+                [item.date_label, item.kind_label + (item.source_of_fund ? ' · ' + item.source_of_fund : ''), item.reference || '-', item.amount_label].forEach((text, index) => {
                     const cell = document.createElement('td');
                     cell.className = index === 3 ? 'px-2 py-2 text-right font-semibold tabular-nums' : (index === 0 ? 'px-3 py-2' : 'px-2 py-2');
                     cell.textContent = text; row.append(cell);
@@ -292,7 +301,7 @@
                 actions.className = 'whitespace-nowrap px-3 py-2 text-right';
                 const edit = document.createElement('button'); edit.type = 'button'; edit.textContent = 'Edit'; edit.className = 'mr-2 font-semibold text-primary hover:underline';
                 edit.addEventListener('click', () => {
-                    field('cash-fund-id').value = item.id; field('cash-fund-date').value = item.received_at; field('cash-fund-kind').value = item.kind;
+                    field('cash-fund-id').value = item.id; field('cash-fund-date').value = item.received_at; field('cash-fund-kind').value = item.kind; const known = fundNames.includes(item.source_of_fund); field('cash-fund-source').value = known || !item.source_of_fund ? item.source_of_fund : 'Others'; field('cash-fund-other').value = known ? '' : item.source_of_fund; showFundOther();
                     field('cash-fund-amount').value = item.amount; field('cash-fund-reference').value = item.reference; field('cash-fund-note').value = item.note;
                     field('cash-fund-save').textContent = 'Save changes'; field('cash-fund-reset').classList.remove('hidden');
                 });
@@ -304,6 +313,12 @@
                 });
                 actions.append(edit, remove); row.append(actions); fundRows.append(row);
             });
+            // The total of the cash downloaded in the period, and the amount of each fund when there is more than one.
+            const totals = {}; fundList.forEach((item) => { const name = item.source_of_fund || 'Not specified'; totals[name] = (totals[name] || 0) + Number(item.amount); });
+            const format = (value) => value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const addTotal = (label, value, strong) => { const row = document.createElement('tr'); row.className = 'border-t border-outline-variant/40' + (strong ? ' font-bold' : ' text-on-surface-variant'); row.innerHTML = '<td class="px-3 py-2" colspan="3"></td><td class="px-2 py-2 text-right tabular-nums"></td><td></td>'; row.children[0].textContent = label; row.children[0].classList.add('text-right'); row.children[1].textContent = format(value); fundRows.append(row); };
+            if (Object.keys(totals).length > 1) Object.entries(totals).forEach(([name, value]) => addTotal(name, value, false));
+            addTotal('Total', Object.values(totals).reduce((sum, value) => sum + value, 0), true);
         };
         const loadFund = async () => {
             const query = new URLSearchParams({ school_id: field('cash-report-school').value, from: field('cash-report-from').value, to: field('cash-report-to').value });
@@ -319,7 +334,7 @@
             fundError.classList.add('hidden');
             const id = field('cash-fund-id').value;
             const response = await fundRequest(id ? 'PUT' : 'POST', id ? receiptsBase + '/' + id : receiptsStore, {
-                school_id: field('cash-report-school').value, received_at: field('cash-fund-date').value, kind: field('cash-fund-kind').value,
+                school_id: field('cash-report-school').value, received_at: field('cash-fund-date').value, kind: field('cash-fund-kind').value, source_of_fund: field('cash-fund-source').value === 'Others' ? field('cash-fund-other').value.trim() : field('cash-fund-source').value,
                 amount: field('cash-fund-amount').value, reference: field('cash-fund-reference').value, note: field('cash-fund-note').value,
             });
             if (!response.ok) {
@@ -331,6 +346,9 @@
             resetFund(); loadFund(); refresh();
         });
         field('cash-fund-reset').addEventListener('click', resetFund);
+        field('cash-fund-source').addEventListener('change', showFundOther);
+        field('cash-report-source').addEventListener('change', () => { field('cash-report-source-other-wrap').classList.toggle('hidden', field('cash-report-source').value !== 'Others'); schedule(); });
+        field('cash-report-source-other').addEventListener('input', schedule);
         const toggleBank = (on) => {
             modal.querySelectorAll('[data-bank-only]').forEach((box) => box.classList.toggle('hidden', !on));
             if (on) { resetFund(); if (!field('cash-fund-date').value) field('cash-fund-date').value = field('cash-report-from').value; loadFund(); }

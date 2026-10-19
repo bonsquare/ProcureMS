@@ -28,7 +28,7 @@ class CashFundReceiptTest extends TestCase
 
     private function body(School $school, array $overrides = []): array
     {
-        return array_merge(['school_id' => $school->id, 'received_at' => '2026-07-01', 'kind' => 'opening_balance', 'fund_cluster' => 'General Fund', 'amount' => 181500, 'reference' => 'NCA-1', 'note' => 'Start of quarter'], $overrides);
+        return array_merge(['school_id' => $school->id, 'received_at' => '2026-07-01', 'kind' => 'opening_balance', 'source_of_fund' => 'MOOE', 'fund_cluster' => 'General Fund', 'amount' => 181500, 'reference' => 'NCA-1', 'note' => 'Start of quarter'], $overrides);
     }
 
     public function test_a_cash_user_adds_a_fund_receipt_and_it_is_audited(): void
@@ -42,6 +42,19 @@ class CashFundReceiptTest extends TestCase
         $this->assertSame($school->id, $receipt->school_id);
         $this->assertSame('181500.00', $receipt->amount);
         $this->assertTrue(AuditLog::where('action', 'cash_fund_received')->exists());
+    }
+
+    public function test_a_fund_receipt_needs_its_specific_fund(): void
+    {
+        [$school, $user] = $this->tenant('FR9');
+
+        $this->actingAs($user)->post(route('cash.fund.store'), $this->body($school, ['source_of_fund' => '']))->assertSessionHasErrors('source_of_fund');
+        $this->actingAs($user)->post(route('cash.fund.store'), $this->body($school, ['source_of_fund' => 'ARAL']))->assertSessionHasNoErrors();
+
+        $this->actingAs($user)->post(route('cash.fund.store'), $this->body($school, ['source_of_fund' => 'Others']))->assertSessionHasErrors('source_of_fund');
+        $this->actingAs($user)->post(route('cash.fund.store'), $this->body($school, ['source_of_fund' => 'Canteen Fund']))->assertSessionHasNoErrors();
+
+        $this->assertSame(['ARAL', 'Canteen Fund'], CashFundReceipt::orderBy('id')->pluck('source_of_fund')->all());
     }
 
     public function test_a_user_without_cash_permission_is_refused(): void

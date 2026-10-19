@@ -34,6 +34,7 @@ class CashReportController extends Controller
             'school_id' => ['required', 'integer'],
             'received_at' => ['required', 'date'],
             'kind' => ['required', Rule::in(array_keys(CashFundReceipt::KINDS))],
+            'source_of_fund' => ['required', 'string', 'max:50', Rule::notIn(['Others'])],
             'fund_cluster' => ['nullable', 'string', 'max:100'],
             'bank_account_number' => ['nullable', 'string', 'max:60'],
             'amount' => ['required', 'numeric', 'min:0.01', 'max:999999999999'],
@@ -104,6 +105,7 @@ class CashReportController extends Controller
             'report_no' => ['nullable', 'string', 'max:50'],
             'sheet_no' => ['nullable', 'string', 'max:50'],
             'fund_cluster' => ['nullable', 'string', 'max:100'],
+            'source_of_fund' => ['nullable', 'string', 'max:50'],
             'entity_name' => ['nullable', 'string', 'max:150'],
             'district' => ['nullable', 'string', 'max:150'],
             'municipality' => ['nullable', 'string', 'max:200'],
@@ -132,6 +134,7 @@ class CashReportController extends Controller
             'report_no' => (string) ($data['report_no'] ?? ''),
             'sheet_no' => (string) ($data['sheet_no'] ?? ''),
             'fund_cluster' => (string) ($data['fund_cluster'] ?? ''),
+            'source_of_fund' => trim((string) ($data['source_of_fund'] ?? '')),
             'entity_name' => (string) ($data['entity_name'] ?? ''),
             'district' => (string) ($data['district'] ?? ''),
             'municipality' => (string) ($data['municipality'] ?? ''),
@@ -208,6 +211,7 @@ class CashReportController extends Controller
             'bankName' => $bankName,
             'bankAccount' => $bankAccount,
             'fundCluster' => $context['fund_cluster'] !== '' ? $context['fund_cluster'] : ($latestPayment?->payment_fund_cluster ?: 'General Fund'),
+            'sourceOfFund' => $context['source_of_fund'],
             'remarks' => $context['remarks'],
             'statementBalance' => $context['statement_balance'],
             'outstandingChecks' => $context['outstanding_checks'],
@@ -216,7 +220,7 @@ class CashReportController extends Controller
             'period' => $this->periodText($context['from'], $context['to']),
             'reportNo' => $context['report_no'],
             'sheetNo' => $context['sheet_no'],
-            'data' => app(CashReportService::class)->build($school, $context['from'], $context['to']),
+            'data' => app(CashReportService::class)->build($school, $context['from'], $context['to'], $context['source_of_fund'] ?: null),
         ];
     }
 
@@ -268,7 +272,7 @@ class CashReportController extends Controller
             ->map(fn (CashFundReceipt $receipt) => [
                 'id' => $receipt->id, 'received_at' => $receipt->received_at->toDateString(), 'date_label' => $receipt->received_at->format('M d, Y'),
                 'kind' => $receipt->kind, 'kind_label' => $receipt->kindLabel(), 'amount' => (string) $receipt->amount, 'amount_label' => number_format((float) $receipt->amount, 2),
-                'reference' => (string) $receipt->reference, 'note' => (string) $receipt->note, 'fund_cluster' => (string) $receipt->fund_cluster, 'bank_account_number' => (string) $receipt->bank_account_number,
+                'reference' => (string) $receipt->reference, 'note' => (string) $receipt->note, 'source_of_fund' => (string) $receipt->source_of_fund, 'fund_cluster' => (string) $receipt->fund_cluster, 'bank_account_number' => (string) $receipt->bank_account_number,
             ])->values());
     }
 }

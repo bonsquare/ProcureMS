@@ -132,18 +132,60 @@ class CashReportPrintTest extends TestCase
     public function test_a_balance_forwarded_can_be_recorded_and_counts_as_cash_downloaded(): void
     {
         [$school, $user] = $this->tenant('BF1');
-        $this->actingAs($user)->postJson(route('cash.fund.store'), ['school_id' => $school->id, 'received_at' => '2026-09-01', 'kind' => 'balance_forwarded', 'amount' => 3000])->assertOk();
+        $this->actingAs($user)->postJson(route('cash.fund.store'), ['school_id' => $school->id, 'received_at' => '2026-09-01', 'kind' => 'balance_forwarded', 'source_of_fund' => 'MOOE', 'amount' => 3000])->assertOk();
 
         $this->actingAs($user)->get(route('cash.report.bank', $this->periodQuery($school)))->assertOk()->assertSee('Balance forwarded')->assertSee('3,000.00');
+    }
+
+    public function test_a_recorded_balance_forwarded_is_shown_at_the_top_with_its_fund_and_not_as_cash_downloaded(): void
+    {
+        [$school, $user] = $this->tenant('BK8');
+        $this->actingAs($user)->postJson(route('cash.fund.store'), ['school_id' => $school->id, 'received_at' => '2026-09-01', 'kind' => 'balance_forwarded', 'source_of_fund' => 'Beginning balance', 'amount' => 500])->assertOk();
+        $this->actingAs($user)->postJson(route('cash.fund.store'), ['school_id' => $school->id, 'received_at' => '2026-09-02', 'kind' => 'nca', 'source_of_fund' => 'MOOE', 'amount' => 1000])->assertOk();
+
+        CashFundReceipt::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'received_at' => '2026-06-10', 'kind' => 'nca', 'source_of_fund' => 'MOOE', 'fund_cluster' => 'General Fund', 'amount' => 9000, 'created_by' => $user->id]);
+
+        $html = $this->actingAs($user)->get(route('cash.report.bank', $this->periodQuery($school)))->assertOk()->assertSee('Beginning balance')->getContent();
+        $this->assertSame(1, substr_count($html, 'Balance forwarded'), 'the automatic balance forwarded is left out when one was recorded');
+        $this->assertMatchesRegularExpression('/Sep 01, 2026<\/td><td colspan="6">Balance forwarded, Beginning balance/', $html);
+        $this->assertMatchesRegularExpression('/class="total">.*?<td class="num">1,000\.00<\/td><td class="num">0\.00<\/td><td class="num">1,500\.00</s', $html);
+    }
+
+    public function test_a_cash_report_of_one_source_of_fund_keeps_the_whole_series_of_checks_but_only_that_funds_amounts(): void
+    {
+        [$school, $user] = $this->tenant('BK7');
+        $this->paid($school, '0101', '2026-08-05', 1000, overrides: ['source_of_fund' => 'MOOE']);
+        $this->paid($school, '0202', '2026-08-06', 2000, overrides: ['source_of_fund' => 'ARAL']);
+        CashFundReceipt::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'received_at' => '2026-07-02', 'kind' => 'nca', 'source_of_fund' => 'MOOE', 'fund_cluster' => 'General Fund', 'amount' => 5000, 'created_by' => $user->id]);
+        CashFundReceipt::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'received_at' => '2026-07-03', 'kind' => 'nca', 'source_of_fund' => 'ARAL', 'fund_cluster' => 'General Fund', 'amount' => 7000, 'created_by' => $user->id]);
+
+        $register = $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school, ['source_of_fund' => 'MOOE'])))->assertOk()
+            ->assertSee('0101')->assertSee('0202')->assertDontSee('Source of Fund')->assertDontSee('2,000.00')->assertDontSee('CANCELLED')->getContent();
+        $this->assertMatchesRegularExpression('/data-col="balance"[^>]*>4,000\.00</', $register);
+        foreach (['cash.report.roci', 'cash.report.checks'] as $name) {
+            $this->actingAs($user)->get(route($name, $this->periodQuery($school, ['source_of_fund' => 'MOOE'])))->assertOk()->assertSee('0101')->assertSee('0202')->assertDontSee('2,000.00');
+        }
+        $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school)))->assertOk()->assertSee('0101')->assertSee('0202')->assertDontSee('Source of Fund:');
+    }
+
+    public function test_the_bank_reconciliation_names_the_fund_of_each_downloaded_amount(): void
+    {
+        [$school, $user] = $this->tenant('BK9');
+        foreach ([['2026-06-10', 'MOOE', 4000], ['2026-06-12', 'ARAL', 2500], ['2026-09-01', 'SBFP', 1500]] as [$date, $fund, $amount]) {
+            CashFundReceipt::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'received_at' => $date, 'kind' => 'nca', 'source_of_fund' => $fund, 'fund_cluster' => 'General Fund', 'amount' => $amount, 'created_by' => $user->id]);
+        }
+
+        $this->actingAs($user)->get(route('cash.report.bank', $this->periodQuery($school)))->assertOk()
+            ->assertSee('ARAL, MOOE, SBFP')->assertSee('Balance forwarded')->assertSee('6,500.00')->assertSee('1,500.00');
     }
 
     public function test_the_downloaded_cash_is_listed_and_saved_as_json_for_the_window(): void
     {
         [$school, $user] = $this->tenant('BK2');
-        $this->actingAs($user)->postJson(route('cash.fund.store'), ['school_id' => $school->id, 'received_at' => '2026-10-02', 'kind' => 'opening_balance', 'amount' => 750.5])->assertOk();
+        $this->actingAs($user)->postJson(route('cash.fund.store'), ['school_id' => $school->id, 'received_at' => '2026-10-02', 'kind' => 'opening_balance', 'source_of_fund' => 'MOOE', 'amount' => 750.5])->assertOk();
 
         $this->actingAs($user)->getJson(route('cash.fund.index', ['school_id' => $school->id, 'from' => '2026-10-01', 'to' => '2026-12-31']))->assertOk()
-            ->assertJsonCount(1)->assertJsonPath('0.amount_label', '750.50')->assertJsonPath('0.kind_label', 'Opening balance');
+            ->assertJsonCount(1)->assertJsonPath('0.amount_label', '750.50')->assertJsonPath('0.kind_label', 'Opening balance')->assertJsonPath('0.source_of_fund', 'MOOE');
         $this->actingAs($user)->getJson(route('cash.fund.index', ['school_id' => $school->id, 'from' => '2027-01-01', 'to' => '2027-03-31']))->assertOk()->assertJsonCount(0);
     }
 

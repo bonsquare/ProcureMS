@@ -15,7 +15,7 @@ class CashReportService
     /**
      * @return array{opening: float, opening_bank: float, receipts: Collection, lines: Collection, total_paid: float, total_received: float, ending: float, accounts: array<string, string>}
      */
-    public function build(School $school, CarbonInterface $from, CarbonInterface $to): array
+    public function build(School $school, CarbonInterface $from, CarbonInterface $to, ?string $fund = null): array
     {
         $from = $from->copy()->startOfDay();
         $to = $to->copy()->endOfDay();
@@ -28,13 +28,16 @@ class CashReportService
             ->map(fn (LiquidationReport $report) => $this->paidLine($report));
 
         $cancelledLines = CancelledCheck::query()
+            ->with('liquidationReport')
             ->where('school_id', $school->id)
             ->whereNotNull('paid_at')
             ->get()
             ->map(fn (CancelledCheck $check) => $this->cancelledLine($check));
 
-        $all = $paidLines->concat($cancelledLines);
-        $receipts = CashFundReceipt::query()->where('school_id', $school->id)->orderBy('received_at')->orderBy('id')->get();
+        // A report of one source of fund keeps the whole series of checks, but only the checks of that fund carry an amount; the cash downloaded is the fund's own.
+        $sameFund = fn (?string $value) => $fund === null || strcasecmp(trim((string) $value), $fund) === 0;
+        $all = $paidLines->concat($cancelledLines)->map(fn (array $line) => $sameFund($line['fund']) ? $line : ['amount' => null] + $line)->values();
+        $receipts = CashFundReceipt::query()->where('school_id', $school->id)->orderBy('received_at')->orderBy('id')->get()->filter(fn (CashFundReceipt $receipt) => $sameFund($receipt->source_of_fund))->values();
 
         $before = fn ($date) => $date->lt($from);
         // The balance of the Bank Reconciliation (cash downloaded less what was paid) before the period starts is the beginning balance of the other reports.
@@ -43,6 +46,14 @@ class CashReportService
         $paidBefore = $all->filter(fn (array $line) => $before($line['date']));
         $opening = round($receiptsBefore - (float) $paidBefore->sum(fn (array $line) => $line['amount'] ?? 0), 2);
         $openingBank = round($receiptsBefore - (float) $paidBefore->reject(fn (array $line) => $line['mode'] === 'other')->sum(fn (array $line) => $line['amount'] ?? 0), 2);
+
+        // The same balance for each fund (source of fund) of the Bank Reconciliation.
+        $fundOf = fn (?string $fund) => strtoupper(trim((string) $fund));
+        $openingBankByFund = $receipts->filter(fn ($receipt) => $before($receipt->received_at))->groupBy(fn ($receipt) => $fundOf($receipt->source_of_fund))->map(fn ($group) => (float) $group->sum('amount'));
+        foreach ($paidBefore->reject(fn (array $line) => $line['mode'] === 'other') as $line) {
+            $key = $fundOf($line['fund']);
+            $openingBankByFund[$key] = ($openingBankByFund[$key] ?? 0) - (float) ($line['amount'] ?? 0);
+        }
 
         $periodReceipts = $receipts->filter(fn ($receipt) => ! $before($receipt->received_at) && $receipt->received_at->lte($to))->values();
         $lines = $all
@@ -73,6 +84,7 @@ class CashReportService
         return [
             'opening' => $opening,
             'opening_bank' => $openingBank,
+            'opening_bank_by_fund' => collect($openingBankByFund)->map(fn ($amount) => round($amount, 2))->filter(fn ($amount) => $amount != 0),
             'receipts' => $periodReceipts,
             'lines' => $lines,
             'total_paid' => $totalPaid,
@@ -101,6 +113,7 @@ class CashReportService
             'check_no' => (string) $report->payment_reference,
             'dv_no' => (string) $report->dv_number,
             'ors_no' => (string) $report->ors_number,
+            'fund' => trim((string) $report->source_of_fund),
             'responsibility_center' => (string) $report->responsibility_center_code,
             'payee' => (string) $report->payee,
             'uacs_code' => $code,
@@ -121,6 +134,7 @@ class CashReportService
             'check_no' => (string) $check->check_number,
             'dv_no' => (string) $check->dv_number,
             'ors_no' => (string) $check->ors_number,
+            'fund' => trim((string) $check->liquidationReport?->source_of_fund),
             'responsibility_center' => '',
             'payee' => 'Cancelled Check',
             'uacs_code' => '',
