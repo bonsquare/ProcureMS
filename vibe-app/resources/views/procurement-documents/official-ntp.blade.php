@@ -62,10 +62,10 @@
 
     <div class="ntp-salutation">Dear {{ $salutation }} :</div>
 
-    <p class="ntp-message"><span class="intro">We wish to inform you that the Contract Agreement for the</span> <strong>{{ $procurementRequest->title }}</strong> has been approved.</p>
+    <p class="ntp-message"><span class="intro">We wish to inform you that the Contract Agreement for the</span> <strong>{{ trim(($procurementRequest->transaction_description ? $procurementRequest->transaction_description.' for ' : '').$procurementRequest->title.' of '.$schoolName) }}</strong> has been approved.</p>
 
     @if(in_array($variant, ['mooe', 'thirty_days'], true))
-        <p class="ntp-message"><span class="intro">You are now hereby notified to commence delivery of goods</span> and shall fully complete the delivery within <strong><u>{{ ($meta['delivery_days'] ?? 30) === '' ? '________' : ($meta['delivery_days'] ?? 30) }}</u></strong> calendar days from receipt of this notice.</p>
+        <p class="ntp-message"><span class="intro">You are now hereby notified to commence delivery of goods</span> and shall fully complete the delivery within <strong><u>{{ ($meta['delivery_days'] ?? 30) === '' ? '________' : ($meta['delivery_days'] ?? 30) }}</u></strong> calendar days from receipt thereof of this notice.</p>
     @else
         <p class="ntp-message"><span class="intro">You are hereby notified to commence the delivery of the goods</span> in accordance with the schedule of delivery for each item and to ensure the timely and complete delivery of all items within their respective scheduled delivery periods upon receipt of this notice.</p>
     @endif

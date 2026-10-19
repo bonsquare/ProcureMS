@@ -1005,3 +1005,7 @@ Design: `docs/superpowers/specs/2026-10-16-cash-reports-design.md`. The owner's 
 ## 48. Notice of Award project line (owner's decision 2026-10-19)
 
 - The Notice of Award names the project as the transaction description, then the Project Title, then the school: "Procurement of Office Supplies of 3rd Quarter MOOE CY 2026 of Lubas Elementary School". Without a transaction description it starts with the Project Title. The year is only what is typed in the title. Nothing else on the NOA changed.
+
+## 49. Notice to Proceed wording (owner's decision 2026-10-19)
+
+- Both Notice to Proceed versions name the project as the transaction description, "for", the Project Title, "of" and the school ("Procurement of Office Supplies for 3rd Quarter MOOE CY 2026 of Lubas Elementary School"); without a transaction description it starts with the Project Title. The 30-day version reads "from receipt thereof of this notice". Nothing else on the NTP changed.
