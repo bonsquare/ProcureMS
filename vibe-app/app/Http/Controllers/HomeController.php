@@ -1679,6 +1679,17 @@ class HomeController extends Controller
             $request->merge(['delivery_days' => 1]);
         }
 
+        // The Inspection and Acceptance Report needs a typed quantity to be saved; the preview still draws the form with zero for the lines not typed yet.
+        if ($request->input('document_type') === 'inspection_acceptance_report') {
+            $received = (array) $request->input('received_items', []);
+            foreach ($procurementRequest->items as $item) {
+                if (($received[$item->id] ?? '') === '') {
+                    $received[$item->id] = 0;
+                }
+            }
+            $request->merge(['received_items' => $received]);
+        }
+
         DB::beginTransaction();
         try {
             $this->storeProcurementDocument($request, $procurementRequest);

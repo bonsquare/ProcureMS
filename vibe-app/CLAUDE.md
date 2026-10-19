@@ -243,6 +243,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 - 2026-10-19: The New Purchase Request form shows a red error box at the top with every refusal (docs/specs.md section 47); no rule changed.
 - 2026-10-19: Notice of Award project line reads transaction description + "of" + Project Title + "of" + school name (docs/specs.md section 48).
 - 2026-10-19: Notice to Proceed project line (description for title of school) and "receipt thereof of this notice" (docs/specs.md section 49).
+- 2026-10-19: The IAR preview shows the form while quantities are empty; saving still needs them (docs/specs.md section 50).
 
 ## Standing workflow (owner's instruction 2026-10-16)
 

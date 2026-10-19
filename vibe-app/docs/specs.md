@@ -1009,3 +1009,7 @@ Design: `docs/superpowers/specs/2026-10-16-cash-reports-design.md`. The owner's 
 ## 49. Notice to Proceed wording (owner's decision 2026-10-19)
 
 - Both Notice to Proceed versions name the project as the transaction description, "for", the Project Title, "of" and the school ("Procurement of Office Supplies for 3rd Quarter MOOE CY 2026 of Lubas Elementary School"); without a transaction description it starts with the Project Title. The 30-day version reads "from receipt thereof of this notice". Nothing else on the NTP changed.
+
+## 50. IAR preview shows the form before quantities are typed (owner's decision 2026-10-19)
+
+- The Inspection and Acceptance Report preview draws the document while the received quantities are still empty (zero for the lines not typed). Saving is unchanged: every line still needs a typed quantity (section 42). Nothing is saved by a preview.
