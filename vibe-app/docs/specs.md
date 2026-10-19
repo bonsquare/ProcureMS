@@ -1033,3 +1033,8 @@ Design: `docs/superpowers/specs/2026-10-16-cash-reports-design.md`. The owner's 
 - Fix: the slip lost the item of every row (rows were grouped by custodian without the item number), so the item table printed empty; it now prints the item.
 - The item row fits its content (no fixed 30 mm height).
 - The PR item description is no longer printed on the slip; the ICS accountable item setup has an optional Description box per item (255 characters), printed under the item name.
+
+## 55. Procurement and all other documents are final (owner's decision 2026-10-19)
+
+- The procurement documents (PR, RFQ, Abstract of Bids, Notice of Award, Purchase Order, Notice to Proceed, Inspection and Acceptance Report, Inventory and Acknowledgement Receipt of Supplies, Requisition and Issuance Slip, Inventory Custodian Slip) and every other official document of the system (their forms, previews, printed layouts, wording, fields and rules) are **final**.
+- No person, assistant or tool edits them without the owner's explicit permission for that exact change. A yes to another feature or a bug fix is not permission to touch a document; if a change seems to need it, stop and ask.
