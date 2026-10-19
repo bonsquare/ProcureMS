@@ -1690,6 +1690,17 @@ class HomeController extends Controller
             $request->merge(['received_items' => $received]);
         }
 
+        // The Inventory Custodian Slip needs an item, quantity and custodian to be saved; while none is chosen the preview draws every received item with the first school staff member as a placeholder custodian.
+        if ($request->input('document_type') === 'inventory_custodian_slip' && collect($request->input('ics_items', []))->filter(fn ($row) => ! empty($row['included']))->isEmpty()) {
+            $custodian = SchoolStaff::active()->where('school_id', $procurementRequest->school_id)->value('id');
+            $received = $procurementRequest->documents()->where('document_type', 'inspection_acceptance_report')->first()?->metadata['received_items'] ?? [];
+            $request->merge(['ics_items' => $procurementRequest->items->mapWithKeys(fn ($item) => [$item->id => [
+                'included' => 1,
+                'custodian_id' => $custodian,
+                'quantity' => ($received[$item->id] ?? '') === '' ? $item->quantity : $received[$item->id],
+            ]])->all()]);
+        }
+
         DB::beginTransaction();
         try {
             $this->storeProcurementDocument($request, $procurementRequest);

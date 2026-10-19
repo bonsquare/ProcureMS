@@ -1022,3 +1022,7 @@ Design: `docs/superpowers/specs/2026-10-16-cash-reports-design.md`. The owner's 
 
 - The Inventory and Acknowledgement Receipt of Supplies window has the same size, form width and text size as the other document windows; its staff table scrolls sideways and keeps Full screen. Layout only.
 - The RIS generation summary lists each staff member (name, designation) and the RIS number only; the items are not repeated there because the document view shows them.
+
+## 53. ICS preview shows the slip before an item is chosen (owner's decision 2026-10-19)
+
+- The Inventory Custodian Slip preview draws the document while no item is selected: every received item, with the IAR received quantity and the first active staff member of the school as a placeholder custodian until one is chosen. Saving is unchanged (an item, a quantity and a custodian are required). Nothing is saved by a preview.
