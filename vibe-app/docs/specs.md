@@ -996,3 +996,8 @@ Design: `docs/superpowers/specs/2026-10-16-cash-reports-design.md`. The owner's 
 - **Read-only list:** every ORS on the **Liquidation** page has a folded **Papers N of M** list (done papers checked, missing ones open circles).
 - File upload was not chosen.
 - Tests: `LiquidationChecklistTest` (also the school's own papers and the read-only views); the fixtures of other tests use the kind Other (`ors_kind`) or tick the paper.
+
+## 47. Purchase Request form shows why a save was refused (2026-10-19)
+
+- The New Purchase Request form lists every validation error in a red box at the top of the form. Before, errors on the items or the Budget line (for example "Add the items from the SOB activity") had no place on the page and the form reloaded blank, so the PR looked as if it would not save.
+- No rule changed: the PR still needs the items of an SOB activity.

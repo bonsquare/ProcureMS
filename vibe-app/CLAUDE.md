@@ -240,6 +240,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 - 2026-10-18: **Liquidation papers checklist** (docs/specs.md section 46): kinds goods, direct, travel, other; papers needed before the ORS is approved and before the DV is created; manual papers can be Received or Not required; Accounting's Papers window; Approve and Create DV refuse while a paper is missing. A school's own extra papers (School Settings > Liquidation Papers) and the read-only Papers list on the Liquidation page are built too.
 - 2026-10-18: Owner decided Phase 11 is not needed (see the Next work sequence).
 - 2026-10-18: **Maintenance screens** (docs/specs.md section 40): the whole-system screen switch now shows the "This System is Under Maintenance" picture, and the master can switch single tabs off (Screen view > Tabs), which show "This Site is Under Maintenance" with Back to Dashboard.
+- 2026-10-19: The New Purchase Request form shows a red error box at the top with every refusal (docs/specs.md section 47); no rule changed.
 
 ## Standing workflow (owner's instruction 2026-10-16)
 
