@@ -1026,3 +1026,10 @@ Design: `docs/superpowers/specs/2026-10-16-cash-reports-design.md`. The owner's 
 ## 53. ICS preview shows the slip before an item is chosen (owner's decision 2026-10-19)
 
 - The Inventory Custodian Slip preview draws the document while no item is selected: every received item, with the IAR received quantity and the first active staff member of the school as a placeholder custodian until one is chosen. Saving is unchanged (an item, a quantity and a custodian are required). Nothing is saved by a preview.
+
+## 54. Inventory Custodian Slip: item rows, row height and a description per item (owner's decision 2026-10-19)
+
+- The ICS preview draws the slip while the form is incomplete: a missing custodian shows the first active staff member of the school as a placeholder, a blank quantity takes the IAR received quantity, and when no item is ticked every received item is shown (amends section 53). Saving is unchanged.
+- Fix: the slip lost the item of every row (rows were grouped by custodian without the item number), so the item table printed empty; it now prints the item.
+- The item row fits its content (no fixed 30 mm height).
+- The PR item description is no longer printed on the slip; the ICS accountable item setup has an optional Description box per item (255 characters), printed under the item name.

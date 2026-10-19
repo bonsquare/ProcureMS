@@ -232,7 +232,7 @@
         const host = document.getElementById('ics-items-table');
         const staffOptions = (selectedId) => schoolStaff.map((staff) => `<option value="${staff.id}" ${String(selectedId || '') === String(staff.id) ? 'selected' : ''}>${escapeHtml(staff.name)} · ${escapeHtml(staff.position || 'No designation')}</option>`).join('');
         host.innerHTML = `<table class="min-w-full border-collapse text-xs">
-            <thead><tr class="bg-white text-left"><th class="border px-3 py-2">Include</th><th class="border px-3 py-2">Item</th><th class="border px-3 py-2 text-center">IAR received</th><th class="border px-3 py-2">Custodian</th><th class="border px-3 py-2 text-center">ICS qty</th><th class="border px-3 py-2">Inventory Item No.</th><th class="border px-3 py-2">Useful Life</th></tr></thead>
+            <thead><tr class="bg-white text-left"><th class="border px-3 py-2">Include</th><th class="border px-3 py-2">Item</th><th class="border px-3 py-2">Description</th><th class="border px-3 py-2 text-center">IAR received</th><th class="border px-3 py-2">Custodian</th><th class="border px-3 py-2 text-center">ICS qty</th><th class="border px-3 py-2">Inventory Item No.</th><th class="border px-3 py-2">Useful Life</th></tr></thead>
             <tbody>${iarReceivedComparisonItems.map((item) => {
                 const saved = icsItems[item.id] || {};
                 const checked = saved.included ? 'checked' : '';
@@ -240,7 +240,7 @@
                 return `<tr class="bg-white">
                     <td class="border px-3 py-2 text-center"><input data-ics-include="${item.id}" type="checkbox" name="ics_items[${item.id}][included]" value="1" ${checked} class="rounded border-outline-variant/50 text-primary"></td>
                     <td class="border px-3 py-2"><span class="font-semibold">${escapeHtml(item.name)}</span><span class="block text-[11px] text-on-surface-variant">${escapeHtml(item.unit)} · PO ${item.po_quantity}</span></td>
-                    <td class="border px-3 py-2 text-center font-semibold text-primary">${item.quantity}</td>
+                    <td class="border p-1"><input data-ics-control="${item.id}" name="ics_items[${item.id}][description]" value="${escapeHtml(saved.description ?? '')}" ${disabled} maxlength="255" placeholder="Optional" class="w-48 rounded border border-outline-variant/50 bg-white px-2 py-1.5"></td><td class="border px-3 py-2 text-center font-semibold text-primary">${item.quantity}</td>
                     <td class="border p-1"><select data-ics-control="${item.id}" name="ics_items[${item.id}][custodian_id]" ${disabled} class="min-w-48 rounded border border-outline-variant/50 bg-white px-2 py-1.5"><option value="">Select custodian</option>${staffOptions(saved.custodian_id)}</select></td>
                     <td class="border p-1 text-center"><input data-ics-control="${item.id}" type="number" min="0" max="${item.quantity}" step="1" name="ics_items[${item.id}][quantity]" value="${escapeHtml(saved.quantity ?? item.quantity)}" ${disabled} class="w-20 rounded border border-outline-variant/50 bg-white px-2 py-1.5 text-center"></td>
                     <td class="border p-1"><input data-ics-control="${item.id}" name="ics_items[${item.id}][inventory_item_number]" value="${escapeHtml(saved.inventory_item_number ?? '')}" ${disabled} placeholder="Optional" class="w-36 rounded border border-outline-variant/50 bg-white px-2 py-1.5"></td>

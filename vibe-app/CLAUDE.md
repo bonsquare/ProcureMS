@@ -247,6 +247,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 - 2026-10-19: IAR Items received is one row per item with a scroll bar and the Item column frozen (docs/specs.md section 51); layout only.
 - 2026-10-19: IARS window sized like the other document windows; the RIS generation summary shows only the staff name and RIS number (docs/specs.md section 52).
 - 2026-10-19: The ICS preview shows the slip before an item is chosen (placeholder custodian); saving is unchanged (docs/specs.md section 53).
+- 2026-10-19: Inventory Custodian Slip: item row prints again, row fits its content, optional Description per item instead of the PR item description, preview fills a placeholder custodian (docs/specs.md section 54).
 
 ## Standing workflow (owner's instruction 2026-10-16)
 

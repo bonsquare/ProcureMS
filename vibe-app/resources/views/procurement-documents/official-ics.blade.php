@@ -4,7 +4,7 @@
     $icsItems = collect($meta['ics_items'] ?? [])->filter(fn ($row) => !empty($row['included']) && !empty($row['custodian_id']));
     $staffById = $staff->keyBy('id');
     $itemById = $procurementRequest->items->keyBy('id');
-    $groups = $icsItems->groupBy('custodian_id');
+    $groups = $icsItems->groupBy('custodian_id', true);
     if ($groups->isEmpty()) {
         $groups = collect(['' => collect()]);
     }
@@ -12,7 +12,7 @@
     $fundCluster = ($meta['source_of_fund'] ?? null) ?: ($procurementRequest->source_of_fund ?: 'General Fund');
 @endphp
 <style>
-    .ics-page{width:216mm;min-height:330mm;padding:16mm 14mm;font-family:Arial,sans-serif;font-size:10pt}.ics-title{text-align:center;font-size:16pt;font-weight:400;margin:0 0 8mm}.ics-table{width:100%;border-collapse:collapse;table-layout:fixed}.ics-table th,.ics-table td{border:1px solid #111;padding:3px 4px;vertical-align:top}.ics-table th{text-align:center;font-weight:400;vertical-align:middle}.ics-info td{border:0;padding:1px 4px}.ics-items .description{line-height:1.35;white-space:pre-line}.ics-items .item-row td{height:30mm}.ics-center{text-align:center;vertical-align:middle!important}.ics-sign td{height:20mm}.ics-sign .name{text-align:center;font-weight:700;text-decoration:underline;padding-top:13mm}.ics-sign .caption{text-align:center;border-top:1px solid #111}.ics-sign .role{text-align:center;font-weight:700}.ics-date{height:17mm!important;vertical-align:bottom!important}.ics-break{page-break-after:always}@media print{.ics-page{margin:0;width:216mm;min-height:330mm;box-shadow:none}.ics-break{page-break-after:always}}
+    .ics-page{width:216mm;min-height:330mm;padding:16mm 14mm;font-family:Arial,sans-serif;font-size:10pt}.ics-title{text-align:center;font-size:16pt;font-weight:400;margin:0 0 8mm}.ics-table{width:100%;border-collapse:collapse;table-layout:fixed}.ics-table th,.ics-table td{border:1px solid #111;padding:3px 4px;vertical-align:top}.ics-table th{text-align:center;font-weight:400;vertical-align:middle}.ics-info td{border:0;padding:1px 4px}.ics-items .description{line-height:1.35;white-space:pre-line}.ics-center{text-align:center;vertical-align:middle!important}.ics-sign td{height:20mm}.ics-sign .name{text-align:center;font-weight:700;text-decoration:underline;padding-top:13mm}.ics-sign .caption{text-align:center;border-top:1px solid #111}.ics-sign .role{text-align:center;font-weight:700}.ics-date{height:17mm!important;vertical-align:bottom!important}.ics-break{page-break-after:always}@media print{.ics-page{margin:0;width:216mm;min-height:330mm;box-shadow:none}.ics-break{page-break-after:always}}
 </style>
 @foreach($groups as $custodianId => $rows)
     @php
@@ -41,7 +41,7 @@
                                 <td class="ics-center">{{ ucfirst(strtolower($item->unit)) }}</td>
                                 <td class="ics-center">{{ number_format($cost, 2) }}</td>
                                 <td class="ics-center">{{ number_format($cost * $quantity, 2) }}</td>
-                                <td class="description"><strong>{{ $item->name }}</strong>@if($item->description)<br>{{ $item->description }}@endif</td>
+                                <td class="description"><strong>{{ $item->name }}</strong>@if(! empty($icsRow['description']))<br>{{ $icsRow['description'] }}@endif</td>
                                 <td class="ics-center">{{ $icsRow['inventory_item_number'] ?? '' }}</td>
                                 <td class="ics-center">{{ $icsRow['useful_life'] ?? '' }}</td>
                             </tr>

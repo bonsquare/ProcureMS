@@ -1305,6 +1305,7 @@ class HomeController extends Controller
             'ics_items.*.included' => ['nullable', 'boolean'],
             'ics_items.*.custodian_id' => ['nullable', 'integer'],
             'ics_items.*.quantity' => ['nullable', 'numeric', 'min:0'],
+            'ics_items.*.description' => ['nullable', 'string', 'max:255'],
             'ics_items.*.inventory_item_number' => ['nullable', 'string', 'max:255'],
             'ics_items.*.useful_life' => ['nullable', 'string', 'max:255'],
         ], [
@@ -1690,15 +1691,24 @@ class HomeController extends Controller
             $request->merge(['received_items' => $received]);
         }
 
-        // The Inventory Custodian Slip needs an item, quantity and custodian to be saved; while none is chosen the preview draws every received item with the first school staff member as a placeholder custodian.
-        if ($request->input('document_type') === 'inventory_custodian_slip' && collect($request->input('ics_items', []))->filter(fn ($row) => ! empty($row['included']))->isEmpty()) {
+        // The Inventory Custodian Slip needs an item, quantity and custodian to be saved; the preview draws what is chosen so far, with every received item when none is ticked, the received quantity for a blank one and the first school staff member as a placeholder custodian until one is chosen.
+        if ($request->input('document_type') === 'inventory_custodian_slip') {
             $custodian = SchoolStaff::active()->where('school_id', $procurementRequest->school_id)->value('id');
             $received = $procurementRequest->documents()->where('document_type', 'inspection_acceptance_report')->first()?->metadata['received_items'] ?? [];
-            $request->merge(['ics_items' => $procurementRequest->items->mapWithKeys(fn ($item) => [$item->id => [
-                'included' => 1,
-                'custodian_id' => $custodian,
-                'quantity' => ($received[$item->id] ?? '') === '' ? $item->quantity : $received[$item->id],
-            ]])->all()]);
+            $rows = (array) $request->input('ics_items', []);
+            $noneTicked = collect($rows)->filter(fn ($row) => ! empty($row['included']))->isEmpty();
+            foreach ($procurementRequest->items as $item) {
+                $row = $rows[$item->id] ?? [];
+                if ($noneTicked) {
+                    $row['included'] = 1;
+                }
+                if (! empty($row['included'])) {
+                    $row['custodian_id'] = $row['custodian_id'] ?? '' ?: $custodian;
+                    $row['quantity'] = (float) ($row['quantity'] ?? 0) > 0 ? $row['quantity'] : (($received[$item->id] ?? '') === '' ? $item->quantity : $received[$item->id]);
+                }
+                $rows[$item->id] = $row;
+            }
+            $request->merge(['ics_items' => $rows]);
         }
 
         DB::beginTransaction();
