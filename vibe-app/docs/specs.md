@@ -1013,3 +1013,7 @@ Design: `docs/superpowers/specs/2026-10-16-cash-reports-design.md`. The owner's 
 ## 50. IAR preview shows the form before quantities are typed (owner's decision 2026-10-19)
 
 - The Inspection and Acceptance Report preview draws the document while the received quantities are still empty (zero for the lines not typed). Saving is unchanged: every line still needs a typed quantity (section 42). Nothing is saved by a preview.
+
+## 51. IAR Items received as one row per item (owner's decision 2026-10-19)
+
+- On the Inspection and Acceptance Report form the Items received block is a table: one row per item (Item, Ordered, Accepted before, This delivery accepted and rejected, Total accepted, Total rejected, Balance), a scroll bar when it is wide, and the Item column frozen on the left. Layout only; the rules of sections 42 to 44 are unchanged.

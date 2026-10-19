@@ -244,6 +244,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 - 2026-10-19: Notice of Award project line reads transaction description + "of" + Project Title + "of" + school name (docs/specs.md section 48).
 - 2026-10-19: Notice to Proceed project line (description for title of school) and "receipt thereof of this notice" (docs/specs.md section 49).
 - 2026-10-19: The IAR preview shows the form while quantities are empty; saving still needs them (docs/specs.md section 50).
+- 2026-10-19: IAR Items received is one row per item with a scroll bar and the Item column frozen (docs/specs.md section 51); layout only.
 
 ## Standing workflow (owner's instruction 2026-10-16)
 
