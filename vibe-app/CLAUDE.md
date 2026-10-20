@@ -254,6 +254,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 - 2026-10-19: **One source of fund per cash report** (docs/specs.md section 57): the Source of Fund is required in the form of the four cash reports, each fund has its own beginning balance, and a recorded balance forwarded replaces the carried-over one so the reports agree. The cash reports stay FINAL.
 - 2026-10-19: Cash Disbursement Register: the cash downloaded row reads "<fund> <kind> <quarter> qrtr. <year>" as in the owner's actual register (docs/specs.md section 58). The cash reports stay FINAL.
 - 2026-10-19: Cash Disbursement Register of one fund lists the accounts budgeted for that fund even without payments, with "-" in the Recapitulation (docs/specs.md section 59). The cash reports stay FINAL.
+- 2026-10-20: The Subscriptions tab lists the real schools' subscriptions with computed figures; the demo rows and sample plan cards are removed (docs/specs.md section 60).
 
 ## Standing workflow (owner's instruction 2026-10-16)
 

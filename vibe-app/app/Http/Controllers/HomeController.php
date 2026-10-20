@@ -2280,6 +2280,7 @@ class HomeController extends Controller
         abort_unless(request()->user()?->hasAccess('subscriptions'), 403);
 
         return view('subscriptions', [
+            'subscriptions' => Subscription::with('school')->whereHas('school')->latest()->get(),
             'pendingPreRegistrations' => School::with(['users' => fn ($query) => $query->oldest()])
                 ->where('status', 'inactive')
                 ->orderBy('created_at')

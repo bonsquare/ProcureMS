@@ -1061,3 +1061,7 @@ Design: `docs/superpowers/specs/2026-10-16-cash-reports-design.md`. The owner's 
 ## 59. Cash Disbursement Register: budgeted accounts without payments (owner's decision 2026-10-19)
 
 - When a Source of Fund is chosen, the UACS columns and the Recapitulation of the Cash Disbursement Register also list the accounts budgeted for that fund in the year of the period (the school's budget lines of the fund) even when nothing was paid from them: the Recapitulation shows "-" and the column is blank. The accounts of the other funds are not listed. The order of the accounts stays by UACS code. The cash reports stay final (section 56).
+
+## 60. Subscriptions tab shows the real schools (owner's decision 2026-10-20)
+
+- The Subscriptions tab no longer shows demo figures: the table lists the real subscription of each school (plan, billing cycle, amount, status, renewal date), and the four figures on top (Active, Monthly Recurring Revenue, Renewing This Month, Past Due) are computed from them. The three sample plan cards were removed. Schools for Activation is unchanged.
