@@ -2,11 +2,12 @@
 
 namespace App\Services;
 
-use App\Models\BudgetAllocation;
 use App\Models\CancelledCheck;
 use App\Models\CashFundReceipt;
 use App\Models\LiquidationReport;
 use App\Models\School;
+use App\Models\SobItem;
+use App\Models\SobPlan;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 
@@ -84,21 +85,19 @@ class CashReportService
         $totalReceived = round((float) $periodReceipts->sum('amount'), 2);
         $totalPaid = round((float) $lines->sum(fn (array $line) => $line['amount'] ?? 0), 2);
 
-        // The accounts of the payments (of the chosen fund only), and, for one fund, the accounts budgeted for it in the SOB even when nothing was paid from them.
-        $accounts = $lines->filter(fn (array $line) => ! $line['cancelled'] && $line['uacs_code'] !== '' && $line['amount'] !== null)
-            ->mapWithKeys(fn (array $line) => [$line['uacs_code'] => $line['nature']])
-            ->all();
-        if ($fund !== null) {
-            $budgeted = BudgetAllocation::query()->with('account')->where('school_id', $school->id)->where('fiscal_year', $from->year)->whereRaw('lower(source_of_fund) = ?', [strtolower($fund)])->get();
-            // The register is per quarter, not consolidated: only the accounts with an allotment in the quarter(s) of the period.
-            $quarters = $from->year === $to->year ? range($from->quarter, $to->quarter) : [1, 2, 3, 4];
-            foreach ($budgeted->filter(fn (BudgetAllocation $allocation) => collect($quarters)->contains(fn (int $quarter) => (float) $allocation->quarterAmount($quarter) > 0)) as $allocation) {
-                $code = (string) ($allocation->account?->code ?? $allocation->uacs_code ?? '');
-                if ($code !== '' && ! isset($accounts[$code])) {
-                    $accounts[$code] = (string) ($allocation->account?->title ?? $allocation->particulars ?? '');
+        // The Breakdown of Payments and the account descriptions are the SOB's summary per object of expenditure: the accounts of the SOBs of the
+        // period covered (its quarters), of the chosen source of fund, or of every fund when none is chosen.
+        $plans = SobPlan::withoutGlobalScopes()->where('school_id', $school->id)
+            ->when($fund !== null, fn ($query) => $query->whereRaw('lower(fund_source) = ?', [strtolower($fund)]))
+            ->where(function ($query) use ($from, $to) {
+                foreach (range($from->year, $to->year) as $year) {
+                    $query->orWhere(fn ($same) => $same->where('fiscal_year', $year)->whereBetween('quarter', [$year === $from->year ? $from->quarter : 1, $year === $to->year ? $to->quarter : 4]));
                 }
-            }
-        }
+            })->pluck('id');
+        $accounts = SobItem::withoutGlobalScopes()->with(['account' => fn ($query) => $query->withoutGlobalScopes()])->whereIn('sob_plan_id', $plans)->get()
+            ->filter(fn (SobItem $item) => $item->account && $item->account->code !== '')
+            ->mapWithKeys(fn (SobItem $item) => [(string) $item->account->code => (string) $item->account->title])
+            ->all();
         ksort($accounts);
 
         return [

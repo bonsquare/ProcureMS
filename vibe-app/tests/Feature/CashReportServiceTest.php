@@ -2,6 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\Aip;
+use App\Models\AipActivity;
+use App\Models\AipKra;
 use App\Models\BudgetAllocation;
 use App\Models\CancelledCheck;
 use App\Models\CashFundReceipt;
@@ -10,6 +13,8 @@ use App\Models\DvJournalLine;
 use App\Models\LiquidationReport;
 use App\Models\Organization;
 use App\Models\School;
+use App\Models\SobItem;
+use App\Models\SobPlan;
 use App\Models\User;
 use App\Services\CashReportService;
 use Carbon\Carbon;
@@ -183,12 +188,21 @@ class CashReportServiceTest extends TestCase
         $this->assertSame([], $report['accounts']);
     }
 
-    public function test_accounts_lists_only_accounts_paid_in_the_period(): void
+    public function test_accounts_are_those_of_the_sob_of_the_period_and_the_fund(): void
     {
-        $this->paid('0001', '2026-08-05', 100, $this->account('5020402000', 'Electricity Expenses'));
-        $this->paid('0002', '2026-08-06', 100, $this->account('5020101000', 'Traveling Expenses'));
-        $this->paid('0003', '2026-12-06', 100, $this->account('5020301000', 'Office Supplies Expenses'));
+        $aip = Aip::create(['organization_id' => $this->organization->id, 'school_id' => $this->school->id, 'fiscal_year' => 2026, 'entity' => 'school', 'status' => 'approved']);
+        $kra = AipKra::create(['organization_id' => $this->organization->id, 'aip_id' => $aip->id, 'pillar' => 'Access', 'kra' => 'KRA', 'program' => 'Program']);
+        $activity = AipActivity::create(['organization_id' => $this->organization->id, 'aip_id' => $aip->id, 'aip_kra_id' => $kra->id, 'activity' => 'Activity', 'physical_target' => 1]);
+        foreach ([[3, 'MOOE', '5020402000', 'Electricity Expenses'], [3, 'MOOE', '5020101000', 'Traveling Expenses'], [3, 'ARAL', '5021304000', 'Repairs'], [4, 'MOOE', '5020301000', 'Office Supplies Expenses']] as [$quarter, $fund, $code, $title]) {
+            $plan = SobPlan::firstOrCreate(['school_id' => $this->school->id, 'fiscal_year' => 2026, 'quarter' => $quarter, 'fund_source' => $fund], ['organization_id' => $this->organization->id, 'aip_id' => $aip->id, 'status' => 'approved']);
+            SobItem::create(['organization_id' => $this->organization->id, 'sob_plan_id' => $plan->id, 'aip_activity_id' => $activity->id, 'chart_of_account_id' => $this->account($code, $title)->id, 'particulars' => $title, 'quantity' => 1, 'unit' => 'lot', 'unit_cost' => 1, 'amount' => 1]);
+        }
 
-        $this->assertSame(['5020101000' => 'Traveling Expenses', '5020402000' => 'Electricity Expenses'], $this->build()['accounts']);
+        $service = app(CashReportService::class);
+        $third = [Carbon::parse('2026-07-01'), Carbon::parse('2026-09-30')];
+
+        $this->assertSame(['5020101000' => 'Traveling Expenses', '5020402000' => 'Electricity Expenses', '5021304000' => 'Repairs'], $service->build($this->school, ...$third)['accounts']);
+        $this->assertSame(['5020101000' => 'Traveling Expenses', '5020402000' => 'Electricity Expenses'], $service->build($this->school, ...$third, fund: 'MOOE')['accounts']);
+        $this->assertSame(['5020301000' => 'Office Supplies Expenses'], $service->build($this->school, Carbon::parse('2026-10-01'), Carbon::parse('2026-12-31'), 'MOOE')['accounts']);
     }
 }

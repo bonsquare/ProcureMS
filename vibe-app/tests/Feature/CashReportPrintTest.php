@@ -2,6 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\Aip;
+use App\Models\AipActivity;
+use App\Models\AipKra;
 use App\Models\BudgetAllocation;
 use App\Models\CancelledCheck;
 use App\Models\CashFundReceipt;
@@ -11,6 +14,8 @@ use App\Models\LiquidationReport;
 use App\Models\Organization;
 use App\Models\School;
 use App\Models\SchoolStaff;
+use App\Models\SobItem;
+use App\Models\SobPlan;
 use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -80,6 +85,19 @@ class CashReportPrintTest extends TestCase
             'dv_date' => $paidAt, 'responsibility_center_code' => '19-001-01', 'amount' => $amount, 'status' => 'approved', 'payee' => 'Payee '.$check, 'purpose' => 'Purpose '.$check,
             'payment_mode' => 'MDS Check', 'payment_reference' => $check, 'paid_at' => $paidAt, 'budget_allocation_id' => $line->id,
         ]);
+    }
+
+    /** An SOB of the school for the quarter and fund, with one item for each account: the source of the register's Breakdown of Payments. @param array<string, string> $accounts code => title */
+    private function sobFor(School $school, array $accounts, int $quarter = 3, string $fund = 'MOOE'): void
+    {
+        $aip = Aip::withoutGlobalScopes()->firstOrCreate(['school_id' => $school->id, 'fiscal_year' => 2026], ['organization_id' => $school->organization_id, 'entity' => 'school', 'status' => 'approved']);
+        $kra = AipKra::withoutGlobalScopes()->firstOrCreate(['aip_id' => $aip->id, 'kra' => 'KRA'], ['organization_id' => $school->organization_id, 'pillar' => 'Access', 'program' => 'Program']);
+        $activity = AipActivity::withoutGlobalScopes()->firstOrCreate(['aip_id' => $aip->id, 'activity' => 'Activity'], ['organization_id' => $school->organization_id, 'aip_kra_id' => $kra->id, 'physical_target' => 1]);
+        $plan = SobPlan::withoutGlobalScopes()->create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'aip_id' => $aip->id, 'fiscal_year' => 2026, 'quarter' => $quarter, 'fund_source' => $fund, 'status' => 'approved']);
+        foreach ($accounts as $code => $title) {
+            $account = ChartOfAccount::firstOrCreate(['organization_id' => $school->organization_id, 'code' => (string) $code], ['title' => $title, 'category' => 'Expense']);
+            SobItem::withoutGlobalScopes()->create(['organization_id' => $school->organization_id, 'sob_plan_id' => $plan->id, 'aip_activity_id' => $activity->id, 'chart_of_account_id' => $account->id, 'particulars' => $title, 'quantity' => 1, 'unit' => 'lot', 'unit_cost' => 100, 'amount' => 100]);
+        }
     }
 
     private function periodQuery(School $school, array $extra = []): array
@@ -196,27 +214,22 @@ class CashReportPrintTest extends TestCase
         $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school, ['source_of_fund' => 'MOOE'])))->assertOk()->assertSee('MOOE Cash Advance 3rd qrtr. 2026')->assertSee('145,750.00');
     }
 
-    public function test_the_register_of_one_fund_lists_its_budgeted_accounts_even_without_payments(): void
+    public function test_the_register_of_one_fund_lists_the_accounts_of_the_sob_of_that_fund_even_without_payments(): void
     {
         [$school, $user] = $this->tenant('BK4');
         $this->paid($school, '0301', '2026-08-05', 1000, overrides: ['source_of_fund' => 'MOOE']);
-        $account = ChartOfAccount::firstOrCreate(['organization_id' => $school->organization_id, 'code' => '5020502000'], ['title' => 'Communication Expenses', 'category' => 'Expense']);
-        BudgetAllocation::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'fiscal_year' => 2026, 'source_of_fund' => 'MOOE', 'particulars' => 'Communication', 'chart_of_account_id' => $account->id, 'amount' => 5000, 'q1_amount' => 0, 'q2_amount' => 0, 'q3_amount' => 5000, 'q4_amount' => 0]);
-        $other = ChartOfAccount::firstOrCreate(['organization_id' => $school->organization_id, 'code' => '5021304000'], ['title' => 'Repairs', 'category' => 'Expense']);
-        BudgetAllocation::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'fiscal_year' => 2026, 'source_of_fund' => 'ARAL', 'particulars' => 'Repairs', 'chart_of_account_id' => $other->id, 'amount' => 5000, 'q1_amount' => 0, 'q2_amount' => 0, 'q3_amount' => 5000, 'q4_amount' => 0]);
+        $this->sobFor($school, ['5020502000' => 'Communication Expenses'], 3, 'MOOE');
+        $this->sobFor($school, ['5021304000' => 'Repairs'], 3, 'ARAL');
 
         $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school, ['source_of_fund' => 'MOOE'])))->assertOk()
             ->assertSee('Communication Expenses')->assertSee('5020502000')->assertSee('data-recap="5020502000">-', false)->assertDontSee('5021304000');
     }
 
-    public function test_the_register_of_one_quarter_leaves_out_the_accounts_of_the_other_quarters(): void
+    public function test_the_register_takes_its_accounts_only_from_the_sob_of_the_quarter_covered(): void
     {
         [$school, $user] = $this->tenant('BK5');
-        $q3 = ChartOfAccount::firstOrCreate(['organization_id' => $school->organization_id, 'code' => '5020502000'], ['title' => 'Communication Expenses', 'category' => 'Expense']);
-        $q4 = ChartOfAccount::firstOrCreate(['organization_id' => $school->organization_id, 'code' => '5021304000'], ['title' => 'Repairs', 'category' => 'Expense']);
-        foreach ([[$q3, 'Communication', 0, 5000], [$q4, 'Repairs', 5000, 0]] as [$account, $name, $fourth, $third]) {
-            BudgetAllocation::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'fiscal_year' => 2026, 'source_of_fund' => 'MOOE', 'particulars' => $name, 'chart_of_account_id' => $account->id, 'amount' => 5000, 'q1_amount' => 0, 'q2_amount' => 0, 'q3_amount' => $third, 'q4_amount' => $fourth]);
-        }
+        $this->sobFor($school, ['5020502000' => 'Communication Expenses'], 3);
+        $this->sobFor($school, ['5021304000' => 'Repairs'], 4);
 
         $this->actingAs($user)->get(route('cash.report.register', ['school_id' => $school->id, 'from' => '2026-10-01', 'to' => '2026-12-31', 'source_of_fund' => 'MOOE']))->assertOk()
             ->assertSee('5021304000')->assertDontSee('5020502000');
@@ -401,6 +414,7 @@ class CashReportPrintTest extends TestCase
         [$school, $user] = $this->tenant('CR1');
         $this->paid($school, '0001', '2026-08-01', 1000, '5020101000', 'Traveling Expenses');
         $this->paid($school, '0002', '2026-08-02', 250.5, '5020301000', 'Office Supplies Expense');
+        $this->sobFor($school, ['5020101000' => 'Traveling Expenses', '5020301000' => 'Office Supplies Expense']);
 
         $document = $this->registerDocument($school, $user);
 
@@ -432,6 +446,7 @@ class CashReportPrintTest extends TestCase
         foreach (range(1, 10) as $number) {
             $this->paid($school, sprintf('%04d', $number), '2026-08-'.sprintf('%02d', $number), 100, '502'.sprintf('%02d', $number).'00000', 'Account '.$number);
         }
+        $this->sobFor($school, collect(range(1, 10))->mapWithKeys(fn ($number) => ['502'.sprintf('%02d', $number).'00000' => 'Account '.$number])->all());
 
         $document = $this->registerDocument($school, $user);
 
