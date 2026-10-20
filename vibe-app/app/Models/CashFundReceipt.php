@@ -10,7 +10,7 @@ class CashFundReceipt extends Model
 {
     use BelongsToOrganization;
 
-    public const KINDS = ['opening_balance' => 'Opening balance', 'balance_forwarded' => 'Balance forwarded', 'nca' => 'NCA received', 'cash_advance' => 'Cash advance'];
+    public const KINDS = ['opening_balance' => 'Opening balance', 'balance_forwarded' => 'Beginning balance (maintaining balance)', 'nca' => 'NCA received', 'cash_advance' => 'Cash receipts from advances'];
 
     /** The specific funds (source of fund) offered for the downloaded cash; Others lets the user type the fund's name. */
     public const FUNDS = ['MOOE', 'ARAL', 'SBFP', 'SEF', 'IGP', 'Others'];

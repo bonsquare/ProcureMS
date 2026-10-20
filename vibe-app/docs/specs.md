@@ -1080,3 +1080,8 @@ Design: `docs/superpowers/specs/2026-10-16-cash-reports-design.md`. The owner's 
 
 - When Create DV opens, the Less: Withholding Tax box is filled from the payee's record in the Supplier Manager (matched by business name, as for the awarded payee): **VAT** = amount / 1.12 x the supplier's Tax rate %; **Non-VAT** = amount x the supplier's Tax rate %. VAT exempt and a payee that is not a supplier get nothing. The amount is the ORS amount (`LiquidationReport::suggestedWithholdingTax()`). The user can still change or clear the box, and the other deductions stay typed by hand. Edit DV keeps the saved values. Covered by `tests/Feature/DvWithholdingTaxTest.php`.
 - The supplier form sets the Tax rate to 0 when Non-VAT is chosen, so the rate of a Non-VAT supplier has to be typed in the Supplier Manager.
+
+## 64. Bank Reconciliation wording: beginning balance and cash receipts from advances (owner's decision 2026-10-20)
+
+- The cash fund records are described the way the school treats its deposits: in the Cash downloaded form the Kind **Beginning balance (maintaining balance)** (stored as `balance_forwarded`) is the maintaining balance of the bank account, and the Kind **Cash receipts from advances** (stored as `cash_advance`) is each fund deposit received as a cash advance. The printed Bank Reconciliation shows the beginning balance at the top, with its fund, and the cash receipts from advances below it; the rows read "Beginning balance (maintaining balance)" and "Cash receipts from advances". Only the wording changed; the amounts, the funds and the other cash reports are unchanged, and the cash reports stay final.
+- The test entries of the local database were cleared by the owner's request so the school can enter its actual balances.

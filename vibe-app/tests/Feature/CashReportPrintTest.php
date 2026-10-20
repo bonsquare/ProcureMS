@@ -134,7 +134,7 @@ class CashReportPrintTest extends TestCase
         [$school, $user] = $this->tenant('BF1');
         $this->actingAs($user)->postJson(route('cash.fund.store'), ['school_id' => $school->id, 'received_at' => '2026-09-01', 'kind' => 'balance_forwarded', 'source_of_fund' => 'MOOE', 'amount' => 3000])->assertOk();
 
-        $this->actingAs($user)->get(route('cash.report.bank', $this->periodQuery($school)))->assertOk()->assertSee('Balance forwarded')->assertSee('3,000.00');
+        $this->actingAs($user)->get(route('cash.report.bank', $this->periodQuery($school)))->assertOk()->assertSee('Beginning balance (maintaining balance)')->assertSee('3,000.00');
     }
 
     public function test_a_recorded_balance_forwarded_is_shown_at_the_top_with_its_fund_and_not_as_cash_downloaded(): void
@@ -146,8 +146,8 @@ class CashReportPrintTest extends TestCase
         CashFundReceipt::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'received_at' => '2026-06-10', 'kind' => 'nca', 'source_of_fund' => 'MOOE', 'fund_cluster' => 'General Fund', 'amount' => 9000, 'created_by' => $user->id]);
 
         $html = $this->actingAs($user)->get(route('cash.report.bank', $this->periodQuery($school)))->assertOk()->assertSee('Beginning balance')->getContent();
-        $this->assertSame(1, substr_count($html, 'Balance forwarded'), 'the automatic balance forwarded is left out when one was recorded');
-        $this->assertMatchesRegularExpression('/Sep 01, 2026<\/td><td colspan="6">Balance forwarded, Beginning balance/', $html);
+        $this->assertSame(1, substr_count($html, 'Beginning balance (maintaining balance)'), 'the automatic balance forwarded is left out when one was recorded');
+        $this->assertMatchesRegularExpression('/Sep 01, 2026<\/td><td colspan="6">Beginning balance \(maintaining balance\), Beginning balance/', $html);
         $this->assertMatchesRegularExpression('/class="total">.*?<td class="num">1,000\.00<\/td><td class="num">0\.00<\/td><td class="num">1,500\.00</s', $html);
     }
 
@@ -216,7 +216,7 @@ class CashReportPrintTest extends TestCase
         }
 
         $this->actingAs($user)->get(route('cash.report.bank', $this->periodQuery($school)))->assertOk()
-            ->assertSee('ARAL, MOOE, SBFP')->assertSee('Balance forwarded')->assertSee('6,500.00')->assertSee('1,500.00');
+            ->assertSee('ARAL, MOOE, SBFP')->assertSee('Beginning balance (maintaining balance)')->assertSee('6,500.00')->assertSee('1,500.00');
     }
 
     public function test_the_downloaded_cash_is_listed_and_saved_as_json_for_the_window(): void

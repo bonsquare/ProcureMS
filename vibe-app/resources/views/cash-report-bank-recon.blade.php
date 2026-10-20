@@ -49,11 +49,11 @@
         </thead>
         <tbody>
         @if($forwarded->isEmpty())
-            <tr class="muted"><td class="center">{{ $report['from']->format('M d, Y') }}</td><td colspan="6">Balance forwarded</td><td class="num" data-col="balance">{{ $money($balance) }}</td></tr>
+            <tr class="muted"><td class="center">{{ $report['from']->format('M d, Y') }}</td><td colspan="6">Beginning balance (maintaining balance)</td><td class="num" data-col="balance">{{ $money($balance) }}</td></tr>
         @endif
         @foreach($forwarded as $receipt)
             @php $balance = round($balance + (float) $receipt->amount, 2); @endphp
-            <tr class="muted"><td class="center">{{ $receipt->received_at->format('M d, Y') }}</td><td colspan="6">Balance forwarded{{ $fundOf($receipt->source_of_fund) !== '' ? ', '.$fundOf($receipt->source_of_fund) : '' }}{{ $receipt->note ? ' · '.$receipt->note : '' }}</td><td class="num" data-col="balance">{{ $money($balance) }}</td></tr>
+            <tr class="muted"><td class="center">{{ $receipt->received_at->format('M d, Y') }}</td><td colspan="6">Beginning balance (maintaining balance){{ $fundOf($receipt->source_of_fund) !== '' ? ', '.$fundOf($receipt->source_of_fund) : '' }}{{ $receipt->note ? ' · '.$receipt->note : '' }}</td><td class="num" data-col="balance">{{ $money($balance) }}</td></tr>
         @endforeach
         @foreach($entries as $entry)
             @if($entry['type'] === 'receipt')
