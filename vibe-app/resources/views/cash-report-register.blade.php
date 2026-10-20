@@ -89,10 +89,20 @@
         } else {
             $line = $entry['line'];
             $balance = round($balance - ($line['amount'] ?? 0), 2);
-            $rows[] = ['date' => $entry['date'], 'reference' => $line['check_no'], 'particulars' => $line['payee'], 'advance' => null, 'payment' => $line['amount'], 'balance' => $balance, 'code' => $line['cancelled'] ? null : $line['uacs_code']];
+            $rows[] = ['date' => $entry['date'], 'reference' => $line['check_no'], 'particulars' => $line['payee'], 'advance' => null, 'payment' => $line['amount'], 'balance' => $balance, 'code' => $line['cancelled'] ? null : $line['uacs_code'], 'splits' => $line['cancelled'] ? [] : ($line['splits'] ?? [])];
         }
     }
-    $accountTotals = collect($rows)->filter(fn (array $row) => $row['code'] !== null && $row['payment'] !== null)->groupBy('code')->map(fn ($group) => round($group->sum('payment'), 2));
+    // A payment of an ORS charged to several UACS codes is divided among their columns; any other payment goes to the column of its one code.
+    $totalsByCode = [];
+    foreach ($rows as $row) {
+        if ($row['payment'] === null) {
+            continue;
+        }
+        foreach ((($row['splits'] ?? []) !== [] ? $row['splits'] : ($row['code'] !== null ? [$row['code'] => $row['payment']] : [])) as $code => $amount) {
+            $totalsByCode[(string) $code] = ($totalsByCode[(string) $code] ?? 0) + (float) $amount;
+        }
+    }
+    $accountTotals = collect($totalsByCode)->map(fn ($amount) => round($amount, 2));
     $totalPayments = collect($rows)->sum(fn (array $row) => $row['payment'] ?? 0);
     $totalAdvance = round($data['opening'] + collect($rows)->sum(fn (array $row) => $row['advance'] ?? 0), 2);
     $blank = fn ($value) => ($value === null || (float) $value == 0.0) ? '' : $money($value);
@@ -150,7 +160,7 @@
                         @endif
                         @for($i = 0; $i < $count; $i++)
                             @if(isset($codes[$i]))
-                                <td class="num" data-account="{{ $codes[$i] }}">{{ $row['code'] === (string) $codes[$i] && $row['payment'] !== null ? $money($row['payment']) : '' }}</td>
+                                <td class="num" data-account="{{ $codes[$i] }}">{{ ($cell = (($row['splits'] ?? []) !== [] ? ($row['splits'][(string) $codes[$i]] ?? null) : ($row['code'] === (string) $codes[$i] ? $row['payment'] : null))) !== null ? $money($cell) : '' }}</td>
                             @else
                                 <td></td>
                             @endif

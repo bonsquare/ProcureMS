@@ -23,7 +23,7 @@ class CashReportService
         $to = $to->copy()->endOfDay();
 
         $paidLines = LiquidationReport::query()
-            ->with(['budgetAllocation.account', 'procurementRequest.budgetAllocation.account', 'journalLines'])
+            ->with(['budgetAllocation.account', 'procurementRequest.budgetAllocation.account', 'journalLines', 'lines.budgetAllocation.account'])
             ->where('school_id', $school->id)
             ->whereNotNull('paid_at')
             ->get()
@@ -113,6 +113,21 @@ class CashReportService
         ];
     }
 
+    /** @return array<string, float> */
+    private function splitsOf(LiquidationReport $report): array
+    {
+        if ($report->lines->count() < 2) {
+            return [];
+        }
+        $splits = [];
+        foreach ($report->lines as $part) {
+            $code = (string) ($part->budgetAllocation?->account?->code ?? $part->budgetAllocation?->uacs_code ?? '');
+            $splits[$code] = round(($splits[$code] ?? 0) + (float) $part->amount, 2);
+        }
+
+        return $splits;
+    }
+
     /** @return array<string, mixed> */
     private function paidLine(LiquidationReport $report): array
     {
@@ -140,6 +155,8 @@ class CashReportService
             'amount' => round((float) $report->amount, 2),
             'mode' => $this->modeOf($report->payment_mode),
             'cancelled' => false,
+            // The code => amount of each UACS code when the ORS is charged to more than one (the register divides the payment among their columns).
+            'splits' => $this->splitsOf($report),
         ];
     }
 

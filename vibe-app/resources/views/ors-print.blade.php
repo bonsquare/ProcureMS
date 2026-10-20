@@ -34,6 +34,9 @@
     $address = $report->payee_address;
     $rc = $report->responsibility_center_code ?: $pr?->responsibility_center_code ?: $line?->responsibility_center;
     $uacs = ($report->ors_show_uacs ?? true) ? $line?->uacs_code : null; // written in the UACS Object Code column only when the box was ticked
+    // An ORS charged to several UACS codes lists each code with its own amount, one under the other.
+    $splitRows = $report->exists ? $report->chargedLines() : collect();
+    $splitRows = $splitRows->count() > 1 ? $splitRows : null;
     $pap = ''; // MFO/PAP is left blank
     $particulars = $report->purpose . ($report->notes ? "\n" . $report->notes : '');
     $amount = number_format((float) $report->amount, 2);
@@ -180,11 +183,13 @@
 <!-- responsibility center / particulars -->
 <text x="66.3" y="263.7" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($rc, 92, 10.6) }}">{{ $rc }}</text>
 <text x="362.5" y="263.7" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($pap, 58, 9) }}">{{ $pap }}</text>
-<text x="427.1" y="263.7" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($uacs, 64, 10) }}">{{ $uacs }}</text>
+@if($splitRows)@foreach($splitRows as $k => $row)@php $rowCode = ($report->ors_show_uacs ?? true) ? ($row['allocation']->uacs_code ?: $row['allocation']->account?->code) : ''; @endphp<text x="427.1" y="{{ round(263.7 + 13.05 * $k, 1) }}" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($rowCode, 64, 10) }}">{{ $rowCode }}</text>@endforeach
+@else<text x="427.1" y="263.7" text-anchor="middle" font-family="'Times New Roman',Times,serif" font-size="{{ $fit($uacs, 64, 10) }}">{{ $uacs }}</text>@endif
 <foreignObject x="123.1" y="253.7" width="188" height="240"><div xmlns="http://www.w3.org/1999/xhtml" style="font:11.4px/13.05px 'Times New Roman',Times,serif;color:#000;overflow:hidden;height:240px;white-space:pre-wrap;word-wrap:break-word">{{ $particulars }}</div></foreignObject>
 <!-- amount -->
 <text x="469.1" y="263.7" font-family="'Times New Roman',Times,serif" font-size="10.6">₱</text>
-<text x="588.0" y="263.7" text-anchor="end" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold">{{ $amount }}</text>
+@if($splitRows)@foreach($splitRows as $k => $row)<text x="588.0" y="{{ round(263.7 + 13.05 * $k, 1) }}" text-anchor="end" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold">{{ number_format($row['amount'], 2) }}</text>@endforeach
+@else<text x="588.0" y="263.7" text-anchor="end" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold">{{ $amount }}</text>@endif
 <text x="469.4" y="493.4" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold">₱</text>
 <text x="587.7" y="493.4" text-anchor="end" font-family="'Times New Roman',Times,serif" font-size="10.6" font-weight="bold">{{ $amount }}</text>
 <!-- A. requested by -->

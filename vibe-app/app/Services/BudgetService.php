@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\BudgetAllocation;
 use App\Models\LiquidationReport;
+use App\Models\LiquidationReportLine;
 use App\Models\ProcurementRequest;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -86,13 +87,22 @@ class BudgetService
         });
     }
 
+    /** The ids of the Purchase Requests whose ORS is charged to several budget lines: those lines carry the obligation, not the PR's own line. */
+    private function splitPrIds()
+    {
+        return LiquidationReport::whereNotNull('procurement_request_id')->whereHas('lines')->pluck('procurement_request_id');
+    }
+
     public function matrix($allocations)
     {
         $ids = $allocations->pluck('id');
-        $prs = ProcurementRequest::with('liquidationReports')->whereIn('budget_allocation_id', $ids)->get()->groupBy('budget_allocation_id');
-        $direct = LiquidationReport::whereNull('procurement_request_id')->whereIn('budget_allocation_id', $ids)->get()->groupBy('budget_allocation_id');
+        // An ORS charged to several budget lines carries its amount on each line (its rows); a PR whose ORS is split is not counted on its own line any more.
+        $splitPrIds = $this->splitPrIds();
+        $prs = ProcurementRequest::with('liquidationReports')->whereIn('budget_allocation_id', $ids)->whereNotIn('id', $splitPrIds)->get()->groupBy('budget_allocation_id');
+        $direct = LiquidationReport::whereNull('procurement_request_id')->whereDoesntHave('lines')->whereIn('budget_allocation_id', $ids)->get()->groupBy('budget_allocation_id');
+        $split = LiquidationReportLine::with('report')->whereIn('budget_allocation_id', $ids)->get()->groupBy('budget_allocation_id');
 
-        return $allocations->map(function (BudgetAllocation $a) use ($prs, $direct) {
+        return $allocations->map(function (BudgetAllocation $a) use ($prs, $direct, $split) {
             $quarters = [];
             foreach ([1, 2, 3, 4] as $q) {
                 $quarters[$q] = ['allocated' => $a->quarterAmount($q), 'obligated' => 0.0, 'liquidated' => 0.0];
@@ -108,6 +118,12 @@ class BudgetService
                 $quarters[$ors->created_at->quarter]['obligated'] += (float) $ors->amount;
                 if ($ors->status === 'approved') {
                     $quarters[$ors->created_at->quarter]['liquidated'] += (float) $ors->amount;
+                }
+            }
+            foreach ($split->get($a->id, collect()) as $part) {
+                $quarters[$part->report->created_at->quarter]['obligated'] += (float) $part->amount;
+                if ($part->report->status === 'approved') {
+                    $quarters[$part->report->created_at->quarter]['liquidated'] += (float) $part->amount;
                 }
             }
 
@@ -170,9 +186,11 @@ class BudgetService
             throw ValidationException::withMessages([$field => 'This budget line is closed and cannot take new obligations.']);
         }
 
-        $prs = ProcurementRequest::where('budget_allocation_id', $item->id)->when($ignorePrId, fn ($q) => $q->where('id', '!=', $ignorePrId))->get(['amount', 'created_at']);
-        $direct = LiquidationReport::where('budget_allocation_id', $item->id)->whereNull('procurement_request_id')->when($ignoreOrsId, fn ($q) => $q->where('id', '!=', $ignoreOrsId))->get(['amount', 'created_at']);
-        $obligations = $prs->concat($direct);
+        $prs = ProcurementRequest::where('budget_allocation_id', $item->id)->whereNotIn('id', $this->splitPrIds())->when($ignorePrId, fn ($q) => $q->where('id', '!=', $ignorePrId))->get(['amount', 'created_at']);
+        $direct = LiquidationReport::where('budget_allocation_id', $item->id)->whereNull('procurement_request_id')->whereDoesntHave('lines')->when($ignoreOrsId, fn ($q) => $q->where('id', '!=', $ignoreOrsId))->get(['amount', 'created_at']);
+        $split = LiquidationReportLine::with('report')->where('budget_allocation_id', $item->id)->when($ignoreOrsId, fn ($q) => $q->where('liquidation_report_id', '!=', $ignoreOrsId))->get()
+            ->map(fn (LiquidationReportLine $part) => (object) ['amount' => $part->amount, 'created_at' => $part->report->created_at]);
+        $obligations = $prs->concat($direct)->concat($split);
 
         $balance = (float) $item->amount - (float) $obligations->sum('amount');
         if ($amount > $balance + 0.001) {

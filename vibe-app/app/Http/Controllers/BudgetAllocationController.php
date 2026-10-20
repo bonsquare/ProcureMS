@@ -7,6 +7,7 @@ use App\Models\AuditLog;
 use App\Models\BudgetAllocation;
 use App\Models\ChartOfAccount;
 use App\Models\LiquidationReport;
+use App\Models\LiquidationReportLine;
 use App\Models\ProcurementRequest;
 use App\Models\School;
 use App\Services\BudgetService;
@@ -221,10 +222,14 @@ class BudgetAllocationController extends Controller
         $budgetAllocation->load(['school', 'account']);
         $row = $this->budget->matrix(collect([$budgetAllocation]))->first();
 
-        $transactions = ProcurementRequest::with('liquidationReports')->where('budget_allocation_id', $budgetAllocation->id)->get()
+        // An ORS charged to several budget lines is listed on each with the part that line carries; its PR is then not listed on its own line.
+        $splitPrIds = LiquidationReport::whereNotNull('procurement_request_id')->whereHas('lines')->pluck('procurement_request_id');
+        $transactions = ProcurementRequest::with('liquidationReports')->where('budget_allocation_id', $budgetAllocation->id)->whereNotIn('id', $splitPrIds)->get()
             ->map(fn ($pr) => ['date' => $pr->created_at, 'type' => 'PR', 'ref' => $pr->request_number, 'description' => $pr->title, 'obligated' => (float) $pr->amount, 'liquidated' => (float) $pr->liquidationReports->where('status', 'approved')->sum('amount'), 'status' => $pr->status, 'url' => route('procurement.edit', $pr)])
-            ->concat(LiquidationReport::whereNull('procurement_request_id')->where('budget_allocation_id', $budgetAllocation->id)->get()
+            ->concat(LiquidationReport::whereNull('procurement_request_id')->whereDoesntHave('lines')->where('budget_allocation_id', $budgetAllocation->id)->get()
                 ->map(fn ($o) => ['date' => $o->created_at, 'type' => 'ORS', 'ref' => $o->ors_number, 'description' => $o->purpose, 'obligated' => (float) $o->amount, 'liquidated' => $o->status === 'approved' ? (float) $o->amount : 0.0, 'status' => $o->status, 'url' => route('liquidation', ['search' => $o->ors_number])]))
+            ->concat(LiquidationReportLine::with('report')->where('budget_allocation_id', $budgetAllocation->id)->get()
+                ->map(fn ($part) => ['date' => $part->report->created_at, 'type' => 'ORS', 'ref' => $part->report->ors_number, 'description' => $part->report->purpose, 'obligated' => (float) $part->amount, 'liquidated' => $part->report->status === 'approved' ? (float) $part->amount : 0.0, 'status' => $part->report->status, 'url' => route('liquidation', ['search' => $part->report->ors_number])]))
             ->sortByDesc('date')->values();
 
         return view('budget-item-show', ['item' => $budgetAllocation, 'row' => $row, 'transactions' => $transactions]);
@@ -234,7 +239,7 @@ class BudgetAllocationController extends Controller
     {
         $this->authorizeManage();
         $this->authorizeItem($budgetAllocation);
-        if (ProcurementRequest::where('budget_allocation_id', $budgetAllocation->id)->exists() || LiquidationReport::where('budget_allocation_id', $budgetAllocation->id)->exists()) {
+        if (ProcurementRequest::where('budget_allocation_id', $budgetAllocation->id)->exists() || LiquidationReport::where('budget_allocation_id', $budgetAllocation->id)->exists() || LiquidationReportLine::where('budget_allocation_id', $budgetAllocation->id)->exists()) {
             return back()->withErrors(['budget' => 'This budget item has obligations or liquidations linked to it and cannot be deleted.']);
         }
 
@@ -398,15 +403,19 @@ class BudgetAllocationController extends Controller
                 return [['Office/Department', 'Fund Source', 'Account Code', 'Expense Item', 'Allocation', 'Obligated', 'Remaining', 'Used', 'Alert'], $lines, [4, 5, 6]];
             case 'unliquidated':
                 $lines = [];
+                $splitPrIds = LiquidationReport::whereNotNull('procurement_request_id')->whereHas('lines')->pluck('procurement_request_id');
                 foreach ($rows as $r) {
-                    foreach (ProcurementRequest::with('liquidationReports')->where('budget_allocation_id', $r['item']->id)->get() as $pr) {
+                    foreach (ProcurementRequest::with('liquidationReports')->where('budget_allocation_id', $r['item']->id)->whereNotIn('id', $splitPrIds)->get() as $pr) {
                         $done = (float) $pr->liquidationReports->where('status', 'approved')->sum('amount');
                         if ($pr->amount - $done > 0.001) {
                             $lines[] = [$pr->created_at->format('Y-m-d'), 'PR', $pr->request_number, $name($r), (float) $pr->amount, $done, (float) $pr->amount - $done];
                         }
                     }
-                    foreach (LiquidationReport::whereNull('procurement_request_id')->where('budget_allocation_id', $r['item']->id)->where('status', '!=', 'approved')->get() as $o) {
+                    foreach (LiquidationReport::whereNull('procurement_request_id')->whereDoesntHave('lines')->where('budget_allocation_id', $r['item']->id)->where('status', '!=', 'approved')->get() as $o) {
                         $lines[] = [$o->created_at->format('Y-m-d'), 'ORS', $o->ors_number, $name($r), (float) $o->amount, 0.0, (float) $o->amount];
+                    }
+                    foreach (LiquidationReportLine::with('report')->where('budget_allocation_id', $r['item']->id)->get()->filter(fn ($part) => $part->report->status !== 'approved') as $part) {
+                        $lines[] = [$part->report->created_at->format('Y-m-d'), 'ORS', $part->report->ors_number, $name($r), (float) $part->amount, 0.0, (float) $part->amount];
                     }
                 }
 
@@ -414,10 +423,13 @@ class BudgetAllocationController extends Controller
             case 'liquidated':
                 $lines = [];
                 foreach ($rows as $r) {
-                    $reports = LiquidationReport::where('status', 'approved')->where(fn ($q) => $q->where('budget_allocation_id', $r['item']->id)
+                    $reports = LiquidationReport::where('status', 'approved')->whereDoesntHave('lines')->where(fn ($q) => $q->where('budget_allocation_id', $r['item']->id)
                         ->orWhereIn('procurement_request_id', ProcurementRequest::where('budget_allocation_id', $r['item']->id)->select('id')))->get();
                     foreach ($reports as $o) {
                         $lines[] = [$o->created_at->format('Y-m-d'), $o->ors_number, $name($r), $o->payee ?: '—', $o->purpose, (float) $o->amount];
+                    }
+                    foreach (LiquidationReportLine::with('report')->where('budget_allocation_id', $r['item']->id)->get()->filter(fn ($part) => $part->report->status === 'approved') as $part) {
+                        $lines[] = [$part->report->created_at->format('Y-m-d'), $part->report->ors_number, $name($r), $part->report->payee ?: '—', $part->report->purpose, (float) $part->amount];
                     }
                 }
 

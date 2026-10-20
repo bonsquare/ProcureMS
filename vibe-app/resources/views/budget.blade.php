@@ -44,7 +44,7 @@
     </div>
 
     <details open class="mt-4 overflow-hidden rounded border border-outline-variant/30 bg-white"><summary class="flex cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden border-b border-outline-variant/30 p-5"><div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center min-w-0 flex-1"><div><h2 class="text-lg font-semibold">Obligation Requests (ORS) · FY {{ $year }}</h2><p class="mt-1 text-xs text-on-surface-variant">Created here → reviewed in Accounting → DV created → paid in Cash.</p></div><button type="button" data-open-ors class="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]">add</span>Create ORS</button></div><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] text-on-surface-variant transition-transform" aria-hidden="true">expand_more</span></summary><div class="overflow-x-auto"><table class="w-full min-w-[900px] text-left text-sm"><thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant"><tr><th class="px-4 py-3">ORS No.</th><th class="px-4 py-3">School</th><th class="px-4 py-3">Fund</th><th class="px-4 py-3">Particulars</th><th class="px-4 py-3">PR</th><th class="px-4 py-3 text-right">Amount</th><th class="px-4 py-3">Stage</th><th class="px-4 py-3"></th></tr></thead><tbody class="divide-y divide-outline-variant/20">
-        @forelse($orsList as $o)@php $stage = $o->paid_at ? ['Paid', 'secondary'] : ($o->dv_number ? [\App\Models\LiquidationReport::dvLabel($o->dv_number), 'primary'] : ($o->status === 'approved' ? ['Approved · awaiting DV', 'primary'] : [$o->status === 'for_review' ? 'For Review Accounting' : \Illuminate\Support\Str::headline($o->status), in_array($o->status, ['returned', 'for_review']) ? 'error' : 'primary'])); @endphp<tr><td class="px-4 py-3 font-semibold text-primary">{{ $o->ors_number }}</td><td class="px-4 py-3">{{ $o->school?->name }}</td><td class="px-4 py-3">{{ $o->source_of_fund ?: '—' }}@if($line = $o->chargedLine())<span class="block text-[11px] text-on-surface-variant">{{ $line->uacs_code }} · {{ $line->particulars }}</span>@endif</td><td class="px-4 py-3">{{ $o->purpose }}</td><td class="px-4 py-3">{{ $o->procurementRequest?->request_number ?: 'No PR' }}</td><td class="px-4 py-3 text-right tabular-nums">{{ $peso($o->amount) }}</td><td class="px-4 py-3"><span class="inline-flex items-center whitespace-nowrap rounded-full bg-{{ $stage[1] }}/10 px-3 py-1 text-xs font-bold text-{{ $stage[1] }}">{{ $stage[0] }}</span>@if($o->accounting_remarks && in_array($o->status, ['returned', 'pending_documents']))<span class="mt-1 block max-w-[220px] text-[11px] text-on-surface-variant">{{ $o->accounting_remarks }}</span>@endif</td><td class="px-4 py-3 text-right"><div class="flex items-center justify-end gap-1.5 whitespace-nowrap">@if(auth()->user()->canCreateObligation() && ! $o->dv_number && ! $o->paid_at)<button type="button" data-ors-edit-open="ors-edit-{{ $o->id }}" title="Edit ORS" aria-label="Edit ORS {{ $o->ors_number }}" class="inline-flex h-8 w-8 items-center justify-center rounded border border-outline-variant/60 bg-white text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">edit</span></button>
+        @forelse($orsList as $o)@php $stage = $o->paid_at ? ['Paid', 'secondary'] : ($o->dv_number ? [\App\Models\LiquidationReport::dvLabel($o->dv_number), 'primary'] : ($o->status === 'approved' ? ['Approved · awaiting DV', 'primary'] : [$o->status === 'for_review' ? 'For Review Accounting' : \Illuminate\Support\Str::headline($o->status), in_array($o->status, ['returned', 'for_review']) ? 'error' : 'primary'])); @endphp<tr><td class="px-4 py-3 font-semibold text-primary">{{ $o->ors_number }}</td><td class="px-4 py-3">{{ $o->school?->name }}</td><td class="px-4 py-3">{{ $o->source_of_fund ?: '—' }}@if($o->lines()->exists())@foreach($o->chargedLines() as $charge)<span class="block text-[11px] text-on-surface-variant">{{ $charge['allocation']->uacs_code }} · {{ $charge['allocation']->particulars }} · {{ $peso($charge['amount']) }}</span>@endforeach @elseif($line = $o->chargedLine())<span class="block text-[11px] text-on-surface-variant">{{ $line->uacs_code }} · {{ $line->particulars }}</span>@endif</td><td class="px-4 py-3">{{ $o->purpose }}</td><td class="px-4 py-3">{{ $o->procurementRequest?->request_number ?: 'No PR' }}</td><td class="px-4 py-3 text-right tabular-nums">{{ $peso($o->amount) }}</td><td class="px-4 py-3"><span class="inline-flex items-center whitespace-nowrap rounded-full bg-{{ $stage[1] }}/10 px-3 py-1 text-xs font-bold text-{{ $stage[1] }}">{{ $stage[0] }}</span>@if($o->accounting_remarks && in_array($o->status, ['returned', 'pending_documents']))<span class="mt-1 block max-w-[220px] text-[11px] text-on-surface-variant">{{ $o->accounting_remarks }}</span>@endif</td><td class="px-4 py-3 text-right"><div class="flex items-center justify-end gap-1.5 whitespace-nowrap">@if(auth()->user()->canCreateObligation() && ! $o->dv_number && ! $o->paid_at)<button type="button" data-ors-edit-open="ors-edit-{{ $o->id }}" title="Edit ORS" aria-label="Edit ORS {{ $o->ors_number }}" class="inline-flex h-8 w-8 items-center justify-center rounded border border-outline-variant/60 bg-white text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">edit</span></button>
                         <dialog id="ors-edit-{{ $o->id }}" data-ors-edit data-split data-preview="{{ route('liquidation.update.preview', $o) }}" class="rounded bg-white p-0 text-left shadow-2xl backdrop:bg-black/50">
                             <div class="flex max-h-[94vh] w-full flex-col overflow-hidden rounded bg-white">
                                 <div class="flex shrink-0 items-center justify-between border-b border-outline-variant/30 px-5 py-3"><div><h2 class="text-lg font-semibold">Edit Obligation Request and Status (ORS)</h2><p class="mt-1 text-xs text-on-surface-variant">{{ $o->ors_number }} has no DV yet. Correct it here; saving sends it to For Review Accounting.</p></div><button type="button" onclick="this.closest('dialog').close()" aria-label="Close" class="rounded p-2 hover:bg-primary hover:text-white"><span class="material-symbols-outlined">close</span></button></div>
@@ -74,10 +74,10 @@
                                             <h3 class="mb-2 text-[11px] font-bold uppercase tracking-wider text-primary">Obligation</h3>
                                             <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
                                                 <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Purpose / Particulars <span class="text-error">*</span><input name="purpose" required maxlength="255" value="{{ $o->purpose }}" class="{{ $inputClass }}"></label>
-                                                <label class="text-xs font-semibold text-on-surface-variant">Amount (₱) <span class="text-error">*</span><input type="number" step="0.01" min="0.01" name="amount" required value="{{ number_format((float) $o->amount, 2, '.', '') }}" @if($o->procurement_request_id) readonly title="The amount of an ORS made from a Purchase Order is the amount of the PO." @endif class="{{ $inputClass }}"></label>
+                                                <label class="text-xs font-semibold text-on-surface-variant">Amount (₱) <span class="text-error">*</span><input type="number" step="0.01" min="0.01" name="amount" required value="{{ number_format((float) $o->amount, 2, '.', '') }}" @if($o->procurement_request_id) readonly title="The amount of an ORS made from a Purchase Order is the amount of the PO." @elseif($o->lines()->exists()) readonly title="The amount of an ORS charged to several UACS codes is the total of their amounts." @endif class="{{ $inputClass }}"></label>
                                                 <label class="text-xs font-semibold text-on-surface-variant">Fund Cluster<input name="ors_fund_cluster" maxlength="100" value="{{ $o->ors_fund_cluster ?: '101101' }}" class="{{ $inputClass }}"></label>
                                                 <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Responsibility Center Code<input disabled value="{{ $o->responsibility_center_code }}" class="{{ $inputClass }} bg-surface-low"></label>
-                                                <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Charge to Budget Line (Fund · Account Code)<input disabled value="{{ ($chargeLine = $o->chargedLine()) ? $chargeLine->source_of_fund.' · '.$chargeLine->uacs_code.' '.$chargeLine->particulars : '' }}" class="{{ $inputClass }} bg-surface-low"></label>
+                                                <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Charge to Budget Line (Fund · Account Code)<input disabled value="{{ $o->lines()->exists() ? $o->chargedLines()->map(fn ($charge) => $charge['allocation']->source_of_fund.' · '.$charge['allocation']->uacs_code.' ₱'.number_format($charge['amount'], 2))->implode(' | ') : (($chargeLine = $o->chargedLine()) ? $chargeLine->source_of_fund.' · '.$chargeLine->uacs_code.' '.$chargeLine->particulars : '') }}" class="{{ $inputClass }} bg-surface-low"></label>
                                             </div>
                                         </section>
                                         <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">Notes<textarea name="notes" rows="2" maxlength="1000" class="{{ $inputClass }}">{{ $o->notes }}</textarea></label>
@@ -123,6 +123,12 @@
                 <label class="flex cursor-pointer items-center gap-2 pb-2.5 text-xs font-semibold text-primary"><input type="hidden" name="ors_show_uacs" value="0"><input type="checkbox" name="ors_show_uacs" value="1" @checked(old('ors_show_uacs', 1)) class="h-4 w-4 rounded border-outline-variant">Show the UACS code on the ORS</label>
             </div>
             <div id="charge-summary" class="mt-2 hidden rounded border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-on-surface"><span class="font-semibold text-primary">Charging of fund:</span> <span id="charge-text"></span></div>
+            <div id="charge-split" class="mt-3 rounded border border-outline-variant/40 bg-surface-low/50 p-3">
+                <div class="flex flex-wrap items-center justify-between gap-2"><p class="text-xs font-semibold text-on-surface">Charge to more than one UACS code <span class="font-normal text-on-surface-variant">(optional): one particulars, each code with its own amount</span></p><button type="button" id="charge-add" class="rounded border border-primary px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary hover:text-white">+ Add UACS code</button></div>
+                <div id="charge-rows" class="mt-2 space-y-2"></div>
+                <p id="charge-total" class="mt-2 hidden text-xs font-semibold"></p>
+                @error('charges')<span class="mt-1 block text-xs text-error">{{ $message }}</span>@enderror
+            </div>
         </div>
         </div></section>
         @include('partials.budget-hint')
@@ -177,6 +183,62 @@
         showCharge();
     });
     showCharge();
+    // An ORS charged to more than one UACS code: the line chosen above is the first, each added row is another line with its own amount.
+    const chargeRows = document.getElementById('charge-rows');
+    const chargeTotal = document.getElementById('charge-total');
+    const orsAmount = orsModal.querySelector('[name=amount]');
+    const orsPr = document.getElementById('ors-pr');
+    const money = (value) => '₱' + Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const chargeInput = (name, placeholder) => { const input = document.createElement('input'); input.type = 'number'; input.step = '0.01'; input.min = '0.01'; input.name = name; input.placeholder = placeholder; input.className = lineSelect.className + ' text-right tabular-nums'; return input; };
+    const chargeFund = () => (lineSelect.selectedOptions[0]?.dataset.fund || '').toLowerCase();
+    const chargeSchool = () => orsModal.querySelector('[name=school_id]')?.value;
+    const syncCharges = () => {
+        const extra = [...chargeRows.querySelectorAll('[data-extra]')];
+        let primary = chargeRows.querySelector('[data-primary]');
+        if (extra.length && !primary) {
+            primary = document.createElement('div'); primary.dataset.primary = '1'; primary.className = 'grid grid-cols-[1fr_9rem_2rem] items-center gap-2';
+            const label = document.createElement('p'); label.className = 'truncate rounded border border-outline-variant/40 bg-white px-3 py-2 text-xs'; label.dataset.label = '1';
+            const hidden = document.createElement('input'); hidden.type = 'hidden'; hidden.name = 'charges[0][budget_allocation_id]';
+            const amount = chargeInput('charges[0][amount]', 'Amount'); amount.dataset.amount = '1';
+            primary.append(label, amount, hidden); chargeRows.prepend(primary);
+            amount.addEventListener('input', syncCharges);
+        }
+        if (!extra.length && primary) primary.remove();
+        if (!extra.length) { chargeTotal.classList.add('hidden'); orsAmount.readOnly = false; orsAmount.classList.remove('bg-surface-low'); return; }
+        primary = chargeRows.querySelector('[data-primary]');
+        const option = lineSelect.selectedOptions[0];
+        primary.querySelector('[data-label]').textContent = option && option.value ? option.dataset.code + ' · ' + option.dataset.title : 'Choose the first budget line above';
+        primary.querySelector('input[type=hidden]').value = lineSelect.value;
+        const others = extra.reduce((sum, row) => sum + (parseFloat(row.querySelector('[data-amount]').value) || 0), 0);
+        const first = primary.querySelector('[data-amount]');
+        const poAmount = orsPr.value ? parseFloat(orsPr.selectedOptions[0].dataset.amount) || 0 : 0;
+        // From a Purchase Order the total is the PO's, so the first line takes what the others leave; a direct ORS adds the lines up.
+        if (orsPr.value) { first.value = Math.max(poAmount - others, 0).toFixed(2); first.readOnly = true; } else { first.readOnly = false; }
+        const total = (parseFloat(first.value) || 0) + others;
+        if (!orsPr.value) orsAmount.value = total ? total.toFixed(2) : '';
+        orsAmount.readOnly = true; orsAmount.classList.add('bg-surface-low');
+        const matches = Math.abs(total - (parseFloat(orsAmount.value) || 0)) < 0.01;
+        chargeTotal.textContent = 'Total of the UACS codes ' + money(total) + (orsPr.value ? ' of the PO ' + money(poAmount) : '');
+        chargeTotal.className = 'mt-2 text-xs font-semibold ' + (matches ? 'text-secondary' : 'text-error');
+        orsAmount.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+    document.getElementById('charge-add').addEventListener('click', () => {
+        const row = document.createElement('div'); row.dataset.extra = '1'; row.className = 'grid grid-cols-[1fr_9rem_2rem] items-center gap-2';
+        const index = chargeRows.querySelectorAll('[data-extra]').length + 1;
+        const select = document.createElement('select'); select.name = 'charges[' + index + '][budget_allocation_id]'; select.className = lineSelect.className;
+        select.append(new Option('Select another budget line', ''));
+        [...lineSelect.options].filter((option) => option.value && option.dataset.fund && (!chargeSchool() || option.dataset.school === chargeSchool()) && (!chargeFund() || option.dataset.fund.toLowerCase() === chargeFund())).forEach((option) => {
+            const copy = new Option(option.textContent, option.value); copy.dataset.code = option.dataset.code; copy.dataset.title = option.dataset.title; select.append(copy);
+        });
+        const amount = chargeInput('charges[' + index + '][amount]', 'Amount'); amount.dataset.amount = '1';
+        const remove = document.createElement('button'); remove.type = 'button'; remove.title = 'Remove this UACS code'; remove.className = 'grid h-8 w-8 place-items-center rounded text-on-surface-variant hover:bg-error/10 hover:text-error'; remove.innerHTML = '<span class="material-symbols-outlined text-[18px]" aria-hidden="true">delete</span>';
+        remove.addEventListener('click', () => { row.remove(); syncCharges(); });
+        row.append(select, amount, remove); chargeRows.append(row);
+        amount.addEventListener('input', syncCharges); select.addEventListener('change', syncCharges);
+        syncCharges();
+    });
+    lineSelect.addEventListener('change', syncCharges);
+    orsPr.addEventListener('change', () => setTimeout(syncCharges, 0));
     // Each school has its own staff, so only the signatory selects of the school the ORS is for are shown and posted.
     const showOrsSignatories = () => {
         const school = orsModal.querySelector('[name=school_id]')?.value;

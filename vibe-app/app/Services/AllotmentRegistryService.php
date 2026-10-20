@@ -28,19 +28,23 @@ class AllotmentRegistryService
         ]]);
 
         $prIds = ProcurementRequest::where('budget_allocation_id', $line->id)->pluck('id');
-        $reports = LiquidationReport::where(fn ($q) => $q->where('budget_allocation_id', $line->id)->orWhereIn('procurement_request_id', $prIds))
+        // An ORS charged to several budget lines is on each of them with the part of its amount that line carries.
+        $reports = LiquidationReport::with('lines')
+            ->where(fn ($q) => $q->where(fn ($own) => $own->whereDoesntHave('lines')->where(fn ($same) => $same->where('budget_allocation_id', $line->id)->orWhereIn('procurement_request_id', $prIds)))
+                ->orWhereHas('lines', fn ($part) => $part->where('budget_allocation_id', $line->id)))
             ->whereNotIn('status', ['returned', 'rejected'])->get();
 
         foreach ($reports as $ors) {
+            $part = $ors->lines->isEmpty() ? (float) $ors->amount : (float) $ors->lines->where('budget_allocation_id', $line->id)->sum('amount');
             $obligatedOn = $ors->submitted_at ?? $ors->created_at;
             $entries->push([
                 'date' => $obligatedOn, 'type' => 'Obligation', 'ref' => $ors->ors_number, 'payee' => $ors->payee, 'particulars' => $ors->purpose,
-                'allotment' => 0.0, 'obligation' => (float) $ors->amount, 'disbursement' => 0.0, 'quarter' => $this->quarterOf($obligatedOn),
+                'allotment' => 0.0, 'obligation' => $part, 'disbursement' => 0.0, 'quarter' => $this->quarterOf($obligatedOn),
             ]);
             if ($ors->paid_at) {
                 $entries->push([
                     'date' => $ors->paid_at, 'type' => 'Disbursement', 'ref' => trim(($ors->dv_number ? LiquidationReport::dvLabel($ors->dv_number) : '').' '.$ors->payment_reference), 'payee' => $ors->payee,
-                    'particulars' => $ors->dv_particulars ?: $ors->purpose, 'allotment' => 0.0, 'obligation' => 0.0, 'disbursement' => (float) $ors->amount, 'quarter' => $this->quarterOf($ors->paid_at),
+                    'particulars' => $ors->dv_particulars ?: $ors->purpose, 'allotment' => 0.0, 'obligation' => 0.0, 'disbursement' => $part, 'quarter' => $this->quarterOf($ors->paid_at),
                 ]);
             }
         }

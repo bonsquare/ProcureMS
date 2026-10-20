@@ -38,6 +38,7 @@ use App\Support\SignatorySlots;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -961,6 +962,37 @@ class HomeController extends Controller
      * Every charge must name a budget line once the school has budgeted for the year; the line must
      * match the school and fund and have room for the amount (annual and quarterly).
      */
+    /**
+     * An ORS split among several budget lines (UACS codes): every line is of the school and of one fund, is in an approved SOB and can take its part,
+     * and the parts add up to the amount of the ORS. A Purchase Request's own obligation is released for the check, since its ORS replaces it.
+     *
+     * @param  Collection<int, array{budget_allocation_id: int, amount: float}>  $charges
+     */
+    private function assertSplitCharges($charges, array $data, ?int $ignorePrId): void
+    {
+        $lines = BudgetAllocation::whereIn('id', $charges->pluck('budget_allocation_id'))->get()->keyBy('id');
+        if ($charges->pluck('budget_allocation_id')->unique()->count() !== $charges->count()) {
+            throw ValidationException::withMessages(['charges' => 'Each budget line (UACS code) can be used once in an ORS.']);
+        }
+        if (abs((float) $charges->sum('amount') - (float) $data['amount']) > 0.009) {
+            throw ValidationException::withMessages(['charges' => sprintf('The amounts of the budget lines (₱%s) must add up to the amount of the ORS (₱%s).', number_format((float) $charges->sum('amount'), 2), number_format((float) $data['amount'], 2))]);
+        }
+        foreach ($charges as $charge) {
+            $line = $lines->get($charge['budget_allocation_id']);
+            if ((int) $line->school_id !== (int) $data['school_id']) {
+                throw ValidationException::withMessages(['charges' => 'A budget line belongs to a different school.']);
+            }
+            if (strcasecmp((string) $line->source_of_fund, (string) $data['source_of_fund']) !== 0) {
+                throw ValidationException::withMessages(['charges' => 'All the budget lines of one ORS must be of the same fund.']);
+            }
+            $this->assertInApprovedSob(['budget_allocation_id' => $line->id]);
+            app(BudgetService::class)->assertItemAvailable('charges', $line->id, (float) $charge['amount'], $ignorePrId);
+        }
+        if (! $ignorePrId) {
+            app(BudgetService::class)->assertAvailable('amount', (int) $data['school_id'], $data['source_of_fund'], (float) $data['amount']);
+        }
+    }
+
     /** An ORS is charged to a budget line, and that line must come from an approved SOB (its account, program and fund are in the SOB). */
     private function assertInApprovedSob(array $data): void
     {
@@ -2039,6 +2071,9 @@ class HomeController extends Controller
             'redirect_to' => ['nullable', 'in:budget'],
             'source_of_fund' => ['nullable', 'string', 'max:255'],
             'budget_allocation_id' => ['nullable', 'integer', 'exists:budget_allocations,id'],
+            'charges' => ['nullable', 'array', 'max:10'],
+            'charges.*.budget_allocation_id' => ['nullable', 'integer', 'exists:budget_allocations,id'],
+            'charges.*.amount' => ['nullable', 'numeric', 'min:0'],
             'payee' => ['nullable', 'string', 'max:255'],
             'payee_address' => ['nullable', 'string', 'max:255'],
             'payee_office' => ['nullable', 'string', 'max:255'],
@@ -2066,12 +2101,25 @@ class HomeController extends Controller
             }
         }
 
+        // An ORS charged to more than one budget line (UACS code), each with its own amount: the first line is the ORS's own line, all of them are kept apart.
+        $charges = collect($request->input('charges', []))
+            ->filter(fn ($row) => filled($row['budget_allocation_id'] ?? null) && (float) ($row['amount'] ?? 0) > 0)
+            ->map(fn ($row) => ['budget_allocation_id' => (int) $row['budget_allocation_id'], 'amount' => round((float) $row['amount'], 2)])->values();
+        $split = $charges->count() >= 2;
+        if ($split) {
+            $data['budget_allocation_id'] = $charges->first()['budget_allocation_id'];
+            $data['source_of_fund'] = BudgetAllocation::whereKey($data['budget_allocation_id'])->value('source_of_fund');
+            $data['responsibility_center_code'] ??= BudgetAllocation::whereKey($data['budget_allocation_id'])->value('responsibility_center');
+        }
+
         // The Source of Fund is no longer typed on the form: it follows the budget line (or the PO), and is MOOE when neither gives one.
         $data['source_of_fund'] = $data['source_of_fund'] ?: (BudgetAllocation::whereKey($data['budget_allocation_id'] ?? 0)->value('source_of_fund') ?: 'MOOE');
 
         $signatories = SignatorySlots::validated('obligation_request', $request->input('signatories'), (int) $data['school_id']);
 
-        if (empty($data['procurement_request_id'])) {
+        if ($split) {
+            $this->assertSplitCharges($charges, $data, isset($procurementRequest) ? $procurementRequest->id : null);
+        } elseif (empty($data['procurement_request_id'])) {
             app(BudgetService::class)->assertAvailable('amount', (int) $data['school_id'], $data['source_of_fund'], (float) $data['amount']);
             $this->assertBudgetItem($data, (float) $data['amount']);
             if (! empty($data['budget_allocation_id'])) {
@@ -2091,7 +2139,7 @@ class HomeController extends Controller
         $fiscalYear = $linkedBudget?->fiscal_year ?? $linkedRequest?->budgetAllocation?->fiscal_year ?? (int) now()->year;
         app(FiscalYearService::class)->assertOpen($organizationId, (int) $fiscalYear);
 
-        $orsNumber = DB::transaction(function () use ($data, $organizationId, $linkedRequest, $linkedBudget, $fiscalYear, $signatories) {
+        $orsNumber = DB::transaction(function () use ($data, $organizationId, $linkedRequest, $linkedBudget, $fiscalYear, $signatories, $split, $charges) {
             $numbering = app(DocumentNumberService::class);
             $reportNumber = $numbering->next($organizationId, 'liquidation_report', 'LR');
             $orsNumber = ! empty($data['manually_encode_ors_number'])
@@ -2136,6 +2184,11 @@ class HomeController extends Controller
                 'submitted_at' => ! empty($data['ors_date']) ? Carbon::parse($data['ors_date'])->setTimeFrom(now()) : now(),
                 'signatories' => $signatories === [] ? null : ['ors' => $signatories],
             ]);
+            if ($split) {
+                foreach ($charges as $index => $charge) {
+                    $report->lines()->create(['organization_id' => $report->organization_id, 'budget_allocation_id' => $charge['budget_allocation_id'], 'line_no' => $index + 1, 'amount' => $charge['amount']]);
+                }
+            }
             $report->transaction?->update(['status' => 'liquidation']);
             $report->transaction?->recordEvent('liquidation', 'ors_submitted', null, 'for_review', $report->ors_number, ['liquidation_report_id' => $report->id, 'amount' => $report->amount]);
 
@@ -2231,8 +2284,9 @@ class HomeController extends Controller
         ]);
 
         // The amount of an ORS made from a Purchase Order is the PO's; only a direct ORS can change it, and the budget is checked again without counting this ORS twice.
-        $amount = $liquidationReport->procurement_request_id ? (float) $liquidationReport->amount : round((float) $data['amount'], 2);
-        if (! $liquidationReport->procurement_request_id && $amount !== (float) $liquidationReport->amount) {
+        $amountIsFixed = $liquidationReport->procurement_request_id || $liquidationReport->lines()->exists();
+        $amount = $amountIsFixed ? (float) $liquidationReport->amount : round((float) $data['amount'], 2);
+        if (! $amountIsFixed && $amount !== (float) $liquidationReport->amount) {
             $budget = ['school_id' => $liquidationReport->school_id, 'source_of_fund' => $liquidationReport->source_of_fund, 'budget_allocation_id' => $liquidationReport->budget_allocation_id];
             app(BudgetService::class)->assertAvailable('amount', (int) $liquidationReport->school_id, $liquidationReport->source_of_fund, $amount, null, null, $liquidationReport->id);
             $this->assertBudgetItem($budget, $amount, null, $liquidationReport->id);

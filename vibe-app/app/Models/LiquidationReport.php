@@ -6,6 +6,7 @@ use App\Models\Concerns\BelongsToOrganization;
 use App\Services\DocumentNumberService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 
 class LiquidationReport extends Model
 {
@@ -68,6 +69,29 @@ class LiquidationReport extends Model
     public function chargedLine(): ?BudgetAllocation
     {
         return $this->budgetAllocation ?? $this->procurementRequest?->budgetAllocation;
+    }
+
+    /** The budget lines (UACS codes) of an ORS that is charged to more than one, each with its amount; none for an ORS with one line. */
+    public function lines()
+    {
+        return $this->hasMany(LiquidationReportLine::class)->orderBy('line_no');
+    }
+
+    /**
+     * Every budget line this obligation is charged to with the amount on each: the split lines when there are any, else the one line with the whole amount.
+     *
+     * @return Collection<int, array{allocation: BudgetAllocation, amount: float}>
+     */
+    public function chargedLines(): Collection
+    {
+        $split = $this->lines()->with('budgetAllocation.account')->get();
+        if ($split->isNotEmpty()) {
+            return $split->map(fn (LiquidationReportLine $line) => ['allocation' => $line->budgetAllocation, 'amount' => (float) $line->amount])->values();
+        }
+
+        $line = $this->chargedLine();
+
+        return $line ? collect([['allocation' => $line, 'amount' => (float) $this->amount]]) : collect();
     }
 
     /** The double-entry journal of the DV, in print order. */
