@@ -46,14 +46,14 @@ class ReturnedOrsEditTest extends TestCase
         return array_replace(['payee' => 'Right Supplier', 'payee_office' => 'Main Office', 'payee_address' => 'Kidapawan City', 'payee_tin' => '123-456', 'purpose' => 'Corrected purpose', 'amount' => '2500', 'notes' => 'Fixed', 'ors_fund_cluster' => '101102'], $overrides);
     }
 
-    public function test_the_budget_page_offers_edit_with_the_accounting_remarks_only_for_a_returned_ors(): void
+    public function test_the_budget_page_offers_edit_with_the_accounting_remarks_only_while_the_ors_has_no_dv(): void
     {
         [$report, $user] = $this->returnedOrs();
 
         $this->actingAs($user)->get(route('budget'))->assertOk()
             ->assertSee('aria-label="Edit ORS ORS-RO-1"', false)->assertSee('flex items-center justify-end gap-1.5 whitespace-nowrap', false)->assertSee('edit</span></button>', false)->assertSee(route('liquidation.update', $report))->assertSee('Wrong supplier name');
 
-        $report->update(['status' => 'approved']);
+        $report->update(['status' => 'approved', 'dv_number' => 'DV-RO-1']);
         $this->get(route('budget'))->assertOk()->assertDontSee(route('liquidation.update', $report));
     }
 
@@ -105,14 +105,14 @@ class ReturnedOrsEditTest extends TestCase
         $this->assertSame('Corrected purpose', $report->fresh()->purpose);
     }
 
-    public function test_only_a_returned_ors_without_a_dv_can_be_edited(): void
+    public function test_only_an_ors_without_a_dv_can_be_edited(): void
     {
         [$report, $user] = $this->returnedOrs();
 
-        $report->update(['status' => 'approved']);
+        $report->update(['status' => 'returned', 'dv_number' => 'DV-RO-1']);
         $this->actingAs($user)->patch(route('liquidation.update', $report), $this->form())->assertStatus(422);
 
-        $report->update(['status' => 'returned', 'dv_number' => 'DV-RO-1']);
+        $report->update(['status' => 'approved']);
         $this->patch(route('liquidation.update', $report), $this->form())->assertStatus(422);
     }
 
@@ -163,7 +163,7 @@ class ReturnedOrsEditTest extends TestCase
     public function test_the_preview_follows_the_same_rules_as_the_edit(): void
     {
         [$report, $user] = $this->returnedOrs();
-        $report->update(['status' => 'approved']);
+        $report->update(['status' => 'approved', 'paid_at' => now()]);
         $this->actingAs($user)->post(route('liquidation.update.preview', $report), $this->form())->assertStatus(422);
     }
 }

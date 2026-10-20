@@ -263,6 +263,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 - 2026-10-20: Cash Disbursement Register is per quarter (accounts with an allotment in the period's quarter only) and a register is kept in a history when the user presses Save to history (`cash_report_histories`; docs/specs.md section 66). The cash reports stay FINAL.
 - 2026-10-20: Cash Disbursement Register: the Breakdown of Payments and account descriptions come only from the SOB of the period's quarter(s) and chosen fund (docs/specs.md section 67). The cash reports stay FINAL.
 - 2026-10-20: An ORS cannot be created unless its budget line comes from an approved SOB (docs/specs.md section 68). Fixed the Subscriptions page, whose table loop was not closed with @endforelse (it returned an error since the 2026-10-20 change).
+- 2026-10-20: Edit and Delete buttons on the ORS list of the Budget page: edit any ORS with no DV, delete any ORS with its DV and papers after the user's password (docs/specs.md section 69).
 
 ## Standing workflow (owner's instruction 2026-10-16)
 

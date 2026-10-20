@@ -2213,11 +2213,11 @@ class HomeController extends Controller
         ], $liquidationReport->signatories['ors'] ?? null));
     }
 
-    /** An ORS that Accounting returned (or asked documents for) is corrected by whoever made it, and goes back to Accounting for review. */
+    /** An ORS that has no DV yet is corrected by whoever made it, and goes (back) to Accounting for review. */
     public function updateReturnedOrs(Request $request, LiquidationReport $liquidationReport)
     {
         abort_unless($request->user()->canCreateObligation() && $this->scopedSchoolIds()->contains($liquidationReport->school_id), 403);
-        abort_unless(in_array($liquidationReport->status, ['returned', 'pending_documents'], true) && ! $liquidationReport->dv_number && ! $liquidationReport->paid_at, 422, 'Only an ORS that Accounting returned can be edited here.');
+        abort_unless(! $liquidationReport->dv_number && ! $liquidationReport->paid_at, 422, 'An ORS that has a DV or a payment cannot be edited here.');
 
         $data = $request->validate([
             'payee' => ['nullable', 'string', 'max:255'],
@@ -2249,6 +2249,24 @@ class HomeController extends Controller
         AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $liquidationReport->school_id, 'action' => 'ors_resubmitted', 'auditable_type' => LiquidationReport::class, 'auditable_id' => $liquidationReport->id, 'metadata' => ['ors' => $liquidationReport->ors_number, 'before' => $before, 'after' => $liquidationReport->only(['amount', 'payee', 'purpose'])]]);
 
         return back()->with('success', ($liquidationReport->ors_number ?: $liquidationReport->report_number).' corrected and sent back to Accounting for review.');
+    }
+
+    /** Deletes an ORS with everything made from it: its DV, journal entry, papers and cancelled checks (a PR it came from stays). */
+    public function destroyLiquidation(Request $request, LiquidationReport $liquidationReport)
+    {
+        abort_unless($request->user()->canCreateObligation() && $this->scopedSchoolIds()->contains($liquidationReport->school_id), 403);
+        $request->validate(['password' => ['required', 'current_password']]);
+
+        $number = $liquidationReport->ors_number ?: $liquidationReport->report_number;
+        $transaction = $liquidationReport->transaction;
+        DB::transaction(function () use ($liquidationReport, $request, $number, $transaction) {
+            CancelledCheck::where('liquidation_report_id', $liquidationReport->id)->delete();
+            $liquidationReport->delete();
+            app(MasterTransactionService::class)->discardIfUnused($transaction);
+            AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $liquidationReport->school_id, 'action' => 'deleted_ors', 'metadata' => ['ors' => $number, 'dv' => $liquidationReport->dv_number, 'paid' => (bool) $liquidationReport->paid_at, 'amount' => $liquidationReport->amount]]);
+        });
+
+        return back()->with('success', $number.' and everything made from it was deleted.');
     }
 
     /** The official ORS drawn with the corrections typed so far: the correction is made inside a transaction that is rolled back, so nothing is saved. */

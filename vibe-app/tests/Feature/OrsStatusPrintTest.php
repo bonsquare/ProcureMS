@@ -394,4 +394,34 @@ class OrsStatusPrintTest extends TestCase
         $this->post(route('liquidation.store'), ['school_id' => $school->id, 'budget_allocation_id' => $this->sobBackedLine($school)->id, 'source_of_fund' => 'MOOE', 'purpose' => 'x', 'amount' => '100', 'payee' => 'P'])->assertSessionHasNoErrors();
         $this->assertSame(1, LiquidationReport::count());
     }
+
+    public function test_an_ors_without_a_dv_can_be_edited_and_one_with_a_dv_cannot(): void
+    {
+        [$school, $user] = $this->tenant();
+        $this->actingAs($user)->post(route('liquidation.store'), $this->payload($school))->assertSessionHasNoErrors();
+        $ors = LiquidationReport::firstOrFail();
+
+        $this->patch(route('liquidation.update', $ors), ['purpose' => 'Corrected purpose', 'amount' => '900', 'payee' => 'New Payee'])->assertSessionHasNoErrors();
+        $this->assertSame(['Corrected purpose', 'New Payee', 'for_review'], [$ors->fresh()->purpose, $ors->fresh()->payee, $ors->fresh()->status]);
+
+        $ors->update(['dv_number' => 'DV-2026-0001']);
+        $this->patch(route('liquidation.update', $ors), ['purpose' => 'Too late', 'amount' => '900'])->assertStatus(422);
+    }
+
+    public function test_an_ors_is_deleted_with_its_dv_and_papers_after_the_password(): void
+    {
+        [$school, $user] = $this->tenant();
+        $user->update(['password' => bcrypt('secret-pass-123')]);
+        $this->actingAs($user)->post(route('liquidation.store'), $this->payload($school))->assertSessionHasNoErrors();
+        $ors = LiquidationReport::firstOrFail();
+        $ors->update(['dv_number' => 'DV-2026-0001', 'paid_at' => now()]);
+        LiquidationDocumentCheck::create(['organization_id' => $school->organization_id, 'liquidation_report_id' => $ors->id, 'item_key' => 'supporting_paper', 'state' => 'received']);
+
+        $this->delete(route('liquidation.destroy', $ors), ['password' => 'wrong'])->assertSessionHasErrors('password');
+        $this->assertSame(1, LiquidationReport::count());
+
+        $this->delete(route('liquidation.destroy', $ors), ['password' => 'secret-pass-123'])->assertSessionHasNoErrors();
+        $this->assertSame(0, LiquidationReport::count());
+        $this->assertSame(0, LiquidationDocumentCheck::count());
+    }
 }

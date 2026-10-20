@@ -77,6 +77,7 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::post('/liquidation', [HomeController::class, 'storeLiquidation'])->middleware('permission:liquidation.create')->name('liquidation.store');
     Route::post('/liquidation/preview', [HomeController::class, 'previewOrs'])->middleware('permission:liquidation.create')->name('liquidation.preview');
     Route::get('/liquidation/{liquidationReport}/print', [HomeController::class, 'printOrs'])->name('liquidation.print');
+    Route::delete('/liquidation/{liquidationReport}', [HomeController::class, 'destroyLiquidation'])->middleware('permission:liquidation.create')->whereNumber('liquidationReport')->name('liquidation.destroy');
     Route::patch('/liquidation/{liquidationReport}/resubmit', [HomeController::class, 'updateReturnedOrs'])->middleware('permission:liquidation.create')->name('liquidation.update');
     Route::post('/liquidation/{liquidationReport}/resubmit/preview', [HomeController::class, 'previewReturnedOrs'])->middleware('permission:liquidation.create')->name('liquidation.update.preview');
     Route::patch('/liquidation/{liquidationReport}/status', [HomeController::class, 'updateLiquidationStatus'])->middleware('permission:liquidation.approve')->name('liquidation.status');
