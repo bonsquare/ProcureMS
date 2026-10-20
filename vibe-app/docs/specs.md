@@ -1065,3 +1065,7 @@ Design: `docs/superpowers/specs/2026-10-16-cash-reports-design.md`. The owner's 
 ## 60. Subscriptions tab shows the real schools (owner's decision 2026-10-20)
 
 - The Subscriptions tab no longer shows demo figures: the table lists the real subscription of each school (plan, billing cycle, amount, status, renewal date), and the four figures on top (Active, Monthly Recurring Revenue, Renewing This Month, Past Due) are computed from them. The three sample plan cards were removed. Schools for Activation is unchanged.
+
+## 61. Delete a purchase request with everything made from it (owner's decision 2026-10-20)
+
+- The Procurement > Requests list has a Delete button on each PR (desktop table; permission `procurement.edit`, own school scope). After a confirmation and the user's own password, it deletes the PR with its items, procurement documents, ORS/DV (journal lines, papers checklist, cancelled checks), even when paid; the master transaction goes only when nothing else uses it. The deletion is written to the audit log.

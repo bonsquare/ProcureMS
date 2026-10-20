@@ -7,6 +7,7 @@ use App\Models\AppItem;
 use App\Models\AuditLog;
 use App\Models\BackupRun;
 use App\Models\BudgetAllocation;
+use App\Models\CancelledCheck;
 use App\Models\LiquidationReport;
 use App\Models\Organization;
 use App\Models\ProcurementDocument;
@@ -27,6 +28,7 @@ use App\Services\DashboardKpiService;
 use App\Services\DocumentNumberService;
 use App\Services\FiscalYearService;
 use App\Services\GoogleDriveService;
+use App\Services\LiquidationChecklistService;
 use App\Services\MasterTransactionService;
 use App\Services\ProcurementWorkspaceService;
 use App\Services\ServerDashboardService;
@@ -389,6 +391,26 @@ class HomeController extends Controller
             'filtersApplied' => $search !== '' || $status !== '' || ($this->isMasterUser() && $schoolId),
             ...$this->procurementSchoolFilterViewData($schoolId),
         ]);
+    }
+
+    /** Deletes the PR with everything made from it: its documents, items, ORS/DV, journal, papers and cancelled checks. */
+    public function destroyProcurement(Request $request, ProcurementRequest $procurementRequest)
+    {
+        abort_unless($this->scopedSchoolIds()->contains($procurementRequest->school_id), 403);
+        $request->validate(['password' => ['required', 'current_password']]);
+
+        $number = $procurementRequest->request_number;
+        $transaction = $procurementRequest->transaction;
+        DB::transaction(function () use ($procurementRequest, $request, $number, $transaction) {
+            $reportIds = $procurementRequest->liquidationReports()->pluck('id');
+            CancelledCheck::whereIn('liquidation_report_id', $reportIds)->delete();
+            $procurementRequest->liquidationReports()->delete();
+            $procurementRequest->delete();
+            app(MasterTransactionService::class)->discardIfUnused($transaction);
+            AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $procurementRequest->school_id, 'action' => 'deleted_procurement_request', 'metadata' => ['request_number' => $number, 'reports' => $reportIds->count()]]);
+        });
+
+        return redirect()->route('procurement.requests')->with('success', $number.' and everything made from it was deleted.');
     }
 
     public function showProcurement(ProcurementRequest $procurementRequest, ProcurementWorkspaceService $workspaceService)
@@ -2249,7 +2271,7 @@ class HomeController extends Controller
         abort_if($liquidationReport->paid_at && $data['status'] !== 'approved', 422, 'A paid ORS cannot be reopened.');
         abort_if($liquidationReport->dv_number && $data['status'] !== 'approved', 422, 'This ORS already has its DV. Edit the DV in Accounting instead.');
         if ($data['status'] === 'approved' && $liquidationReport->status !== 'approved') {
-            app(\App\Services\LiquidationChecklistService::class)->require($liquidationReport, 'ors', 'approve this ORS');
+            app(LiquidationChecklistService::class)->require($liquidationReport, 'ors', 'approve this ORS');
         }
         $previousStatus = $liquidationReport->status;
         $liquidationReport->update([
