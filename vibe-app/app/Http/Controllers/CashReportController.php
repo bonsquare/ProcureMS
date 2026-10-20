@@ -256,12 +256,12 @@ class CashReportController extends Controller
         return view('cash-report-register', ['report' => $this->reportViewData($request)]);
     }
 
-    /** Keeps the register exactly as it is now, when the user opens it to print: the finished page, the period, the fund and the report number. */
+    /** Keeps the register exactly as it is now, when the user presses Save in its window: the finished page, the period, the fund and the report number. */
     public function storeRegisterHistory(Request $request): JsonResponse
     {
         $report = $this->reportViewData($request);
         $school = $report['school'];
-        CashReportHistory::create([
+        $entry = CashReportHistory::create([
             'organization_id' => $school->organization_id,
             'school_id' => $school->id,
             'report' => 'register',
@@ -275,7 +275,10 @@ class CashReportController extends Controller
             'generated_by' => $request->user()->id,
         ]);
 
-        return response()->json(['ok' => true]);
+        return response()->json(['ok' => true, 'entry' => [
+            'generated' => $entry->created_at->format('M d, Y g:i A'), 'period' => $entry->period_text, 'fund' => $entry->source_of_fund ?: 'All funds', 'report_no' => $entry->report_no ?: '—',
+            'payments' => number_format((float) $entry->total_payments, 2), 'by' => $request->user()->name, 'url' => route('cash.report.history', $entry->id),
+        ]]);
     }
 
     public function showHistory(CashReportHistory $history)

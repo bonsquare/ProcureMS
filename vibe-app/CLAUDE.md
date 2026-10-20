@@ -260,7 +260,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 - 2026-10-20: Create DV prefills Less: Withholding Tax from the supplier's tax type and rate: VAT = amount / 1.12 x rate, Non-VAT = amount x rate (docs/specs.md section 63).
 - 2026-10-20: Bank Reconciliation wording: Kind "Beginning balance (maintaining balance)" and "Cash receipts from advances" (docs/specs.md section 64). The cash reports stay FINAL.
 - 2026-10-20: An approved SOB can be edited after a PR or payment; the obligated floor, delete and reopen guards stay (docs/specs.md section 65).
-- 2026-10-20: Cash Disbursement Register is per quarter (accounts with an allotment in the period's quarter only) and every register opened to print is kept in a history (`cash_report_histories`; docs/specs.md section 66). The cash reports stay FINAL.
+- 2026-10-20: Cash Disbursement Register is per quarter (accounts with an allotment in the period's quarter only) and a register is kept in a history when the user presses Save to history (`cash_report_histories`; docs/specs.md section 66). The cash reports stay FINAL.
 - 2026-10-20: Cash Disbursement Register: the Breakdown of Payments and account descriptions come only from the SOB of the period's quarter(s) and chosen fund (docs/specs.md section 67). The cash reports stay FINAL.
 
 ## Standing workflow (owner's instruction 2026-10-16)

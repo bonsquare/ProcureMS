@@ -26,11 +26,11 @@
         </div>
     </section>
     <section class="overflow-hidden rounded-xl border border-outline-variant/60 bg-white shadow-sm">
-        {!! $head(2, 'Cash Disbursement Register history', 'Every register opened to print is kept as it was generated, one per quarter. Open it again to print the same document.') !!}
+        {!! $head(2, 'Cash Disbursement Register history', 'Press Save to history in the register window to keep it as it was generated, one per quarter. Open it again to print the same document.') !!}
         <div class="overflow-x-auto">
             <table class="w-full min-w-[720px] text-left text-xs">
                 <thead class="bg-surface-low uppercase tracking-wider text-on-surface-variant"><tr><th class="px-4 py-2">Generated</th><th class="px-3 py-2">Period covered</th><th class="px-3 py-2">Fund</th><th class="px-3 py-2">Report No.</th><th class="px-3 py-2 text-right">Payments</th><th class="px-3 py-2">By</th><th class="px-4 py-2 text-right"></th></tr></thead>
-                <tbody class="divide-y divide-outline-variant/30">
+                <tbody id="register-history-rows" class="divide-y divide-outline-variant/30">
                     @forelse($registerHistory as $entry)
                         <tr><td class="px-4 py-2.5">{{ $entry->created_at->format('M d, Y g:i A') }}</td><td class="px-3 py-2.5 font-semibold">{{ $entry->period_text }}</td><td class="px-3 py-2.5">{{ $entry->source_of_fund ?: 'All funds' }}</td><td class="px-3 py-2.5">{{ $entry->report_no ?: '—' }}</td><td class="px-3 py-2.5 text-right tabular-nums">{{ number_format((float) $entry->total_payments, 2) }}</td><td class="px-3 py-2.5">{{ $entry->generator?->name }}</td><td class="px-4 py-2.5 text-right"><a href="{{ route('cash.report.history', $entry->id) }}" target="_blank" rel="noopener" class="rounded border border-outline-variant/60 px-3 py-1.5 font-semibold text-primary hover:bg-primary hover:text-white">Open</a></td></tr>
                     @empty
@@ -119,6 +119,7 @@
                     </section>
                     <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-4">
                         <button type="button" id="cash-report-cancel" class="rounded border border-outline-variant/50 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Close</button>
+                        <button type="button" id="cash-report-save" class="hidden rounded-lg border border-primary px-4 py-2.5 text-xs font-semibold text-primary hover:bg-primary hover:text-white">Save to history</button>
                         <a id="cash-report-open" href="#" target="_blank" rel="noopener" class="rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Open to print</a>
                     </div>
                 </div>
@@ -268,10 +269,25 @@
             });
             return url.pathname + url.search;
         };
-        // Opening the register to print keeps a copy of it in the history.
-        printLink.addEventListener('click', () => {
-            if (!registerOn) return;
-            fetch(@json(route('cash.report.register.history')) + new URL(printLink.getAttribute('href'), location.origin).search, { method: 'POST', headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || @json(csrf_token()) } }).catch(() => {});
+        // Save to history keeps a copy of the register as it is now and adds it to the list.
+        const saveButton = document.getElementById('cash-report-save');
+        saveButton.addEventListener('click', async () => {
+            saveButton.disabled = true;
+            try {
+                const response = await fetch(@json(route('cash.report.register.history')) + new URL(printLink.getAttribute('href'), location.origin).search, { method: 'POST', headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || @json(csrf_token()) } });
+                if (!response.ok) throw new Error('save failed');
+                const { entry } = await response.json();
+                const rows = document.getElementById('register-history-rows');
+                const row = document.createElement('tr');
+                const cell = (text, classes) => { const td = document.createElement('td'); td.className = classes; td.textContent = text; row.append(td); return td; };
+                cell(entry.generated, 'px-4 py-2.5'); cell(entry.period, 'px-3 py-2.5 font-semibold'); cell(entry.fund, 'px-3 py-2.5'); cell(entry.report_no, 'px-3 py-2.5'); cell(entry.payments, 'px-3 py-2.5 text-right tabular-nums'); cell(entry.by, 'px-3 py-2.5');
+                const open = document.createElement('a'); open.href = entry.url; open.target = '_blank'; open.rel = 'noopener'; open.textContent = 'Open'; open.className = 'rounded border border-outline-variant/60 px-3 py-1.5 font-semibold text-primary hover:bg-primary hover:text-white';
+                cell('', 'px-4 py-2.5 text-right').append(open);
+                if (rows.querySelector('td[colspan]')) rows.innerHTML = '';
+                rows.prepend(row);
+                status.textContent = 'Saved to history';
+            } catch (error) { status.textContent = 'Could not save to history. Try again'; }
+            saveButton.disabled = false;
         });
         const refresh = async () => {
             if (modal.classList.contains('hidden')) return;
@@ -380,6 +396,7 @@
             toggleBank(button.dataset.bank === '1');
             modal.querySelectorAll('[data-hide-bank]').forEach((box) => box.classList.toggle('hidden', button.dataset.bank === '1'));
             registerOn = button.dataset.register === '1';
+            document.getElementById('cash-report-save').classList.toggle('hidden', !registerOn);
             formKey = button.dataset.form || 'o';
             modal.querySelectorAll('#cash-report-header > [data-o], #cash-report-header > [data-r], #cash-report-header > [data-c], #cash-report-header > [data-b]').forEach((item) => {
                 const place = item.dataset[formKey];
