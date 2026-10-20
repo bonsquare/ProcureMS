@@ -257,6 +257,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 - 2026-10-20: The Subscriptions tab lists the real schools' subscriptions with computed figures; the demo rows and sample plan cards are removed (docs/specs.md section 60).
 - 2026-10-20: Delete button on the PR list removes the PR and everything made from it, after confirmation and the user's password (docs/specs.md section 61).
 - 2026-10-20: **New AIP fills itself from the imported SIP, with a Quarter choice** (docs/specs.md section 62). **FINAL (owner's decision): do not change the AIP generation from the SIP, its quarter choice or its amounts without the owner's explicit permission for that exact change.**
+- 2026-10-20: Create DV prefills Less: Withholding Tax from the supplier's tax type and rate: VAT = amount / 1.12 x rate, Non-VAT = amount x rate (docs/specs.md section 63).
 
 ## Standing workflow (owner's instruction 2026-10-16)
 

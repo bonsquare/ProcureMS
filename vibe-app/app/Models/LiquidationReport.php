@@ -46,6 +46,24 @@ class LiquidationReport extends Model
         return $this->belongsTo(BudgetAllocation::class);
     }
 
+    /**
+     * The withholding tax the DV suggests from the payee's tax type and tax rate in the Supplier Manager:
+     * VAT = amount / 1.12 x the rate; Non-VAT = amount x the rate; none for VAT exempt or a payee that is not a supplier.
+     */
+    public function suggestedWithholdingTax(): float
+    {
+        $payee = $this->payee ?: $this->procurementRequest?->supplier_name;
+        $supplier = $payee ? Supplier::where('business_name', $payee)->first() : null;
+        $amount = (float) $this->amount;
+        $rate = (float) $supplier?->tax_rate / 100;
+
+        return round(match ($supplier?->tax_type) {
+            'vat' => $amount / 1.12 * $rate,
+            'non_vat' => $amount * $rate,
+            default => 0,
+        }, 2);
+    }
+
     /** The budget line this obligation is charged to: its own, or the one on the linked PR. */
     public function chargedLine(): ?BudgetAllocation
     {
