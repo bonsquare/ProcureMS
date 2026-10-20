@@ -86,6 +86,25 @@ class CashReportServiceTest extends TestCase
         $this->assertSame(997.5, $report['total_paid']);
     }
 
+    public function test_a_dv_with_withholding_tax_pays_the_net_and_keeps_the_gross_for_the_expense(): void
+    {
+        $account = $this->account('5020399000', 'Other Supplies Expenses');
+        $this->paid('0001', '2026-09-29', 10000, $account, ['dv_deductions' => ['withholding_tax' => 500, 'other' => [['label' => 'Penalty', 'amount' => 100]]]]);
+        $this->paid('0002', '2026-09-30', 2000, $account);
+
+        $report = $this->build();
+        $withTax = $report['lines']->first();
+        $plain = $report['lines']->last();
+
+        $this->assertSame(9400.0, $withTax['amount']);
+        $this->assertSame(10000.0, $withTax['gross']);
+        $this->assertSame(600.0, $withTax['tax']);
+        $this->assertSame(2000.0, $plain['amount']);
+        $this->assertSame(0.0, $plain['tax']);
+        $this->assertSame(11400.0, $report['total_paid']);
+        $this->assertSame(-11400.0, $report['ending']);
+    }
+
     public function test_the_running_balance_is_opening_plus_receipts_minus_payments(): void
     {
         $account = $this->account('5020301000', 'Office Supplies Expenses');

@@ -128,6 +128,30 @@ class CashReportPrintTest extends TestCase
             ->assertDontSee('Balance per bank statement')->assertDontSee('PREPARED BY')->assertDontSee('Fund Cluster');
     }
 
+    public function test_the_register_shows_a_due_to_bir_column_only_when_a_dv_has_a_deduction(): void
+    {
+        [$school, $user] = $this->tenant('BK4');
+        $dv = $this->paid($school, '0001', '2026-09-05', 1000);
+
+        $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school)))->assertOk()->assertDontSee('Due to BIR');
+
+        $dv->update(['dv_deductions' => ['withholding_tax' => 50]]);
+        $register = $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school)))->assertOk()->assertSee('Due to BIR')->getContent();
+        $this->assertMatchesRegularExpression('/data-col="due-to-bir"[^>]*>50\.00</', $register);
+        $this->assertMatchesRegularExpression('/data-col="balance"[^>]*>-950\.00</', $register, 'only the net leaves the bank');
+    }
+
+    public function test_a_payment_to_the_bir_clears_the_due_to_bir_column(): void
+    {
+        [$school, $user] = $this->tenant('BK5');
+        $this->paid($school, '0001', '2026-09-05', 1000, overrides: ['dv_deductions' => ['withholding_tax' => 50]]);
+        $this->paid($school, '0002', '2026-09-20', 50, '2020101000', 'Due to BIR');
+
+        $register = $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school)))->assertOk()->getContent();
+        $this->assertMatchesRegularExpression('/data-col="due-to-bir"[^>]*>-50\.00</', $register);
+        $this->assertMatchesRegularExpression('/data-total-col="due-to-bir"[^>]*>0\.00</', $register, 'what was withheld and remitted nets to nothing');
+    }
+
     public function test_the_balance_before_the_period_is_the_beginning_balance_of_the_other_reports(): void
     {
         [$school, $user] = $this->tenant('BK3');

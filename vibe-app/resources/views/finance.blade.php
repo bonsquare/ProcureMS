@@ -656,7 +656,28 @@
             let charged = []; try { charged = JSON.parse(button.dataset.expenseLines || '[]'); } catch (error) { charged = []; }
             if (charged.length > 1) { charged.forEach((charge) => addRow(charge.code || '', charge.amount, '')); } else { addRow(button.dataset.expenseCode || '', total, ''); }
             addRow(creditAccountFor(form.querySelector('[name=payment_mode]').value), '', total, true);
+            syncDeductions();
         };
+
+        // The "Less:" deductions are credited to Due to BIR and only the net is credited to cash, while the cash line is still the one filled in by itself.
+        const DUE_TO_BIR = '2020101000';
+        const deductionTotal = () => [...form.querySelectorAll('input[type=number][name^="deductions"]')].reduce((sum, input) => sum + cents(input.value), 0);
+        const syncDeductions = () => {
+            const cash = rows.querySelector('.journal-row[data-auto]');
+            if (! cash) return;
+            let taxRow = rows.querySelector('.journal-row[data-tax]');
+            const deducted = deductionTotal();
+            if (deducted > 0 && deducted < amount && hasOption(DUE_TO_BIR)) {
+                if (! taxRow) { taxRow = addRow(DUE_TO_BIR); taxRow.dataset.tax = '1'; }
+                taxRow.querySelector('[data-side=credit]').value = (deducted / 100).toFixed(2);
+                cash.querySelector('[data-side=credit]').value = ((amount - deducted) / 100).toFixed(2);
+            } else if (taxRow) {
+                taxRow.remove(); renumber();
+                cash.querySelector('[data-side=credit]').value = (amount / 100).toFixed(2);
+            }
+            refresh();
+        };
+        form.addEventListener('input', (event) => { if (event.target.matches('input[type=number][name^="deductions"]')) syncDeductions(); });
 
         form.querySelector('[name=payment_mode]').addEventListener('change', (event) => {
             const auto = rows.querySelector('.journal-row[data-auto]');

@@ -88,8 +88,10 @@
             $rows[] = ['date' => $entry['date'], 'reference' => $entry['receipt']->reference, 'particulars' => trim(trim((string) $entry['receipt']->source_of_fund).' '.($entry['receipt']->kind === 'cash_advance' ? 'Cash Advance' : $entry['receipt']->kindLabel()).' '.['1st', '2nd', '3rd', '4th'][$entry['receipt']->received_at->quarter - 1].' qrtr. '.$entry['receipt']->received_at->year), 'advance' => (float) $entry['receipt']->amount, 'payment' => null, 'balance' => $balance, 'code' => null];
         } else {
             $line = $entry['line'];
+            // A payment to the BIR (a DV debiting Due to BIR) clears the amount withheld: it goes in the Due to BIR column as a minus, not in an expense column.
+            $remit = ! $line['cancelled'] && $line['amount'] !== null && $line['uacs_code'] === '2020101000';
             $balance = round($balance - ($line['amount'] ?? 0), 2);
-            $rows[] = ['date' => $entry['date'], 'reference' => $line['check_no'], 'particulars' => $line['payee'], 'advance' => null, 'payment' => $line['amount'], 'balance' => $balance, 'code' => $line['cancelled'] ? null : $line['uacs_code'], 'splits' => $line['cancelled'] ? [] : ($line['splits'] ?? [])];
+            $rows[] = ['date' => $entry['date'], 'reference' => $line['check_no'], 'particulars' => $line['payee'], 'advance' => null, 'payment' => $line['amount'], 'gross' => $line['amount'] === null ? null : ($line['gross'] ?? $line['amount']), 'tax' => $remit ? -$line['amount'] : ($line['tax'] ?? 0), 'balance' => $balance, 'code' => ($line['cancelled'] || $remit) ? null : $line['uacs_code'], 'splits' => $line['cancelled'] ? [] : ($line['splits'] ?? [])];
         }
     }
     // A payment of an ORS charged to several UACS codes is divided among their columns; any other payment goes to the column of its one code.
@@ -98,11 +100,14 @@
         if ($row['payment'] === null) {
             continue;
         }
-        foreach ((($row['splits'] ?? []) !== [] ? $row['splits'] : ($row['code'] !== null ? [$row['code'] => $row['payment']] : [])) as $code => $amount) {
+        foreach ((($row['splits'] ?? []) !== [] ? $row['splits'] : ($row['code'] !== null ? [$row['code'] => $row['gross'] ?? $row['payment']] : [])) as $code => $amount) {
             $totalsByCode[(string) $code] = ($totalsByCode[(string) $code] ?? 0) + (float) $amount;
         }
     }
     $accountTotals = collect($totalsByCode)->map(fn ($amount) => round($amount, 2));
+    // A payment with a deduction (Due to BIR) adds one more column; a register with none is drawn as before.
+    $hasTax = collect($rows)->contains(fn (array $row) => ($row['tax'] ?? 0) != 0);
+    $totalTax = round(collect($rows)->sum(fn (array $row) => $row['tax'] ?? 0), 2);
     $totalPayments = collect($rows)->sum(fn (array $row) => $row['payment'] ?? 0);
     $totalAdvance = round($data['opening'] + collect($rows)->sum(fn (array $row) => $row['advance'] ?? 0), 2);
     $blank = fn ($value) => ($value === null || (float) $value == 0.0) ? '' : $money($value);
@@ -131,22 +136,24 @@
                 <col style="width:4.8%"><col style="width:5.6%">
                 @if($first)<col style="width:{{ $density === '' ? 24 : ($density === 'dense' ? 17 : 14) }}%"><col style="width:{{ $density === '' ? 6.1 : 5.4 }}%"><col style="width:{{ $density === '' ? 5.6 : 5.2 }}%"><col style="width:{{ $density === '' ? 5.6 : 5.2 }}%">@endif
                 @for($i = 0; $i < $count; $i++)<col>@endfor
+                @if($hasTax)<col>@endif
             </colgroup>
             <thead>
                 <tr>
                     <th rowspan="3">Date</th><th rowspan="3">Reference</th>
                     @if($first)<th rowspan="3">Particulars</th><th colspan="3">Working Fund</th>@endif
-                    <th colspan="{{ $count }}">Breakdown of Payments</th>
+                    <th colspan="{{ $count + ($hasTax ? 1 : 0) }}">Breakdown of Payments</th>
                 </tr>
                 <tr class="acct-title">
                     @if($first)<th rowspan="2" style="font-size:10px;text-transform:uppercase">Cash Advance</th><th rowspan="2" style="font-size:10px;text-transform:uppercase">Payments</th><th rowspan="2" style="font-size:10px;text-transform:uppercase">Balance</th>@endif
                     @for($i = 0; $i < $count; $i++)<th>{{ $titles[$i] ?? '' }}&nbsp;</th>@endfor
+                    @if($hasTax)<th>Due to BIR&nbsp;</th>@endif
                 </tr>
-                <tr class="acct-code">@for($i = 0; $i < $count; $i++)<th>{{ $codes[$i] ?? '' }}&nbsp;</th>@endfor</tr>
+                <tr class="acct-code">@for($i = 0; $i < $count; $i++)<th>{{ $codes[$i] ?? '' }}&nbsp;</th>@endfor @if($hasTax)<th>2020101000&nbsp;</th>@endif</tr>
             </thead>
             <tbody>
                 @if($first)
-                    <tr class="beginning"><td></td><td colspan="2" style="padding-left:14px">Beginning Balance….</td><td class="num" data-col="advance">{{ $blank($data['opening']) }}</td><td></td><td class="num" data-col="balance">{{ $money($data['opening']) }}</td><td colspan="{{ $count }}"></td></tr>
+                    <tr class="beginning"><td></td><td colspan="2" style="padding-left:14px">Beginning Balance….</td><td class="num" data-col="advance">{{ $blank($data['opening']) }}</td><td></td><td class="num" data-col="balance">{{ $money($data['opening']) }}</td><td colspan="{{ $count + ($hasTax ? 1 : 0) }}"></td></tr>
                 @endif
                 @foreach($rows as $row)
                     <tr>
@@ -160,20 +167,22 @@
                         @endif
                         @for($i = 0; $i < $count; $i++)
                             @if(isset($codes[$i]))
-                                <td class="num" data-account="{{ $codes[$i] }}">{{ ($cell = (($row['splits'] ?? []) !== [] ? ($row['splits'][(string) $codes[$i]] ?? null) : ($row['code'] === (string) $codes[$i] ? $row['payment'] : null))) !== null ? $money($cell) : '' }}</td>
+                                <td class="num" data-account="{{ $codes[$i] }}">{{ ($cell = (($row['splits'] ?? []) !== [] ? ($row['splits'][(string) $codes[$i]] ?? null) : ($row['code'] === (string) $codes[$i] ? ($row['gross'] ?? $row['payment']) : null))) !== null ? $money($cell) : '' }}</td>
                             @else
                                 <td></td>
                             @endif
                         @endfor
+                        @if($hasTax)<td class="num" data-col="due-to-bir">{{ $blank($row['tax'] ?? 0) }}</td>@endif
                     </tr>
                 @endforeach
                 @if($rows === [])
-                    <tr class="muted"><td colspan="{{ ($first ? 6 : 2) + $count }}" style="text-align:center;font-style:italic">No payment was made in this period.</td></tr>
+                    <tr class="muted"><td colspan="{{ ($first ? 6 : 2) + $count + ($hasTax ? 1 : 0) }}" style="text-align:center;font-style:italic">No payment was made in this period.</td></tr>
                 @endif
                 <tr class="grand">
                     <td class="label" colspan="{{ $first ? 3 : 2 }}">Grand Total - - - - -&gt;&gt;&gt;</td>
                     @if($first)<td class="num">{{ $blank($totalAdvance) }}</td><td class="num" data-col="total-payments">{{ $money($totalPayments) }}</td><td class="num">{{ $money($balance) }}</td>@endif
                     @for($i = 0; $i < $count; $i++)@if(isset($codes[$i]))<td class="num" data-total-account="{{ $codes[$i] }}">{{ $blank($accountTotals->get((string) $codes[$i], 0)) }}</td>@else<td></td>@endif @endfor
+                    @if($hasTax)<td class="num" data-total-col="due-to-bir">{{ $money($totalTax) }}</td>@endif
                 </tr>
             </tbody>
         </table>

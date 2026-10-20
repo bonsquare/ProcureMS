@@ -128,6 +128,15 @@ class CashReportService
         return $splits;
     }
 
+    /** The total of the "Less:" deductions of the DV, 0 when it has none. */
+    private function deductionsOf(LiquidationReport $report): float
+    {
+        $saved = $report->dv_deductions ?? [];
+        $other = collect($saved['other'] ?? [])->sum(fn ($row) => (float) ($row['amount'] ?? 0));
+
+        return round(collect(LiquidationReport::DV_DEDUCTIONS)->keys()->sum(fn ($key) => (float) ($saved[$key] ?? 0)) + $other, 2);
+    }
+
     /** @return array<string, mixed> */
     private function paidLine(LiquidationReport $report): array
     {
@@ -152,7 +161,10 @@ class CashReportService
             'payee' => (string) $report->payee,
             'uacs_code' => $code,
             'nature' => $title,
-            'amount' => round((float) $report->amount, 2),
+            // The cash paid out is the DV amount less its "Less:" deductions (withholding tax and the like, kept in Due to BIR); the gross is what the UACS columns charge.
+            'amount' => round((float) $report->amount - $this->deductionsOf($report), 2),
+            'gross' => round((float) $report->amount, 2),
+            'tax' => $this->deductionsOf($report),
             'mode' => $this->modeOf($report->payment_mode),
             'cancelled' => false,
             // The code => amount of each UACS code when the ORS is charged to more than one (the register divides the payment among their columns).
