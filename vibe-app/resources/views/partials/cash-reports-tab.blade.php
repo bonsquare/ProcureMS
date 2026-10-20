@@ -25,6 +25,21 @@
             @endforeach
         </div>
     </section>
+    <section class="overflow-hidden rounded-xl border border-outline-variant/60 bg-white shadow-sm">
+        {!! $head(2, 'Cash Disbursement Register history', 'Every register opened to print is kept as it was generated, one per quarter. Open it again to print the same document.') !!}
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-[720px] text-left text-xs">
+                <thead class="bg-surface-low uppercase tracking-wider text-on-surface-variant"><tr><th class="px-4 py-2">Generated</th><th class="px-3 py-2">Period covered</th><th class="px-3 py-2">Fund</th><th class="px-3 py-2">Report No.</th><th class="px-3 py-2 text-right">Payments</th><th class="px-3 py-2">By</th><th class="px-4 py-2 text-right"></th></tr></thead>
+                <tbody class="divide-y divide-outline-variant/30">
+                    @forelse($registerHistory as $entry)
+                        <tr><td class="px-4 py-2.5">{{ $entry->created_at->format('M d, Y g:i A') }}</td><td class="px-3 py-2.5 font-semibold">{{ $entry->period_text }}</td><td class="px-3 py-2.5">{{ $entry->source_of_fund ?: 'All funds' }}</td><td class="px-3 py-2.5">{{ $entry->report_no ?: '—' }}</td><td class="px-3 py-2.5 text-right tabular-nums">{{ number_format((float) $entry->total_payments, 2) }}</td><td class="px-3 py-2.5">{{ $entry->generator?->name }}</td><td class="px-4 py-2.5 text-right"><a href="{{ route('cash.report.history', $entry->id) }}" target="_blank" rel="noopener" class="rounded border border-outline-variant/60 px-3 py-1.5 font-semibold text-primary hover:bg-primary hover:text-white">Open</a></td></tr>
+                    @empty
+                        <tr><td colspan="7" class="px-4 py-6 text-center text-on-surface-variant">No register has been generated yet.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </section>
     @endif
 </div>
 @if($reportSchool)
@@ -253,6 +268,11 @@
             });
             return url.pathname + url.search;
         };
+        // Opening the register to print keeps a copy of it in the history.
+        printLink.addEventListener('click', () => {
+            if (!registerOn) return;
+            fetch(@json(route('cash.report.register.history')) + new URL(printLink.getAttribute('href'), location.origin).search, { method: 'POST', headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || @json(csrf_token()) } }).catch(() => {});
+        });
         const refresh = async () => {
             if (modal.classList.contains('hidden')) return;
             if (controller) controller.abort();

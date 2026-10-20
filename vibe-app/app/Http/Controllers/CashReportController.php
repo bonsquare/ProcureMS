@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AgencySetting;
 use App\Models\AuditLog;
 use App\Models\CashFundReceipt;
+use App\Models\CashReportHistory;
 use App\Models\LiquidationReport;
 use App\Models\School;
 use App\Models\SchoolStaff;
@@ -253,6 +254,35 @@ class CashReportController extends Controller
     public function register(Request $request)
     {
         return view('cash-report-register', ['report' => $this->reportViewData($request)]);
+    }
+
+    /** Keeps the register exactly as it is now, when the user opens it to print: the finished page, the period, the fund and the report number. */
+    public function storeRegisterHistory(Request $request): JsonResponse
+    {
+        $report = $this->reportViewData($request);
+        $school = $report['school'];
+        CashReportHistory::create([
+            'organization_id' => $school->organization_id,
+            'school_id' => $school->id,
+            'report' => 'register',
+            'period_from' => $report['from'],
+            'period_to' => $report['to'],
+            'period_text' => $report['period'],
+            'source_of_fund' => $request->input('source_of_fund') ?: null,
+            'report_no' => $report['reportNo'] ?: null,
+            'total_payments' => $report['data']['total_paid'],
+            'html' => view('cash-report-register', ['report' => $report])->render(),
+            'generated_by' => $request->user()->id,
+        ]);
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function showHistory(CashReportHistory $history)
+    {
+        abort_unless($this->schoolIds()->contains($history->school_id), 403);
+
+        return response($history->html)->header('Content-Type', 'text/html; charset=UTF-8');
     }
 
     public function bank(Request $request)

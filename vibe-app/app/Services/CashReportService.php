@@ -90,7 +90,9 @@ class CashReportService
             ->all();
         if ($fund !== null) {
             $budgeted = BudgetAllocation::query()->with('account')->where('school_id', $school->id)->where('fiscal_year', $from->year)->whereRaw('lower(source_of_fund) = ?', [strtolower($fund)])->get();
-            foreach ($budgeted as $allocation) {
+            // The register is per quarter, not consolidated: only the accounts with an allotment in the quarter(s) of the period.
+            $quarters = $from->year === $to->year ? range($from->quarter, $to->quarter) : [1, 2, 3, 4];
+            foreach ($budgeted->filter(fn (BudgetAllocation $allocation) => collect($quarters)->contains(fn (int $quarter) => (float) $allocation->quarterAmount($quarter) > 0)) as $allocation) {
                 $code = (string) ($allocation->account?->code ?? $allocation->uacs_code ?? '');
                 if ($code !== '' && ! isset($accounts[$code])) {
                     $accounts[$code] = (string) ($allocation->account?->title ?? $allocation->particulars ?? '');

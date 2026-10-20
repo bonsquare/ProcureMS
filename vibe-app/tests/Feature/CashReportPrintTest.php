@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\BudgetAllocation;
 use App\Models\CancelledCheck;
 use App\Models\CashFundReceipt;
+use App\Models\CashReportHistory;
 use App\Models\ChartOfAccount;
 use App\Models\LiquidationReport;
 use App\Models\Organization;
@@ -206,6 +207,46 @@ class CashReportPrintTest extends TestCase
 
         $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school, ['source_of_fund' => 'MOOE'])))->assertOk()
             ->assertSee('Communication Expenses')->assertSee('5020502000')->assertSee('data-recap="5020502000">-', false)->assertDontSee('5021304000');
+    }
+
+    public function test_the_register_of_one_quarter_leaves_out_the_accounts_of_the_other_quarters(): void
+    {
+        [$school, $user] = $this->tenant('BK5');
+        $q3 = ChartOfAccount::firstOrCreate(['organization_id' => $school->organization_id, 'code' => '5020502000'], ['title' => 'Communication Expenses', 'category' => 'Expense']);
+        $q4 = ChartOfAccount::firstOrCreate(['organization_id' => $school->organization_id, 'code' => '5021304000'], ['title' => 'Repairs', 'category' => 'Expense']);
+        foreach ([[$q3, 'Communication', 0, 5000], [$q4, 'Repairs', 5000, 0]] as [$account, $name, $fourth, $third]) {
+            BudgetAllocation::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'fiscal_year' => 2026, 'source_of_fund' => 'MOOE', 'particulars' => $name, 'chart_of_account_id' => $account->id, 'amount' => 5000, 'q1_amount' => 0, 'q2_amount' => 0, 'q3_amount' => $third, 'q4_amount' => $fourth]);
+        }
+
+        $this->actingAs($user)->get(route('cash.report.register', ['school_id' => $school->id, 'from' => '2026-10-01', 'to' => '2026-12-31', 'source_of_fund' => 'MOOE']))->assertOk()
+            ->assertSee('5021304000')->assertDontSee('5020502000');
+    }
+
+    public function test_a_register_opened_to_print_is_kept_in_the_history_and_opens_again_unchanged(): void
+    {
+        [$school, $user] = $this->tenant('BK6');
+        $this->paid($school, '0401', '2026-08-05', 1000, overrides: ['source_of_fund' => 'MOOE']);
+        $query = $this->periodQuery($school, ['source_of_fund' => 'MOOE', 'report_no' => '2026-10-001']);
+
+        $this->actingAs($user)->postJson(route('cash.report.register.history', $query))->assertOk();
+        $history = CashReportHistory::firstOrFail();
+        $this->paid($school, '0402', '2026-08-06', 2000, overrides: ['source_of_fund' => 'MOOE']);
+
+        $this->assertSame(['3RD Quarter C.Y. 2026', 'MOOE', '2026-10-001'], [$history->period_text, $history->source_of_fund, $history->report_no]);
+        $this->actingAs($user)->get(route('cash.report.history', $history->id))->assertOk()->assertSee('CASH DISBURSEMENT REGISTER')->assertSee('0401')->assertDontSee('0402');
+        $this->actingAs($user)->get(route('cash', ['tab' => 'reports', 'school_id' => $school->id]))->assertOk()->assertSee('3RD Quarter C.Y. 2026');
+    }
+
+    public function test_another_school_cannot_open_a_register_history(): void
+    {
+        [$school, $user] = $this->tenant('BK7');
+        $this->paid($school, '0501', '2026-08-05', 1000);
+        $this->actingAs($user)->postJson(route('cash.report.register.history', $this->periodQuery($school)))->assertOk();
+        $historyId = CashReportHistory::firstOrFail()->id;
+        auth()->logout();
+        [, $outsider] = $this->tenant('BK8X');
+
+        $this->actingAs($outsider)->get(route('cash.report.history', $historyId))->assertNotFound();
     }
 
     public function test_the_bank_reconciliation_names_the_fund_of_each_downloaded_amount(): void

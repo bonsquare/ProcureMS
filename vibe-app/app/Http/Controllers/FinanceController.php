@@ -6,6 +6,7 @@ use App\Models\AgencySetting;
 use App\Models\AuditLog;
 use App\Models\CancelledCheck;
 use App\Models\CashFundReceipt;
+use App\Models\CashReportHistory;
 use App\Models\ChartOfAccount;
 use App\Models\DvJournalLine;
 use App\Models\LiquidationReport;
@@ -19,6 +20,7 @@ use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -102,7 +104,7 @@ class FinanceController extends Controller
         }
         // Pending Documents with no typed remark says which papers are missing.
         if ($data['status'] === 'pending_documents' && blank($data['accounting_remarks'] ?? null)) {
-            $data['accounting_remarks'] = \Illuminate\Support\Str::limit('Missing papers: '.$this->papers()->missing($liquidationReport, 'ors')->implode(', '), 250);
+            $data['accounting_remarks'] = Str::limit('Missing papers: '.$this->papers()->missing($liquidationReport, 'ors')->implode(', '), 250);
         }
 
         $previousStatus = $liquidationReport->status;
@@ -155,6 +157,7 @@ class FinanceController extends Controller
 
         return [
             'reportSchools' => $schools,
+            'registerHistory' => $school ? CashReportHistory::with('generator')->where('school_id', $school->id)->where('report', 'register')->latest()->limit(50)->get(['id', 'school_id', 'period_text', 'source_of_fund', 'report_no', 'total_payments', 'generated_by', 'created_at']) : collect(),
             'reportSchool' => $school,
             'reportFrom' => $from,
             'reportTo' => $to,
