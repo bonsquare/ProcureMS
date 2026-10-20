@@ -12,10 +12,12 @@ use App\Models\ChartOfAccount;
 use App\Models\FundSource;
 use App\Models\PpmpPlan;
 use App\Models\School;
+use App\Models\SipProject;
 use App\Models\SobItem;
 use App\Models\SobPlan;
 use App\Services\FiscalYearService;
 use App\Services\MasterTransactionService;
+use App\Services\SipAipService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -56,9 +58,18 @@ class AipController extends Controller
         $data = $request->validate([
             'school_id' => ['required', 'integer', Rule::in($this->schoolIds()->all())],
             'fiscal_year' => ['required', 'integer', 'between:2000,2100', Rule::unique('aips')->where('school_id', $request->input('school_id'))],
+            'quarter' => ['nullable', 'integer', 'between:1,4'],
         ], ['fiscal_year.unique' => 'This school already has an AIP for that fiscal year.']);
 
         $school = School::findOrFail($data['school_id']);
+        $sipStartYear = SipProject::withoutGlobalScopes()->where('school_id', $school->id)
+            ->whereBetween('school_year', [$data['fiscal_year'] - 2, $data['fiscal_year']])->max('school_year');
+        if ($sipStartYear) {
+            $aip = app(SipAipService::class)->generate($school, (int) $sipStartYear, $data['fiscal_year'] - $sipStartYear + 1, $request->user(), isset($data['quarter']) ? (int) $data['quarter'] : null);
+
+            return redirect()->route('aip.show', $aip)->with('success', "AIP FY {$aip->fiscal_year} created from the SIP ".(isset($data['quarter']) ? 'for quarter '.$data['quarter'] : 'for the whole year').'. Choose the source of fund and the account of each activity, then approve it.');
+        }
+        unset($data['quarter']);
         $this->fiscalYears->assertOpen((int) $school->organization_id, (int) $data['fiscal_year']);
         $aip = DB::transaction(function () use ($data, $request, $school) {
             $aip = Aip::create($data + [

@@ -59,6 +59,32 @@ class SipToAipTest extends TestCase
         }
     }
 
+    public function test_new_aip_form_fills_the_kras_from_the_sip_for_the_chosen_quarter(): void
+    {
+        [$school, $master] = $this->lubas();
+        $this->actingAs($master);
+
+        $this->post(route('aip.store'), ['school_id' => $school->id, 'fiscal_year' => 2026, 'quarter' => 4])->assertRedirect();
+
+        $aip = Aip::withoutGlobalScopes()->where('school_id', $school->id)->where('fiscal_year', 2026)->firstOrFail();
+        $activities = AipActivity::withoutGlobalScopes()->where('aip_id', $aip->id)->get();
+        $this->assertGreaterThan(0, $activities->count());
+        $this->assertEquals(0, $activities->sum('q1_amount') + $activities->sum('q2_amount') + $activities->sum('q3_amount'));
+        $this->assertEqualsWithDelta(191500.0, $activities->sum('q4_amount'), 0.001);
+    }
+
+    public function test_new_aip_form_without_a_sip_still_makes_an_empty_aip(): void
+    {
+        $organization = Organization::create(['name' => 'x', 'slug' => 'x', 'status' => 'active', 'fiscal_year' => 2026]);
+        $school = School::create(['organization_id' => $organization->id, 'code' => 'X', 'name' => 'No SIP School', 'status' => 'active']);
+        $this->actingAs(User::factory()->create(['role' => 'master_user', 'organization_id' => null, 'school_id' => null]));
+
+        $this->post(route('aip.store'), ['school_id' => $school->id, 'fiscal_year' => 2026, 'quarter' => 2])->assertRedirect();
+
+        $aip = Aip::withoutGlobalScopes()->where('school_id', $school->id)->firstOrFail();
+        $this->assertSame(0, AipKra::withoutGlobalScopes()->where('aip_id', $aip->id)->count());
+    }
+
     public function test_a_program_without_a_target_in_a_year_is_left_out_of_that_years_aip(): void
     {
         [$school, $master] = $this->lubas();

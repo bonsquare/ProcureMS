@@ -1069,3 +1069,9 @@ Design: `docs/superpowers/specs/2026-10-16-cash-reports-design.md`. The owner's 
 ## 61. Delete a purchase request with everything made from it (owner's decision 2026-10-20)
 
 - The Procurement > Requests list has a Delete button on each PR (desktop table; permission `procurement.edit`, own school scope). After a confirmation and the user's own password, it deletes the PR with its items, procurement documents, ORS/DV (journal lines, papers checklist, cancelled checks), even when paid; the master transaction goes only when nothing else uses it. The deletion is written to the audit log.
+
+## 62. New AIP fills itself from the imported SIP, by quarter (owner's decision 2026-10-20)
+
+- The "+ New AIP" form of Planning > AIP has a Fiscal Year and a Quarter (Whole year, 1st to 4th Quarter). When the school has an imported SIP covering that fiscal year (the SIP's start year, or the two years after it), the AIP is made from it through `SipAipService::generate`: the KRAs, programs, activities, physical targets, source of fund and responsible persons of that plan year, with the year's financial target split evenly over the four quarters. A chosen quarter keeps only that quarter's share (for example 4th Quarter puts 25% in Q4 and nothing in Q1 to Q3); Whole year fills all four. The quarter is not stored on the AIP.
+- A school without an imported SIP still gets an empty AIP. One AIP per school and fiscal year stays; the "Create AIP FY" buttons under the SIP are unchanged.
+- **This behavior is FINAL (owner's decision): do not change the AIP generation from the SIP, its quarter choice or its amounts without the owner's explicit permission for that exact change.** Covered by `tests/Feature/SipToAipTest.php`.

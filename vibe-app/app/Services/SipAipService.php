@@ -32,7 +32,8 @@ class SipAipService
         return array_map(fn (int $part) => round($part / 100, 2), $parts);
     }
 
-    public function generate(School $school, int $startYear, int $yearNo, User $user): Aip
+    /** @param int|null $quarter 1 to 4 puts the year's target in that quarter only; null spreads it over the four quarters */
+    public function generate(School $school, int $startYear, int $yearNo, User $user, ?int $quarter = null): Aip
     {
         if ($yearNo < 1 || $yearNo > 3) {
             throw ValidationException::withMessages(['year_no' => 'A SIP covers three years: choose year 1, 2 or 3.']);
@@ -57,7 +58,7 @@ class SipAipService
             throw ValidationException::withMessages(['aip' => "The SIP {$startYear}-".($startYear + 2)." has no targets for year {$yearNo}, so there is nothing to put in the AIP for FY {$fiscalYear}."]);
         }
 
-        return DB::transaction(function () use ($school, $startYear, $yearNo, $fiscalYear, $user, $programs) {
+        return DB::transaction(function () use ($school, $startYear, $yearNo, $fiscalYear, $user, $programs, $quarter) {
             $aip = Aip::create([
                 'organization_id' => $school->organization_id,
                 'school_id' => $school->id,
@@ -85,7 +86,11 @@ class SipAipService
                 ]);
 
                 foreach ($program->activities as $activity) {
-                    [$q1, $q2, $q3, $q4] = $this->splitQuarters($this->target($activity, 'financial', $yearNo));
+                    $shares = $this->splitQuarters($this->target($activity, 'financial', $yearNo));
+                    if ($quarter) {
+                        $shares = array_map(fn (int $index) => $index === $quarter - 1 ? $shares[$index] : 0.0, array_keys($shares));
+                    }
+                    [$q1, $q2, $q3, $q4] = $shares;
                     $kra->activities()->create([
                         'organization_id' => $school->organization_id,
                         'aip_id' => $aip->id,
@@ -100,7 +105,7 @@ class SipAipService
                 }
             }
 
-            AuditLog::create(['user_id' => $user->id, 'school_id' => $school->id, 'action' => 'aip_generated_from_sip', 'auditable_type' => Aip::class, 'auditable_id' => $aip->id, 'metadata' => ['sip_start_year' => $startYear, 'year_no' => $yearNo, 'fiscal_year' => $fiscalYear, 'programs' => $programs->count(), 'activities' => $count]]);
+            AuditLog::create(['user_id' => $user->id, 'school_id' => $school->id, 'action' => 'aip_generated_from_sip', 'auditable_type' => Aip::class, 'auditable_id' => $aip->id, 'metadata' => ['sip_start_year' => $startYear, 'year_no' => $yearNo, 'quarter' => $quarter, 'fiscal_year' => $fiscalYear, 'programs' => $programs->count(), 'activities' => $count]]);
 
             return $aip;
         });

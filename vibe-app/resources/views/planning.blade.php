@@ -321,6 +321,7 @@
         <form data-form="aip" data-display="flex" method="POST" action="{{ route('aip.store') }}" class="hidden w-full flex-wrap items-center justify-end gap-2 border-t border-outline-variant/20 pt-3">@csrf
             <input type="hidden" name="school_id" value="{{ $selectedSchool->id }}">
             <label class="flex items-center gap-2 text-xs font-semibold text-on-surface-variant">Fiscal Year<input type="number" name="fiscal_year" value="{{ $year }}" min="2000" max="2100" required class="w-24 rounded border border-outline-variant/50 bg-white px-3 py-2 text-xs outline-none focus:border-primary"></label>
+            <label class="flex items-center gap-2 text-xs font-semibold text-on-surface-variant" title="With an imported SIP, the AIP is filled from it for this quarter only.">Quarter<select name="quarter" class="rounded border border-outline-variant/50 bg-white px-3 py-2 text-xs outline-none focus:border-primary"><option value="">Whole year</option><option value="1">1st Quarter</option><option value="2">2nd Quarter</option><option value="3">3rd Quarter</option><option value="4">4th Quarter</option></select></label>
             <button class="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-primary-container">Create AIP</button>
         </form>
         @endif
