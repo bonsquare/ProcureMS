@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\BudgetAllocation;
+use App\Models\LiquidationDocumentCheck;
 use App\Models\LiquidationReport;
 use App\Models\Organization;
 use App\Models\ProcurementDocument;
@@ -12,12 +13,14 @@ use App\Models\Subscription;
 use App\Models\Supplier;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Support\SobBackedBudgetLine;
 use Tests\TestCase;
 
 /** Section C (Status of Obligation) is not on every school's ORS template, so the ORS form has a tick box for it. */
 class OrsStatusPrintTest extends TestCase
 {
     use RefreshDatabase;
+    use SobBackedBudgetLine;
 
     /** @return array{0: School, 1: User} */
     private function tenant(): array
@@ -35,7 +38,7 @@ class OrsStatusPrintTest extends TestCase
 
     private function payload(School $school, array $extra = []): array
     {
-        return $extra + ['school_id' => $school->id, 'source_of_fund' => 'MOOE', 'purpose' => 'Office supplies', 'amount' => '1000', 'payee' => 'Ors Supplier'];
+        return $extra + ['school_id' => $school->id, 'budget_allocation_id' => $this->sobBackedLine($school)->id, 'source_of_fund' => 'MOOE', 'purpose' => 'Office supplies', 'amount' => '1000', 'payee' => 'Ors Supplier'];
     }
 
     public function test_a_new_ors_always_includes_section_c(): void
@@ -113,7 +116,7 @@ class OrsStatusPrintTest extends TestCase
     {
         [$school, $user] = $this->tenant();
         $this->actingAs($user);
-        $pr = ProcurementRequest::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'requested_by' => $user->id, 'request_number' => 'PR-2026-ORS', 'title' => 'Rice', 'amount' => 1500, 'status' => 'approved', 'source_of_fund' => 'MOOE']);
+        $pr = ProcurementRequest::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'requested_by' => $user->id, 'request_number' => 'PR-2026-ORS', 'title' => 'Rice', 'amount' => 1500, 'status' => 'approved', 'source_of_fund' => 'MOOE', 'budget_allocation_id' => $this->sobBackedLine($school)->id]);
 
         $this->get(route('procurement.show', $pr))->assertOk()->assertSee('obligated by the Purchase Order')->assertDontSee('Not obligated yet');
         ProcurementDocument::create(['organization_id' => $school->organization_id, 'procurement_request_id' => $pr->id, 'created_by' => $user->id, 'document_type' => 'purchase_order', 'document_number' => 'PO-2026-001', 'document_date' => now(), 'supplier_or_recipient' => 'Ors Supplier', 'status' => 'prepared', 'metadata' => ['winning_bid_amount' => 1400]]);
@@ -142,7 +145,7 @@ class OrsStatusPrintTest extends TestCase
     {
         [$school, $user] = $this->tenant();
         $this->actingAs($user);
-        $pr = ProcurementRequest::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'requested_by' => $user->id, 'request_number' => 'PR-2026-DAT', 'title' => 'Rice', 'amount' => 1500, 'status' => 'approved', 'source_of_fund' => 'MOOE']);
+        $pr = ProcurementRequest::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'requested_by' => $user->id, 'request_number' => 'PR-2026-DAT', 'title' => 'Rice', 'amount' => 1500, 'status' => 'approved', 'source_of_fund' => 'MOOE', 'budget_allocation_id' => $this->sobBackedLine($school)->id]);
         ProcurementDocument::create(['organization_id' => $school->organization_id, 'procurement_request_id' => $pr->id, 'created_by' => $user->id, 'document_type' => 'purchase_order', 'document_number' => 'PO-2026-003', 'document_date' => '2026-03-12', 'supplier_or_recipient' => 'Ors Supplier', 'status' => 'prepared']);
 
         $this->get(route('budget'))->assertOk()->assertSee('data-po-date="2026-03-12"', false);
@@ -171,7 +174,7 @@ class OrsStatusPrintTest extends TestCase
         $ors = LiquidationReport::firstOrFail();
 
         $this->get(route('accounting'))->assertOk()->assertSee(route('accounting.review', $ors), false);
-        \App\Models\LiquidationDocumentCheck::create(['organization_id' => $ors->organization_id, 'liquidation_report_id' => $ors->id, 'item_key' => 'billing_statement', 'state' => 'received']);
+        LiquidationDocumentCheck::create(['organization_id' => $ors->organization_id, 'liquidation_report_id' => $ors->id, 'item_key' => 'billing_statement', 'state' => 'received']);
         $this->patch(route('accounting.review', $ors), ['status' => 'approved'])->assertSessionHasNoErrors();
         $this->assertSame('approved', $ors->fresh()->status);
         $this->get(route('accounting', ['tab' => 'for_dv']))->assertOk()->assertSee(route('accounting.dv.store', $ors), false);
@@ -229,6 +232,7 @@ class OrsStatusPrintTest extends TestCase
             'start_date' => now()->year.'-01-01', 'end_date' => now()->year.'-12-31', 'source_of_fund' => 'MOOE', 'uacs_code' => '5020301000', 'particulars' => 'Test line',
             'amount' => 5000, 'q1_amount' => 5000, 'q2_amount' => 0, 'q3_amount' => 0, 'q4_amount' => 0, 'created_by' => $user->id, 'budget_ref_no' => 'BA-TEST-2',
         ]);
+        $line = $this->backWithSob($line);
 
         $this->get(route('budget'))->assertOk()->assertSee('name="ors_show_uacs" value="1" checked', false)->assertSee('Show the UACS code on the ORS');
 
@@ -340,6 +344,7 @@ class OrsStatusPrintTest extends TestCase
             'start_date' => now()->year.'-01-01', 'end_date' => now()->year.'-12-31', 'source_of_fund' => 'MOOE', 'uacs_code' => '5020301000', 'particulars' => 'Test line',
             'amount' => 5000, 'q1_amount' => 5000, 'q2_amount' => 0, 'q3_amount' => 0, 'q4_amount' => 0, 'created_by' => $user->id, 'budget_ref_no' => 'BA-TEST-3',
         ]);
+        $line = $this->backWithSob($line);
         $this->get(route('budget'))->assertOk()->assertSee('name="ors_fund_cluster" maxlength="100" value="101101"', false);
 
         $this->post(route('liquidation.store'), $this->payload($school, ['budget_allocation_id' => $line->id]))->assertSessionHasNoErrors();
@@ -361,6 +366,7 @@ class OrsStatusPrintTest extends TestCase
             'start_date' => now()->year.'-01-01', 'end_date' => now()->year.'-12-31', 'source_of_fund' => 'Canteen Fund', 'uacs_code' => '5020301000', 'particulars' => 'Test line',
             'amount' => 5000, 'q1_amount' => 5000, 'q2_amount' => 0, 'q3_amount' => 0, 'q4_amount' => 0, 'created_by' => $user->id, 'budget_ref_no' => 'BA-TEST-4',
         ]);
+        $line = $this->backWithSob($line);
 
         $page = $this->get(route('budget'))->assertOk()->getContent();
         $this->assertStringNotContainsString('Source of Fund <span', $page);
@@ -371,5 +377,21 @@ class OrsStatusPrintTest extends TestCase
 
         $this->post(route('liquidation.store'), $this->payload($school, ['budget_allocation_id' => $line->id, 'source_of_fund' => null]))->assertSessionHasNoErrors();
         $this->assertSame('Canteen Fund', LiquidationReport::firstOrFail()->source_of_fund);
+    }
+
+    public function test_an_ors_cannot_be_created_for_a_budget_line_that_is_not_in_an_approved_sob(): void
+    {
+        [$school, $user] = $this->tenant();
+        $manual = BudgetAllocation::create([
+            'organization_id' => $school->organization_id, 'school_id' => $school->id, 'fiscal_year' => 2026, 'program' => 'Typed by hand', 'source_of_fund' => 'MOOE', 'uacs_code' => '5020301000',
+            'particulars' => 'No SOB', 'amount' => 5000, 'q1_amount' => 5000, 'q2_amount' => 0, 'q3_amount' => 0, 'q4_amount' => 0, 'created_by' => $user->id, 'budget_ref_no' => 'BA-NOSOB',
+        ]);
+
+        $this->actingAs($user)->post(route('liquidation.store'), ['school_id' => $school->id, 'budget_allocation_id' => $manual->id, 'source_of_fund' => 'MOOE', 'purpose' => 'x', 'amount' => '100', 'payee' => 'P'])->assertSessionHasErrors('budget_allocation_id');
+        $this->post(route('liquidation.store'), ['school_id' => $school->id, 'source_of_fund' => 'MOOE', 'purpose' => 'x', 'amount' => '100', 'payee' => 'P'])->assertSessionHasErrors('budget_allocation_id');
+        $this->assertSame(0, LiquidationReport::count());
+
+        $this->post(route('liquidation.store'), ['school_id' => $school->id, 'budget_allocation_id' => $this->sobBackedLine($school)->id, 'source_of_fund' => 'MOOE', 'purpose' => 'x', 'amount' => '100', 'payee' => 'P'])->assertSessionHasNoErrors();
+        $this->assertSame(1, LiquidationReport::count());
     }
 }

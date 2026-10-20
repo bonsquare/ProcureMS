@@ -16,6 +16,7 @@ use App\Models\ProcurementRequestItem;
 use App\Models\School;
 use App\Models\SchoolStaff;
 use App\Models\SharedLogo;
+use App\Models\SobItem;
 use App\Models\StaffRoleOption;
 use App\Models\Subscription;
 use App\Models\Supplier;
@@ -960,6 +961,20 @@ class HomeController extends Controller
      * Every charge must name a budget line once the school has budgeted for the year; the line must
      * match the school and fund and have room for the amount (annual and quarterly).
      */
+    /** An ORS is charged to a budget line, and that line must come from an approved SOB (its account, program and fund are in the SOB). */
+    private function assertInApprovedSob(array $data): void
+    {
+        $line = ! empty($data['budget_allocation_id']) ? BudgetAllocation::find($data['budget_allocation_id']) : null;
+        $inSob = $line && SobItem::withoutGlobalScopes()
+            ->where('chart_of_account_id', $line->chart_of_account_id)
+            ->whereHas('plan', fn ($plans) => $plans->withoutGlobalScopes()->where('status', 'approved')->where('school_id', $line->school_id)->where('fiscal_year', $line->fiscal_year)->whereRaw('lower(fund_source) = ?', [strtolower((string) $line->source_of_fund)]))
+            ->when(filled($line->program), fn ($items) => $items->whereHas('activity.kra', fn ($kras) => $kras->withoutGlobalScopes()->where('program', $line->program)))
+            ->exists();
+        if (! $inSob) {
+            throw ValidationException::withMessages(['budget_allocation_id' => 'This expense is not in an approved SOB. Add it to the SOB of the fund first; an ORS cannot be created without it.']);
+        }
+    }
+
     private function assertBudgetItem(array $data, float $amount, ?int $ignorePrId = null, ?int $ignoreOrsId = null, ?\DateTimeInterface $date = null): void
     {
         if (empty($data['budget_allocation_id'])) {
@@ -2063,6 +2078,8 @@ class HomeController extends Controller
                 $data['responsibility_center_code'] ??= BudgetAllocation::whereKey($data['budget_allocation_id'])->value('responsibility_center');
             }
         }
+
+        $this->assertInApprovedSob($data);
 
         $linkedRequest = ! empty($data['procurement_request_id']) ? ProcurementRequest::findOrFail($data['procurement_request_id']) : null;
         // The date of the PO is the date of its ORS.

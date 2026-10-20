@@ -15,11 +15,13 @@ use App\Support\SignatorySlots;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Tests\Support\SobBackedBudgetLine;
 use Tests\TestCase;
 
 class DocumentSignatoriesTest extends TestCase
 {
     use RefreshDatabase;
+    use SobBackedBudgetLine;
 
     private function tenant(string $slug = 'sig'): array
     {
@@ -435,7 +437,7 @@ class DocumentSignatoriesTest extends TestCase
 
     private function orsPayload(School $school, array $extra = []): array
     {
-        return $extra + ['school_id' => $school->id, 'source_of_fund' => 'MOOE', 'purpose' => 'Office supplies', 'amount' => '1000', 'payee' => 'Sig Supplier'];
+        return $extra + ['school_id' => $school->id, 'budget_allocation_id' => $this->sobBackedLine($school)->id, 'source_of_fund' => 'MOOE', 'purpose' => 'Office supplies', 'amount' => '1000', 'payee' => 'Sig Supplier'];
     }
 
     public function test_the_ors_prints_the_chosen_requester_and_certifier(): void
