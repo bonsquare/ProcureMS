@@ -161,22 +161,17 @@ class SobApprovedEditTest extends TestCase
         $this->assertSame(2, SobItem::count(), 'the Item is still there');
     }
 
-    public function test_items_in_an_approved_app_ask_for_the_app_to_be_unlocked_first(): void
+    public function test_items_in_an_approved_app_can_still_be_edited_and_the_app_follows(): void
     {
         $fx = SobFixture::make();
         $this->actingAs($fx['user']);
         $plan = $this->approved($fx);
         $appItem = $this->appItemFor($fx, $plan, 'approved');
 
-        $error = $this->fails(fn () => $this->service()->saveGroup($plan, $fx['activities'][0]->id, $fx['account']->id, ['aip_activity_id' => $fx['activities'][0]->id, 'chart_of_account_id' => $fx['account']->id, 'lines' => $this->lines(20), 'extras' => []]));
-
-        $this->assertStringContainsString('Unlock the APP', $error->errors()['planning'][0]);
-        $this->assertSame(1000.0, $this->quarterAmount());
-
-        $appItem->plan->update(['status' => 'draft']);
         $keepRow = $this->lines(20);
         $keepRow[0]['id'] = $appItem->sob_item_id;
         $this->service()->saveGroup($plan, $fx['activities'][0]->id, $fx['account']->id, ['aip_activity_id' => $fx['activities'][0]->id, 'chart_of_account_id' => $fx['account']->id, 'lines' => $keepRow, 'extras' => []]);
+
         $this->assertSame([20.0, 2000.0], [(float) $appItem->fresh()->quantity, (float) $appItem->fresh()->estimated_total_cost], 'the APP line follows the SOB');
     }
 
@@ -201,11 +196,16 @@ class SobApprovedEditTest extends TestCase
         $request = ProcurementRequest::create(['organization_id' => $fx['organization']->id, 'school_id' => $fx['school']->id, 'requested_by' => $fx['user']->id, 'request_number' => 'PR-2026-SOB', 'title' => 'Paper', 'amount' => 500, 'status' => 'submitted']);
         ProcurementRequestItem::create(['organization_id' => $fx['organization']->id, 'procurement_request_id' => $request->id, 'app_item_id' => $appItem->id, 'name' => 'Bond paper', 'quantity' => 5, 'unit' => 'ream', 'unit_price' => 100, 'total' => 500]);
 
-        $edit = $this->fails(fn () => $this->service()->saveGroup($plan, $fx['activities'][0]->id, $fx['account']->id, ['aip_activity_id' => $fx['activities'][0]->id, 'chart_of_account_id' => $fx['account']->id, 'lines' => $this->lines(20), 'extras' => []]));
-        $delete = $this->fails(fn () => $this->service()->deletePlan($plan));
+        $keepRow = $this->lines(20);
+        $keepRow[0]['id'] = $appItem->sob_item_id;
+        $this->service()->saveGroup($plan, $fx['activities'][0]->id, $fx['account']->id, ['aip_activity_id' => $fx['activities'][0]->id, 'chart_of_account_id' => $fx['account']->id, 'lines' => $keepRow, 'extras' => []]);
+        $this->assertSame(20.0, (float) $appItem->fresh()->quantity, 'a Purchase Request does not stop an edit');
 
-        $this->assertStringContainsString('Purchase Request', $edit->errors()['planning'][0]);
-        $this->assertStringContainsString('Purchase Request', $delete->errors()['planning'][0]);
+        $deleteItem = $this->fails(fn () => $this->service()->deleteGroup($plan, $fx['activities'][0]->id, $fx['account']->id));
+        $deletePlan = $this->fails(fn () => $this->service()->deletePlan($plan));
+
+        $this->assertStringContainsString('Purchase Request', $deleteItem->errors()['planning'][0]);
+        $this->assertStringContainsString('Purchase Request', $deletePlan->errors()['planning'][0]);
         $this->assertSame(1, SobItem::count());
         $this->assertNotNull(SobPlan::find($plan->id));
     }

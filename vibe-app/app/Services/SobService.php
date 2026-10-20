@@ -147,6 +147,7 @@ class SobService
     {
         $this->requireEditable($plan);
         $rows = $plan->items()->where('aip_activity_id', $activityId)->where('chart_of_account_id', $accountId)->get();
+        $this->guardNoRequests($rows);
         $this->revise($plan, fn () => $plan->items()->whereIn('id', $rows->pluck('id'))->delete(), $rows);
     }
 
@@ -224,6 +225,7 @@ class SobService
     {
         $plan = $item->plan()->firstOrFail();
         $this->requireEditable($plan);
+        $this->guardNoRequests(collect([$item]));
         $this->revise($plan, fn () => $item->delete(), collect([$item]));
     }
 
@@ -581,9 +583,9 @@ class SobService
     }
 
     /**
-     * Makes a change to an SOB. A draft is changed as it is. An approved SOB first checks that nothing it fed is locked or in use, then the change
-     * is made and its Budget allotments and APP lines are brought in line, all in one step: it is refused as a whole if a line would drop below
-     * what is already obligated.
+     * Makes a change to an SOB. A draft is changed as it is. An approved SOB is changed even when a Purchase Request or a payment already
+     * exists: the change is made and its Budget allotments and APP lines are brought in line, all in one step; it is refused as a whole if a
+     * line would drop below what is already obligated.
      *
      * @param  Collection<int, SobItem>|null  $affected  the existing rows the change touches (none for an addition)
      */
@@ -593,10 +595,9 @@ class SobService
             return $change();
         }
 
-        return DB::transaction(function () use ($plan, $change, $affected) {
+        return DB::transaction(function () use ($plan, $change) {
             $locked = SobPlan::withoutGlobalScopes()->lockForUpdate()->findOrFail($plan->id);
             $locked->update(['allotment_snapshot' => $locked->allotment_snapshot ?: $this->snapshotOf($locked)]);
-            $this->guardApprovedChange($locked, $affected ?? $locked->items()->get());
             $outsideApp = $locked->items()->where('is_extra', false)->whereNull('category')->pluck('id')->all();
 
             $result = $change();
@@ -607,7 +608,16 @@ class SobService
         });
     }
 
-    /** An approved SOB's items may be changed only while no Purchase Request draws from them and they are not in an approved APP. */
+    /** An item that a Purchase Request draws from through the APP is changed, but never deleted. */
+    private function guardNoRequests(Collection $rows): void
+    {
+        $drawn = AppItem::withoutGlobalScopes()->whereIn('sob_item_id', $rows->pluck('id'))->get()->first(fn (AppItem $appItem) => $appItem->requestItems()->exists());
+        if ($drawn) {
+            $this->fail('A Purchase Request already draws from "'.$drawn->procurement_item.'" through the APP, so it cannot be deleted. You can still change it.');
+        }
+    }
+
+    /** Deleting an approved SOB (or reopening it) is refused while a Purchase Request draws from its items or they are in an approved APP. */
     private function guardApprovedChange(SobPlan $plan, Collection $rows): void
     {
         $appItems = AppItem::withoutGlobalScopes()->whereIn('sob_item_id', $rows->pluck('id'))->with('plan')->get();
@@ -679,8 +689,8 @@ class SobService
         $plan->update(['allotment_snapshot' => ['fund' => $plan->fund_source, 'quarter' => (int) $plan->quarter, 'groups' => $keys]]);
         foreach (AppItem::withoutGlobalScopes()->whereIn('sob_item_id', $items->reject->is_extra->pluck('id'))->get() as $appItem) {
             $item = $items->firstWhere('id', $appItem->sob_item_id);
-            if (blank($item->category)) {
-                // The line was changed to "-": it leaves the APP (the change was refused before if a Purchase Request or an approved APP holds it).
+            if (blank($item->category) && ! $appItem->requestItems()->exists()) {
+                // The line was changed to "-": it leaves the APP, unless a Purchase Request already draws from it.
                 $transaction->recordEvent('app', 'removed_from_app', 'planned', null, $item->particulars, ['app_plan_id' => $appItem->app_plan_id]);
                 $appItem->delete();
 

@@ -259,6 +259,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 - 2026-10-20: **New AIP fills itself from the imported SIP, with a Quarter choice** (docs/specs.md section 62). **FINAL (owner's decision): do not change the AIP generation from the SIP, its quarter choice or its amounts without the owner's explicit permission for that exact change.**
 - 2026-10-20: Create DV prefills Less: Withholding Tax from the supplier's tax type and rate: VAT = amount / 1.12 x rate, Non-VAT = amount x rate (docs/specs.md section 63).
 - 2026-10-20: Bank Reconciliation wording: Kind "Beginning balance (maintaining balance)" and "Cash receipts from advances" (docs/specs.md section 64). The cash reports stay FINAL.
+- 2026-10-20: An approved SOB can be edited after a PR or payment; the obligated floor, delete and reopen guards stay (docs/specs.md section 65).
 
 ## Standing workflow (owner's instruction 2026-10-16)
 
