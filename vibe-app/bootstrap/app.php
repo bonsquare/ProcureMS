@@ -7,6 +7,7 @@ use App\Http\Middleware\EnsurePermission;
 use App\Http\Middleware\EnsureScreenIsOn;
 use App\Http\Middleware\EnsureStationConfirmed;
 use App\Http\Middleware\EnsureSubscriptionAllowsWrites;
+use App\Http\Middleware\RestrictTrialActions;
 use App\Http\Middleware\ShowDriveReconnectBanner;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
@@ -37,6 +38,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // The Sub-master limits must run before route-model binding, so a refusal never depends on the record existing.
         $middleware->appendToGroup('web', EnforceSubMasterLimits::class);
         $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: EnforceSubMasterLimits::class);
+        // The trial cannot print: answered before route-model binding too, whatever the record.
+        $middleware->appendToGroup('web', RestrictTrialActions::class);
+        $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: RestrictTrialActions::class);
         // The closed screen answers before the sign-in check sends a visitor to the sign-in page.
         $middleware->prependToPriorityList(before: AuthenticatesRequests::class, prepend: EnsureScreenIsOn::class);
     })
