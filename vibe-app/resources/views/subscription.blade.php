@@ -44,12 +44,12 @@
         @endif
     </section>
 
-    <section class="{{ $card }}" data-subscription-account>
+    <section class="{{ $card }} lg:col-span-2" data-subscription-account>
         <p class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Send the payment to</p>
         @if(filled($settings['account_name']) && filled($settings['account_number']))
             <div class="mt-3 flex flex-col gap-4 sm:flex-row sm:items-start">
                 <dl class="min-w-0 flex-1 space-y-1.5 text-sm"><div><dt class="text-xs text-on-surface-variant">Bank</dt><dd class="font-semibold">{{ $settings['bank_name'] ?: '—' }}</dd></div><div><dt class="text-xs text-on-surface-variant">Account name</dt><dd class="font-semibold">{{ $settings['account_name'] }}</dd></div><div><dt class="text-xs text-on-surface-variant">Account number</dt><dd class="font-semibold tabular-nums">{{ $settings['account_number'] }}</dd></div></dl>
-                @if($settings['qr'])<img src="{{ $settings['qr'] }}" alt="QR code of the account" class="h-40 w-40 rounded-lg border border-outline-variant/40 object-contain">@endif
+                @if($settings['qr'])<div class="mx-auto flex shrink-0 flex-col items-center gap-2 sm:mx-0"><button type="button" data-qr-open class="group rounded-2xl bg-white p-3 shadow-md ring-1 ring-outline-variant/40 transition hover:shadow-lg" aria-label="Open the QR code bigger"><img data-qr-large src="{{ $settings['qr'] }}" alt="QR code of the account" class="h-72 w-72 max-w-[calc(100vw-5rem)] object-contain"></button><p class="text-center text-xs font-semibold text-on-surface-variant">Scan with your banking app · tap to enlarge</p></div>@endif
             </div>
         @else
             <p class="mt-3 text-sm text-on-surface-variant">The administrator has not set the payment details yet. Please check again later.</p>
@@ -65,10 +65,13 @@
             <a href="{{ route('google-drive') }}" class="mt-3 inline-flex rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">Connect Google Drive</a>
         @else
             <form method="POST" action="{{ route('subscription.proof') }}" enctype="multipart/form-data" class="mt-3 grid gap-3 sm:grid-cols-2">@csrf
-                <label class="{{ $label }}">Reference no. of your payment<input name="reference" required maxlength="100" value="{{ old('reference') }}" class="{{ $field }}"></label>
-                <label class="{{ $label }}">Date paid<input type="date" name="paid_at" required max="{{ now()->toDateString() }}" value="{{ old('paid_at', now()->toDateString()) }}" class="{{ $field }}"></label>
+                <p class="sm:col-span-2 rounded-lg bg-surface-low px-3 py-2 text-xs text-on-surface-variant" data-proof-sender>Sent by <strong class="text-on-surface">{{ auth()->user()->name }}</strong> · username <strong class="text-on-surface">{{ auth()->user()->username }}</strong> · User ID <strong class="tabular-nums text-on-surface">{{ auth()->user()->id }}</strong>. This goes with the proof.</p>
+                <label class="{{ $label }}">InstaPay Ref. No.<input name="reference" required maxlength="100" value="{{ old('reference') }}" class="{{ $field }}"></label>
+                <label class="{{ $label }}">Date and time of the transaction<input type="datetime-local" name="transacted_at" required max="{{ now()->format('Y-m-d\TH:i') }}" value="{{ old('transacted_at', now()->format('Y-m-d\TH:i')) }}" class="{{ $field }}"></label>
+                <label class="{{ $label }}">Bank account used<input name="bank_account_used" required maxlength="120" placeholder="Bank or e-wallet and the account number you paid from" value="{{ old('bank_account_used') }}" class="{{ $field }}"></label>
                 <label class="{{ $label }}">Amount paid (₱)<input name="amount" data-proof-amount readonly value="{{ number_format($quote['amount'], 2, '.', '') }}" class="{{ $field }} bg-surface-low text-right tabular-nums"></label>
-                <label class="{{ $label }}">Photo or PDF of the proof (up to 5 MB)<input type="file" name="file" required accept="image/jpeg,image/png,image/webp,application/pdf" class="{{ $field }}"></label>
+                <label class="{{ $label }} sm:col-span-2">Remarks · nature of the payment<input name="remarks" required maxlength="255" placeholder="For example: Annual subscription of the school" value="{{ old('remarks') }}" class="{{ $field }}"></label>
+                <label class="{{ $label }} sm:col-span-2">Photo or PDF of the proof (up to 5 MB)<input type="file" name="file" required accept="image/jpeg,image/png,image/webp,application/pdf" class="{{ $field }}"></label>
                 <input type="hidden" name="promo_code" data-proof-promo value="">
                 <div class="sm:col-span-2 flex justify-end"><button class="rounded-lg bg-primary px-5 py-2.5 text-xs font-bold text-white hover:bg-primary-container">Send proof of payment</button></div>
             </form>
@@ -87,6 +90,20 @@
         @endforelse
     </ul>
 </section>
+
+<dialog data-qr-dialog class="rounded-2xl bg-white p-4 shadow-2xl backdrop:bg-black/60" style="width:min(34rem,calc(100% - 1.5rem))">
+    <div class="flex justify-end"><button type="button" data-qr-close aria-label="Close" class="rounded-full p-2 hover:bg-primary hover:text-white"><span class="material-symbols-outlined">close</span></button></div>
+    <div class="grid place-items-center"><img src="{{ $settings['qr'] ?: '' }}" alt="QR code of the account, large" class="w-full max-w-[28rem] object-contain" style="max-height:78vh"></div>
+    <p class="mt-2 text-center text-xs font-semibold text-on-surface-variant">Scan with your banking app</p>
+</dialog>
+<script>
+    (() => {
+        const dialog = document.querySelector('[data-qr-dialog]');
+        document.querySelector('[data-qr-open]')?.addEventListener('click', () => dialog?.showModal());
+        document.querySelector('[data-qr-close]')?.addEventListener('click', () => dialog?.close());
+        dialog?.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
+    })();
+</script>
 
 <script>
     // The promo code is checked on the server and the price on the page follows it.

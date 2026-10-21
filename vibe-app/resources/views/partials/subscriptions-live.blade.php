@@ -26,6 +26,14 @@
             <td class="px-5 py-3"><div class="flex flex-wrap items-center justify-end gap-1.5"><a href="{{ $proof->drive_link }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 rounded border border-outline-variant/60 bg-white px-3 py-1.5 text-xs font-semibold text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">open_in_new</span>View proof</a>
             <button type="button" data-sub-open="approve-proof" data-id="{{ $proof->id }}" data-name="{{ $proof->school?->name }} · {{ $proof->reference }}" data-amount="{{ number_format((float) $proof->amount_to_pay, 2) }}" class="rounded bg-secondary px-3 py-1.5 text-xs font-bold text-white hover:opacity-90">Approve</button>
             <button type="button" data-sub-open="reject-proof" data-id="{{ $proof->id }}" data-name="{{ $proof->school?->name }} · {{ $proof->reference }}" class="rounded border border-error/50 bg-white px-3 py-1.5 text-xs font-bold text-error hover:bg-error hover:text-white">Reject</button></div></td></tr>
+            <tr data-proof-details class="bg-surface-low/50"><td colspan="6" class="px-5 pb-4 pt-0"><dl class="grid gap-x-6 gap-y-2 text-xs sm:grid-cols-2 xl:grid-cols-3">
+                <div><dt class="font-bold uppercase tracking-wider text-on-surface-variant">Sent by</dt><dd class="mt-0.5 font-semibold">{{ $proof->submitted_by_name ?: $proof->user?->name }} · {{ $proof->submitted_by_username ?: $proof->user?->username }} · User ID {{ $proof->user_id }}</dd></div>
+                <div><dt class="font-bold uppercase tracking-wider text-on-surface-variant">Bank account used</dt><dd class="mt-0.5 font-semibold">{{ $proof->bank_account_used ?: '—' }}</dd></div>
+                <div><dt class="font-bold uppercase tracking-wider text-on-surface-variant">InstaPay Ref. No.</dt><dd class="mt-0.5 font-semibold tabular-nums">{{ $proof->reference }}</dd></div>
+                <div><dt class="font-bold uppercase tracking-wider text-on-surface-variant">Date and time of the transaction</dt><dd class="mt-0.5 font-semibold">{{ ($proof->transacted_at ?? $proof->paid_at)?->format($proof->transacted_at ? 'M d, Y g:i A' : 'M d, Y') }}</dd></div>
+                <div><dt class="font-bold uppercase tracking-wider text-on-surface-variant">Amount</dt><dd class="mt-0.5 font-semibold tabular-nums">₱{{ number_format((float) $proof->amount_to_pay, 2) }} <span class="font-normal text-on-surface-variant">of ₱{{ number_format((float) $proof->list_price, 2) }} (Annual plan)</span></dd></div>
+                <div><dt class="font-bold uppercase tracking-wider text-on-surface-variant">Remarks · nature of the payment</dt><dd class="mt-0.5 font-semibold">{{ $proof->remarks ?: '—' }}</dd></div>
+            </dl></td></tr>
         @endforeach
         </tbody></table></div>
     @endif

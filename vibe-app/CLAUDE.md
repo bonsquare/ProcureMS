@@ -391,3 +391,4 @@ After the change: verify the reported issue is resolved, check related functiona
 Problem · Fix Applied · Files Modified · Verification · Unchanged (relevant existing features preserved).
 
 **Do not improve, redesign, or refactor what was not asked. Fix only what is explicitly requested. When uncertain, ask before making changes.**
+- 2026-10-21: Proof of payment now carries the sender (full name, username, User ID), bank account used, InstaPay Ref. No., date and time of the transaction and remarks (remarks and bank account only for the master); the QR is large and opens bigger to scan (docs/specs.md section 85).

@@ -9,6 +9,7 @@ use App\Models\School;
 use App\Services\GoogleDriveService;
 use App\Services\SubscriptionPricing;
 use App\Support\PaymentSettings;
+use Carbon\Carbon;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -61,7 +62,9 @@ class SubscriptionController extends Controller
         abort_unless($request->user()->role === 'school_admin', 403);
         $data = $request->validate([
             'reference' => ['required', 'string', 'max:100'],
-            'paid_at' => ['required', 'date', 'before_or_equal:today'],
+            'bank_account_used' => ['required', 'string', 'max:120'],
+            'transacted_at' => ['required', 'date', 'before_or_equal:now'],
+            'remarks' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'numeric'],
             'promo_code' => ['nullable', 'string', 'max:40'],
             'file' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
@@ -102,10 +105,11 @@ class SubscriptionController extends Controller
 
         $proof = PaymentProof::create([
             'organization_id' => $school->organization_id, 'school_id' => $school->id, 'user_id' => $request->user()->id, 'subscription_id' => $request->user()->activeSubscription()?->id,
-            'reference' => $data['reference'], 'paid_at' => $data['paid_at'], 'list_price' => $quote['list_price'], 'discount_amount' => $quote['discount'], 'promo_code_id' => $quote['promo']?->id, 'amount_to_pay' => $quote['amount'],
+            'reference' => $data['reference'], 'bank_account_used' => $data['bank_account_used'], 'transacted_at' => $data['transacted_at'], 'paid_at' => Carbon::parse($data['transacted_at'])->toDateString(), 'remarks' => $data['remarks'],
+            'submitted_by_name' => $request->user()->name, 'submitted_by_username' => $request->user()->username, 'list_price' => $quote['list_price'], 'discount_amount' => $quote['discount'], 'promo_code_id' => $quote['promo']?->id, 'amount_to_pay' => $quote['amount'],
             'drive_file_id' => $stored['id'], 'drive_link' => $this->drive->webLink($stored['id']), 'file_name' => Str::limit(basename($file->getClientOriginalName()), 150, ''), 'mime' => $mime, 'size' => $stored['size'], 'sha256' => $sha,
         ]);
-        AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $school->id, 'action' => 'subscription_proof_submitted', 'auditable_type' => PaymentProof::class, 'auditable_id' => $proof->id, 'metadata' => ['reason' => null, 'reference' => $proof->reference, 'amount' => (string) $proof->amount_to_pay]]);
+        AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $school->id, 'action' => 'subscription_proof_submitted', 'auditable_type' => PaymentProof::class, 'auditable_id' => $proof->id, 'metadata' => ['reason' => null, 'reference' => $proof->reference, 'bank_account_used' => $proof->bank_account_used, 'sent_by' => $proof->submitted_by_name.' (@'.$proof->submitted_by_username.', user '.$proof->user_id.')', 'amount' => (string) $proof->amount_to_pay]]);
 
         return redirect()->route('subscription')->with('success', 'Your proof of payment was sent. The administrator will check it and activate your school.');
     }

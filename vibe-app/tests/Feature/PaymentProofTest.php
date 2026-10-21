@@ -43,7 +43,7 @@ class PaymentProofTest extends TestCase
 
     private function submit(array $overrides = [], ?User $as = null)
     {
-        return $this->actingAs($as ?? $this->school)->post(route('subscription.proof'), $overrides + ['reference' => 'GCASH-1', 'paid_at' => now()->toDateString(), 'amount' => '1000.00', 'file' => $this->image()]);
+        return $this->actingAs($as ?? $this->school)->post(route('subscription.proof'), $overrides + ['reference' => 'GCASH-1', 'bank_account_used' => 'GCash 0917 123 4567', 'transacted_at' => now()->subHour()->format('Y-m-d\TH:i'), 'remarks' => 'Annual subscription', 'amount' => '1000.00', 'file' => $this->image()]);
     }
 
     private function proof(): PaymentProof
@@ -219,5 +219,46 @@ class PaymentProofTest extends TestCase
 
         $this->actingAs($this->school)->postJson(route('subscription.promo'), ['promo_code' => 'half'])->assertOk()->assertJsonPath('amount', 500)->assertJsonPath('discount', 500);
         $this->postJson(route('subscription.promo'), ['promo_code' => 'nope'])->assertStatus(422)->assertJsonValidationErrors('promo_code');
+    }
+
+    public function test_the_proof_keeps_who_sent_it_and_what_the_master_needs(): void
+    {
+        $this->school->forceFill(['name' => 'Lourdes M. Santos', 'username' => 'lourdes.santos'])->save();
+
+        $this->submit(['bank_account_used' => 'BDO 0012 3456 7890', 'remarks' => 'Subscription of the school, first year', 'transacted_at' => '2026-10-20T14:35'])->assertSessionHasNoErrors();
+
+        $proof = $this->proof();
+        $this->assertSame(['Lourdes M. Santos', 'lourdes.santos', $this->school->id], [$proof->submitted_by_name, $proof->submitted_by_username, $proof->user_id]);
+        $this->assertSame(['BDO 0012 3456 7890', 'Subscription of the school, first year', '2026-10-20 14:35:00', '2026-10-20'], [$proof->bank_account_used, $proof->remarks, $proof->transacted_at->format('Y-m-d H:i:s'), $proof->paid_at->toDateString()]);
+    }
+
+    public function test_the_account_used_the_ref_no_the_time_and_the_remarks_are_required(): void
+    {
+        foreach (['bank_account_used', 'reference', 'transacted_at', 'remarks'] as $field) {
+            $this->submit([$field => ''])->assertSessionHasErrors($field);
+        }
+        $this->submit(['transacted_at' => now()->addDay()->format('Y-m-d\TH:i')])->assertSessionHasErrors('transacted_at');
+        $this->assertSame(0, PaymentProof::withoutGlobalScopes()->count());
+    }
+
+    public function test_the_remarks_are_for_the_master_only(): void
+    {
+        $this->school->forceFill(['name' => 'Rosa D. Reyes', 'username' => 'rosa.reyes'])->save();
+        $this->submit(['remarks' => 'Nature-XYZ-123', 'bank_account_used' => 'GCash 0999-111-2222', 'reference' => 'INSTA-9876'])->assertSessionHasNoErrors();
+
+        $this->actingAs($this->school)->get(route('subscription'))->assertOk()->assertDontSee('Nature-XYZ-123')->assertDontSee('GCash 0999-111-2222')->assertSee('INSTA-9876');
+
+        auth()->logout();
+        $panel = $this->actingAs($this->master)->getJson(route('subscriptions.live'))->assertOk()->json('html');
+        foreach (['Nature-XYZ-123', 'GCash 0999-111-2222', 'INSTA-9876', 'Rosa D. Reyes', 'rosa.reyes', 'User ID '.$this->school->id, 'Annual'] as $detail) {
+            $this->assertStringContainsString($detail, $panel);
+        }
+    }
+
+    public function test_the_qr_is_large_and_can_be_opened_bigger_to_scan(): void
+    {
+        PaymentSettings::put(['qr' => 'data:image/png;base64,AAAA']);
+
+        $this->actingAs($this->school)->get(route('subscription'))->assertOk()->assertSee('data-qr-large', false)->assertSee('data-qr-dialog', false)->assertSee('Scan with your banking app');
     }
 }
