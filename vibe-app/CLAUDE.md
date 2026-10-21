@@ -275,6 +275,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 - 2026-10-21: The Form Generator button of the SOB panel in Planning is now **+ Programs of Works** (label only; docs/specs.md section 38).
 - 2026-10-21: The system runs on Philippine time (`app.timezone` = Asia/Manila); the times stored on UTC are moved forward 8 hours once by a migration (docs/specs.md section 77).
 - 2026-10-21: The Subscriptions page follows its data live (`GET /subscriptions/live` every 8 seconds, redraw only on change; docs/specs.md section 78).
+- 2026-10-21: **Subscription system** (docs/specs.md sections 79 to 83): Annual plan ₱1,000.00; 3-day trial that cannot print, pay or upload to Drive (banner, trial prompt); Free plan (the full system, with an end date the master sets); a price the master sets for each school and promo codes; working buttons on the Subscriptions page with reason and password; the school's Subscription page with proof of payment uploaded to its own Google Drive and shared only with the master's email, approved or rejected live by the master; Payment Settings; the clock and one notification bell on every page; the Subscription Income section of the dashboard (30% / 20% / 50%).
 
 ## Standing workflow (owner's instruction 2026-10-16)
 
