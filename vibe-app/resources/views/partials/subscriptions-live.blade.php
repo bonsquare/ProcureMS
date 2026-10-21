@@ -15,6 +15,22 @@
 @include('partials.schools-for-activation')
 <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">@foreach($metrics as $metric)<article class="flex items-center justify-between rounded border border-outline-variant/30 bg-white p-5"><div><p class="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">{{ $metric['label'] }}</p><p class="mt-3 text-3xl font-semibold tabular-nums {{ $metric['tone'] === 'error' ? 'text-error' : '' }}">{{ $metric['value'] }}</p><p class="mt-1 text-xs font-medium text-{{ $metric['tone'] }}">{{ $metric['note'] }}</p></div><span class="flex h-10 w-10 items-center justify-center rounded bg-{{ $metric['tone'] }}/10 text-{{ $metric['tone'] }}"><span class="material-symbols-outlined">{{ $metric['icon'] }}</span></span></article>@endforeach</div>
 
+<section data-pending-proofs class="mb-8 overflow-hidden rounded border {{ $pendingProofs->isEmpty() ? 'border-outline-variant/30' : 'border-amber-300' }} bg-white">
+    <div class="flex items-center gap-3 border-b border-outline-variant/30 p-5"><span class="material-symbols-outlined text-primary" aria-hidden="true">receipt_long</span><div><h2 class="text-lg font-semibold">Proofs of payment {{ $pendingProofs->isEmpty() ? '' : '· '.$pendingProofs->count().' waiting' }}</h2><p class="mt-1 text-xs text-on-surface-variant">Each file is in the school's own Google Drive and was shared with your Google email. Check the amount and the reference, then approve or reject.</p></div></div>
+    @if($pendingProofs->isEmpty())
+        <p class="px-5 py-6 text-center text-sm text-on-surface-variant">No proof of payment is waiting.</p>
+    @else
+        <div class="overflow-x-auto"><table class="w-full min-w-[820px] text-left text-sm"><thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant"><tr><th class="px-5 py-3">School</th><th class="px-5 py-3">Reference</th><th class="px-5 py-3 text-right">Amount to pay</th><th class="px-5 py-3">Paid</th><th class="px-5 py-3">Sent</th><th class="px-5 py-3 text-right">Actions</th></tr></thead><tbody class="divide-y divide-outline-variant/20">
+        @foreach($pendingProofs as $proof)
+            <tr><td class="px-5 py-3 font-semibold">{{ $proof->school?->name }}</td><td class="px-5 py-3">{{ $proof->reference }}</td><td class="px-5 py-3 text-right tabular-nums"><span class="font-semibold">₱{{ number_format((float) $proof->amount_to_pay, 2) }}</span>@if((float) $proof->discount_amount > 0)<span class="block text-[11px] text-on-surface-variant"><s>₱{{ number_format((float) $proof->list_price, 2) }}</s> · discount ₱{{ number_format((float) $proof->discount_amount, 2) }}</span>@endif</td><td class="px-5 py-3 text-xs text-on-surface-variant">{{ $proof->paid_at->format('M d, Y') }}</td><td class="px-5 py-3 text-xs text-on-surface-variant">{{ $proof->created_at->format('M d, Y g:i A') }}</td>
+            <td class="px-5 py-3"><div class="flex flex-wrap items-center justify-end gap-1.5"><a href="{{ $proof->drive_link }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 rounded border border-outline-variant/60 bg-white px-3 py-1.5 text-xs font-semibold text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">open_in_new</span>View proof</a>
+            <button type="button" data-sub-open="approve-proof" data-id="{{ $proof->id }}" data-name="{{ $proof->school?->name }} · {{ $proof->reference }}" data-amount="{{ number_format((float) $proof->amount_to_pay, 2) }}" class="rounded bg-secondary px-3 py-1.5 text-xs font-bold text-white hover:opacity-90">Approve</button>
+            <button type="button" data-sub-open="reject-proof" data-id="{{ $proof->id }}" data-name="{{ $proof->school?->name }} · {{ $proof->reference }}" class="rounded border border-error/50 bg-white px-3 py-1.5 text-xs font-bold text-error hover:bg-error hover:text-white">Reject</button></div></td></tr>
+        @endforeach
+        </tbody></table></div>
+    @endif
+</section>
+
 <section class="overflow-hidden rounded border border-outline-variant/30 bg-white">
     <div class="flex flex-col justify-between gap-4 border-b border-outline-variant/30 p-5 sm:flex-row sm:items-center">
         <div><h2 class="text-lg font-semibold">School Subscriptions</h2><p class="mt-1 text-xs text-on-surface-variant">Monitor plan status, renewal dates and what each school pays.</p></div>

@@ -10,6 +10,7 @@ use App\Models\BudgetAllocation;
 use App\Models\CancelledCheck;
 use App\Models\LiquidationReport;
 use App\Models\Organization;
+use App\Models\PaymentProof;
 use App\Models\ProcurementDocument;
 use App\Models\ProcurementRequest;
 use App\Models\ProcurementRequestItem;
@@ -2404,10 +2405,11 @@ class HomeController extends Controller
         return $request->query('h') === $hash ? response()->noContent() : response()->json(['hash' => $hash, 'html' => $html]);
     }
 
-    /** @return array{subscriptions: Collection, pendingPreRegistrations: Collection} */
+    /** @return array{subscriptions: Collection, pendingPreRegistrations: Collection, pendingProofs: Collection} */
     private function subscriptionsData(): array
     {
         return [
+            'pendingProofs' => PaymentProof::withoutGlobalScopes()->with('school')->where('status', 'pending')->oldest('id')->get(),
             'subscriptions' => Subscription::with('school')->whereHas('school')->latest()->get(),
             'pendingPreRegistrations' => School::with(['users' => fn ($query) => $query->oldest()])
                 ->where('status', 'inactive')

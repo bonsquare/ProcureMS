@@ -113,6 +113,18 @@
     </script>
     @endif
 
+    <dialog data-sub-dialog="approve-proof" style="width:min(30rem,calc(100% - 2rem))" class="rounded bg-white p-0 text-left shadow-2xl backdrop:bg-black/50"><form method="POST" action="" data-action="{{ route('subscriptions.proofs.approve', ['proof' => 0]) }}" data-guard-base="Approve the proof of" class="space-y-3 p-6">@csrf
+        <h2 class="text-lg font-semibold">Approve the proof of payment</h2>
+        <p class="text-xs text-on-surface-variant"><span data-sub-name></span></p>
+        <p class="text-xs text-on-surface-variant">Records the payment of <strong data-sub-amount></strong> and makes the school Annual for a year. The reason you type is kept in the history.</p>
+        <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-3"><button type="button" data-sub-close class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Close</button><button class="rounded bg-primary px-4 py-2.5 text-xs font-bold text-white hover:bg-primary-container">Approve</button></div>
+    </form></dialog>
+    <dialog data-sub-dialog="reject-proof" style="width:min(30rem,calc(100% - 2rem))" class="rounded bg-white p-0 text-left shadow-2xl backdrop:bg-black/50"><form method="POST" action="" data-action="{{ route('subscriptions.proofs.reject', ['proof' => 0]) }}" data-guard-base="Reject the proof of" class="space-y-3 p-6">@csrf
+        <h2 class="text-lg font-semibold">Reject the proof of payment</h2>
+        <p class="text-xs text-on-surface-variant"><span data-sub-name></span></p>
+        <p class="text-xs text-on-surface-variant">The reason you type is shown to the school, so say what is wrong (for example, the amount or the reference cannot be read).</p>
+        <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-3"><button type="button" data-sub-close class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Close</button><button class="rounded bg-primary px-4 py-2.5 text-xs font-bold text-white hover:bg-primary-container">Reject</button></div>
+    </form></dialog>
     <dialog data-sub-dialog="create" style="width:min(32rem,calc(100% - 2rem))" class="rounded bg-white p-0 text-left shadow-2xl backdrop:bg-black/50"><form method="POST" action="{{ route('subscriptions.store') }}" data-guard="Create the subscription" class="space-y-3 p-6">@csrf
         <h2 class="text-lg font-semibold">Create Subscription</h2>
         <p class="text-xs text-on-surface-variant">Start a 3-day trial for a school, or record its Annual payment (₱{{ number_format(\App\Services\SubscriptionPricing::LIST_PRICE, 2) }} a year, or the price you set for it).</p>
