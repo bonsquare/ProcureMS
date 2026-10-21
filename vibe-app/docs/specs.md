@@ -1210,3 +1210,4 @@ Design: docs/superpowers/specs/2026-10-21-subscription-trial-payment-design.md; 
 - School Settings has a **Subscription** tab at the end of its tab row (school users, not the master); it opens the school's Subscription page.
 - On the Subscription page the proof-of-payment form sits inside the "Send the payment to" card, under the bank details and beside the QR; its fields and rules are unchanged (section 85).
 - The payment card of the Subscription page is shown as two numbered steps (1 Send the payment to, 2 Proof of payment); the bank, account name and account number sit in one panel with a copy button for the account number, and the Connect Google Drive message is a highlighted notice. Layout only.
+- The proof-of-payment form is always shown in step 2; until the Google Drive is connected its fields are dimmed and locked under the Connect Google Drive notice (the server still refuses a proof without Drive).

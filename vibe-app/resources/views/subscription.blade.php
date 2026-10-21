@@ -52,14 +52,15 @@
         <p class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant"><span class="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[11px] text-white">2</span>Proof of payment</p>
         @if(! $canPay)
             <p class="mt-3 text-sm text-on-surface-variant">Only the school's system administrator can send the proof of payment.</p>
-        @elseif(! $driveConnected)
+        @else
+            @unless($driveConnected)
             <div class="mt-3 flex flex-wrap items-center gap-4 rounded-xl border border-primary/20 bg-primary/5 p-4">
                 <span class="material-symbols-outlined text-[28px] text-primary">cloud_upload</span>
                 <p class="min-w-0 flex-1 text-sm text-on-surface-variant">The proof is saved in <strong>your own Google Drive</strong> (nothing is kept on our server) and shared only with the administrator. Connect your Google Drive first.</p>
                 <a href="{{ route('google-drive') }}" class="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]">link</span>Connect Google Drive</a>
             </div>
-        @else
-            <form method="POST" action="{{ route('subscription.proof') }}" enctype="multipart/form-data" class="mt-3 grid gap-3 sm:grid-cols-2">@csrf
+            @endunless
+            <form method="POST" action="{{ route('subscription.proof') }}" enctype="multipart/form-data" class="mt-3 grid gap-3 sm:grid-cols-2 {{ $driveConnected ? '' : 'opacity-60' }}">@csrf<fieldset class="contents" @disabled(! $driveConnected)>
                 <p class="sm:col-span-2 rounded-lg bg-surface-low px-3 py-2 text-xs text-on-surface-variant" data-proof-sender>Sent by <strong class="text-on-surface">{{ auth()->user()->name }}</strong> · username <strong class="text-on-surface">{{ auth()->user()->username }}</strong> · User ID <strong class="tabular-nums text-on-surface">{{ auth()->user()->id }}</strong>. This goes with the proof.</p>
                 <label class="{{ $label }}">InstaPay Ref. No.<input name="reference" required maxlength="100" value="{{ old('reference') }}" class="{{ $field }}"></label>
                 <label class="{{ $label }}">Date and time of the transaction<input type="datetime-local" name="transacted_at" required max="{{ now()->format('Y-m-d\TH:i') }}" value="{{ old('transacted_at', now()->format('Y-m-d\TH:i')) }}" class="{{ $field }}"></label>
@@ -69,7 +70,7 @@
                 <label class="{{ $label }} sm:col-span-2">Photo or PDF of the proof (up to 5 MB)<input type="file" name="file" required accept="image/jpeg,image/png,image/webp,application/pdf" class="{{ $field }}"></label>
                 <input type="hidden" name="promo_code" data-proof-promo value="">
                 <div class="sm:col-span-2 flex justify-end"><button class="rounded-lg bg-primary px-5 py-2.5 text-xs font-bold text-white hover:bg-primary-container">Send proof of payment</button></div>
-            </form>
+            </fieldset></form>
         @endif
     </div></div>
                 @if($settings['qr'])<div class="mx-auto flex shrink-0 flex-col items-center gap-2 sm:mx-0"><button type="button" data-qr-open class="group rounded-2xl bg-white p-3 shadow-md ring-1 ring-outline-variant/40 transition hover:shadow-lg" aria-label="Open the QR code bigger"><img data-qr-large src="{{ $settings['qr'] }}" alt="QR code of the account" class="h-72 w-72 max-w-[calc(100vw-5rem)] object-contain"></button><p class="text-center text-xs font-semibold text-on-surface-variant">Scan with your banking app · tap to enlarge</p></div>@endif
