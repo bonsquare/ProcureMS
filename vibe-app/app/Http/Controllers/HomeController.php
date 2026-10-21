@@ -615,7 +615,7 @@ class HomeController extends Controller
             'dti_registration_no' => ['nullable', 'string', 'max:150'],
             'sec_registration_no' => ['nullable', 'string', 'max:150'],
             'cda_registration_no' => ['nullable', 'string', 'max:150'],
-            'bir_registration_no' => ['required', 'string', 'max:150'],
+            'bir_registration_no' => ['nullable', 'string', 'max:150'],
             'business_permit_expiry' => ['nullable', 'date'],
             'philgeps_expiry' => ['nullable', 'date'],
             'payment_method' => ['nullable', Rule::in(['Check', 'Bank transfer', 'Cash', 'Others'])],
