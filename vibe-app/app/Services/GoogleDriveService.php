@@ -20,7 +20,7 @@ class GoogleDriveService
 
     public const ROOT_FOLDER = 'ProcMS';
 
-    public const FOLDERS = ['Backup', 'Logo', 'Files'];
+    public const FOLDERS = ['Backup', 'Logo', 'Files', 'Proofs'];
 
     private const FOLDER_MIME = 'application/vnd.google-apps.folder';
 
@@ -134,6 +134,13 @@ class GoogleDriveService
         $this->assertOk($connection, $response);
 
         return ['id' => (string) $response->json('id'), 'size' => (int) ($response->json('size') ?? strlen($contents))];
+    }
+
+    /** Gives one Google account read-only access to a file the app created (never public). */
+    public function share(GoogleDriveConnection $connection, string $fileId, string $email): void
+    {
+        $response = $this->api($this->accessToken($connection))->post('https://www.googleapis.com/drive/v3/files/'.$fileId.'/permissions?sendNotificationEmail=false', ['role' => 'reader', 'type' => 'user', 'emailAddress' => $email]);
+        $this->assertOk($connection, $response);
     }
 
     public function download(GoogleDriveConnection $connection, string $fileId): string

@@ -59,7 +59,7 @@ class GoogleDriveConnectionTest extends TestCase
         $this->assertSame(0, GoogleDriveConnection::count());
     }
 
-    public function test_callback_stores_encrypted_tokens_and_creates_the_four_folders(): void
+    public function test_callback_stores_encrypted_tokens_and_creates_the_folders_of_the_app(): void
     {
         $this->fakeGoogle();
         $user = $this->user();
@@ -75,7 +75,7 @@ class GoogleDriveConnectionTest extends TestCase
         $this->assertNotSame('ya29.first-token', DB::table('google_drive_connections')->value('access_token'));
         $this->assertNotSame('1//refresh-token', DB::table('google_drive_connections')->value('refresh_token'));
         $this->assertNotEmpty($connection->root_folder_id);
-        $this->assertEqualsCanonicalizing(['Backup', 'Logo', 'Files'], array_keys($connection->folder_ids));
+        $this->assertEqualsCanonicalizing(['Backup', 'Logo', 'Files', 'Proofs'], array_keys($connection->folder_ids));
     }
 
     public function test_cancel_on_the_google_screen_creates_no_connection(): void
