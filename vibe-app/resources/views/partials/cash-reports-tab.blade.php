@@ -471,7 +471,7 @@
             field('cash-report-source-other-wrap').classList.toggle('hidden', field('cash-report-source').value !== 'Others');
             ['officer_id', 'received_by_id'].forEach((name) => { const select = slotBox.querySelector('select[data-slot="' + name + '"]'); if (select && params[name] !== undefined) { select.value = params[name]; select.dispatchEvent(new Event('change', { bubbles: true })); } });
             editing = { url: button.dataset.url, name: button.dataset.name };
-            saveButton.textContent = 'Update history';
+            saveButton.textContent = 'Update';
             document.getElementById('cash-report-title').textContent = 'Edit · ' + button.dataset.name;
             schedule();
         });
