@@ -56,6 +56,63 @@
             })();
         </script>
 
+    @if(auth()->user()->isMaster())
+    <section data-payment-settings class="mt-8 overflow-hidden rounded border border-outline-variant/30 bg-white">
+        <div class="border-b border-outline-variant/30 p-5"><h2 class="text-lg font-semibold">Payment Settings</h2><p class="mt-1 text-xs text-on-surface-variant">Where a school sends its subscription payment. The schools see this on their Subscription page. Proofs of payment stay in each school's own Google Drive and are shared only with your Google email.</p></div>
+        <form method="POST" action="{{ route('payment-settings.update') }}" enctype="multipart/form-data" data-guard="Save the payment details" class="grid gap-4 p-5 md:grid-cols-2">@csrf @method('PUT')
+            <label class="block text-xs font-semibold text-on-surface-variant">Bank<input name="bank_name" maxlength="120" value="{{ $paymentSettings['bank_name'] }}" class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-sm outline-none focus:border-primary"></label>
+            <label class="block text-xs font-semibold text-on-surface-variant">Account name<input name="account_name" maxlength="120" value="{{ $paymentSettings['account_name'] }}" class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-sm outline-none focus:border-primary"></label>
+            <label class="block text-xs font-semibold text-on-surface-variant">Account number<input name="account_number" maxlength="60" value="{{ $paymentSettings['account_number'] }}" class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-sm outline-none focus:border-primary"></label>
+            <label class="block text-xs font-semibold text-on-surface-variant">Your Google email (the proofs are shared with it)<input type="email" name="master_email" maxlength="190" value="{{ $paymentSettings['master_email'] }}" class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-sm outline-none focus:border-primary"></label>
+            <div class="md:col-span-2 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-start">
+                <label class="block text-xs font-semibold text-on-surface-variant">QR code of the account (PNG or JPG, up to 300 KB)<input type="file" name="qr" accept="image/png,image/jpeg" class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-sm outline-none focus:border-primary"></label>
+                @if($paymentSettings['qr'])<div class="flex items-center gap-3"><img src="{{ $paymentSettings['qr'] }}" alt="QR code of the account" class="h-24 w-24 rounded border border-outline-variant/40 object-contain"><label class="flex items-center gap-2 text-xs font-semibold text-on-surface-variant"><input type="checkbox" name="remove_qr" value="1" class="h-4 w-4">Remove it</label></div>@endif
+            </div>
+            <div class="flex justify-end md:col-span-2"><button class="rounded bg-primary px-5 py-2.5 text-xs font-bold text-white hover:bg-primary-container">Save payment details</button></div>
+        </form>
+    </section>
+
+    <section data-promo-panel class="mt-8 overflow-hidden rounded border border-outline-variant/30 bg-white">
+        <div class="flex flex-col justify-between gap-3 border-b border-outline-variant/30 p-5 sm:flex-row sm:items-center"><div><h2 class="text-lg font-semibold">Promo Codes</h2><p class="mt-1 text-xs text-on-surface-variant">A school types a code to pay less for the Annual plan. The price you set for a school always wins over a code.</p></div><button type="button" data-promo-open class="rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">+ New promo code</button></div>
+        <div class="overflow-x-auto"><table class="w-full min-w-[720px] text-left text-sm"><thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant"><tr><th class="px-5 py-3">Code</th><th class="px-5 py-3">Takes off</th><th class="px-5 py-3">Valid</th><th class="px-5 py-3">Used</th><th class="px-5 py-3">Status</th><th class="px-5 py-3 text-right">Actions</th></tr></thead><tbody class="divide-y divide-outline-variant/20">
+        @forelse($promoCodes as $promo)
+            @php $usable = $promo->usableAt(); @endphp
+            <tr><td class="px-5 py-3 font-mono font-semibold">{{ $promo->code }}</td><td class="px-5 py-3 tabular-nums">{{ $promo->type === 'percent' ? rtrim(rtrim(number_format((float) $promo->value, 2), '0'), '.').'%' : '₱'.number_format((float) $promo->value, 2) }}</td><td class="px-5 py-3 text-xs text-on-surface-variant">{{ $promo->starts_at?->format('M d, Y') ?? 'now' }} to {{ $promo->ends_at?->format('M d, Y') ?? 'no end' }}</td><td class="px-5 py-3 tabular-nums">{{ $promo->used_count }}{{ $promo->max_uses ? ' / '.$promo->max_uses : '' }}</td><td class="px-5 py-3"><span class="inline-flex rounded-full {{ $usable ? 'bg-secondary/10 text-secondary' : 'bg-error/10 text-error' }} px-2 py-1 text-xs font-semibold">{{ ! $promo->active ? 'Off' : ($usable ? 'On' : 'Not usable') }}</span></td>
+            <td class="px-5 py-3"><div class="flex items-center justify-end gap-1.5"><button type="button" data-promo-open data-url="{{ route('promo-codes.update', $promo) }}" data-code="{{ $promo->code }}" data-type="{{ $promo->type }}" data-value="{{ (float) $promo->value }}" data-starts="{{ $promo->starts_at?->toDateString() }}" data-ends="{{ $promo->ends_at?->toDateString() }}" data-max="{{ $promo->max_uses }}" title="Edit" aria-label="Edit {{ $promo->code }}" class="inline-flex h-8 w-8 items-center justify-center rounded border border-outline-variant/60 bg-white text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">edit</span></button>
+            <form method="POST" action="{{ route('promo-codes.toggle', $promo) }}" data-guard="{{ $promo->active ? 'Switch off' : 'Switch on' }} {{ $promo->code }}">@csrf<button title="{{ $promo->active ? 'Switch off' : 'Switch on' }}" aria-label="{{ $promo->active ? 'Switch off' : 'Switch on' }} {{ $promo->code }}" class="inline-flex h-8 w-8 items-center justify-center rounded border border-outline-variant/60 bg-white text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">{{ $promo->active ? 'toggle_on' : 'toggle_off' }}</span></button></form></div></td></tr>
+        @empty
+            <tr><td colspan="6" class="px-5 py-8 text-center text-sm text-on-surface-variant">No promo code yet.</td></tr>
+        @endforelse
+        </tbody></table></div>
+    </section>
+    <dialog data-promo-dialog style="width:min(32rem,calc(100% - 2rem))" class="rounded bg-white p-0 text-left shadow-2xl backdrop:bg-black/50"><form method="POST" action="{{ route('promo-codes.store') }}" data-store="{{ route('promo-codes.store') }}" data-guard="Save the promo code" class="space-y-3 p-6">@csrf<input type="hidden" name="_method" value="POST" data-promo-method>
+        <h2 class="text-lg font-semibold" data-promo-title>New promo code</h2>
+        <label class="block text-xs font-semibold text-on-surface-variant">Code (letters, numbers, - and _)<input name="code" required maxlength="40" pattern="[A-Za-z0-9_-]+" class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-sm outline-none focus:border-primary uppercase"></label>
+        <div class="grid grid-cols-2 gap-3"><label class="block text-xs font-semibold text-on-surface-variant">Kind<select name="type" required class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-sm outline-none focus:border-primary"><option value="percent">Percent off</option><option value="fixed">Pesos off</option></select></label><label class="block text-xs font-semibold text-on-surface-variant">Value<input type="number" name="value" required min="1" step="0.01" class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-sm outline-none focus:border-primary text-right"></label></div>
+        <div class="grid grid-cols-2 gap-3"><label class="block text-xs font-semibold text-on-surface-variant">Valid from (optional)<input type="date" name="starts_at" class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-sm outline-none focus:border-primary"></label><label class="block text-xs font-semibold text-on-surface-variant">Valid until (optional)<input type="date" name="ends_at" class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-sm outline-none focus:border-primary"></label></div>
+        <label class="block text-xs font-semibold text-on-surface-variant">Most uses (optional)<input type="number" name="max_uses" min="1" max="100000" class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-sm outline-none focus:border-primary text-right"></label>
+        <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-3"><button type="button" data-sub-close class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Close</button><button class="rounded bg-primary px-4 py-2.5 text-xs font-bold text-white hover:bg-primary-container">Save</button></div>
+    </form></dialog>
+    <script>
+        document.addEventListener('click', (event) => {
+            const button = event.target.closest('[data-promo-open]');
+            if (!button) return;
+            const dialog = document.querySelector('[data-promo-dialog]');
+            const form = dialog.querySelector('form');
+            form.reset(); delete form.dataset.guarded;
+            const editing = Boolean(button.dataset.url);
+            form.action = editing ? button.dataset.url : form.dataset.store;
+            form.querySelector('[data-promo-method]').value = editing ? 'PUT' : 'POST';
+            dialog.querySelector('[data-promo-title]').textContent = editing ? 'Edit ' + button.dataset.code : 'New promo code';
+            if (editing) {
+                form.elements.code.value = button.dataset.code; form.elements.type.value = button.dataset.type; form.elements.value.value = button.dataset.value;
+                form.elements.starts_at.value = button.dataset.starts ?? ''; form.elements.ends_at.value = button.dataset.ends ?? ''; form.elements.max_uses.value = button.dataset.max ?? '';
+            }
+            dialog.showModal();
+        });
+    </script>
+    @endif
+
     <dialog data-sub-dialog="create" style="width:min(32rem,calc(100% - 2rem))" class="rounded bg-white p-0 text-left shadow-2xl backdrop:bg-black/50"><form method="POST" action="{{ route('subscriptions.store') }}" data-guard="Create the subscription" class="space-y-3 p-6">@csrf
         <h2 class="text-lg font-semibold">Create Subscription</h2>
         <p class="text-xs text-on-surface-variant">Start a 3-day trial for a school, or record its Annual payment (₱{{ number_format(\App\Services\SubscriptionPricing::LIST_PRICE, 2) }} a year, or the price you set for it).</p>

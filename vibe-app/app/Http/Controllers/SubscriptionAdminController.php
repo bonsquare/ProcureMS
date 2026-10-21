@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
+use App\Models\PromoCode;
 use App\Models\School;
 use App\Models\Subscription;
 use App\Models\SubscriptionPayment;
 use App\Models\User;
 use App\Services\SubscriptionPricing;
 use App\Services\SubscriptionService;
+use App\Support\PaymentSettings;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -147,6 +149,94 @@ class SubscriptionAdminController extends Controller
         });
 
         return response()->json(['title' => $school->name, 'entries' => $entries]);
+    }
+
+    public function storePromo(Request $request): RedirectResponse
+    {
+        abort_unless($request->user()->isMaster(), 403);
+        $data = $request->validate($this->guard() + $this->promoRules());
+        $promo = PromoCode::create($this->promoFields($data) + ['active' => true, 'created_by' => $request->user()->id]);
+        $this->noteSettings($request->user(), 'promo_code_created', $data['reason'], ['code' => $promo->code]);
+
+        return back()->with('success', 'Promo code '.$promo->code.' was created.');
+    }
+
+    public function updatePromo(Request $request, PromoCode $promoCode): RedirectResponse
+    {
+        abort_unless($request->user()->isMaster(), 403);
+        $data = $request->validate($this->guard() + $this->promoRules($promoCode));
+        $promoCode->update($this->promoFields($data));
+        $this->noteSettings($request->user(), 'promo_code_updated', $data['reason'], ['code' => $promoCode->code]);
+
+        return back()->with('success', 'Promo code '.$promoCode->code.' was updated.');
+    }
+
+    public function togglePromo(Request $request, PromoCode $promoCode): RedirectResponse
+    {
+        abort_unless($request->user()->isMaster(), 403);
+        $data = $request->validate($this->guard());
+        $promoCode->update(['active' => ! $promoCode->active]);
+        $this->noteSettings($request->user(), 'promo_code_toggled', $data['reason'], ['code' => $promoCode->code, 'active' => $promoCode->active ? 'on' : 'off']);
+
+        return back()->with('success', 'Promo code '.$promoCode->code.($promoCode->active ? ' is on.' : ' is off.'));
+    }
+
+    /** The account the schools pay to, its QR code (a small image kept as it is) and the Google email the proofs are shared with. */
+    public function updatePaymentSettings(Request $request): RedirectResponse
+    {
+        abort_unless($request->user()->isMaster(), 403);
+        $data = $request->validate($this->guard() + [
+            'bank_name' => ['nullable', 'string', 'max:120'],
+            'account_name' => ['nullable', 'string', 'max:120'],
+            'account_number' => ['nullable', 'string', 'max:60'],
+            'master_email' => ['nullable', 'email', 'max:190'],
+            'qr' => ['nullable', 'file', 'mimes:png,jpg,jpeg', 'max:300'],
+            'remove_qr' => ['nullable', 'boolean'],
+        ]);
+        $values = ['bank_name' => $data['bank_name'] ?? null, 'account_name' => $data['account_name'] ?? null, 'account_number' => $data['account_number'] ?? null, 'master_email' => isset($data['master_email']) ? strtolower($data['master_email']) : null];
+        if ($request->hasFile('qr')) {
+            $file = $request->file('qr');
+            $values['qr'] = 'data:'.$file->getMimeType().';base64,'.base64_encode($file->get());
+        } elseif ($request->boolean('remove_qr')) {
+            $values['qr'] = null;
+        }
+        PaymentSettings::put($values);
+        $this->noteSettings($request->user(), 'payment_settings_updated', $data['reason'], ['bank' => $values['bank_name'], 'account_name' => $values['account_name'], 'qr_changed' => array_key_exists('qr', $values) ? 'yes' : 'no']);
+
+        return back()->with('success', 'The payment details were saved.');
+    }
+
+    /** @return array<string, array<int, mixed>> */
+    private function promoRules(?PromoCode $promo = null): array
+    {
+        return [
+            'code' => ['required', 'string', 'max:40', 'regex:/^[A-Za-z0-9_-]+$/', function ($attribute, $value, $fail) use ($promo) {
+                if (PromoCode::query()->where('code', strtoupper(trim($value)))->when($promo, fn ($query) => $query->whereKeyNot($promo->id))->exists()) {
+                    $fail('This code already exists.');
+                }
+            }],
+            'type' => ['required', 'in:percent,fixed'],
+            'value' => ['required', 'numeric', 'min:1', function ($attribute, $value, $fail) {
+                $max = request('type') === 'percent' ? 99 : SubscriptionPricing::LIST_PRICE - 1;
+                if ((float) $value > $max) {
+                    $fail('The value can be at most '.number_format($max, request('type') === 'percent' ? 0 : 2).'.');
+                }
+            }],
+            'starts_at' => ['nullable', 'date'],
+            'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
+            'max_uses' => ['nullable', 'integer', 'min:1', 'max:100000'],
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function promoFields(array $data): array
+    {
+        return ['code' => $data['code'], 'type' => $data['type'], 'value' => round((float) $data['value'], 2), 'starts_at' => filled($data['starts_at'] ?? null) ? $data['starts_at'] : null, 'ends_at' => filled($data['ends_at'] ?? null) ? $data['ends_at'] : null, 'max_uses' => filled($data['max_uses'] ?? null) ? (int) $data['max_uses'] : null];
+    }
+
+    private function noteSettings(User $by, string $action, string $reason, array $meta = []): void
+    {
+        AuditLog::create(['user_id' => $by->id, 'action' => $action, 'metadata' => ['reason' => $reason] + $meta]);
     }
 
     /** @return array<string, array<int, mixed>> the reason and the user's own password every action asks for */

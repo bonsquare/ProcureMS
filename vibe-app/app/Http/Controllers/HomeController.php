@@ -13,6 +13,7 @@ use App\Models\Organization;
 use App\Models\ProcurementDocument;
 use App\Models\ProcurementRequest;
 use App\Models\ProcurementRequestItem;
+use App\Models\PromoCode;
 use App\Models\School;
 use App\Models\SchoolStaff;
 use App\Models\SharedLogo;
@@ -34,6 +35,7 @@ use App\Services\MasterTransactionService;
 use App\Services\ProcurementWorkspaceService;
 use App\Services\ServerDashboardService;
 use App\Services\SubscriptionService;
+use App\Support\PaymentSettings;
 use App\Support\PlaceNames;
 use App\Support\SignatorySlots;
 use Illuminate\Http\Request;
@@ -2388,7 +2390,7 @@ class HomeController extends Controller
 
         $data = $this->subscriptionsData();
 
-        return view('subscriptions', $data + ['liveHash' => md5(view('partials.subscriptions-live', $data)->render()), 'schools' => School::withoutGlobalScopes()->orderBy('name')->get(['id', 'name', 'code'])]);
+        return view('subscriptions', $data + ['liveHash' => md5(view('partials.subscriptions-live', $data)->render()), 'schools' => School::withoutGlobalScopes()->orderBy('name')->get(['id', 'name', 'code']), 'promoCodes' => request()->user()->isMaster() ? PromoCode::query()->latest('id')->get() : collect(), 'paymentSettings' => PaymentSettings::get()]);
     }
 
     /** The live part of the Subscriptions page, drawn again when its data changed (204 when the page already has the same). */

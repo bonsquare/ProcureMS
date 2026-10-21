@@ -241,6 +241,10 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::get('/subscriptions', [HomeController::class, 'subscriptions'])->name('subscriptions');
     Route::get('/subscriptions/live', [HomeController::class, 'subscriptionsLive'])->name('subscriptions.live');
     Route::post('/subscriptions', [SubscriptionAdminController::class, 'store'])->name('subscriptions.store');
+    Route::post('/promo-codes', [SubscriptionAdminController::class, 'storePromo'])->name('promo-codes.store');
+    Route::put('/promo-codes/{promoCode}', [SubscriptionAdminController::class, 'updatePromo'])->whereNumber('promoCode')->name('promo-codes.update');
+    Route::post('/promo-codes/{promoCode}/toggle', [SubscriptionAdminController::class, 'togglePromo'])->whereNumber('promoCode')->name('promo-codes.toggle');
+    Route::put('/payment-settings', [SubscriptionAdminController::class, 'updatePaymentSettings'])->name('payment-settings.update');
     Route::post('/subscriptions/{school}/activate', [SubscriptionAdminController::class, 'activate'])->whereNumber('school')->name('subscriptions.activate');
     Route::post('/subscriptions/{school}/extend', [SubscriptionAdminController::class, 'extend'])->whereNumber('school')->name('subscriptions.extend');
     Route::post('/subscriptions/{school}/suspend', [SubscriptionAdminController::class, 'suspend'])->whereNumber('school')->name('subscriptions.suspend');
