@@ -297,7 +297,7 @@ class CashReportController extends Controller
         return response()->json(['ok' => true, 'entry' => [
             'generated' => $entry->created_at->format('M d, Y g:i A'), 'report' => $entry->label(), 'period' => $entry->period_text, 'fund' => $entry->source_of_fund ?: 'All funds', 'report_no' => $entry->report_no ?: '—',
             'payments' => number_format((float) $entry->total_payments, 2), 'by' => $request->user()->name, 'url' => route('cash.report.history', $entry->id),
-            'update_url' => route('cash.report.history.update', $entry->id), 'delete_url' => route('cash.report.history.destroy', $entry->id), 'name' => $entry->label().' '.$entry->period_text, 'kind' => $entry->report, 'params' => $entry->params,
+            'update_url' => route('cash.report.history.update', $entry->id), 'delete_url' => route('cash.report.history.destroy', $entry->id), 'name' => $entry->label().' '.$entry->period_text, 'kind' => $entry->report, 'params' => $entry->params, 'item' => view('partials.cash-history-item', ['entry' => $entry->load('generator')])->render(),
         ]]);
     }
 

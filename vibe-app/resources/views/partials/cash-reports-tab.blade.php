@@ -27,18 +27,20 @@
     </section>
     <section class="overflow-hidden rounded-xl border border-outline-variant/60 bg-white shadow-sm">
         {!! $head(2, 'Report history', 'Press Save to history in the window of any report to keep it as it was generated. Open it again to print the same document.') !!}
-        <div class="overflow-x-auto">
-            <table class="w-full min-w-[720px] text-left text-xs">
-                <thead class="bg-surface-low uppercase tracking-wider text-on-surface-variant"><tr><th class="px-4 py-2">Generated</th><th class="px-3 py-2">Report</th><th class="px-3 py-2">Period covered</th><th class="px-3 py-2">Fund</th><th class="px-3 py-2">Report No.</th><th class="px-3 py-2 text-right">Payments</th><th class="px-3 py-2">By</th><th class="px-4 py-2 text-right"></th></tr></thead>
-                <tbody id="register-history-rows" class="divide-y divide-outline-variant/30">
-                    @forelse($reportHistory as $entry)
-                        @php $keptParams = $entry->params ?: array_filter(['school_id' => $entry->school_id, 'from' => $entry->period_from->toDateString(), 'to' => $entry->period_to->toDateString(), 'source_of_fund' => $entry->source_of_fund, 'report_no' => $entry->report_no]); @endphp
-                        <tr><td class="px-4 py-2.5">{{ $entry->created_at->format('M d, Y g:i A') }}</td><td class="px-3 py-2.5 font-semibold">{{ $entry->label() }}</td><td class="px-3 py-2.5">{{ $entry->period_text }}</td><td class="px-3 py-2.5">{{ $entry->source_of_fund ?: 'All funds' }}</td><td class="px-3 py-2.5">{{ $entry->report_no ?: '—' }}</td><td class="px-3 py-2.5 text-right tabular-nums">{{ number_format((float) $entry->total_payments, 2) }}</td><td class="px-3 py-2.5">{{ $entry->generator?->name }}</td><td class="px-4 py-2.5 text-right"><div class="flex items-center justify-end gap-1.5"><a href="{{ route('cash.report.history', $entry->id) }}" target="_blank" rel="noopener" class="rounded border border-outline-variant/60 px-3 py-1.5 font-semibold text-primary hover:bg-primary hover:text-white">Open</a><button type="button" data-history-edit data-kind="{{ $entry->report }}" data-url="{{ route('cash.report.history.update', $entry->id) }}" data-name="{{ $entry->label() }} · {{ $entry->period_text }}" data-params='@json($keptParams)' title="Edit" aria-label="Edit {{ $entry->label() }}" class="inline-flex h-8 w-8 items-center justify-center rounded border border-outline-variant/60 text-primary hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">edit</span></button><form method="POST" action="{{ route('cash.report.history.destroy', $entry->id) }}" data-guard="Delete {{ $entry->label() }} · {{ $entry->period_text }} from the history">@csrf @method('DELETE')<button title="Delete from the history" aria-label="Delete {{ $entry->label() }}" class="inline-flex h-8 w-8 items-center justify-center rounded border border-error/50 text-error hover:bg-error hover:text-white"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">delete</span></button></form></div></td></tr>
-                    @empty
-                        <tr><td colspan="8" class="px-4 py-6 text-center text-on-surface-variant">No report has been generated yet.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
+        <div class="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-4">
+            @foreach($reportLinks as [$routeName, $title, $hint, $icon])
+                @php $kind = \Illuminate\Support\Str::afterLast($routeName, '.'); $kept = $reportHistory->where('report', $kind); @endphp
+                <div class="flex flex-col rounded-xl border border-outline-variant/50 border-l-4 border-l-primary bg-[#f6f9fc]">
+                    <div class="flex items-center gap-2 border-b border-outline-variant/40 px-4 py-3"><span class="material-symbols-outlined text-[20px] text-primary" aria-hidden="true">{{ $icon }}</span><h3 class="min-w-0 flex-1 text-sm font-bold text-primary">{{ $title }}</h3><span class="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-on-surface-variant" data-history-count="{{ $kind }}">{{ $kept->count() }}</span></div>
+                    <ul data-history-list="{{ $kind }}" class="max-h-[30rem] space-y-2 overflow-y-auto p-3">
+                        @forelse($kept as $entry)
+                            @include('partials.cash-history-item')
+                        @empty
+                            <li data-empty class="px-2 py-4 text-center text-xs text-on-surface-variant">No report saved yet.</li>
+                        @endforelse
+                    </ul>
+                </div>
+            @endforeach
         </div>
     </section>
     @endif
@@ -299,33 +301,13 @@
                 }
                 if (!response.ok) throw new Error('save failed');
                 const { entry } = await response.json();
-                const rows = document.getElementById('register-history-rows');
-                const row = document.createElement('tr');
-                const cell = (text, classes) => { const td = document.createElement('td'); td.className = classes; td.textContent = text; row.append(td); return td; };
-                cell(entry.generated, 'px-4 py-2.5'); cell(entry.report, 'px-3 py-2.5 font-semibold'); cell(entry.period, 'px-3 py-2.5'); cell(entry.fund, 'px-3 py-2.5'); cell(entry.report_no, 'px-3 py-2.5'); cell(entry.payments, 'px-3 py-2.5 text-right tabular-nums'); cell(entry.by, 'px-3 py-2.5');
-                const open = document.createElement('a'); open.href = entry.url; open.target = '_blank'; open.rel = 'noopener'; open.textContent = 'Open'; open.className = 'rounded border border-outline-variant/60 px-3 py-1.5 font-semibold text-primary hover:bg-primary hover:text-white';
-                const token = document.querySelector('meta[name="csrf-token"]')?.content || @json(csrf_token());
-                const editButton = () => {
-                    const button = document.createElement('button'); button.type = 'button'; button.title = 'Edit'; button.setAttribute('aria-label', 'Edit ' + entry.name);
-                    button.dataset.historyEdit = ''; button.dataset.kind = entry.kind; button.dataset.url = entry.update_url; button.dataset.name = entry.name; button.dataset.params = JSON.stringify(entry.params || {});
-                    button.className = 'inline-flex h-8 w-8 items-center justify-center rounded border border-outline-variant/60 text-primary hover:bg-primary hover:text-white';
-                    const glyph = document.createElement('span'); glyph.className = 'material-symbols-outlined text-[18px]'; glyph.setAttribute('aria-hidden', 'true'); glyph.textContent = 'edit'; button.append(glyph);
-                    return button;
-                };
-                const action = (url, method, label, icon, guard, danger) => {
-                    const form = document.createElement('form'); form.method = 'POST'; form.action = url; form.dataset.guard = guard;
-                    const hidden = (name, value) => { const input = document.createElement('input'); input.type = 'hidden'; input.name = name; input.value = value; form.append(input); };
-                    hidden('_token', token); hidden('_method', method);
-                    const button = document.createElement('button'); button.title = label; button.setAttribute('aria-label', label);
-                    button.className = 'inline-flex h-8 w-8 items-center justify-center rounded border ' + (danger ? 'border-error/50 text-error hover:bg-error hover:text-white' : 'border-outline-variant/60 text-primary hover:bg-primary hover:text-white');
-                    const glyph = document.createElement('span'); glyph.className = 'material-symbols-outlined text-[18px]'; glyph.setAttribute('aria-hidden', 'true'); glyph.textContent = icon; button.append(glyph); form.append(button);
-                    return form;
-                };
-                const wrap = document.createElement('div'); wrap.className = 'flex items-center justify-end gap-1.5';
-                wrap.append(open, editButton(), action(entry.delete_url, 'DELETE', 'Delete from the history', 'delete', 'Delete ' + entry.name + ' from the history', true));
-                cell('', 'px-4 py-2.5 text-right').append(wrap);
-                if (rows.querySelector('td[colspan]')) rows.innerHTML = '';
-                rows.prepend(row);
+                const list = document.querySelector('[data-history-list="' + entry.kind + '"]');
+                if (list) {
+                    list.querySelector('[data-empty]')?.remove();
+                    list.insertAdjacentHTML('afterbegin', entry.item);
+                    const count = document.querySelector('[data-history-count="' + entry.kind + '"]');
+                    if (count) count.textContent = list.querySelectorAll('[data-history-item]').length;
+                }
                 status.textContent = 'Saved to history';
                 notice?.set('Saved to history.', 'done');
             } catch (error) { status.textContent = 'Could not save to history. Try again'; notice?.set('Could not save to history. Try again.', 'error'); }
