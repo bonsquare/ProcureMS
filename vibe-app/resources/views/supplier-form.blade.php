@@ -69,7 +69,7 @@
             <label class="block text-xs font-bold">TIN <span class="text-error" aria-hidden="true">*</span><input name="tin" required value="{{ $value('tin') }}" placeholder="000-000-000-000" class="{{ $input }}">{!! $field('tin') !!}</label>
             <label class="block text-xs font-bold">Tax type <span class="text-error" aria-hidden="true">*</span><select name="tax_type" required id="tax_type" class="{{ $input }}"><option value="vat" @selected($value('tax_type', 'vat') === 'vat')>VAT</option><option value="non_vat" @selected($value('tax_type') === 'non_vat')>Non-VAT</option><option value="vat_exempt" @selected($value('tax_type') === 'vat_exempt')>VAT exempt</option></select>{!! $field('tax_type') !!}</label>
             <label class="block text-xs font-bold">Tax rate (%) <span class="text-error" aria-hidden="true">*</span><input type="number" step="0.01" min="0" max="100" name="tax_rate" required id="tax_rate" value="{{ $value('tax_rate') }}" placeholder="12 for VAT" class="{{ $input }}">{!! $field('tax_rate') !!}</label>
-            <label class="block text-xs font-bold">BIR Certificate of Registration No. <span class="text-error" aria-hidden="true">*</span><input name="bir_registration_no" required value="{{ $value('bir_registration_no') }}" class="{{ $input }}"></label>
+            <label class="block text-xs font-bold">BIR Certificate of Registration No.<input name="bir_registration_no" value="{{ $value('bir_registration_no') }}" class="{{ $input }}"></label>
         </div>
     </section>
     <section class="rounded-xl border border-outline-variant/60 bg-white p-4">
