@@ -46,7 +46,7 @@
         let offset = 0;
 
         const place = () => {
-            if (document.querySelector('[data-official-page]')) return null; // an official document has a letterhead, not a top bar
+            if (document.querySelector('[data\2d official-page]')) return null; // an official document has a letterhead, not a top bar
             const header = document.querySelector('header');
             if (!header || header.querySelector('[data-topbar-tools]')) return null;
             // The old per-page bell goes: this one is the same on every page.

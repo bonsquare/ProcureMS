@@ -46,7 +46,7 @@
     }
 
     /* Notices (spec 75): every action says it is working and when it is done. */
-    #app-toasts { position: fixed; top: 1rem; right: 1rem; z-index: 300; display: flex; flex-direction: column; gap: .5rem; width: min(24rem, calc(100vw - 2rem)); pointer-events: none; }
+    #app-toasts { position: fixed; inset: auto; top: 1rem; right: 1rem; margin: 0; padding: 0; border: 0; background: transparent; overflow: visible; color: inherit; z-index: 300; display: flex; flex-direction: column; gap: .5rem; width: min(24rem, calc(100vw - 2rem)); pointer-events: none; }
     .app-toast { pointer-events: auto; display: flex; align-items: flex-start; gap: .625rem; border-radius: .75rem; border: 1px solid rgba(16, 57, 103, .14); background: rgba(255, 255, 255, .92); padding: .75rem .875rem; font-size: .8125rem; line-height: 1.35; color: #1b2a3a; box-shadow: 0 12px 32px -10px rgba(16, 57, 103, .35); backdrop-filter: blur(10px) saturate(160%); animation: apple-arrive 280ms cubic-bezier(.2, .9, .25, 1.04); transition: opacity 240ms ease, transform 240ms ease; }
     .app-toast[data-type="done"] { border-color: rgba(21, 128, 61, .35); } .app-toast[data-type="done"] .app-toast-icon { color: #15803d; }
     .app-toast[data-type="error"] { border-color: rgba(186, 26, 26, .4); } .app-toast[data-type="error"] .app-toast-icon { color: #ba1a1a; }
@@ -74,6 +74,8 @@
     (() => {
         if (window.appNotify) return;
         const box = () => document.getElementById('app-toasts') ?? document.body.appendChild(Object.assign(document.createElement('div'), { id: 'app-toasts', role: 'status', ariaLive: 'polite' }));
+        // A native dialog sits in the top layer; the notices live there too (popover) so a window never hides them.
+        const raise = () => { const el = box(); if (! el.hasAttribute('popover')) el.setAttribute('popover', 'manual'); try { if (el.matches(':popover-open')) el.hidePopover(); el.showPopover(); } catch (e) {} };
         const icons = { done: 'check_circle', error: 'error', info: 'info' };
         window.appNotify = (message, type = 'info') => {
             const toast = document.createElement('div');
@@ -96,8 +98,14 @@
                 dismiss,
             };
             box().append(toast);
+            raise();
             return api.set(message, type);
         };
+
+        // The refusals of the server (a wrong password, a missing field) are shown as notices too, above any window.
+        document.addEventListener('DOMContentLoaded', () => {
+            @json(array_values(array_unique(array_merge(($errors ?? new \Illuminate\Support\ViewErrorBag)->all(), array_filter([(string) session('error')]))))).slice(0, 3).forEach((message) => window.appNotify(message, 'error'));
+        });
 
         // The success message of a page (after a form) is shown as a notice, not left in the page.
         document.addEventListener('DOMContentLoaded', () => {
