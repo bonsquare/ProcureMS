@@ -9,6 +9,7 @@
 </script>
 
 @include('partials.apple-design')
+@include('partials.trial-banner')
 @include('partials.password-toggle')
 @include('partials.searchable-select')
 
