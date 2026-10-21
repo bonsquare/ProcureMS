@@ -77,6 +77,7 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::post('/liquidation', [HomeController::class, 'storeLiquidation'])->middleware('permission:liquidation.create')->name('liquidation.store');
     Route::post('/liquidation/preview', [HomeController::class, 'previewOrs'])->middleware('permission:liquidation.create')->name('liquidation.preview');
     Route::get('/liquidation/{liquidationReport}/print', [HomeController::class, 'printOrs'])->name('liquidation.print');
+    Route::get('/liquidation/{liquidationReport}/history', [FinanceController::class, 'history'])->whereNumber('liquidationReport')->name('liquidation.history');
     Route::delete('/liquidation/{liquidationReport}', [HomeController::class, 'destroyLiquidation'])->middleware('permission:liquidation.create')->whereNumber('liquidationReport')->name('liquidation.destroy');
     Route::patch('/liquidation/{liquidationReport}/resubmit', [HomeController::class, 'updateReturnedOrs'])->middleware('permission:liquidation.create')->name('liquidation.update');
     Route::post('/liquidation/{liquidationReport}/resubmit/preview', [HomeController::class, 'previewReturnedOrs'])->middleware('permission:liquidation.create')->name('liquidation.update.preview');
@@ -193,6 +194,7 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::get('/accounting/{liquidationReport}/dv-print', [FinanceController::class, 'printDv'])->name('accounting.dv.print');
     Route::get('/cash', [FinanceController::class, 'cash'])->name('cash');
     Route::post('/cash/{liquidationReport}/pay', [FinanceController::class, 'pay'])->middleware('permission:cash.pay')->name('cash.pay');
+    Route::patch('/cash/{liquidationReport}/payment', [FinanceController::class, 'updatePayment'])->middleware('permission:cash.pay')->name('cash.payment.update');
     Route::post('/cash/{liquidationReport}/cancel', [FinanceController::class, 'cancelCheck'])->middleware('permission:cash.pay')->name('cash.cancel');
     Route::post('/cash/fund-receipts', [CashReportController::class, 'storeReceipt'])->middleware('permission:cash.pay')->name('cash.fund.store');
     Route::put('/cash/fund-receipts/{cashFundReceipt}', [CashReportController::class, 'updateReceipt'])->middleware('permission:cash.pay')->name('cash.fund.update')->whereNumber('cashFundReceipt');

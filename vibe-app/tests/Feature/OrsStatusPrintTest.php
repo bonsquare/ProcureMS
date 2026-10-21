@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\AuditLog;
 use App\Models\BudgetAllocation;
 use App\Models\LiquidationDocumentCheck;
 use App\Models\LiquidationReport;
@@ -395,17 +396,20 @@ class OrsStatusPrintTest extends TestCase
         $this->assertSame(1, LiquidationReport::count());
     }
 
-    public function test_an_ors_without_a_dv_can_be_edited_and_one_with_a_dv_cannot(): void
+    public function test_an_ors_is_edited_and_one_with_a_dv_keeps_its_amount_payee_and_status(): void
     {
         [$school, $user] = $this->tenant();
         $this->actingAs($user)->post(route('liquidation.store'), $this->payload($school))->assertSessionHasNoErrors();
         $ors = LiquidationReport::firstOrFail();
 
-        $this->patch(route('liquidation.update', $ors), ['purpose' => 'Corrected purpose', 'amount' => '900', 'payee' => 'New Payee'])->assertSessionHasNoErrors();
+        $guard = ['reason' => 'Typo', 'password' => 'password'];
+        $this->patch(route('liquidation.update', $ors), ['purpose' => 'Corrected purpose', 'amount' => '900', 'payee' => 'New Payee'] + $guard)->assertSessionHasNoErrors();
         $this->assertSame(['Corrected purpose', 'New Payee', 'for_review'], [$ors->fresh()->purpose, $ors->fresh()->payee, $ors->fresh()->status]);
 
         $ors->update(['dv_number' => 'DV-2026-0001']);
-        $this->patch(route('liquidation.update', $ors), ['purpose' => 'Too late', 'amount' => '900'])->assertStatus(422);
+        $this->patch(route('liquidation.update', $ors), ['purpose' => 'In place', 'amount' => '1', 'payee' => 'New Payee'] + $guard)->assertSessionHasNoErrors();
+        $this->assertSame(['In place', 'for_review'], [$ors->fresh()->purpose, $ors->fresh()->status], 'with a DV it is corrected in place and the status stays');
+        $this->patch(route('liquidation.update', $ors), ['purpose' => 'Other', 'amount' => '900', 'payee' => 'Another'] + $guard)->assertSessionHasErrors('payee');
     }
 
     public function test_an_ors_is_deleted_with_its_dv_and_papers_after_the_password(): void
@@ -417,10 +421,12 @@ class OrsStatusPrintTest extends TestCase
         $ors->update(['dv_number' => 'DV-2026-0001', 'paid_at' => now()]);
         LiquidationDocumentCheck::create(['organization_id' => $school->organization_id, 'liquidation_report_id' => $ors->id, 'item_key' => 'supporting_paper', 'state' => 'received']);
 
-        $this->delete(route('liquidation.destroy', $ors), ['password' => 'wrong'])->assertSessionHasErrors('password');
+        $this->delete(route('liquidation.destroy', $ors), ['reason' => 'Duplicate', 'password' => 'wrong'])->assertSessionHasErrors('password');
+        $this->delete(route('liquidation.destroy', $ors), ['password' => 'secret-pass-123'])->assertSessionHasErrors('reason');
         $this->assertSame(1, LiquidationReport::count());
 
-        $this->delete(route('liquidation.destroy', $ors), ['password' => 'secret-pass-123'])->assertSessionHasNoErrors();
+        $this->delete(route('liquidation.destroy', $ors), ['reason' => 'Duplicate', 'password' => 'secret-pass-123'])->assertSessionHasNoErrors();
+        $this->assertSame('Duplicate', AuditLog::where('action', 'deleted_ors')->first()->metadata['reason']);
         $this->assertSame(0, LiquidationReport::count());
         $this->assertSame(0, LiquidationDocumentCheck::count());
     }

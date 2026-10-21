@@ -125,6 +125,7 @@
                     @endif
                 </td>
                 <td class="px-5 py-4 text-right"><div class="flex flex-wrap items-center justify-end gap-1.5">
+                    <button type="button" data-history="{{ route('liquidation.history', $r) }}" title="History of {{ $label }}" aria-label="History of {{ $label }}" class="inline-flex h-8 w-8 items-center justify-center rounded border border-outline-variant/60 bg-white text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">history</span></button>
                     @if(auth()->user()->hasPermission('cash.pay') && $isCash && $r->paid_at)
                         <button type="button" onclick="document.getElementById('cancel-{{ $r->id }}').showModal()" class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-error ring-1 ring-error/30 hover:bg-error hover:text-white"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">cancel</span>Cancel Check</button>
                         <dialog id="cancel-{{ $r->id }}" style="width:min(28rem,calc(100% - 2rem))" class="rounded bg-white p-0 text-left shadow-2xl backdrop:bg-black/50"><form method="POST" action="{{ route('cash.cancel', $r) }}" class="space-y-3 p-6">@csrf
@@ -133,6 +134,21 @@
                             <label class="block text-xs font-semibold text-on-surface-variant">Reason <span class="text-error">*</span><input name="reason" required maxlength="255" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" class="{{ $inputClass }}"></label>
                             <label class="block text-xs font-semibold text-on-surface-variant">Your password <span class="text-error">*</span><input type="password" name="password" required autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly')" class="{{ $inputClass }}"></label>
                             <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-3"><button type="button" onclick="this.closest('dialog').close()" class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Close</button><button class="rounded bg-error px-4 py-2.5 text-xs font-bold text-white hover:opacity-90">Cancel Check</button></div>
+                        </form></dialog>
+                        <button type="button" onclick="document.getElementById('edit-pay-{{ $r->id }}').showModal()" class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-primary ring-1 ring-outline-variant/50 hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">edit</span>Edit Payment</button>
+                        <dialog id="edit-pay-{{ $r->id }}" style="width:min(32rem,calc(100% - 2rem))" class="rounded bg-white p-0 text-left shadow-2xl backdrop:bg-black/50"><form method="POST" action="{{ route('cash.payment.update', $r) }}" data-guard="Edit payment of {{ $dvLabel($r->dv_number) }}" class="space-y-3 p-6">@csrf @method('PATCH')
+                            <h2 class="text-lg font-semibold">Edit payment · check {{ $r->payment_reference }}</h2>
+                            <p class="text-xs text-on-surface-variant">{{ $label }} · {{ $dvLabel($r->dv_number) }} · {{ $peso($r->amount) }}. The check number, mode, date paid and amount stay; a reason and your password are asked when you save.</p>
+                            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                <label class="block text-xs font-semibold text-on-surface-variant">Check Date<input type="date" name="check_date" value="{{ $r->check_date?->toDateString() }}" class="{{ $inputClass }}"></label>
+                                <label class="block text-xs font-semibold text-on-surface-variant">Fund Cluster<input name="payment_fund_cluster" maxlength="100" value="{{ $r->payment_fund_cluster }}" class="{{ $inputClass }}"></label>
+                                <label class="block text-xs font-semibold text-on-surface-variant">Bank<input name="bank_name" maxlength="120" value="{{ $r->bank_name }}" class="{{ $inputClass }}"></label>
+                                <label class="block text-xs font-semibold text-on-surface-variant">Account Name<input name="bank_account_name" maxlength="120" value="{{ $r->bank_account_name }}" class="{{ $inputClass }}"></label>
+                                <label class="block text-xs font-semibold text-on-surface-variant">Account No.<input name="bank_account_number" maxlength="60" value="{{ $r->bank_account_number }}" class="{{ $inputClass }}"></label>
+                                <label class="block text-xs font-semibold text-on-surface-variant">Received / Claimed by<input name="received_by" maxlength="120" value="{{ $r->received_by }}" class="{{ $inputClass }}"></label>
+                                <label class="block text-xs font-semibold text-on-surface-variant sm:col-span-2">Remarks<input name="payment_remarks" maxlength="255" value="{{ $r->payment_remarks }}" class="{{ $inputClass }}"></label>
+                            </div>
+                            <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-3"><button type="button" onclick="this.closest('dialog').close()" class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Close</button><button class="rounded bg-primary px-4 py-2.5 text-xs font-bold text-white hover:bg-primary-container">Save changes</button></div>
                         </form></dialog>
                     @endif
                     @if(auth()->user()->hasPermission('cash.pay') && $isCash && ! $r->paid_at)<button type="button" data-pay="{{ route('cash.pay', $r) }}" data-label="{{ $label }}" data-amount="{{ $peso($r->amount) }}" data-mode="{{ $r->payment_mode }}" data-dv-date="{{ $r->dv_date?->toDateString() }}" data-fund-cluster="{{ $r->dv_fund_cluster ?: 'General Fund' }}" data-bank="{{ $r->school?->bank_name }}" data-account-name="{{ $r->school?->bank_account_name }}" data-account-number="{{ $r->school?->bank_account_number }}" class="inline-flex items-center gap-1 rounded-lg bg-secondary px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:opacity-90"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">payments</span>Record Payment</button>@endif
@@ -186,7 +202,7 @@
                             <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-3"><button type="button" onclick="this.closest('dialog').close()" class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Close</button><button class="rounded bg-primary px-4 py-2.5 text-xs font-bold text-white hover:bg-primary-container">Save papers</button></div>
                         </form></dialog>
                     @endif
-                    @if(auth()->user()->hasPermission('accounting.approve') && ! $isCash && $r->dv_number && ! $r->paid_at)
+                    @if(auth()->user()->hasPermission('accounting.approve') && ! $isCash && $r->dv_number)
                         <button type="button" data-ors-edit-open="edit-dv-{{ $r->id }}" class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-primary ring-1 ring-outline-variant/50 hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">edit</span>Edit DV</button>
                         <dialog id="edit-dv-{{ $r->id }}" data-ors-edit data-split data-preview="{{ route('accounting.dv.preview', $r) }}" class="rounded bg-white p-0 text-left shadow-2xl backdrop:bg-black/50">
                             <div class="flex max-h-[94vh] w-full flex-col overflow-hidden rounded bg-white">
@@ -697,5 +713,6 @@
         if (id) document.querySelector('[data-dv][data-report-id="' + CSS.escape(id) + '"]')?.click();
     })();
 </script>
+@include('partials.action-guard')
 </body>
 </html>

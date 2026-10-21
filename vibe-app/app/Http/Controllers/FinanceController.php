@@ -19,6 +19,7 @@ use App\Support\SignatorySlots;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -247,6 +248,65 @@ class FinanceController extends Controller
         return redirect()->route('cash', ['tab' => 'cancelled'])->with('success', "Check cancelled for {$liquidationReport->ors_number} (DV {$dvNumber}). Edit the ORS in Accounting (For Review), approve it, create the DV again, then record the new payment.");
     }
 
+    /** Corrects the details of a recorded payment without cancelling the check: the check number, mode, date paid and amount stay. */
+    public function updatePayment(Request $request, LiquidationReport $liquidationReport)
+    {
+        abort_unless($request->user()->hasPermission('cash.pay') && $this->schoolIds()->contains($liquidationReport->school_id), 403);
+        abort_unless($liquidationReport->paid_at, 422, 'Only a recorded payment can be edited.');
+
+        $data = $request->validate([
+            'check_date' => ['nullable', 'date'],
+            'bank_name' => ['nullable', 'string', 'max:120'],
+            'bank_account_name' => ['nullable', 'string', 'max:120'],
+            'bank_account_number' => ['nullable', 'string', 'max:60'],
+            'payment_fund_cluster' => ['nullable', 'string', 'max:100'],
+            'received_by' => ['nullable', 'string', 'max:120'],
+            'payment_remarks' => ['nullable', 'string', 'max:255'],
+            'reason' => ['required', 'string', 'max:255'],
+            'password' => ['required', 'current_password'],
+        ]);
+        $fields = Arr::except($data, ['reason', 'password']);
+        $before = $liquidationReport->only(array_keys($fields));
+        $liquidationReport->update($fields);
+        AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $liquidationReport->school_id, 'action' => 'payment_edited', 'auditable_type' => LiquidationReport::class, 'auditable_id' => $liquidationReport->id, 'metadata' => ['dv' => $liquidationReport->dv_number, 'reason' => $data['reason'], 'before' => $before, 'after' => $liquidationReport->only(array_keys($fields))]]);
+
+        return back()->with('success', 'Payment details of '.LiquidationReport::dvLabel($liquidationReport->dv_number).' updated.');
+    }
+
+    /** What was done to an ORS, its DV and its payment: who, when, the reason and what changed (the audit log of the record). */
+    public function history(Request $request, LiquidationReport $liquidationReport)
+    {
+        $user = $request->user();
+        abort_unless(($user->canCreateObligation() || $user->hasPermission('accounting.approve') || $user->hasPermission('cash.pay')) && $this->schoolIds()->contains($liquidationReport->school_id), 403);
+
+        $entries = AuditLog::with('user')->where('auditable_type', LiquidationReport::class)->where('auditable_id', $liquidationReport->id)->latest('id')->get()->map(function (AuditLog $log) {
+            $meta = $log->metadata ?? [];
+            $details = [];
+            foreach (['before' => 'Before', 'after' => 'After'] as $key => $label) {
+                if (isset($meta[$key]) && is_array($meta[$key])) {
+                    $details[] = $label.': '.collect($meta[$key])->map(fn ($value, $name) => (is_string($name) ? $name.' ' : '').(is_array($value) ? json_encode($value) : (string) $value))->implode('; ');
+                }
+            }
+
+            return [
+                'when' => $log->created_at?->format('M d, Y g:i A'),
+                'who' => $log->user?->name ?? 'System',
+                'action' => Str::headline($log->action),
+                'icon' => match (true) {
+                    str_contains($log->action, 'edit'), str_contains($log->action, 'resubmit') => 'edit',
+                    str_contains($log->action, 'delete') => 'delete',
+                    str_contains($log->action, 'cancel') => 'cancel',
+                    str_contains($log->action, 'paid') => 'payments',
+                    default => 'history',
+                },
+                'reason' => $meta['reason'] ?? null,
+                'details' => $details,
+            ];
+        });
+
+        return response()->json(['title' => $liquidationReport->ors_number ?: $liquidationReport->report_number, 'entries' => $entries]);
+    }
+
     private function papers(): LiquidationChecklistService
     {
         return app(LiquidationChecklistService::class);
@@ -315,7 +375,6 @@ class FinanceController extends Controller
     {
         abort_unless($request->user()->hasPermission('accounting.approve') && $this->schoolIds()->contains($liquidationReport->school_id), 403);
         abort_unless($liquidationReport->status === 'approved', 422, 'Approve the ORS before creating a disbursement voucher.');
-        abort_if($liquidationReport->paid_at, 422, 'A paid DV cannot be edited. Cancel the check first.');
         $editing = (bool) $liquidationReport->dv_number;
         if (! $editing && ! $preview) {
             $this->papers()->require($liquidationReport, 'dv', 'create the DV');
@@ -347,6 +406,10 @@ class FinanceController extends Controller
             'journal.min' => 'The journal entry needs at least two lines (a debit and a credit).',
             'journal.max' => 'The DV has room for '.self::JOURNAL_MAX_LINES.' accounting entry lines.',
         ]);
+        // A paid DV is corrected without cancelling the check, but the payee (supplier) stays; the amount of a DV is its ORS's and never changes here.
+        if ($liquidationReport->paid_at && ! $preview && trim((string) $data['payee']) !== trim((string) ($liquidationReport->payee ?: $liquidationReport->procurementRequest?->supplier_name))) {
+            throw ValidationException::withMessages(['payee' => 'The payee of a paid DV cannot be changed. Cancel the check first.']);
+        }
         $before = $editing ? ['particulars' => $liquidationReport->dv_particulars, 'deductions' => $liquidationReport->dv_deductions, 'journal' => $liquidationReport->journalLines->map(fn ($line) => [$line->account_code, (string) $line->debit, (string) $line->credit])->all()] : [];
         $signatories = $request->has('signatories')
             ? SignatorySlots::validated('disbursement_voucher', $request->input('signatories'), (int) $liquidationReport->school_id)
@@ -400,7 +463,7 @@ class FinanceController extends Controller
             }
         });
         if ($editing) {
-            $changes = ['reason' => $request->input('reason'), 'before' => $before];
+            $changes = ['reason' => $request->input('reason'), 'before' => $before, 'after' => ['particulars' => $data['dv_particulars'], 'deductions' => $data['dv_deductions'], 'journal' => collect($lines)->map(fn ($line) => [$line['account_code'], $line['debit'], $line['credit']])->all()]];
             $liquidationReport->transaction?->recordEvent('accounting', 'dv_edited', null, 'ready_for_payment', $data['dv_number'], $changes);
             AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $liquidationReport->school_id, 'action' => 'dv_edited', 'auditable_type' => LiquidationReport::class, 'auditable_id' => $liquidationReport->id, 'metadata' => ['dv' => $data['dv_number'], 'ors' => $liquidationReport->ors_number] + $changes]);
 

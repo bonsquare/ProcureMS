@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\AuditLog;
 use App\Models\BudgetAllocation;
 use App\Models\LiquidationReport;
 use App\Models\Organization;
@@ -43,10 +44,10 @@ class ReturnedOrsEditTest extends TestCase
 
     private function form(array $overrides = []): array
     {
-        return array_replace(['payee' => 'Right Supplier', 'payee_office' => 'Main Office', 'payee_address' => 'Kidapawan City', 'payee_tin' => '123-456', 'purpose' => 'Corrected purpose', 'amount' => '2500', 'notes' => 'Fixed', 'ors_fund_cluster' => '101102'], $overrides);
+        return array_replace(['payee' => 'Right Supplier', 'payee_office' => 'Main Office', 'payee_address' => 'Kidapawan City', 'payee_tin' => '123-456', 'purpose' => 'Corrected purpose', 'amount' => '2500', 'notes' => 'Fixed', 'ors_fund_cluster' => '101102', 'reason' => 'Corrected', 'password' => 'password'], $overrides);
     }
 
-    public function test_the_budget_page_offers_edit_with_the_accounting_remarks_only_while_the_ors_has_no_dv(): void
+    public function test_the_budget_page_offers_edit_with_the_accounting_remarks(): void
     {
         [$report, $user] = $this->returnedOrs();
 
@@ -54,7 +55,7 @@ class ReturnedOrsEditTest extends TestCase
             ->assertSee('aria-label="Edit ORS ORS-RO-1"', false)->assertSee('flex items-center justify-end gap-1.5 whitespace-nowrap', false)->assertSee('edit</span></button>', false)->assertSee(route('liquidation.update', $report))->assertSee('Wrong supplier name');
 
         $report->update(['status' => 'approved', 'dv_number' => 'DV-RO-1']);
-        $this->get(route('budget'))->assertOk()->assertDontSee(route('liquidation.update', $report));
+        $this->get(route('budget'))->assertOk()->assertSee(route('liquidation.update', $report))->assertSee(route('liquidation.history', $report));
     }
 
     public function test_the_creator_corrects_the_ors_and_it_goes_back_to_for_review(): void
@@ -105,15 +106,29 @@ class ReturnedOrsEditTest extends TestCase
         $this->assertSame('Corrected purpose', $report->fresh()->purpose);
     }
 
-    public function test_only_an_ors_without_a_dv_can_be_edited(): void
+    public function test_an_ors_with_a_dv_is_corrected_in_place_while_its_amount_and_payee_stay(): void
+    {
+        [$report, $user] = $this->returnedOrs();
+        $report->update(['status' => 'approved', 'dv_number' => 'DV-RO-1', 'paid_at' => now()]);
+
+        $this->actingAs($user)->patch(route('liquidation.update', $report), $this->form(['payee' => 'Right Supplier']))->assertSessionHasErrors('payee');
+
+        $this->patch(route('liquidation.update', $report), $this->form(['payee' => $report->payee, 'amount' => '1']))->assertSessionHasNoErrors();
+        $report->refresh();
+        $this->assertSame('Corrected purpose', $report->purpose);
+        $this->assertSame('3000.00', $report->amount, 'the amount stays');
+        $this->assertSame('approved', $report->status, 'it does not go back to review');
+        $this->assertNotNull($report->paid_at);
+        $this->assertSame('Corrected', AuditLog::latest('id')->first()->metadata['reason']);
+    }
+
+    public function test_an_edit_needs_a_reason_and_the_users_own_password(): void
     {
         [$report, $user] = $this->returnedOrs();
 
-        $report->update(['status' => 'returned', 'dv_number' => 'DV-RO-1']);
-        $this->actingAs($user)->patch(route('liquidation.update', $report), $this->form())->assertStatus(422);
-
-        $report->update(['status' => 'approved']);
-        $this->patch(route('liquidation.update', $report), $this->form())->assertStatus(422);
+        $this->actingAs($user)->patch(route('liquidation.update', $report), $this->form(['reason' => '']))->assertSessionHasErrors('reason');
+        $this->patch(route('liquidation.update', $report), $this->form(['password' => 'not-it']))->assertSessionHasErrors('password');
+        $this->assertSame('Wrong Supplier', $report->fresh()->payee);
     }
 
     public function test_someone_who_cannot_create_obligations_or_belongs_to_another_organization_cannot_edit(): void
@@ -160,10 +175,11 @@ class ReturnedOrsEditTest extends TestCase
         $this->assertSame('Wrong Supplier', $report->fresh()->payee);
     }
 
-    public function test_the_preview_follows_the_same_rules_as_the_edit(): void
+    public function test_the_preview_of_an_ors_with_a_payment_saves_nothing(): void
     {
         [$report, $user] = $this->returnedOrs();
         $report->update(['status' => 'approved', 'paid_at' => now()]);
-        $this->actingAs($user)->post(route('liquidation.update.preview', $report), $this->form())->assertStatus(422);
+        $this->actingAs($user)->post(route('liquidation.update.preview', $report), $this->form())->assertOk();
+        $this->assertSame('Wrong Supplier', $report->fresh()->payee, 'a preview saves nothing');
     }
 }

@@ -6,6 +6,7 @@ use App\Models\BudgetAllocation;
 use App\Models\CancelledCheck;
 use App\Models\ChartOfAccount;
 use App\Models\DvJournalLine;
+use App\Models\LiquidationDocumentCheck;
 use App\Models\LiquidationReport;
 use App\Models\Organization;
 use App\Models\School;
@@ -34,7 +35,7 @@ class CancelledCheckTest extends TestCase
             'dv_number' => 'DV-CC-1', 'dv_date' => now()->toDateString(), 'dv_particulars' => 'Office supplies',
             'payment_mode' => 'MDS Check', 'payment_reference' => 'CHK-1', 'paid_at' => now()->toDateString(), 'paid_by' => $master->id,
         ]);
-        \App\Models\LiquidationDocumentCheck::create(['organization_id' => $organization->id, 'liquidation_report_id' => $report->id, 'item_key' => 'supporting_paper', 'state' => 'received']);
+        LiquidationDocumentCheck::create(['organization_id' => $organization->id, 'liquidation_report_id' => $report->id, 'item_key' => 'supporting_paper', 'state' => 'received']);
         foreach ([[$this->codes()['expense'], $amount, 0], [$this->codes()['cash'], 0, $amount]] as $number => [$code, $debit, $credit]) {
             DvJournalLine::create(['organization_id' => $organization->id, 'liquidation_report_id' => $report->id, 'line_no' => $number + 1, 'account_code' => $code, 'account_title' => 'Account', 'debit' => $debit, 'credit' => $credit]);
         }
@@ -205,7 +206,7 @@ class CancelledCheckTest extends TestCase
         $this->assertSame('9000.00', $report->fresh()->journalLines->first()->debit);
     }
 
-    public function test_a_paid_dv_cannot_be_edited_and_paying_again_locks_the_ors(): void
+    public function test_a_paid_dv_is_edited_in_place_but_not_its_payee_and_paying_again_locks_the_ors(): void
     {
         [$report, $master] = $this->reissuedDv();
 
@@ -215,7 +216,25 @@ class CancelledCheckTest extends TestCase
         $this->assertFalse($report->reissue_pending);
         $this->assertSame('CHK-2', $report->payment_reference);
         $this->assertSame(1, CancelledCheck::count());
-        $this->post(route('accounting.dv.store', $report), $this->dvForm(9000) + ['reason' => 'Late', 'password' => self::PASSWORD])->assertStatus(422);
+        $this->post(route('accounting.dv.store', $report), $this->dvForm(9000, ['payee' => 'Someone Else']) + ['reason' => 'Late', 'password' => self::PASSWORD])->assertSessionHasErrors('payee');
+        $this->post(route('accounting.dv.store', $report), $this->dvForm(9000) + ['reason' => 'Late', 'password' => self::PASSWORD])->assertSessionHasNoErrors();
+        $this->assertSame('CHK-2', $report->fresh()->payment_reference, 'the check stays');
+    }
+
+    public function test_a_payment_is_edited_without_cancelling_the_check_and_its_history_lists_the_action(): void
+    {
+        [$report, $master] = $this->paidOrs();
+        $check = $report->payment_reference;
+        $url = route('cash.payment.update', $report);
+
+        $this->actingAs($master)->patch($url, ['bank_name' => 'LBP', 'reason' => '', 'password' => self::PASSWORD])->assertSessionHasErrors('reason');
+        $this->patch($url, ['bank_name' => 'LBP', 'reason' => 'Wrong bank', 'password' => 'not-it'])->assertSessionHasErrors('password');
+        $this->patch($url, ['bank_name' => 'LBP', 'received_by' => 'Juan', 'reason' => 'Wrong bank', 'password' => self::PASSWORD])->assertSessionHasNoErrors();
+
+        $report->refresh();
+        $this->assertSame(['LBP', 'Juan', $check], [$report->bank_name, $report->received_by, $report->payment_reference]);
+        $this->assertSame(0, CancelledCheck::count());
+        $this->get(route('liquidation.history', $report))->assertOk()->assertJsonPath('entries.0.action', 'Payment Edited')->assertJsonPath('entries.0.reason', 'Wrong bank');
     }
 
     public function test_the_register_and_the_screens_show_the_new_flow(): void
