@@ -183,7 +183,6 @@
         if (opener) { document.getElementById(opener.dataset.open)?.showModal(); return; }
         const closer = event.target.closest('[data-close]');
         if (closer) { closer.closest('dialog')?.close(); return; }
-        if (event.target instanceof HTMLDialogElement) { event.target.close(); }
     });
 </script>
 @endsection

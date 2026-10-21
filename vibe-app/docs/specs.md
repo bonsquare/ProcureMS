@@ -1214,3 +1214,4 @@ Design: docs/superpowers/specs/2026-10-21-subscription-trial-payment-design.md; 
 - The APP tab button that opens the printed Annual Procurement Plan reads "Print APP Summary" (label only; the document is unchanged).
 - New Purchase Request: the Item specification of a line is no longer pre-filled from the SOB activity or the APP item; it stays hidden until the "+ Specification" button (before Remove) is pressed, and shows by itself when it already has text.
 - New Purchase Request: the Specification and Remove buttons of an item line are icons (post_add and delete) with tooltips.
+- Windows with a form or a Save button no longer close when the user clicks outside them (School Settings, Planning edit windows, School Management, document strip review, Finance Pay / Review / DV, Cash Reports, Procurement Documents); they close only with Close, Cancel or the X. Read-only windows (the QR viewer, the document history) still close on an outside click.

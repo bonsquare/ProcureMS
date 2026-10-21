@@ -45,7 +45,7 @@
         </button>
     </div>
 
-    <dialog id="{{ $stripId }}-review" data-native onclick="if (event.target === this) this.close()" class="w-[min(94vw,36rem)] rounded-2xl border border-outline-variant/60 p-0 shadow-2xl backdrop:bg-slate-900/40">
+    <dialog id="{{ $stripId }}-review" data-native class="w-[min(94vw,36rem)] rounded-2xl border border-outline-variant/60 p-0 shadow-2xl backdrop:bg-slate-900/40">
         <div class="flex items-center justify-between gap-3 border-b border-outline-variant/30 bg-gradient-to-r from-primary/5 to-transparent px-5 py-4">
             <div class="flex items-center gap-3"><span class="flex h-9 w-9 items-center justify-center rounded-lg bg-surface-low text-primary"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">fact_check</span></span><div><h3 class="text-base font-semibold">Review before generating</h3><p class="text-xs {{ $strip['missingRequired'] ? 'text-error' : 'text-secondary' }}">{{ $strip['ready'] }} of {{ count($strip['checks']) }} ready @if($strip['missingRequired']) · {{ $strip['missingRequired'] }} required missing @endif</p></div></div>
             <form method="dialog"><button aria-label="Close" class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-low"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">close</span></button></form>

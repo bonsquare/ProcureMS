@@ -595,7 +595,6 @@
     });
     document.getElementById('close-document-modal').addEventListener('click', closeModal);
     document.getElementById('cancel-document-modal').addEventListener('click', closeModal);
-    modal.addEventListener('click', (event) => { if (event.target === modal) closeModal(); });
     modal.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') return closeModal();
         if (event.key !== 'Tab') return;

@@ -501,7 +501,6 @@
         ['cash-report-entity', 'cash-report-district', 'cash-report-municipality', 'cash-report-station', 'cash-report-registered', 'cash-report-officer-name', 'cash-report-officer-position', 'cash-report-from', 'cash-report-to', 'cash-report-no', 'cash-sheet-no', 'cash-report-cluster', 'cash-report-bank-name', 'cash-report-bank-account', 'cash-report-remarks'].forEach((id) => field(id).addEventListener('input', schedule));
         document.getElementById('cash-report-close').addEventListener('click', close);
         document.getElementById('cash-report-cancel').addEventListener('click', close);
-        modal.addEventListener('click', (event) => { if (event.target === modal) close(); });
         document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !modal.classList.contains('hidden')) close(); });
     })();
 </script>

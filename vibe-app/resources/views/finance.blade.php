@@ -495,7 +495,7 @@
         document.getElementById('review-title').textContent = b.dataset.label;
         show(reviewModal);
     }));
-    [payModal, reviewModal, dvModal].forEach((m) => { m.addEventListener('click', (e) => { if (e.target === m) hide(m); }); m.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => hide(m))); });
+    [payModal, reviewModal, dvModal].forEach((m) => { m.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => hide(m))); });
 </script>
 <script>
     // Live preview: the right pane draws the real official DV from the form as it is now (nothing is saved).

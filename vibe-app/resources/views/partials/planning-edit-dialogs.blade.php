@@ -116,7 +116,6 @@
         document.addEventListener('click', (event) => {
             const closer = event.target.closest('dialog [data-close]');
             if (closer) { closer.closest('dialog').close(); return; }
-            if (event.target instanceof HTMLDialogElement) { event.target.close(); }
         });
         document.addEventListener('submit', (event) => {
             const message = event.target.dataset ? event.target.dataset.confirm : null;
