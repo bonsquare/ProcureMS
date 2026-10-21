@@ -5,10 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\AuditLog;
 use App\Models\School;
 use App\Models\SchoolStaff;
-use App\Models\Subscription;
 use App\Models\User;
 use App\Services\SchoolManagementService;
 use App\Services\SchoolTakeoverService;
+use App\Services\SubscriptionService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -103,10 +103,7 @@ class UserDirectoryController extends Controller
             $user = new User(['name' => $data['name'], 'username' => $data['username'], 'email' => strtolower($data['email']), 'phone' => $data['phone'] ?? null, 'position' => $data['position'] ?? null, 'password' => $data['password']]);
             $user->forceFill(['role' => $data['role'], 'status' => 'active', 'organization_id' => $school->organization_id, 'school_id' => $school->id, 'password_changed_at' => now()])->save();
             SchoolStaff::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'name' => $user->name, 'position' => $user->position]);
-            Subscription::create([
-                'organization_id' => $school->organization_id, 'school_id' => $school->id, 'user_id' => $user->id, 'plan' => 'trial', 'billing_cycle' => 'monthly',
-                'amount' => 0, 'payment_status' => 'pending', 'status' => 'trial', 'starts_at' => now(), 'subscription_end' => now()->addDays(30),
-            ]);
+            app(SubscriptionService::class)->startTrial($school, $user);
             $this->audit($request, $user, 'user_created', ['role' => $user->role]);
 
             return $user;

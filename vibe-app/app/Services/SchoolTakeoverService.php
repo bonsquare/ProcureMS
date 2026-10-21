@@ -6,7 +6,6 @@ use App\Models\AuditLog;
 use App\Models\School;
 use App\Models\SchoolStaff;
 use App\Models\SchoolTakeoverRequest;
-use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -77,18 +76,7 @@ class SchoolTakeoverService
 
             $user->update(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'status' => 'active', 'role' => 'school_admin', 'password_changed_at' => now()]);
             SchoolStaff::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'name' => $user->name, 'position' => $user->position]);
-            Subscription::create([
-                'organization_id' => $school->organization_id,
-                'school_id' => $school->id,
-                'user_id' => $user->id,
-                'plan' => 'trial',
-                'billing_cycle' => 'monthly',
-                'amount' => 0,
-                'payment_status' => 'pending',
-                'status' => 'trial',
-                'starts_at' => now(),
-                'subscription_end' => now()->addDays(30),
-            ]);
+            app(SubscriptionService::class)->startTrial($school, $user);
             $request->update(['status' => 'approved', 'school_id' => $school->id, 'decided_by' => $master->id, 'decided_at' => now(), 'decision_note' => $note]);
             $this->audit($master->id, $school->id, 'approved_school_takeover', $request->id, ['user_id' => $user->id]);
         });

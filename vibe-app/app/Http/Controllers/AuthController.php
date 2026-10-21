@@ -6,9 +6,9 @@ use App\Models\AuditLog;
 use App\Models\Organization;
 use App\Models\School;
 use App\Models\SchoolTakeoverRequest;
-use App\Models\Subscription;
 use App\Models\User;
 use App\Services\SchoolTakeoverService;
+use App\Services\SubscriptionService;
 use App\Support\PlaceNames;
 use App\Support\Turnstile;
 use Illuminate\Http\Request;
@@ -160,18 +160,7 @@ class AuthController extends Controller
                 'privacy_policy_version' => User::PRIVACY_POLICY_VERSION,
             ]);
 
-            Subscription::create([
-                'organization_id' => $organization->id,
-                'school_id' => $school->id,
-                'user_id' => $systemUser->id,
-                'plan' => 'trial',
-                'billing_cycle' => 'monthly',
-                'amount' => 0,
-                'payment_status' => 'pending',
-                'status' => 'trial',
-                'starts_at' => now(),
-                'subscription_end' => now()->addDays(30),
-            ]);
+            app(SubscriptionService::class)->startTrial($school, $systemUser);
 
             AuditLog::create([
                 'user_id' => null,

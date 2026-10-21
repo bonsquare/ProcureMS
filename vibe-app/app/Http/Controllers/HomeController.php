@@ -33,6 +33,7 @@ use App\Services\LiquidationChecklistService;
 use App\Services\MasterTransactionService;
 use App\Services\ProcurementWorkspaceService;
 use App\Services\ServerDashboardService;
+use App\Services\SubscriptionService;
 use App\Support\PlaceNames;
 use App\Support\SignatorySlots;
 use Illuminate\Http\Request;
@@ -285,18 +286,7 @@ class HomeController extends Controller
                 'position' => 'System User',
             ]);
 
-            Subscription::create([
-                'organization_id' => $organization->id,
-                'school_id' => $school->id,
-                'user_id' => $systemUser->id,
-                'plan' => 'trial',
-                'billing_cycle' => 'monthly',
-                'amount' => 0,
-                'payment_status' => 'pending',
-                'status' => 'trial',
-                'starts_at' => now(),
-                'subscription_end' => now()->addDays(30),
-            ]);
+            app(SubscriptionService::class)->startTrial($school, $systemUser);
 
             AuditLog::create([
                 'user_id' => $actorId,
@@ -2692,6 +2682,7 @@ class HomeController extends Controller
 
         $school->update(['status' => 'active']);
         $school->organization?->update(['status' => 'active']);
+        app(SubscriptionService::class)->beginTrialOnActivation($school);
 
         AuditLog::create([
             'user_id' => request()->user()?->id,

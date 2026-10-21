@@ -10,18 +10,29 @@ class Subscription extends Model
 {
     use BelongsToOrganization, HasFactory;
 
-    public const TRANSACTIONAL_STATUSES = ['trial', 'active', 'grace_period'];
+    public const TRANSACTIONAL_STATUSES = ['trial', 'active', 'grace_period', 'free'];
 
-    protected $fillable = ['organization_id', 'school_id', 'user_id', 'plan', 'billing_cycle', 'amount', 'charge_amount', 'charge_ends_at', 'payment_status', 'status', 'starts_at', 'renews_at', 'subscription_end', 'grace_period_end', 'renewed_at', 'canceled_at'];
+    protected $fillable = ['organization_id', 'school_id', 'user_id', 'plan', 'billing_cycle', 'amount', 'charge_amount', 'charge_ends_at', 'previous_state', 'payment_status', 'status', 'starts_at', 'renews_at', 'subscription_end', 'grace_period_end', 'renewed_at', 'canceled_at'];
 
     protected function casts(): array
     {
-        return ['amount' => 'decimal:2', 'charge_amount' => 'decimal:2', 'charge_ends_at' => 'date', 'starts_at' => 'date', 'renews_at' => 'date', 'subscription_end' => 'date', 'grace_period_end' => 'date', 'renewed_at' => 'datetime', 'canceled_at' => 'date'];
+        return ['amount' => 'decimal:2', 'charge_amount' => 'decimal:2', 'charge_ends_at' => 'date', 'previous_state' => 'array', 'starts_at' => 'date', 'renews_at' => 'date', 'subscription_end' => 'date', 'grace_period_end' => 'date', 'renewed_at' => 'datetime', 'canceled_at' => 'date'];
     }
 
     public function school()
     {
         return $this->belongsTo(School::class);
+    }
+
+    /** The trial is the limited state: it cannot print or record a payment. Free is the full system. */
+    public function isTrial(): bool
+    {
+        return strtolower((string) $this->status) === 'trial';
+    }
+
+    public function isFree(): bool
+    {
+        return strtolower((string) $this->status) === 'free';
     }
 
     public function allowsTransactions(): bool
