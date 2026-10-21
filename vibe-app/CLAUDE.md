@@ -276,6 +276,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 - 2026-10-21: The system runs on Philippine time (`app.timezone` = Asia/Manila); the times stored on UTC are moved forward 8 hours once by a migration (docs/specs.md section 77).
 - 2026-10-21: The Subscriptions page follows its data live (`GET /subscriptions/live` every 8 seconds, redraw only on change; docs/specs.md section 78).
 - 2026-10-21: **Subscription system** (docs/specs.md sections 79 to 83): Annual plan ₱1,000.00; 3-day trial that cannot print, pay or upload to Drive (banner, trial prompt); Free plan (the full system, with an end date the master sets); a price the master sets for each school and promo codes; working buttons on the Subscriptions page with reason and password; the school's Subscription page with proof of payment uploaded to its own Google Drive and shared only with the master's email, approved or rejected live by the master; Payment Settings; the clock and one notification bell on every page; the Subscription Income section of the dashboard (30% / 20% / 50%).
+- 2026-10-21: Proof of payment now carries the sender (full name, username, User ID), bank account used, InstaPay Ref. No., date and time of the transaction and remarks (remarks and bank account only for the master); the QR is large and opens bigger to scan (docs/specs.md section 85).
 
 ## Standing workflow (owner's instruction 2026-10-16)
 
@@ -391,4 +392,3 @@ After the change: verify the reported issue is resolved, check related functiona
 Problem · Fix Applied · Files Modified · Verification · Unchanged (relevant existing features preserved).
 
 **Do not improve, redesign, or refactor what was not asked. Fix only what is explicitly requested. When uncertain, ask before making changes.**
-- 2026-10-21: Proof of payment now carries the sender (full name, username, User ID), bank account used, InstaPay Ref. No., date and time of the transaction and remarks (remarks and bank account only for the master); the QR is large and opens bigger to scan (docs/specs.md section 85).
