@@ -267,6 +267,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 - 2026-10-20: An ORS (also one from a PO) can be charged to several UACS codes each with its own amount (`liquidation_report_lines`); budget, printed ORS, DV and the cash register follow (docs/specs.md section 70).
 - 2026-10-21: Cash reports pay the DV net of its "Less:" deductions; the Cash Disbursement Register adds a Due to BIR column (a BIR remittance shows as a minus) and the Create DV journal splits cash (net) and Due to BIR (docs/specs.md section 71).
 - 2026-10-21: A paid ORS, DV (also its Less: deductions) and payment can be corrected without cancelling the check while the amount and payee stay; every edit/delete asks a reason and the user's password; a History icon on the ORS, DV and Cash rows lists the actions (docs/specs.md section 72).
+- 2026-10-21: Apple-style design layer (`partials/apple-design.blade.php`, via `input-fixes`): press feedback, blurred and spring windows, focus rings, tighter headings; looks and motion only, official documents and cash reports left out (docs/specs.md section 73).
 
 ## Standing workflow (owner's instruction 2026-10-16)
 

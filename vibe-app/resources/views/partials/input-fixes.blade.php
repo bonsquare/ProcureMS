@@ -8,6 +8,7 @@
     document.addEventListener('keydown', (event) => { if ((event.key === 'ArrowUp' || event.key === 'ArrowDown') && event.target.type === 'number') event.preventDefault(); });
 </script>
 
+@include('partials.apple-design')
 @include('partials.password-toggle')
 @include('partials.searchable-select')
 

@@ -55,7 +55,7 @@ class ReturnedOrsEditTest extends TestCase
             ->assertSee('aria-label="Edit ORS ORS-RO-1"', false)->assertSee('flex items-center justify-end gap-1.5 whitespace-nowrap', false)->assertSee('edit</span></button>', false)->assertSee(route('liquidation.update', $report))->assertSee('Wrong supplier name');
 
         $report->update(['status' => 'approved', 'dv_number' => 'DV-RO-1']);
-        $this->get(route('budget'))->assertOk()->assertSee(route('liquidation.update', $report))->assertSee(route('liquidation.history', $report));
+        $this->get(route('budget'))->assertOk()->assertSee(route('liquidation.update', $report))->assertSee(route('liquidation.history', $report))->assertSee('data-apple-design', false);
     }
 
     public function test_the_creator_corrects_the_ors_and_it_goes_back_to_for_review(): void
