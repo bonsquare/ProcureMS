@@ -19,10 +19,34 @@
         :where({!! $screen !!}) [role="dialog"].fixed { backdrop-filter: blur(6px) saturate(140%); }
         :where({!! $screen !!}) dialog[open] { animation: apple-arrive 300ms cubic-bezier(.2, .9, .25, 1.04); }
         :where({!! $screen !!}) dialog { box-shadow: 0 24px 60px -12px rgba(16, 57, 103, .35), 0 8px 20px -8px rgba(0, 0, 0, .2); }
+
+        /* Icon buttons in table rows: a comfortable target, the same size on every screen. */
+        {!! $screen !!} table td :is(button, a)[class*="h-8"][class*="w-8"] { height: 2.25rem; width: 2.25rem; border-radius: .6rem; }
+        {!! $screen !!} table td :is(button, a)[class*="h-8"][class*="w-8"]:hover { box-shadow: 0 2px 8px -2px rgba(16, 57, 103, .3); }
+
+        /* Status badges: one family, a soft inner edge in the badge's own color. */
+        {!! $screen !!} :is(span, div)[class*="rounded-full"][class*="font-bold"][class*="px-"] { font-weight: 650; letter-spacing: .01em; box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 16%, transparent); }
+
+        /* Tables: the row under the pointer is lit softly; numbers line up. */
+        {!! $screen !!} table tbody tr > td { transition: box-shadow 140ms ease; }
+        {!! $screen !!} table tbody tr:hover > td { box-shadow: inset 0 0 0 100vmax rgba(16, 57, 103, .035); }
+        {!! $screen !!} table td:is(.text-right, [class*="tabular"]) { font-variant-numeric: tabular-nums; }
+
+        /* Cards and panels outside forms: one radius, a light depth. */
+        {!! $screen !!} :is(div, details, article, section)[class*="border-outline-variant/30"][class*="bg-white"]:not(form *) { border-radius: .75rem; box-shadow: 0 1px 2px rgba(16, 57, 103, .06), 0 10px 24px -14px rgba(16, 57, 103, .18); }
+
+        /* Main buttons: a little lift so they read as the main action. */
+        {!! $screen !!} button[class*="bg-primary"]:not(:disabled), {!! $screen !!} button[class*="bg-secondary"]:not(:disabled) { box-shadow: 0 1px 2px rgba(16, 57, 103, .28), inset 0 1px 0 rgba(255, 255, 255, .14); }
+
+        /* The History list arrives one entry after the other. */
+        #action-history-list > li { animation: apple-arrive 300ms cubic-bezier(.2, .9, .25, 1.04) both; }
+        #action-history-list > li:nth-child(2) { animation-delay: 40ms; }
+        #action-history-list > li:nth-child(3) { animation-delay: 80ms; }
+        #action-history-list > li:nth-child(n+4) { animation-delay: 120ms; }
     }
     @keyframes apple-arrive { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: none; } }
     @media (prefers-reduced-motion: reduce) {
-        :where(body) dialog[open] { animation: opacity-only 160ms ease; }
+        :where(body) dialog[open], #action-history-list > li { animation: opacity-only 160ms ease; }
         :where(body) :where(button:not(:disabled), a):active { transform: none !important; }
     }
     @keyframes opacity-only { from { opacity: 0; } to { opacity: 1; } }

@@ -268,6 +268,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 - 2026-10-21: Cash reports pay the DV net of its "Less:" deductions; the Cash Disbursement Register adds a Due to BIR column (a BIR remittance shows as a minus) and the Create DV journal splits cash (net) and Due to BIR (docs/specs.md section 71).
 - 2026-10-21: A paid ORS, DV (also its Less: deductions) and payment can be corrected without cancelling the check while the amount and payee stay; every edit/delete asks a reason and the user's password; a History icon on the ORS, DV and Cash rows lists the actions (docs/specs.md section 72).
 - 2026-10-21: Apple-style design layer (`partials/apple-design.blade.php`, via `input-fixes`): press feedback, blurred and spring windows, focus rings, tighter headings; looks and motion only, official documents and cash reports left out (docs/specs.md section 73).
+- 2026-10-21: Apple design second pass in the same layer: 2.25rem row icon buttons, one badge family, table row hover and tabular numbers, card radius and depth, main-button lift (docs/specs.md section 73).
 
 ## Standing workflow (owner's instruction 2026-10-16)
 
