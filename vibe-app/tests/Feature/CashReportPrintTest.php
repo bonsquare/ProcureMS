@@ -284,8 +284,12 @@ class CashReportPrintTest extends TestCase
             $this->actingAs($user)->postJson(route('cash.report.history.store', ['kind' => $kind] + $this->periodQuery($school)))->assertOk()->assertJsonPath('entry.report', $name);
         }
         $this->actingAs($user)->postJson(route('cash.report.history.store', ['kind' => 'other'] + $this->periodQuery($school)))->assertNotFound();
+        $this->actingAs($user)->postJson(route('cash.report.history.store', ['kind' => 'register'] + $this->periodQuery($school)))->assertStatus(409)->assertJsonPath('ok', false);
+        $this->actingAs($user)->postJson(route('cash.report.history.store', ['kind' => 'register'] + $this->periodQuery($school, ['source_of_fund' => 'MOOE'])))->assertOk();
+        $this->assertSame(1, CashReportHistory::where('report', 'bank')->count(), 'a report of a period is kept once');
+        $this->assertSame(5, CashReportHistory::count());
 
-        $this->assertSame(array_keys($names), CashReportHistory::orderBy('id')->pluck('report')->all());
+        $this->assertSame(array_keys($names), CashReportHistory::orderBy('id')->limit(4)->pluck('report')->all());
         $page = $this->actingAs($user)->get(route('cash', ['tab' => 'reports', 'school_id' => $school->id]))->assertOk();
         foreach ($names as $name) {
             $page->assertSee($name);

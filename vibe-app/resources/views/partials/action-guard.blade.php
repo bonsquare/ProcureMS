@@ -39,6 +39,7 @@
             target.dataset.guarded = '1';
             password.value = '';
             dialog.close();
+            window.appBusy?.(target);
             target.submit();
         });
 

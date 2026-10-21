@@ -273,6 +273,12 @@ class CashReportController extends Controller
             $report['reportNo'] = now()->format('Y-m').'-001';
         }
         $school = $report['school'];
+        // A report of a period and fund is kept once: pressing Save again does not make a second copy.
+        $kept = CashReportHistory::query()->where('school_id', $school->id)->where('report', $kind)->whereDate('period_from', $report['from'])->whereDate('period_to', $report['to'])
+            ->when($request->input('source_of_fund'), fn ($query, $fund) => $query->where('source_of_fund', $fund), fn ($query) => $query->whereNull('source_of_fund'))->first();
+        if ($kept) {
+            return response()->json(['ok' => false, 'message' => 'This report was already saved to history on '.$kept->created_at->format('M d, Y g:i A').'.', 'url' => route('cash.report.history', $kept->id)], 409);
+        }
         $entry = CashReportHistory::create([
             'organization_id' => $school->organization_id,
             'school_id' => $school->id,

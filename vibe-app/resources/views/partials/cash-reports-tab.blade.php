@@ -274,8 +274,16 @@
         const saveButton = document.getElementById('cash-report-save');
         saveButton.addEventListener('click', async () => {
             saveButton.disabled = true;
+            const notice = window.appNotify?.('Saving to history…', 'progress');
             try {
                 const response = await fetch(@json(url('/cash/reports')) + '/' + historyKinds[formKey] + '/history' + new URL(printLink.getAttribute('href'), location.origin).search, { method: 'POST', headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || @json(csrf_token()) } });
+                if (response.status === 409) {
+                    const kept = await response.json();
+                    notice?.set(kept.message, 'info');
+                    status.textContent = 'Already saved to history';
+                    saveButton.disabled = false;
+                    return;
+                }
                 if (!response.ok) throw new Error('save failed');
                 const { entry } = await response.json();
                 const rows = document.getElementById('register-history-rows');
@@ -287,7 +295,8 @@
                 if (rows.querySelector('td[colspan]')) rows.innerHTML = '';
                 rows.prepend(row);
                 status.textContent = 'Saved to history';
-            } catch (error) { status.textContent = 'Could not save to history. Try again'; }
+                notice?.set('Saved to history.', 'done');
+            } catch (error) { status.textContent = 'Could not save to history. Try again'; notice?.set('Could not save to history. Try again.', 'error'); }
             saveButton.disabled = false;
         });
         const refresh = async () => {
