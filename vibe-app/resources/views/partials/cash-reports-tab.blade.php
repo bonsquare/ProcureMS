@@ -26,15 +26,15 @@
         </div>
     </section>
     <section class="overflow-hidden rounded-xl border border-outline-variant/60 bg-white shadow-sm">
-        {!! $head(2, 'Cash Disbursement Register history', 'Press Save to history in the register window to keep it as it was generated, one per quarter. Open it again to print the same document.') !!}
+        {!! $head(2, 'Report history', 'Press Save to history in the window of any report to keep it as it was generated. Open it again to print the same document.') !!}
         <div class="overflow-x-auto">
             <table class="w-full min-w-[720px] text-left text-xs">
-                <thead class="bg-surface-low uppercase tracking-wider text-on-surface-variant"><tr><th class="px-4 py-2">Generated</th><th class="px-3 py-2">Period covered</th><th class="px-3 py-2">Fund</th><th class="px-3 py-2">Report No.</th><th class="px-3 py-2 text-right">Payments</th><th class="px-3 py-2">By</th><th class="px-4 py-2 text-right"></th></tr></thead>
+                <thead class="bg-surface-low uppercase tracking-wider text-on-surface-variant"><tr><th class="px-4 py-2">Generated</th><th class="px-3 py-2">Report</th><th class="px-3 py-2">Period covered</th><th class="px-3 py-2">Fund</th><th class="px-3 py-2">Report No.</th><th class="px-3 py-2 text-right">Payments</th><th class="px-3 py-2">By</th><th class="px-4 py-2 text-right"></th></tr></thead>
                 <tbody id="register-history-rows" class="divide-y divide-outline-variant/30">
-                    @forelse($registerHistory as $entry)
-                        <tr><td class="px-4 py-2.5">{{ $entry->created_at->format('M d, Y g:i A') }}</td><td class="px-3 py-2.5 font-semibold">{{ $entry->period_text }}</td><td class="px-3 py-2.5">{{ $entry->source_of_fund ?: 'All funds' }}</td><td class="px-3 py-2.5">{{ $entry->report_no ?: '—' }}</td><td class="px-3 py-2.5 text-right tabular-nums">{{ number_format((float) $entry->total_payments, 2) }}</td><td class="px-3 py-2.5">{{ $entry->generator?->name }}</td><td class="px-4 py-2.5 text-right"><a href="{{ route('cash.report.history', $entry->id) }}" target="_blank" rel="noopener" class="rounded border border-outline-variant/60 px-3 py-1.5 font-semibold text-primary hover:bg-primary hover:text-white">Open</a></td></tr>
+                    @forelse($reportHistory as $entry)
+                        <tr><td class="px-4 py-2.5">{{ $entry->created_at->format('M d, Y g:i A') }}</td><td class="px-3 py-2.5 font-semibold">{{ $entry->label() }}</td><td class="px-3 py-2.5">{{ $entry->period_text }}</td><td class="px-3 py-2.5">{{ $entry->source_of_fund ?: 'All funds' }}</td><td class="px-3 py-2.5">{{ $entry->report_no ?: '—' }}</td><td class="px-3 py-2.5 text-right tabular-nums">{{ number_format((float) $entry->total_payments, 2) }}</td><td class="px-3 py-2.5">{{ $entry->generator?->name }}</td><td class="px-4 py-2.5 text-right"><a href="{{ route('cash.report.history', $entry->id) }}" target="_blank" rel="noopener" class="rounded border border-outline-variant/60 px-3 py-1.5 font-semibold text-primary hover:bg-primary hover:text-white">Open</a></td></tr>
                     @empty
-                        <tr><td colspan="7" class="px-4 py-6 text-center text-on-surface-variant">No register has been generated yet.</td></tr>
+                        <tr><td colspan="8" class="px-4 py-6 text-center text-on-surface-variant">No report has been generated yet.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -269,18 +269,19 @@
             });
             return url.pathname + url.search;
         };
-        // Save to history keeps a copy of the register as it is now and adds it to the list.
+        // Save to history keeps a copy of the open report as it is now and adds it to the list.
+        const historyKinds = { o: 'roci', c: 'checks', r: 'register', b: 'bank' };
         const saveButton = document.getElementById('cash-report-save');
         saveButton.addEventListener('click', async () => {
             saveButton.disabled = true;
             try {
-                const response = await fetch(@json(route('cash.report.register.history')) + new URL(printLink.getAttribute('href'), location.origin).search, { method: 'POST', headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || @json(csrf_token()) } });
+                const response = await fetch(@json(url('/cash/reports')) + '/' + historyKinds[formKey] + '/history' + new URL(printLink.getAttribute('href'), location.origin).search, { method: 'POST', headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || @json(csrf_token()) } });
                 if (!response.ok) throw new Error('save failed');
                 const { entry } = await response.json();
                 const rows = document.getElementById('register-history-rows');
                 const row = document.createElement('tr');
                 const cell = (text, classes) => { const td = document.createElement('td'); td.className = classes; td.textContent = text; row.append(td); return td; };
-                cell(entry.generated, 'px-4 py-2.5'); cell(entry.period, 'px-3 py-2.5 font-semibold'); cell(entry.fund, 'px-3 py-2.5'); cell(entry.report_no, 'px-3 py-2.5'); cell(entry.payments, 'px-3 py-2.5 text-right tabular-nums'); cell(entry.by, 'px-3 py-2.5');
+                cell(entry.generated, 'px-4 py-2.5'); cell(entry.report, 'px-3 py-2.5 font-semibold'); cell(entry.period, 'px-3 py-2.5'); cell(entry.fund, 'px-3 py-2.5'); cell(entry.report_no, 'px-3 py-2.5'); cell(entry.payments, 'px-3 py-2.5 text-right tabular-nums'); cell(entry.by, 'px-3 py-2.5');
                 const open = document.createElement('a'); open.href = entry.url; open.target = '_blank'; open.rel = 'noopener'; open.textContent = 'Open'; open.className = 'rounded border border-outline-variant/60 px-3 py-1.5 font-semibold text-primary hover:bg-primary hover:text-white';
                 cell('', 'px-4 py-2.5 text-right').append(open);
                 if (rows.querySelector('td[colspan]')) rows.innerHTML = '';
@@ -396,7 +397,7 @@
             toggleBank(button.dataset.bank === '1');
             modal.querySelectorAll('[data-hide-bank]').forEach((box) => box.classList.toggle('hidden', button.dataset.bank === '1'));
             registerOn = button.dataset.register === '1';
-            document.getElementById('cash-report-save').classList.toggle('hidden', !registerOn);
+            document.getElementById('cash-report-save').classList.remove('hidden');
             formKey = button.dataset.form || 'o';
             modal.querySelectorAll('#cash-report-header > [data-o], #cash-report-header > [data-r], #cash-report-header > [data-c], #cash-report-header > [data-b]').forEach((item) => {
                 const place = item.dataset[formKey];

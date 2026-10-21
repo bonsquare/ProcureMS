@@ -274,6 +274,26 @@ class CashReportPrintTest extends TestCase
         $this->actingAs($user)->get(route('cash', ['tab' => 'reports', 'school_id' => $school->id]))->assertOk()->assertSee('3RD Quarter C.Y. 2026');
     }
 
+    public function test_every_cash_report_can_be_kept_in_the_history_and_is_listed_with_its_name(): void
+    {
+        [$school, $user] = $this->tenant('BK7');
+        $this->paid($school, '0501', '2026-08-05', 1000);
+        $names = ['roci' => 'Report of Checks Issued', 'checks' => 'Checks and Advices to Debit Account', 'register' => 'Cash Disbursement Register', 'bank' => 'Bank Reconciliation'];
+
+        foreach ($names as $kind => $name) {
+            $this->actingAs($user)->postJson(route('cash.report.history.store', ['kind' => $kind] + $this->periodQuery($school)))->assertOk()->assertJsonPath('entry.report', $name);
+        }
+        $this->actingAs($user)->postJson(route('cash.report.history.store', ['kind' => 'other'] + $this->periodQuery($school)))->assertNotFound();
+
+        $this->assertSame(array_keys($names), CashReportHistory::orderBy('id')->pluck('report')->all());
+        $page = $this->actingAs($user)->get(route('cash', ['tab' => 'reports', 'school_id' => $school->id]))->assertOk();
+        foreach ($names as $name) {
+            $page->assertSee($name);
+        }
+        $first = CashReportHistory::where('report', 'roci')->firstOrFail();
+        $this->actingAs($user)->get(route('cash.report.history', $first->id))->assertOk()->assertSee('0501');
+    }
+
     public function test_another_school_cannot_open_a_register_history(): void
     {
         [$school, $user] = $this->tenant('BK7');

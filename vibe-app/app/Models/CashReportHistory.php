@@ -17,6 +17,12 @@ class CashReportHistory extends Model
         return ['period_from' => 'date', 'period_to' => 'date', 'total_payments' => 'decimal:2'];
     }
 
+    /** The name of the kept report. */
+    public function label(): string
+    {
+        return ['roci' => 'Report of Checks Issued', 'checks' => 'Checks and Advices to Debit Account', 'register' => 'Cash Disbursement Register', 'bank' => 'Bank Reconciliation'][$this->report] ?? (string) $this->report;
+    }
+
     public function school()
     {
         return $this->belongsTo(School::class);

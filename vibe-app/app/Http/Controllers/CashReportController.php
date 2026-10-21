@@ -256,27 +256,39 @@ class CashReportController extends Controller
         return view('cash-report-register', ['report' => $this->reportViewData($request)]);
     }
 
-    /** Keeps the register exactly as it is now, when the user presses Save in its window: the finished page, the period, the fund and the report number. */
+    /** The pages of the four cash reports by the key kept in their history. */
+    private const HISTORY_VIEWS = ['roci' => 'cash-report-roci', 'checks' => 'cash-report-checks-advices', 'register' => 'cash-report-register', 'bank' => 'cash-report-bank-recon'];
+
     public function storeRegisterHistory(Request $request): JsonResponse
     {
+        return $this->storeHistory($request, 'register');
+    }
+
+    /** Keeps a cash report exactly as it is now, when the user presses Save in its window: the finished page, the period, the fund and the report number. */
+    public function storeHistory(Request $request, string $kind): JsonResponse
+    {
+        abort_unless(isset(self::HISTORY_VIEWS[$kind]), 404);
         $report = $this->reportViewData($request);
+        if ($kind === 'roci' && $report['reportNo'] === '') {
+            $report['reportNo'] = now()->format('Y-m').'-001';
+        }
         $school = $report['school'];
         $entry = CashReportHistory::create([
             'organization_id' => $school->organization_id,
             'school_id' => $school->id,
-            'report' => 'register',
+            'report' => $kind,
             'period_from' => $report['from'],
             'period_to' => $report['to'],
             'period_text' => $report['period'],
             'source_of_fund' => $request->input('source_of_fund') ?: null,
             'report_no' => $report['reportNo'] ?: null,
             'total_payments' => $report['data']['total_paid'],
-            'html' => view('cash-report-register', ['report' => $report])->render(),
+            'html' => view(self::HISTORY_VIEWS[$kind], ['report' => $report])->render(),
             'generated_by' => $request->user()->id,
         ]);
 
         return response()->json(['ok' => true, 'entry' => [
-            'generated' => $entry->created_at->format('M d, Y g:i A'), 'period' => $entry->period_text, 'fund' => $entry->source_of_fund ?: 'All funds', 'report_no' => $entry->report_no ?: '—',
+            'generated' => $entry->created_at->format('M d, Y g:i A'), 'report' => $entry->label(), 'period' => $entry->period_text, 'fund' => $entry->source_of_fund ?: 'All funds', 'report_no' => $entry->report_no ?: '—',
             'payments' => number_format((float) $entry->total_payments, 2), 'by' => $request->user()->name, 'url' => route('cash.report.history', $entry->id),
         ]]);
     }

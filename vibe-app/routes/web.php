@@ -203,6 +203,7 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::get('/cash/reports/checks-advices', [CashReportController::class, 'checksAdvices'])->middleware('permission:cash.pay')->name('cash.report.checks');
     Route::get('/cash/reports/register', [CashReportController::class, 'register'])->middleware('permission:cash.pay')->name('cash.report.register');
     Route::post('/cash/reports/register/history', [CashReportController::class, 'storeRegisterHistory'])->middleware('permission:cash.pay')->name('cash.report.register.history');
+    Route::post('/cash/reports/{kind}/history', [CashReportController::class, 'storeHistory'])->middleware('permission:cash.pay')->whereIn('kind', ['roci', 'checks', 'register', 'bank'])->name('cash.report.history.store');
     Route::get('/cash/reports/history/{history}', [CashReportController::class, 'showHistory'])->middleware('permission:cash.pay')->whereNumber('history')->name('cash.report.history');
     Route::get('/cash/reports/bank-reconciliation', [CashReportController::class, 'bank'])->middleware('permission:cash.pay')->name('cash.report.bank');
     Route::get('/cash/fund-receipts', [CashReportController::class, 'receipts'])->middleware('permission:cash.pay')->name('cash.fund.index');

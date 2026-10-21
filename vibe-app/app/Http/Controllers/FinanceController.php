@@ -158,7 +158,7 @@ class FinanceController extends Controller
 
         return [
             'reportSchools' => $schools,
-            'registerHistory' => $school ? CashReportHistory::with('generator')->where('school_id', $school->id)->where('report', 'register')->latest()->limit(50)->get(['id', 'school_id', 'period_text', 'source_of_fund', 'report_no', 'total_payments', 'generated_by', 'created_at']) : collect(),
+            'reportHistory' => $school ? CashReportHistory::with('generator')->where('school_id', $school->id)->latest()->limit(100)->get(['id', 'school_id', 'report', 'period_text', 'source_of_fund', 'report_no', 'total_payments', 'generated_by', 'created_at']) : collect(),
             'reportSchool' => $school,
             'reportFrom' => $from,
             'reportTo' => $to,
