@@ -130,6 +130,33 @@
                     </article>
                 @endforeach
             </div>
+            @if($income)
+            @php $incomePeso = fn ($value) => '₱'.number_format($value, 2); @endphp
+            <section data-subscription-income data-income-gross="{{ number_format($income['gross'], 2, '.', '') }}" aria-label="Subscription income" class="mb-5 overflow-hidden rounded-xl border border-outline-variant/50 bg-white">
+                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/40 px-5 py-4">
+                    <div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary" aria-hidden="true">account_balance_wallet</span><div><h2 class="text-base font-semibold">Subscription Income</h2><p class="text-xs text-on-surface-variant">The amounts the schools really paid, and how the income is divided.</p></div></div>
+                    <form method="GET" action="{{ route('home') }}" class="flex items-center gap-2">
+                        @foreach(request()->except(['income_year']) as $name => $value)@if(! is_array($value))<input type="hidden" name="{{ $name }}" value="{{ $value }}">@endif @endforeach
+                        <label class="text-xs font-semibold text-on-surface-variant" for="income-year">Year</label>
+                        <select id="income-year" name="income_year" onchange="this.form.submit()" class="rounded border border-outline-variant/50 bg-white px-3 py-1.5 text-xs font-semibold"><option value="">All years</option>@foreach($incomeYears as $year)<option value="{{ $year }}" @selected($incomeYear === $year)>{{ $year }}</option>@endforeach</select>
+                    </form>
+                </div>
+                <div class="grid gap-4 p-5 sm:grid-cols-3">
+                    <div class="rounded-lg bg-surface-low p-4"><p class="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant">Users registered</p><p class="mt-1.5 text-3xl font-bold tabular-nums">{{ number_format($income['users']) }}</p></div>
+                    <div class="rounded-lg bg-surface-low p-4"><p class="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant">Requests for activation</p><p class="mt-1.5 text-3xl font-bold tabular-nums">{{ number_format($income['activation_requests']) }}</p></div>
+                    <div class="rounded-lg bg-primary/5 p-4"><p class="text-[11px] font-bold uppercase tracking-wide text-primary">Gross income from subscriptions</p><p class="mt-1.5 text-3xl font-bold tabular-nums text-primary">{{ $incomePeso($income['gross']) }}</p></div>
+                </div>
+                <div class="border-t border-outline-variant/40 p-5">
+                    <p class="text-xs font-bold uppercase tracking-wide text-on-surface-variant">100% of the income is divided</p>
+                    <div class="mt-3 flex h-3 overflow-hidden rounded-full bg-surface-container" role="img" aria-label="30% System Subscription, 20% Allowance, Maintenance and Operating Expense, 50% Net Income"><span class="h-full bg-[#174b82]" style="width:30%"></span><span class="h-full bg-[#d97706]" style="width:20%"></span><span class="h-full bg-[#2a7f64]" style="width:50%"></span></div>
+                    <dl class="mt-4 grid gap-3 sm:grid-cols-3">
+                        <div class="flex items-start gap-2"><span class="mt-1 h-3 w-3 shrink-0 rounded-full bg-[#174b82]"></span><div><dt class="text-xs text-on-surface-variant">30% · System Subscription</dt><dd class="text-lg font-semibold tabular-nums">{{ $incomePeso($income['system_subscription']) }}</dd></div></div>
+                        <div class="flex items-start gap-2"><span class="mt-1 h-3 w-3 shrink-0 rounded-full bg-[#d97706]"></span><div><dt class="text-xs text-on-surface-variant">20% · Allowance, Maintenance and Operating Expense</dt><dd class="text-lg font-semibold tabular-nums">{{ $incomePeso($income['operating']) }}</dd></div></div>
+                        <div class="flex items-start gap-2"><span class="mt-1 h-3 w-3 shrink-0 rounded-full bg-[#2a7f64]"></span><div><dt class="text-xs text-on-surface-variant">50% · Net Income</dt><dd class="text-lg font-semibold tabular-nums">{{ $incomePeso($income['net']) }}</dd></div></div>
+                    </dl>
+                </div>
+            </section>
+            @endif
             @endif
 
             @if($dashboardView === 'system')

@@ -35,6 +35,7 @@ use App\Services\LiquidationChecklistService;
 use App\Services\MasterTransactionService;
 use App\Services\ProcurementWorkspaceService;
 use App\Services\ServerDashboardService;
+use App\Services\SubscriptionIncomeService;
 use App\Services\SubscriptionService;
 use App\Support\PaymentSettings;
 use App\Support\PlaceNames;
@@ -141,7 +142,20 @@ class HomeController extends Controller
                 ->get()
             : collect();
 
+        $income = null;
+        $incomeYear = null;
+        $incomeYears = [];
+        if ($user?->hasAccess('subscriptions')) {
+            $service = app(SubscriptionIncomeService::class);
+            $incomeYears = $service->years();
+            $incomeYear = in_array((int) request('income_year'), $incomeYears, true) ? (int) request('income_year') : null;
+            $income = $service->summary($incomeYear);
+        }
+
         return view('home', [
+            'income' => $income,
+            'incomeYear' => $incomeYear,
+            'incomeYears' => $incomeYears,
             'schools' => $schools,
             'pendingPreRegistrations' => $pendingPreRegistrations,
             'totalSchools' => $schools->count(),
