@@ -57,19 +57,93 @@
         </script>
 
     @if(auth()->user()->isMaster())
-    <section data-payment-settings class="mt-8 overflow-hidden rounded border border-outline-variant/30 bg-white">
-        <div class="border-b border-outline-variant/30 p-5"><h2 class="text-lg font-semibold">Payment Settings</h2><p class="mt-1 text-xs text-on-surface-variant">Where a school sends its subscription payment. The schools see this on their Subscription page. Proofs of payment stay in each school's own Google Drive and are shared only with your Google email.</p></div>
-        <form method="POST" action="{{ route('payment-settings.update') }}" enctype="multipart/form-data" data-guard="Save the payment details" class="grid gap-4 p-5 md:grid-cols-2">@csrf @method('PUT')
-            <label class="block text-xs font-semibold text-on-surface-variant">Bank<input name="bank_name" maxlength="120" value="{{ $paymentSettings['bank_name'] }}" class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-sm outline-none focus:border-primary"></label>
-            <label class="block text-xs font-semibold text-on-surface-variant">Account name<input name="account_name" maxlength="120" value="{{ $paymentSettings['account_name'] }}" class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-sm outline-none focus:border-primary"></label>
-            <label class="block text-xs font-semibold text-on-surface-variant">Account number<input name="account_number" maxlength="60" value="{{ $paymentSettings['account_number'] }}" class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-sm outline-none focus:border-primary"></label>
-            <label class="block text-xs font-semibold text-on-surface-variant">Your Google email (the proofs are shared with it)<input type="email" name="master_email" maxlength="190" value="{{ $paymentSettings['master_email'] }}" class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-sm outline-none focus:border-primary"></label>
-            <div class="md:col-span-2 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-start">
-                <label class="block text-xs font-semibold text-on-surface-variant">QR code of the account (PNG or JPG, up to 300 KB)<input type="file" name="qr" accept="image/png,image/jpeg" class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-sm outline-none focus:border-primary"></label>
-                @if($paymentSettings['qr'])<div class="flex items-center gap-3"><img src="{{ $paymentSettings['qr'] }}" alt="QR code of the account" class="h-24 w-24 rounded border border-outline-variant/40 object-contain"><label class="flex items-center gap-2 text-xs font-semibold text-on-surface-variant"><input type="checkbox" name="remove_qr" value="1" class="h-4 w-4">Remove it</label></div>@endif
+    <section data-payment-settings class="mt-8 overflow-hidden rounded-2xl border border-outline-variant/40 bg-white">
+        @php
+            $payReady = filled($paymentSettings['account_name']) && filled($paymentSettings['account_number']);
+            $payEmail = filled($paymentSettings['master_email']);
+            $payField = 'mt-1.5 w-full rounded-xl border border-outline-variant/60 bg-white px-3.5 py-2.5 text-sm font-medium text-on-surface outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10';
+            $payLabel = 'block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant';
+        @endphp
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/30 px-6 py-5">
+            <div class="flex items-center gap-3"><span class="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary"><span class="material-symbols-outlined" aria-hidden="true">account_balance</span></span><div><h2 class="text-lg font-semibold tracking-tight">Payment Settings</h2><p class="text-xs text-on-surface-variant">Where a school sends its subscription payment. The schools see this on their Subscription page.</p></div></div>
+            <div class="flex flex-wrap gap-2" data-payment-status>
+                <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold {{ $payReady ? 'bg-secondary/10 text-secondary' : 'bg-amber-100 text-amber-800' }}"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">{{ $payReady ? 'check_circle' : 'error' }}</span>{{ $payReady ? 'Account is ready' : 'Account is not complete' }}</span>
+                <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold {{ $payEmail ? 'bg-secondary/10 text-secondary' : 'bg-amber-100 text-amber-800' }}"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">{{ $payEmail ? 'check_circle' : 'mail' }}</span>{{ $payEmail ? 'Proofs are shared with your email' : 'Google email missing: schools cannot send a proof yet' }}</span>
             </div>
-            <div class="flex justify-end md:col-span-2"><button class="rounded bg-primary px-5 py-2.5 text-xs font-bold text-white hover:bg-primary-container">Save payment details</button></div>
+        </div>
+        <form method="POST" action="{{ route('payment-settings.update') }}" enctype="multipart/form-data" data-guard="Save the payment details" class="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_21rem]">@csrf @method('PUT')
+            <div class="space-y-5">
+                <fieldset class="rounded-xl border border-outline-variant/40 bg-surface-low/40 p-5">
+                    <legend class="px-1 text-xs font-bold uppercase tracking-wider text-primary">1 · The account</legend>
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <label class="{{ $payLabel }}">Bank<input name="bank_name" data-pay-bind="bank" maxlength="120" placeholder="GoTyme Bank" value="{{ $paymentSettings['bank_name'] }}" class="{{ $payField }}"></label>
+                        <label class="{{ $payLabel }}">Account name<input name="account_name" data-pay-bind="name" maxlength="120" placeholder="Name on the account" value="{{ $paymentSettings['account_name'] }}" class="{{ $payField }}"></label>
+                        <label class="{{ $payLabel }} sm:col-span-2">Account number<input name="account_number" data-pay-bind="number" maxlength="60" inputmode="numeric" placeholder="0000 0000 0000" value="{{ $paymentSettings['account_number'] }}" class="{{ $payField }} tabular-nums tracking-wider"></label>
+                    </div>
+                </fieldset>
+                <fieldset class="rounded-xl border border-outline-variant/40 bg-surface-low/40 p-5">
+                    <legend class="px-1 text-xs font-bold uppercase tracking-wider text-primary">2 · Where the proofs go</legend>
+                    <label class="{{ $payLabel }}">Your Google email<input type="email" name="master_email" maxlength="190" autocomplete="email" placeholder="you@gmail.com" value="{{ $paymentSettings['master_email'] }}" class="{{ $payField }}"></label>
+                    <p class="mt-2 text-xs leading-relaxed text-on-surface-variant">Each school keeps its proof in its own Google Drive and shares it read-only with this address only (never public). Use a Google account you can open.</p>
+                </fieldset>
+                <fieldset class="rounded-xl border border-outline-variant/40 bg-surface-low/40 p-5">
+                    <legend class="px-1 text-xs font-bold uppercase tracking-wider text-primary">3 · The QR code</legend>
+                    <label data-pay-drop class="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-outline-variant/70 bg-white px-4 py-6 text-center transition hover:border-primary hover:bg-primary/5">
+                        <span class="material-symbols-outlined text-[28px] text-primary" aria-hidden="true">qr_code_2</span>
+                        <span class="text-sm font-semibold text-on-surface">Choose an image or drop it here</span>
+                        <span class="text-xs text-on-surface-variant" data-pay-file>PNG or JPG, up to 300 KB</span>
+                        <input type="file" name="qr" accept="image/png,image/jpeg" data-pay-qr class="sr-only">
+                    </label>
+                    <p class="mt-2 hidden text-xs font-semibold text-error" data-pay-error></p>
+                    @if($paymentSettings['qr'])<label class="mt-3 inline-flex cursor-pointer items-center gap-2 text-xs font-semibold text-on-surface-variant"><input type="checkbox" name="remove_qr" value="1" data-pay-remove class="h-4 w-4 rounded border-outline-variant">Remove the QR code that is saved</label>@endif
+                </fieldset>
+            </div>
+            <aside class="lg:sticky lg:top-24 lg:self-start" aria-label="What a school sees">
+                <p class="mb-2 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">What a school sees</p>
+                <div class="overflow-hidden rounded-2xl p-5 text-white shadow-lg" style="background:linear-gradient(145deg,#0b2a66 0%,#103967 55%,#1b5088 100%)">
+                    <p class="text-[10px] font-bold uppercase tracking-[.14em] text-white/60">Send the payment to</p>
+                    <p class="mt-3 text-sm font-semibold text-white/80" data-pay-view="bank">{{ $paymentSettings['bank_name'] ?: 'Bank' }}</p>
+                    <p class="mt-0.5 text-lg font-semibold tracking-tight" data-pay-view="name">{{ $paymentSettings['account_name'] ?: 'Account name' }}</p>
+                    <p class="mt-1 font-mono text-base tracking-[.12em] tabular-nums text-white/90" data-pay-view="number">{{ $paymentSettings['account_number'] ?: '0000 0000 0000' }}</p>
+                    <div class="mt-4 grid place-items-center rounded-xl bg-white p-3"><img data-pay-view="qr" src="{{ $paymentSettings['qr'] ?: '' }}" alt="QR code of the account" class="{{ $paymentSettings['qr'] ? '' : 'hidden' }} h-44 w-44 object-contain"><p data-pay-view="noqr" class="{{ $paymentSettings['qr'] ? 'hidden' : '' }} py-12 text-xs font-medium text-on-surface-variant">No QR code yet</p></div>
+                    <p class="mt-3 text-center text-[11px] text-white/60">Amount to pay is shown on the school's page</p>
+                </div>
+            </aside>
+            <div class="flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant/30 pt-5 lg:col-span-2"><p class="text-xs text-on-surface-variant">Saving asks for your reason and your password, and is kept in the history.</p><button class="rounded-xl bg-primary px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-primary-container">Save payment details</button></div>
         </form>
+        <script>
+            // The card on the right follows what is typed and the image that is chosen, before anything is saved.
+            (() => {
+                const root = document.querySelector('[data-payment-settings]');
+                if (!root) return;
+                const view = (key) => root.querySelector('[data-pay-view="' + key + '"]');
+                const fallback = { bank: 'Bank', name: 'Account name', number: '0000 0000 0000' };
+                root.querySelectorAll('[data-pay-bind]').forEach((input) => input.addEventListener('input', () => { view(input.dataset.payBind).textContent = input.value.trim() || fallback[input.dataset.payBind]; }));
+
+                const file = root.querySelector('[data-pay-qr]');
+                const drop = root.querySelector('[data-pay-drop]');
+                const label = root.querySelector('[data-pay-file]');
+                const error = root.querySelector('[data-pay-error]');
+                const show = (src) => { const img = view('qr'); img.src = src; img.classList.toggle('hidden', !src); view('noqr').classList.toggle('hidden', Boolean(src)); };
+                const fail = (message) => { error.textContent = message; error.classList.remove('hidden'); file.value = ''; label.textContent = 'PNG or JPG, up to 300 KB'; };
+                const pick = (chosen) => {
+                    error.classList.add('hidden');
+                    if (!chosen) return;
+                    if (!['image/png', 'image/jpeg'].includes(chosen.type)) return fail('The QR code must be a PNG or a JPG image.');
+                    if (chosen.size > 300 * 1024) return fail('The image is ' + Math.round(chosen.size / 1024) + ' KB. The limit is 300 KB.');
+                    label.textContent = chosen.name + ' · ' + Math.round(chosen.size / 1024) + ' KB';
+                    const reader = new FileReader();
+                    reader.onload = () => show(reader.result);
+                    reader.readAsDataURL(chosen);
+                    const remove = root.querySelector('[data-pay-remove]'); if (remove) remove.checked = false;
+                };
+                file.addEventListener('change', () => pick(file.files[0]));
+                ['dragenter', 'dragover'].forEach((name) => drop.addEventListener(name, (event) => { event.preventDefault(); drop.classList.add('border-primary', 'bg-primary/5'); }));
+                ['dragleave', 'drop'].forEach((name) => drop.addEventListener(name, (event) => { event.preventDefault(); drop.classList.remove('border-primary', 'bg-primary/5'); }));
+                drop.addEventListener('drop', (event) => { const dropped = event.dataTransfer?.files?.[0]; if (!dropped) return; const transfer = new DataTransfer(); transfer.items.add(dropped); file.files = transfer.files; pick(dropped); });
+                root.querySelector('[data-pay-remove]')?.addEventListener('change', (event) => { if (event.target.checked) { show(''); file.value = ''; label.textContent = 'PNG or JPG, up to 300 KB'; } });
+            })();
+        </script>
     </section>
 
     <section data-promo-panel class="mt-8 overflow-hidden rounded border border-outline-variant/30 bg-white">
