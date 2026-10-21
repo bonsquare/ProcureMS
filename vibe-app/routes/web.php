@@ -16,6 +16,7 @@ use App\Http\Controllers\FormGeneratorController;
 use App\Http\Controllers\GoogleDriveController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MasterUserController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PlanningController;
 use App\Http\Controllers\SchoolManagementController;
 use App\Http\Controllers\SchoolSettingsController;
@@ -245,6 +246,8 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::post('/subscriptions/proofs/{proof}/approve', [SubscriptionAdminController::class, 'approveProof'])->whereNumber('proof')->name('subscriptions.proofs.approve');
     Route::post('/subscriptions/proofs/{proof}/reject', [SubscriptionAdminController::class, 'rejectProof'])->whereNumber('proof')->name('subscriptions.proofs.reject');
     Route::get('/subscription', [SubscriptionController::class, 'show'])->name('subscription');
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications');
+    Route::get('/server-time', [NotificationController::class, 'serverTime'])->name('server-time');
     Route::post('/subscription/promo', [SubscriptionController::class, 'promo'])->name('subscription.promo');
     Route::post('/subscription/proof', [SubscriptionController::class, 'submitProof'])->middleware('drive.connected')->name('subscription.proof');
     Route::post('/promo-codes', [SubscriptionAdminController::class, 'storePromo'])->name('promo-codes.store');

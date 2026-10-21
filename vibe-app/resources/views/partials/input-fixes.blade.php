@@ -10,6 +10,7 @@
 
 @include('partials.apple-design')
 @include('partials.trial-banner')
+@include('partials.topbar-tools')
 @include('partials.password-toggle')
 @include('partials.searchable-select')
 
