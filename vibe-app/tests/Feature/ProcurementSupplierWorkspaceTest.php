@@ -38,7 +38,7 @@ class ProcurementSupplierWorkspaceTest extends TestCase
         $this->post(route('suppliers.store'), [
             'business_name' => 'Rizal Trading', 'has_company_owner' => 1, 'owner_salutation' => 'Engr.', 'owner_given_name' => 'Juan', 'owner_middle_initial' => 'D', 'owner_last_name' => 'Cruz',
             'address_street' => '12 Rizal St.', 'address_barangay' => 'Poblacion', 'address_city' => 'Kidapawan City', 'address_province' => 'Cotabato', 'address_zip' => '9400',
-            'phone' => '09171234567', 'email' => 'rizal@example.com', 'tax_type' => 'non_vat', 'tin' => '123-456-789-000', 'philgeps_no' => 'PG-1', 'business_permit_no' => 'BP-9',
+            'phone' => '09171234567', 'email' => 'rizal@example.com', 'tax_type' => 'non_vat', 'tax_rate' => 0, 'bir_registration_no' => 'BIR-1', 'tin' => '123-456-789-000', 'philgeps_no' => 'PG-1', 'business_permit_no' => 'BP-9',
             'payment_method' => 'Bank transfer', 'bank_name' => 'Landbank', 'bank_account_name' => 'Rizal Trading', 'bank_account_number' => '0011223344', 'dti_registration_no' => 'DTI-77',
         ])->assertRedirect(route('suppliers'));
 
@@ -48,7 +48,7 @@ class ProcurementSupplierWorkspaceTest extends TestCase
         $this->assertSame('Landbank', $supplier->bank_name);
 
         $this->get(route('suppliers.edit', $supplier))->assertOk()->assertSee('Rizal Trading')->assertSee('0011223344');
-        $this->put(route('suppliers.update', $supplier), ['business_name' => 'Rizal Trading', 'has_company_owner' => 0, 'tax_type' => 'vat', 'tax_rate' => 12, 'addressee' => 'The Manager'])->assertRedirect(route('suppliers'));
+        $this->put(route('suppliers.update', $supplier), ['business_name' => 'Rizal Trading', 'has_company_owner' => 0, 'tax_type' => 'vat', 'tax_rate' => 12, 'addressee' => 'The Manager', 'tin' => '123-456-789-000', 'bir_registration_no' => 'BIR-1', 'address_street' => '12 Rizal St.', 'address_barangay' => 'Poblacion', 'address_city' => 'Kidapawan City', 'address_province' => 'Cotabato', 'address_zip' => '9400'])->assertRedirect(route('suppliers'));
         $this->assertNull($supplier->fresh()->owner_given_name);
         $this->assertSame('The Manager', $supplier->fresh()->addressee);
     }

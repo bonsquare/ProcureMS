@@ -30,7 +30,7 @@
     <section class="rounded-xl border border-outline-variant/60 bg-white p-4">
         <h2 class="font-bold">Business information</h2>
         <div class="mt-3 grid gap-3 sm:grid-cols-2">
-            <label class="block text-xs font-bold sm:col-span-2">Business / company name<input name="business_name" required value="{{ $value('business_name') }}" class="{{ $input }}">{!! $field('business_name') !!}</label>
+            <label class="block text-xs font-bold sm:col-span-2">Payee / Business / company name <span class="text-error" aria-hidden="true">*</span><input name="business_name" required value="{{ $value('business_name') }}" class="{{ $input }}">{!! $field('business_name') !!}</label>
             <label class="block text-xs font-bold">Type of business<select name="business_type" class="{{ $input }}"><option value="">Select</option>@foreach(['Sole Proprietorship', 'Partnership', 'Corporation', 'Cooperative', 'Others'] as $type)<option @selected($value('business_type') === $type)>{{ $type }}</option>@endforeach</select>{!! $field('business_type') !!}</label>
             <label class="block text-xs font-bold">Line of business / products<input name="line_of_business" value="{{ $value('line_of_business') }}" placeholder="e.g. School and office supplies" class="{{ $input }}">{!! $field('line_of_business') !!}</label>
             @if($isMasterUser)
@@ -43,22 +43,22 @@
         <h2 class="font-bold">Company Owner Details</h2>
         <label class="mt-4 flex items-center gap-2 text-xs font-bold"><input type="checkbox" name="has_company_owner" value="1" id="has_company_owner" @checked($hasOwner) class="h-4 w-4 rounded border-outline-variant">The company has an owner / proprietor</label>
         <div id="owner-fields" class="mt-4 grid gap-4 sm:grid-cols-2">
-            <label class="block text-xs font-bold">Salutation<select name="owner_salutation" class="{{ $input }}"><option value="">—</option>@foreach(['Mr.', 'Mrs.', 'Ms.', 'Atty.', 'Engr.', 'Dr.'] as $salutation)<option @selected($value('owner_salutation') === $salutation)>{{ $salutation }}</option>@endforeach</select>{!! $field('owner_salutation') !!}</label>
-            <label class="block text-xs font-bold">Given name<input name="owner_given_name" value="{{ $value('owner_given_name') }}" class="{{ $input }}">{!! $field('owner_given_name') !!}</label>
-            <label class="block text-xs font-bold">Middle initial<input name="owner_middle_initial" maxlength="10" value="{{ $value('owner_middle_initial') }}" class="{{ $input }}">{!! $field('owner_middle_initial') !!}</label>
-            <label class="block text-xs font-bold">Surname<input name="owner_last_name" value="{{ $value('owner_last_name') }}" class="{{ $input }}">{!! $field('owner_last_name') !!}</label>
+            <label class="block text-xs font-bold">Salutation <span class="text-error" aria-hidden="true">*</span><select name="owner_salutation" required class="{{ $input }}"><option value="">—</option>@foreach(['Mr.', 'Mrs.', 'Ms.', 'Atty.', 'Engr.', 'Dr.'] as $salutation)<option @selected($value('owner_salutation') === $salutation)>{{ $salutation }}</option>@endforeach</select>{!! $field('owner_salutation') !!}</label>
+            <label class="block text-xs font-bold">Given name <span class="text-error" aria-hidden="true">*</span><input name="owner_given_name" required value="{{ $value('owner_given_name') }}" class="{{ $input }}">{!! $field('owner_given_name') !!}</label>
+            <label class="block text-xs font-bold">Middle initial <span class="text-error" aria-hidden="true">*</span><input name="owner_middle_initial" required maxlength="10" value="{{ $value('owner_middle_initial') }}" class="{{ $input }}">{!! $field('owner_middle_initial') !!}</label>
+            <label class="block text-xs font-bold">Surname <span class="text-error" aria-hidden="true">*</span><input name="owner_last_name" required value="{{ $value('owner_last_name') }}" class="{{ $input }}">{!! $field('owner_last_name') !!}</label>
         </div>
         <label class="mt-4 block text-xs font-bold">Letter addressee<input name="addressee" value="{{ $value('addressee') }}" placeholder="The Manager" class="{{ $input }}">{!! $field('addressee') !!}</label>
     </section>
     <section class="rounded-xl border border-outline-variant/60 bg-white p-4">
         <h2 class="font-bold">Complete address</h2>
         <div class="mt-3 grid gap-3 sm:grid-cols-2">
-            <label class="block text-xs font-bold sm:col-span-2">Street / building / lot<input name="address_street" value="{{ $value('address_street') }}" class="{{ $input }}">{!! $field('address_street') !!}</label>
-            <label class="block text-xs font-bold">Barangay<input name="address_barangay" value="{{ $value('address_barangay') }}" class="{{ $input }}"></label>
-            <label class="block text-xs font-bold">City / municipality<input name="address_city" value="{{ $value('address_city') }}" class="{{ $input }}"></label>
-            <label class="block text-xs font-bold">Province<input name="address_province" value="{{ $value('address_province') }}" class="{{ $input }}"></label>
-            <label class="block text-xs font-bold">ZIP code<input name="address_zip" value="{{ $value('address_zip') }}" class="{{ $input }}"></label>
-            <label class="block text-xs font-bold sm:col-span-2">Complete address<textarea name="business_address" id="business_address" rows="2" class="{{ $input }}">{{ $value('business_address') }}</textarea>{!! $field('business_address') !!}</label>
+            <label class="block text-xs font-bold sm:col-span-2">Street / building / lot <span class="text-error" aria-hidden="true">*</span><input name="address_street" required value="{{ $value('address_street') }}" class="{{ $input }}">{!! $field('address_street') !!}</label>
+            <label class="block text-xs font-bold">Barangay <span class="text-error" aria-hidden="true">*</span><input name="address_barangay" required value="{{ $value('address_barangay') }}" class="{{ $input }}"></label>
+            <label class="block text-xs font-bold">City / municipality <span class="text-error" aria-hidden="true">*</span><input name="address_city" required value="{{ $value('address_city') }}" class="{{ $input }}"></label>
+            <label class="block text-xs font-bold">Province <span class="text-error" aria-hidden="true">*</span><input name="address_province" required value="{{ $value('address_province') }}" class="{{ $input }}"></label>
+            <label class="block text-xs font-bold">ZIP code <span class="text-error" aria-hidden="true">*</span><input name="address_zip" required value="{{ $value('address_zip') }}" class="{{ $input }}"></label>
+            <label class="block text-xs font-bold sm:col-span-2">Complete address <span class="text-error" aria-hidden="true">*</span><textarea name="business_address" required id="business_address" rows="2" class="{{ $input }}">{{ $value('business_address') }}</textarea>{!! $field('business_address') !!}</label>
         </div>
     </section>
     </div>
@@ -66,10 +66,10 @@
     <section class="rounded-xl border border-outline-variant/60 bg-white p-4">
         <h2 class="font-bold">BIR Registration</h2>
         <div class="mt-3 grid gap-3 sm:grid-cols-2">
-            <label class="block text-xs font-bold">TIN<input name="tin" value="{{ $value('tin') }}" placeholder="000-000-000-000" class="{{ $input }}">{!! $field('tin') !!}</label>
-            <label class="block text-xs font-bold">Tax type<select name="tax_type" required id="tax_type" class="{{ $input }}"><option value="vat" @selected($value('tax_type', 'vat') === 'vat')>VAT</option><option value="non_vat" @selected($value('tax_type') === 'non_vat')>Non-VAT</option><option value="vat_exempt" @selected($value('tax_type') === 'vat_exempt')>VAT exempt</option></select>{!! $field('tax_type') !!}</label>
-            <label class="block text-xs font-bold">Tax rate (%)<input type="number" step="0.01" min="0" max="100" name="tax_rate" id="tax_rate" value="{{ $value('tax_rate') }}" placeholder="12 for VAT" class="{{ $input }}">{!! $field('tax_rate') !!}</label>
-            <label class="block text-xs font-bold">BIR Certificate of Registration No.<input name="bir_registration_no" value="{{ $value('bir_registration_no') }}" class="{{ $input }}"></label>
+            <label class="block text-xs font-bold">TIN <span class="text-error" aria-hidden="true">*</span><input name="tin" required value="{{ $value('tin') }}" placeholder="000-000-000-000" class="{{ $input }}">{!! $field('tin') !!}</label>
+            <label class="block text-xs font-bold">Tax type <span class="text-error" aria-hidden="true">*</span><select name="tax_type" required id="tax_type" class="{{ $input }}"><option value="vat" @selected($value('tax_type', 'vat') === 'vat')>VAT</option><option value="non_vat" @selected($value('tax_type') === 'non_vat')>Non-VAT</option><option value="vat_exempt" @selected($value('tax_type') === 'vat_exempt')>VAT exempt</option></select>{!! $field('tax_type') !!}</label>
+            <label class="block text-xs font-bold">Tax rate (%) <span class="text-error" aria-hidden="true">*</span><input type="number" step="0.01" min="0" max="100" name="tax_rate" required id="tax_rate" value="{{ $value('tax_rate') }}" placeholder="12 for VAT" class="{{ $input }}">{!! $field('tax_rate') !!}</label>
+            <label class="block text-xs font-bold">BIR Certificate of Registration No. <span class="text-error" aria-hidden="true">*</span><input name="bir_registration_no" required value="{{ $value('bir_registration_no') }}" class="{{ $input }}"></label>
         </div>
     </section>
     <section class="rounded-xl border border-outline-variant/60 bg-white p-4">

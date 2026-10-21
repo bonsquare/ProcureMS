@@ -141,7 +141,7 @@ class SaasFoundationTest extends TestCase
     private function supplierPayload(): array
     {
         return [
-            'business_name' => 'Tenant Test Supplier',
+            'business_name' => 'Tenant Test Supplier', 'tin' => '123-456-789-000', 'tax_rate' => 0, 'bir_registration_no' => 'BIR-1', 'address_street' => '1 Main St.', 'address_barangay' => 'Poblacion', 'address_city' => 'Kidapawan City', 'address_province' => 'Cotabato', 'address_zip' => '9400',
             'tax_type' => 'non_vat',
             'tax_rate' => 0,
         ];

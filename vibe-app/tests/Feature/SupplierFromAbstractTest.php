@@ -28,7 +28,7 @@ class SupplierFromAbstractTest extends TestCase
 
     private function supplier(): array
     {
-        return ['business_name' => 'Lubas Trading', 'tax_type' => 'vat', 'status' => 'active'];
+        return ['business_name' => 'Lubas Trading', 'tax_type' => 'vat', 'status' => 'active', 'tin' => '123-456-789-000', 'tax_rate' => 0, 'bir_registration_no' => 'BIR-1', 'address_street' => '1 Main St.', 'address_barangay' => 'Poblacion', 'address_city' => 'Kidapawan City', 'address_province' => 'Cotabato', 'address_zip' => '9400'];
     }
 
     public function test_the_abstract_form_links_to_supplier_management_and_opens_again_when_asked(): void
@@ -82,6 +82,6 @@ class SupplierFromAbstractTest extends TestCase
         $this->actingAs($user)->get(route('suppliers.create', ['return_to' => 'abstract', 'return_request' => $foreign->id]))->assertOk()
             ->assertDontSee('Back to Abstract of Bids')->assertDontSee('PR-2026-ABS-F');
         $this->post(route('suppliers.store'), $this->supplier() + ['return_to' => 'abstract', 'return_request' => $foreign->id])->assertRedirect(route('suppliers'));
-        $this->post(route('suppliers.store'), ['business_name' => 'Evil', 'tax_type' => 'vat', 'return_to' => 'https://evil.test', 'return_request' => 'x'])->assertRedirect(route('suppliers'));
+        $this->post(route('suppliers.store'), $this->supplier() + ['business_name' => 'Evil', 'return_to' => 'https://evil.test', 'return_request' => 'x'])->assertRedirect(route('suppliers'));
     }
 }
