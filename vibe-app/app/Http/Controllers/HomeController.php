@@ -2396,13 +2396,32 @@ class HomeController extends Controller
     {
         abort_unless(request()->user()?->hasAccess('subscriptions'), 403);
 
-        return view('subscriptions', [
+        $data = $this->subscriptionsData();
+
+        return view('subscriptions', $data + ['liveHash' => md5(view('partials.subscriptions-live', $data)->render())]);
+    }
+
+    /** The live part of the Subscriptions page, drawn again when its data changed (204 when the page already has the same). */
+    public function subscriptionsLive(Request $request)
+    {
+        abort_unless($request->user()?->hasAccess('subscriptions'), 403);
+
+        $html = view('partials.subscriptions-live', $this->subscriptionsData())->render();
+        $hash = md5($html);
+
+        return $request->query('h') === $hash ? response()->noContent() : response()->json(['hash' => $hash, 'html' => $html]);
+    }
+
+    /** @return array{subscriptions: Collection, pendingPreRegistrations: Collection} */
+    private function subscriptionsData(): array
+    {
+        return [
             'subscriptions' => Subscription::with('school')->whereHas('school')->latest()->get(),
             'pendingPreRegistrations' => School::with(['users' => fn ($query) => $query->oldest()])
                 ->where('status', 'inactive')
                 ->orderBy('created_at')
                 ->get(),
-        ]);
+        ];
     }
 
     public function schoolSettings()

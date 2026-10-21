@@ -238,6 +238,7 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::put('/user-management/sub-masters/{user}/password', [SubMasterController::class, 'password'])->name('master-user.sub-masters.password')->whereNumber('user');
     Route::put('/user-management/sub-masters/{user}/status', [SubMasterController::class, 'status'])->name('master-user.sub-masters.status')->whereNumber('user');
     Route::get('/subscriptions', [HomeController::class, 'subscriptions'])->name('subscriptions');
+    Route::get('/subscriptions/live', [HomeController::class, 'subscriptionsLive'])->name('subscriptions.live');
     Route::get('/school-settings', [HomeController::class, 'schoolSettings'])->name('school-settings');
     Route::post('/school-settings/organization', [HomeController::class, 'updateOrganizationSettings'])->middleware('permission:organization.settings')->name('school-settings.organization');
     Route::post('/school-settings/agency', [HomeController::class, 'updateAgencySettings'])->middleware('permission:organization.settings')->name('school-settings.agency');
