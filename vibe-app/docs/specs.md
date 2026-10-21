@@ -1137,7 +1137,7 @@ Design: `docs/superpowers/specs/2026-10-16-cash-reports-design.md`. The owner's 
 ## 74. History of every cash report (owner's decision 2026-10-21)
 
 - The **Save to history** button of the report window now exists for all four cash reports (Report of Checks Issued, Checks and Advices to Debit Account, Cash Disbursement Register, Bank Reconciliation), not only the register. It keeps the finished page, the period, the fund and the report number (`cash_report_histories.report` = `roci`, `checks`, `register` or `bank`; `POST /cash/reports/{kind}/history`, `cash.report.history.store`; the register's own route stays).
-- The Reports tab of Cash shows the **Report history as one card under each report** (four cards in the same row as the four report cards; each lists its own saved reports newest first, the last 100 of the school, with the period, fund, report number, payments, who and when, and a count); **Open** shows the kept page unchanged. The printed layout of the reports is not changed (they stay final, section 56); only the history reaches every report. Covered by `tests/Feature/CashReportPrintTest.php`.
+- The Reports tab of Cash shows the **Report history as one list per report** (four lists one under the other, each titled with its report and a count; each lists only its own saved reports newest first, the last 100 of the school, in columns Generated, Period covered, Fund, Report No., Payments and By); **Open** shows the kept page unchanged. The printed layout of the reports is not changed (they stay final, section 56); only the history reaches every report. Covered by `tests/Feature/CashReportPrintTest.php`.
 
 ## 75. One notice for every action; a report is saved to history once (owner's decision 2026-10-21)
 

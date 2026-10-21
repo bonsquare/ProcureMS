@@ -27,18 +27,23 @@
     </section>
     <section class="overflow-hidden rounded-xl border border-outline-variant/60 bg-white shadow-sm">
         {!! $head(2, 'Report history', 'Press Save to history in the window of any report to keep it as it was generated. Open it again to print the same document.') !!}
-        <div class="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-4">
+        <div class="space-y-5 p-5">
             @foreach($reportLinks as [$routeName, $title, $hint, $icon])
                 @php $kind = \Illuminate\Support\Str::afterLast($routeName, '.'); $kept = $reportHistory->where('report', $kind); @endphp
-                <div class="flex flex-col rounded-xl border border-outline-variant/50 border-l-4 border-l-primary bg-[#f6f9fc]">
-                    <div class="flex items-center gap-2 border-b border-outline-variant/40 px-4 py-3"><span class="material-symbols-outlined text-[20px] text-primary" aria-hidden="true">{{ $icon }}</span><h3 class="min-w-0 flex-1 text-sm font-bold text-primary">{{ $title }}</h3><span class="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-on-surface-variant" data-history-count="{{ $kind }}">{{ $kept->count() }}</span></div>
-                    <ul data-history-list="{{ $kind }}" class="max-h-[30rem] space-y-2 overflow-y-auto p-3">
-                        @forelse($kept as $entry)
-                            @include('partials.cash-history-item')
-                        @empty
-                            <li data-empty class="px-2 py-4 text-center text-xs text-on-surface-variant">No report saved yet.</li>
-                        @endforelse
-                    </ul>
+                <div class="overflow-hidden rounded-xl border border-outline-variant/50 border-l-4 border-l-primary">
+                    <div class="flex items-center gap-2 border-b border-outline-variant/40 bg-[#f6f9fc] px-4 py-3"><span class="material-symbols-outlined text-[20px] text-primary" aria-hidden="true">{{ $icon }}</span><h3 class="min-w-0 flex-1 text-sm font-bold text-primary">{{ $title }}</h3><span class="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-on-surface-variant ring-1 ring-outline-variant/50" data-history-count="{{ $kind }}">{{ $kept->count() }}</span></div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full min-w-[720px] text-left text-xs">
+                            <thead class="bg-surface-low uppercase tracking-wider text-on-surface-variant"><tr><th class="px-4 py-2">Generated</th><th class="px-3 py-2">Period covered</th><th class="px-3 py-2">Fund</th><th class="px-3 py-2">Report No.</th><th class="px-3 py-2 text-right">Payments</th><th class="px-3 py-2">By</th><th class="px-4 py-2 text-right"></th></tr></thead>
+                            <tbody data-history-list="{{ $kind }}" class="divide-y divide-outline-variant/30">
+                                @forelse($kept as $entry)
+                                    @include('partials.cash-history-item')
+                                @empty
+                                    <tr data-empty><td colspan="7" class="px-4 py-5 text-center text-on-surface-variant">No report saved yet.</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             @endforeach
         </div>

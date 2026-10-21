@@ -299,7 +299,7 @@ class CashReportPrintTest extends TestCase
         foreach (array_keys($names) as $kind) {
             $page->assertSee('data-history-list="'.$kind.'"', false);
         }
-        $this->assertSame(5, substr_count($page->getContent(), '<li data-history-item'), 'every kept report is a card; the register of another fund is one more under the register');
+        $this->assertSame(5, substr_count($page->getContent(), '<tr data-history-item'), 'every kept report is a row in the list of its own report; the register of another fund is one more under the register');
         $first = CashReportHistory::where('report', 'roci')->firstOrFail();
         $this->actingAs($user)->get(route('cash.report.history', $first->id))->assertOk()->assertSee('0501');
     }
