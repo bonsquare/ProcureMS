@@ -32,7 +32,8 @@
                 <thead class="bg-surface-low uppercase tracking-wider text-on-surface-variant"><tr><th class="px-4 py-2">Generated</th><th class="px-3 py-2">Report</th><th class="px-3 py-2">Period covered</th><th class="px-3 py-2">Fund</th><th class="px-3 py-2">Report No.</th><th class="px-3 py-2 text-right">Payments</th><th class="px-3 py-2">By</th><th class="px-4 py-2 text-right"></th></tr></thead>
                 <tbody id="register-history-rows" class="divide-y divide-outline-variant/30">
                     @forelse($reportHistory as $entry)
-                        <tr><td class="px-4 py-2.5">{{ $entry->created_at->format('M d, Y g:i A') }}</td><td class="px-3 py-2.5 font-semibold">{{ $entry->label() }}</td><td class="px-3 py-2.5">{{ $entry->period_text }}</td><td class="px-3 py-2.5">{{ $entry->source_of_fund ?: 'All funds' }}</td><td class="px-3 py-2.5">{{ $entry->report_no ?: '—' }}</td><td class="px-3 py-2.5 text-right tabular-nums">{{ number_format((float) $entry->total_payments, 2) }}</td><td class="px-3 py-2.5">{{ $entry->generator?->name }}</td><td class="px-4 py-2.5 text-right"><div class="flex items-center justify-end gap-1.5"><a href="{{ route('cash.report.history', $entry->id) }}" target="_blank" rel="noopener" class="rounded border border-outline-variant/60 px-3 py-1.5 font-semibold text-primary hover:bg-primary hover:text-white">Open</a><form method="POST" action="{{ route('cash.report.history.update', $entry->id) }}" data-guard="Update {{ $entry->label() }} · {{ $entry->period_text }} from today's figures">@csrf @method('PUT')<button title="Update from today's figures" aria-label="Update {{ $entry->label() }}" class="inline-flex h-8 w-8 items-center justify-center rounded border border-outline-variant/60 text-primary hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">sync</span></button></form><form method="POST" action="{{ route('cash.report.history.destroy', $entry->id) }}" data-guard="Delete {{ $entry->label() }} · {{ $entry->period_text }} from the history">@csrf @method('DELETE')<button title="Delete from the history" aria-label="Delete {{ $entry->label() }}" class="inline-flex h-8 w-8 items-center justify-center rounded border border-error/50 text-error hover:bg-error hover:text-white"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">delete</span></button></form></div></td></tr>
+                        @php $keptParams = $entry->params ?: array_filter(['school_id' => $entry->school_id, 'from' => $entry->period_from->toDateString(), 'to' => $entry->period_to->toDateString(), 'source_of_fund' => $entry->source_of_fund, 'report_no' => $entry->report_no]); @endphp
+                        <tr><td class="px-4 py-2.5">{{ $entry->created_at->format('M d, Y g:i A') }}</td><td class="px-3 py-2.5 font-semibold">{{ $entry->label() }}</td><td class="px-3 py-2.5">{{ $entry->period_text }}</td><td class="px-3 py-2.5">{{ $entry->source_of_fund ?: 'All funds' }}</td><td class="px-3 py-2.5">{{ $entry->report_no ?: '—' }}</td><td class="px-3 py-2.5 text-right tabular-nums">{{ number_format((float) $entry->total_payments, 2) }}</td><td class="px-3 py-2.5">{{ $entry->generator?->name }}</td><td class="px-4 py-2.5 text-right"><div class="flex items-center justify-end gap-1.5"><a href="{{ route('cash.report.history', $entry->id) }}" target="_blank" rel="noopener" class="rounded border border-outline-variant/60 px-3 py-1.5 font-semibold text-primary hover:bg-primary hover:text-white">Open</a><button type="button" data-history-edit data-kind="{{ $entry->report }}" data-url="{{ route('cash.report.history.update', $entry->id) }}" data-name="{{ $entry->label() }} · {{ $entry->period_text }}" data-params='@json($keptParams)' title="Edit" aria-label="Edit {{ $entry->label() }}" class="inline-flex h-8 w-8 items-center justify-center rounded border border-outline-variant/60 text-primary hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">edit</span></button><form method="POST" action="{{ route('cash.report.history.destroy', $entry->id) }}" data-guard="Delete {{ $entry->label() }} · {{ $entry->period_text }} from the history">@csrf @method('DELETE')<button title="Delete from the history" aria-label="Delete {{ $entry->label() }}" class="inline-flex h-8 w-8 items-center justify-center rounded border border-error/50 text-error hover:bg-error hover:text-white"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">delete</span></button></form></div></td></tr>
                     @empty
                         <tr><td colspan="8" class="px-4 py-6 text-center text-on-surface-variant">No report has been generated yet.</td></tr>
                     @endforelse
@@ -272,7 +273,19 @@
         // Save to history keeps a copy of the open report as it is now and adds it to the list.
         const historyKinds = { o: 'roci', c: 'checks', r: 'register', b: 'bank' };
         const saveButton = document.getElementById('cash-report-save');
+        let editing = null;
         saveButton.addEventListener('click', async () => {
+            if (editing) {
+                // The edited form replaces the kept copy; the reason and the password are asked first.
+                const form = document.createElement('form');
+                form.method = 'POST'; form.action = editing.url; form.dataset.guard = 'Update ' + editing.name + ' in the history'; form.hidden = true;
+                [['_token', document.querySelector('meta[name="csrf-token"]')?.content || @json(csrf_token())], ['_method', 'PUT'], ['query', new URL(printLink.getAttribute('href'), location.origin).search.slice(1)]].forEach(([name, value]) => {
+                    const input = document.createElement('input'); input.type = 'hidden'; input.name = name; input.value = value; form.append(input);
+                });
+                document.body.append(form);
+                form.requestSubmit();
+                return;
+            }
             saveButton.disabled = true;
             const notice = window.appNotify?.('Saving to history…', 'progress');
             try {
@@ -292,6 +305,13 @@
                 cell(entry.generated, 'px-4 py-2.5'); cell(entry.report, 'px-3 py-2.5 font-semibold'); cell(entry.period, 'px-3 py-2.5'); cell(entry.fund, 'px-3 py-2.5'); cell(entry.report_no, 'px-3 py-2.5'); cell(entry.payments, 'px-3 py-2.5 text-right tabular-nums'); cell(entry.by, 'px-3 py-2.5');
                 const open = document.createElement('a'); open.href = entry.url; open.target = '_blank'; open.rel = 'noopener'; open.textContent = 'Open'; open.className = 'rounded border border-outline-variant/60 px-3 py-1.5 font-semibold text-primary hover:bg-primary hover:text-white';
                 const token = document.querySelector('meta[name="csrf-token"]')?.content || @json(csrf_token());
+                const editButton = () => {
+                    const button = document.createElement('button'); button.type = 'button'; button.title = 'Edit'; button.setAttribute('aria-label', 'Edit ' + entry.name);
+                    button.dataset.historyEdit = ''; button.dataset.kind = entry.kind; button.dataset.url = entry.update_url; button.dataset.name = entry.name; button.dataset.params = JSON.stringify(entry.params || {});
+                    button.className = 'inline-flex h-8 w-8 items-center justify-center rounded border border-outline-variant/60 text-primary hover:bg-primary hover:text-white';
+                    const glyph = document.createElement('span'); glyph.className = 'material-symbols-outlined text-[18px]'; glyph.setAttribute('aria-hidden', 'true'); glyph.textContent = 'edit'; button.append(glyph);
+                    return button;
+                };
                 const action = (url, method, label, icon, guard, danger) => {
                     const form = document.createElement('form'); form.method = 'POST'; form.action = url; form.dataset.guard = guard;
                     const hidden = (name, value) => { const input = document.createElement('input'); input.type = 'hidden'; input.name = name; input.value = value; form.append(input); };
@@ -302,7 +322,7 @@
                     return form;
                 };
                 const wrap = document.createElement('div'); wrap.className = 'flex items-center justify-end gap-1.5';
-                wrap.append(open, action(entry.update_url, 'PUT', 'Update from today\'s figures', 'sync', 'Update ' + entry.name + ' from today\'s figures', false), action(entry.delete_url, 'DELETE', 'Delete from the history', 'delete', 'Delete ' + entry.name + ' from the history', true));
+                wrap.append(open, editButton(), action(entry.delete_url, 'DELETE', 'Delete from the history', 'delete', 'Delete ' + entry.name + ' from the history', true));
                 cell('', 'px-4 py-2.5 text-right').append(wrap);
                 if (rows.querySelector('td[colspan]')) rows.innerHTML = '';
                 rows.prepend(row);
@@ -419,6 +439,7 @@
             modal.querySelectorAll('[data-hide-bank]').forEach((box) => box.classList.toggle('hidden', button.dataset.bank === '1'));
             registerOn = button.dataset.register === '1';
             document.getElementById('cash-report-save').classList.remove('hidden');
+            editing = null; saveButton.textContent = 'Save to history';
             formKey = button.dataset.form || 'o';
             modal.querySelectorAll('#cash-report-header > [data-o], #cash-report-header > [data-r], #cash-report-header > [data-c], #cash-report-header > [data-b]').forEach((item) => {
                 const place = item.dataset[formKey];
@@ -432,6 +453,28 @@
             modal.classList.remove('hidden'); modal.classList.add('flex');
             refresh();
         }));
+        // Edit on a kept report: the window opens with the values it was saved with; Update replaces the kept copy.
+        const formOfKind = { roci: 'o', checks: 'c', register: 'r', bank: 'b' };
+        const fieldOfParam = { school_id: 'cash-report-school', from: 'cash-report-from', to: 'cash-report-to', report_no: 'cash-report-no', sheet_no: 'cash-sheet-no', fund_cluster: 'cash-report-cluster', bank_name: 'cash-report-bank-name', bank_account: 'cash-report-bank-account', remarks: 'cash-report-remarks', entity_name: 'cash-report-entity', station: 'cash-report-station', officer_name: 'cash-report-officer-name', officer_position: 'cash-report-officer-position', district: 'cash-report-district', municipality: 'cash-report-municipality', registered_no: 'cash-report-registered' };
+        document.addEventListener('click', (event) => {
+            const button = event.target.closest('[data-history-edit]');
+            if (!button) return;
+            const opener = document.querySelector('[data-cash-report-open][data-form="' + formOfKind[button.dataset.kind] + '"]');
+            if (!opener) return;
+            let params = {}; try { params = JSON.parse(button.dataset.params || '{}'); } catch (error) { params = {}; }
+            opener.click();
+            Object.entries(fieldOfParam).forEach(([name, id]) => { if (params[name] !== undefined && field(id)) { field(id).value = params[name]; field(id).dataset.typed = '1'; field(id).dispatchEvent(new Event('change', { bubbles: true })); } });
+            const fund = params.source_of_fund || '';
+            const known = [...field('cash-report-source').options].some((option) => option.value === fund);
+            field('cash-report-source').value = known ? fund : (fund ? 'Others' : '');
+            field('cash-report-source-other').value = known ? '' : fund;
+            field('cash-report-source-other-wrap').classList.toggle('hidden', field('cash-report-source').value !== 'Others');
+            ['officer_id', 'received_by_id'].forEach((name) => { const select = slotBox.querySelector('select[data-slot="' + name + '"]'); if (select && params[name] !== undefined) { select.value = params[name]; select.dispatchEvent(new Event('change', { bubbles: true })); } });
+            editing = { url: button.dataset.url, name: button.dataset.name };
+            saveButton.textContent = 'Update history';
+            document.getElementById('cash-report-title').textContent = 'Edit · ' + button.dataset.name;
+            schedule();
+        });
         field('cash-report-school').addEventListener('change', () => { buildSlots(); fillDefaults(); schedule(); });
         ['cash-report-entity', 'cash-report-district', 'cash-report-municipality', 'cash-report-station', 'cash-report-registered', 'cash-report-officer-name', 'cash-report-officer-position', 'cash-report-from', 'cash-report-to', 'cash-report-no', 'cash-sheet-no', 'cash-report-cluster', 'cash-report-bank-name', 'cash-report-bank-account', 'cash-report-remarks'].forEach((id) => field(id).addEventListener('input', schedule));
         document.getElementById('cash-report-close').addEventListener('click', close);

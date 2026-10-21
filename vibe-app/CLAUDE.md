@@ -271,7 +271,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 - 2026-10-21: Apple design second pass in the same layer: 2.25rem row icon buttons, one badge family, table row hover and tabular numbers, card radius and depth, main-button lift (docs/specs.md section 73).
 - 2026-10-21: Every cash report (not only the register) can be saved to a Report history on the Cash Reports tab (docs/specs.md section 74). The cash reports stay FINAL.
 - 2026-10-21: A cash report is saved to history once per school, kind, period and fund; every app screen shows a Processing / Done notice and blocks a double press (docs/specs.md section 75).
-- 2026-10-21: Update (from today's figures) and Delete on every kept cash report, with reason and password (`cash_report_histories.params`; docs/specs.md section 76). The cash reports stay FINAL.
+- 2026-10-21: Edit (opens the report window with the saved values; Update history replaces the kept copy) and Delete on every kept cash report, with reason and password (`cash_report_histories.params`; docs/specs.md section 76). The cash reports stay FINAL.
 
 ## Standing workflow (owner's instruction 2026-10-16)
 

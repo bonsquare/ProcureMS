@@ -295,6 +295,7 @@ class CashReportPrintTest extends TestCase
         foreach ($names as $name) {
             $page->assertSee($name);
         }
+        $page->assertSee('data-history-edit', false);
         $first = CashReportHistory::where('report', 'roci')->firstOrFail();
         $this->actingAs($user)->get(route('cash.report.history', $first->id))->assertOk()->assertSee('0501');
     }
@@ -323,6 +324,23 @@ class CashReportPrintTest extends TestCase
         $this->assertSame(0, CashReportHistory::count());
         $this->assertSame('Duplicate', AuditLog::where('action', 'cash_report_history_deleted')->firstOrFail()->metadata['reason']);
         $this->postJson(route('cash.report.history.store', ['kind' => 'register'] + $this->periodQuery($school, ['source_of_fund' => 'MOOE'])))->assertOk();
+    }
+
+    public function test_an_edited_report_form_replaces_the_kept_copy(): void
+    {
+        [$school, $user] = $this->tenant('BKE');
+        $this->paid($school, '0701', '2026-08-05', 1000, overrides: ['source_of_fund' => 'MOOE']);
+        $this->actingAs($user)->postJson(route('cash.report.history.store', ['kind' => 'register'] + $this->periodQuery($school, ['source_of_fund' => 'MOOE', 'report_no' => '2026-10-001'])))->assertOk();
+        $history = CashReportHistory::firstOrFail();
+
+        $query = http_build_query($this->periodQuery($school, ['source_of_fund' => 'MOOE', 'report_no' => '2026-10-002', 'remarks' => 'Edited']));
+        $this->put(route('cash.report.history.update', $history), ['reason' => 'Wrong number', 'password' => 'password', 'query' => $query])->assertSessionHasNoErrors();
+
+        $history->refresh();
+        $this->assertSame('2026-10-002', $history->report_no);
+        $this->assertSame('Edited', $history->params['remarks']);
+        $this->assertStringContainsString('Edited', $history->html);
+        $this->assertSame(1, CashReportHistory::count());
     }
 
     public function test_another_school_cannot_update_or_delete_a_kept_report(): void

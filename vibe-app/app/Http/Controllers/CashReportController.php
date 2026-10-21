@@ -297,7 +297,7 @@ class CashReportController extends Controller
         return response()->json(['ok' => true, 'entry' => [
             'generated' => $entry->created_at->format('M d, Y g:i A'), 'report' => $entry->label(), 'period' => $entry->period_text, 'fund' => $entry->source_of_fund ?: 'All funds', 'report_no' => $entry->report_no ?: '—',
             'payments' => number_format((float) $entry->total_payments, 2), 'by' => $request->user()->name, 'url' => route('cash.report.history', $entry->id),
-            'update_url' => route('cash.report.history.update', $entry->id), 'delete_url' => route('cash.report.history.destroy', $entry->id), 'name' => $entry->label().' '.$entry->period_text,
+            'update_url' => route('cash.report.history.update', $entry->id), 'delete_url' => route('cash.report.history.destroy', $entry->id), 'name' => $entry->label().' '.$entry->period_text, 'kind' => $entry->report, 'params' => $entry->params,
         ]]);
     }
 
@@ -305,16 +305,23 @@ class CashReportController extends Controller
     public function updateHistory(Request $request, CashReportHistory $history)
     {
         abort_unless($this->schoolIds()->contains($history->school_id), 403);
-        $data = $request->validate(['reason' => ['required', 'string', 'max:255'], 'password' => ['required', 'current_password']]);
+        $data = $request->validate(['reason' => ['required', 'string', 'max:255'], 'password' => ['required', 'current_password'], 'query' => ['nullable', 'string', 'max:4000']]);
 
-        $params = $history->params ?: array_filter(['school_id' => $history->school_id, 'from' => $history->period_from->toDateString(), 'to' => $history->period_to->toDateString(), 'source_of_fund' => $history->source_of_fund, 'report_no' => $history->report_no]);
+        // The values of the edited form (the report window) replace the kept ones; without them the kept header is used again.
+        parse_str((string) ($data['query'] ?? ''), $edited);
+        $params = $edited ?: ($history->params ?: array_filter(['school_id' => $history->school_id, 'from' => $history->period_from->toDateString(), 'to' => $history->period_to->toDateString(), 'source_of_fund' => $history->source_of_fund, 'report_no' => $history->report_no]));
         $remade = $request->duplicate($params, []);
         $report = $this->reportViewData($remade);
         if ($history->report === 'roci' && $report['reportNo'] === '') {
             $report['reportNo'] = now()->format('Y-m').'-001';
         }
         $before = ['generated' => $history->created_at->format('M d, Y g:i A'), 'payments' => (string) $history->total_payments, 'report_no' => $history->report_no];
+        abort_unless((int) $report['school']->id === (int) $history->school_id, 422, 'The report of a kept copy stays with its school.');
         $history->update([
+            'period_from' => $report['from'],
+            'period_to' => $report['to'],
+            'period_text' => $report['period'],
+            'source_of_fund' => $remade->input('source_of_fund') ?: null,
             'report_no' => $report['reportNo'] ?: null,
             'total_payments' => $report['data']['total_paid'],
             'html' => view(self::HISTORY_VIEWS[$history->report], ['report' => $report])->render(),
