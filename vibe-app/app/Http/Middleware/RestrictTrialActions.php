@@ -16,8 +16,11 @@ class RestrictTrialActions
     public const PRINT_ROUTES = [
         'liquidation.print', 'accounting.dv.print', 'procurement.print', 'procurement.documents.print', 'procurement.delivery-reconciliation',
         'planning.sip.print', 'aip.print', 'planning.sob.print', 'planning.app.print', 'planning.app-cse.print', 'planning.pow.print',
-        'cash.report.roci', 'cash.report.checks', 'cash.report.register', 'cash.report.bank', 'cash.report.history',
+        'cash.report.roci', 'cash.report.checks', 'cash.report.register', 'cash.report.bank', 'cash.report.history', 'dashboard.audit-logs.export',
     ];
+
+    /** Pages that can be read but also print or export themselves: blocked only when asked to print (`?print=1`) or to export (`?format=csv`). */
+    public const PRINT_WHEN_ASKED = ['budget.allocation.report', 'allotment-registry', 'budget.allocation.show'];
 
     /** Other things a trial cannot do: route name => what the prompt says is available on the paid subscription. */
     public const ACTION_ROUTES = [
@@ -28,11 +31,15 @@ class RestrictTrialActions
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
-        if (! $user || $user->seesAllSchools() || ! $user->activeSubscription()?->isTrial()) {
+        if (! $user || $user->seesAllSchools() || ! $user->activeSubscription()?->isLimited()) {
             return $next($request);
         }
 
         if (in_array($request->route()?->getName(), self::PRINT_ROUTES, true)) {
+            return $this->refuse($request, 'Printing is available on a paid subscription');
+        }
+
+        if (in_array($request->route()?->getName(), self::PRINT_WHEN_ASKED, true) && ($request->boolean('print') || $request->query('format') === 'csv')) {
             return $this->refuse($request, 'Printing is available on a paid subscription');
         }
 

@@ -30,6 +30,12 @@ class Subscription extends Model
         return strtolower((string) $this->status) === 'trial';
     }
 
+    /** Limited like the trial: in the trial, or on a plan that was never paid (a trial that ran out, or Free taken back from a school that never paid). */
+    public function isLimited(): bool
+    {
+        return $this->isTrial() || strtolower((string) $this->plan) === 'trial';
+    }
+
     public function isFree(): bool
     {
         return strtolower((string) $this->status) === 'free';

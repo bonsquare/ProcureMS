@@ -7,6 +7,7 @@ use App\Models\School;
 use App\Models\Subscription;
 use App\Models\SubscriptionPayment;
 use App\Models\User;
+use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -160,7 +161,9 @@ class SubscriptionService
         $this->assertStaff($by);
         throw_if($days < 1 || $days > 365, ValidationException::withMessages(['days' => 'Give 1 to 365 days.']));
         DB::transaction(function () use ($school, $days, $by, $reason) {
-            foreach ($this->lockedRows($school) as $row) {
+            $rows = $this->lockedRows($school);
+            throw_if($rows->isNotEmpty() && $rows->every(fn (Subscription $row) => $row->status === 'suspended'), ValidationException::withMessages(['days' => 'The school is suspended: reactivate it first.']));
+            foreach ($rows as $row) {
                 $today = now()->startOfDay();
                 if ($row->status === 'grace_period') {
                     $row->update(['grace_period_end' => ($row->grace_period_end && $row->grace_period_end->gte($today) ? $row->grace_period_end : $today)->copy()->addDays($days)->toDateString()]);
@@ -182,7 +185,7 @@ class SubscriptionService
         throw_if($amount !== null && ($amount < SubscriptionPricing::MINIMUM || $amount > SubscriptionPricing::LIST_PRICE), ValidationException::withMessages(['amount' => 'The price must be from 1.00 to 1,000.00.']));
         DB::transaction(function () use ($school, $amount, $endsAt, $by, $reason) {
             $rows = $this->lockedRows($school);
-            $rows->isEmpty() ? $this->createRow($school, ['plan' => 'trial', 'status' => 'expired', 'starts_at' => now()->toDateString(), 'subscription_end' => now()->subDay()->toDateString()]) : null;
+            throw_if($rows->isEmpty(), ValidationException::withMessages(['school' => 'Give the school a subscription first (a trial, or an Annual payment), then set its price.']));
             $this->updateAll($school, ['charge_amount' => $amount, 'charge_ends_at' => $amount === null ? null : $endsAt?->toDateString()]);
             $this->audit($school, $by, 'subscription_price_set', $reason, ['amount' => $amount === null ? null : (string) $amount, 'until' => $amount === null ? null : $endsAt?->toDateString()]);
         });
@@ -195,7 +198,16 @@ class SubscriptionService
         $query = fn (array $statuses, string $column) => Subscription::withoutGlobalScopes()->whereIn('status', $statuses)->whereNotNull($column)->whereDate($column, '<', $today);
 
         $trial = $query(['trial'], 'subscription_end')->update(['status' => 'expired']);
-        $free = $query(['free'], 'subscription_end')->update(['status' => 'expired']);
+        $free = 0;
+        foreach ($query(['free'], 'subscription_end')->get() as $row) {
+            // The Annual that was paid before the Free plan is given back while it still runs; otherwise the school becomes read-only.
+            $before = ($row->previous_state ?? [])['before_free'] ?? null;
+            $state = $row->previous_state ?? [];
+            unset($state['before_free']);
+            $stillRuns = $before && ($before['plan'] ?? null) === 'annual' && ! empty($before['subscription_end']) && Carbon::parse($before['subscription_end'])->startOfDay()->gte(now()->startOfDay());
+            $stillRuns ? $row->update($before + ['previous_state' => $state ?: null]) : $row->update(['status' => 'expired']);
+            $free += $stillRuns ? 0 : 1;
+        }
         $grace = 0;
         foreach ($query(['active'], 'subscription_end')->get() as $row) {
             $row->update(['status' => 'grace_period', 'grace_period_end' => $row->subscription_end->copy()->addDays(self::GRACE_DAYS)->toDateString()]);
@@ -206,21 +218,31 @@ class SubscriptionService
         return ['trial' => $trial, 'grace' => $grace, 'expired' => $expired];
     }
 
+    /**
+     * The rows of a school: of its users that are still in it. A user who moved to another school keeps the personal subscription he or she had
+     * (the row stays at the old school), and what is done to the old school does not touch it.
+     */
+    private function schoolRows(School $school)
+    {
+        return Subscription::withoutGlobalScopes()->where('school_id', $school->id)
+            ->where(fn ($query) => $query->whereNull('user_id')->orWhereIn('user_id', User::withoutGlobalScopes()->where('school_id', $school->id)->select('id')));
+    }
+
     /** @return Collection<int, Subscription> */
     private function rows(School $school): Collection
     {
-        return Subscription::withoutGlobalScopes()->where('school_id', $school->id)->get();
+        return $this->schoolRows($school)->get();
     }
 
     /** @return Collection<int, Subscription> */
     private function lockedRows(School $school): Collection
     {
-        return Subscription::withoutGlobalScopes()->where('school_id', $school->id)->lockForUpdate()->get();
+        return $this->schoolRows($school)->lockForUpdate()->get();
     }
 
     private function updateAll(School $school, array $fields, ?string $onlyStatus = null): void
     {
-        Subscription::withoutGlobalScopes()->where('school_id', $school->id)->when($onlyStatus, fn ($query, $status) => $query->where('status', $status))->get()->each->update($fields);
+        $this->schoolRows($school)->when($onlyStatus, fn ($query, $status) => $query->where('status', $status))->get()->each->update($fields);
     }
 
     private function createRow(School $school, array $fields): Subscription

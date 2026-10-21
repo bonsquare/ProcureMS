@@ -9,9 +9,11 @@ use App\Models\School;
 use App\Services\GoogleDriveService;
 use App\Services\SubscriptionPricing;
 use App\Support\PaymentSettings;
+use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -65,6 +67,16 @@ class SubscriptionController extends Controller
             'file' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
         ], ['file.max' => 'The file is too large. The limit is 5 MB.', 'file.mimes' => 'The proof must be a photo (JPG, PNG or WEBP) or a PDF.']);
 
+        try {
+            return Cache::lock('subscription-proof:'.$school->id, 60)->block(5, fn () => $this->storeProof($request, $school, $data));
+        } catch (LockTimeoutException) {
+            throw ValidationException::withMessages(['proof' => 'Your proof is still being sent. Please wait a moment.']);
+        }
+    }
+
+    /** One school sends one proof at a time (the lock above), so two presses of the button cannot make two proofs. */
+    private function storeProof(Request $request, School $school, array $data): RedirectResponse
+    {
         $file = $request->file('file');
         $contents = $file->get();
         $mime = (string) $file->getMimeType();

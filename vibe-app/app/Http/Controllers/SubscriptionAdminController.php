@@ -37,6 +37,7 @@ class SubscriptionAdminController extends Controller
         $school = School::withoutGlobalScopes()->findOrFail($data['school_id']);
 
         if ($data['mode'] === 'trial') {
+            throw_if(Subscription::withoutGlobalScopes()->where('school_id', $school->id)->exists(), ValidationException::withMessages(['school_id' => $school->name.' already has a subscription: a school gets one trial only.']));
             $owner = User::withoutGlobalScopes()->where('school_id', $school->id)->whereNotIn('role', User::MASTER_ROLES)->oldest('id')->first();
             $this->subscriptions->startTrial($school, $owner);
             $this->subscriptions->beginTrialOnActivation($school);
@@ -289,6 +290,7 @@ class SubscriptionAdminController extends Controller
     {
         $proof = PaymentProof::withoutGlobalScopes()->lockForUpdate()->findOrFail($id);
         throw_unless($proof->isPending(), ValidationException::withMessages(['proof' => 'This proof was already decided.']));
+        throw_if(PaymentProof::withoutGlobalScopes()->where('sha256', $proof->sha256)->where('status', PaymentProof::APPROVED)->whereKeyNot($proof->id)->exists(), ValidationException::withMessages(['proof' => 'The same file was already approved as a proof of payment.']));
 
         return $proof;
     }
@@ -307,6 +309,7 @@ class SubscriptionAdminController extends Controller
     /** The master records a payment for the school: the amount is the one the school owes (the price set for it, else the list price). */
     private function record(School $school, array $data, User $by, string $reason): void
     {
+        throw_if(PaymentProof::withoutGlobalScopes()->where('school_id', $school->id)->where('status', PaymentProof::PENDING)->exists(), ValidationException::withMessages(['proof' => $school->name.' has a proof of payment waiting: approve or reject it instead of recording a second payment.']));
         $quote = $this->pricing->quote($school);
         $this->subscriptions->activateAnnual($school, [
             'amount' => $quote['amount'], 'list_price' => $quote['list_price'], 'discount_amount' => $quote['discount'], 'reference' => $data['reference'],
