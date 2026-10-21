@@ -1212,3 +1212,4 @@ Design: docs/superpowers/specs/2026-10-21-subscription-trial-payment-design.md; 
 - The payment card of the Subscription page is shown as two numbered steps (1 Send the payment to, 2 Proof of payment); the bank, account name and account number sit in one panel with a copy button for the account number, and the Connect Google Drive message is a highlighted notice. Layout only.
 - The proof-of-payment form is always shown in step 2; until the Google Drive is connected its fields are dimmed and locked under the Connect Google Drive notice (the server still refuses a proof without Drive).
 - The APP tab button that opens the printed Annual Procurement Plan reads "Print APP Summary" (label only; the document is unchanged).
+- New Purchase Request: the Item specification of a line is no longer pre-filled from the SOB activity or the APP item; it stays hidden until the "+ Specification" button (before Remove) is pressed, and shows by itself when it already has text.

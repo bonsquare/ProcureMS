@@ -116,9 +116,16 @@
         const specificationRow = document.createElement('tr');
         row.className = 'item-row bg-white';
         specificationRow.className = 'item-spec-row bg-[#fbfcfe]';
-        row.innerHTML = `<td data-stock-number class="px-2 py-2 text-center text-sm font-semibold text-primary"></td><td class="px-2 py-2"><select name="items[${index}][unit]" class="w-full rounded border border-outline-variant/50 bg-white px-2 py-2 text-xs outline-none focus:border-primary">${unitOptionsHtml(item.unit)}</select></td><td class="px-2 py-2"><input name="items[${index}][name]" required maxlength="255" placeholder="Item description" value="${escapeHtml(item.name)}" class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-xs outline-none focus:border-primary"></td><td class="px-2 py-2"><input data-field="quantity" name="items[${index}][quantity]" required min="0.01" step="0.01" value="${escapeHtml(item.quantity ?? 1)}" type="number" class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-xs outline-none focus:border-primary"></td><td class="px-2 py-2"><input data-field="unit_price" name="items[${index}][unit_price]" required min="0" step="0.01" value="${escapeHtml(item.unit_price ?? 0)}" type="number" class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-xs outline-none focus:border-primary"></td><td data-line-total class="px-2 py-2 text-right text-sm font-semibold text-on-surface">₱0.00</td><td class="px-2 py-2 text-center"><button type="button" class="remove-item rounded bg-red-50 px-2.5 py-2 text-[11px] font-semibold text-error hover:bg-red-100">Remove</button></td>`;
+        row.innerHTML = `<td data-stock-number class="px-2 py-2 text-center text-sm font-semibold text-primary"></td><td class="px-2 py-2"><select name="items[${index}][unit]" class="w-full rounded border border-outline-variant/50 bg-white px-2 py-2 text-xs outline-none focus:border-primary">${unitOptionsHtml(item.unit)}</select></td><td class="px-2 py-2"><input name="items[${index}][name]" required maxlength="255" placeholder="Item description" value="${escapeHtml(item.name)}" class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-xs outline-none focus:border-primary"></td><td class="px-2 py-2"><input data-field="quantity" name="items[${index}][quantity]" required min="0.01" step="0.01" value="${escapeHtml(item.quantity ?? 1)}" type="number" class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-xs outline-none focus:border-primary"></td><td class="px-2 py-2"><input data-field="unit_price" name="items[${index}][unit_price]" required min="0" step="0.01" value="${escapeHtml(item.unit_price ?? 0)}" type="number" class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-xs outline-none focus:border-primary"></td><td data-line-total class="px-2 py-2 text-right text-sm font-semibold text-on-surface">₱0.00</td><td class="whitespace-nowrap px-2 py-2 text-center"><button type="button" data-add-spec class="mr-1 rounded bg-primary/10 px-2.5 py-2 text-[11px] font-semibold text-primary hover:bg-primary/20">+ Specification</button><button type="button" class="remove-item rounded bg-red-50 px-2.5 py-2 text-[11px] font-semibold text-error hover:bg-red-100">Remove</button></td>`;
         specificationRow.innerHTML = `<td colspan="7" class="px-2 pb-3 pt-0"><label class="hidden"><span class="shrink-0">Approved APP item</span><select data-field="app_item" name="items[${index}][app_item_id]" class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-xs font-normal outline-none focus:border-primary"></select></label><label class="flex items-center gap-3 text-[11px] font-semibold text-on-surface-variant"><span class="shrink-0">Item specification</span><input name="items[${index}][description]" maxlength="255" placeholder="Brand, size, technical specification, or other details" value="${escapeHtml(item.description)}" class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-xs font-normal outline-none focus:border-primary"></label></td>`;
         items.append(row, specificationRow);
+        const specificationInput = specificationRow.querySelector('[name$="[description]"]');
+        specificationRow.hidden = !specificationInput.value;
+        row.querySelector('[data-add-spec]').addEventListener('click', () => {
+            if (!specificationRow.hidden && !specificationInput.value) { specificationRow.hidden = true; return; }
+            specificationRow.hidden = false;
+            specificationInput.focus();
+        });
         row.querySelectorAll('input').forEach((input) => input.addEventListener('input', updateTotal));
         const appSelect = specificationRow.querySelector('[data-field="app_item"]');
         fillAppOptions(appSelect, item.app_item_id);
@@ -129,7 +136,6 @@
             if (![...unit.options].some((option) => option.value === planned.unit)) unit.add(new Option(planned.unit, planned.unit));
             unit.value = planned.unit;
             row.querySelector('[name$="[name]"]').value = planned.name;
-            specificationRow.querySelector('[name$="[description]"]').value = planned.specifications || '';
             row.querySelector('[data-field="quantity"]').value = planned.remaining_quantity;
             row.querySelector('[data-field="unit_price"]').value = planned.unit_price;
             updateTotal();
@@ -170,7 +176,7 @@
         const added = new Set([...items.querySelectorAll('[data-field="app_item"]')].map((select) => select.value));
         group.items.forEach((candidate) => {
             if (added.has(String(candidate.id))) return;
-            addItem({ name: candidate.name, description: candidate.specifications || '', app_item_id: candidate.id, quantity: candidate.remaining_quantity, unit: candidate.unit, unit_price: candidate.unit_price });
+            addItem({ name: candidate.name, app_item_id: candidate.id, quantity: candidate.remaining_quantity, unit: candidate.unit, unit_price: candidate.unit_price });
         });
         const fund = group.items.find((candidate) => candidate.fund_source)?.fund_source;
         const fundField = document.getElementById('source_of_fund');
