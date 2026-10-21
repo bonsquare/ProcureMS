@@ -273,6 +273,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 - 2026-10-21: A cash report is saved to history once per school, kind, period and fund; every app screen shows a Processing / Done notice and blocks a double press (docs/specs.md section 75).
 - 2026-10-21: Edit (opens the report window with the saved values; Update replaces the kept copy) and Delete on every kept cash report, with reason and password (`cash_report_histories.params`; docs/specs.md section 76). The cash reports stay FINAL.
 - 2026-10-21: The Form Generator button of the SOB panel in Planning is now **+ Programs of Works** (label only; docs/specs.md section 38).
+- 2026-10-21: The system runs on Philippine time (`app.timezone` = Asia/Manila); the times stored on UTC are moved forward 8 hours once by a migration (docs/specs.md section 77).
 
 ## Standing workflow (owner's instruction 2026-10-16)
 
