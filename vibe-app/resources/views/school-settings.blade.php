@@ -18,6 +18,7 @@
     ];
     if (! $isMasterUser) {
         $tabs['transfer'] = ['Official Station Management', 'swap_horiz'];
+        $tabs['subscription'] = ['Subscription', 'card_membership'];
     }
     $stats = [
         ['Profile complete', $profileCompleteness.'%', $profileCompleteness >= 80 ? 'Ready for official documents' : 'Fill in the missing details', 'task_alt', $profileCompleteness >= 80 ? 'green' : 'amber', $profileCompleteness],
@@ -72,7 +73,7 @@
 
 <nav class="civic-module-tabs" aria-label="School settings sections">
     @foreach($tabs as $key => [$label, $icon])
-        <a href="{{ $tabUrl($key) }}" @if($tab === $key) aria-current="page" @endif class="civic-module-tab {{ $tab === $key ? 'civic-module-tab--active' : '' }}"><span class="material-symbols-outlined" aria-hidden="true">{{ $icon }}</span><span>{{ $label }}</span></a>
+        <a href="{{ $key === 'subscription' ? route('subscription') : $tabUrl($key) }}" @if($tab === $key) aria-current="page" @endif class="civic-module-tab {{ $tab === $key ? 'civic-module-tab--active' : '' }}"><span class="material-symbols-outlined" aria-hidden="true">{{ $icon }}</span><span>{{ $label }}</span></a>
     @endforeach
 </nav>
 

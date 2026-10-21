@@ -26,28 +26,51 @@
             $connected = $connection?->isConnected();
             $needsReconnect = $connection && ! $connected;
         @endphp
-        <section class="max-w-3xl rounded border border-outline-variant/30 bg-white p-6">
-            <div class="flex items-start gap-4">
-                <span class="material-symbols-outlined text-4xl {{ $connected ? 'text-secondary' : ($needsReconnect ? 'text-error' : 'text-on-surface-variant') }}">{{ $connected ? 'cloud_done' : ($needsReconnect ? 'cloud_off' : 'cloud') }}</span>
-                <div class="min-w-0 flex-1">
-                    <h2 class="text-lg font-semibold">{{ $connected ? 'Connected' : ($needsReconnect ? 'Connection needs to be renewed' : 'Not connected') }}</h2>
+        <section class="grid max-w-5xl gap-5 lg:grid-cols-[1.4fr_1fr]">
+            <div class="overflow-hidden rounded-2xl border border-outline-variant/30 bg-white shadow-sm">
+                <div class="flex items-center gap-4 px-6 py-5 {{ $connected ? 'bg-secondary/10' : ($needsReconnect ? 'bg-error/10' : 'bg-surface-low') }}">
+                    <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm"><span class="material-symbols-outlined text-[32px] {{ $connected ? 'text-secondary' : ($needsReconnect ? 'text-error' : 'text-primary') }}">{{ $connected ? 'cloud_done' : ($needsReconnect ? 'cloud_off' : 'cloud') }}</span></span>
+                    <div class="min-w-0">
+                        <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-on-surface-variant">Connection status</p>
+                        <h2 class="text-xl font-semibold leading-7">{{ $connected ? 'Connected' : ($needsReconnect ? 'Connection needs to be renewed' : 'Not connected') }}</h2>
+                    </div>
+                </div>
+                <div class="px-6 py-5">
                     @if($connection)
-                        <p class="mt-1 text-sm text-on-surface-variant">Google account: <span class="font-semibold text-on-surface">{{ $connection->google_email ?: 'unknown' }}</span></p>
-                        <p class="mt-1 text-xs text-on-surface-variant">Connected {{ $connection->connected_at?->format('M d, Y') }}. Folder: ProcMS, with Backup, Logo and Files inside.</p>
+                        <dl class="grid gap-4 sm:grid-cols-2">
+                            <div><dt class="text-[10px] font-bold uppercase tracking-[0.14em] text-on-surface-variant">Google account</dt><dd class="mt-1 truncate text-sm font-semibold">{{ $connection->google_email ?: 'unknown' }}</dd></div>
+                            <div><dt class="text-[10px] font-bold uppercase tracking-[0.14em] text-on-surface-variant">Connected since</dt><dd class="mt-1 text-sm font-semibold">{{ $connection->connected_at?->format('M d, Y') }}</dd></div>
+                        </dl>
                     @else
-                        <p class="mt-1 text-sm text-on-surface-variant">You must connect your Google Drive before you can upload files. ProcMS only sees the folders and files it creates itself, never the rest of your Drive.</p>
+                        <p class="text-sm text-on-surface-variant">You must connect your Google Drive before you can upload files. ProcMS only sees the folders and files it creates itself, never the rest of your Drive.</p>
                     @endif
-                    @unless($configured)<p class="mt-3 rounded border border-error/30 bg-error/5 px-3 py-2 text-xs text-error">Google Drive is not set up on this server yet. Ask the system administrator.</p>@endunless
-                    <div class="mt-5 flex flex-wrap gap-3">
-                        <a href="{{ route('drive-files.index') }}" class="inline-flex items-center gap-2 rounded border border-primary/40 px-4 py-2.5 text-xs font-semibold text-primary hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[18px]">folder_open</span>My Drive Files</a>
-                        @if(auth()->user()->hasAccess('backup'))<a href="{{ route('backup.index') }}" class="inline-flex items-center gap-2 rounded border border-primary/40 px-4 py-2.5 text-xs font-semibold text-primary hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[18px]">backup</span>Database Backup</a>@endif
-                        @if($configured)<a href="{{ route('google-drive.redirect') }}" class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]">link</span>{{ $needsReconnect ? 'Reconnect Google Drive' : ($connected ? 'Connect a different account' : 'Connect Google Drive') }}</a>@endif
+                    @unless($configured)<p class="mt-4 rounded-lg border border-error/30 bg-error/5 px-3 py-2 text-xs text-error">Google Drive is not set up on this server yet. Ask the system administrator.</p>@endunless
+                    <div class="mt-6 flex flex-wrap gap-3">
+                        @if($configured)<a href="{{ route('google-drive.redirect') }}" class="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]">link</span>{{ $needsReconnect ? 'Reconnect Google Drive' : ($connected ? 'Connect a different account' : 'Connect Google Drive') }}</a>@endif
                         @if($connection)
-                            <form method="POST" action="{{ route('google-drive.disconnect') }}" onsubmit="return confirm('Disconnect Google Drive? Your files stay in your Drive.')">@csrf @method('DELETE')<button class="inline-flex items-center gap-2 rounded border border-outline-variant px-4 py-2.5 text-xs font-semibold hover:bg-surface-container"><span class="material-symbols-outlined text-[18px]">link_off</span>Disconnect</button></form>
+                            <form method="POST" action="{{ route('google-drive.disconnect') }}" onsubmit="return confirm('Disconnect Google Drive? Your files stay in your Drive.')">@csrf @method('DELETE')<button class="inline-flex items-center gap-2 rounded-xl border border-outline-variant px-5 py-3 text-xs font-semibold hover:bg-surface-container"><span class="material-symbols-outlined text-[18px]">link_off</span>Disconnect</button></form>
                         @endif
                     </div>
                 </div>
+                <div class="grid gap-3 border-t border-outline-variant/30 bg-surface/50 p-4 sm:grid-cols-2">
+                    <a href="{{ route('drive-files.index') }}" class="flex items-center gap-3 rounded-xl border border-outline-variant/30 bg-white p-3 hover:border-primary/50 hover:shadow-sm"><span class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary"><span class="material-symbols-outlined text-[22px]">folder_open</span></span><span><span class="block text-sm font-semibold">My Drive Files</span><span class="block text-xs text-on-surface-variant">Browse what you uploaded</span></span></a>
+                    @if(auth()->user()->hasAccess('backup'))<a href="{{ route('backup.index') }}" class="flex items-center gap-3 rounded-xl border border-outline-variant/30 bg-white p-3 hover:border-primary/50 hover:shadow-sm"><span class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary"><span class="material-symbols-outlined text-[22px]">backup</span></span><span><span class="block text-sm font-semibold">Database Backup</span><span class="block text-xs text-on-surface-variant">Daily copy to your Drive</span></span></a>@endif
+                </div>
             </div>
+
+            <aside class="rounded-2xl border border-outline-variant/30 bg-white p-6 shadow-sm">
+                <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-on-surface-variant">Your private folder</p>
+                <ul class="mt-4 space-y-2 text-sm">
+                    <li class="flex items-center gap-2 font-semibold"><span class="material-symbols-outlined text-[20px] text-primary">folder</span>ProcMS</li>
+                    @foreach(['Backup' => 'database copies', 'Logo' => 'school logos', 'Files' => 'your uploads'] as $folder => $note)
+                        <li class="ml-3 flex items-center gap-2 border-l border-outline-variant/40 pl-4"><span class="material-symbols-outlined text-[18px] text-on-surface-variant">subdirectory_arrow_right</span><span class="font-medium">{{ $folder }}</span><span class="text-xs text-on-surface-variant">{{ $note }}</span></li>
+                    @endforeach
+                </ul>
+                <div class="mt-5 space-y-3 border-t border-outline-variant/30 pt-5 text-xs text-on-surface-variant">
+                    <p class="flex gap-2"><span class="material-symbols-outlined text-[18px] text-secondary">lock</span>Only you can open this folder. Nobody else in the system sees it.</p>
+                    <p class="flex gap-2"><span class="material-symbols-outlined text-[18px] text-secondary">visibility_off</span>ProcMS never sees the rest of your Drive.</p>
+                </div>
+            </aside>
         </section>
     </div></main></div>
 @include('partials.profile-menu')

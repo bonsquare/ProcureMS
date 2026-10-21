@@ -1203,3 +1203,9 @@ Design: docs/superpowers/specs/2026-10-21-subscription-trial-payment-design.md; 
 - A proof of payment keeps who sent it (full name, username, User ID, saved as they were) and requires the **Bank account used**, the **InstaPay Ref. No.**, the **Date and time of the transaction** (not in the future), the **Amount** (the price to pay, fixed) and the **Remarks (nature of the payment)**.
 - The **remarks and the bank account are not shown on the school's page**; the master sees every detail under each waiting proof on the Subscriptions page.
 - The QR code on the school's Subscription page is large (18rem) and opens in a bigger window ("Scan with your banking app") so it can be scanned from the screen. Covered by `tests/Feature/PaymentProofTest.php`.
+
+## 86. Google Drive page, Subscription tab and the proof form (owner's decision 2026-10-21)
+
+- The Google Drive page (`/google-drive`) is redesigned: a status banner (green connected, red needs renewing, neutral not connected), the Google account and connected date, the Connect / Disconnect buttons, tiles for My Drive Files and Database Backup, and a panel showing the private ProcMS folder (Backup, Logo, Files). No route or rule changed.
+- School Settings has a **Subscription** tab at the end of its tab row (school users, not the master); it opens the school's Subscription page.
+- On the Subscription page the proof-of-payment form sits inside the "Send the payment to" card, under the bank details and beside the QR; its fields and rules are unchanged (section 85).
