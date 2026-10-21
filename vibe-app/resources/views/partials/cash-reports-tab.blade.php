@@ -15,23 +15,29 @@
         <p class="rounded-lg border border-outline-variant/40 bg-white px-4 py-6 text-center text-sm text-on-surface-variant">No school to report on.</p>
     @else
     <section class="overflow-hidden rounded-xl border border-outline-variant/60 bg-white shadow-sm">
-        {!! $head(1, 'Reports', 'Choose a report to fill in its form and see it on its official form.') !!}
+        {!! $head(1, 'Reports', 'Choose a report to see its history below, then open its form to make a new one.') !!}
         <div class="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-4">
             @foreach($reportLinks as [$routeName, $title, $hint, $icon, $slots, $isBank])
-                <button type="button" data-cash-report-open data-url="{{ route($routeName) }}" data-slots='@json($slots)' data-bank="{{ ($isBank ?? false) ? 1 : 0 }}" data-register="{{ $routeName === 'cash.report.register' ? 1 : 0 }}" data-form="{{ $routeName === 'cash.report.register' ? 'r' : ($routeName === 'cash.report.checks' ? 'c' : (($isBank ?? false) ? 'b' : 'o')) }}" data-report-no="{{ $routeName === 'cash.report.roci' ? now()->format('Y-m').'-001' : '' }}" data-title="{{ $title }}" class="group flex items-start gap-3 rounded-xl border border-outline-variant/50 border-l-4 border-l-primary bg-white p-4 text-left shadow-sm transition hover:bg-[#eef4fa]">
+                @php $kind = \Illuminate\Support\Str::afterLast($routeName, '.'); @endphp
+                <button type="button" data-report-card data-kind="{{ $kind }}" aria-pressed="false" aria-controls="history-panel-{{ $kind }}" class="group flex items-start gap-3 rounded-xl border border-outline-variant/50 border-l-4 border-l-primary bg-white p-4 text-left shadow-sm transition hover:bg-[#eef4fa] aria-pressed:bg-[#e3eefa] aria-pressed:ring-2 aria-pressed:ring-primary/60">
                     <span class="material-symbols-outlined text-[24px] text-primary" aria-hidden="true">{{ $icon }}</span>
                     <span><span class="block text-sm font-bold text-primary">{{ $title }}</span><span class="mt-1 block text-xs text-on-surface-variant">{{ $hint }}</span></span>
                 </button>
             @endforeach
         </div>
     </section>
-    <section class="overflow-hidden rounded-xl border border-outline-variant/60 bg-white shadow-sm">
-        {!! $head(2, 'Report history', 'Press Save to history in the window of any report to keep it as it was generated. Open it again to print the same document.') !!}
-        <div class="space-y-5 p-5">
-            @foreach($reportLinks as [$routeName, $title, $hint, $icon])
+    <section id="cash-history-section" class="overflow-hidden rounded-xl border border-outline-variant/60 bg-white shadow-sm">
+        {!! $head(2, 'Report history', 'Press Save to history in the window of a report to keep it as it was generated. Open it again to print the same document.') !!}
+        <div class="p-5">
+            <p data-history-hint class="rounded-lg border border-dashed border-outline-variant/60 bg-[#f6f9fc] px-4 py-6 text-center text-sm text-on-surface-variant">Choose a report above to see what was saved for it.</p>
+            @foreach($reportLinks as [$routeName, $title, $hint, $icon, $slots, $isBank])
                 @php $kind = \Illuminate\Support\Str::afterLast($routeName, '.'); $kept = $reportHistory->where('report', $kind); @endphp
-                <div class="overflow-hidden rounded-xl border border-outline-variant/50 border-l-4 border-l-primary">
-                    <div class="flex items-center gap-2 border-b border-outline-variant/40 bg-[#f6f9fc] px-4 py-3"><span class="material-symbols-outlined text-[20px] text-primary" aria-hidden="true">{{ $icon }}</span><h3 class="min-w-0 flex-1 text-sm font-bold text-primary">{{ $title }}</h3><span class="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-on-surface-variant ring-1 ring-outline-variant/50" data-history-count="{{ $kind }}">{{ $kept->count() }}</span></div>
+                <div id="history-panel-{{ $kind }}" data-history-panel="{{ $kind }}" hidden class="history-panel overflow-hidden rounded-xl border border-outline-variant/50 border-l-4 border-l-primary">
+                    <div class="flex flex-wrap items-center gap-3 border-b border-outline-variant/40 bg-[#f6f9fc] px-4 py-3">
+                        <span class="material-symbols-outlined text-[22px] text-primary" aria-hidden="true">{{ $icon }}</span>
+                        <div class="min-w-0 flex-1"><h3 class="text-sm font-bold text-primary">{{ $title }} · history</h3><p class="text-xs text-on-surface-variant"><span data-history-count="{{ $kind }}">{{ $kept->count() }}</span> saved</p></div>
+                        <button type="button" data-cash-report-open data-url="{{ route($routeName) }}" data-slots='@json($slots)' data-bank="{{ ($isBank ?? false) ? 1 : 0 }}" data-register="{{ $routeName === 'cash.report.register' ? 1 : 0 }}" data-form="{{ $routeName === 'cash.report.register' ? 'r' : ($routeName === 'cash.report.checks' ? 'c' : (($isBank ?? false) ? 'b' : 'o')) }}" data-report-no="{{ $routeName === 'cash.report.roci' ? now()->format('Y-m').'-001' : '' }}" data-title="{{ $title }}" class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">add</span>Open report form</button>
+                    </div>
                     <div class="overflow-x-auto">
                         <table class="w-full min-w-[720px] text-left text-xs">
                             <thead class="bg-surface-low uppercase tracking-wider text-on-surface-variant"><tr><th class="px-4 py-2">Generated</th><th class="px-3 py-2">Period covered</th><th class="px-3 py-2">Fund</th><th class="px-3 py-2">Report No.</th><th class="px-3 py-2 text-right">Payments</th><th class="px-3 py-2">By</th><th class="px-4 py-2 text-right"></th></tr></thead>
@@ -39,7 +45,7 @@
                                 @forelse($kept as $entry)
                                     @include('partials.cash-history-item')
                                 @empty
-                                    <tr data-empty><td colspan="7" class="px-4 py-5 text-center text-on-surface-variant">No report saved yet.</td></tr>
+                                    <tr data-empty><td colspan="7" class="px-4 py-6 text-center text-on-surface-variant">No report saved yet. Open the report form, fill it in and press Save to history.</td></tr>
                                 @endforelse
                             </tbody>
                         </table>
@@ -50,6 +56,35 @@
     </section>
     @endif
 </div>
+<style>
+    /* The chosen report card and the arrival of its history. */
+    @keyframes history-arrive { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    .history-panel:not([hidden]) { animation: history-arrive 260ms cubic-bezier(.2, .9, .25, 1.04); }
+    [data-report-card][aria-pressed="true"] { background: #e3eefa; box-shadow: 0 0 0 2px rgba(23, 75, 130, .6); }
+    @media (prefers-reduced-motion: reduce) { .history-panel:not([hidden]) { animation: none; } }
+</style>
+<script>
+    // A report card shows the history of that report under the cards; the form opens from the button in that history.
+    (() => {
+        const cards = [...document.querySelectorAll('[data-report-card]')];
+        if (!cards.length) return;
+        const panels = [...document.querySelectorAll('[data-history-panel]')];
+        const hint = document.querySelector('[data-history-hint]');
+        const remember = (kind) => { try { sessionStorage.setItem('cashHistoryKind', kind || ''); } catch (error) { /* the choice is only a convenience */ } };
+        const choose = (kind, scroll = true) => {
+            cards.forEach((card) => card.setAttribute('aria-pressed', card.dataset.kind === kind ? 'true' : 'false'));
+            panels.forEach((panel) => { panel.hidden = panel.dataset.historyPanel !== kind; });
+            if (hint) hint.hidden = Boolean(kind);
+            remember(kind);
+            const panel = panels.find((one) => one.dataset.historyPanel === kind);
+            if (panel && scroll) panel.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'nearest' });
+        };
+        cards.forEach((card) => card.addEventListener('click', () => choose(card.getAttribute('aria-pressed') === 'true' ? '' : card.dataset.kind)));
+        let last = '';
+        try { last = sessionStorage.getItem('cashHistoryKind') || ''; } catch (error) { last = ''; }
+        if (last) choose(last, false);
+    })();
+</script>
 @if($reportSchool)
 <div id="cash-report-modal" role="dialog" aria-modal="true" aria-labelledby="cash-report-title" class="fixed inset-0 z-[80] hidden items-center justify-center bg-black/50 p-3 md:left-60">
     <div class="flex max-h-[96vh] w-full max-w-[1500px] flex-col overflow-hidden rounded bg-white shadow-2xl">
