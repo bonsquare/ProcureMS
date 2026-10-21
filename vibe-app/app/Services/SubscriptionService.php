@@ -25,16 +25,16 @@ class SubscriptionService
     public const ANNUAL_DAYS = 365;
 
     /** The trial of a school: only one, ever. A school that already has a subscription gives a new user its current state instead. */
-    public function startTrial(School $school, User $owner): Subscription
+    public function startTrial(School $school, ?User $owner = null): Subscription
     {
         $current = $this->rows($school)->sortByDesc('id')->first();
         if ($current) {
-            return $this->rows($school)->firstWhere('user_id', $owner->id) ?? $this->join($current, $owner);
+            return ($owner ? $this->rows($school)->firstWhere('user_id', $owner->id) : null) ?? $this->join($current, $owner);
         }
         $this->assertNoTwinTrial($school);
 
         return Subscription::create([
-            'organization_id' => $school->organization_id, 'school_id' => $school->id, 'user_id' => $owner->id,
+            'organization_id' => $school->organization_id, 'school_id' => $school->id, 'user_id' => $owner?->id,
             'plan' => 'trial', 'billing_cycle' => 'monthly', 'amount' => 0, 'payment_status' => 'pending', 'status' => 'trial',
             'starts_at' => now(), 'subscription_end' => now()->addDays(self::TRIAL_DAYS),
         ]);
@@ -230,9 +230,9 @@ class SubscriptionService
         return Subscription::create($fields + ['organization_id' => $school->organization_id, 'school_id' => $school->id, 'user_id' => $owner?->id, 'plan' => 'annual', 'billing_cycle' => 'annual', 'amount' => 0, 'payment_status' => 'pending', 'status' => 'active']);
     }
 
-    private function join(Subscription $current, User $owner): Subscription
+    private function join(Subscription $current, ?User $owner): Subscription
     {
-        return Subscription::create($current->only(['organization_id', 'school_id', 'plan', 'billing_cycle', 'amount', 'charge_amount', 'charge_ends_at', 'payment_status', 'status', 'starts_at', 'renews_at', 'subscription_end', 'grace_period_end', 'previous_state']) + ['user_id' => $owner->id]);
+        return Subscription::create($current->only(['organization_id', 'school_id', 'plan', 'billing_cycle', 'amount', 'charge_amount', 'charge_ends_at', 'payment_status', 'status', 'starts_at', 'renews_at', 'subscription_end', 'grace_period_end', 'previous_state']) + ['user_id' => $owner?->id]);
     }
 
     private function assertNoTwinTrial(School $school): void

@@ -2388,7 +2388,7 @@ class HomeController extends Controller
 
         $data = $this->subscriptionsData();
 
-        return view('subscriptions', $data + ['liveHash' => md5(view('partials.subscriptions-live', $data)->render())]);
+        return view('subscriptions', $data + ['liveHash' => md5(view('partials.subscriptions-live', $data)->render()), 'schools' => School::withoutGlobalScopes()->orderBy('name')->get(['id', 'name', 'code'])]);
     }
 
     /** The live part of the Subscriptions page, drawn again when its data changed (204 when the page already has the same). */
