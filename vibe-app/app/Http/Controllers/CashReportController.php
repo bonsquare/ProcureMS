@@ -290,13 +290,52 @@ class CashReportController extends Controller
             'report_no' => $report['reportNo'] ?: null,
             'total_payments' => $report['data']['total_paid'],
             'html' => view(self::HISTORY_VIEWS[$kind], ['report' => $report])->render(),
+            'params' => $request->query(),
             'generated_by' => $request->user()->id,
         ]);
 
         return response()->json(['ok' => true, 'entry' => [
             'generated' => $entry->created_at->format('M d, Y g:i A'), 'report' => $entry->label(), 'period' => $entry->period_text, 'fund' => $entry->source_of_fund ?: 'All funds', 'report_no' => $entry->report_no ?: '—',
             'payments' => number_format((float) $entry->total_payments, 2), 'by' => $request->user()->name, 'url' => route('cash.report.history', $entry->id),
+            'update_url' => route('cash.report.history.update', $entry->id), 'delete_url' => route('cash.report.history.destroy', $entry->id), 'name' => $entry->label().' '.$entry->period_text,
         ]]);
+    }
+
+    /** Makes a kept report again from today's figures with the header it was saved with (the reason and the user's password are asked). */
+    public function updateHistory(Request $request, CashReportHistory $history)
+    {
+        abort_unless($this->schoolIds()->contains($history->school_id), 403);
+        $data = $request->validate(['reason' => ['required', 'string', 'max:255'], 'password' => ['required', 'current_password']]);
+
+        $params = $history->params ?: array_filter(['school_id' => $history->school_id, 'from' => $history->period_from->toDateString(), 'to' => $history->period_to->toDateString(), 'source_of_fund' => $history->source_of_fund, 'report_no' => $history->report_no]);
+        $remade = $request->duplicate($params, []);
+        $report = $this->reportViewData($remade);
+        if ($history->report === 'roci' && $report['reportNo'] === '') {
+            $report['reportNo'] = now()->format('Y-m').'-001';
+        }
+        $before = ['generated' => $history->created_at->format('M d, Y g:i A'), 'payments' => (string) $history->total_payments, 'report_no' => $history->report_no];
+        $history->update([
+            'report_no' => $report['reportNo'] ?: null,
+            'total_payments' => $report['data']['total_paid'],
+            'html' => view(self::HISTORY_VIEWS[$history->report], ['report' => $report])->render(),
+            'params' => $params,
+        ]);
+        $history->touch();
+        AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $history->school_id, 'action' => 'cash_report_history_updated', 'auditable_type' => CashReportHistory::class, 'auditable_id' => $history->id, 'metadata' => ['report' => $history->label(), 'period' => $history->period_text, 'reason' => $data['reason'], 'before' => $before, 'after' => ['payments' => (string) $history->total_payments, 'report_no' => $history->report_no]]]);
+
+        return redirect()->route('cash', ['tab' => 'reports', 'school_id' => $history->school_id])->with('success', $history->label().' of '.$history->period_text.' updated from today\'s figures.');
+    }
+
+    /** Removes a kept report (the reason and the user's password are asked); the report itself can be saved again. */
+    public function destroyHistory(Request $request, CashReportHistory $history)
+    {
+        abort_unless($this->schoolIds()->contains($history->school_id), 403);
+        $data = $request->validate(['reason' => ['required', 'string', 'max:255'], 'password' => ['required', 'current_password']]);
+
+        AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $history->school_id, 'action' => 'cash_report_history_deleted', 'auditable_type' => CashReportHistory::class, 'auditable_id' => $history->id, 'metadata' => ['report' => $history->label(), 'period' => $history->period_text, 'fund' => $history->source_of_fund, 'report_no' => $history->report_no, 'reason' => $data['reason']]]);
+        $history->delete();
+
+        return redirect()->route('cash', ['tab' => 'reports', 'school_id' => $history->school_id])->with('success', $history->label().' of '.$history->period_text.' removed from the history.');
     }
 
     public function showHistory(CashReportHistory $history)

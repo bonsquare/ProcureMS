@@ -10,11 +10,11 @@ class CashReportHistory extends Model
 {
     use BelongsToOrganization;
 
-    protected $fillable = ['organization_id', 'school_id', 'report', 'period_from', 'period_to', 'period_text', 'source_of_fund', 'report_no', 'total_payments', 'html', 'generated_by'];
+    protected $fillable = ['organization_id', 'school_id', 'report', 'period_from', 'period_to', 'period_text', 'source_of_fund', 'report_no', 'total_payments', 'html', 'params', 'generated_by'];
 
     protected function casts(): array
     {
-        return ['period_from' => 'date', 'period_to' => 'date', 'total_payments' => 'decimal:2'];
+        return ['period_from' => 'date', 'period_to' => 'date', 'total_payments' => 'decimal:2', 'params' => 'array'];
     }
 
     /** The name of the kept report. */

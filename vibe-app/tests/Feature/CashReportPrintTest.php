@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Aip;
 use App\Models\AipActivity;
 use App\Models\AipKra;
+use App\Models\AuditLog;
 use App\Models\BudgetAllocation;
 use App\Models\CancelledCheck;
 use App\Models\CashFundReceipt;
@@ -296,6 +297,45 @@ class CashReportPrintTest extends TestCase
         }
         $first = CashReportHistory::where('report', 'roci')->firstOrFail();
         $this->actingAs($user)->get(route('cash.report.history', $first->id))->assertOk()->assertSee('0501');
+    }
+
+    public function test_a_kept_report_is_updated_from_todays_figures_or_deleted_with_a_reason_and_the_password(): void
+    {
+        [$school, $user] = $this->tenant('BK8');
+        $this->paid($school, '0601', '2026-08-05', 1000, overrides: ['source_of_fund' => 'MOOE']);
+        $this->actingAs($user)->postJson(route('cash.report.history.store', ['kind' => 'register'] + $this->periodQuery($school, ['source_of_fund' => 'MOOE', 'report_no' => '2026-10-001'])))->assertOk();
+        $history = CashReportHistory::firstOrFail();
+        $this->paid($school, '0602', '2026-08-06', 2000, overrides: ['source_of_fund' => 'MOOE']);
+
+        $this->put(route('cash.report.history.update', $history), ['reason' => '', 'password' => 'password'])->assertSessionHasErrors('reason');
+        $this->put(route('cash.report.history.update', $history), ['reason' => 'New payment', 'password' => 'wrong'])->assertSessionHasErrors('password');
+        $this->assertSame('1000.00', $history->fresh()->total_payments);
+
+        $this->put(route('cash.report.history.update', $history), ['reason' => 'New payment', 'password' => 'password'])->assertSessionHasNoErrors();
+        $history->refresh();
+        $this->assertSame(['3000.00', '2026-10-001'], [$history->total_payments, $history->report_no], 'the header it was saved with stays');
+        $this->get(route('cash.report.history', $history))->assertOk()->assertSee('0602');
+        $this->assertSame(1, CashReportHistory::count());
+        $this->assertSame('New payment', AuditLog::where('action', 'cash_report_history_updated')->firstOrFail()->metadata['reason']);
+
+        $this->delete(route('cash.report.history.destroy', $history), ['password' => 'password'])->assertSessionHasErrors('reason');
+        $this->delete(route('cash.report.history.destroy', $history), ['reason' => 'Duplicate', 'password' => 'password'])->assertSessionHasNoErrors();
+        $this->assertSame(0, CashReportHistory::count());
+        $this->assertSame('Duplicate', AuditLog::where('action', 'cash_report_history_deleted')->firstOrFail()->metadata['reason']);
+        $this->postJson(route('cash.report.history.store', ['kind' => 'register'] + $this->periodQuery($school, ['source_of_fund' => 'MOOE'])))->assertOk();
+    }
+
+    public function test_another_school_cannot_update_or_delete_a_kept_report(): void
+    {
+        [$school, $user] = $this->tenant('BK9');
+        $this->actingAs($user)->postJson(route('cash.report.history.store', ['kind' => 'bank'] + $this->periodQuery($school)))->assertOk();
+        $history = CashReportHistory::firstOrFail();
+        auth()->logout();
+        [, $outsider] = $this->tenant('BKX');
+
+        $this->actingAs($outsider)->put(route('cash.report.history.update', $history), ['reason' => 'x', 'password' => 'password'])->assertNotFound();
+        $this->delete(route('cash.report.history.destroy', $history), ['reason' => 'x', 'password' => 'password'])->assertNotFound();
+        $this->assertSame(1, CashReportHistory::withoutGlobalScopes()->count());
     }
 
     public function test_another_school_cannot_open_a_register_history(): void
