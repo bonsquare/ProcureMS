@@ -8,6 +8,7 @@ use App\Models\CancelledCheck;
 use App\Models\CashFundReceipt;
 use App\Models\CashReportHistory;
 use App\Models\ChartOfAccount;
+use App\Models\DvBreakdownLine;
 use App\Models\DvJournalLine;
 use App\Models\LiquidationReport;
 use App\Models\School;
@@ -51,7 +52,7 @@ class FinanceController extends Controller
 
     private function reports()
     {
-        return LiquidationReport::with(['school', 'procurementRequest.documents', 'submitter', 'journalLines', 'cancelledChecks', 'documentChecks', 'school.checklistItems'])->whereIn('school_id', $this->schoolIds());
+        return LiquidationReport::with(['school', 'procurementRequest.documents', 'submitter', 'journalLines', 'breakdownLines', 'cancelledChecks', 'documentChecks', 'school.checklistItems'])->whereIn('school_id', $this->schoolIds());
     }
 
     public function accounting(Request $request)
@@ -234,6 +235,7 @@ class FinanceController extends Controller
                 'reason' => $data['reason'], 'cancelled_by' => $request->user()->id, 'cancelled_at' => now(),
             ]);
             $liquidationReport->journalLines()->delete();
+            $liquidationReport->breakdownLines()->delete();
             $liquidationReport->update([
                 'paid_at' => null, 'payment_reference' => null, 'payment_mode' => null, 'paid_by' => null,
                 'check_date' => null, 'bank_name' => null, 'bank_account_name' => null, 'bank_account_number' => null, 'payment_fund_cluster' => null, 'received_by' => null, 'payment_remarks' => null,
@@ -398,6 +400,9 @@ class FinanceController extends Controller
             'journal.*.account_code' => [$preview ? 'nullable' : 'required', 'string', 'max:50'],
             'journal.*.debit' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
             'journal.*.credit' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
+            'breakdown' => ['nullable', 'array', 'max:'.self::JOURNAL_MAX_LINES],
+            'breakdown.*.account_code' => ['nullable', 'string', 'max:50'],
+            'breakdown.*.amount' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
         ] + ($editing ? [
             'reason' => [$preview ? 'nullable' : 'required', 'string', 'max:255'],
             'password' => [$preview ? 'nullable' : 'required', 'current_password'],
@@ -423,7 +428,15 @@ class FinanceController extends Controller
             }
             $lines = [];
         }
-        unset($data['journal'], $data['deductions'], $data['deductions_other'], $data['reason'], $data['password']);
+        try {
+            $breakdown = $this->breakdownLines($data['breakdown'] ?? [], $liquidationReport);
+        } catch (ValidationException $e) {
+            if (! $preview) {
+                throw $e;
+            }
+            $breakdown = [];
+        }
+        unset($data['breakdown'], $data['journal'],$data['deductions'], $data['deductions_other'], $data['reason'], $data['password']);
         $deductions = collect(LiquidationReport::DV_DEDUCTIONS)->keys()
             ->mapWithKeys(fn ($key) => [$key => round((float) $request->input('deductions.'.$key, 0), 2)])->filter(fn ($value) => $value > 0);
         $others = collect($request->input('deductions_other', []))
@@ -453,13 +466,17 @@ class FinanceController extends Controller
 
         $data['dv_number'] = $editing ? $liquidationReport->dv_number : ($data['dv_number'] ?? app(DocumentNumberService::class)
             ->next((int) $liquidationReport->organization_id, 'disbursement_voucher', 'DV'));
-        DB::transaction(function () use ($liquidationReport, $data, $lines, $editing) {
+        DB::transaction(function () use ($liquidationReport, $data, $lines, $breakdown, $editing) {
             if ($editing) {
                 $liquidationReport->journalLines()->delete();
+                $liquidationReport->breakdownLines()->delete();
             }
             $liquidationReport->update($data);
             foreach ($lines as $number => $line) {
                 DvJournalLine::create($line + ['organization_id' => $liquidationReport->organization_id, 'liquidation_report_id' => $liquidationReport->id, 'line_no' => $number + 1]);
+            }
+            foreach ($breakdown as $number => $line) {
+                DvBreakdownLine::create($line + ['organization_id' => $liquidationReport->organization_id, 'liquidation_report_id' => $liquidationReport->id, 'line_no' => $number + 1]);
             }
         });
         if ($editing) {
@@ -576,6 +593,42 @@ class FinanceController extends Controller
         }
         if ($debit !== $cents($report->amount)) {
             throw ValidationException::withMessages(['journal' => 'The entry totals '.number_format($debit / 100, 2).' but the DV amount is '.number_format((float) $report->amount, 2).'.']);
+        }
+
+        return $lines;
+    }
+
+    /**
+     * The optional breakdown of the advance by actual expense account. Blank rows are ignored; when any line is given every
+     * line is an account of the chart with an amount, and the lines add up to the DV amount.
+     *
+     * @param  array<int, array<string, mixed>>  $rows
+     * @return array<int, array{account_code: string, account_title: string, amount: string}>
+     */
+    private function breakdownLines(array $rows, LiquidationReport $report): array
+    {
+        $rows = collect($rows)->filter(fn ($row) => trim((string) ($row['account_code'] ?? '')) !== '' || (float) ($row['amount'] ?? 0) > 0)->values();
+        if ($rows->isEmpty()) {
+            return [];
+        }
+        ChartOfAccount::ensureDefaults($report->organization_id);
+        $titles = ChartOfAccount::withoutGlobalScopes()->where('organization_id', $report->organization_id)
+            ->whereIn('code', $rows->pluck('account_code')->all())->pluck('title', 'code');
+
+        $lines = [];
+        $total = 0;
+        foreach ($rows as $number => $row) {
+            $position = $number + 1;
+            $code = (string) ($row['account_code'] ?? '');
+            $cents = (int) round(((float) ($row['amount'] ?? 0)) * 100);
+            if (! $titles->has($code) || $cents <= 0) {
+                throw ValidationException::withMessages(['breakdown' => "Breakdown line {$position}: choose an account from the Chart of Accounts and enter an amount."]);
+            }
+            $total += $cents;
+            $lines[] = ['account_code' => $code, 'account_title' => $titles[$code], 'amount' => number_format($cents / 100, 2, '.', '')];
+        }
+        if ($total !== (int) round(((float) $report->amount) * 100)) {
+            throw ValidationException::withMessages(['breakdown' => 'The breakdown totals '.number_format($total / 100, 2).' but the DV amount is '.number_format((float) $report->amount, 2).'.']);
         }
 
         return $lines;

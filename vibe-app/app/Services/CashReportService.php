@@ -23,7 +23,7 @@ class CashReportService
         $to = $to->copy()->endOfDay();
 
         $paidLines = LiquidationReport::query()
-            ->with(['budgetAllocation.account', 'procurementRequest.budgetAllocation.account', 'journalLines', 'lines.budgetAllocation.account'])
+            ->with(['budgetAllocation.account', 'procurementRequest.budgetAllocation.account', 'journalLines', 'breakdownLines', 'lines.budgetAllocation.account'])
             ->where('school_id', $school->id)
             ->whereNotNull('paid_at')
             ->get()
@@ -116,6 +116,15 @@ class CashReportService
     /** @return array<string, float> */
     private function splitsOf(LiquidationReport $report): array
     {
+        // The breakdown of the advance by actual expense account, when the DV has one, replaces the split of the ORS.
+        if ($report->breakdownLines->isNotEmpty()) {
+            $splits = [];
+            foreach ($report->breakdownLines as $part) {
+                $splits[$part->account_code] = round(($splits[$part->account_code] ?? 0) + (float) $part->amount, 2);
+            }
+
+            return $splits;
+        }
         if ($report->lines->count() < 2) {
             return [];
         }

@@ -100,6 +100,12 @@ class LiquidationReport extends Model
         return $this->hasMany(DvJournalLine::class)->orderBy('line_no');
     }
 
+    /** The breakdown of the advance by actual expense account (optional); the cash reports read it. */
+    public function breakdownLines()
+    {
+        return $this->hasMany(DvBreakdownLine::class)->orderBy('line_no');
+    }
+
     public function cancelledChecks()
     {
         return $this->hasMany(CancelledCheck::class);

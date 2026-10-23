@@ -1219,3 +1219,9 @@ Design: docs/superpowers/specs/2026-10-21-subscription-trial-payment-design.md; 
 - The clock and notification bell are not placed on an official document page (`data-official-page`), where they had landed on the letterhead of the Notice of Award; the BIR Certificate of Registration No. of a supplier is optional.
 - The document window of the procurement documents is always 96% of the screen height, so the Inventory and Acknowledgement Receipt of Supplies window is the same size as the others (window size only; the documents are unchanged).
 - Notices (Processing, Done, errors) are drawn in the top layer, above any open window and its blur; the refusals of the server (a wrong password, a missing field) are shown as red notices on every page, up to three, besides the inline message.
+
+## 87. Breakdown of advance by actual expense account (owner's decision 2026-10-23)
+
+- The DV journal debits Advances to Operating Expenses; the **Breakdown of advance** is a second, optional layer that lists the actual expense accounts the advance covers (`dv_breakdown_lines`: account, amount; `DvBreakdownLine`, `LiquidationReport::breakdownLines()`). It is a box under the Journal entry in Create DV and a section in Edit DV (same reason and password rule); Create DV starts it from the account(s) the ORS is charged to.
+- Optional. When any line is filled in, every line needs a Chart of Accounts account and an amount, and the lines add up to the DV amount (`FinanceController::breakdownLines`, up to 20 lines). The journal entry, deductions and printed DV are unchanged. Cancel Check clears it with the journal.
+- **Cash reports:** a DV with a breakdown is divided among the account columns and the Recapitulation by its lines (`CashReportService::splitsOf`); a DV without one keeps the split of its ORS (section 70). Nothing else in the reports changes. Covered by `tests/Feature/DvBreakdownTest.php`.

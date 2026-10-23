@@ -237,6 +237,17 @@
                                         <button type="button" class="mt-3 inline-flex items-center gap-1 rounded border border-outline-variant/60 bg-white px-3 py-1.5 text-xs font-semibold text-primary hover:bg-surface-low" onclick="const box=this.closest('[data-edit-journal]').querySelector('[data-lines]');const row=box.lastElementChild.cloneNode(true);const n=box.children.length;row.querySelectorAll('select,input').forEach((el)=>{el.name=el.name.replace(/journal\[\d+\]/,'journal['+n+']');if(el.tagName==='INPUT')el.value='';});box.appendChild(row);"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">add</span>Add line</button>
                                     </div>
                                 </section>
+                                <section data-edit-journal>
+                                    <div class="mb-2 flex flex-wrap items-baseline justify-between gap-2"><h3 class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Breakdown of advance (optional)</h3><p class="text-[11px] text-on-surface-variant">When filled in, it totals {{ $peso($r->amount) }}; leave every line blank to leave it out</p></div>
+                                    <div class="rounded-lg border border-outline-variant/40 bg-surface-low/40 p-3">
+                                        <div class="space-y-2" data-lines>
+                                            @foreach(($r->breakdownLines->isNotEmpty() ? $r->breakdownLines : [new \App\Models\DvBreakdownLine()]) as $i => $line)
+                                                <div class="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_7rem]"><select name="breakdown[{{ $i }}][account_code]" class="{{ $inputClass }} mt-0"><option value="">Choose an account…</option>@foreach($journalAccounts as $category => $accounts)<optgroup label="{{ $category }}">@foreach($accounts as $account)<option value="{{ $account['code'] }}" @selected($account['code'] === $line->account_code)>{{ $account['code'] }} · {{ $account['title'] }}</option>@endforeach</optgroup>@endforeach</select><input type="number" step="0.01" min="0" name="breakdown[{{ $i }}][amount]" value="{{ $line->amount > 0 ? number_format((float) $line->amount, 2, '.', '') : '' }}" placeholder="Amount" class="{{ $inputClass }} mt-0 text-right"></div>
+                                            @endforeach
+                                        </div>
+                                        <button type="button" class="mt-3 inline-flex items-center gap-1 rounded border border-outline-variant/60 bg-white px-3 py-1.5 text-xs font-semibold text-primary hover:bg-surface-low" onclick="const box=this.closest('[data-edit-journal]').querySelector('[data-lines]');const row=box.lastElementChild.cloneNode(true);const n=box.children.length;row.querySelectorAll('select,input').forEach((el)=>{el.name=el.name.replace(/breakdown\[\d+\]/,'breakdown['+n+']');el.value='';});box.appendChild(row);"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">add</span>Add line</button>
+                                    </div>
+                                </section>
                                 <section>
                                     <h3 class="mb-2 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Less: Deductions <span class="font-normal normal-case tracking-normal">(optional)</span></h3>
                                     <div class="grid grid-cols-2 gap-3 md:grid-cols-4">@foreach(\App\Models\LiquidationReport::DV_DEDUCTIONS as $deductionKey => $deductionLabel)<label class="text-xs font-semibold text-on-surface-variant">{{ $deductionLabel }}<input type="number" step="0.01" min="0" name="deductions[{{ $deductionKey }}]" value="{{ $r->dv_deductions[$deductionKey] ?? '' }}" class="{{ $inputClass }} text-right"></label>@endforeach</div>
@@ -348,6 +359,17 @@
                 <p class="text-xs text-on-surface-variant">Total debit <strong id="journal-debit" class="text-on-surface">0.00</strong> · Total credit <strong id="journal-credit" class="text-on-surface">0.00</strong></p>
             </div>
             <select id="journal-options" hidden aria-hidden="true"><option value="">Choose an account…</option>@foreach(($journalAccounts ?? []) as $category => $accounts)<optgroup label="{{ $category }}">@foreach($accounts as $account)<option value="{{ $account['code'] }}">{{ $account['code'] }} · {{ $account['title'] }}</option>@endforeach</optgroup>@endforeach</select>
+        </div>
+        <div id="breakdown-box" class="rounded-xl border border-outline-variant/50 bg-surface-low/50 p-3 md:col-span-2">
+            <div class="mb-2 flex flex-wrap items-start justify-between gap-2">
+                <div><p class="text-sm font-bold text-on-surface">Breakdown of advance <span class="font-normal text-on-surface-variant">(actual expense accounts, optional)</span></p><p class="text-[11px] font-normal text-on-surface-variant">The cash reports read this to show the actual expenses. When filled in, it must total the DV amount; remove every line to leave it out.</p></div>
+                <span id="breakdown-badge" class="rounded-full bg-surface-high px-3 py-1 text-[11px] font-bold text-on-surface-variant">Not used</span>
+            </div>
+            <div id="breakdown-rows" class="space-y-2"></div>
+            <div class="mt-2 flex flex-wrap items-center justify-between gap-2">
+                <button type="button" id="breakdown-add" class="inline-flex items-center gap-1 rounded border border-outline-variant/60 bg-white px-3 py-1.5 text-xs font-semibold text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">add</span>Add line</button>
+                <p class="text-xs text-on-surface-variant">Total <strong id="breakdown-total" class="text-on-surface">0.00</strong></p>
+            </div>
         </div>
         <div class="rounded-xl border border-outline-variant/50 bg-surface-low/50 p-3 md:col-span-2">
             <p class="text-sm font-bold text-on-surface">Less: Deductions <span class="font-normal text-on-surface-variant">(optional)</span></p>
@@ -673,6 +695,7 @@
             if (charged.length > 1) { charged.forEach((charge) => addRow(charge.code || '', charge.amount, '')); } else { addRow(button.dataset.expenseCode || '', total, ''); }
             addRow(creditAccountFor(form.querySelector('[name=payment_mode]').value), '', total, true);
             syncDeductions();
+            if (window.breakdownOpen) window.breakdownOpen(charged.length > 1 ? charged : [{ code: button.dataset.expenseCode || '', amount: total }], amount);
         };
 
         // The "Less:" deductions are credited to Due to BIR and only the net is credited to cash, while the cash line is still the one filled in by itself.
@@ -704,6 +727,70 @@
         });
         document.getElementById('journal-add').addEventListener('click', () => addRow());
         form.addEventListener('submit', (event) => { refresh(); if (submit.disabled) event.preventDefault(); });
+    })();
+</script>
+<script>
+    // Breakdown of the advance by actual expense account: optional, but when it is filled in it must total the DV amount.
+    (() => {
+        const MAX = {{ \App\Http\Controllers\FinanceController::JOURNAL_MAX_LINES }};
+        const form = document.getElementById('dv-form');
+        const rows = document.getElementById('breakdown-rows');
+        const options = document.getElementById('journal-options');
+        const badge = document.getElementById('breakdown-badge');
+        const field = 'w-full rounded border border-outline-variant/50 bg-white px-2.5 py-2 text-sm font-normal outline-none focus:border-primary';
+        let amount = 0; let valid = true;
+        const cents = (value) => Math.round((parseFloat(value) || 0) * 100);
+        const peso = (value) => (value / 100).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        const refresh = () => {
+            const lines = [...rows.querySelectorAll('.breakdown-row')];
+            lines.forEach((row, index) => {
+                row.querySelector('select').name = `breakdown[${index}][account_code]`;
+                row.querySelector('input').name = `breakdown[${index}][amount]`;
+            });
+            const total = lines.reduce((sum, row) => sum + cents(row.querySelector('input').value), 0);
+            const complete = lines.every((row) => row.querySelector('select').value && cents(row.querySelector('input').value) > 0);
+            document.getElementById('breakdown-total').textContent = peso(total);
+            let text = 'Not used'; let tone = 'bg-surface-high text-on-surface-variant';
+            valid = true;
+            if (lines.length) {
+                if (total !== amount) { text = 'Must total ₱' + peso(amount); tone = 'bg-error/10 text-error'; valid = false; }
+                else if (! complete) { text = 'Complete every line'; tone = 'bg-amber-100 text-amber-800'; valid = false; }
+                else { text = 'Matches the DV'; tone = 'bg-secondary/15 text-secondary'; }
+            }
+            badge.textContent = text;
+            badge.className = 'rounded-full px-3 py-1 text-[11px] font-bold ' + tone;
+            document.getElementById('breakdown-add').disabled = lines.length >= MAX;
+        };
+
+        const addRow = (code = '', value = '') => {
+            if (rows.children.length >= MAX) return;
+            const row = document.createElement('div');
+            row.className = 'breakdown-row grid grid-cols-1 gap-2 sm:grid-cols-[1fr_9rem_2rem]';
+            const select = options.cloneNode(true);
+            select.removeAttribute('id'); select.removeAttribute('aria-hidden'); select.hidden = false; select.className = field;
+            const input = document.createElement('input');
+            input.type = 'number'; input.step = '0.01'; input.min = '0'; input.placeholder = 'Amount'; input.className = field + ' text-right tabular-nums'; input.value = value;
+            const remove = document.createElement('button');
+            remove.type = 'button'; remove.title = 'Remove line'; remove.setAttribute('aria-label', 'Remove line');
+            remove.className = 'grid h-9 w-8 place-items-center rounded text-on-surface-variant hover:bg-error/10 hover:text-error';
+            remove.innerHTML = '<span class="material-symbols-outlined text-[18px]" aria-hidden="true">delete</span>';
+            row.append(select, input, remove);
+            rows.append(row);
+            select.value = [...select.options].some((option) => option.value === code) ? code : '';
+            select.addEventListener('change', refresh); input.addEventListener('input', refresh);
+            remove.addEventListener('click', () => { row.remove(); refresh(); });
+            refresh();
+        };
+
+        // Starts from the expense account(s) the ORS is charged to; the user changes them to the actual expenses.
+        window.breakdownOpen = (charged, total) => {
+            rows.innerHTML = ''; amount = total;
+            charged.forEach((charge) => addRow(charge.code || '', charge.amount));
+            refresh();
+        };
+        document.getElementById('breakdown-add').addEventListener('click', () => addRow());
+        form.addEventListener('submit', (event) => { refresh(); if (! valid) event.preventDefault(); });
     })();
 </script>
 <script>
