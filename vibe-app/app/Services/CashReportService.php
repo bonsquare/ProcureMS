@@ -116,14 +116,23 @@ class CashReportService
     /** @return array<string, float> */
     private function splitsOf(LiquidationReport $report): array
     {
-        // The breakdown of the advance by actual expense account, when the DV has one, replaces the split of the ORS.
-        if ($report->breakdownLines->isNotEmpty()) {
+        // A breakdown of a debit line of the journal (the advance split by actual expense account) replaces the split of the ORS:
+        // the debit lines of the journal count, a ticked line by the net of its parts per account, any other as it is.
+        if ($report->breakdownLines->contains(fn ($part) => $report->journalLines->contains(fn ($line) => $line->line_no === $part->journal_line_no && (float) $line->debit > 0))) {
             $splits = [];
-            foreach ($report->breakdownLines as $part) {
-                $splits[$part->account_code] = round(($splits[$part->account_code] ?? 0) + (float) $part->amount, 2);
+            foreach ($report->journalLines->filter(fn ($line) => (float) $line->debit > 0) as $line) {
+                $parts = $report->breakdownLines->where('journal_line_no', $line->line_no);
+                if ($parts->isEmpty()) {
+                    $splits[$line->account_code] = round(($splits[$line->account_code] ?? 0) + (float) $line->debit, 2);
+
+                    continue;
+                }
+                foreach ($parts as $part) {
+                    $splits[$part->account_code] = round(($splits[$part->account_code] ?? 0) + (float) $part->debit - (float) $part->credit, 2);
+                }
             }
 
-            return $splits;
+            return array_filter($splits, fn ($amount) => $amount != 0);
         }
         if ($report->lines->count() < 2) {
             return [];

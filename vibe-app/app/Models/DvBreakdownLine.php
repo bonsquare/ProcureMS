@@ -5,16 +5,16 @@ namespace App\Models;
 use App\Models\Concerns\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Model;
 
-/** One line of the breakdown of an advance: the actual expense account and the part of the DV amount it covers. The cash reports read it. */
+/** One line of the breakdown of a journal line (for example the advance): an actual account with a debit or a credit. The cash reports read it. */
 class DvBreakdownLine extends Model
 {
     use BelongsToOrganization;
 
-    protected $fillable = ['organization_id', 'liquidation_report_id', 'line_no', 'account_code', 'account_title', 'amount'];
+    protected $fillable = ['organization_id', 'liquidation_report_id', 'journal_line_no', 'line_no', 'account_code', 'account_title', 'debit', 'credit'];
 
     protected function casts(): array
     {
-        return ['amount' => 'decimal:2'];
+        return ['debit' => 'decimal:2', 'credit' => 'decimal:2'];
     }
 
     public function report()

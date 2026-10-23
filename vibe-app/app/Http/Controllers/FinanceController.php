@@ -401,8 +401,10 @@ class FinanceController extends Controller
             'journal.*.debit' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
             'journal.*.credit' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
             'breakdown' => ['nullable', 'array', 'max:'.self::JOURNAL_MAX_LINES],
-            'breakdown.*.account_code' => ['nullable', 'string', 'max:50'],
-            'breakdown.*.amount' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
+            'breakdown.*' => ['nullable', 'array', 'max:'.self::JOURNAL_MAX_LINES],
+            'breakdown.*.*.account_code' => ['nullable', 'string', 'max:50'],
+            'breakdown.*.*.debit' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
+            'breakdown.*.*.credit' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
         ] + ($editing ? [
             'reason' => [$preview ? 'nullable' : 'required', 'string', 'max:255'],
             'password' => [$preview ? 'nullable' : 'required', 'current_password'],
@@ -429,7 +431,7 @@ class FinanceController extends Controller
             $lines = [];
         }
         try {
-            $breakdown = $this->breakdownLines($data['breakdown'] ?? [], $liquidationReport);
+            $breakdown = $this->breakdownLines($data['breakdown'] ?? [], $lines, $liquidationReport);
         } catch (ValidationException $e) {
             if (! $preview) {
                 throw $e;
@@ -599,36 +601,53 @@ class FinanceController extends Controller
     }
 
     /**
-     * The optional breakdown of the advance by actual expense account. Blank rows are ignored; when any line is given every
-     * line is an account of the chart with an amount, and the lines add up to the DV amount.
+     * The optional breakdown of journal lines (ticked in the form): each ticked line is split into accounts of the chart, every
+     * part a debit or a credit, and the net of the parts (in the direction of the journal line) equals the amount of that line.
      *
-     * @param  array<int, array<string, mixed>>  $rows
-     * @return array<int, array{account_code: string, account_title: string, amount: string}>
+     * @param  array<int, array<int, array<string, mixed>>>  $breakdown  parts by the position of their journal line
+     * @param  array<int, array{account_code: string, account_title: string, debit: string, credit: string}>  $journal
+     * @return array<int, array{journal_line_no: int, account_code: string, account_title: string, debit: string, credit: string}>
      */
-    private function breakdownLines(array $rows, LiquidationReport $report): array
+    private function breakdownLines(array $breakdown, array $journal, LiquidationReport $report): array
     {
-        $rows = collect($rows)->filter(fn ($row) => trim((string) ($row['account_code'] ?? '')) !== '' || (float) ($row['amount'] ?? 0) > 0)->values();
-        if ($rows->isEmpty()) {
-            return [];
-        }
-        ChartOfAccount::ensureDefaults($report->organization_id);
-        $titles = ChartOfAccount::withoutGlobalScopes()->where('organization_id', $report->organization_id)
-            ->whereIn('code', $rows->pluck('account_code')->all())->pluck('title', 'code');
-
+        $cents = fn ($value) => (int) round(((float) ($value ?: 0)) * 100);
+        $titles = null;
         $lines = [];
-        $total = 0;
-        foreach ($rows as $number => $row) {
-            $position = $number + 1;
-            $code = (string) ($row['account_code'] ?? '');
-            $cents = (int) round(((float) ($row['amount'] ?? 0)) * 100);
-            if (! $titles->has($code) || $cents <= 0) {
-                throw ValidationException::withMessages(['breakdown' => "Breakdown line {$position}: choose an account from the Chart of Accounts and enter an amount."]);
+        foreach ($breakdown as $position => $rows) {
+            $rows = collect($rows)->filter(fn ($row) => trim((string) ($row['account_code'] ?? '')) !== '' || $cents($row['debit'] ?? 0) > 0 || $cents($row['credit'] ?? 0) > 0)->values();
+            if ($rows->isEmpty()) {
+                continue;
             }
-            $total += $cents;
-            $lines[] = ['account_code' => $code, 'account_title' => $titles[$code], 'amount' => number_format($cents / 100, 2, '.', '')];
-        }
-        if ($total !== (int) round(((float) $report->amount) * 100)) {
-            throw ValidationException::withMessages(['breakdown' => 'The breakdown totals '.number_format($total / 100, 2).' but the DV amount is '.number_format((float) $report->amount, 2).'.']);
+            $entry = $journal[(int) $position] ?? null;
+            if ($entry === null) {
+                throw ValidationException::withMessages(['breakdown' => 'A breakdown belongs to a line of the journal entry that is not there.']);
+            }
+            $titles ??= (function () use ($breakdown, $report) {
+                ChartOfAccount::ensureDefaults($report->organization_id);
+
+                return ChartOfAccount::withoutGlobalScopes()->where('organization_id', $report->organization_id)
+                    ->whereIn('code', collect($breakdown)->flatten(1)->pluck('account_code')->filter()->all())->pluck('title', 'code');
+            })();
+            $isDebit = $cents($entry['debit']) > 0;
+            $net = 0;
+            foreach ($rows as $number => $row) {
+                $label = 'Breakdown of '.$entry['account_title'].', line '.($number + 1);
+                $code = (string) ($row['account_code'] ?? '');
+                $d = $cents($row['debit'] ?? 0);
+                $c = $cents($row['credit'] ?? 0);
+                if (! $titles->has($code)) {
+                    throw ValidationException::withMessages(['breakdown' => "{$label}: choose an account from the Chart of Accounts."]);
+                }
+                if (($d > 0) === ($c > 0)) {
+                    throw ValidationException::withMessages(['breakdown' => "{$label}: enter either a debit or a credit amount, not both and not neither."]);
+                }
+                $net += $isDebit ? $d - $c : $c - $d;
+                $lines[] = ['journal_line_no' => (int) $position + 1, 'account_code' => $code, 'account_title' => $titles[$code], 'debit' => number_format($d / 100, 2, '.', ''), 'credit' => number_format($c / 100, 2, '.', '')];
+            }
+            $amount = $cents($isDebit ? $entry['debit'] : $entry['credit']);
+            if ($net !== $amount) {
+                throw ValidationException::withMessages(['breakdown' => 'The breakdown of '.$entry['account_title'].' nets '.number_format($net / 100, 2).' but the line is '.number_format($amount / 100, 2).'.']);
+            }
         }
 
         return $lines;

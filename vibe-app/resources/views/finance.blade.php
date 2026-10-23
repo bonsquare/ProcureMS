@@ -228,24 +228,13 @@
                                 <section data-edit-journal>
                                     <div class="mb-2 flex flex-wrap items-baseline justify-between gap-2"><h3 class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Journal entry</h3><p class="text-[11px] text-on-surface-variant">Total debit = total credit = {{ $peso($r->amount) }}</p></div>
                                     <div class="rounded-lg border border-outline-variant/40 bg-surface-low/40 p-3">
-                                        <div class="mb-1 hidden grid-cols-[1fr_7rem_7rem] gap-2 px-0.5 text-[10px] font-bold uppercase tracking-wide text-on-surface-variant sm:grid"><span>Account</span><span class="text-right">Debit</span><span class="text-right">Credit</span></div>
+                                        <div class="mb-1 hidden grid-cols-[4.5rem_1fr_7rem_7rem_2rem] gap-2 text-[10px] font-bold uppercase tracking-wide text-on-surface-variant sm:grid"><span class="text-center">Break down</span><span>Account</span><span class="pr-3 text-right">Debit</span><span class="pr-3 text-right">Credit</span><span></span></div>
                                         <div class="space-y-2" data-lines>
                                             @foreach($r->journalLines as $i => $line)
-                                                <div class="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_7rem_7rem]"><select name="journal[{{ $i }}][account_code]" required class="{{ $inputClass }} mt-0">@foreach($journalAccounts as $category => $accounts)<optgroup label="{{ $category }}">@foreach($accounts as $account)<option value="{{ $account['code'] }}" @selected($account['code'] === $line->account_code)>{{ $account['code'] }} · {{ $account['title'] }}</option>@endforeach</optgroup>@endforeach</select><input type="number" step="0.01" min="0" name="journal[{{ $i }}][debit]" value="{{ $line->debit > 0 ? number_format((float) $line->debit, 2, '.', '') : '' }}" placeholder="Debit" class="{{ $inputClass }} mt-0 text-right"><input type="number" step="0.01" min="0" name="journal[{{ $i }}][credit]" value="{{ $line->credit > 0 ? number_format((float) $line->credit, 2, '.', '') : '' }}" placeholder="Credit" class="{{ $inputClass }} mt-0 text-right"></div>
+                                                <div class="bd-row grid grid-cols-1 gap-2 sm:grid-cols-[4.5rem_1fr_7rem_7rem_2rem]" @if($r->breakdownLines->where('journal_line_no', $i + 1)->isNotEmpty()) data-bd="{{ json_encode($r->breakdownLines->where('journal_line_no', $i + 1)->map(fn ($part) => ['account_code' => $part->account_code, 'debit' => (float) $part->debit ?: '', 'credit' => (float) $part->credit ?: ''])->values()) }}" @endif><span class="bd-cell flex items-center justify-center gap-1"><input type="checkbox" class="bd-tick h-4 w-4 accent-[#103967]" title="Break down this account" aria-label="Break down this account"><button type="button" class="bd-chip hidden rounded-full bg-secondary/15 px-1.5 text-[10px] font-bold text-secondary"></button></span><select name="journal[{{ $i }}][account_code]" required class="{{ $inputClass }} mt-0">@foreach($journalAccounts as $category => $accounts)<optgroup label="{{ $category }}">@foreach($accounts as $account)<option value="{{ $account['code'] }}" @selected($account['code'] === $line->account_code)>{{ $account['code'] }} · {{ $account['title'] }}</option>@endforeach</optgroup>@endforeach</select><input type="number" step="0.01" min="0" name="journal[{{ $i }}][debit]" value="{{ $line->debit > 0 ? number_format((float) $line->debit, 2, '.', '') : '' }}" placeholder="Debit" class="{{ $inputClass }} mt-0 text-right"><input type="number" step="0.01" min="0" name="journal[{{ $i }}][credit]" value="{{ $line->credit > 0 ? number_format((float) $line->credit, 2, '.', '') : '' }}" placeholder="Credit" class="{{ $inputClass }} mt-0 text-right"><button type="button" title="Remove line" aria-label="Remove line" class="grid h-9 w-8 place-items-center rounded text-on-surface-variant hover:bg-error/10 hover:text-error" onclick="const box=this.closest('[data-lines]');if(box.children.length<=2)return;this.parentElement.remove();[...box.children].forEach((r,n)=>r.querySelectorAll('select,input').forEach((el)=>{el.name=el.name.replace(/journal\[\d+\]/,'journal['+n+']');}));"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">delete</span></button><div class="bd-store" hidden></div></div>
                                             @endforeach
                                         </div>
-                                        <button type="button" class="mt-3 inline-flex items-center gap-1 rounded border border-outline-variant/60 bg-white px-3 py-1.5 text-xs font-semibold text-primary hover:bg-surface-low" onclick="const box=this.closest('[data-edit-journal]').querySelector('[data-lines]');const row=box.lastElementChild.cloneNode(true);const n=box.children.length;row.querySelectorAll('select,input').forEach((el)=>{el.name=el.name.replace(/journal\[\d+\]/,'journal['+n+']');if(el.tagName==='INPUT')el.value='';});box.appendChild(row);"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">add</span>Add line</button>
-                                    </div>
-                                </section>
-                                <section data-edit-journal>
-                                    <div class="mb-2 flex flex-wrap items-baseline justify-between gap-2"><h3 class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Breakdown of advance (optional)</h3><p class="text-[11px] text-on-surface-variant">When filled in, it totals {{ $peso($r->amount) }}; leave every line blank to leave it out</p></div>
-                                    <div class="rounded-lg border border-outline-variant/40 bg-surface-low/40 p-3">
-                                        <div class="space-y-2" data-lines>
-                                            @foreach(($r->breakdownLines->isNotEmpty() ? $r->breakdownLines : [new \App\Models\DvBreakdownLine()]) as $i => $line)
-                                                <div class="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_7rem]"><select name="breakdown[{{ $i }}][account_code]" class="{{ $inputClass }} mt-0"><option value="">Choose an account…</option>@foreach($journalAccounts as $category => $accounts)<optgroup label="{{ $category }}">@foreach($accounts as $account)<option value="{{ $account['code'] }}" @selected($account['code'] === $line->account_code)>{{ $account['code'] }} · {{ $account['title'] }}</option>@endforeach</optgroup>@endforeach</select><input type="number" step="0.01" min="0" name="breakdown[{{ $i }}][amount]" value="{{ $line->amount > 0 ? number_format((float) $line->amount, 2, '.', '') : '' }}" placeholder="Amount" class="{{ $inputClass }} mt-0 text-right"></div>
-                                            @endforeach
-                                        </div>
-                                        <button type="button" class="mt-3 inline-flex items-center gap-1 rounded border border-outline-variant/60 bg-white px-3 py-1.5 text-xs font-semibold text-primary hover:bg-surface-low" onclick="const box=this.closest('[data-edit-journal]').querySelector('[data-lines]');const row=box.lastElementChild.cloneNode(true);const n=box.children.length;row.querySelectorAll('select,input').forEach((el)=>{el.name=el.name.replace(/breakdown\[\d+\]/,'breakdown['+n+']');el.value='';});box.appendChild(row);"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">add</span>Add line</button>
+                                        <button type="button" class="mt-3 inline-flex items-center gap-1 rounded border border-outline-variant/60 bg-white px-3 py-1.5 text-xs font-semibold text-primary hover:bg-surface-low" onclick="const box=this.closest('[data-edit-journal]').querySelector('[data-lines]');const row=box.lastElementChild.cloneNode(true);const n=box.children.length;row.removeAttribute('data-bd');row.querySelector('.bd-store').innerHTML='';row.querySelector('.bd-tick').checked=false;row.querySelector('.bd-chip').classList.add('hidden');row.querySelectorAll('select,input').forEach((el)=>{el.name=el.name.replace(/journal\[\d+\]/,'journal['+n+']');if(el.tagName==='INPUT'&&el.type!=='checkbox')el.value='';});box.appendChild(row);"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">add</span>Add line</button>
                                     </div>
                                 </section>
                                 <section>
@@ -352,24 +341,13 @@
                 <div><p class="text-sm font-bold text-on-surface">Journal entry <span class="font-normal text-on-surface-variant">(double entry)</span></p><p class="text-[11px] font-normal text-on-surface-variant">Total debit must equal total credit and the DV amount. Up to {{ \App\Http\Controllers\FinanceController::JOURNAL_MAX_LINES }} lines fit the printed DV.</p></div>
                 <span id="journal-badge" class="rounded-full bg-surface-high px-3 py-1 text-[11px] font-bold text-on-surface-variant">Add the entry</span>
             </div>
-            <div class="mb-1 hidden grid-cols-[1fr_8rem_8rem_2rem] gap-2 text-[10px] font-bold uppercase tracking-wide text-on-surface-variant sm:grid"><span>Account (UACS code · title)</span><span class="text-right">Debit</span><span class="text-right">Credit</span><span></span></div>
+            <div class="mb-1 hidden grid-cols-[4.5rem_1fr_8rem_8rem_2rem] gap-2 text-[10px] font-bold uppercase tracking-wide text-on-surface-variant sm:grid"><span class="text-center">Break down</span><span>Account (UACS code · title)</span><span class="pr-2.5 text-right">Debit</span><span class="pr-2.5 text-right">Credit</span><span></span></div>
             <div id="journal-rows" class="space-y-2"></div>
             <div class="mt-2 flex flex-wrap items-center justify-between gap-2">
                 <button type="button" id="journal-add" class="inline-flex items-center gap-1 rounded border border-outline-variant/60 bg-white px-3 py-1.5 text-xs font-semibold text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">add</span>Add line</button>
                 <p class="text-xs text-on-surface-variant">Total debit <strong id="journal-debit" class="text-on-surface">0.00</strong> · Total credit <strong id="journal-credit" class="text-on-surface">0.00</strong></p>
             </div>
             <select id="journal-options" hidden aria-hidden="true"><option value="">Choose an account…</option>@foreach(($journalAccounts ?? []) as $category => $accounts)<optgroup label="{{ $category }}">@foreach($accounts as $account)<option value="{{ $account['code'] }}">{{ $account['code'] }} · {{ $account['title'] }}</option>@endforeach</optgroup>@endforeach</select>
-        </div>
-        <div id="breakdown-box" class="rounded-xl border border-outline-variant/50 bg-surface-low/50 p-3 md:col-span-2">
-            <div class="mb-2 flex flex-wrap items-start justify-between gap-2">
-                <div><p class="text-sm font-bold text-on-surface">Breakdown of advance <span class="font-normal text-on-surface-variant">(actual expense accounts, optional)</span></p><p class="text-[11px] font-normal text-on-surface-variant">The cash reports read this to show the actual expenses. When filled in, it must total the DV amount; remove every line to leave it out.</p></div>
-                <span id="breakdown-badge" class="rounded-full bg-surface-high px-3 py-1 text-[11px] font-bold text-on-surface-variant">Not used</span>
-            </div>
-            <div id="breakdown-rows" class="space-y-2"></div>
-            <div class="mt-2 flex flex-wrap items-center justify-between gap-2">
-                <button type="button" id="breakdown-add" class="inline-flex items-center gap-1 rounded border border-outline-variant/60 bg-white px-3 py-1.5 text-xs font-semibold text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">add</span>Add line</button>
-                <p class="text-xs text-on-surface-variant">Total <strong id="breakdown-total" class="text-on-surface">0.00</strong></p>
-            </div>
         </div>
         <div class="rounded-xl border border-outline-variant/50 bg-surface-low/50 p-3 md:col-span-2">
             <p class="text-sm font-bold text-on-surface">Less: Deductions <span class="font-normal text-on-surface-variant">(optional)</span></p>
@@ -658,7 +636,7 @@
         const addRow = (code = '', debit = '', credit = '', auto = false) => {
             if (rows.children.length >= MAX) return null;
             const row = document.createElement('div');
-            row.className = 'journal-row grid grid-cols-1 gap-2 sm:grid-cols-[1fr_8rem_8rem_2rem]';
+            row.className = 'journal-row bd-row grid grid-cols-1 gap-2 sm:grid-cols-[4.5rem_1fr_8rem_8rem_2rem]';
             if (auto) row.dataset.auto = '1';
             const select = options.cloneNode(true);
             select.removeAttribute('id'); select.removeAttribute('aria-hidden'); select.hidden = false; select.className = field; select.required = true;
@@ -673,7 +651,8 @@
             remove.type = 'button'; remove.title = 'Remove line'; remove.setAttribute('aria-label', 'Remove line');
             remove.className = 'grid h-9 w-8 place-items-center rounded text-on-surface-variant hover:bg-error/10 hover:text-error';
             remove.innerHTML = '<span class="material-symbols-outlined text-[18px]" aria-hidden="true">delete</span>';
-            row.append(select, debitInput, creditInput, remove);
+            const tick = document.createElement('span'); tick.innerHTML = '<span class="bd-cell flex items-center justify-center gap-1"><input type="checkbox" class="bd-tick h-4 w-4 accent-[#103967]" title="Break down this account" aria-label="Break down this account"><button type="button" class="bd-chip hidden rounded-full bg-secondary/15 px-1.5 text-[10px] font-bold text-secondary"></button></span>'; const store = document.createElement('div'); store.className = 'bd-store'; store.hidden = true;
+            row.append(tick.firstChild, select, debitInput, creditInput, remove, store);
             rows.append(row);
             select.value = hasOption(code) ? code : '';
             select.addEventListener('change', () => { delete row.dataset.auto; refresh(); });
@@ -695,7 +674,6 @@
             if (charged.length > 1) { charged.forEach((charge) => addRow(charge.code || '', charge.amount, '')); } else { addRow(button.dataset.expenseCode || '', total, ''); }
             addRow(creditAccountFor(form.querySelector('[name=payment_mode]').value), '', total, true);
             syncDeductions();
-            if (window.breakdownOpen) window.breakdownOpen(charged.length > 1 ? charged : [{ code: button.dataset.expenseCode || '', amount: total }], amount);
         };
 
         // The "Less:" deductions are credited to Due to BIR and only the net is credited to cash, while the cash line is still the one filled in by itself.
@@ -729,68 +707,136 @@
         form.addEventListener('submit', (event) => { refresh(); if (submit.disabled) event.preventDefault(); });
     })();
 </script>
+<dialog id="bd-dialog" style="width:min(48rem,94vw);max-height:92vh;padding:0;border:0;border-radius:.9rem;box-shadow:0 20px 60px rgba(0,0,0,.35)">
+    <div class="flex max-h-[92vh] flex-col">
+        <div class="border-b border-outline-variant/30 px-5 py-4"><p class="text-xs font-semibold uppercase tracking-wider text-primary">Breakdown</p><h2 id="bd-title" class="mt-1 text-lg font-semibold"></h2><p class="mt-1 text-xs text-on-surface-variant">Split this journal line into the actual accounts. Debits and credits net to the amount of the line.</p></div>
+        <div class="overflow-y-auto px-5 py-4">
+            <div class="mb-1 hidden grid-cols-[1fr_8rem_8rem_2rem] gap-2 text-[10px] font-bold uppercase tracking-wide text-on-surface-variant sm:grid"><span>Account (UACS code · title)</span><span class="pr-2.5 text-right">Debit</span><span class="pr-2.5 text-right">Credit</span><span></span></div>
+            <div id="bd-rows" class="space-y-2"></div>
+            <div class="mt-2 flex flex-wrap items-center justify-between gap-2">
+                <button type="button" id="bd-add" class="inline-flex items-center gap-1 rounded border border-outline-variant/60 bg-white px-3 py-1.5 text-xs font-semibold text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">add</span>Add line</button>
+                <p class="text-xs text-on-surface-variant">Total debit <strong id="bd-debit" class="text-on-surface">0.00</strong> · Total credit <strong id="bd-credit" class="text-on-surface">0.00</strong></p>
+            </div>
+        </div>
+        <div class="flex flex-wrap items-center justify-between gap-2 border-t border-outline-variant/30 px-5 py-3">
+            <span id="bd-badge" class="rounded-full bg-surface-high px-3 py-1 text-[11px] font-bold text-on-surface-variant"></span>
+            <div class="flex gap-2"><button type="button" id="bd-close" class="rounded border border-outline-variant/60 bg-white px-4 py-2 text-sm font-semibold hover:bg-surface-low">Close</button><button type="button" id="bd-save" class="rounded bg-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-40">Save</button></div>
+        </div>
+    </div>
+</dialog>
 <script>
-    // Breakdown of the advance by actual expense account: optional, but when it is filled in it must total the DV amount.
+    // Break down a journal line: the tick box after the account opens a window to split the line into actual accounts (add, edit, delete); Save keeps the parts in the form.
     (() => {
-        const MAX = {{ \App\Http\Controllers\FinanceController::JOURNAL_MAX_LINES }};
-        const form = document.getElementById('dv-form');
-        const rows = document.getElementById('breakdown-rows');
-        const options = document.getElementById('journal-options');
-        const badge = document.getElementById('breakdown-badge');
+        const dialog = document.getElementById('bd-dialog');
+        const box = document.getElementById('bd-rows');
+        const badge = document.getElementById('bd-badge');
+        const saveButton = document.getElementById('bd-save');
         const field = 'w-full rounded border border-outline-variant/50 bg-white px-2.5 py-2 text-sm font-normal outline-none focus:border-primary';
-        let amount = 0; let valid = true;
+        let current = null;
         const cents = (value) => Math.round((parseFloat(value) || 0) * 100);
         const peso = (value) => (value / 100).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const side = (row, name) => row.querySelector(`input[name^="journal["][name$="[${name}]"]`);
+        const saved = (row) => { try { return JSON.parse(row.dataset.bd || '[]'); } catch (error) { return []; } };
+        const paint = (row) => {
+            const count = saved(row).length;
+            row.querySelector('.bd-tick').checked = count > 0;
+            const chip = row.querySelector('.bd-chip');
+            chip.textContent = count + (count === 1 ? ' line' : ' lines');
+            chip.classList.toggle('hidden', count === 0);
+        };
+        // The parts travel as hidden fields named by the position of their journal line, so the names are made again whenever the form changes.
+        const sync = (form) => form.querySelectorAll('.bd-row').forEach((row) => {
+            const index = [...row.parentElement.children].indexOf(row);
+            const store = row.querySelector('.bd-store');
+            store.innerHTML = '';
+            saved(row).forEach((part, number) => ['account_code', 'debit', 'credit'].forEach((key) => {
+                const input = document.createElement('input');
+                input.type = 'hidden'; input.name = `breakdown[${index}][${number}][${key}]`; input.value = part[key] ?? '';
+                store.append(input);
+            }));
+        });
+        const parts = () => [...box.querySelectorAll('.bd-part')].map((part) => ({ account_code: part.querySelector('select').value, debit: part.querySelector('[data-side=debit]').value, credit: part.querySelector('[data-side=credit]').value }));
 
         const refresh = () => {
-            const lines = [...rows.querySelectorAll('.breakdown-row')];
-            lines.forEach((row, index) => {
-                row.querySelector('select').name = `breakdown[${index}][account_code]`;
-                row.querySelector('input').name = `breakdown[${index}][amount]`;
+            const info = current.info;
+            let debit = 0; let credit = 0; let complete = box.children.length > 0;
+            box.querySelectorAll('.bd-part').forEach((part) => {
+                const d = cents(part.querySelector('[data-side=debit]').value); const c = cents(part.querySelector('[data-side=credit]').value);
+                debit += d; credit += c;
+                if (! part.querySelector('select').value || (d > 0) === (c > 0)) complete = false;
             });
-            const total = lines.reduce((sum, row) => sum + cents(row.querySelector('input').value), 0);
-            const complete = lines.every((row) => row.querySelector('select').value && cents(row.querySelector('input').value) > 0);
-            document.getElementById('breakdown-total').textContent = peso(total);
-            let text = 'Not used'; let tone = 'bg-surface-high text-on-surface-variant';
-            valid = true;
-            if (lines.length) {
-                if (total !== amount) { text = 'Must total ₱' + peso(amount); tone = 'bg-error/10 text-error'; valid = false; }
-                else if (! complete) { text = 'Complete every line'; tone = 'bg-amber-100 text-amber-800'; valid = false; }
-                else { text = 'Matches the DV'; tone = 'bg-secondary/15 text-secondary'; }
-            }
+            document.getElementById('bd-debit').textContent = peso(debit);
+            document.getElementById('bd-credit').textContent = peso(credit);
+            const net = info.isDebit ? debit - credit : credit - debit;
+            let text = 'Matches the line'; let tone = 'bg-secondary/15 text-secondary';
+            if (net !== info.amount) { text = 'Net must be ₱' + peso(info.amount) + ' (now ₱' + peso(net) + ')'; tone = 'bg-error/10 text-error'; }
+            else if (! complete) { text = 'Complete every line'; tone = 'bg-amber-100 text-amber-800'; }
             badge.textContent = text;
             badge.className = 'rounded-full px-3 py-1 text-[11px] font-bold ' + tone;
-            document.getElementById('breakdown-add').disabled = lines.length >= MAX;
+            saveButton.disabled = net !== info.amount || ! complete;
         };
 
-        const addRow = (code = '', value = '') => {
-            if (rows.children.length >= MAX) return;
-            const row = document.createElement('div');
-            row.className = 'breakdown-row grid grid-cols-1 gap-2 sm:grid-cols-[1fr_9rem_2rem]';
-            const select = options.cloneNode(true);
-            select.removeAttribute('id'); select.removeAttribute('aria-hidden'); select.hidden = false; select.className = field;
-            const input = document.createElement('input');
-            input.type = 'number'; input.step = '0.01'; input.min = '0'; input.placeholder = 'Amount'; input.className = field + ' text-right tabular-nums'; input.value = value;
+        const addPart = (data = {}) => {
+            const part = document.createElement('div');
+            part.className = 'bd-part grid grid-cols-1 gap-2 sm:grid-cols-[1fr_8rem_8rem_2rem]';
+            const select = current.select.cloneNode(true);
+            select.removeAttribute('name'); select.removeAttribute('id'); select.required = false; select.hidden = false; select.className = field;
+            if (! select.querySelector('option[value=""]')) select.insertBefore(new Option('Choose an account…', ''), select.firstChild);
+            select.value = data.account_code || '';
+            const amount = (name, value) => {
+                const input = document.createElement('input');
+                input.type = 'number'; input.step = '0.01'; input.min = '0'; input.placeholder = name === 'debit' ? 'Debit' : 'Credit';
+                input.className = field + ' text-right tabular-nums'; input.dataset.side = name; input.value = value ?? '';
+                return input;
+            };
+            const debit = amount('debit', data.debit); const credit = amount('credit', data.credit);
+            debit.addEventListener('input', () => { if (debit.value) credit.value = ''; refresh(); });
+            credit.addEventListener('input', () => { if (credit.value) debit.value = ''; refresh(); });
+            select.addEventListener('change', refresh);
             const remove = document.createElement('button');
             remove.type = 'button'; remove.title = 'Remove line'; remove.setAttribute('aria-label', 'Remove line');
             remove.className = 'grid h-9 w-8 place-items-center rounded text-on-surface-variant hover:bg-error/10 hover:text-error';
             remove.innerHTML = '<span class="material-symbols-outlined text-[18px]" aria-hidden="true">delete</span>';
-            row.append(select, input, remove);
-            rows.append(row);
-            select.value = [...select.options].some((option) => option.value === code) ? code : '';
-            select.addEventListener('change', refresh); input.addEventListener('input', refresh);
-            remove.addEventListener('click', () => { row.remove(); refresh(); });
+            remove.addEventListener('click', () => { part.remove(); refresh(); });
+            part.append(select, debit, credit, remove);
+            box.append(part);
             refresh();
         };
 
-        // Starts from the expense account(s) the ORS is charged to; the user changes them to the actual expenses.
-        window.breakdownOpen = (charged, total) => {
-            rows.innerHTML = ''; amount = total;
-            charged.forEach((charge) => addRow(charge.code || '', charge.amount));
-            refresh();
+        const open = (row) => {
+            const select = row.querySelector('select');
+            const d = cents(side(row, 'debit').value); const c = cents(side(row, 'credit').value);
+            if (d === c) { alert('Enter the debit or credit amount of this line first.'); row.querySelector('.bd-tick').checked = false; return; }
+            current = { row, select, info: { isDebit: d > c, amount: Math.max(d, c) } };
+            document.getElementById('bd-title').textContent = (select.selectedOptions[0]?.textContent || 'Journal line') + ' · ₱' + peso(current.info.amount) + (current.info.isDebit ? ' debit' : ' credit');
+            box.innerHTML = '';
+            const existing = saved(row);
+            (existing.length ? existing : [{}]).forEach((data) => addPart(data));
+            dialog.showModal();
         };
-        document.getElementById('breakdown-add').addEventListener('click', () => addRow());
-        form.addEventListener('submit', (event) => { refresh(); if (! valid) event.preventDefault(); });
+        const done = () => { const row = current.row; paint(row); sync(row.closest('form')); row.querySelector('.bd-tick').dispatchEvent(new Event('change', { bubbles: true })); dialog.close(); };
+
+        document.getElementById('bd-add').addEventListener('click', () => addPart());
+        document.getElementById('bd-close').addEventListener('click', () => { paint(current.row); dialog.close(); });
+        dialog.addEventListener('cancel', () => paint(current.row));
+        saveButton.addEventListener('click', () => { current.row.dataset.bd = JSON.stringify(parts()); done(); });
+
+        document.addEventListener('change', (event) => {
+            if (! event.target.matches('.bd-tick')) return;
+            const row = event.target.closest('.bd-row');
+            if (event.target.checked) { if (event.isTrusted) open(row); return; }
+            if (saved(row).length && ! confirm('Clear the breakdown of this account?')) { event.target.checked = true; return; }
+            delete row.dataset.bd; paint(row); sync(row.closest('form'));
+        });
+        document.addEventListener('click', (event) => {
+            const chip = event.target.closest('.bd-chip');
+            if (chip) { open(chip.closest('.bd-row')); return; }
+            const form = event.target.closest('form');
+            if (form) setTimeout(() => sync(form));
+        });
+        ['input', 'change'].forEach((name) => document.addEventListener(name, (event) => { const form = event.target.closest?.('form'); if (form) sync(form); }, true));
+        document.addEventListener('submit', (event) => sync(event.target), true);
+        document.querySelectorAll('.bd-row[data-bd]').forEach(paint);
     })();
 </script>
 <script>
