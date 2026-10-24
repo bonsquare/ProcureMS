@@ -153,6 +153,19 @@ class CashReportPrintTest extends TestCase
         $this->assertMatchesRegularExpression('/data-col="balance"[^>]*>-950\.00</', $register, 'only the net leaves the bank');
     }
 
+    public function test_the_register_columns_follow_the_amount_of_the_check_issued(): void
+    {
+        [$school, $user] = $this->tenant('BK3');
+        $this->sobFor($school, ['5020399000' => 'Other Supplies Expenses']);
+        $dv = $this->paid($school, '0001', '2026-09-05', 1000);
+        DvJournalLine::create(['organization_id' => $school->organization_id, 'liquidation_report_id' => $dv->id, 'line_no' => 1, 'account_code' => '5020399000', 'account_title' => 'Account', 'debit' => 1200, 'credit' => 0]);
+        DvBreakdownLine::create(['organization_id' => $school->organization_id, 'liquidation_report_id' => $dv->id, 'journal_line_no' => 1, 'line_no' => 1, 'account_code' => '5020399000', 'account_title' => 'Account', 'debit' => 1200, 'credit' => 0]);
+
+        $register = $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school)))->assertOk()->getContent();
+        $this->assertMatchesRegularExpression('/data-account="5020399000"[^>]*>1,000\.00</', $register, 'the column is the check amount, not the journal amount');
+        $this->assertMatchesRegularExpression('/data-col="total-payments"[^>]*>1,000\.00</', $register);
+    }
+
     public function test_a_payment_to_the_bir_is_charged_to_the_expense_accounts_its_breakdown_names(): void
     {
         [$school, $user] = $this->tenant('BK5');

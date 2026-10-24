@@ -91,10 +91,16 @@
             // There is no Due to BIR column: a payment shows the cash paid (the DV net of its deductions) in the columns it is charged to, and a payment to the BIR is
             // charged to the expense accounts its breakdown names (the Due to BIR line is reversed there), so the columns always add up to the Payments column.
             $lineSplits = $line['cancelled'] ? [] : ($line['splits'] ?? []);
-            $gross = (float) ($line['gross'] ?? $line['amount'] ?? 0);
-            if ($lineSplits !== [] && $line['amount'] !== null && $gross > 0 && round($gross - (float) $line['amount'], 2) != 0) {
-                $lineSplits = array_map(fn ($amount) => round((float) $amount * (float) $line['amount'] / $gross, 2), $lineSplits);
-                $lineSplits[array_key_last($lineSplits)] = round($lineSplits[array_key_last($lineSplits)] + (float) $line['amount'] - array_sum($lineSplits), 2);
+            // The register follows the amount of the check issued: when the accounts of the journal add up to anything else (the gross before the deductions, an advance),
+            // they are brought to the check amount in proportion; when they add up to nothing, the check goes to its own account.
+            $splitTotal = round((float) array_sum($lineSplits), 2);
+            if ($lineSplits !== [] && $line['amount'] !== null && $splitTotal != round((float) $line['amount'], 2)) {
+                if ($splitTotal > 0) {
+                    $lineSplits = array_map(fn ($amount) => round((float) $amount * (float) $line['amount'] / $splitTotal, 2), $lineSplits);
+                    $lineSplits[array_key_last($lineSplits)] = round($lineSplits[array_key_last($lineSplits)] + (float) $line['amount'] - array_sum($lineSplits), 2);
+                } else {
+                    $lineSplits = [];
+                }
             }
             // The nature of the disbursement is the account title of the expense it is charged to (a liability such as Due to BIR is not one).
             $natures = collect($lineSplits !== [] ? array_keys($lineSplits) : [(string) $line['uacs_code']])->map(fn ($code) => (string) $code)
