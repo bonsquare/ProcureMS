@@ -226,7 +226,7 @@
                                     </div>
                                 </section>
                                 <section data-edit-journal>
-                                    <div class="mb-2 flex flex-wrap items-baseline justify-between gap-2"><h3 class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Journal entry</h3><p class="text-[11px] text-on-surface-variant">Total debit = total credit = {{ $peso($r->amount) }}</p><label class="inline-flex items-center gap-1.5 self-center text-[11px] font-semibold leading-none text-on-surface-variant"><input type="checkbox" class="bd-master m-0 h-4 w-4 shrink-0 accent-[#103967]" title="Break down this journal" aria-label="Break down this journal">Break down<button type="button" class="bd-chip hidden rounded-full bg-secondary/15 px-1.5 text-[10px] font-bold text-secondary"></button></label></div>
+                                    <div class="mb-2 flex flex-wrap items-baseline justify-between gap-2"><h3 class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Journal entry</h3><p class="text-[11px] text-on-surface-variant">Total debit = total credit = {{ $peso($r->amount) }}</p><label style="display:inline-flex;align-items:center;gap:6px;margin:0;padding:0;line-height:1" class="self-center text-[11px] font-semibold text-on-surface-variant"><input type="checkbox" style="margin:0;width:16px;height:16px;flex:none;position:static" class="bd-master accent-[#103967]" title="Break down this journal" aria-label="Break down this journal">Break down<button type="button" class="bd-chip hidden rounded-full bg-secondary/15 px-1.5 text-[10px] font-bold text-secondary"></button></label></div>
                                     <div class="rounded-lg border border-outline-variant/40 bg-surface-low/40 p-3">
                                         <div class="mb-1 hidden grid-cols-[1fr_7rem_7rem_2rem] gap-2 text-[10px] font-bold uppercase tracking-wide text-on-surface-variant sm:grid"><span>Account</span><span class="pr-3 text-right">Debit</span><span class="pr-3 text-right">Credit</span><span></span></div>
                                         <div class="space-y-2" data-lines>
@@ -339,7 +339,7 @@
         <div id="journal-box" class="rounded-xl border border-outline-variant/50 bg-surface-low/50 p-3 md:col-span-2">
             <div class="mb-2 flex flex-wrap items-start justify-between gap-2">
                 <div><p class="text-sm font-bold text-on-surface">Journal entry <span class="font-normal text-on-surface-variant">(double entry)</span></p><p class="text-[11px] font-normal text-on-surface-variant">Total debit must equal total credit and the DV amount. Up to {{ \App\Http\Controllers\FinanceController::JOURNAL_MAX_LINES }} lines fit the printed DV.</p></div>
-                <label class="inline-flex items-center gap-1.5 self-start text-[11px] font-semibold leading-none text-on-surface-variant"><input type="checkbox" class="bd-master m-0 h-4 w-4 shrink-0 accent-[#103967]" title="Break down this journal" aria-label="Break down this journal">Break down<button type="button" class="bd-chip hidden rounded-full bg-secondary/15 px-1.5 text-[10px] font-bold text-secondary"></button></label><span id="journal-badge" class="rounded-full bg-surface-high px-3 py-1 text-[11px] font-bold text-on-surface-variant">Add the entry</span>
+                <label style="display:inline-flex;align-items:center;gap:6px;margin:0;padding:0;line-height:1" class="self-center text-[11px] font-semibold text-on-surface-variant"><input type="checkbox" style="margin:0;width:16px;height:16px;flex:none;position:static" class="bd-master accent-[#103967]" title="Break down this journal" aria-label="Break down this journal">Break down<button type="button" class="bd-chip hidden rounded-full bg-secondary/15 px-1.5 text-[10px] font-bold text-secondary"></button></label><span id="journal-badge" class="rounded-full bg-surface-high px-3 py-1 text-[11px] font-bold text-on-surface-variant">Add the entry</span>
             </div>
             <div class="mb-1 hidden grid-cols-[1fr_8rem_8rem_2rem] gap-2 text-[10px] font-bold uppercase tracking-wide text-on-surface-variant sm:grid"><span>Account (UACS code · title)</span><span class="pr-2.5 text-right">Debit</span><span class="pr-2.5 text-right">Credit</span><span></span></div>
             <div id="journal-rows" class="space-y-2"></div>
@@ -709,21 +709,15 @@
 </script>
 <dialog id="bd-dialog" style="width:min(48rem,94vw);max-height:92vh;padding:0;border:0;border-radius:.9rem;box-shadow:0 20px 60px rgba(0,0,0,.35)">
     <div class="flex max-h-[92vh] flex-col">
-        <div class="border-b border-outline-variant/30 px-5 py-4"><p class="text-xs font-semibold uppercase tracking-wider text-primary">Breakdown</p><h2 id="bd-title" class="mt-1 text-lg font-semibold"></h2><p class="mt-1 text-xs text-on-surface-variant">Enter the account and its debit (or credit). The account of the line is the other side of the entry and fills itself, like the cash line of the journal.</p></div>
+        <div class="border-b border-outline-variant/30 px-5 py-4"><p class="text-xs font-semibold uppercase tracking-wider text-primary">Breakdown</p><h2 id="bd-title" class="mt-1 text-lg font-semibold"></h2><p class="mt-1 text-xs text-on-surface-variant">Make the entry like a journal entry: every account with its debit or credit, and the total debit equal to the total credit. The line itself stays as it is.</p></div>
         <div class="overflow-y-auto px-5 py-4">
             <label id="bd-line-wrap" class="mb-3 hidden text-xs font-semibold text-on-surface-variant">Journal line<select id="bd-line" class="mt-1 w-full rounded border border-outline-variant/50 bg-white px-2.5 py-2 text-sm font-normal outline-none focus:border-primary"></select></label>
             <p id="bd-note" class="mb-3 hidden rounded bg-amber-100 px-3 py-2 text-xs font-semibold text-amber-800">This breakdown was made with the older entry. It is replaced when you save.</p>
             <div class="mb-1 hidden grid-cols-[1fr_8rem_8rem_2rem] gap-2 text-[10px] font-bold uppercase tracking-wide text-on-surface-variant sm:grid"><span>Account (UACS code · title)</span><span class="pr-2.5 text-right">Debit</span><span class="pr-2.5 text-right">Credit</span><span></span></div>
             <div id="bd-rows" class="space-y-2"></div>
-            <div id="bd-auto" class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-[1fr_8rem_8rem_2rem]">
-                <input id="bd-auto-account" disabled class="w-full rounded border border-outline-variant/50 bg-surface-high px-2.5 py-2 text-sm font-normal">
-                <input id="bd-auto-debit" disabled placeholder="Debit" class="w-full rounded border border-outline-variant/50 bg-surface-high px-2.5 py-2 text-right text-sm font-normal tabular-nums">
-                <input id="bd-auto-credit" disabled placeholder="Credit" class="w-full rounded border border-outline-variant/50 bg-surface-high px-2.5 py-2 text-right text-sm font-normal tabular-nums">
-                <span></span>
-            </div>
             <div class="mt-2 flex flex-wrap items-center justify-between gap-2">
                 <button type="button" id="bd-add" class="inline-flex items-center gap-1 rounded border border-outline-variant/60 bg-white px-3 py-1.5 text-xs font-semibold text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">add</span>Add line</button>
-                <p class="text-xs text-on-surface-variant">Total debit <strong id="bd-debit" class="text-on-surface">0.00</strong> · Total credit <strong id="bd-credit" class="text-on-surface">0.00</strong> · Stays in the line <strong id="bd-stays" class="text-on-surface">0.00</strong></p>
+                <p class="text-xs text-on-surface-variant">Total debit <strong id="bd-debit" class="text-on-surface">0.00</strong> · Total credit <strong id="bd-credit" class="text-on-surface">0.00</strong></p>
             </div>
         </div>
         <div class="flex flex-wrap items-center justify-between gap-2 border-t border-outline-variant/30 px-5 py-3">
@@ -756,18 +750,9 @@
             return d === c ? null : { row, code: row.querySelector('select').value, title: row.querySelector('select').selectedOptions[0]?.textContent || 'Journal line', isDebit: d > c, amount: Math.max(d, c) };
         };
         const totals = (list) => list.reduce((sum, entry) => ({ debit: sum.debit + cents(entry.debit), credit: sum.credit + cents(entry.credit) }), { debit: 0, credit: 0 });
-        const parts = (info, list) => {
-            const part = (code, key, amount) => ({ account_code: code, debit: '', credit: '', [key]: money(amount) });
-            const sum = totals(list);
-            const made = [part(info.code, 'debit', info.amount)];
-            list.forEach((entry) => made.push(part(entry.account_code, cents(entry.debit) > 0 ? 'debit' : 'credit', Math.max(cents(entry.debit), cents(entry.credit)))));
-            if (sum.credit > 0) made.push(part(info.code, 'debit', sum.credit));
-            if (sum.debit > 0) made.push(part(info.code, 'credit', sum.debit));
-            return made;
-        };
-        const entriesOf = (info, kept) => kept.filter((part) => part.account_code !== info.code).map((part) => ({ account_code: part.account_code, debit: part.debit, credit: part.credit }));
-        // The net per account, so a breakdown made before this window is recognised when it says the same thing.
-        const nets = (list) => { const map = {}; list.forEach((part) => { map[part.account_code] = (map[part.account_code] || 0) + cents(part.debit) - cents(part.credit); }); return JSON.stringify(Object.entries(map).filter(([, value]) => value !== 0).sort()); };
+        // The line itself (its account and amount) stays as the first part; the entries as typed follow and net to nothing, so the line's net is unchanged.
+        const parts = (info, list) => [{ account_code: info.code, debit: money(info.amount), credit: '' }, ...list.map((entry) => ({ account_code: entry.account_code, debit: cents(entry.debit) > 0 ? money(cents(entry.debit)) : '', credit: cents(entry.credit) > 0 ? money(cents(entry.credit)) : '' }))];
+        const entriesOf = (info, kept) => kept.length && kept[0].account_code === info.code && cents(kept[0].debit) === info.amount && ! cents(kept[0].credit) ? kept.slice(1).map((part) => ({ account_code: part.account_code, debit: part.debit, credit: part.credit })) : [];
         const paint = (form) => {
             const master = form.querySelector('.bd-master');
             if (! master) return;
@@ -792,28 +777,29 @@
         const entries = () => [...box.querySelectorAll('.bd-part')].map((part) => ({ account_code: part.querySelector('select').value, debit: part.querySelector('[data-side=debit]').value, credit: part.querySelector('[data-side=credit]').value }));
 
         const refresh = () => {
-            const info = current.info;
+            // Like the cash line of the journal, the line of the account of the journal line takes the balancing amount by itself until an amount is typed on it.
+            const auto = box.querySelector('[data-auto]');
+            if (auto) {
+                const others = [...box.querySelectorAll('.bd-part')].filter((part) => part !== auto).map((part) => ({ debit: part.querySelector('[data-side=debit]').value, credit: part.querySelector('[data-side=credit]').value }));
+                const net = totals(others).debit - totals(others).credit;
+                auto.querySelector('[data-side=debit]').value = net < 0 ? money(-net) : '';
+                auto.querySelector('[data-side=credit]').value = net > 0 ? money(net) : '';
+            }
             const list = entries();
-            let complete = list.length > 0;
-            list.forEach((entry) => {
-                if (! entry.account_code || entry.account_code === info.code || (cents(entry.debit) > 0) === (cents(entry.credit) > 0)) complete = false;
-            });
+            let complete = list.length > 1;
+            list.forEach((entry) => { if (! entry.account_code || (cents(entry.debit) > 0) === (cents(entry.credit) > 0)) complete = false; });
             const sum = totals(list);
-            // The account of the line is the other side: it takes the debits as a credit and the credits as a debit.
-            document.getElementById('bd-auto-account').value = info.title;
-            document.getElementById('bd-auto-debit').value = sum.credit > 0 ? money(sum.credit) : '';
-            document.getElementById('bd-auto-credit').value = sum.debit > 0 ? money(sum.debit) : '';
-            const moved = sum.debit - sum.credit;
-            document.getElementById('bd-debit').textContent = peso(sum.debit + sum.credit);
-            document.getElementById('bd-credit').textContent = peso(sum.debit + sum.credit);
-            document.getElementById('bd-stays').textContent = peso(info.amount - moved);
+            document.getElementById('bd-debit').textContent = peso(sum.debit);
+            document.getElementById('bd-credit').textContent = peso(sum.credit);
+            const balanced = sum.debit === sum.credit && sum.debit > 0;
             let text = 'Balanced'; let tone = 'bg-secondary/15 text-secondary';
-            if (moved > info.amount || moved < 0) { text = 'Moves more than the line (₱' + peso(info.amount) + ')'; tone = 'bg-error/10 text-error'; }
-            else if (! complete) { text = 'Choose another account and a debit or a credit for every line'; tone = 'bg-amber-100 text-amber-800'; }
+            if (sum.debit === 0 && sum.credit === 0) { text = 'Enter the debit and the credit'; tone = 'bg-amber-100 text-amber-800'; }
+            else if (! balanced) { text = 'Debit and credit must be equal (now ₱' + peso(Math.abs(sum.debit - sum.credit)) + ' apart)'; tone = 'bg-error/10 text-error'; }
+            else if (! complete) { text = 'Choose an account and a debit or a credit for every line'; tone = 'bg-amber-100 text-amber-800'; }
             badge.textContent = text;
             badge.className = 'rounded-full px-3 py-1 text-[11px] font-bold ' + tone;
-            saveButton.disabled = moved > info.amount || moved < 0 || ! complete;
-            document.getElementById('bd-add').disabled = list.length >= MAX;
+            saveButton.disabled = ! balanced || ! complete;
+            document.getElementById('bd-add').disabled = box.children.length >= MAX;
         };
 
         const addPart = (data = {}) => {
@@ -830,8 +816,9 @@
                 return input;
             };
             const debit = amount('debit', data.debit); const credit = amount('credit', data.credit);
-            debit.addEventListener('input', () => { if (debit.value) credit.value = ''; refresh(); });
-            credit.addEventListener('input', () => { if (credit.value) debit.value = ''; refresh(); });
+            if (data.auto) part.dataset.auto = '1';
+            debit.addEventListener('input', () => { delete part.dataset.auto; if (debit.value) credit.value = ''; refresh(); });
+            credit.addEventListener('input', () => { delete part.dataset.auto; if (credit.value) debit.value = ''; refresh(); });
             select.addEventListener('change', refresh);
             const remove = document.createElement('button');
             remove.type = 'button'; remove.title = 'Remove line'; remove.setAttribute('aria-label', 'Remove line');
@@ -848,9 +835,9 @@
             document.getElementById('bd-title').textContent = info.title + ' · ₱' + peso(info.amount) + ' debit';
             const kept = saved(info.row);
             const found = entriesOf(info, kept);
-            document.getElementById('bd-note').classList.toggle('hidden', ! kept.length || nets(kept) === nets(parts(info, found)));
+            document.getElementById('bd-note').classList.toggle('hidden', ! kept.length || found.length > 0);
             box.innerHTML = '';
-            (found.length ? found : [{}]).forEach((data) => addPart(data));
+            (found.length ? found : [{}, { account_code: info.code, auto: true }]).forEach((data) => addPart(data));
         };
         const open = (form) => {
             const lines = rowsOf(form).map(lineInfo).filter((info) => info && info.isDebit);
