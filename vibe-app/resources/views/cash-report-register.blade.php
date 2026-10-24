@@ -89,9 +89,13 @@
         } else {
             $line = $entry['line'];
             // A payment to the BIR (a DV debiting Due to BIR) clears the amount withheld: it goes in the Due to BIR column as a minus, not in an expense column.
-            $remit = ! $line['cancelled'] && $line['amount'] !== null && $line['uacs_code'] === '2020101000';
+            // The same when a breakdown of the DV's journal line moves the amount to Due to BIR (reversing the expense): that part goes in the Due to BIR column as a minus.
+            $lineSplits = $line['cancelled'] ? [] : ($line['splits'] ?? []);
+            $birSplit = isset($lineSplits['2020101000']) ? (float) $lineSplits['2020101000'] : null;
+            unset($lineSplits['2020101000']);
+            $remit = ! $line['cancelled'] && $line['amount'] !== null && ($line['uacs_code'] === '2020101000' || $birSplit !== null);
             $balance = round($balance - ($line['amount'] ?? 0), 2);
-            $rows[] = ['date' => $entry['date'], 'reference' => $line['check_no'], 'particulars' => $line['payee'], 'advance' => null, 'payment' => $line['amount'], 'gross' => $line['amount'] === null ? null : ($line['gross'] ?? $line['amount']), 'tax' => $remit ? -$line['amount'] : ($line['tax'] ?? 0), 'balance' => $balance, 'code' => ($line['cancelled'] || $remit) ? null : $line['uacs_code'], 'splits' => $line['cancelled'] ? [] : ($line['splits'] ?? [])];
+            $rows[] = ['date' => $entry['date'], 'reference' => $line['check_no'], 'particulars' => $line['payee'], 'advance' => null, 'payment' => $line['amount'], 'gross' => $line['amount'] === null ? null : ($line['gross'] ?? $line['amount']), 'tax' => $remit ? -($birSplit ?? $line['amount']) : ($line['tax'] ?? 0), 'balance' => $balance, 'code' => ($line['cancelled'] || $remit) ? null : $line['uacs_code'], 'splits' => $lineSplits];
         }
     }
     // A payment of an ORS charged to several UACS codes is divided among their columns; any other payment goes to the column of its one code.
