@@ -237,6 +237,16 @@ class CashReportServiceTest extends TestCase
         return $this->account('2020101000', 'Due to BIR');
     }
 
+    public function test_with_no_breakdown_the_journal_entry_decides_the_columns_and_a_liability_is_left_out(): void
+    {
+        $dv = $this->paid('0001', '2026-07-05', 1000, $this->account('5020399000', 'Other Supplies Expenses'), ['dv_deductions' => ['withholding_tax' => 100]]);
+        foreach ([[1, '5020301000', 'Office Supplies Expenses', 1000, 0], [2, '1010404000', 'Cash', 0, 900], [3, '2020101000', 'Due to BIR', 0, 100]] as [$no, $code, $title, $debit, $credit]) {
+            DvJournalLine::create(['organization_id' => $this->organization->id, 'liquidation_report_id' => $dv->id, 'line_no' => $no, 'account_code' => $code, 'account_title' => $title, 'debit' => $debit, 'credit' => $credit]);
+        }
+
+        $this->assertSame(['5020301000' => 1000.0], $this->splitOf('0001'), 'the journal debit, not the account charged in the ORS');
+    }
+
     public function test_a_remittance_takes_the_withheld_taxes_oldest_first(): void
     {
         $this->paid('0001', '2026-07-05', 1000, $this->account('5020399000', 'Other Supplies Expenses'), ['dv_deductions' => ['withholding_tax' => 100]]);

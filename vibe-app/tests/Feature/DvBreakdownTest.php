@@ -115,7 +115,7 @@ class DvBreakdownTest extends TestCase
         $this->assertSame(0, DvBreakdownLine::count());
     }
 
-    public function test_the_cash_report_splits_a_payment_by_the_net_of_its_breakdown_and_falls_back_without_one(): void
+    public function test_the_cash_report_splits_a_payment_by_the_net_of_its_breakdown_and_follows_the_journal_entry_without_one(): void
     {
         [$report, $master, $school] = $this->ors();
         [$a, $b] = $this->mooe();
@@ -126,10 +126,10 @@ class DvBreakdownTest extends TestCase
         $build = fn () => app(CashReportService::class)->build($school, Carbon::parse('2026-07-01'), Carbon::parse('2026-09-30'))['lines']->first();
         $part = fn (int $journal, int $number, string $code, float $debit, float $credit) => DvBreakdownLine::create(['organization_id' => $report->organization_id, 'liquidation_report_id' => $report->id, 'journal_line_no' => $journal, 'line_no' => $number, 'account_code' => $code, 'account_title' => 'T', 'debit' => $debit, 'credit' => $credit]);
 
-        $this->assertSame([], $build()['splits']);
+        $this->assertSame(['1990101000' => 10000.0], $build()['splits'], 'with no breakdown the journal entry is the source');
 
         $part(2, 1, $a, 0, 10000);
-        $this->assertSame([], $build()['splits'], 'a breakdown of the credit side is not an expense split');
+        $this->assertSame(['1990101000' => 10000.0], $build()['splits'], 'a breakdown of the credit side is not an expense split: the journal entry stays the source');
 
         $part(1, 2, $a, 6000, 0);
         $part(1, 3, $b, 5000, 0);
