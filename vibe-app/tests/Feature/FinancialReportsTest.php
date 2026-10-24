@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\CashFundReceipt;
+use App\Models\DvBreakdownLine;
 use App\Models\DvJournalLine;
 use App\Models\LiquidationReport;
 use App\Models\OpeningBalance;
@@ -104,5 +105,79 @@ class FinancialReportsTest extends TestCase
         $this->assertCount(6, $this->service()->postings([$school->id], 'General Fund', Carbon::parse('2026-03-31')));
         $this->assertCount(4, $this->service()->postings([$school->id], null, Carbon::parse('2026-02-15')));
         $this->assertCount(2, $this->service()->postings([$school->id], 'Special Fund'));
+    }
+
+    private function range(): array
+    {
+        return [Carbon::parse('2026-02-01'), Carbon::parse('2026-12-31')];
+    }
+
+    public function test_trial_balance_has_equal_totals_and_correct_cash_row(): void
+    {
+        [$school] = $this->books('FR5');
+
+        $tb = $this->service()->trialBalance([$school->id], null, ...$this->range());
+
+        $cash = $tb['rows']->firstWhere('account_code', self::CASH);
+        $this->assertSame(['10000.00', '50000.00', '8000.00', '52000.00'], [$cash['opening_debit'], $cash['period_debit'], $cash['period_credit'], $cash['ending_debit']]);
+        $this->assertTrue($tb['balanced']);
+        $this->assertSame(['debit' => '60000.00', 'credit' => '60000.00'], $tb['totals']);
+    }
+
+    public function test_trial_balance_flags_an_unbalanced_dv_journal(): void
+    {
+        [$school] = $this->tenant('FR6');
+        $this->dv($school, '0006', '2026-03-01', 8000, 7000);
+
+        $this->assertFalse($this->service()->trialBalance([$school->id], null, ...$this->range())['balanced']);
+    }
+
+    public function test_general_ledger_running_balance(): void
+    {
+        [$school] = $this->books('FR7');
+
+        $ledger = $this->service()->ledger(self::CASH, [$school->id], null, ...$this->range());
+
+        $this->assertSame('10000.00', $ledger['opening']);
+        $this->assertSame(['60000.00', '52000.00'], $ledger['rows']->pluck('balance')->all());
+        $this->assertSame('52000.00', $ledger['closing']);
+        $this->assertSame(['2026-02-01', '2026-03-01'], $ledger['rows']->pluck('date')->all());
+    }
+
+    public function test_ledger_of_account_without_postings_is_zero(): void
+    {
+        [$school] = $this->books('FR8');
+
+        $ledger = $this->service()->ledger('1999999999', [$school->id], null, ...$this->range());
+
+        $this->assertSame(['0.00', '0.00', 0], [$ledger['opening'], $ledger['closing'], $ledger['rows']->count()]);
+    }
+
+    public function test_subsidiary_ledger_splits_by_breakdown_and_falls_back_to_payee(): void
+    {
+        [$school] = $this->books('FR9');
+        $split = $this->dv($school, '0010', '2026-04-01', 5000, 5000);
+        foreach ([[1, '5020301000', 'Travelling Expenses', 3000], [2, '5020399000', 'Other Supplies Expenses', 2000]] as [$no, $code, $title, $amount]) {
+            DvBreakdownLine::create(['organization_id' => $school->organization_id, 'liquidation_report_id' => $split->id, 'journal_line_no' => 2, 'line_no' => $no, 'account_code' => $code, 'account_title' => $title, 'debit' => 0, 'credit' => $amount]);
+        }
+
+        $subs = $this->service()->subsidiary(self::CASH, [$school->id], null, ...$this->range())->keyBy('sub');
+
+        $this->assertSame('8000.00', $subs['Payee 0001']['credit']);
+        $this->assertSame('3000.00', $subs['Travelling Expenses']['credit']);
+        $this->assertSame('2000.00', $subs['Other Supplies Expenses']['credit']);
+        $this->assertSame('10000.00', $subs['Balance brought forward']['debit']);
+        $this->assertFalse($subs->has('Payee 0010'));
+    }
+
+    public function test_reports_are_empty_but_valid_with_no_postings(): void
+    {
+        [$school] = $this->tenant('FR10');
+
+        $tb = $this->service()->trialBalance([$school->id], null, ...$this->range());
+
+        $this->assertCount(0, $tb['rows']);
+        $this->assertTrue($tb['balanced']);
+        $this->assertCount(0, $this->service()->subsidiary(self::CASH, [$school->id], null, ...$this->range()));
     }
 }
