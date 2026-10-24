@@ -132,7 +132,7 @@
                     </section>
                     <section data-register-only class="hidden rounded-xl border border-outline-variant/50 p-4">
                         <h3 class="text-[11px] font-bold uppercase tracking-wider text-primary">Checks of the register</h3>
-                        <p class="mt-1 text-xs text-on-surface-variant">Type a Check No. and the register pulls its DV, payee, amount and account. A cancelled check stays in the series marked cancelled. The list is kept for this school, fund and quarter.</p>
+                        <p class="mt-1 text-xs text-on-surface-variant">Type a Check No. and the register pulls its DV, payee, amount and account. A cancelled check stays in the series marked cancelled. The list is kept for this school and quarter, so the register of every source of fund shows the same series; the amount shows only on the checks of that fund.</p>
                         <form id="cash-check-form" class="mt-3 flex items-end gap-2">
                             <label class="{{ $label }} min-w-0 flex-1">Check No.<input id="cash-check-number" maxlength="100" required class="{{ $box }}"></label>
                             <button class="rounded-lg bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary-container">Add</button>

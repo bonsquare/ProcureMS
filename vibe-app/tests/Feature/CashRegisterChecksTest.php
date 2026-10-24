@@ -56,6 +56,21 @@ class CashRegisterChecksTest extends TestCase
         $this->assertLessThan(strpos($html, 'Payee 0002'), strpos($html, 'Payee 0001'));
     }
 
+    public function test_the_register_of_each_fund_shows_the_whole_series_with_the_amount_only_on_its_own_checks(): void
+    {
+        [$school, $user] = $this->tenant('RC5');
+        $this->paid($school, '0001')->update(['source_of_fund' => 'MOOE', 'amount' => 1111]);
+        $this->paid($school, '0002')->update(['source_of_fund' => 'ARAL', 'amount' => 2222]);
+        foreach (['0001', '0002'] as $number) {
+            $this->actingAs($user)->post(route('cash.report.register.checks.store'), $this->scope($school, ['source_of_fund' => 'MOOE', 'check_number' => $number]))->assertOk();
+        }
+
+        foreach ([['MOOE', '1,111.00', '2,222.00'], ['ARAL', '2,222.00', '1,111.00']] as [$fund, $shown, $hidden]) {
+            $this->actingAs($user)->get(route('cash.report.register', ['school_id' => $school->id, 'from' => '2026-07-01', 'to' => '2026-09-30', 'source_of_fund' => $fund]))
+                ->assertOk()->assertSee('Payee 0001')->assertSee('Payee 0002')->assertSee($shown)->assertDontSee($hidden);
+        }
+    }
+
     public function test_a_number_that_is_neither_paid_nor_cancelled_is_refused_and_a_typed_check_can_be_removed(): void
     {
         [$school, $user] = $this->tenant('RC2');

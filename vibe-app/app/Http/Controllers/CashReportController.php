@@ -188,7 +188,7 @@ class CashReportController extends Controller
         $context = $this->reportContext($request);
         $school = $context['school'];
         // The Cash Disbursement Register lists only the check numbers typed in its form; the other reports read every payment.
-        $checks = $kind === 'register' ? $this->registerChecks($school, $context['source_of_fund'], $context['from'])->pluck('check_number')->all() : null;
+        $checks = $kind === 'register' ? $this->registerChecks($school, $context['from'])->pluck('check_number')->all() : null;
         $latestPayment = LiquidationReport::query()->where('school_id', $school->id)->whereNotNull('paid_at')->latest('paid_at')->first();
         $bankName = $context['bank_name'] !== '' ? $context['bank_name'] : (string) ($school->bank_name ?: $latestPayment?->bank_name);
         $bankAccount = $context['bank_account'] !== '' ? $context['bank_account'] : (string) ($school->bank_account_number ?: $latestPayment?->bank_account_number);
@@ -230,10 +230,10 @@ class CashReportController extends Controller
         ];
     }
 
-    /** The check numbers typed in the register form for a school, fund and quarter. */
-    private function registerChecks(School $school, string $fund, Carbon $from)
+    /** The check numbers typed in the register form for a school and quarter: one series shared by the register of every source of fund. */
+    private function registerChecks(School $school, Carbon $from)
     {
-        return CashRegisterCheck::query()->where('school_id', $school->id)->where('source_of_fund', $fund)->whereDate('quarter_start', $from->copy()->startOfQuarter())->get()
+        return CashRegisterCheck::query()->where('school_id', $school->id)->whereDate('quarter_start', $from->copy()->startOfQuarter())->get()
             ->sortBy('check_number', SORT_NATURAL)->values();
     }
 
@@ -263,7 +263,7 @@ class CashReportController extends Controller
     {
         [$school, $fund, $from] = $this->registerScope($request);
 
-        return response()->json($this->registerChecks($school, $fund, $from)->map(fn (CashRegisterCheck $row) => ['id' => $row->id, 'check_number' => $row->check_number] + ($this->checkOf($school, $row->check_number) ?? ['status' => 'Not found', 'payee' => '', 'dv_no' => '', 'amount' => '']))->values());
+        return response()->json($this->registerChecks($school, $from)->map(fn (CashRegisterCheck $row) => ['id' => $row->id, 'check_number' => $row->check_number] + ($this->checkOf($school, $row->check_number) ?? ['status' => 'Not found', 'payee' => '', 'dv_no' => '', 'amount' => '']))->values());
     }
 
     public function storeRegisterCheck(Request $request): JsonResponse
@@ -274,7 +274,7 @@ class CashReportController extends Controller
             throw ValidationException::withMessages(['check_number' => 'Check No. '.$number.' is not a paid or cancelled check of this school.']);
         }
         CashRegisterCheck::firstOrCreate(
-            ['school_id' => $school->id, 'source_of_fund' => $fund, 'quarter_start' => $from->copy()->startOfQuarter()->toDateString(), 'check_number' => $number],
+            ['school_id' => $school->id, 'source_of_fund' => '', 'quarter_start' => $from->copy()->startOfQuarter()->toDateString(), 'check_number' => $number],
             ['organization_id' => $school->organization_id, 'created_by' => $request->user()->id],
         );
 

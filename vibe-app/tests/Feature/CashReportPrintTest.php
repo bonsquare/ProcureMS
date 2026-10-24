@@ -78,12 +78,10 @@ class CashReportPrintTest extends TestCase
         }
     }
 
-    /** The register lists only the check numbers typed in its form: types one for every fund the tests ask for. */
+    /** The register lists only the check numbers typed in its form: types one. */
     private function typeCheck(School $school, string $check, string $date): void
     {
-        foreach (['', 'MOOE', 'ARAL'] as $fund) {
-            CashRegisterCheck::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'source_of_fund' => $fund, 'quarter_start' => Carbon::parse($date)->startOfQuarter()->toDateString(), 'check_number' => $check]);
-        }
+        CashRegisterCheck::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'source_of_fund' => '', 'quarter_start' => Carbon::parse($date)->startOfQuarter()->toDateString(), 'check_number' => $check]);
     }
 
     private function paid(School $school, string $check, string $paidAt, float $amount, string $code = '5020399000', string $title = 'Other Supplies Expenses', array $overrides = []): LiquidationReport
