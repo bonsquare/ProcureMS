@@ -141,46 +141,34 @@ class CashReportPrintTest extends TestCase
             ->assertDontSee('Balance per bank statement')->assertDontSee('PREPARED BY')->assertDontSee('Fund Cluster');
     }
 
-    public function test_the_register_shows_a_due_to_bir_column_only_when_a_dv_has_a_deduction(): void
+    public function test_the_register_has_no_due_to_bir_column_and_a_check_with_a_deduction_shows_what_was_paid(): void
     {
         [$school, $user] = $this->tenant('BK4');
-        $dv = $this->paid($school, '0001', '2026-09-05', 1000);
+        $this->sobFor($school, ['5020399000' => 'Other Supplies Expenses']);
+        $this->paid($school, '0001', '2026-09-05', 1000, overrides: ['dv_deductions' => ['withholding_tax' => 50]]);
 
-        $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school)))->assertOk()->assertDontSee('Due to BIR');
-
-        $dv->update(['dv_deductions' => ['withholding_tax' => 50]]);
-        $register = $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school)))->assertOk()->assertSee('Due to BIR')->getContent();
-        $this->assertMatchesRegularExpression('/data-col="due-to-bir"[^>]*>50\.00</', $register);
+        $register = $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school)))->assertOk()->assertDontSee('Due to BIR')->getContent();
+        $this->assertMatchesRegularExpression('/data-account="5020399000"[^>]*>950\.00</', $register, 'the column shows the cash paid, not the gross');
+        $this->assertMatchesRegularExpression('/data-col="total-payments"[^>]*>950\.00</', $register);
         $this->assertMatchesRegularExpression('/data-col="balance"[^>]*>-950\.00</', $register, 'only the net leaves the bank');
     }
 
-    public function test_a_payment_to_the_bir_clears_the_due_to_bir_column(): void
+    public function test_a_payment_to_the_bir_is_charged_to_the_expense_accounts_its_breakdown_names(): void
     {
         [$school, $user] = $this->tenant('BK5');
-        $this->paid($school, '0001', '2026-09-05', 1000, overrides: ['dv_deductions' => ['withholding_tax' => 50]]);
-        $this->paid($school, '0002', '2026-09-20', 50, '2020101000', 'Due to BIR');
-
-        $register = $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school)))->assertOk()->getContent();
-        $this->assertMatchesRegularExpression('/data-col="due-to-bir"[^>]*>-50\.00</', $register);
-        $this->assertMatchesRegularExpression('/data-total-col="due-to-bir"[^>]*>0\.00</', $register, 'what was withheld and remitted nets to nothing');
-    }
-
-    public function test_a_breakdown_that_moves_the_expense_to_due_to_bir_shows_as_a_minus_in_the_due_to_bir_column(): void
-    {
-        [$school, $user] = $this->tenant('BK9');
-        $this->sobFor($school, ['5020399000' => 'Other Supplies Expenses']);
-        $dv = $this->paid($school, '0001', '2026-09-05', 1000, overrides: ['source_of_fund' => 'MOOE']);
-        foreach ([[1, '5020399000', 1000, 0], [2, '1010404000', 0, 1000]] as [$no, $code, $debit, $credit]) {
+        $this->sobFor($school, ['5020399000' => 'Other Supplies Expenses', '5020301000' => 'Office Supplies Expense']);
+        $dv = $this->paid($school, '0002', '2026-09-20', 1000, '2020101000', 'Due to BIR');
+        foreach ([[1, '2020101000', 1000, 0], [2, '1010404000', 0, 1000]] as [$no, $code, $debit, $credit]) {
             DvJournalLine::create(['organization_id' => $school->organization_id, 'liquidation_report_id' => $dv->id, 'line_no' => $no, 'account_code' => $code, 'account_title' => 'Account', 'debit' => $debit, 'credit' => $credit]);
         }
-        foreach ([[1, '5020399000', 1000, 0], [2, '2020101000', 1000, 0], [3, '5020399000', 0, 1000]] as [$no, $code, $debit, $credit]) {
+        foreach ([[1, '2020101000', 1000, 0], [2, '5020399000', 600, 0], [3, '5020301000', 400, 0], [4, '2020101000', 0, 1000]] as [$no, $code, $debit, $credit]) {
             DvBreakdownLine::create(['organization_id' => $school->organization_id, 'liquidation_report_id' => $dv->id, 'journal_line_no' => 1, 'line_no' => $no, 'account_code' => $code, 'account_title' => 'Account', 'debit' => $debit, 'credit' => $credit]);
         }
 
-        $register = $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school, ['source_of_fund' => 'MOOE'])))->assertOk()->assertSee('Due to BIR')->getContent();
-        $this->assertMatchesRegularExpression('/data-col="due-to-bir"[^>]*>-1,000\.00</', $register);
-        $this->assertMatchesRegularExpression('/data-account="5020399000"[^>]*><\/td>/', $register, 'the expense column keeps nothing of the reversed amount');
-        $this->assertMatchesRegularExpression('/data-col="total-payments"[^>]*>1,000\.00</', $register, 'the check still leaves the bank');
+        $register = $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school)))->assertOk()->assertDontSee('Due to BIR')->getContent();
+        $this->assertMatchesRegularExpression('/data-account="5020399000"[^>]*>600\.00</', $register);
+        $this->assertMatchesRegularExpression('/data-account="5020301000"[^>]*>400\.00</', $register);
+        $this->assertMatchesRegularExpression('/data-col="total-payments"[^>]*>1,000\.00</', $register, 'the columns add up to the Payments column');
     }
 
     public function test_the_balance_before_the_period_is_the_beginning_balance_of_the_other_reports(): void
