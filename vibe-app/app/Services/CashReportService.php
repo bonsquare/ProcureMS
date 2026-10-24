@@ -28,6 +28,8 @@ class CashReportService
             ->whereNotNull('paid_at')
             ->get()
             ->map(fn (LiquidationReport $report) => $this->paidLine($report));
+        // A payment to the BIR with no breakdown of its own is charged to the expense accounts of the withheld taxes it remits, oldest first.
+        $paidLines = $this->allocateRemittances($paidLines);
 
         $cancelledLines = CancelledCheck::query()
             ->with('liquidationReport')
@@ -185,6 +187,7 @@ class CashReportService
             'amount' => round((float) $report->amount - $this->deductionsOf($report), 2),
             'gross' => round((float) $report->amount, 2),
             'tax' => $this->deductionsOf($report),
+            'withheld' => round((float) ($report->dv_deductions['withholding_tax'] ?? 0), 2),
             'mode' => $this->modeOf($report->payment_mode),
             'cancelled' => false,
             // The code => amount of each UACS code when the ORS is charged to more than one (the register divides the payment among their columns).
@@ -211,6 +214,57 @@ class CashReportService
             'mode' => $this->modeOf($check->payment_mode),
             'cancelled' => true,
         ];
+    }
+
+    /**
+     * Fills the split of every payment to the BIR (Due to BIR 2020101000, no breakdown) from a queue of the withholding taxes of the paid DVs, oldest check date first;
+     * each tax keeps the split of the DV it was withheld from (a liability account never gets a share). A tax is used once.
+     *
+     * @param  Collection<int, array<string, mixed>>  $lines
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function allocateRemittances(Collection $lines): Collection
+    {
+        $cents = fn ($amount) => (int) round(((float) $amount) * 100);
+        $result = $lines->all();
+        $queue = [];
+        $order = $lines->sortBy(fn (array $line) => $line['date']->format('Ymd').'|'.$line['check_no'], SORT_NATURAL)->keys();
+        foreach ($order as $key) {
+            $line = $result[$key];
+            if ($line['withheld'] > 0) {
+                $weights = array_filter($line['splits'] !== [] ? $line['splits'] : [$line['uacs_code'] => 1], fn ($weight, $code) => (string) $code !== '' && ! str_starts_with((string) $code, '2') && $weight > 0, ARRAY_FILTER_USE_BOTH);
+                if ($weights !== []) {
+                    $queue[] = ['left' => $cents($line['withheld']), 'weights' => $weights];
+                }
+            }
+            if ($line['uacs_code'] !== '2020101000' || $line['splits'] !== []) {
+                continue;
+            }
+            $need = $cents($line['amount']);
+            $pieces = [];
+            while ($need > 0 && $queue !== []) {
+                $take = min($need, $queue[0]['left']);
+                $weights = $queue[0]['weights'];
+                $total = array_sum($weights);
+                $last = array_key_last($weights);
+                $given = 0;
+                foreach ($weights as $code => $weight) {
+                    $part = $code === $last ? $take - $given : (int) round($take * $weight / $total);
+                    $given += $part;
+                    $pieces[$code] = ($pieces[$code] ?? 0) + $part;
+                }
+                $queue[0]['left'] -= $take;
+                $need -= $take;
+                if ($queue[0]['left'] <= 0) {
+                    array_shift($queue);
+                }
+            }
+            if ($pieces !== []) {
+                $result[$key]['splits'] = array_map(fn ($amount) => round($amount / 100, 2), $pieces);
+            }
+        }
+
+        return collect($result);
     }
 
     /** 'ada' for an ADA, 'other' for the Others mode (cash and the like), else 'check' (also an old record with no mode). */

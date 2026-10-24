@@ -9,6 +9,7 @@ use App\Models\BudgetAllocation;
 use App\Models\CancelledCheck;
 use App\Models\CashFundReceipt;
 use App\Models\ChartOfAccount;
+use App\Models\DvBreakdownLine;
 use App\Models\DvJournalLine;
 use App\Models\LiquidationReport;
 use App\Models\Organization;
@@ -223,5 +224,71 @@ class CashReportServiceTest extends TestCase
         $this->assertSame(['5020101000' => 'Traveling Expenses', '5020402000' => 'Electricity Expenses', '5021304000' => 'Repairs'], $service->build($this->school, ...$third)['accounts']);
         $this->assertSame(['5020101000' => 'Traveling Expenses', '5020402000' => 'Electricity Expenses'], $service->build($this->school, ...$third, fund: 'MOOE')['accounts']);
         $this->assertSame(['5020301000' => 'Office Supplies Expenses'], $service->build($this->school, Carbon::parse('2026-10-01'), Carbon::parse('2026-12-31'), 'MOOE')['accounts']);
+    }
+
+    /** @return array<string, float> the split of the line of a check */
+    private function splitOf(string $check, string $from = '2026-07-01', string $to = '2026-09-30'): array
+    {
+        return array_map('floatval', $this->build($from, $to)['lines']->firstWhere('check_no', $check)['splits']);
+    }
+
+    private function bir(): ChartOfAccount
+    {
+        return $this->account('2020101000', 'Due to BIR');
+    }
+
+    public function test_a_remittance_takes_the_withheld_taxes_oldest_first(): void
+    {
+        $this->paid('0001', '2026-07-05', 1000, $this->account('5020399000', 'Other Supplies Expenses'), ['dv_deductions' => ['withholding_tax' => 100]]);
+        $this->paid('0002', '2026-07-10', 2000, $this->account('5020301000', 'Office Supplies Expenses'), ['dv_deductions' => ['withholding_tax' => 200]]);
+        $this->paid('0003', '2026-07-20', 250, $this->bir());
+        $this->paid('0004', '2026-07-25', 50, $this->bir());
+
+        $this->assertSame(['5020399000' => 100.0, '5020301000' => 150.0], $this->splitOf('0003'));
+        $this->assertSame(['5020301000' => 50.0], $this->splitOf('0004'));
+    }
+
+    public function test_a_remittance_with_a_breakdown_keeps_it(): void
+    {
+        $this->paid('0001', '2026-07-05', 1000, $this->account('5020399000', 'Other Supplies Expenses'), ['dv_deductions' => ['withholding_tax' => 100]]);
+        $remittance = $this->paid('0002', '2026-07-20', 100, $this->bir());
+        DvJournalLine::create(['organization_id' => $this->organization->id, 'liquidation_report_id' => $remittance->id, 'line_no' => 1, 'account_code' => '2020101000', 'account_title' => 'Due to BIR', 'debit' => 100, 'credit' => 0]);
+        foreach ([[1, '2020101000', 100, 0], [2, '5020301000', 100, 0], [3, '2020101000', 0, 100]] as [$no, $code, $debit, $credit]) {
+            DvBreakdownLine::create(['organization_id' => $this->organization->id, 'liquidation_report_id' => $remittance->id, 'journal_line_no' => 1, 'line_no' => $no, 'account_code' => $code, 'account_title' => 'Account', 'debit' => $debit, 'credit' => $credit]);
+        }
+
+        $this->assertSame(['5020301000' => 100.0], $this->splitOf('0002'));
+    }
+
+    public function test_a_remittance_with_no_withheld_tax_has_no_split_and_one_larger_than_the_tax_gets_the_tax_accounts(): void
+    {
+        $this->paid('0003', '2026-07-20', 300, $this->bir());
+        $this->assertSame([], $this->splitOf('0003'));
+
+        $this->paid('0001', '2026-07-05', 1000, $this->account('5020399000', 'Other Supplies Expenses'), ['dv_deductions' => ['withholding_tax' => 100]]);
+        $this->assertSame(['5020399000' => 100.0], $this->splitOf('0003'));
+    }
+
+    public function test_a_remittance_of_a_later_quarter_uses_a_tax_withheld_earlier(): void
+    {
+        $this->paid('0001', '2026-06-10', 1000, $this->account('5020399000', 'Other Supplies Expenses'), ['dv_deductions' => ['withholding_tax' => 100]]);
+        $this->paid('0002', '2026-08-05', 100, $this->bir());
+
+        $report = $this->build('2026-07-01', '2026-09-30');
+        $this->assertSame(['0002'], $report['lines']->pluck('check_no')->all());
+        $this->assertSame(['5020399000' => 100.0], $this->splitOf('0002'));
+    }
+
+    public function test_a_tax_of_a_dv_charged_to_several_accounts_is_split_in_proportion(): void
+    {
+        $dv = $this->paid('0001', '2026-07-05', 1000, $this->account('5020399000', 'Other Supplies Expenses'), ['dv_deductions' => ['withholding_tax' => 100]]);
+        $this->account('5020301000', 'Office Supplies Expenses');
+        DvJournalLine::create(['organization_id' => $this->organization->id, 'liquidation_report_id' => $dv->id, 'line_no' => 1, 'account_code' => '5020399000', 'account_title' => 'Other Supplies Expenses', 'debit' => 1000, 'credit' => 0]);
+        foreach ([[1, '5020399000', 600], [2, '5020301000', 400]] as [$no, $code, $debit]) {
+            DvBreakdownLine::create(['organization_id' => $this->organization->id, 'liquidation_report_id' => $dv->id, 'journal_line_no' => 1, 'line_no' => $no, 'account_code' => $code, 'account_title' => 'Account', 'debit' => $debit, 'credit' => 0]);
+        }
+        $this->paid('0002', '2026-07-20', 100, $this->bir());
+
+        $this->assertSame(['5020399000' => 60.0, '5020301000' => 40.0], $this->splitOf('0002'));
     }
 }

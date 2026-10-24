@@ -153,6 +153,21 @@ class CashReportPrintTest extends TestCase
         $this->assertMatchesRegularExpression('/data-col="balance"[^>]*>-950\.00</', $register, 'only the net leaves the bank');
     }
 
+    public function test_a_payment_to_the_bir_without_a_breakdown_is_charged_to_the_accounts_of_the_withheld_taxes(): void
+    {
+        [$school, $user] = $this->tenant('BK8');
+        $this->sobFor($school, ['5020399000' => 'Other Supplies Expenses', '5020301000' => 'Office Supplies Expense']);
+        $this->paid($school, '0001', '2026-09-05', 1000, overrides: ['dv_deductions' => ['withholding_tax' => 100]]);
+        $this->paid($school, '0002', '2026-09-10', 2000, '5020301000', 'Office Supplies Expense', ['dv_deductions' => ['withholding_tax' => 200]]);
+        $this->paid($school, '0003', '2026-09-20', 250, '2020101000', 'Due to BIR');
+
+        $register = $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school)))->assertOk()->assertDontSee('Due to BIR')
+            ->assertSee('(Other Supplies Expenses, Office Supplies Expense)', false)->getContent();
+        $this->assertMatchesRegularExpression('/data-total-account="5020399000"[^>]*>1,000\.00</', $register, '900 paid + 100 remitted');
+        $this->assertMatchesRegularExpression('/data-total-account="5020301000"[^>]*>1,950\.00</', $register, '1,800 paid + 150 remitted, 50 of the tax still unremitted');
+        $this->assertMatchesRegularExpression('/data-col="total-payments"[^>]*>2,950\.00</', $register);
+    }
+
     public function test_the_register_columns_follow_the_amount_of_the_check_issued(): void
     {
         [$school, $user] = $this->tenant('BK3');
