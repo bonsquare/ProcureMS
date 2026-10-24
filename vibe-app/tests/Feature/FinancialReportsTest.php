@@ -180,4 +180,43 @@ class FinancialReportsTest extends TestCase
         $this->assertTrue($tb['balanced']);
         $this->assertCount(0, $this->service()->subsidiary(self::CASH, [$school->id], null, ...$this->range()));
     }
+
+    public function test_income_statement_shows_revenue_expenses_and_surplus(): void
+    {
+        [$school] = $this->books('FR11');
+
+        $is = $this->service()->incomeStatement([$school->id], null, ...$this->range());
+
+        $this->assertSame(['50000.00', '8000.00', '42000.00'], [$is['totalRevenue'], $is['totalExpenses'], $is['surplus']]);
+        $this->assertSame('8000.00', $is['expenses']->flatten(1)->first()['amount']);
+    }
+
+    public function test_balance_sheet_balances(): void
+    {
+        [$school] = $this->books('FR12');
+
+        $bs = $this->service()->balanceSheet([$school->id], null, Carbon::parse('2026-12-31'));
+
+        $this->assertSame(['52000.00', '0.00', '52000.00'], [$bs['totalAssets'], $bs['totalLiabilities'], $bs['totalEquity']]);
+        $this->assertTrue($bs['balanced']);
+        $this->assertSame('42000.00', $bs['equity']->firstWhere('account_title', 'Current surplus/(deficit)')['amount']);
+    }
+
+    public function test_balance_sheet_as_of_before_the_dv_excludes_it(): void
+    {
+        [$school] = $this->books('FR13');
+
+        $this->assertSame('60000.00', $this->service()->balanceSheet([$school->id], null, Carbon::parse('2026-02-15'))['totalAssets']);
+    }
+
+    public function test_statements_with_no_postings_are_zero(): void
+    {
+        [$school] = $this->tenant('FR14');
+
+        $is = $this->service()->incomeStatement([$school->id], null, ...$this->range());
+        $bs = $this->service()->balanceSheet([$school->id], null, Carbon::parse('2026-12-31'));
+
+        $this->assertSame(['0.00', '0.00'], [$is['surplus'], $bs['totalAssets']]);
+        $this->assertTrue($bs['balanced']);
+    }
 }

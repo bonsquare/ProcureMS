@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\CashFundReceipt;
+use App\Models\ChartOfAccount;
 use App\Models\LiquidationReport;
 use App\Models\OpeningBalance;
 use Carbon\Carbon;
@@ -145,6 +146,67 @@ class GeneralLedgerService
 
             return ['sub' => $sub, 'debit' => $this->money($debit), 'credit' => $this->money($credit), 'balance' => $this->money($debit - $credit)];
         })->values();
+    }
+
+    /**
+     * Revenue less expenses for $from to $to, each grouped by the chart's category.
+     *
+     * @param  array<int, int>  $schoolIds
+     * @return array{revenue: Collection, expenses: Collection, totalRevenue: string, totalExpenses: string, surplus: string}
+     */
+    public function incomeStatement(array $schoolIds, ?string $fundCluster, Carbon $from, Carbon $to): array
+    {
+        $lines = $this->postings($schoolIds, $fundCluster, $to)->reject(fn (array $p) => $p['date']->lt($from));
+        $revenue = $this->statementRows($lines, 'Revenue', 'credit');
+        $expenses = $this->statementRows($lines, 'Expense', 'debit');
+        $totalRevenue = $revenue->flatten(1)->sum(fn (array $r) => $this->cents($r['amount']));
+        $totalExpenses = $expenses->flatten(1)->sum(fn (array $r) => $this->cents($r['amount']));
+
+        return ['revenue' => $revenue, 'expenses' => $expenses, 'totalRevenue' => $this->money($totalRevenue), 'totalExpenses' => $this->money($totalExpenses), 'surplus' => $this->money($totalRevenue - $totalExpenses)];
+    }
+
+    /**
+     * Assets, liabilities and equity as of $asOf; the surplus of every posting up to then is added to equity.
+     *
+     * @param  array<int, int>  $schoolIds
+     * @return array{assets: Collection, liabilities: Collection, equity: Collection, totalAssets: string, totalLiabilities: string, totalEquity: string, balanced: bool}
+     */
+    public function balanceSheet(array $schoolIds, ?string $fundCluster, Carbon $asOf): array
+    {
+        $lines = $this->postings($schoolIds, $fundCluster, $asOf);
+        $assets = $this->accountRows($lines, 'Assets', 'debit');
+        $liabilities = $this->accountRows($lines, 'Liabilities', 'credit');
+        $equity = $this->accountRows($lines, 'Equity', 'credit');
+        $surplus = $this->statementRows($lines, 'Revenue', 'credit')->flatten(1)->sum(fn (array $r) => $this->cents($r['amount']))
+            - $this->statementRows($lines, 'Expense', 'debit')->flatten(1)->sum(fn (array $r) => $this->cents($r['amount']));
+        $equity->push(['account_code' => '', 'account_title' => 'Current surplus/(deficit)', 'amount' => $this->money($surplus)]);
+
+        $total = fn (Collection $rows) => $rows->sum(fn (array $r) => $this->cents($r['amount']));
+
+        return [
+            'assets' => $assets, 'liabilities' => $liabilities, 'equity' => $equity,
+            'totalAssets' => $this->money($total($assets)), 'totalLiabilities' => $this->money($total($liabilities)), 'totalEquity' => $this->money($total($equity)),
+            'balanced' => $total($assets) === $total($liabilities) + $total($equity),
+        ];
+    }
+
+    /** Rows of one account class, amount on the natural side ('debit' or 'credit'), zero rows left out. */
+    private function accountRows(Collection $lines, string $category, string $natural): Collection
+    {
+        return $lines->filter(fn (array $p) => $this->accountCategory($p['account_code']) === $category)->groupBy('account_code')->map(function (Collection $group, string $code) use ($natural) {
+            $net = $this->net($group);
+
+            return ['account_code' => $code, 'account_title' => $group->first()['account_title'], 'amount' => $this->money($natural === 'debit' ? $net : -$net)];
+        })->reject(fn (array $row) => $row['amount'] === '0.00')->sortKeys()->values();
+    }
+
+    /** accountRows() grouped by the chart's category (for example MOOE); an account missing from the chart goes under Other. */
+    private function statementRows(Collection $lines, string $category, string $natural): Collection
+    {
+        $rows = $this->accountRows($lines, $category, $natural);
+        $categories = ChartOfAccount::withoutGlobalScopes()->whereIn('code', $rows->pluck('account_code'))->pluck('category', 'code');
+
+        return $rows->groupBy(fn (array $row) => $categories[$row['account_code']] ?? 'Other')->sortKeys();
     }
 
     private function cents(mixed $amount): int
