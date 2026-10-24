@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\CashFundReceipt;
+use App\Models\ChartOfAccount;
 use App\Models\DvBreakdownLine;
 use App\Models\DvJournalLine;
 use App\Models\LiquidationReport;
@@ -218,5 +219,77 @@ class FinancialReportsTest extends TestCase
 
         $this->assertSame(['0.00', '0.00'], [$is['surplus'], $bs['totalAssets']]);
         $this->assertTrue($bs['balanced']);
+    }
+
+    private function page(User $user, School $school, array $query = [])
+    {
+        return $this->actingAs($user)->get(route('financial-reports', $query + ['school_id' => $school->id, 'from' => '2026-02-01', 'to' => '2026-12-31']));
+    }
+
+    public function test_each_report_tab_renders_with_the_fixture_numbers(): void
+    {
+        [$school, $user] = $this->books('FR15');
+
+        $this->page($user, $school, ['report' => 'tb'])->assertOk()->assertSee('52,000.00')->assertSee('60,000.00')->assertDontSee('Out of balance');
+        $this->page($user, $school, ['report' => 'gl', 'account' => self::CASH])->assertOk()->assertSee('NCA-1')->assertSee('52,000.00');
+        $this->page($user, $school, ['report' => 'sl', 'account' => self::CASH])->assertOk()->assertSee('Payee 0001')->assertSee('MOOE');
+        $this->page($user, $school, ['report' => 'is'])->assertOk()->assertSee('42,000.00');
+        $this->page($user, $school, ['report' => 'bs'])->assertOk()->assertSee('52,000.00')->assertSee('Current surplus/(deficit)');
+    }
+
+    public function test_trial_balance_page_warns_when_out_of_balance(): void
+    {
+        [$school, $user] = $this->tenant('FR16');
+        $this->dv($school, '0016', '2026-03-01', 8000, 7000);
+
+        $this->page($user, $school)->assertOk()->assertSee('Out of balance');
+    }
+
+    public function test_from_after_to_is_rejected(): void
+    {
+        [$school, $user] = $this->tenant('FR17');
+
+        $this->page($user, $school, ['from' => '2026-12-31', 'to' => '2026-01-01'])->assertSessionHasErrors('to');
+    }
+
+    public function test_another_schools_data_is_forbidden(): void
+    {
+        [$school, $user] = $this->tenant('FR18');
+        [$other] = $this->tenant('FR19');
+
+        $this->page($user, $other)->assertForbidden();
+    }
+
+    public function test_page_renders_with_no_data_and_needs_accounting_permission(): void
+    {
+        [$school, $user] = $this->tenant('FR20');
+        [$viewerSchool, $viewer] = $this->tenant('FR21', 'viewer');
+
+        foreach (['tb', 'gl', 'sl', 'is', 'bs'] as $report) {
+            $this->page($user, $school, ['report' => $report])->assertOk();
+        }
+        $this->page($viewer, $viewerSchool, [])->assertForbidden();
+    }
+
+    public function test_opening_balance_can_be_added_and_deleted_only_with_accounting_manage(): void
+    {
+        [$school, $user] = $this->tenant('FR22');
+        $auditor = User::factory()->create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'role' => 'auditor']);
+        ChartOfAccount::create(['organization_id' => $school->organization_id, 'code' => self::CASH, 'title' => 'Cash in Bank', 'category' => 'Assets']);
+        $form = ['school_id' => $school->id, 'as_of' => '2026-01-01', 'account_code' => self::CASH, 'debit' => 500];
+
+        $this->actingAs($user)->post(route('financial-reports.opening.store'), $form)->assertSessionHas('success');
+        $opening = OpeningBalance::firstOrFail();
+        $this->assertSame('500.00', (string) $opening->debit);
+        $this->assertSame('General Fund', $opening->fund_cluster);
+
+        $this->actingAs($user)->post(route('financial-reports.opening.store'), $form)->assertSessionHasErrors('account_code');
+        $this->assertSame(1, OpeningBalance::count());
+
+        $this->actingAs($auditor)->post(route('financial-reports.opening.store'), $form)->assertForbidden();
+        $this->actingAs($auditor)->delete(route('financial-reports.opening.destroy', $opening))->assertForbidden();
+
+        $this->actingAs($user)->delete(route('financial-reports.opening.destroy', $opening))->assertSessionHas('success');
+        $this->assertSame(0, OpeningBalance::count());
     }
 }

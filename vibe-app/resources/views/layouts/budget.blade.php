@@ -23,9 +23,10 @@
         str_starts_with($routeName, 'budget') => 'budget',
         $routeName === 'allotment-registry' => 'allotment-registry',
         str_starts_with($routeName, 'chart-of-accounts') => 'chart-of-accounts',
+        str_starts_with($routeName, 'financial-reports') => 'financial-reports',
         default => null,
     };
-    $financeLinks = [['budget', 'account_balance', 'Budget'], ['accounting', 'request_quote', 'Accounting'], ['chart-of-accounts', 'list_alt', 'Chart of Accounts'], ['allotment-registry', 'menu_book', 'Allotment Registry'], ['cash', 'payments', 'Cash']];
+    $financeLinks = [['budget', 'account_balance', 'Budget'], ['accounting', 'request_quote', 'Accounting'], ['chart-of-accounts', 'list_alt', 'Chart of Accounts'], ['financial-reports', 'assessment', 'Financial Reports'], ['allotment-registry', 'menu_book', 'Allotment Registry'], ['cash', 'payments', 'Cash']];
     $peso = fn ($v) => '₱' . number_format((float) $v, 2);
     $inputClass = 'mt-1 w-full rounded border border-outline-variant/50 bg-white px-3 py-2.5 text-sm outline-none focus:border-primary';
 @endphp

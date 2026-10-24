@@ -12,6 +12,7 @@ use App\Http\Controllers\ChartOfAccountController;
 use App\Http\Controllers\DemoController;
 use App\Http\Controllers\DriveFileController;
 use App\Http\Controllers\FinanceController;
+use App\Http\Controllers\FinancialReportController;
 use App\Http\Controllers\FormGeneratorController;
 use App\Http\Controllers\GoogleDriveController;
 use App\Http\Controllers\HomeController;
@@ -187,6 +188,9 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::post('/accounting/chart-of-accounts', [ChartOfAccountController::class, 'store'])->middleware('permission:accounting.manage')->name('chart-of-accounts.store');
     Route::put('/accounting/chart-of-accounts/{chartOfAccount}', [ChartOfAccountController::class, 'update'])->middleware('permission:accounting.manage')->name('chart-of-accounts.update');
     Route::delete('/accounting/chart-of-accounts/{chartOfAccount}', [ChartOfAccountController::class, 'destroy'])->middleware('permission:accounting.manage')->name('chart-of-accounts.destroy');
+    Route::get('/accounting/financial-reports', [FinancialReportController::class, 'index'])->name('financial-reports');
+    Route::post('/accounting/financial-reports/opening-balances', [FinancialReportController::class, 'storeOpening'])->middleware('permission:accounting.manage')->name('financial-reports.opening.store');
+    Route::delete('/accounting/financial-reports/opening-balances/{openingBalance}', [FinancialReportController::class, 'destroyOpening'])->middleware('permission:accounting.manage')->name('financial-reports.opening.destroy')->whereNumber('openingBalance');
     Route::patch('/accounting/{liquidationReport}', [FinanceController::class, 'review'])->middleware('permission:accounting.approve')->name('accounting.review');
     Route::post('/accounting/dv-manual', [FinanceController::class, 'storeManualDv'])->middleware('permission:accounting.approve')->name('accounting.dv.manual');
     Route::post('/accounting/{liquidationReport}/dv/preview', [FinanceController::class, 'previewDv'])->middleware('permission:accounting.approve')->name('accounting.dv.preview');
