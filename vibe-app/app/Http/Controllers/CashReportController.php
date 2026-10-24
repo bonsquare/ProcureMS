@@ -273,12 +273,31 @@ class CashReportController extends Controller
         if ($this->checkOf($school, $number) === null) {
             throw ValidationException::withMessages(['check_number' => 'Check No. '.$number.' is not a paid or cancelled check of this school.']);
         }
-        CashRegisterCheck::firstOrCreate(
-            ['school_id' => $school->id, 'source_of_fund' => '', 'quarter_start' => $from->copy()->startOfQuarter()->toDateString(), 'check_number' => $number],
-            ['organization_id' => $school->organization_id, 'created_by' => $request->user()->id],
-        );
+        $this->rememberCheck($school, $from, $number, $request->user()->id);
 
         return response()->json(['message' => 'The check was added to the register.']);
+    }
+
+    /** Keeps a check number in the register list of the school and quarter once. */
+    private function rememberCheck(School $school, Carbon $from, string $number, int $userId): void
+    {
+        $quarter = $from->copy()->startOfQuarter();
+        if (! CashRegisterCheck::query()->where('school_id', $school->id)->whereDate('quarter_start', $quarter)->where('check_number', $number)->exists()) {
+            CashRegisterCheck::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'source_of_fund' => '', 'quarter_start' => $quarter->toDateString(), 'check_number' => $number, 'created_by' => $userId]);
+        }
+    }
+
+    /** Types every check issued in the period (paid and cancelled) into the register list; the ones already typed stay as they are. */
+    public function fillRegisterChecks(Request $request): JsonResponse
+    {
+        [$school, , $from] = $this->registerScope($request);
+        $to = Carbon::parse($request->validate(['to' => ['required', 'date', 'after_or_equal:from']])['to'])->startOfDay();
+        $numbers = app(CashReportService::class)->build($school, $from, $to)['lines']->pluck('check_no')->map(fn ($number) => trim((string) $number))->filter()->unique();
+        foreach ($numbers as $number) {
+            $this->rememberCheck($school, $from, $number, $request->user()->id);
+        }
+
+        return response()->json(['message' => $numbers->count().' check(s) of the period are in the register.']);
     }
 
     public function destroyRegisterCheck(CashRegisterCheck $check): JsonResponse

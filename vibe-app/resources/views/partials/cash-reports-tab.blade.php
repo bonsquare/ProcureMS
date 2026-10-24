@@ -137,6 +137,7 @@
                             <label class="{{ $label }} min-w-0 flex-1">Check No.<input id="cash-check-number" maxlength="100" required class="{{ $box }}"></label>
                             <button class="rounded-lg bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary-container">Add</button>
                         </form>
+                        <button type="button" id="cash-check-fill" class="mt-2 rounded-lg border border-primary px-3 py-2 text-xs font-semibold text-primary hover:bg-primary hover:text-white">Add all checks of the period</button>
                         <p id="cash-check-error" class="mt-2 hidden text-xs font-semibold text-error"></p>
                         <div class="mt-3 overflow-x-auto rounded-lg border border-outline-variant/40">
                             <table class="w-full text-left text-xs">
@@ -501,6 +502,17 @@
                 return;
             }
             field('cash-check-number').value = '';
+            loadChecks(); refresh();
+        });
+        field('cash-check-fill').addEventListener('click', async () => {
+            checkError.classList.add('hidden');
+            const response = await checkRequest('POST', checksBase + '/fill', { school_id: field('cash-report-school').value, from: field('cash-report-from').value, to: field('cash-report-to').value });
+            if (!response.ok) {
+                const body = await response.json().catch(() => ({}));
+                checkError.textContent = Object.values(body.errors || {})[0]?.[0] || body.message || 'It could not be added.';
+                checkError.classList.remove('hidden');
+                return;
+            }
             loadChecks(); refresh();
         });
         const registerBox = () => modal.querySelector('[data-register-only]');

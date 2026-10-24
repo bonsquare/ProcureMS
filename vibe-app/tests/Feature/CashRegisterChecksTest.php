@@ -71,6 +71,20 @@ class CashRegisterChecksTest extends TestCase
         }
     }
 
+    public function test_one_press_types_every_paid_and_cancelled_check_of_the_period(): void
+    {
+        [$school, $user] = $this->tenant('RC6');
+        $paid = $this->paid($school, '0001');
+        $this->paid($school, '0002')->update(['paid_at' => '2026-11-05', 'dv_date' => '2026-11-05']);
+        CancelledCheck::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'liquidation_report_id' => $paid->id, 'ors_number' => 'ORS-X', 'dv_number' => 'DV-X', 'check_number' => '0003', 'payment_mode' => 'MDS Check', 'paid_at' => '2026-08-06', 'amount' => 300, 'reason' => 'Wrong', 'cancelled_by' => $user->id, 'cancelled_at' => now()]);
+        $query = $this->scope($school, ['to' => '2026-09-30']);
+
+        $this->actingAs($user)->postJson(route('cash.report.register.checks.fill'), $query)->assertOk();
+        $this->actingAs($user)->postJson(route('cash.report.register.checks.fill'), $query)->assertOk();
+
+        $this->assertSame(['0001', '0003'], CashRegisterCheck::orderBy('check_number')->pluck('check_number')->all());
+    }
+
     public function test_a_number_that_is_neither_paid_nor_cancelled_is_refused_and_a_typed_check_can_be_removed(): void
     {
         [$school, $user] = $this->tenant('RC2');
