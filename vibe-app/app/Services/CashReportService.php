@@ -138,17 +138,6 @@ class CashReportService
 
             return array_filter($splits, fn ($amount) => $amount != 0);
         }
-        // With no breakdown the journal entry of the DV is the source: each debit line is a column (a liability such as Due to BIR is not one); the ORS only
-        // answers when the DV has no journal.
-        $debits = $report->journalLines->filter(fn ($line) => (float) $line->debit > 0 && ! str_starts_with((string) $line->account_code, '2'));
-        if ($debits->isNotEmpty()) {
-            $splits = [];
-            foreach ($debits as $line) {
-                $splits[$line->account_code] = round(($splits[$line->account_code] ?? 0) + (float) $line->debit, 2);
-            }
-
-            return $splits;
-        }
         if ($report->lines->count() < 2) {
             return [];
         }
