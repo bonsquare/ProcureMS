@@ -147,7 +147,7 @@ class CashReportPrintTest extends TestCase
         $this->sobFor($school, ['5020399000' => 'Other Supplies Expenses']);
         $this->paid($school, '0001', '2026-09-05', 1000, overrides: ['dv_deductions' => ['withholding_tax' => 50]]);
 
-        $register = $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school)))->assertOk()->assertDontSee('Due to BIR')->getContent();
+        $register = $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school)))->assertOk()->assertDontSee('Due to BIR')->assertSee('Payee 0001 (Other Supplies Expenses)', false)->getContent();
         $this->assertMatchesRegularExpression('/data-account="5020399000"[^>]*>950\.00</', $register, 'the column shows the cash paid, not the gross');
         $this->assertMatchesRegularExpression('/data-col="total-payments"[^>]*>950\.00</', $register);
         $this->assertMatchesRegularExpression('/data-col="balance"[^>]*>-950\.00</', $register, 'only the net leaves the bank');
@@ -165,7 +165,7 @@ class CashReportPrintTest extends TestCase
             DvBreakdownLine::create(['organization_id' => $school->organization_id, 'liquidation_report_id' => $dv->id, 'journal_line_no' => 1, 'line_no' => $no, 'account_code' => $code, 'account_title' => 'Account', 'debit' => $debit, 'credit' => $credit]);
         }
 
-        $register = $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school)))->assertOk()->assertDontSee('Due to BIR')->getContent();
+        $register = $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school)))->assertOk()->assertDontSee('Due to BIR')->assertSee('(Other Supplies Expenses, Office Supplies Expense)', false)->getContent();
         $this->assertMatchesRegularExpression('/data-account="5020399000"[^>]*>600\.00</', $register);
         $this->assertMatchesRegularExpression('/data-account="5020301000"[^>]*>400\.00</', $register);
         $this->assertMatchesRegularExpression('/data-col="total-payments"[^>]*>1,000\.00</', $register, 'the columns add up to the Payments column');

@@ -96,8 +96,12 @@
                 $lineSplits = array_map(fn ($amount) => round((float) $amount * (float) $line['amount'] / $gross, 2), $lineSplits);
                 $lineSplits[array_key_last($lineSplits)] = round($lineSplits[array_key_last($lineSplits)] + (float) $line['amount'] - array_sum($lineSplits), 2);
             }
+            // The nature of the disbursement is the account title of the expense it is charged to (a liability such as Due to BIR is not one).
+            $natures = collect($lineSplits !== [] ? array_keys($lineSplits) : [(string) $line['uacs_code']])->map(fn ($code) => (string) $code)
+                ->reject(fn (string $code) => $code === '' || str_starts_with($code, '2') || $line['cancelled'])
+                ->map(fn (string $code) => $accounts[$code] ?? ($code === (string) $line['uacs_code'] ? (string) $line['nature'] : ''))->filter()->unique()->implode(', ');
             $balance = round($balance - ($line['amount'] ?? 0), 2);
-            $rows[] = ['date' => $entry['date'], 'reference' => $line['check_no'], 'particulars' => $line['payee'], 'advance' => null, 'payment' => $line['amount'], 'gross' => $line['amount'], 'balance' => $balance, 'code' => $line['cancelled'] ? null : $line['uacs_code'], 'splits' => $lineSplits];
+            $rows[] = ['date' => $entry['date'], 'reference' => $line['check_no'], 'particulars' => $line['payee'].($natures !== '' ? ' ('.$natures.')' : ''), 'advance' => null, 'payment' => $line['amount'], 'gross' => $line['amount'], 'balance' => $balance, 'code' => $line['cancelled'] ? null : $line['uacs_code'], 'splits' => $lineSplits];
         }
     }
     // A payment of an ORS charged to several UACS codes is divided among their columns; any other payment goes to the column of its one code.
