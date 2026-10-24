@@ -9,6 +9,7 @@ use App\Models\AuditLog;
 use App\Models\BudgetAllocation;
 use App\Models\CancelledCheck;
 use App\Models\CashFundReceipt;
+use App\Models\CashRegisterCheck;
 use App\Models\CashReportHistory;
 use App\Models\ChartOfAccount;
 use App\Models\LiquidationReport;
@@ -19,6 +20,7 @@ use App\Models\SobItem;
 use App\Models\SobPlan;
 use App\Models\Subscription;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -76,10 +78,20 @@ class CashReportPrintTest extends TestCase
         }
     }
 
+    /** The register lists only the check numbers typed in its form: types one for every fund the tests ask for. */
+    private function typeCheck(School $school, string $check, string $date): void
+    {
+        foreach (['', 'MOOE', 'ARAL'] as $fund) {
+            CashRegisterCheck::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'source_of_fund' => $fund, 'quarter_start' => Carbon::parse($date)->startOfQuarter()->toDateString(), 'check_number' => $check]);
+        }
+    }
+
     private function paid(School $school, string $check, string $paidAt, float $amount, string $code = '5020399000', string $title = 'Other Supplies Expenses', array $overrides = []): LiquidationReport
     {
         $account = ChartOfAccount::firstOrCreate(['organization_id' => $school->organization_id, 'code' => $code], ['title' => $title, 'category' => 'Expense']);
         $line = BudgetAllocation::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'fiscal_year' => 2026, 'source_of_fund' => 'MOOE', 'particulars' => 'Line', 'chart_of_account_id' => $account->id, 'amount' => 100000, 'q1_amount' => 25000, 'q2_amount' => 25000, 'q3_amount' => 25000, 'q4_amount' => 25000]);
+
+        $this->typeCheck($school, $check, $paidAt);
 
         return LiquidationReport::create($overrides + [
             'organization_id' => $school->organization_id, 'school_id' => $school->id, 'report_number' => 'LR-'.$check, 'ors_number' => 'ORS-2026-'.$check, 'dv_number' => 'DV-2026-'.$check,
@@ -451,6 +463,7 @@ class CashReportPrintTest extends TestCase
         [$school, $user] = $this->tenant('RO2');
         $paid = $this->paid($school, '0010', '2026-08-05', 300);
         CancelledCheck::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'liquidation_report_id' => $paid->id, 'ors_number' => 'ORS-2026-0010', 'dv_number' => 'DV-2026-0010', 'check_number' => '0009', 'payment_mode' => 'MDS Check', 'paid_at' => '2026-08-01', 'amount' => 300, 'reason' => 'Wrong amount', 'cancelled_by' => $user->id, 'cancelled_at' => '2026-08-04 10:00:00']);
+        $this->typeCheck($school, '0009', '2026-08-01');
 
         $html = $this->actingAs($user)->get(route('cash.report.roci', $this->periodQuery($school)))->assertOk()->getContent();
 
@@ -595,6 +608,7 @@ class CashReportPrintTest extends TestCase
         $this->paid($school, 'OR-123', '2026-08-05', 300, '5020301000', 'Office Supplies Expenses', ['payment_mode' => 'Others']);
         $ada = $this->paid($school, 'ADA3', '2026-08-06', 200, '5020301000', 'Office Supplies Expenses', ['payment_mode' => 'ADA']);
         CancelledCheck::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'liquidation_report_id' => $ada->id, 'ors_number' => 'ORS-2026-ADA3', 'dv_number' => 'DV-2026-ADA3', 'check_number' => 'ADA-OLD', 'payment_mode' => 'ADA', 'paid_at' => '2026-08-01', 'amount' => 200, 'reason' => 'Wrong amount', 'cancelled_by' => $user->id, 'cancelled_at' => '2026-08-04 10:00:00']);
+        $this->typeCheck($school, 'ADA-OLD', '2026-08-01');
 
         $this->actingAs($user)->get(route('cash.report.roci', $this->periodQuery($school)))->assertOk()->assertDontSee('OR-123')->assertDontSee('ADA-OLD')->assertDontSee('ADA3');
 

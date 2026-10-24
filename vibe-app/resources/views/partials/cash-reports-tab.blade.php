@@ -130,6 +130,21 @@
                             <label data-r="8" class="{{ $label }}">Registered No.<input id="cash-report-registered" maxlength="50" class="{{ $box }}"></label>
                         </div>
                     </section>
+                    <section data-register-only class="hidden rounded-xl border border-outline-variant/50 p-4">
+                        <h3 class="text-[11px] font-bold uppercase tracking-wider text-primary">Checks of the register</h3>
+                        <p class="mt-1 text-xs text-on-surface-variant">Type a Check No. and the register pulls its DV, payee, amount and account. A cancelled check stays in the series marked cancelled. The list is kept for this school, fund and quarter.</p>
+                        <form id="cash-check-form" class="mt-3 flex items-end gap-2">
+                            <label class="{{ $label }} min-w-0 flex-1">Check No.<input id="cash-check-number" maxlength="100" required class="{{ $box }}"></label>
+                            <button class="rounded-lg bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary-container">Add</button>
+                        </form>
+                        <p id="cash-check-error" class="mt-2 hidden text-xs font-semibold text-error"></p>
+                        <div class="mt-3 overflow-x-auto rounded-lg border border-outline-variant/40">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-surface-low uppercase tracking-wider text-on-surface-variant"><tr><th class="px-3 py-2">Check No.</th><th class="px-2 py-2">DV / Payee</th><th class="px-2 py-2 text-right">Amount</th><th class="px-3 py-2"></th></tr></thead>
+                                <tbody id="cash-check-rows" class="divide-y divide-outline-variant/30"></tbody>
+                            </table>
+                        </div>
+                    </section>
                     <section data-hide-bank class="rounded-xl border border-outline-variant/50 p-4">
                         <h3 class="text-[11px] font-bold uppercase tracking-wider text-primary">Signatories</h3>
                         <div id="cash-report-slots" class="mt-3 space-y-3"></div>
@@ -452,6 +467,44 @@
             if (on) { resetFund(); if (!field('cash-fund-date').value) field('cash-fund-date').value = field('cash-report-from').value; loadFund(); }
         };
         ['cash-report-school', 'cash-report-from', 'cash-report-to'].forEach((id) => field(id).addEventListener('change', () => { if (!modal.querySelector('[data-bank-only]').classList.contains('hidden')) loadFund(); }));
+        // Cash Disbursement Register only: the check numbers typed by hand; each one pulls its details into the register.
+        const checkRows = field('cash-check-rows');
+        const checkError = field('cash-check-error');
+        const checksUrl = @json(route('cash.report.register.checks'));
+        const checksBase = @json(url('/cash/reports/register/checks'));
+        const checkScope = () => new URLSearchParams({ school_id: field('cash-report-school').value, source_of_fund: field('cash-report-source').value === 'Others' ? field('cash-report-source-other').value.trim() : field('cash-report-source').value, from: field('cash-report-from').value });
+        const checkRequest = (method, url, data) => fetch(url, { method: 'POST', headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrf, 'Content-Type': 'application/json' }, body: JSON.stringify({ ...data, _method: method }) });
+        const loadChecks = async () => {
+            let list = [];
+            try { const response = await fetch(checksUrl + '?' + checkScope(), { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } }); list = response.ok ? await response.json() : []; } catch (error) { list = []; }
+            checkRows.innerHTML = '';
+            if (!list.length) { checkRows.innerHTML = '<tr><td colspan="4" class="px-3 py-4 text-center text-on-surface-variant">No check typed yet.</td></tr>'; return; }
+            list.forEach((item) => {
+                const row = document.createElement('tr');
+                [item.check_number, (item.status === 'Paid' ? '' : item.status + ' · ') + [item.dv_no, item.payee].filter(Boolean).join(' · '), item.amount].forEach((text, index) => {
+                    const cell = document.createElement('td'); cell.className = index === 2 ? 'px-2 py-2 text-right tabular-nums' : (index === 0 ? 'px-3 py-2 font-semibold' : 'px-2 py-2'); cell.textContent = text; row.append(cell);
+                });
+                const actions = document.createElement('td'); actions.className = 'whitespace-nowrap px-3 py-2 text-right';
+                const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = 'Remove'; remove.className = 'font-semibold text-error hover:underline';
+                remove.addEventListener('click', async () => { await checkRequest('DELETE', checksBase + '/' + item.id, {}); loadChecks(); refresh(); });
+                actions.append(remove); row.append(actions); checkRows.append(row);
+            });
+        };
+        field('cash-check-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            checkError.classList.add('hidden');
+            const response = await checkRequest('POST', checksUrl, { school_id: field('cash-report-school').value, source_of_fund: checkScope().get('source_of_fund'), from: field('cash-report-from').value, check_number: field('cash-check-number').value.trim() });
+            if (!response.ok) {
+                const body = await response.json().catch(() => ({}));
+                checkError.textContent = Object.values(body.errors || {})[0]?.[0] || body.message || 'It could not be added.';
+                checkError.classList.remove('hidden');
+                return;
+            }
+            field('cash-check-number').value = '';
+            loadChecks(); refresh();
+        });
+        const registerBox = () => modal.querySelector('[data-register-only]');
+        ['cash-report-school', 'cash-report-from', 'cash-report-source', 'cash-report-source-other'].forEach((id) => field(id).addEventListener('change', () => { if (registerOn) { loadChecks(); schedule(); } }));
         const close = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); };
         document.querySelectorAll('[data-cash-report-open]').forEach((button) => button.addEventListener('click', () => {
             baseUrl = button.dataset.url;
@@ -460,6 +513,8 @@
             toggleBank(button.dataset.bank === '1');
             modal.querySelectorAll('[data-hide-bank]').forEach((box) => box.classList.toggle('hidden', button.dataset.bank === '1'));
             registerOn = button.dataset.register === '1';
+            registerBox().classList.toggle('hidden', !registerOn);
+            if (registerOn) loadChecks();
             document.getElementById('cash-report-save').classList.remove('hidden');
             editing = null; saveButton.textContent = 'Save to history';
             formKey = button.dataset.form || 'o';
@@ -491,6 +546,7 @@
             field('cash-report-source').value = known ? fund : (fund ? 'Others' : '');
             field('cash-report-source-other').value = known ? '' : fund;
             field('cash-report-source-other-wrap').classList.toggle('hidden', field('cash-report-source').value !== 'Others');
+            if (registerOn) loadChecks();
             ['officer_id', 'received_by_id'].forEach((name) => { const select = slotBox.querySelector('select[data-slot="' + name + '"]'); if (select && params[name] !== undefined) { select.value = params[name]; select.dispatchEvent(new Event('change', { bubbles: true })); } });
             editing = { url: button.dataset.url, name: button.dataset.name };
             saveButton.textContent = 'Update';

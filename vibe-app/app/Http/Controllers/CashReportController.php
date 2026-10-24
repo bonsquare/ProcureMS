@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\AgencySetting;
 use App\Models\AuditLog;
+use App\Models\CancelledCheck;
 use App\Models\CashFundReceipt;
+use App\Models\CashRegisterCheck;
 use App\Models\CashReportHistory;
 use App\Models\LiquidationReport;
 use App\Models\School;
@@ -15,6 +17,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class CashReportController extends Controller
 {
@@ -180,10 +183,12 @@ class CashReportController extends Controller
         ];
     }
 
-    private function reportViewData(Request $request): array
+    private function reportViewData(Request $request, ?string $kind = null): array
     {
         $context = $this->reportContext($request);
         $school = $context['school'];
+        // The Cash Disbursement Register lists only the check numbers typed in its form; the other reports read every payment.
+        $checks = $kind === 'register' ? $this->registerChecks($school, $context['source_of_fund'], $context['from'])->pluck('check_number')->all() : null;
         $latestPayment = LiquidationReport::query()->where('school_id', $school->id)->whereNotNull('paid_at')->latest('paid_at')->first();
         $bankName = $context['bank_name'] !== '' ? $context['bank_name'] : (string) ($school->bank_name ?: $latestPayment?->bank_name);
         $bankAccount = $context['bank_account'] !== '' ? $context['bank_account'] : (string) ($school->bank_account_number ?: $latestPayment?->bank_account_number);
@@ -221,8 +226,67 @@ class CashReportController extends Controller
             'period' => $this->periodText($context['from'], $context['to']),
             'reportNo' => $context['report_no'],
             'sheetNo' => $context['sheet_no'],
-            'data' => app(CashReportService::class)->build($school, $context['from'], $context['to'], $context['source_of_fund'] ?: null),
+            'data' => app(CashReportService::class)->build($school, $context['from'], $context['to'], $context['source_of_fund'] ?: null, $checks),
         ];
+    }
+
+    /** The check numbers typed in the register form for a school, fund and quarter. */
+    private function registerChecks(School $school, string $fund, Carbon $from)
+    {
+        return CashRegisterCheck::query()->where('school_id', $school->id)->where('source_of_fund', $fund)->whereDate('quarter_start', $from->copy()->startOfQuarter())->get()
+            ->sortBy('check_number', SORT_NATURAL)->values();
+    }
+
+    /** The school, fund and quarter of the register form's check list, from the From date of the open report. */
+    private function registerScope(Request $request): array
+    {
+        $data = $request->validate(['school_id' => ['required', 'integer'], 'source_of_fund' => ['nullable', 'string', 'max:50'], 'from' => ['required', 'date']]);
+        abort_unless($this->schoolIds()->contains((int) $data['school_id']), 403);
+
+        return [School::findOrFail($data['school_id']), trim((string) ($data['source_of_fund'] ?? '')), Carbon::parse($data['from'])->startOfDay()];
+    }
+
+    /** The paid check (or the cancelled one) of a school with this number; a check of another fund stays in the series, its amount blank. */
+    private function checkOf(School $school, string $number): ?array
+    {
+        $paid = LiquidationReport::query()->where('school_id', $school->id)->whereNotNull('paid_at')->where('payment_reference', $number)->first();
+        if ($paid) {
+            return ['status' => 'Paid', 'payee' => (string) $paid->payee, 'dv_no' => (string) $paid->dv_number, 'amount' => number_format((float) $paid->amount, 2)];
+        }
+        $cancelled = CancelledCheck::query()->where('school_id', $school->id)->whereNotNull('paid_at')->where('check_number', $number)->first();
+
+        return $cancelled ? ['status' => 'Cancelled', 'payee' => 'Cancelled Check', 'dv_no' => (string) $cancelled->dv_number, 'amount' => ''] : null;
+    }
+
+    /** The saved check list of the register form with the details each number pulls. */
+    public function registerCheckList(Request $request): JsonResponse
+    {
+        [$school, $fund, $from] = $this->registerScope($request);
+
+        return response()->json($this->registerChecks($school, $fund, $from)->map(fn (CashRegisterCheck $row) => ['id' => $row->id, 'check_number' => $row->check_number] + ($this->checkOf($school, $row->check_number) ?? ['status' => 'Not found', 'payee' => '', 'dv_no' => '', 'amount' => '']))->values());
+    }
+
+    public function storeRegisterCheck(Request $request): JsonResponse
+    {
+        [$school, $fund, $from] = $this->registerScope($request);
+        $number = trim((string) $request->validate(['check_number' => ['required', 'string', 'max:100']])['check_number']);
+        if ($this->checkOf($school, $number) === null) {
+            throw ValidationException::withMessages(['check_number' => 'Check No. '.$number.' is not a paid or cancelled check of this school.']);
+        }
+        CashRegisterCheck::firstOrCreate(
+            ['school_id' => $school->id, 'source_of_fund' => $fund, 'quarter_start' => $from->copy()->startOfQuarter()->toDateString(), 'check_number' => $number],
+            ['organization_id' => $school->organization_id, 'created_by' => $request->user()->id],
+        );
+
+        return response()->json(['message' => 'The check was added to the register.']);
+    }
+
+    public function destroyRegisterCheck(CashRegisterCheck $check): JsonResponse
+    {
+        abort_unless($this->schoolIds()->contains($check->school_id), 403);
+        $check->delete();
+
+        return response()->json(['message' => 'The check was removed from the register.']);
     }
 
     /** "3RD Quarter C.Y. 2026" when the dates are a whole quarter, else the two dates. */
@@ -253,7 +317,7 @@ class CashReportController extends Controller
 
     public function register(Request $request)
     {
-        return view('cash-report-register', ['report' => $this->reportViewData($request)]);
+        return view('cash-report-register', ['report' => $this->reportViewData($request, 'register')]);
     }
 
     /** The pages of the four cash reports by the key kept in their history. */
@@ -268,7 +332,7 @@ class CashReportController extends Controller
     public function storeHistory(Request $request, string $kind): JsonResponse
     {
         abort_unless(isset(self::HISTORY_VIEWS[$kind]), 404);
-        $report = $this->reportViewData($request);
+        $report = $this->reportViewData($request, $kind);
         if ($kind === 'roci' && $report['reportNo'] === '') {
             $report['reportNo'] = now()->format('Y-m').'-001';
         }
@@ -311,7 +375,7 @@ class CashReportController extends Controller
         parse_str((string) ($data['query'] ?? ''), $edited);
         $params = $edited ?: ($history->params ?: array_filter(['school_id' => $history->school_id, 'from' => $history->period_from->toDateString(), 'to' => $history->period_to->toDateString(), 'source_of_fund' => $history->source_of_fund, 'report_no' => $history->report_no]));
         $remade = $request->duplicate($params, []);
-        $report = $this->reportViewData($remade);
+        $report = $this->reportViewData($remade, $history->report);
         if ($history->report === 'roci' && $report['reportNo'] === '') {
             $report['reportNo'] = now()->format('Y-m').'-001';
         }

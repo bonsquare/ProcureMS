@@ -17,7 +17,7 @@ class CashReportService
     /**
      * @return array{opening: float, opening_bank: float, receipts: Collection, lines: Collection, total_paid: float, total_received: float, ending: float, accounts: array<string, string>}
      */
-    public function build(School $school, CarbonInterface $from, CarbonInterface $to, ?string $fund = null): array
+    public function build(School $school, CarbonInterface $from, CarbonInterface $to, ?string $fund = null, ?array $checks = null): array
     {
         $from = $from->copy()->startOfDay();
         $to = $to->copy()->endOfDay();
@@ -60,6 +60,8 @@ class CashReportService
         $periodReceipts = $receipts->filter(fn ($receipt) => ! $before($receipt->received_at) && $receipt->received_at->lte($to))->values();
         $lines = $all
             ->filter(fn (array $line) => ! $before($line['date']) && $line['date']->lte($to))
+            // The Cash Disbursement Register lists only the check numbers typed in its form (a cancelled one stays in the series, marked cancelled).
+            ->when($checks !== null, fn (Collection $kept) => $kept->filter(fn (array $line) => in_array($line['check_no'], $checks, true)))
             ->sortBy(fn (array $line) => $line['date']->format('Ymd').'|'.$line['check_no'])
             ->values();
 

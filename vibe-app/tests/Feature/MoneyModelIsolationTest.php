@@ -6,6 +6,7 @@ use App\Models\AppCsePlan;
 use App\Models\BudgetAllocation;
 use App\Models\CancelledCheck;
 use App\Models\CashFundReceipt;
+use App\Models\CashRegisterCheck;
 use App\Models\DvJournalLine;
 use App\Models\LiquidationReport;
 use App\Models\MasterTransaction;
@@ -68,6 +69,7 @@ class MoneyModelIsolationTest extends TestCase
         $this->get(route('planning.pow.print', $r['pow']))->assertOk();
         $this->get(route('planning.sob.show', $r['sob']))->assertOk();
         $this->get(route('planning.app-cse.show', $r['appCse']))->assertOk();
+        CashRegisterCheck::create(['organization_id' => $b['school']->organization_id, 'school_id' => $b['school']->id, 'source_of_fund' => '', 'quarter_start' => '2026-07-01', 'check_number' => 'CHK-B']);
         $this->get(route('cash.report.register', ['school_id' => $b['school']->id, 'from' => '2026-07-01', 'to' => '2026-09-30']))->assertOk()->assertSee('Payee of B');
     }
 
