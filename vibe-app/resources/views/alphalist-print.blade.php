@@ -31,6 +31,9 @@
 
 @include('partials.official-toolbar', ['closeUrl' => route('liquidation'), 'context' => 'Alphalist - Tax Remittance · '.$period])
 
+@if($preview ?? false)
+    <div class="missing no-print" style="border-color:#286da8;color:#174b82">PREVIEW - not saved. Use Generate &amp; save on the Liquidation page to keep this alphalist.</div>
+@endif
 @if($report['missing'] !== [])
     <div class="missing no-print">Left out: the payee has no supplier in the Supplier Manager, or its 1600 and 0619E rates are not entered yet: {{ implode('; ', $report['missing']) }}.</div>
 @endif

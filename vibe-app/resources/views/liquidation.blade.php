@@ -51,48 +51,7 @@
         </tbody></table></div><div class="flex flex-col justify-between gap-3 border-t border-outline-variant/20 bg-surface-low px-5 py-3 text-xs text-on-surface-variant sm:flex-row sm:items-center"><span>Showing {{ $liquidations->count() }} liquidation {{ Str::plural('record', $liquidations->count()) }}</span><span>Filtered from live records</span></div>
     </details>
 
-    <details class="mt-8 rounded border border-outline-variant/30 bg-white"><summary class="flex cursor-pointer list-none items-center justify-between gap-3 border-b border-outline-variant/30 p-5 [&::-webkit-details-marker]:hidden"><div><h2 class="text-lg font-semibold">Alphalist - Tax Remittance</h2><p class="mt-1 text-xs text-on-surface-variant">Monthly Alphalist of Payees for the 1600PT, 0619E / 1601EQ and 1600VT remittances, from the withholding tax of the DVs paid in the month.</p></div><span class="material-symbols-outlined shrink-0 text-[20px] text-on-surface-variant">expand_more</span></summary>
-        <form method="POST" action="{{ route('liquidation.alphalist.store') }}" target="_blank" class="grid grid-cols-1 items-end gap-4 p-5 md:grid-cols-6">@csrf
-            @php $alphaLabel = 'mb-1 block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant'; $alphaBox = 'w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2 text-sm outline-none focus:border-primary'; @endphp
-            <label class="{{ $alphaLabel }}">School<select name="school_id" required class="{{ $alphaBox }} mt-1 normal-case tracking-normal">@foreach($schools as $school)<option value="{{ $school->id }}" @selected((string) $selectedSchoolId === (string) $school->id)>{{ $school->name }}</option>@endforeach</select></label>
-            <label class="{{ $alphaLabel }}">Returned period<input type="month" name="month" required value="{{ now()->format('Y-m') }}" class="{{ $alphaBox }} mt-1 normal-case tracking-normal"></label>
-            <label class="{{ $alphaLabel }}">Source of fund<input name="source_of_fund" list="alpha-funds" placeholder="All funds" class="{{ $alphaBox }} mt-1 normal-case tracking-normal"><datalist id="alpha-funds">@foreach(array_diff(\App\Models\CashFundReceipt::FUNDS, ['Others']) as $fundName)<option value="{{ $fundName }}"></option>@endforeach</datalist></label>
-            <label class="{{ $alphaLabel }}">School TIN<input name="school_tin" placeholder="000-000-000-000" class="{{ $alphaBox }} mt-1 normal-case tracking-normal"></label>
-            <label class="{{ $alphaLabel }}">Signatory<input name="signatory_name" placeholder="School Head (default)" class="{{ $alphaBox }} mt-1 normal-case tracking-normal"></label>
-            <button class="mb-1 h-[38px] rounded-lg bg-primary px-4 text-xs font-semibold text-white hover:bg-primary-container">Open Alphalist</button>
-        </form>
-        @php $alphaHistory = \App\Models\CashReportHistory::with('generator', 'school')->where('report', 'alphalist')->whereIn('school_id', $schools->pluck('id'))->latest()->limit(30)->get(); @endphp
-        @php $remittanceDvs = \App\Models\LiquidationReport::whereIn('school_id', $schools->pluck('id'))->whereNotNull('remittance')->get()->keyBy(fn ($dv) => ($dv->remittance['history_id'] ?? '').'|'.($dv->remittance['form'] ?? '')); $canMakeDv = auth()->user()?->hasPermission('accounting.approve'); $canChangeAlpha = auth()->user()?->hasPermission('liquidation.create'); @endphp
-        <div class="border-t border-outline-variant/30 px-5 pb-5 pt-4">
-            <h3 class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">History</h3>
-            @forelse($alphaHistory as $entry)
-                <div class="mt-2 flex flex-wrap items-center justify-between gap-2 rounded bg-surface-low px-3 py-2 text-xs"><span><span class="font-semibold">{{ $entry->period_text }}</span>@if($entry->source_of_fund) · {{ $entry->source_of_fund }}@endif · {{ $entry->school?->name }} · Tax withheld ₱{{ number_format((float) $entry->total_payments, 2) }} · {{ $entry->created_at->format('M d, Y g:i A') }}@if($entry->generator) · {{ $entry->generator->name }}@endif</span><span class="flex flex-wrap items-center gap-2"><a href="{{ route('liquidation.alphalist.history', $entry) }}" target="_blank" rel="noopener" class="font-semibold text-primary hover:underline">Open</a>@foreach(($entry->params['remittance'] ?? []) as $form => $block)@php $dv = $remittanceDvs->get($entry->id.'|'.$form); $formLabel = \App\Services\AlphalistService::FORMS[$form] ?? $form; @endphp @if($dv)<span class="rounded bg-secondary/10 px-2 py-1 font-semibold text-secondary">{{ $formLabel }}: {{ $dv->dv_number ? \App\Models\LiquidationReport::dvLabel($dv->dv_number) : $dv->report_number }}</span>@elseif($canMakeDv)<form method="POST" action="{{ route('liquidation.alphalist.dv', [$entry, $form]) }}">@csrf<button class="rounded border border-primary px-2 py-1 font-semibold text-primary hover:bg-primary hover:text-white">Create DV {{ $formLabel }} · ₱{{ number_format((float) $block['total'], 2) }}</button></form>@endif @endforeach
-@if($canChangeAlpha && ! $remittanceDvs->keys()->contains(fn ($key) => str_starts_with($key, $entry->id.'|')))
-<details class="relative"><summary class="cursor-pointer list-none rounded border border-outline-variant/60 px-2 py-1 font-semibold text-primary hover:bg-primary hover:text-white [&::-webkit-details-marker]:hidden">Edit</summary>
-    <form method="POST" action="{{ route('liquidation.alphalist.update', $entry) }}" class="absolute right-0 top-full z-20 mt-1 w-80 space-y-2 rounded-lg border border-outline-variant/40 bg-white p-3 text-left shadow-lg">@csrf @method('PUT')
-        <p class="font-semibold">Update {{ $entry->period_text }} from today's figures</p>
-        <label class="block font-semibold text-on-surface-variant">Source of fund<input name="source_of_fund" list="alpha-funds" value="{{ $entry->params['source_of_fund'] ?? '' }}" placeholder="All funds" class="w-full rounded border border-outline-variant/50 bg-surface-low px-2 py-1.5 text-xs outline-none focus:border-primary mt-1"></label>
-        <label class="block font-semibold text-on-surface-variant">School TIN<input name="school_tin" value="{{ $entry->params['school_tin'] ?? '' }}" class="w-full rounded border border-outline-variant/50 bg-surface-low px-2 py-1.5 text-xs outline-none focus:border-primary mt-1"></label>
-        <label class="block font-semibold text-on-surface-variant">Signatory<input name="signatory_name" value="{{ $entry->params['signatory_name'] ?? '' }}" placeholder="School Head (default)" class="w-full rounded border border-outline-variant/50 bg-surface-low px-2 py-1.5 text-xs outline-none focus:border-primary mt-1"></label>
-        <label class="block font-semibold text-on-surface-variant">Reason<input name="reason" required class="w-full rounded border border-outline-variant/50 bg-surface-low px-2 py-1.5 text-xs outline-none focus:border-primary mt-1"></label>
-        <label class="block font-semibold text-on-surface-variant">Your password<input type="password" name="password" required autocomplete="current-password" class="w-full rounded border border-outline-variant/50 bg-surface-low px-2 py-1.5 text-xs outline-none focus:border-primary mt-1"></label>
-        <button class="w-full rounded-lg bg-primary px-3 py-2 font-semibold text-white hover:bg-primary-container">Update</button>
-    </form>
-</details>
-<details class="relative"><summary class="cursor-pointer list-none rounded border border-error/60 px-2 py-1 font-semibold text-error hover:bg-error hover:text-white [&::-webkit-details-marker]:hidden">Delete</summary>
-    <form method="POST" action="{{ route('liquidation.alphalist.destroy', $entry) }}" class="absolute right-0 top-full z-20 mt-1 w-80 space-y-2 rounded-lg border border-outline-variant/40 bg-white p-3 text-left shadow-lg">@csrf @method('DELETE')
-        <p class="font-semibold">Delete the alphalist of {{ $entry->period_text }}?</p>
-        <label class="block font-semibold text-on-surface-variant">Reason<input name="reason" required class="w-full rounded border border-outline-variant/50 bg-surface-low px-2 py-1.5 text-xs outline-none focus:border-primary mt-1"></label>
-        <label class="block font-semibold text-on-surface-variant">Your password<input type="password" name="password" required autocomplete="current-password" class="w-full rounded border border-outline-variant/50 bg-surface-low px-2 py-1.5 text-xs outline-none focus:border-primary mt-1"></label>
-        <button class="w-full rounded-lg bg-error px-3 py-2 font-semibold text-white">Delete</button>
-    </form>
-</details>
-@endif</span></div>
-            @empty
-                <p class="mt-2 text-xs text-on-surface-variant">No alphalist generated yet.</p>
-            @endforelse
-        </div>
-    </details>
+    @include('partials.alphalist-card')
 
     <details id="cl-panel" class="mt-8 overflow-hidden rounded border border-outline-variant/30 bg-white"><summary class="flex cursor-pointer list-none items-center justify-between gap-3 border-b border-outline-variant/30 p-5 [&::-webkit-details-marker]:hidden"><div><h2 class="text-lg font-semibold">Check Liquidation</h2><p class="mt-1 text-xs text-on-surface-variant">Pick a paid check and record the actual expense accounts and any payable (such as Due to BIR). The check entry (Dr Advances, Cr Cash) is not changed; approval adds Dr expense, Cr payable, Cr Advances.</p></div><span class="material-symbols-outlined shrink-0 text-[20px] text-on-surface-variant">expand_more</span></summary>
         <div class="p-5">

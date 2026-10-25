@@ -80,7 +80,7 @@ class AlphalistTest extends TestCase
         $query = ['school_id' => $school->id, 'month' => '2026-11', 'school_tin' => '449-876-374-485'];
 
         $this->actingAs($user)->get(route('liquidation.alphalist', $query))->assertOk()
-            ->assertSee('MONTHLY ALPHALIST OF PAYEES (MAP)')->assertSee('NOVEMBER 2026')->assertSee('TIN: 449-876-374-485')->assertSee('VAT STORE')->assertSee('500.00');
+            ->assertSee('PREVIEW - not saved')->assertSee('MONTHLY ALPHALIST OF PAYEES (MAP)')->assertSee('NOVEMBER 2026')->assertSee('TIN: 449-876-374-485')->assertSee('VAT STORE')->assertSee('500.00');
         $this->actingAs($other)->get(route('liquidation.alphalist', $query))->assertForbidden();
     }
 
@@ -106,13 +106,13 @@ class AlphalistTest extends TestCase
         $this->assertSame('NOVEMBER 2026', $entry->period_text);
 
         $this->actingAs($other)->delete(route('liquidation.alphalist.destroy', $entry), ['reason' => 'x', 'password' => 'password'])->assertNotFound();
+        // With a remittance DV issued it can still be updated and deleted (owner's decision 2026-10-25): the DV keeps its own amount and sources.
         $this->actingAs($user)->post(route('liquidation.alphalist.dv', [$entry, '1600PT']))->assertRedirect();
-        $this->delete(route('liquidation.alphalist.destroy', $entry), ['reason' => 'Duplicate', 'password' => 'password'])->assertSessionHas('error');
-        $this->assertSame(1, CashReportHistory::where('report', 'alphalist')->count(), 'a list a remittance DV was made from stays');
-
-        LiquidationReport::whereNotNull('remittance')->delete();
+        $this->get(route('liquidation'))->assertSee('Remittance DV already issued');
+        $this->put(route('liquidation.alphalist.update', $entry), ['source_of_fund' => 'MOOE', 'reason' => 'Signatory', 'signatory_name' => 'New Head', 'password' => 'password'])->assertRedirect(route('liquidation'));
         $this->delete(route('liquidation.alphalist.destroy', $entry), ['reason' => 'Duplicate', 'password' => 'password'])->assertRedirect(route('liquidation'));
         $this->assertSame(0, CashReportHistory::where('report', 'alphalist')->count());
+        $this->assertEquals(300, LiquidationReport::whereNotNull('remittance')->sole()->amount, 'the DV stays as it was issued');
     }
 
     public function test_every_generation_is_kept_with_one_sheet_per_list(): void
@@ -130,6 +130,7 @@ class AlphalistTest extends TestCase
         $this->assertSame('NOVEMBER 2026', $entry->period_text, 'the returned period is the month after the payments');
         $this->assertEquals(360, $entry->total_payments);
         $html = $this->get(route('liquidation.alphalist.history', $entry))->assertOk()->getContent();
+        $this->assertStringNotContainsString('PREVIEW - not saved', $html, 'a kept copy is not a preview');
         $this->assertSame(2, substr_count($html, '<section class="doc-page"'), 'the 1600PT and 0619E lists are separate sheets');
         $this->get(route('liquidation'))->assertSee(route('liquidation.alphalist.history', $entry), false);
         $this->actingAs($other)->get(route('liquidation.alphalist.history', $entry))->assertNotFound();
