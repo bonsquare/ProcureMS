@@ -66,7 +66,7 @@
             <div class="sign"><div class="name">{{ $signatoryName ?: ' ' }}&nbsp;</div><div>{{ $signatoryPosition }}</div></div>
         </section>
     @empty
-        <div class="doc-page"><p>No withholding tax was paid in {{ $period }}{{ $fund !== '' ? ' for '.$fund : '' }}.</p></div>
+        <div class="doc-page"><p>No withholding tax was paid in {{ mb_strtoupper($month->copy()->subMonthNoOverflow()->format('F Y')) }} (returned period {{ $period }}){{ $fund !== '' ? ' for '.$fund : '' }}.</p></div>
     @endforelse
 </main>
 </body>

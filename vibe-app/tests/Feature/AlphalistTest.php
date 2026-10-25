@@ -73,10 +73,10 @@ class AlphalistTest extends TestCase
         [, $other] = $this->tenant('B');
         $this->supplier($school, 'Vat Store', 'vat', 5, 1);
         $this->paid($school, 'Vat Store', 11200, '2026-10-05');
-        $query = ['school_id' => $school->id, 'month' => '2026-10', 'school_tin' => '449-876-374-485'];
+        $query = ['school_id' => $school->id, 'month' => '2026-11', 'school_tin' => '449-876-374-485'];
 
         $this->actingAs($user)->get(route('liquidation.alphalist', $query))->assertOk()
-            ->assertSee('MONTHLY ALPHALIST OF PAYEES (MAP)')->assertSee('OCTOBER 2026')->assertSee('TIN: 449-876-374-485')->assertSee('VAT STORE')->assertSee('500.00');
+            ->assertSee('MONTHLY ALPHALIST OF PAYEES (MAP)')->assertSee('NOVEMBER 2026')->assertSee('TIN: 449-876-374-485')->assertSee('VAT STORE')->assertSee('500.00');
         $this->actingAs($other)->get(route('liquidation.alphalist', $query))->assertForbidden();
     }
 
@@ -86,14 +86,14 @@ class AlphalistTest extends TestCase
         [, $other] = $this->tenant('B');
         $this->supplier($school, 'Plain Store', 'non_vat', 3, 1);
         $this->paid($school, 'Plain Store', 9000, '2026-10-07', 'direct');
-        $query = ['school_id' => $school->id, 'month' => '2026-10', 'source_of_fund' => 'MOOE'];
+        $query = ['school_id' => $school->id, 'month' => '2026-11', 'source_of_fund' => 'MOOE'];
 
         $this->actingAs($user)->post(route('liquidation.alphalist.store'), $query)->assertRedirect();
         $this->post(route('liquidation.alphalist.store'), $query)->assertRedirect();
         $this->assertSame(2, CashReportHistory::where('report', 'alphalist')->count());
 
         $entry = CashReportHistory::where('report', 'alphalist')->first();
-        $this->assertSame('OCTOBER 2026', $entry->period_text);
+        $this->assertSame('NOVEMBER 2026', $entry->period_text, 'the returned period is the month after the payments');
         $this->assertEquals(360, $entry->total_payments);
         $html = $this->get(route('liquidation.alphalist.history', $entry))->assertOk()->getContent();
         $this->assertSame(2, substr_count($html, '<section class="doc-page"'), 'the 1600PT and 0619E lists are separate sheets');

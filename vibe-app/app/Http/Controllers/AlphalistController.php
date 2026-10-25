@@ -76,7 +76,8 @@ class AlphalistController extends Controller
             'schoolTin' => (string) ($data['school_tin'] ?? ''),
             'signatoryName' => (string) (($data['signatory_name'] ?? '') ?: $head?->name),
             'signatoryPosition' => (string) (($data['signatory_position'] ?? '') ?: ($head?->position ?: 'School Head')),
-            'report' => $alphalist->build($school, $month, $fund !== '' ? $fund : null),
+            // The month chosen is the returned period: it lists the tax withheld from the payments of the month before it.
+            'report' => $alphalist->build($school, $month->copy()->subMonthNoOverflow(), $fund !== '' ? $fund : null),
         ];
     }
 
