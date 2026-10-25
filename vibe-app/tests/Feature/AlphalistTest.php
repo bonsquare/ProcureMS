@@ -6,6 +6,7 @@ use App\Models\BudgetAllocation;
 use App\Models\CashReportHistory;
 use App\Models\ChartOfAccount;
 use App\Models\LiquidationReport;
+use App\Models\LiquidationReportLine;
 use App\Models\Organization;
 use App\Models\School;
 use App\Models\Subscription;
@@ -125,6 +126,11 @@ class AlphalistTest extends TestCase
         $this->chargeLastTo($school, $user, '5020503000');
         $this->paid($school, 'Imtech', 9000, '2026-10-06', 'direct');
         $this->chargeLastTo($school, $user, '5029999099');
+        // Imtech's ORS is split with a share on Advances for Operating Expenses, which is no column: the tax must still go wholly to the expense.
+        $imtech = LiquidationReport::latest('id')->first();
+        $advances = BudgetAllocation::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'fiscal_year' => 2026, 'program' => 'Program', 'source_of_fund' => 'MOOE', 'uacs_code' => '1990101000', 'particulars' => 'Advances', 'amount' => 100000, 'q1_amount' => 100000, 'q2_amount' => 0, 'q3_amount' => 0, 'q4_amount' => 0, 'created_by' => $user->id, 'budget_ref_no' => 'BA-ADV']);
+        LiquidationReportLine::create(['organization_id' => $school->organization_id, 'liquidation_report_id' => $imtech->id, 'budget_allocation_id' => $imtech->budget_allocation_id, 'line_no' => 1, 'amount' => 4500]);
+        LiquidationReportLine::create(['organization_id' => $school->organization_id, 'liquidation_report_id' => $imtech->id, 'budget_allocation_id' => $advances->id, 'line_no' => 2, 'amount' => 4500]);
         $this->actingAs($user)->post(route('liquidation.alphalist.store'), ['school_id' => $school->id, 'month' => '2026-11', 'school_tin' => '449-876-374-485'])->assertRedirect();
         $history = CashReportHistory::where('report', 'alphalist')->sole();
 
@@ -134,11 +140,17 @@ class AlphalistTest extends TestCase
         $this->assertSame('LBP Kidapawan FAO BIR School A 449-876-374-485 (1600PT)', $dv->payee);
         $this->assertEquals(301.5, $dv->amount, '3% of 1,050 and 9,000');
         $this->assertNull($dv->ors_number);
+        $this->assertSame('MOOE', $dv->source_of_fund, 'an alphalist of every fund remits for the fund of its DVs');
         $this->get(route('liquidation'))->assertSee('Create DV 0619E / 1601EQ')->assertDontSee('Create DV 1600PT');
 
         $dv->update(['dv_number' => 'DV-BIR', 'dv_date' => '2026-11-05', 'payment_mode' => 'MDS Check', 'payment_reference' => 'CHK-BIR', 'paid_at' => '2026-11-05']);
         $register = app(CashReportService::class)->build($school, Carbon::parse('2026-10-01'), Carbon::parse('2026-12-31'));
         $this->assertEquals(['5020503000' => 31.5, '5029999099' => 270.0], $register['lines']->firstWhere('check_no', 'CHK-BIR')['splits']);
+
+        // A remittance DV made before it had a fund still counts in its fund's register, with its payment.
+        $dv->update(['source_of_fund' => null]);
+        $mooe = app(CashReportService::class)->build($school, Carbon::parse('2026-10-01'), Carbon::parse('2026-12-31'), 'MOOE');
+        $this->assertEquals(301.5, $mooe['lines']->firstWhere('check_no', 'CHK-BIR')['amount']);
 
         $viewer = User::factory()->create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'role' => 'viewer']);
         $this->actingAs($viewer)->post(route('liquidation.alphalist.dv', [$history, '0619E']))->assertForbidden();

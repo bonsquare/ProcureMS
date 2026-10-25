@@ -33,6 +33,11 @@ class CashReportService
             ->map(fn (LiquidationReport $report) => $this->paidLine($report, $strict));
         // A payment to the BIR with no breakdown of its own is charged to the expense accounts of the withheld taxes it remits, oldest first.
         $paidLines = $this->allocateRemittances($paidLines);
+        // A remittance made from an alphalist of every fund has no fund of its own: it is of the fund of the DVs it remits, so it counts in that fund's register.
+        $fundOf = $paidLines->pluck('fund', 'id');
+        $paidLines = $paidLines->map(fn (array $line) => $line['fund'] === '' && ! empty($line['remittance_sources'])
+            ? ['fund' => (string) collect(array_keys($line['remittance_sources']))->map(fn ($id) => $fundOf->get((int) $id))->filter()->first()] + $line
+            : $line);
 
         $cancelledLines = CancelledCheck::query()
             ->with('liquidationReport')
@@ -255,8 +260,8 @@ class CashReportService
     private function allocateRemittances(Collection $lines): Collection
     {
         $cents = fn ($amount) => (int) round(((float) $amount) * 100);
-        // The expense columns a payment is charged to (its split, else its one account), never a liability.
-        $weightsOf = fn (array $line) => array_filter($line['splits'] !== [] ? $line['splits'] : [$line['uacs_code'] => 1], fn ($weight, $code) => (string) $code !== '' && ! str_starts_with((string) $code, '2') && $weight > 0, ARRAY_FILTER_USE_BOTH);
+        // The expense columns a payment is charged to (its split, else its one account): never a liability, cash or the advance (Advances for Operating Expenses), which are no column.
+        $weightsOf = fn (array $line) => array_filter($line['splits'] !== [] ? $line['splits'] : [$line['uacs_code'] => 1], fn ($weight, $code) => (string) $code !== '' && ! str_starts_with((string) $code, '2') && ! str_starts_with((string) $code, '101') && (string) $code !== '1990101000' && $weight > 0, ARRAY_FILTER_USE_BOTH);
         $result = $lines->all();
 
         // A remittance made from an alphalist knows the DV each part of its tax was withheld from: each part goes to that DV's columns, and those taxes leave the queue below.

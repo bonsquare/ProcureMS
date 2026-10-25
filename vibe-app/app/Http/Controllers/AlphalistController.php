@@ -93,7 +93,8 @@ class AlphalistController extends Controller
             'payee' => $payee,
             'purpose' => "Remittance of {$label} withholding tax for the returned period {$history->period_text}",
             'amount' => $block['total'],
-            'source_of_fund' => $history->source_of_fund,
+            // An alphalist of every fund remits the tax of the fund of its DVs.
+            'source_of_fund' => $history->source_of_fund ?: LiquidationReport::whereIn('id', array_keys($block['sources']))->pluck('source_of_fund')->filter()->first(),
             'remittance' => ['history_id' => $history->id, 'form' => $form, 'period' => $history->period_text, 'sources' => $block['sources']],
             'submitted_by' => $request->user()->id,
             'report_number' => app(DocumentNumberService::class)->next((int) $school->organization_id, 'liquidation_report', 'LR'),
