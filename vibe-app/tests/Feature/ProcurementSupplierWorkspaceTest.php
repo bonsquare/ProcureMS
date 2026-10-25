@@ -59,7 +59,7 @@ class ProcurementSupplierWorkspaceTest extends TestCase
         $s = School::create(['organization_id' => $o->id, 'code' => 'RAT', 'name' => 'Rate School', 'status' => 'active']);
         Subscription::create(['organization_id' => $o->id, 'school_id' => $s->id, 'plan' => 'professional', 'billing_cycle' => 'monthly', 'amount' => 0, 'payment_status' => 'paid', 'starts_at' => now()->subDay(), 'ends_at' => now()->addMonth()]);
         $u = User::factory()->create(['organization_id' => $o->id, 'school_id' => $s->id, 'role' => 'school_admin']);
-        $this->actingAs($u)->get(route('suppliers.create'))->assertOk()->assertSee('1600VT rate (%)')->assertSee('0619E rate (%)')->assertSee('Total tax rate (%)');
+        $this->actingAs($u)->get(route('suppliers.create'))->assertOk()->assertSee('1600VT rate (%)')->assertSee('0619E / 1601EQ rate (%)')->assertSee('Total tax rate (%)');
 
         $base = ['has_company_owner' => 0, 'tin' => '123-456-789-000', 'bir_registration_no' => 'BIR-1', 'address_street' => '1 St.', 'address_barangay' => 'Poblacion', 'address_city' => 'City', 'address_province' => 'Province', 'address_zip' => '9400', 'tax_rate' => 0];
         $this->post(route('suppliers.store'), $base + ['business_name' => 'Vat Co', 'tax_type' => 'vat', 'tax_rate_1600' => 5, 'tax_rate_0619e' => 1])->assertRedirect(route('suppliers'));
