@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\BudgetAllocation;
 use App\Models\CashReportHistory;
+use App\Models\ChartOfAccount;
 use App\Models\LiquidationReport;
 use App\Models\Organization;
 use App\Models\School;
@@ -10,6 +12,7 @@ use App\Models\Subscription;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Services\AlphalistService;
+use App\Services\CashReportService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -99,5 +102,45 @@ class AlphalistTest extends TestCase
         $this->assertSame(2, substr_count($html, '<section class="doc-page"'), 'the 1600PT and 0619E lists are separate sheets');
         $this->get(route('liquidation'))->assertSee(route('liquidation.alphalist.history', $entry), false);
         $this->actingAs($other)->get(route('liquidation.alphalist.history', $entry))->assertNotFound();
+    }
+
+    /** Charges the last paid DV to an expense account of the chart (its ORS budget line). */
+    private function chargeLastTo(School $school, User $user, string $code): void
+    {
+        $account = ChartOfAccount::create(['organization_id' => $school->organization_id, 'code' => $code, 'title' => 'Account '.$code, 'category' => 'MOOE']);
+        $line = BudgetAllocation::create([
+            'organization_id' => $school->organization_id, 'school_id' => $school->id, 'fiscal_year' => 2026, 'program' => 'Program', 'source_of_fund' => 'MOOE', 'uacs_code' => $code, 'chart_of_account_id' => $account->id,
+            'particulars' => 'Line', 'amount' => 100000, 'q1_amount' => 100000, 'q2_amount' => 0, 'q3_amount' => 0, 'q4_amount' => 0, 'start_date' => '2026-01-01', 'end_date' => '2026-12-31', 'created_by' => $user->id, 'budget_ref_no' => 'BA-'.$code,
+        ]);
+        LiquidationReport::latest('id')->first()->update(['budget_allocation_id' => $line->id]);
+    }
+
+    public function test_a_remittance_dv_made_from_the_alphalist_is_charged_to_the_columns_of_the_payments_it_remits(): void
+    {
+        [$school, $user] = $this->tenant('A');
+        $school->update(['bank_name' => 'LBP Kidapawan']);
+        $this->supplier($school, 'Rmr Software', 'non_vat', 3, 2);
+        $this->supplier($school, 'Imtech', 'non_vat', 3, 2);
+        $this->paid($school, 'Rmr Software', 1050, '2026-10-05', 'direct');
+        $this->chargeLastTo($school, $user, '5020503000');
+        $this->paid($school, 'Imtech', 9000, '2026-10-06', 'direct');
+        $this->chargeLastTo($school, $user, '5029999099');
+        $this->actingAs($user)->post(route('liquidation.alphalist.store'), ['school_id' => $school->id, 'month' => '2026-11', 'school_tin' => '449-876-374-485'])->assertRedirect();
+        $history = CashReportHistory::where('report', 'alphalist')->sole();
+
+        $this->post(route('liquidation.alphalist.dv', [$history, '1600PT']))->assertRedirect();
+        $this->post(route('liquidation.alphalist.dv', [$history, '1600PT']))->assertRedirect();
+        $dv = LiquidationReport::whereNotNull('remittance')->sole();
+        $this->assertSame('LBP Kidapawan FAO BIR School A 449-876-374-485 (1600PT)', $dv->payee);
+        $this->assertEquals(301.5, $dv->amount, '3% of 1,050 and 9,000');
+        $this->assertNull($dv->ors_number);
+        $this->get(route('liquidation'))->assertSee('Create DV 0619E / 1601EQ')->assertDontSee('Create DV 1600PT');
+
+        $dv->update(['dv_number' => 'DV-BIR', 'dv_date' => '2026-11-05', 'payment_mode' => 'MDS Check', 'payment_reference' => 'CHK-BIR', 'paid_at' => '2026-11-05']);
+        $register = app(CashReportService::class)->build($school, Carbon::parse('2026-10-01'), Carbon::parse('2026-12-31'));
+        $this->assertEquals(['5020503000' => 31.5, '5029999099' => 270.0], $register['lines']->firstWhere('check_no', 'CHK-BIR')['splits']);
+
+        $viewer = User::factory()->create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'role' => 'viewer']);
+        $this->actingAs($viewer)->post(route('liquidation.alphalist.dv', [$history, '0619E']))->assertForbidden();
     }
 }

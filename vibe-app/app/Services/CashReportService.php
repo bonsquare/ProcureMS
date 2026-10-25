@@ -182,6 +182,8 @@ class CashReportService
     {
         $liquidation = $report->checkLiquidation;
         $approved = $liquidation?->isApproved() ? $liquidation : null;
+        // A check of a school that liquidates waits for its liquidation; a remittance to the BIR made from an alphalist is not an advance and does not.
+        $held = $strict && ! $approved && ! $report->remittance;
         $account = $report->chargedLine()?->account;
         $code = (string) ($account?->code ?? $report->chargedLine()?->uacs_code ?? '');
         $title = (string) ($account?->title ?? '');
@@ -201,8 +203,9 @@ class CashReportService
             'fund' => trim((string) $report->source_of_fund),
             'responsibility_center' => (string) $report->responsibility_center_code,
             'payee' => (string) $report->payee,
-            'uacs_code' => $strict && ! $approved ? '' : $code,
-            'nature' => $strict && ! $approved ? '' : $title,
+            'id' => $report->id,
+            'uacs_code' => $held ? '' : $code,
+            'nature' => $held ? '' : $title,
             // The cash paid out is the DV amount less its "Less:" deductions (withholding tax and the like, kept in Due to BIR); the gross is what the UACS columns charge.
             'amount' => round((float) $report->amount - $this->deductionsOf($report), 2),
             'gross' => round((float) $report->amount, 2),
@@ -212,9 +215,11 @@ class CashReportService
             'cancelled' => false,
             // The code => amount of each UACS code when the ORS is charged to more than one (the register divides the payment among their columns).
             // An approved liquidation decides the expense accounts; a check not yet liquidated of a school that liquidates is pending and guessed into no column.
-            'splits' => $approved ? $approved->lines->reject(fn ($line) => CheckLiquidationService::isPayableAccount($line->account_code))->groupBy('account_code')->map(fn ($group) => round((float) $group->sum('amount'), 2))->all() : ($strict ? [] : $this->splitsOf($report)),
+            'splits' => $approved ? $approved->lines->reject(fn ($line) => CheckLiquidationService::isPayableAccount($line->account_code))->groupBy('account_code')->map(fn ($group) => round((float) $group->sum('amount'), 2))->all() : ($held ? [] : $this->splitsOf($report)),
             'liquidation' => $liquidation?->status ?? 'none',
-            'pending' => $strict && ! $approved,
+            'pending' => $held,
+            // The DV each part of a remittance made from an alphalist was withheld from (report id => tax): the register charges it to their columns.
+            'remittance_sources' => $report->remittance['sources'] ?? null,
             'refund' => $approved ? round((float) $approved->refund_amount, 2) : 0.0,
         ];
     }
@@ -250,13 +255,39 @@ class CashReportService
     private function allocateRemittances(Collection $lines): Collection
     {
         $cents = fn ($amount) => (int) round(((float) $amount) * 100);
+        // The expense columns a payment is charged to (its split, else its one account), never a liability.
+        $weightsOf = fn (array $line) => array_filter($line['splits'] !== [] ? $line['splits'] : [$line['uacs_code'] => 1], fn ($weight, $code) => (string) $code !== '' && ! str_starts_with((string) $code, '2') && $weight > 0, ARRAY_FILTER_USE_BOTH);
         $result = $lines->all();
+
+        // A remittance made from an alphalist knows the DV each part of its tax was withheld from: each part goes to that DV's columns, and those taxes leave the queue below.
+        $byId = $lines->keyBy('id');
+        $remitted = [];
+        foreach ($result as $key => $line) {
+            if (empty($line['remittance_sources'])) {
+                continue;
+            }
+            $pieces = [];
+            foreach ($line['remittance_sources'] as $id => $tax) {
+                $remitted[(int) $id] = true;
+                $weights = $byId->has((int) $id) ? $weightsOf($byId->get((int) $id)) : [];
+                $total = array_sum($weights);
+                $last = array_key_last($weights);
+                $given = 0;
+                foreach ($weights as $code => $weight) {
+                    $part = $code === $last ? $cents($tax) - $given : (int) round($cents($tax) * $weight / $total);
+                    $given += $part;
+                    $pieces[$code] = ($pieces[$code] ?? 0) + $part;
+                }
+            }
+            $result[$key]['splits'] = array_map(fn ($amount) => round($amount / 100, 2), $pieces);
+        }
+
         $queue = [];
         $order = $lines->sortBy(fn (array $line) => $line['date']->format('Ymd').'|'.$line['check_no'], SORT_NATURAL)->keys();
         foreach ($order as $key) {
             $line = $result[$key];
-            if ($line['withheld'] > 0) {
-                $weights = array_filter($line['splits'] !== [] ? $line['splits'] : [$line['uacs_code'] => 1], fn ($weight, $code) => (string) $code !== '' && ! str_starts_with((string) $code, '2') && $weight > 0, ARRAY_FILTER_USE_BOTH);
+            if ($line['withheld'] > 0 && ! isset($remitted[$line['id']])) {
+                $weights = $weightsOf($line);
                 if ($weights !== []) {
                     $queue[] = ['left' => $cents($line['withheld']), 'weights' => $weights];
                 }

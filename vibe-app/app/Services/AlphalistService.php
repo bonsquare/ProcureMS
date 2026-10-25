@@ -18,7 +18,7 @@ class AlphalistService
     public const FORMS = ['1600PT' => '1600PT', '0619E' => '0619E / 1601EQ', '1600VT' => '1600VT'];
 
     /**
-     * @return array{blocks: array<string, Collection<int, array{tin: string, payee: string, atc: string, nature: string, base: float, rate: float, withheld: float}>>, missing: array<int, string>}
+     * @return array{blocks: array<string, Collection<int, array{tin: string, payee: string, atc: string, nature: string, base: float, rate: float, withheld: float, sources: array<int, float>}>>, missing: array<int, string>}
      */
     public function build(School $school, CarbonInterface $month, ?string $fund = null): array
     {
@@ -55,8 +55,9 @@ class AlphalistService
                 }
                 // One row per payee, code and rate in a list: the payments of the month are added up, as in the template.
                 $key = $form.'|'.$supplier->id.'|'.$atc.'|'.$rate.'|'.$nature;
-                $rows[$key] ??= ['form' => $form, 'tin' => (string) $supplier->tin, 'payee' => mb_strtoupper((string) $supplier->business_name), 'atc' => $atc, 'nature' => $nature, 'base' => 0.0, 'rate' => $rate];
+                $rows[$key] ??= ['form' => $form, 'tin' => (string) $supplier->tin, 'payee' => mb_strtoupper((string) $supplier->business_name), 'atc' => $atc, 'nature' => $nature, 'base' => 0.0, 'rate' => $rate, 'sources' => []];
                 $rows[$key]['base'] += $base;
+                $rows[$key]['sources'][$report->id] = ($rows[$key]['sources'][$report->id] ?? 0) + $base;
             }
         }
 
@@ -65,6 +66,14 @@ class AlphalistService
             $blocks[$form] = collect($rows)->where('form', $form)->map(function (array $row) {
                 $row['base'] = round($row['base'], 2);
                 $row['withheld'] = round($row['base'] * $row['rate'] / 100, 2);
+                // The tax of the row by the DV it was withheld from (report id => tax), in cents so it adds up to the row: the register charges the remittance by it.
+                $left = (int) round($row['withheld'] * 100);
+                $last = array_key_last($row['sources']);
+                foreach ($row['sources'] as $id => $base) {
+                    $cents = $id === $last ? $left : (int) round($row['withheld'] * 100 * $base / max($row['base'], 0.01));
+                    $left -= $cents;
+                    $row['sources'][$id] = $cents / 100;
+                }
 
                 return $row;
             })->sortBy('payee')->values();
