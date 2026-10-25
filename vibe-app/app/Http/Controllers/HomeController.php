@@ -597,6 +597,8 @@ class HomeController extends Controller
             'tin' => ['required', 'string', 'max:100'],
             'tax_type' => ['required', Rule::in(['vat', 'non_vat', 'vat_exempt'])],
             'tax_rate' => ['required', 'numeric', 'min:0', 'max:100'],
+            'tax_rate_1600' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'tax_rate_0619e' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'business_permit_no' => ['nullable', 'string', 'max:150'],
             'philgeps_no' => ['nullable', 'string', 'max:150'],
             'notes' => ['nullable', 'string', 'max:2000'],
@@ -639,6 +641,13 @@ class HomeController extends Controller
             unset($data['school_id']);
         }
         $this->authorizeSchoolAccess(isset($data['school_id']) ? (int) $data['school_id'] : null);
+
+        // The total tax rate is the 1600VT (VAT) or 1600PT (Non-VAT) rate plus the 0619E rate; a VAT exempt supplier has neither.
+        if ($data['tax_type'] === 'vat_exempt') {
+            $data['tax_rate_1600'] = $data['tax_rate_0619e'] = null;
+        } elseif (($data['tax_rate_1600'] ?? null) !== null || ($data['tax_rate_0619e'] ?? null) !== null) {
+            $data['tax_rate'] = min(100, round((float) ($data['tax_rate_1600'] ?? 0) + (float) ($data['tax_rate_0619e'] ?? 0), 2));
+        }
 
         $data['has_company_owner'] = $request->boolean('has_company_owner');
         if (! $data['has_company_owner']) {

@@ -52,4 +52,27 @@ class ProcurementSupplierWorkspaceTest extends TestCase
         $this->assertNull($supplier->fresh()->owner_given_name);
         $this->assertSame('The Manager', $supplier->fresh()->addressee);
     }
+
+    public function test_the_total_tax_rate_is_the_two_withholding_rates_added_up(): void
+    {
+        $o = Organization::create(['name' => 'Rate Org', 'slug' => 'supplier-rate', 'status' => 'active']);
+        $s = School::create(['organization_id' => $o->id, 'code' => 'RAT', 'name' => 'Rate School', 'status' => 'active']);
+        Subscription::create(['organization_id' => $o->id, 'school_id' => $s->id, 'plan' => 'professional', 'billing_cycle' => 'monthly', 'amount' => 0, 'payment_status' => 'paid', 'starts_at' => now()->subDay(), 'ends_at' => now()->addMonth()]);
+        $u = User::factory()->create(['organization_id' => $o->id, 'school_id' => $s->id, 'role' => 'school_admin']);
+        $this->actingAs($u)->get(route('suppliers.create'))->assertOk()->assertSee('1600VT rate (%)')->assertSee('0619E rate (%)')->assertSee('Total tax rate (%)');
+
+        $base = ['has_company_owner' => 0, 'tin' => '123-456-789-000', 'bir_registration_no' => 'BIR-1', 'address_street' => '1 St.', 'address_barangay' => 'Poblacion', 'address_city' => 'City', 'address_province' => 'Province', 'address_zip' => '9400', 'tax_rate' => 0];
+        $this->post(route('suppliers.store'), $base + ['business_name' => 'Vat Co', 'tax_type' => 'vat', 'tax_rate_1600' => 5, 'tax_rate_0619e' => 1])->assertRedirect(route('suppliers'));
+        $this->post(route('suppliers.store'), $base + ['business_name' => 'Plain Co', 'tax_type' => 'non_vat', 'tax_rate_1600' => 3, 'tax_rate_0619e' => 1])->assertRedirect(route('suppliers'));
+        $this->post(route('suppliers.store'), $base + ['business_name' => 'Exempt Co', 'tax_type' => 'vat_exempt', 'tax_rate_1600' => 3, 'tax_rate_0619e' => 1])->assertRedirect(route('suppliers'));
+
+        $vat = Supplier::where('business_name', 'Vat Co')->firstOrFail();
+        $this->assertEquals(6, $vat->tax_rate);
+        $this->assertEquals(5, $vat->tax_rate_1600);
+        $this->assertEquals(4, Supplier::where('business_name', 'Plain Co')->firstOrFail()->tax_rate);
+        $exempt = Supplier::where('business_name', 'Exempt Co')->firstOrFail();
+        $this->assertEquals(0, $exempt->tax_rate);
+        $this->assertNull($exempt->tax_rate_1600);
+        $this->get(route('suppliers.edit', $vat))->assertOk()->assertSee('1600VT rate (%)');
+    }
 }

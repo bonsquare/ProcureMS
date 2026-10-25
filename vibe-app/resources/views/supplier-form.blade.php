@@ -68,7 +68,9 @@
         <div class="mt-3 grid gap-3 sm:grid-cols-2">
             <label class="block text-xs font-bold">TIN <span class="text-error" aria-hidden="true">*</span><input name="tin" required value="{{ $value('tin') }}" placeholder="000-000-000-000" class="{{ $input }}">{!! $field('tin') !!}</label>
             <label class="block text-xs font-bold">Tax type <span class="text-error" aria-hidden="true">*</span><select name="tax_type" required id="tax_type" class="{{ $input }}"><option value="vat" @selected($value('tax_type', 'vat') === 'vat')>VAT</option><option value="non_vat" @selected($value('tax_type') === 'non_vat')>Non-VAT</option><option value="vat_exempt" @selected($value('tax_type') === 'vat_exempt')>VAT exempt</option></select>{!! $field('tax_type') !!}</label>
-            <label class="block text-xs font-bold">Tax rate (%) <span class="text-error" aria-hidden="true">*</span><input type="number" step="0.01" min="0" max="100" name="tax_rate" required id="tax_rate" value="{{ $value('tax_rate') }}" placeholder="12 for VAT" class="{{ $input }}">{!! $field('tax_rate') !!}</label>
+            <label class="block text-xs font-bold" data-tax-part><span id="tax_rate_1600_label">{{ $value('tax_type', 'vat') === 'non_vat' ? '1600PT rate (%)' : '1600VT rate (%)' }}</span><input type="number" step="0.01" min="0" max="100" name="tax_rate_1600" id="tax_rate_1600" value="{{ $value('tax_rate_1600') }}" class="{{ $input }}">{!! $field('tax_rate_1600') !!}</label>
+            <label class="block text-xs font-bold" data-tax-part>0619E rate (%)<input type="number" step="0.01" min="0" max="100" name="tax_rate_0619e" id="tax_rate_0619e" value="{{ $value('tax_rate_0619e') }}" class="{{ $input }}">{!! $field('tax_rate_0619e') !!}</label>
+            <label class="block text-xs font-bold">Total tax rate (%) <span class="text-error" aria-hidden="true">*</span><input type="number" step="0.01" min="0" max="100" name="tax_rate" required id="tax_rate" value="{{ $value('tax_rate') }}" class="{{ $input }}">{!! $field('tax_rate') !!}</label>
             <label class="block text-xs font-bold">BIR Certificate of Registration No.<input name="bir_registration_no" value="{{ $value('bir_registration_no') }}" class="{{ $input }}"></label>
         </div>
     </section>
@@ -124,7 +126,20 @@
         addressParts.forEach((el) => el.addEventListener('input', fillAddress));
         if (!fullAddress.value.trim()) fillAddress();
         const tax = document.getElementById('tax_type'); const rate = document.getElementById('tax_rate');
-        tax.addEventListener('change', () => { if (tax.value === 'vat' && !rate.value) rate.value = 12; if (tax.value !== 'vat') rate.value = 0; });
+        // VAT: 1600VT + 0619E; Non-VAT: 1600PT + 0619E; the two rates add up to the total tax rate. VAT exempt has no rates.
+        const partA = document.getElementById('tax_rate_1600'); const partB = document.getElementById('tax_rate_0619e'); const partLabel = document.getElementById('tax_rate_1600_label');
+        const parts = document.querySelectorAll('[data-tax-part]');
+        const total = () => { if (partA.value !== '' || partB.value !== '') rate.value = Math.min(100, Math.round(((parseFloat(partA.value) || 0) + (parseFloat(partB.value) || 0)) * 100) / 100); };
+        const syncTax = (changed) => {
+            const exempt = tax.value === 'vat_exempt';
+            partLabel.textContent = tax.value === 'non_vat' ? '1600PT rate (%)' : '1600VT rate (%)';
+            parts.forEach((el) => { el.style.visibility = exempt ? 'hidden' : 'visible'; });
+            rate.readOnly = !exempt && (partA.value !== '' || partB.value !== '');
+            if (exempt && changed) { partA.value = ''; partB.value = ''; rate.value = 0; }
+        };
+        tax.addEventListener('change', () => syncTax(true));
+        [partA, partB].forEach((el) => el.addEventListener('input', () => { total(); syncTax(false); }));
+        syncTax(false);
     })();
 </script>
 </div>
