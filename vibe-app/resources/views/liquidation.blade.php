@@ -50,7 +50,7 @@
     </details>
 
     <details class="mt-8 overflow-hidden rounded border border-outline-variant/30 bg-white"><summary class="flex cursor-pointer list-none items-center justify-between gap-3 border-b border-outline-variant/30 p-5 [&::-webkit-details-marker]:hidden"><div><h2 class="text-lg font-semibold">Alphalist - Tax Remittance</h2><p class="mt-1 text-xs text-on-surface-variant">Monthly Alphalist of Payees for the 1600PT, 0619E / 1601EQ and 1600VT remittances, from the withholding tax of the DVs paid in the month.</p></div><span class="material-symbols-outlined shrink-0 text-[20px] text-on-surface-variant">expand_more</span></summary>
-        <form method="GET" action="{{ route('liquidation.alphalist') }}" target="_blank" class="grid grid-cols-1 items-end gap-4 p-5 md:grid-cols-6">
+        <form method="POST" action="{{ route('liquidation.alphalist.store') }}" target="_blank" class="grid grid-cols-1 items-end gap-4 p-5 md:grid-cols-6">@csrf
             @php $alphaLabel = 'mb-1 block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant'; $alphaBox = 'w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2 text-sm outline-none focus:border-primary'; @endphp
             <label class="{{ $alphaLabel }}">School<select name="school_id" required class="{{ $alphaBox }} mt-1 normal-case tracking-normal">@foreach($schools as $school)<option value="{{ $school->id }}" @selected((string) $selectedSchoolId === (string) $school->id)>{{ $school->name }}</option>@endforeach</select></label>
             <label class="{{ $alphaLabel }}">Month<input type="month" name="month" required value="{{ now()->format('Y-m') }}" class="{{ $alphaBox }} mt-1 normal-case tracking-normal"></label>
@@ -59,6 +59,15 @@
             <label class="{{ $alphaLabel }}">Signatory<input name="signatory_name" placeholder="School Head (default)" class="{{ $alphaBox }} mt-1 normal-case tracking-normal"></label>
             <button class="mb-1 h-[38px] rounded-lg bg-primary px-4 text-xs font-semibold text-white hover:bg-primary-container">Open Alphalist</button>
         </form>
+        @php $alphaHistory = \App\Models\CashReportHistory::with('generator', 'school')->where('report', 'alphalist')->whereIn('school_id', $schools->pluck('id'))->latest()->limit(30)->get(); @endphp
+        <div class="border-t border-outline-variant/30 px-5 pb-5 pt-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">History</h3>
+            @forelse($alphaHistory as $entry)
+                <div class="mt-2 flex flex-wrap items-center justify-between gap-2 rounded bg-surface-low px-3 py-2 text-xs"><span><span class="font-semibold">{{ $entry->period_text }}</span>@if($entry->source_of_fund) · {{ $entry->source_of_fund }}@endif · {{ $entry->school?->name }} · Tax withheld ₱{{ number_format((float) $entry->total_payments, 2) }} · {{ $entry->created_at->format('M d, Y g:i A') }}@if($entry->generator) · {{ $entry->generator->name }}@endif</span><a href="{{ route('liquidation.alphalist.history', $entry) }}" target="_blank" rel="noopener" class="font-semibold text-primary hover:underline">Open</a></div>
+            @empty
+                <p class="mt-2 text-xs text-on-surface-variant">No alphalist generated yet.</p>
+            @endforelse
+        </div>
     </details>
 
     <details id="cl-panel" class="mt-8 overflow-hidden rounded border border-outline-variant/30 bg-white"><summary class="flex cursor-pointer list-none items-center justify-between gap-3 border-b border-outline-variant/30 p-5 [&::-webkit-details-marker]:hidden"><div><h2 class="text-lg font-semibold">Check Liquidation</h2><p class="mt-1 text-xs text-on-surface-variant">Pick a paid check and record the actual expense accounts and any payable (such as Due to BIR). The check entry (Dr Advances, Cr Cash) is not changed; approval adds Dr expense, Cr payable, Cr Advances.</p></div><span class="material-symbols-outlined shrink-0 text-[20px] text-on-surface-variant">expand_more</span></summary>

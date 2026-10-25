@@ -7,8 +7,6 @@
 @include('partials.print-clean')
 <style>
     body { margin: 0; background: #fff; color: #111; font-family: Arial, Helvetica, sans-serif; font-size: 11px; }
-    .map { break-after: page; page-break-after: always; }
-    .map:last-of-type { break-after: auto; page-break-after: auto; }
     .map-head { text-align: center; line-height: 1.45; }
     .map-head .title { margin-top: 10px; font-weight: bold; font-size: 13px; }
     .map-head .tin { text-align: left; margin: 6px 0 4px 22%; font-weight: bold; }
@@ -33,13 +31,14 @@
 
 @include('partials.official-toolbar', ['closeUrl' => route('liquidation'), 'context' => 'Alphalist - Tax Remittance · '.$period])
 
-<main class="paper" data-official-page data-paper="longbond" data-orientation="landscape" data-margin="10">
-    @if($report['missing'] !== [])
-        <div class="missing no-print">Left out: the payee has no supplier in the Supplier Manager, or its 1600 and 0619E rates are not entered yet: {{ implode('; ', $report['missing']) }}.</div>
-    @endif
+@if($report['missing'] !== [])
+    <div class="missing no-print">Left out: the payee has no supplier in the Supplier Manager, or its 1600 and 0619E rates are not entered yet: {{ implode('; ', $report['missing']) }}.</div>
+@endif
+{{-- One sheet of paper per BIR form. --}}
+<main class="paper" data-official-page data-sheets data-paper="longbond" data-orientation="landscape" data-margin="10">
 
     @forelse($blocks as $form => $rows)
-        <section class="map" data-form="{{ $form }}">
+        <section class="doc-page" data-form="{{ $form }}">
             <div class="map-head">
                 <div>{{ $department }}</div>
                 <div>{{ $division }}</div>
@@ -67,7 +66,7 @@
             <div class="sign"><div class="name">{{ $signatoryName ?: ' ' }}&nbsp;</div><div>{{ $signatoryPosition }}</div></div>
         </section>
     @empty
-        <p>No withholding tax was paid in {{ $period }}{{ $fund !== '' ? ' for '.$fund : '' }}.</p>
+        <div class="doc-page"><p>No withholding tax was paid in {{ $period }}{{ $fund !== '' ? ' for '.$fund : '' }}.</p></div>
     @endforelse
 </main>
 </body>

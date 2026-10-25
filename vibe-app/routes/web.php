@@ -88,6 +88,8 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::post('/liquidation/checks/{liquidationReport}/approve', [CheckLiquidationController::class, 'approve'])->whereNumber('liquidationReport')->middleware('permission:liquidation.approve')->name('check-liquidation.approve');
     Route::post('/liquidation/checks/{liquidationReport}/reopen', [CheckLiquidationController::class, 'reopen'])->whereNumber('liquidationReport')->middleware('permission:liquidation.approve')->name('check-liquidation.reopen');
     Route::get('/liquidation/alphalist', AlphalistController::class)->middleware('permission:liquidation.view')->name('liquidation.alphalist');
+    Route::post('/liquidation/alphalist', [AlphalistController::class, 'store'])->middleware('permission:liquidation.view')->name('liquidation.alphalist.store');
+    Route::get('/liquidation/alphalist/history/{history}', [AlphalistController::class, 'show'])->middleware('permission:liquidation.view')->whereNumber('history')->name('liquidation.alphalist.history');
     Route::post('/liquidation/preview', [HomeController::class, 'previewOrs'])->middleware('permission:liquidation.create')->name('liquidation.preview');
     Route::get('/liquidation/{liquidationReport}/print', [HomeController::class, 'printOrs'])->name('liquidation.print');
     Route::get('/liquidation/{liquidationReport}/history', [FinanceController::class, 'history'])->whereNumber('liquidationReport')->name('liquidation.history');

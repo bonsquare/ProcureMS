@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\CashReportHistory;
 use App\Models\LiquidationReport;
 use App\Models\Organization;
 use App\Models\School;
@@ -77,5 +78,26 @@ class AlphalistTest extends TestCase
         $this->actingAs($user)->get(route('liquidation.alphalist', $query))->assertOk()
             ->assertSee('MONTHLY ALPHALIST OF PAYEES (MAP)')->assertSee('OCTOBER 2026')->assertSee('TIN: 449-876-374-485')->assertSee('VAT STORE')->assertSee('500.00');
         $this->actingAs($other)->get(route('liquidation.alphalist', $query))->assertForbidden();
+    }
+
+    public function test_every_generation_is_kept_with_one_sheet_per_list(): void
+    {
+        [$school, $user] = $this->tenant('A');
+        [, $other] = $this->tenant('B');
+        $this->supplier($school, 'Plain Store', 'non_vat', 3, 1);
+        $this->paid($school, 'Plain Store', 9000, '2026-10-07', 'direct');
+        $query = ['school_id' => $school->id, 'month' => '2026-10', 'source_of_fund' => 'MOOE'];
+
+        $this->actingAs($user)->post(route('liquidation.alphalist.store'), $query)->assertRedirect();
+        $this->post(route('liquidation.alphalist.store'), $query)->assertRedirect();
+        $this->assertSame(2, CashReportHistory::where('report', 'alphalist')->count());
+
+        $entry = CashReportHistory::where('report', 'alphalist')->first();
+        $this->assertSame('OCTOBER 2026', $entry->period_text);
+        $this->assertEquals(360, $entry->total_payments);
+        $html = $this->get(route('liquidation.alphalist.history', $entry))->assertOk()->getContent();
+        $this->assertSame(2, substr_count($html, '<section class="doc-page"'), 'the 1600PT and 0619E lists are separate sheets');
+        $this->get(route('liquidation'))->assertSee(route('liquidation.alphalist.history', $entry), false);
+        $this->actingAs($other)->get(route('liquidation.alphalist.history', $entry))->assertNotFound();
     }
 }

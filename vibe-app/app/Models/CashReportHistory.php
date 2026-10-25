@@ -20,7 +20,7 @@ class CashReportHistory extends Model
     /** The name of the kept report. */
     public function label(): string
     {
-        return ['roci' => 'Report of Checks Issued', 'checks' => 'Checks and Advices to Debit Account', 'register' => 'Cash Disbursement Register', 'bank' => 'Bank Reconciliation'][$this->report] ?? (string) $this->report;
+        return ['roci' => 'Report of Checks Issued', 'checks' => 'Checks and Advices to Debit Account', 'register' => 'Cash Disbursement Register', 'bank' => 'Bank Reconciliation', 'alphalist' => 'Alphalist - Tax Remittance'][$this->report] ?? (string) $this->report;
     }
 
     public function school()
