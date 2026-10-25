@@ -49,6 +49,90 @@
         </tbody></table></div><div class="flex flex-col justify-between gap-3 border-t border-outline-variant/20 bg-surface-low px-5 py-3 text-xs text-on-surface-variant sm:flex-row sm:items-center"><span>Showing {{ $liquidations->count() }} liquidation {{ Str::plural('record', $liquidations->count()) }}</span><span>Filtered from live records</span></div>
     </details>
 
+    <details id="cl-panel" class="mt-8 overflow-hidden rounded border border-outline-variant/30 bg-white"><summary class="flex cursor-pointer list-none items-center justify-between gap-3 border-b border-outline-variant/30 p-5 [&::-webkit-details-marker]:hidden"><div><h2 class="text-lg font-semibold">Check Liquidation</h2><p class="mt-1 text-xs text-on-surface-variant">Pick a paid check and record the actual expense accounts. The check entry (Dr Advances, Cr Cash) is not changed; approval adds Dr expense, Cr Advances.</p></div><span class="material-symbols-outlined shrink-0 text-[20px] text-on-surface-variant">expand_more</span></summary>
+        <div class="p-5">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-3"><div><label for="cl-check" class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Check number</label><input id="cl-check" list="cl-checks" autocomplete="off" placeholder="Type or pick a check number" class="w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2 text-sm outline-none focus:border-primary"><datalist id="cl-checks"></datalist></div></div>
+            <p id="cl-msg" class="mt-3 hidden rounded px-3 py-2 text-sm" role="alert"></p>
+            <div id="cl-form" class="mt-5 hidden">
+                <dl id="cl-info" class="grid grid-cols-2 gap-x-6 gap-y-2 rounded bg-surface-low p-4 text-xs md:grid-cols-4"></dl>
+                <p id="cl-source" class="mt-3 text-xs font-semibold text-primary"></p>
+                <datalist id="cl-accounts"></datalist>
+                <table class="mt-2 w-full text-left text-[13px]"><thead class="text-xs uppercase tracking-wider text-on-surface-variant"><tr><th class="py-2 pr-3 font-semibold">Expense account (UACS)</th><th class="w-44 py-2 text-right font-semibold">Amount</th><th class="w-12"></th></tr></thead><tbody id="cl-lines"></tbody></table>
+                <button type="button" id="cl-add" class="mt-2 rounded px-2 py-1 text-xs font-semibold text-primary hover:bg-primary hover:text-white">+ Add account</button>
+                <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3"><div><label for="cl-refund" class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Refunded / unspent amount</label><input id="cl-refund" type="number" step="0.01" min="0" value="0" class="w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2 text-sm outline-none focus:border-primary"></div><div><label for="cl-refund-ref" class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Refund reference (OR no.)</label><input id="cl-refund-ref" class="w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2 text-sm outline-none focus:border-primary"></div></div>
+                <p id="cl-balance" class="mt-4 text-sm font-semibold tabular-nums"></p>
+                <div class="mt-4 flex flex-wrap gap-2"><button type="button" id="cl-save" class="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-primary-container">Save draft</button>@if(auth()->user()?->hasPermission('liquidation.approve'))<button type="button" id="cl-approve" class="rounded-lg bg-secondary px-4 py-2 text-xs font-semibold text-white">Approve liquidation</button><button type="button" id="cl-reopen" class="hidden rounded-lg border border-error px-4 py-2 text-xs font-semibold text-error">Reopen</button>@endif</div>
+            </div>
+        </div>
+    </details>
+    <script>
+    (function () {
+        const $ = id => document.getElementById(id), csrf = '{{ csrf_token() }}', base = '{{ url('/liquidation/checks') }}';
+        const money = n => '₱' + Number(n || 0).toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        let checks = [], current = null, accounts = [];
+        const msg = (text, ok) => { const el = $('cl-msg'); el.textContent = text || ''; el.className = 'mt-3 rounded px-3 py-2 text-sm ' + (text ? (ok ? 'bg-secondary/10 text-secondary' : 'bg-error/10 text-error') : 'hidden'); };
+        const call = async (url, method, body) => {
+            const r = await fetch(url, {method, headers: {'Accept': 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf}, body: body ? JSON.stringify(body) : undefined});
+            const data = await r.json().catch(() => ({}));
+            if (!r.ok) { throw new Error(data.errors ? Object.values(data.errors).flat().join(' ') : (data.message || 'Something went wrong.')); }
+            return data;
+        };
+        const label = a => a.code + ' — ' + a.title;
+        const addRow = (code, amount) => {
+            const tr = document.createElement('tr'), a = accounts.find(x => x.code === code);
+            tr.innerHTML = '<td class="py-1 pr-3"><input list="cl-accounts" class="cl-acc w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2 text-sm outline-none focus:border-primary" placeholder="Type an account code or title"></td><td class="py-1"><input type="number" step="0.01" min="0" class="cl-amt w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2 text-right text-sm tabular-nums outline-none focus:border-primary"></td><td class="py-1 text-right"><button type="button" class="cl-del rounded px-2 py-1 text-xs font-semibold text-error hover:bg-error hover:text-white" aria-label="Remove account">✕</button></td>';
+            tr.querySelector('.cl-acc').value = a ? label(a) : (code || '');
+            tr.querySelector('.cl-amt').value = amount ?? '';
+            tr.querySelector('.cl-del').onclick = () => { tr.remove(); balance(); };
+            tr.querySelectorAll('input').forEach(i => i.oninput = balance);
+            $('cl-lines').appendChild(tr);
+        };
+        const rows = () => [...$('cl-lines').children].map(tr => ({account_code: tr.querySelector('.cl-acc').value.split(' — ')[0].trim(), amount: tr.querySelector('.cl-amt').value}));
+        const locked = () => current && current.status === 'approved';
+        function balance() {
+            if (!current) { return; }
+            const total = rows().reduce((s, r) => s + (parseFloat(r.amount) || 0), 0) + (parseFloat($('cl-refund').value) || 0), diff = Math.round((current.amount - total) * 100) / 100;
+            const el = $('cl-balance');
+            el.textContent = 'Expenses + refund ' + money(total) + ' of ' + money(current.amount) + (diff === 0 ? ' — balanced' : diff > 0 ? ' — ' + money(diff) + ' still to allocate' : ' — over by ' + money(-diff));
+            el.className = 'mt-4 text-sm font-semibold tabular-nums ' + (diff === 0 ? 'text-secondary' : 'text-error');
+        }
+        function render(d) {
+            current = d; msg('');
+            $('cl-form').classList.remove('hidden');
+            const info = [['Check no.', d.check_no], ['Check date', d.check_date], ['DV no.', d.dv_no], ['ORS no.', d.ors_no], ['Payee', d.payee], ['Check amount', money(d.amount)], ['Fund', d.fund], ['Responsibility center', d.responsibility_center], ['Description', d.description], ['ORS account', d.ors_account ? [d.ors_account.code, d.ors_account.title].filter(Boolean).join(' — ') : 'None'], ['Status', d.status === 'new' ? 'Not liquidated' : d.status]];
+            $('cl-info').innerHTML = '';
+            info.forEach(([k, v]) => { const w = document.createElement('div'); w.innerHTML = '<dt class="font-semibold uppercase tracking-wider text-on-surface-variant"></dt><dd class="mt-0.5 font-medium"></dd>'; w.children[0].textContent = k; w.children[1].textContent = v || '—'; $('cl-info').appendChild(w); });
+            $('cl-source').textContent = {ors_main: 'Suggested from the ORS budget account — confirm or change.', ors_split: 'Suggested from the ORS split lines — confirm or change.', needs_classification: 'Needs classification: no valid expense account on the ORS. Choose the accounts below.', saved: 'Saved liquidation (version ' + d.version + ').'}[d.source] || '';
+            $('cl-lines').innerHTML = '';
+            (d.lines.length ? d.lines : [{}]).forEach(l => addRow(l.account_code, l.amount));
+            $('cl-refund').value = d.refund || 0; $('cl-refund-ref').value = d.refund_reference || '';
+            const lock = locked();
+            $('cl-form').querySelectorAll('input').forEach(i => i.disabled = lock);
+            $('cl-add').classList.toggle('hidden', lock); $('cl-save').classList.toggle('hidden', lock);
+            if ($('cl-approve')) { $('cl-approve').classList.toggle('hidden', lock); $('cl-reopen').classList.toggle('hidden', !lock); }
+            balance();
+        }
+        const open = async id => { try { render(await call(base + '/' + id, 'GET')); } catch (e) { msg(e.message); } };
+        async function init() {
+            try {
+                checks = await call(base, 'GET'); accounts = await call(base + '/accounts', 'GET');
+                $('cl-checks').innerHTML = checks.map(c => '<option value="' + c.check_no + '">' + c.payee + ' · ' + money(c.amount) + '</option>').join('');
+                $('cl-accounts').innerHTML = accounts.map(a => '<option value="' + label(a).replace(/"/g, '&quot;') + '"></option>').join('');
+            } catch (e) { msg(e.message); }
+        }
+        $('cl-check').addEventListener('change', () => { const c = checks.find(x => x.check_no === $('cl-check').value.trim()); if (c) { open(c.id); } else { $('cl-form').classList.add('hidden'); current = null; if ($('cl-check').value.trim()) { msg('No paid check with that number is waiting for liquidation.'); } } });
+        $('cl-add').onclick = () => addRow('', '');
+        $('cl-refund').oninput = balance;
+        const payload = () => ({lines: rows().filter(r => r.account_code || r.amount), refund: parseFloat($('cl-refund').value) || 0, refund_reference: $('cl-refund-ref').value});
+        $('cl-save').onclick = async () => { try { await call(base + '/' + current.id, 'PUT', payload()); await open(current.id); msg('Draft saved.', true); } catch (e) { msg(e.message); } };
+        if ($('cl-approve')) {
+            $('cl-approve').onclick = async () => { try { await call(base + '/' + current.id, 'PUT', payload()); await call(base + '/' + current.id + '/approve', 'POST'); const id = current.id; await open(id); msg('Liquidation approved.', true); } catch (e) { msg(e.message); } };
+            $('cl-reopen').onclick = async () => { const reason = prompt('Reason for reopening this liquidation:'); if (!reason) { return; } const password = prompt('Enter your password to confirm:'); if (!password) { return; } try { await call(base + '/' + current.id + '/reopen', 'POST', {reason, password}); await open(current.id); msg('Liquidation reopened as a draft.', true); } catch (e) { msg(e.message); } };
+        }
+        init();
+    })();
+    </script>
+
     <div class="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-2"><section class="rounded border border-outline-variant/30 bg-white p-5"><div class="mb-5 flex items-center justify-between"><div><h3 class="text-lg font-semibold">Liquidation Workflow</h3><p class="mt-1 text-xs text-on-surface-variant">Liquidation records by current review stage.</p></div><span class="material-symbols-outlined text-on-surface-variant">account_tree</span></div><div class="space-y-4">@foreach($statusLabels as $statusKey => $label)@php $count=$statusCounts[$statusKey] ?? 0; $percent=max(4, ($metrics['total'] ?? 0) ? round(($count / max(1,$metrics['total'])) * 100) : 4); $tone=$statusTones[$statusKey] ?? 'primary'; @endphp<div><div class="mb-1 flex justify-between text-xs"><span>{{ $label }}</span><span class="font-semibold">{{ $count }} records</span></div><div class="h-2 rounded-full bg-surface-container"><div class="h-full rounded-full bg-{{ $tone }}" style="width: {{ $percent }}%"></div></div></div>@endforeach</div></section><section class="rounded border border-outline-variant/30 bg-white p-5"><div class="mb-5 flex items-center justify-between"><div><h3 class="text-lg font-semibold">Review Queue</h3><p class="mt-1 text-xs text-on-surface-variant">Items needing your attention.</p></div><span class="material-symbols-outlined text-on-surface-variant">fact_check</span></div><div class="space-y-2"><div class="flex items-center justify-between rounded bg-error/5 p-3"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-error">priority_high</span><div><p class="text-xs font-semibold">{{ $metrics['forReview'] ?? 0 }} records for review</p><p class="mt-1 text-xs text-on-surface-variant">Check ORS details, receipts, and supporting documents</p></div></div><a href="{{ route('liquidation', ['status'=>'for_review']) }}" class="text-xs font-semibold text-primary hover:underline">Review</a></div><div class="flex items-center justify-between rounded bg-primary/5 p-3"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-primary">upload_file</span><div><p class="text-xs font-semibold">{{ $metrics['pendingDocuments'] ?? 0 }} missing documents</p><p class="mt-1 text-xs text-on-surface-variant">Follow up with school custodians</p></div></div><a href="{{ route('liquidation', ['status'=>'pending_documents']) }}" class="text-xs font-semibold text-primary hover:underline">View</a></div><div class="flex items-center justify-between rounded bg-secondary/5 p-3"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-secondary">task_alt</span><div><p class="text-xs font-semibold">{{ $metrics['approvedThisMonth'] ?? 0 }} approved this month</p><p class="mt-1 text-xs text-on-surface-variant">Approved records are timestamped automatically</p></div></div><a href="{{ route('liquidation', ['status'=>'approved']) }}" class="text-xs font-semibold text-primary hover:underline">Open</a></div></div></section></div>
 </div></main></div>
 

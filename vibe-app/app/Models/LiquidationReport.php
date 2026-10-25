@@ -106,6 +106,12 @@ class LiquidationReport extends Model
         return $this->hasMany(DvBreakdownLine::class)->orderBy('line_no');
     }
 
+    /** The liquidation of the check (the actual expenses), if one was started. */
+    public function checkLiquidation()
+    {
+        return $this->hasOne(CheckLiquidation::class);
+    }
+
     public function cancelledChecks()
     {
         return $this->hasMany(CancelledCheck::class);

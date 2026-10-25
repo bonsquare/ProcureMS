@@ -224,6 +224,8 @@ class FinanceController extends Controller
             'password' => ['required', 'current_password'],
         ]);
 
+        abort_if($liquidationReport->checkLiquidation?->isApproved(), 422, 'This check is already liquidated. Reopen its liquidation in the Liquidation tab before cancelling the check.');
+
         $oldJournal = $liquidationReport->journalLines->map(fn ($line) => [$line->account_code, (string) $line->debit, (string) $line->credit])->all();
         $oldDeductions = $liquidationReport->dv_deductions;
         $dvNumber = $liquidationReport->dv_number;
@@ -235,6 +237,7 @@ class FinanceController extends Controller
                 'reason' => $data['reason'], 'cancelled_by' => $request->user()->id, 'cancelled_at' => now(),
             ]);
             $liquidationReport->journalLines()->delete();
+            $liquidationReport->checkLiquidation?->delete();
             $liquidationReport->breakdownLines()->delete();
             $liquidationReport->update([
                 'paid_at' => null, 'payment_reference' => null, 'payment_mode' => null, 'paid_by' => null,
