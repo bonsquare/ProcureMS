@@ -84,6 +84,37 @@ class AlphalistTest extends TestCase
         $this->actingAs($other)->get(route('liquidation.alphalist', $query))->assertForbidden();
     }
 
+    public function test_one_alphalist_per_month_that_can_be_updated_or_deleted_with_reason_and_password(): void
+    {
+        [$school, $user] = $this->tenant('A');
+        [, $other] = $this->tenant('B');
+        $this->supplier($school, 'Plain Store', 'non_vat', 3, 1);
+        $this->paid($school, 'Plain Store', 9000, '2026-10-07', 'direct');
+        $query = ['school_id' => $school->id, 'month' => '2026-11', 'source_of_fund' => 'MOOE'];
+
+        $this->actingAs($user)->post(route('liquidation.alphalist.store'), $query)->assertRedirect();
+        $this->post(route('liquidation.alphalist.store'), ['source_of_fund' => ''] + $query)->assertRedirect(route('liquidation'))->assertSessionHas('error');
+        $entry = CashReportHistory::where('report', 'alphalist')->sole();
+
+        $this->paid($school, 'Plain Store', 1000, '2026-10-20', 'direct');
+        $this->put(route('liquidation.alphalist.update', $entry), ['source_of_fund' => 'MOOE', 'school_tin' => '111-222', 'reason' => 'New payment', 'password' => 'wrong'])->assertSessionHasErrors('password');
+        $this->put(route('liquidation.alphalist.update', $entry), ['source_of_fund' => 'MOOE', 'school_tin' => '111-222', 'reason' => 'New payment', 'password' => 'password'])->assertRedirect(route('liquidation'));
+        $entry->refresh();
+        $this->assertEquals(400, $entry->total_payments, 'made again from the figures of today: 4% of 10,000');
+        $this->assertSame('111-222', $entry->params['school_tin']);
+        $this->assertArrayNotHasKey('password', $entry->params);
+        $this->assertSame('NOVEMBER 2026', $entry->period_text);
+
+        $this->actingAs($other)->delete(route('liquidation.alphalist.destroy', $entry), ['reason' => 'x', 'password' => 'password'])->assertNotFound();
+        $this->actingAs($user)->post(route('liquidation.alphalist.dv', [$entry, '1600PT']))->assertRedirect();
+        $this->delete(route('liquidation.alphalist.destroy', $entry), ['reason' => 'Duplicate', 'password' => 'password'])->assertSessionHas('error');
+        $this->assertSame(1, CashReportHistory::where('report', 'alphalist')->count(), 'a list a remittance DV was made from stays');
+
+        LiquidationReport::whereNotNull('remittance')->delete();
+        $this->delete(route('liquidation.alphalist.destroy', $entry), ['reason' => 'Duplicate', 'password' => 'password'])->assertRedirect(route('liquidation'));
+        $this->assertSame(0, CashReportHistory::where('report', 'alphalist')->count());
+    }
+
     public function test_every_generation_is_kept_with_one_sheet_per_list(): void
     {
         [$school, $user] = $this->tenant('A');
@@ -93,8 +124,7 @@ class AlphalistTest extends TestCase
         $query = ['school_id' => $school->id, 'month' => '2026-11', 'source_of_fund' => 'MOOE'];
 
         $this->actingAs($user)->post(route('liquidation.alphalist.store'), $query)->assertRedirect();
-        $this->post(route('liquidation.alphalist.store'), $query)->assertRedirect();
-        $this->assertSame(2, CashReportHistory::where('report', 'alphalist')->count());
+        $this->assertSame(1, CashReportHistory::where('report', 'alphalist')->count());
 
         $entry = CashReportHistory::where('report', 'alphalist')->first();
         $this->assertSame('NOVEMBER 2026', $entry->period_text, 'the returned period is the month after the payments');

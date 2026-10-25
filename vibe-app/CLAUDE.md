@@ -286,7 +286,7 @@ This is a Laravel 13 / PHP 8.4 school procurement, budget, accounting, cash, and
 - 2026-10-25: Supplier form: 1600VT (VAT) or 1600PT (Non-VAT) and 0619E rates add up to the Total tax rate, all three required (docs/specs.md section 92). Not deployed yet.
 - 2026-10-25: **Alphalist - Tax Remittance** (docs/specs.md section 93): Liquidation page card prints the Monthly Alphalist of Payees per BIR form (1600PT, 0619E / 1601EQ, 1600VT) from the withholding tax of the DVs paid in the month before the chosen returned period and the supplier rates (`AlphalistService`, `AlphalistController`); one sheet per form, and every generation is kept in the report history and listed on the card. Not deployed yet.
 - 2026-10-25: **Purchase Request beyond the SOB** (docs/specs.md section 94): SOB activity optional, items outside the SOB allowed, going over the fund, budget line or APP saves with a yellow warning instead of a refusal; the ORS stays strict. Not deployed yet.
-- 2026-10-25: **Remittance DV from the alphalist** (docs/specs.md section 95): Create DV per BIR form on a kept alphalist (payee "{bank} FAO BIR {school} {TIN} ({form})", `liquidation_reports.remittance`); the register charges the BIR check to the columns of the DVs it remits. Not deployed yet.
+- 2026-10-25: **Remittance DV from the alphalist** (docs/specs.md section 95): Create DV per BIR form on a kept alphalist (payee "{bank} FAO BIR {school} {TIN} ({form})", `liquidation_reports.remittance`); the register charges the BIR check to the columns of the DVs it remits (fund of its DVs, expense columns only). One alphalist per school and month, with Edit/Update and Delete (reason and password).
 
 ## Standing workflow (owner's instruction 2026-10-16)
 

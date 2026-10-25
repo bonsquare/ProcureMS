@@ -23,25 +23,81 @@ class AlphalistController extends Controller
         return view('alphalist-print', $this->viewData($request, $alphalist));
     }
 
-    /** Generates the alphalist and keeps the finished pages in the report history, then opens the kept copy. */
+    /** Generates the alphalist and keeps the finished pages in the report history, then opens the kept copy. A school has one alphalist per returned period. */
     public function store(Request $request, AlphalistService $alphalist)
     {
         $data = $this->viewData($request, $alphalist);
-        $entry = CashReportHistory::create([
+        $kept = CashReportHistory::query()->where('report', 'alphalist')->where('school_id', $data['school']->id)->whereDate('period_from', $data['month']->toDateString())->latest()->first();
+        if ($kept) {
+            return redirect()->route('liquidation')->with('error', "The alphalist of {$data['period']} was already generated on {$kept->created_at->format('M d, Y g:i A')}. Open it, or use Edit in its History row to update it.");
+        }
+        $entry = CashReportHistory::create($this->keptCopy($request, $data) + [
             'organization_id' => $data['school']->organization_id,
             'school_id' => $data['school']->id,
             'report' => 'alphalist',
+            'generated_by' => $request->user()->id,
+        ]);
+
+        return redirect()->route('liquidation.alphalist.history', $entry);
+    }
+
+    /** Makes the kept alphalist again from today's figures with the edited fund, TIN and signatory (the reason and the user's password are asked). */
+    public function update(Request $request, CashReportHistory $history, AlphalistService $alphalist)
+    {
+        $this->assertChangeable($request, $history);
+        // The DV keeps what it remits, so the list it was made from stays as it is.
+        if ($this->hasRemittanceDv($history)) {
+            return redirect()->route('liquidation')->with('error', "A remittance DV was already made from the alphalist of {$history->period_text}, so it cannot be changed or deleted.");
+        }
+        $request->validate(['reason' => ['required', 'string', 'max:255'], 'password' => ['required', 'current_password']]);
+        $request->merge(['school_id' => $history->school_id, 'month' => $history->period_from->format('Y-m')]);
+        $data = $this->viewData($request, $alphalist);
+        $before = ['fund' => $history->source_of_fund, 'total' => (float) $history->total_payments];
+        $history->update($this->keptCopy($request, $data));
+        AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $history->school_id, 'action' => 'alphalist_updated', 'auditable_type' => CashReportHistory::class, 'auditable_id' => $history->id, 'metadata' => ['period' => $history->period_text, 'reason' => $request->input('reason'), 'before' => $before, 'total' => (float) $history->total_payments]]);
+
+        return redirect()->route('liquidation')->with('success', "The alphalist of {$history->period_text} was updated.");
+    }
+
+    public function destroy(Request $request, CashReportHistory $history)
+    {
+        $this->assertChangeable($request, $history);
+        // The DV keeps what it remits, so the list it was made from stays as it is.
+        if ($this->hasRemittanceDv($history)) {
+            return redirect()->route('liquidation')->with('error', "A remittance DV was already made from the alphalist of {$history->period_text}, so it cannot be changed or deleted.");
+        }
+        $request->validate(['reason' => ['required', 'string', 'max:255'], 'password' => ['required', 'current_password']]);
+        AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $history->school_id, 'action' => 'alphalist_deleted', 'auditable_type' => CashReportHistory::class, 'auditable_id' => $history->id, 'metadata' => ['period' => $history->period_text, 'fund' => $history->source_of_fund, 'total' => (float) $history->total_payments, 'reason' => $request->input('reason')]]);
+        $history->delete();
+
+        return redirect()->route('liquidation')->with('success', "The alphalist of {$history->period_text} was deleted.");
+    }
+
+    /** An alphalist of the user's schools, changed by a user who prepares liquidations. */
+    private function assertChangeable(Request $request, CashReportHistory $history): void
+    {
+        abort_unless($request->user()->hasPermission('liquidation.create'), 403);
+        abort_unless($history->report === 'alphalist' && $this->schoolIds($request)->contains($history->school_id), 404);
+    }
+
+    private function hasRemittanceDv(CashReportHistory $history): bool
+    {
+        return LiquidationReport::query()->where('school_id', $history->school_id)->whereNotNull('remittance')->get()
+            ->contains(fn (LiquidationReport $report) => (int) ($report->remittance['history_id'] ?? 0) === $history->id);
+    }
+
+    /** @return array<string, mixed> the generated pages and figures of an alphalist, as kept in the history */
+    private function keptCopy(Request $request, array $data): array
+    {
+        return [
             'period_from' => $data['month']->copy()->startOfMonth(),
             'period_to' => $data['month']->copy()->endOfMonth(),
             'period_text' => $data['period'],
             'source_of_fund' => $data['fund'] !== '' ? $data['fund'] : null,
             'total_payments' => collect($data['report']['blocks'])->flatten(1)->sum('withheld'),
             'html' => view('alphalist-print', $data)->render(),
-            'params' => $request->except('_token') + ['remittance' => $this->remittance($data['report']['blocks'])],
-            'generated_by' => $request->user()->id,
-        ]);
-
-        return redirect()->route('liquidation.alphalist.history', $entry);
+            'params' => $request->only(['school_id', 'month', 'source_of_fund', 'school_tin', 'signatory_name', 'signatory_position']) + ['remittance' => $this->remittance($data['report']['blocks'])],
+        ];
     }
 
     /**

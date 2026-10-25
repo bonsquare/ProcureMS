@@ -90,6 +90,8 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::get('/liquidation/alphalist', AlphalistController::class)->middleware('permission:liquidation.view')->name('liquidation.alphalist');
     Route::post('/liquidation/alphalist', [AlphalistController::class, 'store'])->middleware('permission:liquidation.view')->name('liquidation.alphalist.store');
     Route::post('/liquidation/alphalist/history/{history}/dv/{form}', [AlphalistController::class, 'createDv'])->middleware('permission:accounting.approve')->whereNumber('history')->whereIn('form', ['1600PT', '0619E', '1600VT'])->name('liquidation.alphalist.dv');
+    Route::put('/liquidation/alphalist/history/{history}', [AlphalistController::class, 'update'])->middleware('permission:liquidation.create')->whereNumber('history')->name('liquidation.alphalist.update');
+    Route::delete('/liquidation/alphalist/history/{history}', [AlphalistController::class, 'destroy'])->middleware('permission:liquidation.create')->whereNumber('history')->name('liquidation.alphalist.destroy');
     Route::get('/liquidation/alphalist/history/{history}', [AlphalistController::class, 'show'])->middleware('permission:liquidation.view')->whereNumber('history')->name('liquidation.alphalist.history');
     Route::post('/liquidation/preview', [HomeController::class, 'previewOrs'])->middleware('permission:liquidation.create')->name('liquidation.preview');
     Route::get('/liquidation/{liquidationReport}/print', [HomeController::class, 'printOrs'])->name('liquidation.print');
