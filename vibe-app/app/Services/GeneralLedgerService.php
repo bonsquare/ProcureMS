@@ -62,10 +62,14 @@ class GeneralLedgerService
             $report = $liquidation->report;
             $fund = $report->dv_fund_cluster ?: self::DEFAULT_FUND;
             $ref = 'Liquidation of check '.$report->payment_reference;
+            // An expense is debited; a payable (liability, code 2...) such as Due to BIR is credited, so the advance is credited for the expenses less the payables.
+            $net = 0.0;
             foreach ($liquidation->lines as $line) {
-                $postings->push($this->posting('liquidation', $liquidation->approved_at, $line->account_code, $line->account_title, $line->amount, 0, $liquidation->school_id, $fund, $ref, (string) $report->purpose, (string) $report->payee));
+                $payable = CheckLiquidationService::isPayableAccount($line->account_code);
+                $net += $payable ? -(float) $line->amount : (float) $line->amount;
+                $postings->push($this->posting('liquidation', $liquidation->approved_at, $line->account_code, $line->account_title, $payable ? 0 : $line->amount, $payable ? $line->amount : 0, $liquidation->school_id, $fund, $ref, (string) $report->purpose, (string) $report->payee));
             }
-            $postings->push($this->posting('liquidation', $liquidation->approved_at, $advances['code'], $advances['title'], 0, $liquidation->lines->sum('amount'), $liquidation->school_id, $fund, $ref, (string) $report->purpose, (string) $report->payee));
+            $postings->push($this->posting('liquidation', $liquidation->approved_at, $advances['code'], $advances['title'], 0, round($net, 2), $liquidation->school_id, $fund, $ref, (string) $report->purpose, (string) $report->payee));
         }
 
         if ($fundCluster) {

@@ -212,7 +212,7 @@ class CashReportService
             'cancelled' => false,
             // The code => amount of each UACS code when the ORS is charged to more than one (the register divides the payment among their columns).
             // An approved liquidation decides the expense accounts; a check not yet liquidated of a school that liquidates is pending and guessed into no column.
-            'splits' => $approved ? $approved->lines->groupBy('account_code')->map(fn ($group) => round((float) $group->sum('amount'), 2))->all() : ($strict ? [] : $this->splitsOf($report)),
+            'splits' => $approved ? $approved->lines->reject(fn ($line) => CheckLiquidationService::isPayableAccount($line->account_code))->groupBy('account_code')->map(fn ($group) => round((float) $group->sum('amount'), 2))->all() : ($strict ? [] : $this->splitsOf($report)),
             'liquidation' => $liquidation?->status ?? 'none',
             'pending' => $strict && ! $approved,
             'refund' => $approved ? round((float) $approved->refund_amount, 2) : 0.0,

@@ -38,7 +38,7 @@ class CheckLiquidationTest extends TestCase
         $organization = Organization::create(['name' => 'Org '.$code, 'slug' => 'org-'.strtolower($code), 'status' => 'active']);
         $school = School::create(['organization_id' => $organization->id, 'code' => $code, 'name' => 'School '.$code, 'status' => 'active']);
         Subscription::create(['organization_id' => $organization->id, 'school_id' => $school->id, 'plan' => 'professional', 'billing_cycle' => 'monthly', 'amount' => 0, 'payment_status' => 'paid', 'starts_at' => now()->subDay(), 'ends_at' => now()->addMonth()]);
-        foreach ([self::OFFICE => 'Office Supplies Expenses', self::OTHER => 'Other Supplies and Materials Expenses', '1990101000' => 'Advances for Operating Expenses', '4030101000' => 'Subsidy'] as $number => $title) {
+        foreach ([self::OFFICE => 'Office Supplies Expenses', self::OTHER => 'Other Supplies and Materials Expenses', '1990101000' => 'Advances for Operating Expenses', '4030101000' => 'Subsidy', '2020101000' => 'Due to BIR'] as $number => $title) {
             ChartOfAccount::create(['organization_id' => $organization->id, 'code' => (string) $number, 'title' => $title, 'category' => 'MOOE']);
         }
 
@@ -344,5 +344,25 @@ class CheckLiquidationTest extends TestCase
         DvBreakdownLine::create(['organization_id' => $school->organization_id, 'liquidation_report_id' => $check->id, 'journal_line_no' => 1, 'line_no' => 1, 'account_code' => self::OFFICE, 'account_title' => 'Office', 'debit' => 10000, 'credit' => 0]);
 
         $this->save($user, $check, [['account_code' => self::OFFICE, 'amount' => 10000]])->assertJsonValidationErrors('check');
+    }
+
+    public function test_a_payable_such_as_due_to_bir_is_credited_and_comes_off_the_advance(): void
+    {
+        [$school, $user] = $this->tenant('A');
+        $check = $this->check($school, $user, 9500);
+        $this->actingAs($user);
+
+        $this->save($user, $check, [['account_code' => self::OFFICE, 'amount' => 10000]])->assertJsonValidationErrors('lines');
+        $this->save($user, $check, [['account_code' => '2020101000', 'amount' => 500]])->assertJsonValidationErrors('lines');
+        $this->approvedLiquidation($user, $check, [['account_code' => self::OFFICE, 'amount' => 10000], ['account_code' => '2020101000', 'amount' => 500]]);
+
+        $ledger = $this->ledger($school);
+        $this->assertEquals(10000, $ledger[self::OFFICE]['debit']);
+        $this->assertEquals(500, $ledger['2020101000']['credit']);
+        $this->assertEquals(0, $ledger['2020101000']['debit']);
+        $this->assertEquals(9500, $ledger['1990101000']['credit']);
+
+        $line = $this->register($school)['lines']->first();
+        $this->assertEquals([self::OFFICE => 10000], $line['splits'], 'the register has no payable column');
     }
 }

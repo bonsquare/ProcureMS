@@ -44,11 +44,11 @@ class CheckLiquidationController extends Controller
         ]);
     }
 
-    /** The accounts a line can use: the expense and property accounts of the organization's chart. */
+    /** The accounts a line can use: the expense and property accounts of the organization's chart, and its payables (liabilities such as Due to BIR). */
     public function accounts(Request $request): JsonResponse
     {
         return response()->json(ChartOfAccount::query()->orderBy('code')->get(['code', 'title'])
-            ->reject(fn ($account) => in_array(substr($account->code, 0, 1), ['2', '3', '4'], true) || str_starts_with($account->code, '101') || $account->code === '1990101000')->values());
+            ->reject(fn ($account) => in_array(substr($account->code, 0, 1), ['3', '4'], true) || str_starts_with($account->code, '101') || $account->code === '1990101000')->values());
     }
 
     public function save(Request $request, LiquidationReport $liquidationReport): JsonResponse

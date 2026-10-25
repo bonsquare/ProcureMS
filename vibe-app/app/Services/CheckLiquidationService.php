@@ -138,8 +138,8 @@ class CheckLiquidationService
         foreach ($lines as $line) {
             $code = trim((string) ($line['account_code'] ?? ''));
             $amount = round((float) ($line['amount'] ?? 0), 2);
-            if (! $titles->has($code) || ! $this->isExpenseAccount($code)) {
-                throw ValidationException::withMessages(['lines' => "Account {$code} is not an expense account of the chart of accounts."]);
+            if (! $titles->has($code) || ! ($this->isExpenseAccount($code) || $this->isPayableAccount($code))) {
+                throw ValidationException::withMessages(['lines' => "Account {$code} is not an expense or payable account of the chart of accounts."]);
             }
             if ($amount <= 0) {
                 throw ValidationException::withMessages(['lines' => "The amount of account {$code} must be more than zero."]);
@@ -153,9 +153,14 @@ class CheckLiquidationService
             throw ValidationException::withMessages(['refund' => 'The refund cannot be negative.']);
         }
         $combined = array_values($combined);
-        $total = round(array_sum(array_column($combined, 'amount')) + $refund, 2);
-        if ($combined === [] || $total !== round((float) $report->amount, 2)) {
-            throw ValidationException::withMessages(['lines' => 'The expenses plus the refund (₱'.number_format($total, 2).') must equal the check amount (₱'.number_format((float) $report->amount, 2).').']);
+        $expenses = round(collect($combined)->reject(fn (array $line) => $this->isPayableAccount($line['account_code']))->sum('amount'), 2);
+        $payables = round(collect($combined)->filter(fn (array $line) => $this->isPayableAccount($line['account_code']))->sum('amount'), 2);
+        if ($expenses <= 0) {
+            throw ValidationException::withMessages(['lines' => 'Add at least one expense account.']);
+        }
+        $total = round($expenses - $payables + $refund, 2);
+        if ($total !== round((float) $report->amount, 2)) {
+            throw ValidationException::withMessages(['lines' => 'The expenses (₱'.number_format($expenses, 2).') less the payables (₱'.number_format($payables, 2).') plus the refund (₱'.number_format($refund, 2).') must equal the check amount (₱'.number_format((float) $report->amount, 2).').']);
         }
 
         return $combined;
@@ -165,6 +170,12 @@ class CheckLiquidationService
     private function isExpenseAccount(string $code): bool
     {
         return $code !== self::ADVANCES_CODE && ! in_array(substr($code, 0, 1), ['2', '3', '4'], true) && ! str_starts_with($code, '101');
+    }
+
+    /** A payable (liability, code 2...) such as Due to BIR: it is credited by the liquidation and comes off the advance. */
+    public static function isPayableAccount(string $code): bool
+    {
+        return str_starts_with($code, '2');
     }
 
     private function audit(User $user, LiquidationReport $report, string $action, array $metadata): void
