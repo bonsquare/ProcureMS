@@ -28,7 +28,7 @@ class SupplierFromAbstractTest extends TestCase
 
     private function supplier(): array
     {
-        return ['business_name' => 'Lubas Trading', 'tax_type' => 'vat', 'status' => 'active', 'tin' => '123-456-789-000', 'tax_rate' => 0, 'bir_registration_no' => 'BIR-1', 'address_street' => '1 Main St.', 'address_barangay' => 'Poblacion', 'address_city' => 'Kidapawan City', 'address_province' => 'Cotabato', 'address_zip' => '9400'];
+        return ['business_name' => 'Lubas Trading', 'tax_type' => 'vat', 'status' => 'active', 'tin' => '123-456-789-000', 'tax_rate' => 0, 'tax_rate_1600' => 0, 'tax_rate_0619e' => 0, 'bir_registration_no' => 'BIR-1', 'address_street' => '1 Main St.', 'address_barangay' => 'Poblacion', 'address_city' => 'Kidapawan City', 'address_province' => 'Cotabato', 'address_zip' => '9400'];
     }
 
     public function test_the_abstract_form_links_to_supplier_management_and_opens_again_when_asked(): void

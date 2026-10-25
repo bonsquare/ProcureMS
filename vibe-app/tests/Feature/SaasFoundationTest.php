@@ -144,6 +144,8 @@ class SaasFoundationTest extends TestCase
             'business_name' => 'Tenant Test Supplier', 'tin' => '123-456-789-000', 'tax_rate' => 0, 'bir_registration_no' => 'BIR-1', 'address_street' => '1 Main St.', 'address_barangay' => 'Poblacion', 'address_city' => 'Kidapawan City', 'address_province' => 'Cotabato', 'address_zip' => '9400',
             'tax_type' => 'non_vat',
             'tax_rate' => 0,
+            'tax_rate_1600' => 0,
+            'tax_rate_0619e' => 0,
         ];
     }
 }

@@ -1263,6 +1263,6 @@ A check issued as an advance keeps its entry (Dr Advances for Operating Expenses
 
 ## 92. Supplier tax rate parts (owner's decision 2026-10-25)
 
-The supplier form's BIR Registration shows two withholding rates under Tax type: 1600VT and 0619E for a VAT supplier, 1600PT and 0619E for a Non-VAT supplier (`suppliers.tax_rate_1600`, `suppliers.tax_rate_0619e`). Their sum is the Total tax rate (%) in `tax_rate`, which the DV's withholding tax reads as before (VAT = amount / 1.12 x rate; Non-VAT = amount x rate). A VAT exempt supplier has neither rate. A supplier saved before this keeps its total until a part is typed.
+The supplier form's BIR Registration shows two withholding rates under Tax type: 1600VT and 0619E for a VAT supplier, 1600PT and 0619E for a Non-VAT supplier (`suppliers.tax_rate_1600`, `suppliers.tax_rate_0619e`). Their sum is the Total tax rate (%) in `tax_rate`, which the DV's withholding tax reads as before (VAT = amount / 1.12 x rate; Non-VAT = amount x rate). A VAT exempt supplier has neither rate. The two part boxes and the total are required, each marked with a red asterisk on the same line as its label; a VAT exempt supplier has none (owner's decision 2026-10-25). A supplier saved before this keeps its total until a part is typed.
 
 The three boxes (1600VT or 1600PT, "0619E / 1601EQ" and the total) sit in one row on the same line (owner's decision 2026-10-25).
