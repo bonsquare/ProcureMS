@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\AuditLog;
+use App\Models\CashFundReceipt;
 use App\Models\ChartOfAccount;
 use App\Models\CheckLiquidation;
 use App\Models\LiquidationReport;
@@ -61,6 +62,9 @@ class CheckLiquidationService
         if (! $report->paid_at || ! $report->payment_reference) {
             throw ValidationException::withMessages(['check' => 'Only a paid check can be liquidated.']);
         }
+        if ($report->breakdownLines->contains(fn ($part) => (float) $part->debit > 0 && $part->account_code !== self::ADVANCES_CODE && $report->journalLines->contains(fn ($line) => $line->line_no === $part->journal_line_no && $line->account_code === self::ADVANCES_CODE && (float) $line->debit > 0))) {
+            throw ValidationException::withMessages(['check' => 'The DV of this check already splits the advance by expense account, so the expense is recognized there.']);
+        }
         $prepared = $this->preparedLines($report, $lines, $refund);
 
         return DB::transaction(function () use ($report, $user, $prepared, $refund, $refundReference) {
@@ -91,6 +95,14 @@ class CheckLiquidationService
             $report = $locked->report;
             $this->preparedLines($report, $locked->lines->map(fn ($line) => ['account_code' => $line->account_code, 'amount' => $line->amount])->all(), (float) $locked->refund_amount);
             $locked->update(['status' => 'approved', 'approved_by' => $user->id, 'approved_at' => now()]);
+            // The refund of the unspent advance is cash received back into the fund (Dr Cash, Cr Advances in the books), never an expense.
+            if ((float) $locked->refund_amount > 0) {
+                CashFundReceipt::create([
+                    'organization_id' => $locked->organization_id, 'school_id' => $locked->school_id, 'received_at' => now()->toDateString(), 'kind' => 'refund',
+                    'source_of_fund' => trim((string) $report->source_of_fund) ?: null, 'fund_cluster' => $report->dv_fund_cluster ?: 'General Fund', 'amount' => $locked->refund_amount,
+                    'reference' => $locked->refund_reference ?: 'Refund of check '.$report->payment_reference, 'note' => 'Unspent balance of check '.$report->payment_reference, 'created_by' => $user->id, 'check_liquidation_id' => $locked->id,
+                ]);
+            }
             $this->audit($user, $report, 'check_liquidation_approved', ['version' => $locked->version, 'total' => (float) $locked->lines->sum('amount'), 'refund' => (float) $locked->refund_amount]);
 
             return $locked;
@@ -106,6 +118,7 @@ class CheckLiquidationService
                 return $locked;
             }
             $this->audit($user, $locked->report, 'check_liquidation_reopened', ['version' => $locked->version, 'reason' => $reason, 'lines' => $locked->lines->map->only(['account_code', 'amount'])->all(), 'refund' => (float) $locked->refund_amount]);
+            CashFundReceipt::query()->where('check_liquidation_id', $locked->id)->delete();
             $locked->update(['status' => 'draft', 'version' => $locked->version + 1, 'reopened_by' => $user->id, 'reopen_reason' => $reason, 'approved_by' => null, 'approved_at' => null]);
 
             return $locked;

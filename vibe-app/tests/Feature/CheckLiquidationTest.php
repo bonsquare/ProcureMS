@@ -5,13 +5,21 @@ namespace Tests\Feature;
 use App\Models\AuditLog;
 use App\Models\BudgetAllocation;
 use App\Models\CancelledCheck;
+use App\Models\CashFundReceipt;
+use App\Models\CashRegisterCheck;
+use App\Models\CashReportHistory;
 use App\Models\ChartOfAccount;
 use App\Models\CheckLiquidation;
+use App\Models\DvBreakdownLine;
+use App\Models\DvJournalLine;
 use App\Models\LiquidationReport;
 use App\Models\Organization;
 use App\Models\School;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Services\CashReportService;
+use App\Services\GeneralLedgerService;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -191,5 +199,150 @@ class CheckLiquidationTest extends TestCase
         $this->putJson(route('check-liquidation.save', $check), ['lines' => [['account_code' => self::OFFICE, 'amount' => 10000]]])->assertForbidden();
         $this->actingAs($other)->getJson(route('check-liquidation.checks'))->assertJsonCount(0);
         $this->assertSame(0, CheckLiquidation::count());
+    }
+
+    private function approvedLiquidation(User $user, LiquidationReport $check, array $lines, float $refund = 0): void
+    {
+        $this->save($user, $check, $lines, $refund)->assertOk();
+        $this->postJson(route('check-liquidation.approve', $check))->assertOk();
+    }
+
+    /** @return array<string, array{debit: float, credit: float}> */
+    private function ledger(School $school): array
+    {
+        $totals = [];
+        foreach (app(GeneralLedgerService::class)->postings([$school->id], null) as $posting) {
+            $totals[$posting['account_code']]['debit'] = ($totals[$posting['account_code']]['debit'] ?? 0) + (float) $posting['debit'];
+            $totals[$posting['account_code']]['credit'] = ($totals[$posting['account_code']]['credit'] ?? 0) + (float) $posting['credit'];
+        }
+
+        return $totals;
+    }
+
+    private function register(School $school): array
+    {
+        return app(CashReportService::class)->build($school, Carbon::parse('2026-07-01'), Carbon::parse('2026-09-30'));
+    }
+
+    public function test_an_approved_liquidation_debits_the_expenses_and_credits_advances_once(): void
+    {
+        [$school, $user] = $this->tenant('A');
+        $check = $this->check($school, $user);
+        $this->actingAs($user);
+        $this->approvedLiquidation($user, $check, [['account_code' => self::OFFICE, 'amount' => 6000], ['account_code' => self::OTHER, 'amount' => 4000]]);
+        $this->postJson(route('check-liquidation.approve', $check))->assertOk();
+
+        $ledger = $this->ledger($school);
+        $this->assertEquals(6000, $ledger[self::OFFICE]['debit']);
+        $this->assertEquals(4000, $ledger[self::OTHER]['debit']);
+        $this->assertEquals(10000, $ledger['1990101000']['credit']);
+        $this->assertArrayNotHasKey('1010202024', $ledger, 'Cash is not credited again');
+
+        $this->postJson(route('check-liquidation.reopen', $check), ['reason' => 'Fix', 'password' => 'secret-pass-123'])->assertOk();
+        $this->assertArrayNotHasKey(self::OFFICE, $this->ledger($school));
+    }
+
+    public function test_a_refund_is_cash_received_back_and_not_an_expense(): void
+    {
+        [$school, $user] = $this->tenant('A');
+        $check = $this->check($school, $user);
+        $this->actingAs($user);
+        $this->approvedLiquidation($user, $check, [['account_code' => self::OFFICE, 'amount' => 9000]], 1000);
+        $this->postJson(route('check-liquidation.approve', $check));
+
+        $this->assertSame(1, CashFundReceipt::where('kind', 'refund')->count());
+        $ledger = $this->ledger($school);
+        $this->assertEquals(9000, $ledger[self::OFFICE]['debit']);
+        $this->assertEquals(1000, $ledger['1010202024']['debit']);
+        $this->assertEquals(10000, $ledger['1990101000']['credit']);
+
+        $receipt = CashFundReceipt::where('kind', 'refund')->first();
+        $this->delete(route('cash.fund.destroy', $receipt))->assertStatus(422);
+
+        $this->postJson(route('check-liquidation.reopen', $check), ['reason' => 'Fix', 'password' => 'secret-pass-123']);
+        $this->assertSame(0, CashFundReceipt::where('kind', 'refund')->count());
+    }
+
+    public function test_the_register_puts_an_approved_liquidation_under_its_accounts_and_the_totals_agree(): void
+    {
+        [$school, $user] = $this->tenant('A');
+        $check = $this->check($school, $user);
+        $this->actingAs($user);
+        $this->approvedLiquidation($user, $check, [['account_code' => self::OFFICE, 'amount' => 6000], ['account_code' => self::OTHER, 'amount' => 3000]], 1000);
+
+        $data = $this->register($school);
+        $line = $data['lines']->first();
+        $this->assertEquals([self::OFFICE => 6000, self::OTHER => 3000], $line['splits']);
+        $this->assertSame('approved', $line['liquidation']);
+        $this->assertFalse($data['liquidation']['incomplete']);
+        $this->assertEquals(9000, $data['liquidation']['payments']);
+        $this->assertEquals(array_sum($line['splits']), $data['liquidation']['classified']);
+        $this->get(route('cash.report.register', ['school_id' => $school->id, 'from' => '2026-07-01', 'to' => '2026-09-30']))->assertOk()->assertDontSee('data-incomplete', false);
+    }
+
+    public function test_a_check_not_yet_liquidated_is_pending_and_the_final_register_is_blocked(): void
+    {
+        [$school, $user] = $this->tenant('A');
+        $done = $this->check($school, $user, 10000, 'CHK-1');
+        $pending = $this->check($school, $user, 5000, 'CHK-2');
+        $this->actingAs($user);
+        $this->approvedLiquidation($user, $done, [['account_code' => self::OFFICE, 'amount' => 10000]]);
+        $this->save($user, $pending, [['account_code' => self::OFFICE, 'amount' => 5000]])->assertOk();
+
+        $data = $this->register($school);
+        $this->assertTrue($data['liquidation']['incomplete']);
+        $this->assertSame(1, $data['liquidation']['pending']);
+        $this->assertEquals(5000, $data['liquidation']['unclassified']);
+        $row = $data['lines']->firstWhere('check_no', 'CHK-2');
+        $this->assertSame([], $row['splits']);
+        $this->assertSame('', $row['uacs_code']);
+
+        foreach (['CHK-1', 'CHK-2'] as $number) {
+            CashRegisterCheck::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'source_of_fund' => '', 'quarter_start' => '2026-07-01', 'check_number' => $number, 'created_by' => $user->id]);
+        }
+        $query = ['school_id' => $school->id, 'from' => '2026-07-01', 'to' => '2026-09-30'];
+        $this->get(route('cash.report.register', $query))->assertOk()->assertSee('INCOMPLETE - DRAFT ONLY', false)->assertSee('Pending liquidation');
+        $this->postJson(route('cash.report.register.history', $query))->assertStatus(422);
+        $this->assertSame(0, CashReportHistory::count());
+
+        $this->approvedLiquidation($user, $pending, [['account_code' => self::OFFICE, 'amount' => 5000]]);
+        $this->assertFalse($this->register($school)['liquidation']['incomplete']);
+        $this->postJson(route('cash.report.register.history', $query))->assertOk();
+    }
+
+    public function test_a_school_that_has_not_started_liquidating_keeps_the_register_as_before(): void
+    {
+        [$school, $user] = $this->tenant('A');
+        $this->check($school, $user);
+
+        $data = $this->register($school);
+        $this->assertFalse($data['liquidation']['incomplete']);
+        $this->assertSame(self::OFFICE, $data['lines']->first()['uacs_code']);
+    }
+
+    public function test_a_cancelled_check_stays_in_the_register_with_no_payment_and_is_not_pending(): void
+    {
+        [$school, $user] = $this->tenant('A');
+        $done = $this->check($school, $user, 10000, 'CHK-1');
+        $cancelled = $this->check($school, $user, 3000, 'CHK-2');
+        $this->actingAs($user);
+        $this->approvedLiquidation($user, $done, [['account_code' => self::OFFICE, 'amount' => 10000]]);
+        $this->post(route('cash.cancel', $cancelled), ['reason' => 'Wrong', 'password' => 'secret-pass-123'])->assertRedirect();
+
+        $data = $this->register($school);
+        $row = $data['lines']->firstWhere('check_no', 'CHK-2');
+        $this->assertTrue($row['cancelled']);
+        $this->assertNull($row['amount']);
+        $this->assertFalse($data['liquidation']['incomplete']);
+    }
+
+    public function test_a_check_whose_dv_already_splits_the_advance_by_expense_account_cannot_be_liquidated(): void
+    {
+        [$school, $user] = $this->tenant('A');
+        $check = $this->check($school, $user);
+        DvJournalLine::create(['organization_id' => $school->organization_id, 'liquidation_report_id' => $check->id, 'line_no' => 1, 'account_code' => '1990101000', 'account_title' => 'Advances', 'debit' => 10000, 'credit' => 0]);
+        DvBreakdownLine::create(['organization_id' => $school->organization_id, 'liquidation_report_id' => $check->id, 'journal_line_no' => 1, 'line_no' => 1, 'account_code' => self::OFFICE, 'account_title' => 'Office', 'debit' => 10000, 'credit' => 0]);
+
+        $this->save($user, $check, [['account_code' => self::OFFICE, 'amount' => 10000]])->assertJsonValidationErrors('check');
     }
 }

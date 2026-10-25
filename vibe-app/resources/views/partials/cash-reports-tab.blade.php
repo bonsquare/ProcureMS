@@ -162,7 +162,7 @@
                         <form id="cash-fund-form" class="mt-3 grid gap-3 sm:grid-cols-2">
                             <input type="hidden" id="cash-fund-id">
                             <label class="{{ $label }}">Date<input type="date" id="cash-fund-date" required class="{{ $box }}"></label>
-                            <label class="{{ $label }}">Kind<select id="cash-fund-kind" class="{{ $box }}">@foreach(\App\Models\CashFundReceipt::KINDS as $key => $kindLabel)<option value="{{ $key }}">{{ $kindLabel }}</option>@endforeach</select></label>
+                            <label class="{{ $label }}">Kind<select id="cash-fund-kind" class="{{ $box }}">@foreach(\App\Models\CashFundReceipt::manualKinds() as $key => $kindLabel)<option value="{{ $key }}">{{ $kindLabel }}</option>@endforeach</select></label>
                             <label class="{{ $label }}">Fund<select id="cash-fund-source" required class="{{ $box }}"><option value="">Select the fund</option>@foreach(\App\Models\CashFundReceipt::FUNDS as $fundName)<option value="{{ $fundName }}">{{ $fundName }}</option>@endforeach</select></label>
                             <label id="cash-fund-other-wrap" class="{{ $label }} hidden sm:col-span-2">Specify the fund<input id="cash-fund-other" maxlength="50" placeholder="Name of the fund" class="{{ $box }}"></label>
                             <label class="{{ $label }}">Amount<input type="number" step="0.01" min="0.01" id="cash-fund-amount" required class="{{ $box }} text-right tabular-nums"></label>

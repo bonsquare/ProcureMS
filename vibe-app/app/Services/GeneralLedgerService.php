@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\CashFundReceipt;
 use App\Models\ChartOfAccount;
+use App\Models\CheckLiquidation;
 use App\Models\LiquidationReport;
 use App\Models\OpeningBalance;
 use Carbon\Carbon;
@@ -55,13 +56,25 @@ class GeneralLedgerService
             }
         }
 
+        // An approved liquidation of a check recognizes the expense: Dr each expense account, Cr Advances for Operating Expenses (the cash was credited when the check was issued).
+        $advances = $credits['cash_advance'];
+        foreach (CheckLiquidation::query()->whereIn('school_id', $schoolIds)->where('status', 'approved')->with(['lines', 'report'])->get() as $liquidation) {
+            $report = $liquidation->report;
+            $fund = $report->dv_fund_cluster ?: self::DEFAULT_FUND;
+            $ref = 'Liquidation of check '.$report->payment_reference;
+            foreach ($liquidation->lines as $line) {
+                $postings->push($this->posting('liquidation', $liquidation->approved_at, $line->account_code, $line->account_title, $line->amount, 0, $liquidation->school_id, $fund, $ref, (string) $report->purpose, (string) $report->payee));
+            }
+            $postings->push($this->posting('liquidation', $liquidation->approved_at, $advances['code'], $advances['title'], 0, $liquidation->lines->sum('amount'), $liquidation->school_id, $fund, $ref, (string) $report->purpose, (string) $report->payee));
+        }
+
         if ($fundCluster) {
             $postings = $postings->where('fund_cluster', $fundCluster);
         }
         if ($to) {
             $postings = $postings->filter(fn (array $p) => $p['date']->lte($to));
         }
-        $order = ['opening' => 0, 'receipt' => 1, 'dv' => 2];
+        $order = ['opening' => 0, 'receipt' => 1, 'dv' => 2, 'liquidation' => 3];
 
         return $postings->sortBy(fn (array $p) => $p['date']->format('Y-m-d').$order[$p['source']])->values();
     }

@@ -37,7 +37,7 @@ class CashReportController extends Controller
         $data = $request->validate([
             'school_id' => ['required', 'integer'],
             'received_at' => ['required', 'date'],
-            'kind' => ['required', Rule::in(array_keys(CashFundReceipt::KINDS))],
+            'kind' => ['required', Rule::in(array_keys(CashFundReceipt::manualKinds()))],
             'source_of_fund' => ['required', 'string', 'max:50', Rule::notIn(['Others'])],
             'fund_cluster' => ['nullable', 'string', 'max:100'],
             'bank_account_number' => ['nullable', 'string', 'max:60'],
@@ -78,6 +78,7 @@ class CashReportController extends Controller
     public function updateReceipt(Request $request, CashFundReceipt $cashFundReceipt): RedirectResponse|JsonResponse
     {
         abort_unless($this->schoolIds()->contains($cashFundReceipt->school_id), 403);
+        abort_if($cashFundReceipt->check_liquidation_id, 422, 'A refund comes from a check liquidation; reopen the liquidation to change it.');
         $data = $this->validatedReceipt($request);
         abort_unless((int) $data['school_id'] === $cashFundReceipt->school_id, 403);
         $cashFundReceipt->update($data);
@@ -89,6 +90,7 @@ class CashReportController extends Controller
     public function destroyReceipt(Request $request, CashFundReceipt $cashFundReceipt): RedirectResponse|JsonResponse
     {
         abort_unless($this->schoolIds()->contains($cashFundReceipt->school_id), 403);
+        abort_if($cashFundReceipt->check_liquidation_id, 422, 'A refund comes from a check liquidation; reopen the liquidation to change it.');
         $this->audit($request, 'cash_fund_deleted', $cashFundReceipt);
         $cashFundReceipt->delete();
 
@@ -356,6 +358,10 @@ class CashReportController extends Controller
             $report['reportNo'] = now()->format('Y-m').'-001';
         }
         $school = $report['school'];
+        // The kept register is the official copy: it cannot be saved while a check is not liquidated, but the draft can still be previewed.
+        if ($kind === 'register' && $report['data']['liquidation']['incomplete']) {
+            return response()->json(['ok' => false, 'message' => 'The register is incomplete: '.$report['data']['liquidation']['pending'].' check(s) are not yet liquidated. Liquidate them in the Liquidation tab before saving the final register.'], 422);
+        }
         // A report of a period and fund is kept once: pressing Save again does not make a second copy.
         $kept = CashReportHistory::query()->where('school_id', $school->id)->where('report', $kind)->whereDate('period_from', $report['from'])->whereDate('period_to', $report['to'])
             ->when($request->input('source_of_fund'), fn ($query, $fund) => $query->where('source_of_fund', $fund), fn ($query) => $query->whereNull('source_of_fund'))->first();

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\CancelledCheck;
 use App\Models\CashFundReceipt;
+use App\Models\CheckLiquidation;
 use App\Models\LiquidationReport;
 use App\Models\School;
 use App\Models\SobItem;
@@ -22,12 +23,14 @@ class CashReportService
         $from = $from->copy()->startOfDay();
         $to = $to->copy()->endOfDay();
 
+        // A school that has started to liquidate its checks is held to the full rule: a check not yet liquidated is pending and goes to no expense column.
+        $strict = CheckLiquidation::query()->where('school_id', $school->id)->exists();
         $paidLines = LiquidationReport::query()
-            ->with(['budgetAllocation.account', 'procurementRequest.budgetAllocation.account', 'journalLines', 'breakdownLines', 'lines.budgetAllocation.account'])
+            ->with(['budgetAllocation.account', 'procurementRequest.budgetAllocation.account', 'journalLines', 'breakdownLines', 'lines.budgetAllocation.account', 'checkLiquidation.lines'])
             ->where('school_id', $school->id)
             ->whereNotNull('paid_at')
             ->get()
-            ->map(fn (LiquidationReport $report) => $this->paidLine($report));
+            ->map(fn (LiquidationReport $report) => $this->paidLine($report, $strict));
         // A payment to the BIR with no breakdown of its own is charged to the expense accounts of the withheld taxes it remits, oldest first.
         $paidLines = $this->allocateRemittances($paidLines);
 
@@ -114,7 +117,22 @@ class CashReportService
             'total_received' => $totalReceived,
             'ending' => round($opening + $totalReceived - $totalPaid, 2),
             'accounts' => $accounts,
+            'liquidation' => $this->liquidationControl($lines),
         ];
+    }
+
+    /**
+     * The control of the register: the Payments column must equal the Breakdown of Payments columns. A check pending liquidation or with no expense account is not in the columns.
+     *
+     * @return array{incomplete: bool, pending: int, unclassified: float, payments: float, classified: float}
+     */
+    private function liquidationControl(Collection $lines): array
+    {
+        $open = $lines->filter(fn (array $line) => ! $line['cancelled'] && ($line['amount'] ?? 0) > 0 && (($line['pending'] ?? false) || ($line['splits'] === [] && $line['uacs_code'] === '')));
+        $unclassified = round((float) $open->sum(fn (array $line) => $line['amount'] - ($line['refund'] ?? 0)), 2);
+        $payments = round((float) $lines->sum(fn (array $line) => ($line['amount'] ?? 0) - ($line['refund'] ?? 0)), 2);
+
+        return ['incomplete' => $open->isNotEmpty(), 'pending' => $open->count(), 'unclassified' => $unclassified, 'payments' => $payments, 'classified' => round($payments - $unclassified, 2)];
     }
 
     /** @return array<string, float> */
@@ -160,8 +178,10 @@ class CashReportService
     }
 
     /** @return array<string, mixed> */
-    private function paidLine(LiquidationReport $report): array
+    private function paidLine(LiquidationReport $report, bool $strict = false): array
     {
+        $liquidation = $report->checkLiquidation;
+        $approved = $liquidation?->isApproved() ? $liquidation : null;
         $account = $report->chargedLine()?->account;
         $code = (string) ($account?->code ?? $report->chargedLine()?->uacs_code ?? '');
         $title = (string) ($account?->title ?? '');
@@ -181,8 +201,8 @@ class CashReportService
             'fund' => trim((string) $report->source_of_fund),
             'responsibility_center' => (string) $report->responsibility_center_code,
             'payee' => (string) $report->payee,
-            'uacs_code' => $code,
-            'nature' => $title,
+            'uacs_code' => $strict && ! $approved ? '' : $code,
+            'nature' => $strict && ! $approved ? '' : $title,
             // The cash paid out is the DV amount less its "Less:" deductions (withholding tax and the like, kept in Due to BIR); the gross is what the UACS columns charge.
             'amount' => round((float) $report->amount - $this->deductionsOf($report), 2),
             'gross' => round((float) $report->amount, 2),
@@ -191,7 +211,11 @@ class CashReportService
             'mode' => $this->modeOf($report->payment_mode),
             'cancelled' => false,
             // The code => amount of each UACS code when the ORS is charged to more than one (the register divides the payment among their columns).
-            'splits' => $this->splitsOf($report),
+            // An approved liquidation decides the expense accounts; a check not yet liquidated of a school that liquidates is pending and guessed into no column.
+            'splits' => $approved ? $approved->lines->groupBy('account_code')->map(fn ($group) => round((float) $group->sum('amount'), 2))->all() : ($strict ? [] : $this->splitsOf($report)),
+            'liquidation' => $liquidation?->status ?? 'none',
+            'pending' => $strict && ! $approved,
+            'refund' => $approved ? round((float) $approved->refund_amount, 2) : 0.0,
         ];
     }
 

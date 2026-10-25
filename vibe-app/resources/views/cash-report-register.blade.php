@@ -76,7 +76,8 @@
     $accountCount = max(9, count($accounts));
     $density = $accountCount > 13 ? 'denser' : ($accountCount > 9 ? 'dense' : '');
     // Money received and the payments of the period in date order (money first on the same day), with the running balance of the working fund.
-    $entries = $data['receipts']->map(fn ($receipt) => ['type' => 'receipt', 'date' => $receipt->received_at, 'receipt' => $receipt])
+    // The refund of an unspent advance is already taken off the payment of its check, so it is not listed again as money received.
+    $entries = $data['receipts']->reject(fn ($receipt) => $receipt->kind === 'refund')->map(fn ($receipt) => ['type' => 'receipt', 'date' => $receipt->received_at, 'receipt' => $receipt])
         ->concat($data['lines']->map(fn (array $line) => ['type' => 'line', 'date' => $line['date'], 'line' => $line]))
         ->sortBy(fn (array $entry) => $entry['date']->format('Ymd').($entry['type'] === 'receipt' ? '0' : '1'))
         ->values();
@@ -88,6 +89,9 @@
             $rows[] = ['date' => $entry['date'], 'reference' => $entry['receipt']->reference, 'particulars' => trim(trim((string) $entry['receipt']->source_of_fund).' '.($entry['receipt']->kind === 'cash_advance' ? 'Cash Advance' : $entry['receipt']->kindLabel()).' '.['1st', '2nd', '3rd', '4th'][$entry['receipt']->received_at->quarter - 1].' qrtr. '.$entry['receipt']->received_at->year), 'advance' => (float) $entry['receipt']->amount, 'payment' => null, 'balance' => $balance, 'code' => null];
         } else {
             $line = $entry['line'];
+            if ($line['amount'] !== null) {
+                $line['amount'] = round($line['amount'] - ($line['refund'] ?? 0), 2);
+            }
             // There is no Due to BIR column: a payment shows the cash paid (the DV net of its deductions) in the columns it is charged to, and a payment to the BIR is
             // charged to the expense accounts its breakdown names (the Due to BIR line is reversed there), so the columns always add up to the Payments column.
             $lineSplits = $line['cancelled'] ? [] : ($line['splits'] ?? []);
@@ -107,7 +111,7 @@
                 ->reject(fn (string $code) => $code === '' || str_starts_with($code, '2') || $line['cancelled'])
                 ->map(fn (string $code) => $accounts[$code] ?? ($code === (string) $line['uacs_code'] ? (string) $line['nature'] : ''))->filter()->unique()->implode(', ');
             $balance = round($balance - ($line['amount'] ?? 0), 2);
-            $rows[] = ['date' => $entry['date'], 'reference' => $line['check_no'], 'particulars' => $line['payee'].($natures !== '' ? ' ('.$natures.')' : ''), 'advance' => null, 'payment' => $line['amount'], 'gross' => $line['amount'], 'balance' => $balance, 'code' => $line['cancelled'] ? null : $line['uacs_code'], 'splits' => $lineSplits];
+            $rows[] = ['date' => $entry['date'], 'reference' => $line['check_no'], 'particulars' => $line['payee'].($natures !== '' ? ' ('.$natures.')' : '').(($line['pending'] ?? false) ? ' - Pending liquidation' : ''), 'advance' => null, 'payment' => $line['amount'], 'gross' => $line['amount'], 'balance' => $balance, 'code' => $line['cancelled'] ? null : $line['uacs_code'], 'splits' => $lineSplits];
         }
     }
     // A payment of an ORS charged to several UACS codes is divided among their columns; any other payment goes to the column of its one code.
@@ -131,6 +135,7 @@
 
 <main class="paper cdr" data-official-page data-sheets data-doc="cash-register" data-paper="longbond" data-orientation="landscape" data-margin="8">
     <h1>CASH DISBURSEMENT REGISTER</h1>
+    @if($data['liquidation']['incomplete'])<div data-incomplete style="border:2px solid #b00020;color:#b00020;font-weight:bold;text-align:center;padding:4px;margin:4px 0">INCOMPLETE - DRAFT ONLY: {{ $data['liquidation']['pending'] }} {{ \Illuminate\Support\Str::plural('check', $data['liquidation']['pending']) }} not yet liquidated (P{{ $money($data['liquidation']['unclassified']) }} is in no expense column). The Payments column does not equal the Breakdown of Payments columns.</div>@endif
 
     <table class="cdr-info">
         <colgroup><col style="width:15%"><col style="width:28%"><col style="width:11%"><col style="width:12%"><col style="width:28%"><col style="width:6%"></colgroup>

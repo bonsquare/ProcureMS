@@ -6,5 +6,6 @@ return [
     'receipt_credit' => [
         'nca' => ['code' => '4030101000', 'title' => 'Subsidy from National Government'],
         'cash_advance' => ['code' => '1990101000', 'title' => 'Advances for Operating Expenses'],
+        'refund' => ['code' => '1990101000', 'title' => 'Advances for Operating Expenses'],
     ],
 ];
