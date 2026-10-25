@@ -31,10 +31,18 @@ class AppItemLinkService
 
     /**
      * Every linked line must point to an approved APP item of the PR's school and stay within
-     * the quantity and estimated cost the APP has left.
+     * the quantity and estimated cost the APP has left. With $warnings, going over the APP is added there instead of refused (a PR may go beyond the SOB).
+     *
+     * @param  array<int, string>|null  $warnings
      */
-    public function assertWithinApp(int $schoolId, array $items, ?int $ignorePrId = null): void
+    public function assertWithinApp(int $schoolId, array $items, ?int $ignorePrId = null, ?array &$warnings = null): void
     {
+        $over = function (string $message) use (&$warnings) {
+            if ($warnings === null) {
+                throw ValidationException::withMessages(['items' => $message]);
+            }
+            $warnings[] = $message;
+        };
         $lines = collect($items)->filter(fn ($item) => ! empty($item['app_item_id']))->groupBy('app_item_id');
         foreach ($lines as $appItemId => $group) {
             $key = 'items';
@@ -46,10 +54,10 @@ class AppItemLinkService
             $quantity = $group->sum(fn ($line) => (float) $line['quantity']);
             $cost = $group->sum(fn ($line) => (float) $line['quantity'] * (float) $line['unit_price']);
             if (round($usedQuantity + $quantity, 2) > round((float) $appItem->quantity, 2)) {
-                throw ValidationException::withMessages([$key => "{$appItem->procurement_item}: quantity exceeds the APP ({$appItem->quantity} {$appItem->unit} planned, ".round($usedQuantity, 2).' already requested).']);
+                $over("{$appItem->procurement_item}: quantity exceeds the APP ({$appItem->quantity} {$appItem->unit} planned, ".round($usedQuantity, 2).' already requested).');
             }
             if (round($usedCost + $cost, 2) > round((float) $appItem->estimated_total_cost, 2)) {
-                throw ValidationException::withMessages([$key => "{$appItem->procurement_item}: cost exceeds the APP estimate of ₱".number_format((float) $appItem->estimated_total_cost, 2).'.']);
+                $over("{$appItem->procurement_item}: cost exceeds the APP estimate of ₱".number_format((float) $appItem->estimated_total_cost, 2).'.');
             }
         }
     }

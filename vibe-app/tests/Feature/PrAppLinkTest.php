@@ -84,10 +84,10 @@ class PrAppLinkTest extends TestCase
         [$school, , $appItem] = $this->tenantWithApprovedApp('alpha');
 
         $this->post(route('procurement.store'), $this->prPayload($school, $appItem, 6))->assertSessionHasNoErrors();
-        $this->post(route('procurement.store'), $this->prPayload($school, $appItem, 5))->assertSessionHasErrors('items');
-        $this->post(route('procurement.store'), $this->prPayload($school, $appItem, 4, 300))->assertSessionHasErrors('items');
-        $this->post(route('procurement.store'), $this->prPayload($school, $appItem, 4))->assertSessionHasNoErrors();
-        $this->assertSame(2, ProcurementRequest::count());
+        // Beyond the APP quantity or cost the request is still saved, with a warning (owner's decision 2026-10-25).
+        $this->post(route('procurement.store'), $this->prPayload($school, $appItem, 5))->assertSessionHasNoErrors()->assertSessionHas('warning', fn ($warnings) => str_contains(implode(' ', $warnings), 'quantity exceeds the APP'));
+        $this->post(route('procurement.store'), $this->prPayload($school, $appItem, 4, 300))->assertSessionHasNoErrors()->assertSessionHas('warning', fn ($warnings) => str_contains(implode(' ', $warnings), 'cost exceeds the APP'));
+        $this->assertSame(3, ProcurementRequest::count());
     }
 
     public function test_editing_a_pr_does_not_count_its_own_lines_twice(): void
@@ -142,7 +142,7 @@ class PrAppLinkTest extends TestCase
 
         $this->get(route('procurement.create'))->assertOk()
             ->assertSee('id="pr-sob-activity"', false)
-            ->assertSee('Activity (from the SOB)')
+            ->assertSee('Activity (from the SOB, optional)')
             ->assertSeeInOrder(['id="school_id"', 'selected'], false)
             ->assertSeeInOrder(['name="school_id" required', 'hidden', 'class="mt-2 w-full rounded border'], false)
             ->assertViewHas('appItems', fn ($items) => array_key_exists('activity_id', $items[0]) && array_key_exists('activity', $items[0]) && array_key_exists('program', $items[0]));

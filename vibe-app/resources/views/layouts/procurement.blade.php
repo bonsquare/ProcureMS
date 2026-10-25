@@ -107,6 +107,9 @@
                 @if(session('success') && ! $__env->hasSection('flash-handled'))
                     <div role="status" class="civic-alert civic-alert--success">{{ session('success') }}</div>
                 @endif
+                @if(session('warning'))
+                    <div role="status" class="civic-alert" style="border-color:#e8c27a;background:#fdf4e3;color:#7a5410"><strong>Beyond the SOB / budget:</strong> {{ implode(' ', (array) session('warning')) }} The ORS will need an SOB budget line with enough left.</div>
+                @endif
                 @yield('content')
             </div>
         </main>

@@ -785,9 +785,7 @@ class HomeController extends Controller
         $organizationId = $this->organizationIdForSchool((int) $validated['school_id']);
         $fiscalYear = $budgetAllocation?->fiscal_year ?? (int) date('Y', strtotime($validated['request_date']));
         app(FiscalYearService::class)->assertOpen($organizationId, (int) $fiscalYear);
-        app(BudgetService::class)->assertAvailable('source_of_fund', (int) $validated['school_id'], $validated['source_of_fund'], (float) $amount);
-        $this->assertPrBudgetLine($validated, (float) $amount, $derived);
-        app(AppItemLinkService::class)->assertWithinApp((int) $validated['school_id'], $items);
+        $budgetWarnings = $this->prBudgetWarnings($validated, (float) $amount, $derived, $items);
         $sobActivityId = $this->chosenSobActivity($validated);
 
         $procurementRequest = DB::transaction(function () use ($validated, $request, $amount, $items, $budgetAllocation, $fiscalYear, $signatories, $sobActivityId) {
@@ -840,7 +838,7 @@ class HomeController extends Controller
             return $procurementRequest;
         });
 
-        return redirect()->route('procurement.show', $procurementRequest)->with('success', 'Procurement request created successfully.');
+        return redirect()->route('procurement.show', $procurementRequest)->with('success', 'Procurement request created successfully.')->with($budgetWarnings ? ['warning' => $budgetWarnings] : []);
     }
 
     public function updateProcurement(Request $request, ProcurementRequest $procurementRequest)
@@ -868,9 +866,7 @@ class HomeController extends Controller
             (int) $procurementRequest->organization_id,
             (int) ($budgetAllocation?->fiscal_year ?? date('Y', strtotime($validated['request_date']))),
         );
-        app(BudgetService::class)->assertAvailable('source_of_fund', (int) $validated['school_id'], $validated['source_of_fund'], (float) $amount, $procurementRequest->created_at?->year, $procurementRequest->id);
-        $this->assertPrBudgetLine($validated, (float) $amount, $derived, $procurementRequest->id, $procurementRequest->created_at);
-        app(AppItemLinkService::class)->assertWithinApp((int) $validated['school_id'], $items, $procurementRequest->id);
+        $budgetWarnings = $this->prBudgetWarnings($validated, (float) $amount, $derived, $items, $procurementRequest->id, $procurementRequest->created_at);
         $sobActivityId = $this->chosenSobActivity($validated, $procurementRequest->id);
         $requestNumber = ! empty($validated['manually_encode_pr_number'])
             ? $validated['manual_pr_number']
@@ -903,7 +899,7 @@ class HomeController extends Controller
         $procurementRequest->transaction?->recordEvent('procurement', 'pr_updated', null, $procurementRequest->status, $procurementRequest->request_number, ['procurement_request_id' => $procurementRequest->id, 'amount' => $amount]);
 
         return redirect()->route('procurement.show', $procurementRequest)
-            ->with('success', 'Procurement request updated successfully.');
+            ->with('success', 'Procurement request updated successfully.')->with($budgetWarnings ? ['warning' => $budgetWarnings] : []);
     }
 
     public function updateProcurementStatus(Request $request, ProcurementRequest $procurementRequest, ProcurementWorkspaceService $workspaceService)
@@ -960,18 +956,42 @@ class HomeController extends Controller
             ->with('success', 'Procurement request status updated to '.str($nextStatus)->replace('_', ' ')->title().'.');
     }
 
-    /** The Budget check of a Purchase Request: a line found from the SOB is checked for its own share of the cost; without any, the school's budget still has to be named. */
-    private function assertPrBudgetLine(array $validated, float $amount, ?array $derived, ?int $ignorePrId = null, ?\DateTimeInterface $date = null): void
+    /**
+     * The Budget check of a Purchase Request (owner's decision 2026-10-25): a PR may go beyond the SOB, so going over the fund, the budget line or the APP, or having no SOB line,
+     * is returned as warnings and the PR is still saved; a budget line of another school or fund and an APP item of another school are still refused. The ORS keeps the strict check.
+     *
+     * @return array<int, string>
+     */
+    private function prBudgetWarnings(array $validated, float $amount, ?array $derived, array $items, ?int $ignorePrId = null, ?\DateTimeInterface $date = null): array
     {
-        if ($derived && (int) $validated['budget_allocation_id'] === $derived['id']) {
-            $amount = $derived['amount'];
-        } elseif (empty($validated['budget_allocation_id'])) {
-            $budgeted = BudgetAllocation::where('school_id', $validated['school_id'])->where('fiscal_year', ($date ?? now())->format('Y'))->whereNull('closed_at');
-            if ($budgeted->exists()) {
-                throw ValidationException::withMessages(['items' => 'Add the items from the SOB activity: the request is charged to the Budget line the SOB wrote for them.']);
+        $warnings = [];
+        $soft = function (callable $check) use (&$warnings) {
+            try {
+                $check();
+            } catch (ValidationException $exception) {
+                array_push($warnings, ...array_values(collect($exception->errors())->flatten()->all()));
             }
+        };
+        $soft(fn () => app(BudgetService::class)->assertAvailable('source_of_fund', (int) $validated['school_id'], $validated['source_of_fund'], $amount, $date?->format('Y') ? (int) $date->format('Y') : null, $ignorePrId));
+
+        if (empty($validated['budget_allocation_id'])) {
+            if (BudgetAllocation::where('school_id', $validated['school_id'])->where('fiscal_year', ($date ?? now())->format('Y'))->whereNull('closed_at')->exists()) {
+                $warnings[] = 'Not charged to an SOB budget line: no item of this request comes from the SOB.';
+            }
+        } else {
+            $line = BudgetAllocation::findOrFail($validated['budget_allocation_id']);
+            if ($line->school_id !== (int) $validated['school_id']) {
+                throw ValidationException::withMessages(['budget_allocation_id' => 'The selected budget line belongs to a different school.']);
+            }
+            if (strcasecmp($line->source_of_fund, (string) $validated['source_of_fund']) !== 0) {
+                throw ValidationException::withMessages(['budget_allocation_id' => 'The selected fund source does not match this budget line.']);
+            }
+            $lineAmount = $derived && (int) $validated['budget_allocation_id'] === $derived['id'] ? $derived['amount'] : $amount;
+            $soft(fn () => app(BudgetService::class)->assertItemAvailable('budget_allocation_id', $line->id, $lineAmount, $ignorePrId, null, $date));
         }
-        $this->assertBudgetItem($validated, $amount, $ignorePrId, null, $date);
+        app(AppItemLinkService::class)->assertWithinApp((int) $validated['school_id'], $items, $ignorePrId, $warnings);
+
+        return array_values(array_unique($warnings));
     }
 
     /**
@@ -1058,11 +1078,9 @@ class HomeController extends Controller
             ->map(fn ($item) => $item->loadMissing('sobItem')->sobItem?->aip_activity_id)->filter()->unique()->values();
         $chosen = (int) ($validated['sob_activity_id'] ?? 0);
 
-        if ($available->isEmpty()) {
+        // A request may be made outside the SOB (owner's decision 2026-10-25): no activity is then linked.
+        if ($available->isEmpty() || $chosen === 0) {
             return null;
-        }
-        if ($chosen === 0) {
-            throw ValidationException::withMessages(['sob_activity_id' => 'Choose the SOB activity this request is for.']);
         }
         if (! $available->contains($chosen)) {
             throw ValidationException::withMessages(['sob_activity_id' => 'The chosen activity has no item left in an approved SOB of this school.']);

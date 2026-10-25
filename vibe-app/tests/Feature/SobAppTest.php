@@ -156,19 +156,21 @@ class SobAppTest extends TestCase
             'items' => [['app_item_id' => $appItem->id, 'name' => 'Bond paper', 'quantity' => $quantity, 'unit' => 'ream', 'unit_price' => $price]],
         ];
 
-        // The SOB activity is the basis of the request: it must be chosen, and it must be one with an item left in an approved SOB.
-        $this->post(route('procurement.store'), ['sob_activity_id' => null] + $payload(6))->assertSessionHasErrors('sob_activity_id');
+        // The SOB activity is optional (a request may be made outside the SOB), but a chosen one must have an item left in an approved SOB.
         $this->post(route('procurement.store'), ['sob_activity_id' => 999999] + $payload(6))->assertSessionHasErrors('sob_activity_id');
         $this->assertSame(0, ProcurementRequest::count());
         $this->post(route('procurement.store'), $payload(6))->assertSessionHasNoErrors();
-        $this->post(route('procurement.store'), $payload(5))->assertSessionHasErrors('items');
-        $this->post(route('procurement.store'), $payload(4, 300))->assertSessionHasErrors('items');
-        $this->post(route('procurement.store'), $payload(4))->assertSessionHasNoErrors();
+        $this->post(route('procurement.store'), $payload(4))->assertSessionHasNoErrors()->assertSessionMissing('warning');
 
         $this->assertSame(2, ProcurementRequest::count());
         $this->assertSame(2, ProcurementRequestItem::count());
         $this->assertTrue($plan->fresh()->transaction->events()->where('module', 'app')->where('action', 'pr_linked')->exists());
         $this->get(route('planning', ['school_id' => $fx['school']->id, 'year' => 2026]))->assertOk()->assertSee('10 of 10 ream');
+
+        // Beyond the APP it is saved with a warning; with no activity chosen none is linked.
+        $this->post(route('procurement.store'), $payload(5))->assertSessionHasNoErrors()->assertSessionHas('warning');
+        $this->post(route('procurement.store'), ['sob_activity_id' => null] + $payload(1))->assertSessionHasNoErrors();
+        $this->assertNull(ProcurementRequest::latest('id')->first()->aip_activity_id);
     }
 
     public function test_a_purchase_request_from_the_sob_is_charged_to_the_budget_line_the_sob_wrote_without_asking_for_it(): void
@@ -194,7 +196,8 @@ class SobAppTest extends TestCase
 
         $unlinked = $payload;
         $unlinked['items'] = [['name' => 'Anything', 'quantity' => 1, 'unit' => 'piece', 'unit_price' => 10]];
-        $this->post(route('procurement.store'), $unlinked)->assertSessionHasErrors('items');
+        // An item not from the SOB is saved too, with a warning (owner's decision 2026-10-25).
+        $this->post(route('procurement.store'), $unlinked)->assertSessionHasNoErrors()->assertSessionHas('warning', fn ($warnings) => str_contains(implode(' ', $warnings), 'Not charged to an SOB budget line'));
     }
 
     public function test_an_aip_with_an_sob_cannot_be_deleted(): void

@@ -105,7 +105,9 @@ class PlanningToPurchaseOrderChainTest extends TestCase
             'school_id' => $school->id, 'purpose' => 'Too many', 'entity_name' => 'DepEd', 'department_name' => $school->name, 'request_date' => '2026-03-02',
             'source_of_fund' => 'MOOE', 'transaction_description' => null, 'section' => null, 'sai_number' => null, 'sai_date' => null, 'responsibility_center_code' => null, 'extra_blank_rows' => 0,
             'items' => [['app_item_id' => $appItem->id, 'name' => 'Bond paper', 'quantity' => 1, 'unit' => 'ream', 'unit_price' => 250]],
-        ])->assertSessionHasErrors();
+        ])->assertSessionHasNoErrors()->assertSessionHas('warning');
+        // A request beyond the SOB is saved with a warning (owner's decision 2026-10-25); it is set aside so the chain goes on with the first one.
+        ProcurementRequest::latest('id')->first()->delete();
         $this->assertSame(1, ProcurementRequest::count());
 
         // 6. Approval, then RFQ, Abstract, Notice to Award, Notice to Proceed and Purchase Order in their order
