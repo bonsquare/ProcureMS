@@ -3,6 +3,7 @@
         ['budget', 'Budget', 'account_balance', ['budget', 'budget.*']],
         ['accounting', 'Accounting', 'request_quote', ['accounting', 'accounting.*']],
         ['chart-of-accounts', 'Chart of Accounts', 'list_alt', ['chart-of-accounts*']],
+        ['financial-reports', 'Financial Reports', 'assessment', ['financial-reports*']],
         ['allotment-registry', 'Allotment Registry', 'menu_book', ['allotment-registry*']],
         ['cash', 'Cash', 'payments', ['cash', 'cash.*']],
     ];
