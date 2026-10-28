@@ -207,6 +207,44 @@ class GeneralLedgerService
         ];
     }
 
+    /**
+     * Direct-method cash flow for $from to $to: every cash posting (cash accounts start with 101) is traced to the other lines of its entry, and each of those lines is the cash effect shown under its account.
+     *
+     * @param  array<int, int>  $schoolIds
+     * @return array{sections: array<string, Collection>, totals: array<string, string>, net: string, beginning: string, ending: string, balanced: bool}
+     */
+    public function cashFlow(array $schoolIds, ?string $fundCluster, Carbon $from, Carbon $to): array
+    {
+        $isCash = fn (array $p) => str_starts_with((string) $p['account_code'], '101');
+        $lines = $this->postings($schoolIds, $fundCluster, $to);
+        $beginning = $this->net($lines->filter(fn (array $p) => $isCash($p) && ($p['source'] === 'opening' || $p['date']->lt($from))));
+        $flows = $lines->reject(fn (array $p) => $p['source'] === 'opening' || $p['date']->lt($from))
+            ->groupBy(fn (array $p) => implode('|', [$p['school_id'], $p['fund_cluster'], $p['source'], $p['date']->format('Y-m-d'), $p['ref']]))
+            ->filter(fn (Collection $entry) => $entry->contains($isCash));
+
+        $counters = $flows->flatMap(fn (Collection $entry) => $entry->reject($isCash))->groupBy('account_code')->map(function (Collection $group, string $code) {
+            return ['account_code' => $code, 'account_title' => $group->first()['account_title'], 'cents' => -$this->net($group)];
+        })->reject(fn (array $row) => $row['cents'] === 0);
+
+        $sectionOf = ['Revenue' => 'Cash received', 'Equity' => 'Cash received', 'Expense' => 'Cash paid', 'Liabilities' => 'Cash paid', 'Assets' => 'Advances and other assets'];
+        $sections = collect($sectionOf)->unique()->mapWithKeys(fn (string $title) => [$title => collect()])->all();
+        $totals = array_fill_keys(array_keys($sections), 0);
+        foreach ($counters->sortKeys() as $row) {
+            $title = $sectionOf[$this->accountCategory($row['account_code'])];
+            $sections[$title]->push(['account_code' => $row['account_code'], 'account_title' => $row['account_title'], 'amount' => $this->money($row['cents'])]);
+            $totals[$title] += $row['cents'];
+        }
+
+        $net = array_sum($totals);
+        $ending = $this->net($lines->filter($isCash));
+
+        return [
+            'sections' => $sections, 'totals' => array_map(fn (int $cents) => $this->money($cents), $totals),
+            'net' => $this->money($net), 'beginning' => $this->money($beginning), 'ending' => $this->money($beginning + $net),
+            'balanced' => $beginning + $net === $ending,
+        ];
+    }
+
     /** Rows of one account class, amount on the natural side ('debit' or 'credit'), zero rows left out. */
     private function accountRows(Collection $lines, string $category, string $natural): Collection
     {

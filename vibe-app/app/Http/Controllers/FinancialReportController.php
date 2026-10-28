@@ -13,7 +13,7 @@ use Illuminate\Validation\Rule;
 
 class FinancialReportController extends Controller
 {
-    public const REPORTS = ['tb' => 'Trial Balance', 'gl' => 'General Ledger', 'sl' => 'Subsidiary Ledger', 'is' => 'Income Statement', 'bs' => 'Balance Sheet'];
+    public const REPORTS = ['tb' => 'Trial Balance', 'gl' => 'General Ledger', 'sl' => 'Subsidiary Ledger', 'is' => 'Income Statement', 'bs' => 'Balance Sheet', 'cf' => 'Cash Flow'];
 
     /** The schools this user may report on (the same rule as the Cash page). */
     private function schoolIds()
@@ -55,6 +55,7 @@ class FinancialReportController extends Controller
             'sl' => $account ? $books->subsidiary($account, $ids, $fund, $from, $to) : null,
             'is' => $books->incomeStatement($ids, $fund, $from, $to),
             'bs' => $books->balanceSheet($ids, $fund, $to),
+            'cf' => $books->cashFlow($ids, $fund, $from, $to),
         };
 
         return view('financial-reports', [

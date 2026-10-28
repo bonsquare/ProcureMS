@@ -139,6 +139,22 @@
             </tbody>
         </table>
     </section>
+@elseif($report === 'cf')
+    @unless($data['balanced'])<div class="mb-4 rounded border border-error/30 bg-error/5 px-4 py-3 text-sm text-error">Out of balance: the ending cash {{ $num($data['ending']) }} differs from the cash accounts in the books. Check the opening balances and DV journal entries.</div>@endunless
+    <section class="overflow-x-auto rounded border border-outline-variant/30 bg-white">
+        <table class="w-full text-left text-sm">
+            <tbody class="divide-y divide-outline-variant/20">
+                @foreach($data['sections'] as $title => $rows)
+                    <tr class="bg-surface-low"><td colspan="2" class="px-4 py-2 text-xs font-bold uppercase tracking-wider text-primary">{{ $title }}</td></tr>
+                    @forelse($rows as $row)<tr><td class="px-4 py-1.5 pl-8">{{ $row['account_code'] }} · {{ $row['account_title'] }}</td><td class="px-4 py-1.5 text-right tabular-nums">{{ $num($row['amount']) }}</td></tr>@empty<tr><td colspan="2" class="px-4 py-1.5 pl-8 text-on-surface-variant">None in this period.</td></tr>@endforelse
+                    <tr class="font-semibold"><td class="px-4 py-2 text-right">Total {{ strtolower($title) }}</td><td class="px-4 py-2 text-right tabular-nums">{{ $num($data['totals'][$title]) }}</td></tr>
+                @endforeach
+                <tr class="bg-surface-low font-bold"><td class="px-4 py-3 text-right">Net increase / (decrease) in cash</td><td class="px-4 py-3 text-right tabular-nums">{{ $num($data['net']) }}</td></tr>
+                <tr class="font-semibold"><td class="px-4 py-2 text-right">Cash at the beginning</td><td class="px-4 py-2 text-right tabular-nums">{{ $num($data['beginning']) }}</td></tr>
+                <tr class="bg-surface-low font-bold"><td class="px-4 py-3 text-right">Cash at the end</td><td class="px-4 py-3 text-right tabular-nums">{{ $num($data['ending']) }}</td></tr>
+            </tbody>
+        </table>
+    </section>
 @else
     @unless($data['balanced'])<div class="mb-4 rounded border border-error/30 bg-error/5 px-4 py-3 text-sm text-error">Out of balance: assets {{ $num($data['totalAssets']) }} differ from liabilities plus equity {{ $num($data['totalLiabilities'] + $data['totalEquity']) }}. Check the opening balances and DV journal entries.</div>@endunless
     <section class="overflow-x-auto rounded border border-outline-variant/30 bg-white">

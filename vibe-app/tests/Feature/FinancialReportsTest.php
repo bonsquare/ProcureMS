@@ -192,6 +192,26 @@ class FinancialReportsTest extends TestCase
         $this->assertSame('8000.00', $is['expenses']->flatten(1)->first()['amount']);
     }
 
+    public function test_cash_flow_direct_method_ties_to_the_cash_account(): void
+    {
+        [$school] = $this->books('FR5B');
+
+        $flow = $this->service()->cashFlow([$school->id], null, ...$this->range());
+
+        $this->assertSame('50000.00', $flow['totals']['Cash received']);
+        $this->assertSame('-8000.00', $flow['totals']['Cash paid']);
+        $this->assertSame(['10000.00', '42000.00', '52000.00'], [$flow['beginning'], $flow['net'], $flow['ending']]);
+        $this->assertTrue($flow['balanced']);
+    }
+
+    public function test_cash_flow_page_shows_for_an_accounting_user(): void
+    {
+        [, $user] = $this->books('FR5C');
+
+        $this->actingAs($user)->get(route('financial-reports', ['report' => 'cf', 'from' => '2026-02-01', 'to' => '2026-12-31']))
+            ->assertOk()->assertSee('Cash at the end')->assertSee('52,000.00');
+    }
+
     public function test_balance_sheet_balances(): void
     {
         [$school] = $this->books('FR12');
