@@ -250,7 +250,7 @@ class FinancialReportsTest extends TestCase
     {
         [$school, $user] = $this->books('FR15');
 
-        $this->page($user, $school, ['report' => 'tb'])->assertOk()->assertSee('52,000.00')->assertSee('60,000.00')->assertDontSee('Out of balance');
+        $this->page($user, $school, ['report' => 'tb'])->assertOk()->assertSee('B. Opening')->assertSee('52,000.00')->assertSee('58,000.00')->assertDontSee('Out of balance');
         $this->page($user, $school, ['report' => 'gl', 'account' => self::CASH])->assertOk()->assertSee('NCA-1')->assertSee('52,000.00');
         $this->page($user, $school, ['report' => 'sl', 'account' => self::CASH])->assertOk()->assertSee('Payee 0001')->assertSee('MOOE');
         $this->page($user, $school, ['report' => 'is'])->assertOk()->assertSee('42,000.00');
