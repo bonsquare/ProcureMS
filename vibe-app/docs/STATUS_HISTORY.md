@@ -116,3 +116,4 @@ Full dated log moved out of CLAUDE.md to keep that file short. Nothing was remov
 - 2026-10-27: Finance menu (procurement pages) now lists Financial Reports; the link was missing from `partials/finance-nav.blade.php`. Not deployed yet.
 - 2026-10-28: **Cash Flow report** (docs/specs.md section 88): sixth tab of Financial Reports, direct method, from the same postings as the other reports (`GeneralLedgerService::cashFlow`). Deployed 2026-10-28 (Railway e887896e).
 - 2026-10-28: Trial Balance columns are B. Opening, Debit, Credit, Ending (docs/specs.md section 88); the Financial Reports link was added to the Finance menu of the dashboard, liquidation, reports, budget, drive, backup, subscriptions and user-management pages. Deployed 2026-10-28 (Railway e887896e).
+- 2026-10-28: Trial Balance B. Opening and Ending are positive on the account's own side and negative only on the opposite side (docs/specs.md section 88). Deployed 2026-10-28.

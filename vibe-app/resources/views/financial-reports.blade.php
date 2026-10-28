@@ -5,6 +5,8 @@
 @php
     $th = 'px-4 py-3 text-xs font-semibold uppercase tracking-wider text-on-surface-variant';
     $num = fn ($value) => number_format((float) $value, 2);
+    // A balance is positive on the account's own side (assets and expenses debit; liabilities, equity and revenue credit) and negative on the other.
+    $side = fn ($code) => in_array(substr((string) $code, 0, 1), ['2', '3', '4'], true) ? -1 : 1;
     $bal = fn ($value) => round((float) $value, 2) < 0 ? '('.number_format(abs((float) $value), 2).')' : number_format((float) $value, 2);
     $query = fn (array $extra = []) => array_merge(['report' => $report, 'school_id' => $schoolId, 'fund_cluster' => $fund, 'from' => $from->toDateString(), 'to' => $to->toDateString(), 'account' => $account], $extra);
     $needsAccount = in_array($report, ['gl', 'sl'], true);
@@ -54,12 +56,12 @@
             <thead class="bg-surface-low"><tr><th class="{{ $th }}">Code</th><th class="{{ $th }}">Account</th><th class="{{ $th }} text-right">B. Opening</th><th class="{{ $th }} text-right">Debit</th><th class="{{ $th }} text-right">Credit</th><th class="{{ $th }} text-right">Ending</th></tr></thead>
             <tbody class="divide-y divide-outline-variant/20">
                 @forelse($data['rows'] as $row)
-                    <tr><td class="px-4 py-2">{{ $row['account_code'] }}</td><td class="px-4 py-2">{{ $row['account_title'] }}</td><td class="px-4 py-2 text-right tabular-nums">{{ $bal($row['opening_debit'] - $row['opening_credit']) }}</td><td class="px-4 py-2 text-right tabular-nums">{{ $num($row['period_debit']) }}</td><td class="px-4 py-2 text-right tabular-nums">{{ $num($row['period_credit']) }}</td><td class="px-4 py-2 text-right tabular-nums">{{ $bal($row['ending_debit'] - $row['ending_credit']) }}</td></tr>
+                    <tr><td class="px-4 py-2">{{ $row['account_code'] }}</td><td class="px-4 py-2">{{ $row['account_title'] }}</td><td class="px-4 py-2 text-right tabular-nums">{{ $bal(($row['opening_debit'] - $row['opening_credit']) * $side($row['account_code'])) }}</td><td class="px-4 py-2 text-right tabular-nums">{{ $num($row['period_debit']) }}</td><td class="px-4 py-2 text-right tabular-nums">{{ $num($row['period_credit']) }}</td><td class="px-4 py-2 text-right tabular-nums">{{ $bal(($row['ending_debit'] - $row['ending_credit']) * $side($row['account_code'])) }}</td></tr>
                 @empty
                     <tr><td colspan="6" class="px-4 py-6 text-center text-on-surface-variant">No entries for this period.</td></tr>
                 @endforelse
             </tbody>
-            <tfoot class="bg-surface-low font-semibold"><tr><td colspan="2" class="px-4 py-3 text-right">Total</td><td class="px-4 py-3 text-right tabular-nums">{{ $bal($data['rows']->sum(fn ($r) => $r['opening_debit'] - $r['opening_credit'])) }}</td><td class="px-4 py-3 text-right tabular-nums">{{ $num($data['rows']->sum('period_debit')) }}</td><td class="px-4 py-3 text-right tabular-nums">{{ $num($data['rows']->sum('period_credit')) }}</td><td class="px-4 py-3 text-right tabular-nums">{{ $bal($data['totals']['debit'] - $data['totals']['credit']) }}</td></tr></tfoot>
+            <tfoot class="bg-surface-low font-semibold"><tr><td colspan="2" class="px-4 py-3 text-right">Total</td><td class="px-4 py-3"></td><td class="px-4 py-3 text-right tabular-nums">{{ $num($data['rows']->sum('period_debit')) }}</td><td class="px-4 py-3 text-right tabular-nums">{{ $num($data['rows']->sum('period_credit')) }}</td><td class="px-4 py-3"></td></tr></tfoot>
         </table>
     </section>
 
