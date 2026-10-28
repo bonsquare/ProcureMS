@@ -187,7 +187,7 @@ Binding decisions from that log:
 - Still open before Phase 3 is complete: browser check of the PR form picker, PR numbering/status end-to-end validation, and deciding whether the APP link should be required for PRs.
 - The Planning page is `/planning`. The source is `resources/views/planning.blade.php`; the controller is `app/Http/Controllers/PlanningController.php`.
 - The last GitHub backup is commit `69d1d35` on `master`. Do not reset or discard local changes.
-- Live: Railway deployment cdf7a9ad (2026-10-17 14:44), migrations through `create_system_settings_table` (see the history file for later changes, several marked "not deployed yet").
+- Live: Railway deployment e887896e (2026-10-28 20:44), migrations through `create_system_settings_table` (see the history file for later changes, several marked "not deployed yet").
 
 ## Standing workflow (owner's instruction 2026-10-16)
 
