@@ -49,9 +49,15 @@ class GeneralLedgerService
         }
 
         $reports = LiquidationReport::query()->whereIn('school_id', $schoolIds)->where('status', 'approved')->whereNotNull('dv_number')->whereNotNull('dv_date')->with(['journalLines', 'breakdownLines'])->get();
+        // A remittance DV made from an alphalist knows the DV each part of its tax was withheld from: its debit is split by those suppliers so each supplier's Due to BIR is cleared.
+        $sourceIds = $reports->flatMap(fn (LiquidationReport $report) => array_keys($report->remittance['sources'] ?? []))->unique()->all();
+        $sourcePayees = $sourceIds === [] ? collect() : LiquidationReport::query()->whereIn('id', $sourceIds)->pluck('payee', 'id');
         foreach ($reports as $report) {
             foreach ($report->journalLines as $line) {
                 $breakdown = $report->breakdownLines->where('journal_line_no', $line->line_no)->map(fn ($b) => ['account_code' => $b->account_code, 'account_title' => $b->account_title, 'debit' => (string) $b->debit, 'credit' => (string) $b->credit])->values()->all();
+                if ($breakdown === [] && (float) $line->debit > 0) {
+                    $breakdown = $this->remittanceBreakdown($report->remittance['sources'] ?? [], $sourcePayees, (float) $line->debit);
+                }
                 $postings->push($this->posting('dv', $report->dv_date, $line->account_code, $line->account_title, $line->debit, $line->credit, $report->school_id, $report->dv_fund_cluster ?: self::DEFAULT_FUND, $report->dv_number, (string) $report->purpose, (string) $report->payee, $breakdown));
             }
         }
@@ -262,6 +268,30 @@ class GeneralLedgerService
         $categories = ChartOfAccount::withoutGlobalScopes()->whereIn('code', $rows->pluck('account_code'))->pluck('category', 'code');
 
         return $rows->groupBy(fn (array $row) => $categories[$row['account_code']] ?? 'Other')->sortKeys();
+    }
+
+    /**
+     * The debit of a remittance DV split by the supplier each part of the tax was withheld from; empty when the parts do not add up to the debit.
+     *
+     * @param  array<int|string, float|int|string>  $sources  DV id => tax withheld
+     * @param  Collection<int, string>  $payees  DV id => payee
+     * @return array<int, array<string, string>>
+     */
+    private function remittanceBreakdown(array $sources, Collection $payees, float $debit): array
+    {
+        $parts = [];
+        foreach ($sources as $id => $tax) {
+            $payee = (string) ($payees[(int) $id] ?? '');
+            if ($payee === '') {
+                return [];
+            }
+            $parts[$payee] = ($parts[$payee] ?? 0) + $this->cents($tax);
+        }
+        if ($parts === [] || array_sum($parts) !== $this->cents($debit)) {
+            return [];
+        }
+
+        return collect($parts)->map(fn (int $cents, string $payee) => ['account_code' => '', 'account_title' => $payee, 'debit' => $this->money($cents), 'credit' => '0.00'])->values()->all();
     }
 
     private function cents(mixed $amount): int

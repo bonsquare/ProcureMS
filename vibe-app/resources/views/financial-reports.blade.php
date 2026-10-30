@@ -45,6 +45,16 @@
     @endif
     <button class="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-container">Show</button>
 </form>
+@if($report !== 'bs')
+    <div class="no-print -mt-3 mb-6 flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wider text-on-surface-variant">
+        <span>Quarter {{ $from->year }}</span>
+        @foreach(['1st', '2nd', '3rd', '4th'] as $index => $name)
+            @php($start = \Carbon\Carbon::create($from->year, $index * 3 + 1, 1))
+            @php($isCurrent = $from->toDateString() === $start->toDateString() && $to->toDateString() === $start->copy()->addMonths(3)->subDay()->toDateString())
+            <a href="{{ route('financial-reports', $query(['from' => $start->toDateString(), 'to' => $start->copy()->addMonths(3)->subDay()->toDateString()])) }}" class="rounded-lg px-3 py-1.5 normal-case tracking-normal {{ $isCurrent ? 'bg-primary text-white' : 'border border-outline-variant/60 bg-white hover:bg-surface-low' }}">{{ $name }} qrtr.</a>
+        @endforeach
+    </div>
+@endif
 
 <h2 class="mb-1 text-lg font-semibold">{{ $reports[$report] }}</h2>
 <p class="mb-3 text-sm text-on-surface-variant">{{ $schools->firstWhere('id', $schoolId)?->name }} · {{ $fund ?: 'All funds' }} · {{ $report === 'bs' ? 'as of '.$to->format('F j, Y') : $from->format('F j, Y').' to '.$to->format('F j, Y') }}</p>

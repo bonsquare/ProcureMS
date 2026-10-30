@@ -171,6 +171,48 @@ class FinancialReportsTest extends TestCase
         $this->assertFalse($subs->has('Payee 0010'));
     }
 
+    /** A supplier DV that credits Due to BIR, and a remittance DV to the BIR that debits it. */
+    private function withheldAndRemitted(School $school, \Closure $sources): void
+    {
+        $supplier = $this->dv($school, '0020', '2026-04-01', 1000, 980, ['payee' => 'Survive Marketing Corp']);
+        DvJournalLine::create(['organization_id' => $school->organization_id, 'liquidation_report_id' => $supplier->id, 'line_no' => 3, 'account_code' => '2020101000', 'account_title' => 'Due to BIR', 'debit' => 0, 'credit' => 20]);
+        $remittance = $this->dv($school, '0021', '2026-04-20', 20, 20, ['payee' => 'LBP Kidapawan FAO BIR', 'remittance' => ['form' => '0619E', 'sources' => $sources($supplier)]]);
+        DvJournalLine::query()->where('liquidation_report_id', $remittance->id)->where('line_no', 1)->update(['account_code' => '2020101000', 'account_title' => 'Due to BIR']);
+    }
+
+    public function test_remittance_clears_due_to_bir_of_the_supplier_it_was_withheld_from(): void
+    {
+        [$school] = $this->books('FR11');
+        $this->withheldAndRemitted($school, fn (LiquidationReport $supplier) => [$supplier->id => 20]);
+
+        $subs = $this->service()->subsidiary('2020101000', [$school->id], null, ...$this->range())->keyBy('sub');
+
+        $this->assertSame(['20.00', '20.00', '0.00'], [$subs['Survive Marketing Corp']['credit'], $subs['Survive Marketing Corp']['debit'], $subs['Survive Marketing Corp']['balance']]);
+        $this->assertFalse($subs->has('LBP Kidapawan FAO BIR'));
+    }
+
+    public function test_remittance_that_does_not_add_up_to_its_sources_stays_under_the_bir_payee(): void
+    {
+        [$school] = $this->books('FR12');
+        $this->withheldAndRemitted($school, fn (LiquidationReport $supplier) => [$supplier->id => 15]);
+
+        $subs = $this->service()->subsidiary('2020101000', [$school->id], null, ...$this->range())->keyBy('sub');
+
+        $this->assertSame('20.00', $subs['LBP Kidapawan FAO BIR']['debit']);
+        $this->assertSame('-20.00', $subs['Survive Marketing Corp']['balance']);
+    }
+
+    public function test_quarter_links_set_the_period_of_the_report(): void
+    {
+        [, $user] = $this->books('FR13');
+
+        $this->actingAs($user)->get(route('financial-reports', ['report' => 'gl', 'from' => '2026-01-01', 'to' => '2026-12-31']))
+            ->assertOk()
+            ->assertSee('from=2026-04-01', false)
+            ->assertSee('to=2026-06-30', false)
+            ->assertSee('4th qrtr.');
+    }
+
     public function test_reports_are_empty_but_valid_with_no_postings(): void
     {
         [$school] = $this->tenant('FR10');
