@@ -62,9 +62,6 @@ class CheckLiquidationService
         if (! $report->paid_at || ! $report->payment_reference) {
             throw ValidationException::withMessages(['check' => 'Only a paid check can be liquidated.']);
         }
-        if ($report->breakdownLines->contains(fn ($part) => (float) $part->debit > 0 && $part->account_code !== self::ADVANCES_CODE && $report->journalLines->contains(fn ($line) => $line->line_no === $part->journal_line_no && $line->account_code === self::ADVANCES_CODE && (float) $line->debit > 0))) {
-            throw ValidationException::withMessages(['check' => 'The DV of this check already splits the advance by expense account, so the expense is recognized there.']);
-        }
         $prepared = $this->preparedLines($report, $lines, $refund);
 
         return DB::transaction(function () use ($report, $user, $prepared, $refund, $refundReference) {

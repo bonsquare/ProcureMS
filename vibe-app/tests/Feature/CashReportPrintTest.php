@@ -12,7 +12,6 @@ use App\Models\CashFundReceipt;
 use App\Models\CashRegisterCheck;
 use App\Models\CashReportHistory;
 use App\Models\ChartOfAccount;
-use App\Models\DvBreakdownLine;
 use App\Models\DvJournalLine;
 use App\Models\LiquidationReport;
 use App\Models\Organization;
@@ -174,29 +173,10 @@ class CashReportPrintTest extends TestCase
         $this->sobFor($school, ['5020399000' => 'Other Supplies Expenses']);
         $dv = $this->paid($school, '0001', '2026-09-05', 1000);
         DvJournalLine::create(['organization_id' => $school->organization_id, 'liquidation_report_id' => $dv->id, 'line_no' => 1, 'account_code' => '5020399000', 'account_title' => 'Account', 'debit' => 1200, 'credit' => 0]);
-        DvBreakdownLine::create(['organization_id' => $school->organization_id, 'liquidation_report_id' => $dv->id, 'journal_line_no' => 1, 'line_no' => 1, 'account_code' => '5020399000', 'account_title' => 'Account', 'debit' => 1200, 'credit' => 0]);
 
         $register = $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school)))->assertOk()->getContent();
         $this->assertMatchesRegularExpression('/data-account="5020399000"[^>]*>1,000\.00</', $register, 'the column is the check amount, not the journal amount');
         $this->assertMatchesRegularExpression('/data-col="total-payments"[^>]*>1,000\.00</', $register);
-    }
-
-    public function test_a_payment_to_the_bir_is_charged_to_the_expense_accounts_its_breakdown_names(): void
-    {
-        [$school, $user] = $this->tenant('BK5');
-        $this->sobFor($school, ['5020399000' => 'Other Supplies Expenses', '5020301000' => 'Office Supplies Expense']);
-        $dv = $this->paid($school, '0002', '2026-09-20', 1000, '2020101000', 'Due to BIR');
-        foreach ([[1, '2020101000', 1000, 0], [2, '1010404000', 0, 1000]] as [$no, $code, $debit, $credit]) {
-            DvJournalLine::create(['organization_id' => $school->organization_id, 'liquidation_report_id' => $dv->id, 'line_no' => $no, 'account_code' => $code, 'account_title' => 'Account', 'debit' => $debit, 'credit' => $credit]);
-        }
-        foreach ([[1, '2020101000', 1000, 0], [2, '5020399000', 600, 0], [3, '5020301000', 400, 0], [4, '2020101000', 0, 1000]] as [$no, $code, $debit, $credit]) {
-            DvBreakdownLine::create(['organization_id' => $school->organization_id, 'liquidation_report_id' => $dv->id, 'journal_line_no' => 1, 'line_no' => $no, 'account_code' => $code, 'account_title' => 'Account', 'debit' => $debit, 'credit' => $credit]);
-        }
-
-        $register = $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school)))->assertOk()->assertDontSee('Due to BIR')->assertSee('(Other Supplies Expenses, Office Supplies Expense)', false)->getContent();
-        $this->assertMatchesRegularExpression('/data-account="5020399000"[^>]*>600\.00</', $register);
-        $this->assertMatchesRegularExpression('/data-account="5020301000"[^>]*>400\.00</', $register);
-        $this->assertMatchesRegularExpression('/data-col="total-payments"[^>]*>1,000\.00</', $register, 'the columns add up to the Payments column');
     }
 
     public function test_the_balance_before_the_period_is_the_beginning_balance_of_the_other_reports(): void

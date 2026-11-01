@@ -26,7 +26,7 @@ class CashReportService
         // A school that has started to liquidate its checks is held to the full rule: a check not yet liquidated is pending and goes to no expense column.
         $strict = CheckLiquidation::query()->where('school_id', $school->id)->exists();
         $paidLines = LiquidationReport::query()
-            ->with(['budgetAllocation.account', 'procurementRequest.budgetAllocation.account', 'journalLines', 'breakdownLines', 'lines.budgetAllocation.account', 'checkLiquidation.lines'])
+            ->with(['budgetAllocation.account', 'procurementRequest.budgetAllocation.account', 'journalLines', 'lines.budgetAllocation.account', 'checkLiquidation.lines'])
             ->where('school_id', $school->id)
             ->whereNotNull('paid_at')
             ->get()
@@ -143,24 +143,6 @@ class CashReportService
     /** @return array<string, float> */
     private function splitsOf(LiquidationReport $report): array
     {
-        // A breakdown of a debit line of the journal (the advance split by actual expense account) replaces the split of the ORS:
-        // the debit lines of the journal count, a ticked line by the net of its parts per account, any other as it is.
-        if ($report->breakdownLines->contains(fn ($part) => $report->journalLines->contains(fn ($line) => $line->line_no === $part->journal_line_no && (float) $line->debit > 0))) {
-            $splits = [];
-            foreach ($report->journalLines->filter(fn ($line) => (float) $line->debit > 0) as $line) {
-                $parts = $report->breakdownLines->where('journal_line_no', $line->line_no);
-                if ($parts->isEmpty()) {
-                    $splits[$line->account_code] = round(($splits[$line->account_code] ?? 0) + (float) $line->debit, 2);
-
-                    continue;
-                }
-                foreach ($parts as $part) {
-                    $splits[$part->account_code] = round(($splits[$part->account_code] ?? 0) + (float) $part->debit - (float) $part->credit, 2);
-                }
-            }
-
-            return array_filter($splits, fn ($amount) => $amount != 0);
-        }
         if ($report->lines->count() < 2) {
             return [];
         }

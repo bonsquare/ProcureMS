@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\CashFundReceipt;
 use App\Models\ChartOfAccount;
-use App\Models\DvBreakdownLine;
 use App\Models\DvJournalLine;
 use App\Models\LiquidationReport;
 use App\Models\OpeningBalance;
@@ -152,23 +151,6 @@ class FinancialReportsTest extends TestCase
         $ledger = $this->service()->ledger('1999999999', [$school->id], null, ...$this->range());
 
         $this->assertSame(['0.00', '0.00', 0], [$ledger['opening'], $ledger['closing'], $ledger['rows']->count()]);
-    }
-
-    public function test_subsidiary_ledger_splits_by_breakdown_and_falls_back_to_payee(): void
-    {
-        [$school] = $this->books('FR9');
-        $split = $this->dv($school, '0010', '2026-04-01', 5000, 5000);
-        foreach ([[1, '5020301000', 'Travelling Expenses', 3000], [2, '5020399000', 'Other Supplies Expenses', 2000]] as [$no, $code, $title, $amount]) {
-            DvBreakdownLine::create(['organization_id' => $school->organization_id, 'liquidation_report_id' => $split->id, 'journal_line_no' => 2, 'line_no' => $no, 'account_code' => $code, 'account_title' => $title, 'debit' => 0, 'credit' => $amount]);
-        }
-
-        $subs = $this->service()->subsidiary(self::CASH, [$school->id], null, ...$this->range())->keyBy('sub');
-
-        $this->assertSame('8000.00', $subs['Payee 0001']['credit']);
-        $this->assertSame('3000.00', $subs['Travelling Expenses']['credit']);
-        $this->assertSame('2000.00', $subs['Other Supplies Expenses']['credit']);
-        $this->assertSame('10000.00', $subs['Balance brought forward']['debit']);
-        $this->assertFalse($subs->has('Payee 0010'));
     }
 
     /** A supplier DV that credits Due to BIR, and a remittance DV to the BIR that debits it. */

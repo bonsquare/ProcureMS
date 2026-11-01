@@ -47,16 +47,13 @@ class GeneralLedgerService
             $postings->push($this->posting('receipt', $receipt->received_at, $credit['code'], $credit['title'], 0, $receipt->amount, $receipt->school_id, $fund, $ref, $receipt->kindLabel(), $sub));
         }
 
-        $reports = LiquidationReport::query()->whereIn('school_id', $schoolIds)->where('status', 'approved')->whereNotNull('dv_number')->whereNotNull('dv_date')->with(['journalLines', 'breakdownLines'])->get();
+        $reports = LiquidationReport::query()->whereIn('school_id', $schoolIds)->where('status', 'approved')->whereNotNull('dv_number')->whereNotNull('dv_date')->with(['journalLines'])->get();
         // A remittance DV made from an alphalist knows the DV each part of its tax was withheld from: its debit is split by those suppliers so each supplier's Due to BIR is cleared.
         $sourceIds = $reports->flatMap(fn (LiquidationReport $report) => array_keys($report->remittance['sources'] ?? []))->unique()->all();
         $sourcePayees = $sourceIds === [] ? collect() : LiquidationReport::query()->whereIn('id', $sourceIds)->pluck('payee', 'id');
         foreach ($reports as $report) {
             foreach ($report->journalLines as $line) {
-                $breakdown = $report->breakdownLines->where('journal_line_no', $line->line_no)->map(fn ($b) => ['account_code' => $b->account_code, 'account_title' => $b->account_title, 'debit' => (string) $b->debit, 'credit' => (string) $b->credit])->values()->all();
-                if ($breakdown === [] && (float) $line->debit > 0) {
-                    $breakdown = $this->remittanceBreakdown($report->remittance['sources'] ?? [], $sourcePayees, (float) $line->debit);
-                }
+                $breakdown = (float) $line->debit > 0 ? $this->remittanceBreakdown($report->remittance['sources'] ?? [], $sourcePayees, (float) $line->debit) : [];
                 $postings->push($this->posting('dv', $report->dv_date, $line->account_code, $line->account_title, $line->debit, $line->credit, $report->school_id, $report->dv_fund_cluster ?: self::DEFAULT_FUND, $report->dv_number, (string) $report->purpose, (string) $report->payee, $breakdown));
             }
         }
@@ -125,7 +122,7 @@ class GeneralLedgerService
     }
 
     /**
-     * One account split by payee, source of fund or, where a DV line has a breakdown, by the breakdown accounts.
+     * One account split by payee, source of fund or, for a remittance DV, by the suppliers it remits for.
      *
      * @param  array<int, int>  $schoolIds
      * @return Collection<int, array<string, string>>

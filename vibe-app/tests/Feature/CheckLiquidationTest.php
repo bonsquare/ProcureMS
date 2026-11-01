@@ -10,7 +10,6 @@ use App\Models\CashRegisterCheck;
 use App\Models\CashReportHistory;
 use App\Models\ChartOfAccount;
 use App\Models\CheckLiquidation;
-use App\Models\DvBreakdownLine;
 use App\Models\DvJournalLine;
 use App\Models\LiquidationReport;
 use App\Models\Organization;
@@ -332,16 +331,6 @@ class CheckLiquidationTest extends TestCase
         $this->assertTrue($row['cancelled']);
         $this->assertNull($row['amount']);
         $this->assertFalse($data['liquidation']['incomplete']);
-    }
-
-    public function test_a_check_whose_dv_already_splits_the_advance_by_expense_account_cannot_be_liquidated(): void
-    {
-        [$school, $user] = $this->tenant('A');
-        $check = $this->check($school, $user);
-        DvJournalLine::create(['organization_id' => $school->organization_id, 'liquidation_report_id' => $check->id, 'line_no' => 1, 'account_code' => '1990101000', 'account_title' => 'Advances', 'debit' => 10000, 'credit' => 0]);
-        DvBreakdownLine::create(['organization_id' => $school->organization_id, 'liquidation_report_id' => $check->id, 'journal_line_no' => 1, 'line_no' => 1, 'account_code' => self::OFFICE, 'account_title' => 'Office', 'debit' => 10000, 'credit' => 0]);
-
-        $this->save($user, $check, [['account_code' => self::OFFICE, 'amount' => 10000]])->assertJsonValidationErrors('check');
     }
 
     public function test_a_payable_such_as_due_to_bir_is_credited_and_comes_off_the_advance(): void
