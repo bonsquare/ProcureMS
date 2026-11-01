@@ -1293,3 +1293,7 @@ Every kept alphalist (section 93) keeps each list's total and the tax of every D
 - **Quarter links.** Under the filter form of Financial Reports (every tab except the Balance Sheet) the links 1st, 2nd, 3rd and 4th qrtr. of the year of the From date set From and To to that quarter and keep the school, fund and account. The form boxes are unchanged.
 - **Due to BIR per supplier.** In the Subsidiary Ledger, a remittance DV made from an alphalist (section 95) splits its debit among the suppliers whose DVs the tax was withheld from (`liquidation_reports.remittance['sources']`), so each supplier's Due to BIR balance is cleared by the remittance. When the parts do not add up to the debit of the line, the debit stays under the payee of the remittance DV, as before. The General Ledger and the other reports are unchanged. `GeneralLedgerService::remittanceBreakdown`.
 - Covered by `tests/Feature/FinancialReportsTest.php`.
+
+## 97. Repository housekeeping and project skills (2026-11-01)
+
+- A root `.gitignore` keeps `tmp/`, `graphify-out/`, `.superpowers/` and `vibe-app/.agents/` out of git. Pint and Prettier are not run across the project; Pint is checked only on PHP files that are changed. Three project skills are installed in `.claude/skills`: `laravel-security`, `laravel-testing-qa` and `laravel-database-scale`. The application is unchanged.
