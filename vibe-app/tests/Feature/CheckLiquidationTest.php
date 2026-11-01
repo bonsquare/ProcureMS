@@ -224,7 +224,7 @@ class CheckLiquidationTest extends TestCase
         return app(CashReportService::class)->build($school, Carbon::parse('2026-07-01'), Carbon::parse('2026-09-30'));
     }
 
-    public function test_an_approved_liquidation_debits_the_expenses_and_credits_advances_once(): void
+    public function test_an_approved_liquidation_posts_nothing_to_the_books(): void
     {
         [$school, $user] = $this->tenant('A');
         $check = $this->check($school, $user);
@@ -232,14 +232,12 @@ class CheckLiquidationTest extends TestCase
         $this->approvedLiquidation($user, $check, [['account_code' => self::OFFICE, 'amount' => 6000], ['account_code' => self::OTHER, 'amount' => 4000]]);
         $this->postJson(route('check-liquidation.approve', $check))->assertOk();
 
+        // The Cash Disbursement Register breaks down the use of Advances; the ledger has no liquidation entry (owner's decision 2026-11-01).
         $ledger = $this->ledger($school);
-        $this->assertEquals(6000, $ledger[self::OFFICE]['debit']);
-        $this->assertEquals(4000, $ledger[self::OTHER]['debit']);
-        $this->assertEquals(10000, $ledger['1990101000']['credit']);
-        $this->assertArrayNotHasKey('1010202024', $ledger, 'Cash is not credited again');
-
-        $this->postJson(route('check-liquidation.reopen', $check), ['reason' => 'Fix', 'password' => 'secret-pass-123'])->assertOk();
-        $this->assertArrayNotHasKey(self::OFFICE, $this->ledger($school));
+        $this->assertArrayNotHasKey(self::OFFICE, $ledger);
+        $this->assertArrayNotHasKey(self::OTHER, $ledger);
+        $this->assertArrayNotHasKey('1990101000', $ledger);
+        $this->assertArrayNotHasKey('1010202024', $ledger);
     }
 
     public function test_a_refund_is_cash_received_back_and_not_an_expense(): void
@@ -252,9 +250,9 @@ class CheckLiquidationTest extends TestCase
 
         $this->assertSame(1, CashFundReceipt::where('kind', 'refund')->count());
         $ledger = $this->ledger($school);
-        $this->assertEquals(9000, $ledger[self::OFFICE]['debit']);
+        $this->assertArrayNotHasKey(self::OFFICE, $ledger);
         $this->assertEquals(1000, $ledger['1010202024']['debit']);
-        $this->assertEquals(10000, $ledger['1990101000']['credit']);
+        $this->assertEquals(1000, $ledger['1990101000']['credit']);
 
         $receipt = CashFundReceipt::where('kind', 'refund')->first();
         $this->delete(route('cash.fund.destroy', $receipt))->assertStatus(422);
@@ -356,11 +354,7 @@ class CheckLiquidationTest extends TestCase
         $this->save($user, $check, [['account_code' => '2020101000', 'amount' => 500]])->assertJsonValidationErrors('lines');
         $this->approvedLiquidation($user, $check, [['account_code' => self::OFFICE, 'amount' => 10000], ['account_code' => '2020101000', 'amount' => 500]]);
 
-        $ledger = $this->ledger($school);
-        $this->assertEquals(10000, $ledger[self::OFFICE]['debit']);
-        $this->assertEquals(500, $ledger['2020101000']['credit']);
-        $this->assertEquals(0, $ledger['2020101000']['debit']);
-        $this->assertEquals(9500, $ledger['1990101000']['credit']);
+        $this->assertSame([], $this->ledger($school), 'a liquidation posts nothing to the books');
 
         $line = $this->register($school)['lines']->first();
         $this->assertEquals([self::OFFICE => 10000], $line['splits'], 'the register has no payable column');

@@ -1297,3 +1297,7 @@ Every kept alphalist (section 93) keeps each list's total and the tax of every D
 ## 97. Repository housekeeping and project skills (2026-11-01)
 
 - A root `.gitignore` keeps `tmp/`, `graphify-out/`, `.superpowers/` and `vibe-app/.agents/` out of git. Pint and Prettier are not run across the project; Pint is checked only on PHP files that are changed. Three project skills are installed in `.claude/skills`: `laravel-security`, `laravel-testing-qa` and `laravel-database-scale`. The application is unchanged.
+
+## 98. Liquidation posts no entry to the books (owner's decision 2026-11-01)
+
+- An approved check liquidation (sections 91) no longer posts Dr expense / Cr Advances for Operating Expenses in the General Ledger, Trial Balance or Cash Flow: `GeneralLedgerService::postings` has no `liquidation` source now. The use of 1990101000 is shown by the Cash Disbursement Register, which still reads the liquidation lines for its expense columns. The advance received (Dr Cash in bank, Cr 1990101000) and the refund (Dr Cash, Cr 1990101000) are unchanged; the check DV journal is as typed by the user (an expense account may be debited directly). The liquidation screen, its rules and the cash reports are unchanged. Covered by `tests/Feature/CheckLiquidationTest.php`.

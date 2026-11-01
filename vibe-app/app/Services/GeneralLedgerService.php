@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\CashFundReceipt;
 use App\Models\ChartOfAccount;
-use App\Models\CheckLiquidation;
 use App\Models\LiquidationReport;
 use App\Models\OpeningBalance;
 use Carbon\Carbon;
@@ -62,21 +61,7 @@ class GeneralLedgerService
             }
         }
 
-        // An approved liquidation of a check recognizes the expense: Dr each expense account, Cr Advances for Operating Expenses (the cash was credited when the check was issued).
-        $advances = $credits['cash_advance'];
-        foreach (CheckLiquidation::query()->whereIn('school_id', $schoolIds)->where('status', 'approved')->with(['lines', 'report'])->get() as $liquidation) {
-            $report = $liquidation->report;
-            $fund = $report->dv_fund_cluster ?: self::DEFAULT_FUND;
-            $ref = 'Liquidation of check '.$report->payment_reference;
-            // An expense is debited; a payable (liability, code 2...) such as Due to BIR is credited, so the advance is credited for the expenses less the payables.
-            $net = 0.0;
-            foreach ($liquidation->lines as $line) {
-                $payable = CheckLiquidationService::isPayableAccount($line->account_code);
-                $net += $payable ? -(float) $line->amount : (float) $line->amount;
-                $postings->push($this->posting('liquidation', $liquidation->approved_at, $line->account_code, $line->account_title, $payable ? 0 : $line->amount, $payable ? $line->amount : 0, $liquidation->school_id, $fund, $ref, (string) $report->purpose, (string) $report->payee));
-            }
-            $postings->push($this->posting('liquidation', $liquidation->approved_at, $advances['code'], $advances['title'], 0, round($net, 2), $liquidation->school_id, $fund, $ref, (string) $report->purpose, (string) $report->payee));
-        }
+        // A liquidation of a check posts nothing: the Cash Disbursement Register breaks down how Advances for Operating Expenses was used (owner's decision 2026-11-01).
 
         if ($fundCluster) {
             $postings = $postings->where('fund_cluster', $fundCluster);
