@@ -1339,3 +1339,7 @@ Every kept alphalist (section 93) keeps each list's total and the tax of every D
 - This changes the school-user bullet of section 4. The School Dashboard has eight cards: Budget utilization, Budget balance, **Cash balance** (cash received less paid in the fiscal year, from `CashReportService`), **DVs for payment** (count and amount waiting in Cash; a non-cash DV is never counted), Purchase requests, Pending approval, In progress and Liquidation to review. The Completion rate card, the Active suppliers card and the Requests per month chart are not shown to a school (Request pipeline and Budget flow share the row).
 - A school on a trial sees a "Trial · N day(s) left" chip under the welcome line, linking to the Subscription page.
 - The master and sub-master KPI Dashboard is unchanged. Figures come from `DashboardKpiService::forSchools` (new `cash` key). Tests: `DashboardKpiTest`.
+
+## 106. Budget page: totals, search, stage steps (owner's decision 2026-11-02)
+
+- Fund Utilization has a TOTAL row (more than one fund line). The ORS list and the Obligations & Transactions list each have a search box and a filter (ORS: stage; transactions: PR or ORS) that hide rows in the page and say "N of M shown". Each ORS shows four step bars (Created, Accounting, DV, Paid) under its stage chip, red when returned. Obligations & Transactions starts collapsed. `resources/views/budget.blade.php` only.
