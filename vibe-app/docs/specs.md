@@ -1308,3 +1308,7 @@ Every kept alphalist (section 93) keeps each list's total and the tax of every D
 ## 99. Breakdown of the DV journal removed (owner's decision 2026-11-01)
 
 - The **Break down** tick boxes, the per-line chips, the breakdown window and the saving of breakdowns are gone from Create DV and Edit DV; `FinanceController` neither validates nor saves them, and `LiquidationReport::breakdownLines()` and the `DvBreakdownLine` model are removed. The Cash Disbursement Register (`CashReportService::splitsOf`) now takes a check's split from its ORS lines only, the Subsidiary Ledger splits by payee, fund or, for a remittance DV, the suppliers it remits for, and a check whose journal debits Advances can be liquidated. The table `dv_breakdown_lines` and its saved rows are kept in the database, unused (no data was deleted). The cash reports, the form boxes and the printed DV are otherwise unchanged. Tests of the breakdown were removed.
+
+## 100. Trial Balance Ending shows no brackets (owner's decision 2026-11-02)
+
+- The Trial Balance Ending column shows the size of each account's balance with no minus sign or brackets (for example Cash-MDS 222,789.98 and Advances for Operating Expenses 162,798.52). B. Opening, Debit, Credit and the Total row are unchanged (this replaces the sign rule of section 88 for the Ending column only).
