@@ -32,12 +32,15 @@ use App\Http\Controllers\SubMasterController;
 use App\Http\Controllers\SubscriptionAdminController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\SupportController;
+use App\Http\Controllers\TelegramWebhookController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserDirectoryController;
 use Illuminate\Support\Facades\Route;
 
 // Public: the privacy policy that Google requires for the Drive connection, readable without signing in.
 Route::view('/privacy', 'privacy')->name('privacy');
+
+Route::post('/telegram/webhook/{secret}', [TelegramWebhookController::class, 'handle'])->middleware('throttle:120,1')->name('telegram.webhook');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'create'])->name('login');
@@ -248,6 +251,7 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::get('/reports', [HomeController::class, 'reports'])->middleware('permission:reports.view')->name('reports');
     Route::get('/support', [SupportController::class, 'show'])->name('support');
     Route::put('/support', [SupportController::class, 'update'])->name('support.update');
+    Route::post('/support/messages', [SupportController::class, 'send'])->middleware('throttle:10,1')->name('support.send');
     Route::post('/demo/reset', [DemoController::class, 'reset'])->name('demo.reset');
     Route::get('/user-management', [UserDirectoryController::class, 'index'])->name('user-management');
     Route::post('/user-management/users', [UserDirectoryController::class, 'store'])->name('user-management.users.store');

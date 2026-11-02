@@ -1,6 +1,7 @@
 @extends('layouts.budget')
 @section('title', 'Support')
 @section('content')
+@php $inputClass = 'mt-1 w-full rounded border border-outline-variant/50 bg-white px-3 py-2.5 text-sm outline-none focus:border-primary'; @endphp
 <div class="mb-6">
     <h1 class="text-3xl font-semibold tracking-tight">Support</h1>
     <p class="mt-1 text-sm text-on-surface-variant">Reach Customer Services for help with your account, subscription or the system.</p>
@@ -48,6 +49,31 @@
         </div>
     </section>
 </div>
+
+<section class="mt-4 rounded border border-outline-variant/30 bg-white p-5">
+    <h2 class="text-lg font-semibold">Message Customer Services</h2>
+    <p class="mt-1 text-xs text-on-surface-variant">Your message goes straight to Customer Services{{ $telegramOn ? '' : ' (messaging is not switched on yet: it is saved only)' }}. The reply appears below.</p>
+    <form method="POST" action="{{ route('support.send') }}" class="mt-3">@csrf
+        <label class="block text-xs font-semibold text-on-surface-variant">Your message<textarea name="body" rows="3" required minlength="3" maxlength="2000" placeholder="Describe what you need help with, and the page you were on." class="{{ $inputClass }}">{{ old('body') }}</textarea></label>
+        <div class="mt-2 flex justify-end"><button class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">send</span>Send message</button></div>
+    </form>
+
+    @if($messages->isNotEmpty())
+        <h3 class="mt-5 text-sm font-bold uppercase tracking-wide text-on-surface-variant">{{ $canEdit ? 'All messages' : 'Your messages' }}</h3>
+        <div class="mt-2 space-y-3">
+            @foreach($messages as $message)
+                <article class="rounded-xl border border-outline-variant/40 p-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] text-on-surface-variant"><span class="font-semibold">#{{ $message->id }}@if($canEdit) · {{ $message->user?->name }}@if($message->school) · {{ $message->school->name }}@endif @endif</span><span class="flex items-center gap-2"><span>{{ $message->created_at->format('M d, Y g:i A') }}</span><span class="rounded-full px-2 py-0.5 font-bold {{ $message->status === 'answered' ? 'bg-secondary/10 text-secondary' : 'bg-amber-100 text-amber-800' }}">{{ $message->status === 'answered' ? 'Answered' : 'Waiting for reply' }}</span></span></div>
+                    <p class="mt-1.5 whitespace-pre-line text-sm">{{ $message->body }}</p>
+                    @foreach($message->replies as $reply)
+                        <div class="mt-2 rounded-lg border-l-2 border-secondary bg-secondary/5 px-3 py-2"><p class="text-[11px] font-bold uppercase tracking-wide text-secondary">Customer Services · {{ $reply->created_at->format('M d, Y g:i A') }}</p><p class="mt-0.5 whitespace-pre-line text-sm">{{ $reply->body }}</p></div>
+                    @endforeach
+                    @if($canEdit && $message->telegram_status !== 'sent')<p class="mt-1.5 text-[11px] text-error">Not delivered to Telegram ({{ str_replace('_', ' ', $message->telegram_status) }}).</p>@endif
+                </article>
+            @endforeach
+        </div>
+    @endif
+</section>
 
 @if($canEdit)
     <section class="mt-4 rounded border border-outline-variant/30 bg-white p-5">

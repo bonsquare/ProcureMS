@@ -23,6 +23,7 @@ class SupportPageTest extends TestCase
         $this->actingAs($schoolUser)->get(route('support'))->assertOk()->assertSee('Contact Customer Services')->assertSee('have not been set yet')->assertDontSee('Customer Services details');
         $this->actingAs($schoolUser)->put(route('support.update'), ['support_email' => 'x@example.test'])->assertForbidden();
 
+        $this->actingAs($master)->get(route('support'))->assertOk()->assertSee('Customer Services details');
         $this->actingAs($master)->put(route('support.update'), ['support_email' => 'help@example.test', 'support_phone' => '0917 000 0000', 'support_hours' => 'Mon to Fri, 8 to 5'])->assertRedirect(route('support'));
         $this->assertSame('help@example.test', SystemSetting::get('support_email'));
 

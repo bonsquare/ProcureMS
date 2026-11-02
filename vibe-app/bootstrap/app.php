@@ -31,6 +31,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // Behind a Cloudflare Tunnel the app is reached over plain http from this computer; trust the forwarded
         // headers so links are https, cookies are secure and the visitor's own address is recorded.
         $middleware->trustProxies(at: '*');
+        // Telegram posts the replies here without a session; the secret in the address and in the header is the check.
+        $middleware->validateCsrfTokens(except: ['telegram/webhook/*']);
         $middleware->appendToGroup('web', EnsureScreenIsOn::class);
         $middleware->appendToGroup('web', EnsureAccountActive::class);
         $middleware->appendToGroup('web', EnsureStationConfirmed::class);

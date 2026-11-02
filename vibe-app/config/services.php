@@ -47,6 +47,13 @@ return [
         ],
     ],
 
+    // Customer Services on Telegram: messages from the Support page go to this chat and the replies written there come back by the webhook.
+    'telegram' => [
+        'token' => env('TELEGRAM_BOT_TOKEN'),
+        'chat_id' => env('TELEGRAM_CHAT_ID'),
+        'webhook_secret' => env('TELEGRAM_WEBHOOK_SECRET'),
+    ],
+
     'railway' => [
         'token' => env('RAILWAY_API_TOKEN'),
         'project_id' => env('RAILWAY_PROJECT_ID'),
