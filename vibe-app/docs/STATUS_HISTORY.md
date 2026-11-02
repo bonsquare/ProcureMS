@@ -132,3 +132,4 @@ Full dated log moved out of CLAUDE.md to keep that file short. Nothing was remov
 - 2026-11-02: Chart of Accounts rows are built when a category opens (templates), so the page loads faster (docs/specs.md section 107). Deployed 2026-11-02 (Railway PENDING).
 - 2026-11-02: Trial Balance counts an advance once when a typed cash advance receipt and a non-cash DV record the same amount; the cash reports keep the typed receipt (docs/specs.md section 108). Deployed 2026-11-02 (Railway PENDING).
 - 2026-11-02: Liquidation Records table: one-line Print ORS button, right-aligned Amount, no wrapping date, no "Submitted" text in Actions (docs/specs.md section 109). Deployed 2026-11-02 (Railway PENDING).
+- 2026-11-02: Support tab for Customer Services (contact details set by the master, quick help; docs/specs.md section 110). Deployed 2026-11-02 (Railway PENDING).

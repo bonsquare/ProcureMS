@@ -31,6 +31,7 @@ use App\Http\Controllers\StationTransferController;
 use App\Http\Controllers\SubMasterController;
 use App\Http\Controllers\SubscriptionAdminController;
 use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\SupportController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserDirectoryController;
 use Illuminate\Support\Facades\Route;
@@ -245,6 +246,8 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::post('/drive-files', [DriveFileController::class, 'store'])->middleware('drive.connected')->name('drive-files.store');
     Route::delete('/drive-files/{driveFile}', [DriveFileController::class, 'destroy'])->whereNumber('driveFile')->name('drive-files.destroy');
     Route::get('/reports', [HomeController::class, 'reports'])->middleware('permission:reports.view')->name('reports');
+    Route::get('/support', [SupportController::class, 'show'])->name('support');
+    Route::put('/support', [SupportController::class, 'update'])->name('support.update');
     Route::post('/demo/reset', [DemoController::class, 'reset'])->name('demo.reset');
     Route::get('/user-management', [UserDirectoryController::class, 'index'])->name('user-management');
     Route::post('/user-management/users', [UserDirectoryController::class, 'store'])->name('user-management.users.store');

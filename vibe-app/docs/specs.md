@@ -1356,3 +1356,7 @@ Every kept alphalist (section 93) keeps each list's total and the tax of every D
 ## 109. Liquidation Records table presentation (2026-11-02)
 
 - In the Liquidation Records table the Print ORS button is one line with a print icon, the Amount column is right-aligned and does not wrap, the Submitted date does not wrap, and a school user no longer sees the "Submitted" text in Actions (the Status column says it). `resources/views/liquidation.blade.php` only.
+
+## 110. Support tab for Customer Services (owner's decision 2026-11-02)
+
+- A **Support** item (route `support`, `/support`) sits above School Settings in the sidebar of every user. The page shows the Customer Services contact (email and phone as links, service hours, a note) and a short Quick help list; no tickets or messages are stored. The details are `system_settings` keys `support_email`, `support_phone`, `support_hours`, `support_note`, edited on the same page by the master user only (`PUT /support`, 403 for anyone else). An empty box is hidden; with nothing set the page asks the user to ask the administrator. `SupportController`, `resources/views/support.blade.php`. Tests: `SupportPageTest`.
