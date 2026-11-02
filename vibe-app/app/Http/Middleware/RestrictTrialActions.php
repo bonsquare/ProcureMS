@@ -35,6 +35,11 @@ class RestrictTrialActions
             return $next($request);
         }
 
+        // The docked preview beside a planning page reads the printed form into a frame (toolbar hidden); that is a preview, not a print.
+        if ($request->isMethod('GET') && $request->headers->has('X-Doc-Preview')) {
+            return $next($request);
+        }
+
         if (in_array($request->route()?->getName(), self::PRINT_ROUTES, true)) {
             return $this->refuse($request, 'Printing is available on a paid subscription');
         }

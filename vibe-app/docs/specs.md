@@ -1317,3 +1317,7 @@ Every kept alphalist (section 93) keeps each list's total and the tax of every D
 
 - The money received (the advances, for example Dr Cash in bank / Cr Advances for Operating Expenses 1990101000) is listed first in the register, in advance-date order; the payments follow by date and the running balance carries through in that order (this changes the date order of sections 56 to 59, 64, 66, 67, 74 and 76 for the register only).
 - An approved DV with a DV number, no check and a journal line debiting an expense account is a row of the register: Particulars is the payee of the DV, the Reference is the DV number, the amount is the sum of its expense debits and it is divided among the expense columns by those debits. A DV dated before the period lowers the beginning balance. `CashReportService::build` returns them as `journal` and `journal_opening`, apart from `lines`, so the Bank Reconciliation, the other cash reports and the books do not move. Nothing stored is rewritten: the register reads the records each time. A BIR remittance is unchanged (charged to the columns of the taxes it remits).
+
+## 102. Docked document preview works on the trial (2026-11-02)
+
+- The docked preview beside the AIP, SOB and APP-CSE pages reads the printed form with a GET that carries the header `X-Doc-Preview`. `RestrictTrialActions` lets that request through for a trial user (the toolbar is hidden in the frame); opening the print route directly is still refused with the trial prompt (402).

@@ -78,7 +78,7 @@
                     body.delete('_method'); // the preview address takes a plain POST
                     response = await fetch(form.action.replace(/\/$/, '') + '/preview', { method: 'POST', body, signal: controller.signal, headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' } });
                 } else {
-                    response = await fetch(savedUrl, { signal: controller.signal, headers: { 'Accept': 'text/html' } });
+                    response = await fetch(savedUrl, { signal: controller.signal, headers: { 'Accept': 'text/html', 'X-Doc-Preview': '1' } });
                 }
                 if (!response.ok) { status.textContent = 'Preview unavailable (HTTP ' + response.status + ')'; return; }
                 show(await response.text());
