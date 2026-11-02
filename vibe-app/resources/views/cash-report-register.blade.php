@@ -112,7 +112,7 @@
                 ->reject(fn (string $code) => $code === '' || str_starts_with($code, '2') || $line['cancelled'])
                 ->map(fn (string $code) => $accounts[$code] ?? ($code === (string) $line['uacs_code'] ? (string) $line['nature'] : ''))->filter()->unique()->implode(', ');
             $balance = round($balance - ($line['amount'] ?? 0), 2);
-            $rows[] = ['date' => $entry['date'], 'reference' => $line['check_no'], 'particulars' => $line['payee'].($natures !== '' && ! ($line['journal'] ?? false) ? ' ('.$natures.')' : '').(($line['pending'] ?? false) ? ' - Pending liquidation' : ''), 'advance' => null, 'payment' => $line['amount'], 'gross' => $line['amount'], 'balance' => $balance, 'code' => $line['cancelled'] ? null : $line['uacs_code'], 'splits' => $lineSplits];
+            $rows[] = ['date' => $entry['date'], 'reference' => $line['check_no'], 'particulars' => $line['payee'].($natures !== '' && ! ($line['journal'] ?? false) && empty($line['remittance_sources']) ? ' ('.$natures.')' : '').(($line['pending'] ?? false) ? ' - Pending liquidation' : ''), 'advance' => null, 'payment' => $line['amount'], 'gross' => $line['amount'], 'balance' => $balance, 'code' => $line['cancelled'] ? null : $line['uacs_code'], 'splits' => $lineSplits];
         }
     }
     // A payment of an ORS charged to several UACS codes is divided among their columns; any other payment goes to the column of its one code.

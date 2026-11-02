@@ -61,9 +61,6 @@
         @foreach($procurementRequest->items as $item)
             <tr><td class="center">{{ $loop->iteration }}</td><td class="center">{{ strtolower($item->unit) }}</td><td>{{ $item->name }}</td><td class="right">{{ number_format((float)$item->quantity,0) }}</td><td class="right">{{ number_format((float)$item->unit_price,2) }}</td><td></td><td></td></tr>
         @endforeach
-        @for($blank = 0; $blank < 3; $blank++)
-            <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-        @endfor
         <tr><td colspan="6" class="right bold" style="border:0">Grand Total:</td><td style="height:29px;border-width:2px"></td></tr>
     </tbody></table><div style="margin-top:24px">Conformed by:</div><div style="margin-top:52px;width:95mm;border-top:1px solid #111" class="bold">Supplier</div>
 </section>

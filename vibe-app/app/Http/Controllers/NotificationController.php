@@ -76,7 +76,7 @@ class NotificationController extends Controller
         if ($user->hasPermission('liquidation.create') && ($returned = $reports()->where('status', 'returned')->count()) > 0) {
             $items->push($this->item($returned.' ORS returned to you', 'Accounting returned it with a remark. Correct it and send it again.', route('budget'), 'warn'));
         }
-        if ($user->hasPermission('cash.pay') && ($waiting = $reports()->where('status', 'approved')->whereNotNull('dv_number')->whereNull('paid_at')->count()) > 0) {
+        if ($user->hasPermission('cash.pay') && ($waiting = $reports()->where('status', 'approved')->whereNotNull('dv_number')->whereNull('paid_at')->where('dv_non_cash', false)->count()) > 0) {
             $items->push($this->item($waiting.' '.Str::plural('DV', $waiting).' waiting for payment', 'Record the payment in Cash.', route('cash'), 'info'));
         }
         if ($user->hasPermission('accounting.approve') && ($missing = $reports()->where('status', 'pending_documents')->count()) > 0) {

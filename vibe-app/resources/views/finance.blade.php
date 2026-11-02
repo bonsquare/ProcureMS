@@ -119,7 +119,11 @@
                         @if($r->dv_number)
                             <div class="mt-1.5 whitespace-nowrap text-xs font-bold text-secondary">{{ $dvLabel($r->dv_number) }}</div>
                             <div class="whitespace-nowrap text-xs text-on-surface-variant">{{ $r->dv_date?->format('M d, Y') }}</div>
-                            <span class="mt-1.5 inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-sky-100 px-2.5 py-1 text-xs font-bold text-sky-800"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">account_balance_wallet</span>Cash for Disbursement</span>
+                            @if($r->dv_non_cash)
+                                <span class="mt-1.5 inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-sky-100 px-2.5 py-1 text-xs font-bold text-sky-800">Non-cash transaction</span>
+                            @else
+                                <span class="mt-1.5 inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-sky-100 px-2.5 py-1 text-xs font-bold text-sky-800"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">account_balance_wallet</span>Cash for Disbursement</span>
+                            @endif
                         @endif
                         @if($r->accounting_remarks)<div class="mt-1.5 max-w-[240px] rounded-lg border-l-2 border-amber-500 bg-amber-50 px-2 py-1 text-[11px] text-amber-900">{{ $r->accounting_remarks }}</div>@endif
                     @endif
@@ -224,6 +228,7 @@
                                         <label class="text-xs font-semibold text-on-surface-variant">Payee <span class="text-error">*</span><input name="payee" required maxlength="255" value="{{ $payee }}" class="{{ $inputClass }}"></label>
                                         <label class="text-xs font-semibold text-on-surface-variant">Particulars <span class="text-error">*</span><input name="dv_particulars" required maxlength="255" value="{{ $r->dv_particulars }}" class="{{ $inputClass }}"></label>
                                     </div>
+                                    <label class="mt-3 flex items-start gap-2 text-xs font-semibold text-on-surface-variant"><input type="checkbox" name="dv_non_cash" value="1" @checked($r->dv_non_cash) @disabled($r->paid_at) class="mt-0.5 h-4 w-4 rounded border-outline-variant"><span>Non-cash transaction<span class="block font-normal">Recorded in the journal entry only: no payment and no cash report.</span></span></label>
                                 </section>
                                 <section data-edit-journal>
                                     <div class="mb-2 flex flex-wrap items-baseline justify-between gap-2"><h3 class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Journal entry</h3><p class="text-[11px] text-on-surface-variant">Total debit = total credit = {{ $peso($r->amount) }}</p></div>
@@ -360,6 +365,7 @@
             <div id="deduction-others" class="mt-2 space-y-2"></div>
             <button type="button" id="deduction-add" class="mt-2 inline-flex items-center gap-1 rounded border border-outline-variant/60 bg-white px-3 py-1.5 text-xs font-semibold text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">add</span>Add other deduction</button>
         </div>
+        <label class="flex items-start gap-2 text-xs font-semibold text-on-surface-variant md:col-span-2"><input type="checkbox" name="dv_non_cash" value="1" @checked(old('dv_non_cash')) class="mt-0.5 h-4 w-4 rounded border-outline-variant"><span>Non-cash transaction<span class="block font-normal">Left unchecked, the DV is a cash transaction (payment and cash reports). Check it when nothing is paid out, for example receiving advances in Cash-MDS: it is recorded in the journal entry only.</span></span></label>
         <label class="flex items-start gap-2 text-xs font-semibold text-on-surface-variant md:col-span-2"><input type="checkbox" name="dv_include_appropriation" value="1" @checked(old('dv_include_appropriation')) class="mt-0.5 h-4 w-4 rounded border-outline-variant"><span>Add the APPROPRIATION table to the printed DV<span class="block font-normal">Columns: Appropriation, P/A/P, OR No., Amount, Expense Code. Left unchecked, the DV prints without it.</span></span></label>
         @foreach(($dvDialogPanels ?? []) as $signatorySchoolId => $signatoryRows)
             <section data-signatories-school="{{ $signatorySchoolId }}" class="hidden rounded-xl border border-outline-variant/50 bg-surface-low/50 p-3 md:col-span-2">

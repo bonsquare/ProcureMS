@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\CancelledCheck;
 use App\Models\CashFundReceipt;
+use App\Models\ChartOfAccount;
 use App\Models\CheckLiquidation;
 use App\Models\LiquidationReport;
 use App\Models\School;
@@ -50,6 +51,23 @@ class CashReportService
         $sameFund = fn (?string $value) => $fund === null || strcasecmp(trim((string) $value), $fund) === 0;
         $all = $paidLines->concat($cancelledLines)->map(fn (array $line) => $sameFund($line['fund']) ? $line : ['amount' => null] + $line)->values();
         $receipts = CashFundReceipt::query()->where('school_id', $school->id)->orderBy('received_at')->orderBy('id')->get()->filter(fn (CashFundReceipt $receipt) => $sameFund($receipt->source_of_fund))->values();
+
+        // A non-cash DV that records Advances for Operating Expenses (1990101000) is cash received from advances: it is listed with the cash downloaded, kept apart from the receipts typed by hand.
+        $advances = LiquidationReport::query()
+            ->with('journalLines')
+            ->where('school_id', $school->id)
+            ->where('status', 'approved')
+            ->where('dv_non_cash', true)
+            ->whereNotNull('dv_number')
+            ->whereNotNull('dv_date')
+            ->get()
+            ->filter(fn (LiquidationReport $report) => $sameFund($report->source_of_fund))
+            ->map(fn (LiquidationReport $report) => new CashFundReceipt([
+                'school_id' => $report->school_id, 'received_at' => $report->dv_date, 'kind' => 'cash_advance', 'source_of_fund' => $report->source_of_fund,
+                'amount' => round((float) $report->journalLines->where('account_code', '1990101000')->sum('debit'), 2), 'reference' => LiquidationReport::dvLabel($report->dv_number), 'note' => $report->dv_particulars,
+            ]))
+            ->filter(fn (CashFundReceipt $receipt) => (float) $receipt->amount > 0);
+        $receipts = $receipts->concat($advances)->sortBy(fn (CashFundReceipt $receipt) => $receipt->received_at->format('Ymd'))->values();
 
         $before = fn ($date) => $date->lt($from);
         // The balance of the Bank Reconciliation (cash downloaded less what was paid) before the period starts is the beginning balance of the other reports.
@@ -101,6 +119,7 @@ class CashReportService
             ->where('school_id', $school->id)
             ->where('status', 'approved')
             ->whereNull('paid_at')
+            ->where('dv_non_cash', false)
             ->whereNotNull('dv_number')
             ->whereNotNull('dv_date')
             ->get()
@@ -126,6 +145,18 @@ class CashReportService
             ->filter(fn (SobItem $item) => $item->account && $item->account->code !== '')
             ->mapWithKeys(fn (SobItem $item) => [(string) $item->account->code => (string) $item->account->title])
             ->all();
+        // An expense paid in the period always has its column, even when no SOB lists it (its title comes from the DV or the chart of accounts).
+        $paidCodes = $lines->flatMap(fn (array $line) => $line['cancelled'] ?? false ? [] : ($line['splits'] !== [] ? array_keys($line['splits']) : [$line['uacs_code']]))
+            ->concat($journal->flatMap(fn (array $line) => array_keys($line['splits'])))
+            ->map(fn ($code) => (string) $code)
+            ->filter(fn (string $code) => $code !== '' && ! in_array($code[0], ['1', '2', '3', '4'], true))
+            ->unique()->reject(fn (string $code) => isset($accounts[$code]));
+        if ($paidCodes->isNotEmpty()) {
+            $titles = ChartOfAccount::withoutGlobalScopes()->whereIn('code', $paidCodes->all())->pluck('title', 'code');
+            foreach ($paidCodes as $code) {
+                $accounts[$code] = (string) ($titles[$code] ?? $lines->firstWhere('uacs_code', $code)['nature'] ?? $code);
+            }
+        }
         ksort($accounts);
 
         return [

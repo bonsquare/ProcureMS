@@ -1321,3 +1321,11 @@ Every kept alphalist (section 93) keeps each list's total and the tax of every D
 ## 102. Docked document preview works on the trial (2026-11-02)
 
 - The docked preview beside the AIP, SOB and APP-CSE pages reads the printed form with a GET that carries the header `X-Doc-Preview`. `RestrictTrialActions` lets that request through for a trial user (the toolbar is hidden in the frame); opening the print route directly is still refused with the trial prompt (402).
+
+## 103. Non-cash DV, advances in the cash reports, register columns and RFQ rows (owner's decision 2026-11-02)
+
+- Create DV and Edit DV have a **Non-cash transaction** tickbox (`liquidation_reports.dv_non_cash`, default off = cash). A non-cash DV is recorded in its journal entry only: it is not listed in Cash (DVs For Payment, Paid), Record Payment is refused for it (422), it is not a row of the Cash Disbursement Register and the bell does not count it. Accounting shows the badge "Non-cash transaction" (no wallet icon) in place of "Cash for Disbursement". A paid DV cannot be switched to non-cash.
+- A non-cash DV with a debit on Advances for Operating Expenses 1990101000 is cash received from advances ("Cash receipts from advances", DV date, DV number, particulars) in the Bank Reconciliation, Checks and Advices and the register, by `CashReportService::build`; it follows the report's source-of-fund filter (a DV with no fund shows only when no fund is chosen).
+- The register's Breakdown of Payments has a column for every expense account paid in the period even when no SOB lists it (title from the chart of accounts), so the columns and the Recapitulation add up to Payments.
+- The particulars of a remittance to the BIR made from an alphalist no longer end with the expense account name in brackets.
+- The printed RFQ "Detailed Estimates and Technical Specification" table no longer has the three blank rows before the Grand Total (owner's permission to edit this official document).

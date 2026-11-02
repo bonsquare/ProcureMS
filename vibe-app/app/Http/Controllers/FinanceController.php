@@ -126,7 +126,7 @@ class FinanceController extends Controller
         if ($tab === 'reports') {
             abort_unless($request->user()->hasPermission('cash.pay'), 403);
         }
-        $all = $this->reports()->where('status', 'approved')->whereNotNull('dv_number')->get();
+        $all = $this->reports()->where('status', 'approved')->whereNotNull('dv_number')->where('dv_non_cash', false)->get();
         $paid = $all->whereNotNull('paid_at');
         $unpaid = $all->whereNull('paid_at');
         $cancelledChecks = CancelledCheck::with('canceller')->whereIn('school_id', $this->schoolIds())->latest('cancelled_at')->get();
@@ -190,6 +190,7 @@ class FinanceController extends Controller
         abort_unless($request->user()->hasPermission('cash.pay') && $this->schoolIds()->contains($liquidationReport->school_id), 403);
         abort_unless($liquidationReport->status === 'approved' && $liquidationReport->dv_number, 422, 'A disbursement voucher must be created in Accounting first.');
         abort_if($liquidationReport->paid_at, 422, 'This ORS is already paid.');
+        abort_if($liquidationReport->dv_non_cash, 422, 'A non-cash DV is recorded in its journal entry only: there is no payment to record.');
 
         $data = $request->validate([
             'payment_mode' => ['required', Rule::in(self::PAYMENT_MODES)],
@@ -392,6 +393,7 @@ class FinanceController extends Controller
             'dv_fund_cluster' => ['nullable', 'string', 'max:100'],
             'payment_mode' => ['required', Rule::in(self::PAYMENT_MODES)],
             'dv_include_appropriation' => ['nullable', 'boolean'],
+            'dv_non_cash' => ['nullable', 'boolean'],
             'deductions' => ['nullable', 'array'],
             'deductions.*' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
             'deductions_other' => ['nullable', 'array', 'max:'.(self::DEDUCTION_MAX_LINES - count(LiquidationReport::DV_DEDUCTIONS))],
@@ -453,6 +455,7 @@ class FinanceController extends Controller
             $data['signatories'] = $this->withDvSignatories($liquidationReport, $signatories);
         }
         $data['dv_include_appropriation'] = (bool) ($data['dv_include_appropriation'] ?? false);
+        $data['dv_non_cash'] = (bool) ($data['dv_non_cash'] ?? false);
 
         $data['dv_number'] = $editing ? $liquidationReport->dv_number : ($data['dv_number'] ?? app(DocumentNumberService::class)
             ->next((int) $liquidationReport->organization_id, 'disbursement_voucher', 'DV'));
