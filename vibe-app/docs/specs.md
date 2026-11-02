@@ -1352,3 +1352,7 @@ Every kept alphalist (section 93) keeps each list's total and the tax of every D
 
 - A non-cash DV that records an advance on Advances for Operating Expenses 1990101000 (`LiquidationReport::advanceAmount()`: the larger of its debit or credit on that account) is the book entry of the advance. `GeneralLedgerService::postings` does not post a typed cash advance receipt of the same school and amount again (one to one), so the Trial Balance has no duplicate Cash in Bank / Advances.
 - In the cash reports (`CashReportService::build`) the same pair is one advance: the typed receipt (date, fund, label) is kept and the DV's own entry is not added. This replaces the debit-only rule of section 103 for the advance. Tests: `DvNonCashTest`.
+
+## 109. Liquidation Records table presentation (2026-11-02)
+
+- In the Liquidation Records table the Print ORS button is one line with a print icon, the Amount column is right-aligned and does not wrap, the Submitted date does not wrap, and a school user no longer sees the "Submitted" text in Actions (the Status column says it). `resources/views/liquidation.blade.php` only.
