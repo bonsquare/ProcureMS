@@ -79,9 +79,10 @@
     // The refund of an unspent advance is already taken off the payment of its check, so it is not listed again as money received.
     $entries = $data['receipts']->reject(fn ($receipt) => $receipt->kind === 'refund')->map(fn ($receipt) => ['type' => 'receipt', 'date' => $receipt->received_at, 'receipt' => $receipt])
         ->concat($data['lines']->map(fn (array $line) => ['type' => 'line', 'date' => $line['date'], 'line' => $line]))
-        ->sortBy(fn (array $entry) => $entry['date']->format('Ymd').($entry['type'] === 'receipt' ? '0' : '1'))
+        ->concat(($data['journal'] ?? collect())->map(fn (array $line) => ['type' => 'line', 'date' => $line['date'], 'line' => $line + ['check_no' => $line['dv_no'], 'refund' => 0, 'cancelled' => false, 'pending' => false, 'uacs_code' => (string) array_key_first($line['splits']), 'nature' => '', 'journal' => true]]))
+        ->sortBy(fn (array $entry) => ($entry['type'] === 'receipt' ? '0' : '1').$entry['date']->format('Ymd'))
         ->values();
-    $balance = $data['opening'];
+    $balance = $opening = round($data['opening'] - ($data['journal_opening'] ?? 0), 2);
     $rows = [];
     foreach ($entries as $entry) {
         if ($entry['type'] === 'receipt') {
@@ -111,7 +112,7 @@
                 ->reject(fn (string $code) => $code === '' || str_starts_with($code, '2') || $line['cancelled'])
                 ->map(fn (string $code) => $accounts[$code] ?? ($code === (string) $line['uacs_code'] ? (string) $line['nature'] : ''))->filter()->unique()->implode(', ');
             $balance = round($balance - ($line['amount'] ?? 0), 2);
-            $rows[] = ['date' => $entry['date'], 'reference' => $line['check_no'], 'particulars' => $line['payee'].($natures !== '' ? ' ('.$natures.')' : '').(($line['pending'] ?? false) ? ' - Pending liquidation' : ''), 'advance' => null, 'payment' => $line['amount'], 'gross' => $line['amount'], 'balance' => $balance, 'code' => $line['cancelled'] ? null : $line['uacs_code'], 'splits' => $lineSplits];
+            $rows[] = ['date' => $entry['date'], 'reference' => $line['check_no'], 'particulars' => $line['payee'].($natures !== '' && ! ($line['journal'] ?? false) ? ' ('.$natures.')' : '').(($line['pending'] ?? false) ? ' - Pending liquidation' : ''), 'advance' => null, 'payment' => $line['amount'], 'gross' => $line['amount'], 'balance' => $balance, 'code' => $line['cancelled'] ? null : $line['uacs_code'], 'splits' => $lineSplits];
         }
     }
     // A payment of an ORS charged to several UACS codes is divided among their columns; any other payment goes to the column of its one code.
@@ -126,7 +127,7 @@
     }
     $accountTotals = collect($totalsByCode)->map(fn ($amount) => round($amount, 2));
     $totalPayments = collect($rows)->sum(fn (array $row) => $row['payment'] ?? 0);
-    $totalAdvance = round($data['opening'] + collect($rows)->sum(fn (array $row) => $row['advance'] ?? 0), 2);
+    $totalAdvance = round($opening + collect($rows)->sum(fn (array $row) => $row['advance'] ?? 0), 2);
     $blank = fn ($value) => ($value === null || (float) $value == 0.0) ? '' : $money($value);
     $officer = $report['officer'];
 @endphp
@@ -169,7 +170,7 @@
             </thead>
             <tbody>
                 @if($first)
-                    <tr class="beginning"><td></td><td colspan="2" style="padding-left:14px">Beginning Balance….</td><td class="num" data-col="advance">{{ $blank($data['opening']) }}</td><td></td><td class="num" data-col="balance">{{ $money($data['opening']) }}</td><td colspan="{{ $count }}"></td></tr>
+                    <tr class="beginning"><td></td><td colspan="2" style="padding-left:14px">Beginning Balance….</td><td class="num" data-col="advance">{{ $blank($opening) }}</td><td></td><td class="num" data-col="balance">{{ $money($opening) }}</td><td colspan="{{ $count }}"></td></tr>
                 @endif
                 @foreach($rows as $row)
                     <tr>

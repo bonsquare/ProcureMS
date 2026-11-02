@@ -152,6 +152,24 @@ class CashReportPrintTest extends TestCase
         $this->assertMatchesRegularExpression('/data-col="balance"[^>]*>-950\.00</', $register, 'only the net leaves the bank');
     }
 
+    public function test_advances_come_first_and_a_dv_with_no_check_shows_its_expense_debits_in_the_running_balance(): void
+    {
+        [$school, $user] = $this->tenant('BK5');
+        $this->sobFor($school, ['5020399000' => 'Other Supplies Expenses', '5020402000' => 'Electricity Expenses']);
+        $this->paid($school, '0001', '2026-07-05', 1000);
+        CashFundReceipt::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'received_at' => '2026-07-20', 'amount' => 363000, 'kind' => 'cash_advance', 'source_of_fund' => 'MOOE', 'reference' => 'ADV-1', 'created_by' => $user->id]);
+        $dv = LiquidationReport::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'report_number' => 'LR-J1', 'ors_number' => 'ORS-J1', 'dv_number' => 'DV-J1', 'dv_date' => '2026-07-10', 'amount' => 5000, 'status' => 'approved', 'payee' => 'Meralco', 'purpose' => 'Electricity']);
+        foreach ([['5020402000', 'Electricity Expenses', 5000, 0], ['1990101000', 'Advances for Operating Expenses', 0, 5000]] as $number => [$code, $title, $debit, $credit]) {
+            DvJournalLine::create(['organization_id' => $school->organization_id, 'liquidation_report_id' => $dv->id, 'line_no' => $number + 1, 'account_code' => $code, 'account_title' => $title, 'debit' => $debit, 'credit' => $credit]);
+        }
+
+        $html = $this->actingAs($user)->get(route('cash.report.register', $this->periodQuery($school)))->assertOk()->assertSee('Meralco', false)->getContent();
+
+        $this->assertLessThan(strpos($html, 'Payee 0001'), strpos($html, 'ADV-1'), 'the advance is above every payment');
+        $this->assertMatchesRegularExpression('/data-account="5020402000"[^>]*>5,000\.00</', $html);
+        $this->assertMatchesRegularExpression('/data-col="balance"[^>]*>357,000\.00</', $html, 'advance 363,000 less 1,000 and 5,000');
+    }
+
     public function test_a_payment_to_the_bir_without_a_breakdown_is_charged_to_the_accounts_of_the_withheld_taxes(): void
     {
         [$school, $user] = $this->tenant('BK8');

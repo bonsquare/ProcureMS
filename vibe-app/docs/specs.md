@@ -1312,3 +1312,8 @@ Every kept alphalist (section 93) keeps each list's total and the tax of every D
 ## 100. Trial Balance Ending shows no brackets (owner's decision 2026-11-02)
 
 - The Trial Balance Ending column shows the size of each account's balance with no minus sign or brackets (for example Cash-MDS 222,789.98 and Advances for Operating Expenses 162,798.52). B. Opening, Debit, Credit and the Total row are unchanged (this replaces the sign rule of section 88 for the Ending column only).
+
+## 101. Cash Disbursement Register: advances first and DV journal expenses (owner's decision 2026-11-02)
+
+- The money received (the advances, for example Dr Cash in bank / Cr Advances for Operating Expenses 1990101000) is listed first in the register, in advance-date order; the payments follow by date and the running balance carries through in that order (this changes the date order of sections 56 to 59, 64, 66, 67, 74 and 76 for the register only).
+- An approved DV with a DV number, no check and a journal line debiting an expense account is a row of the register: Particulars is the payee of the DV, the Reference is the DV number, the amount is the sum of its expense debits and it is divided among the expense columns by those debits. A DV dated before the period lowers the beginning balance. `CashReportService::build` returns them as `journal` and `journal_opening`, apart from `lines`, so the Bank Reconciliation, the other cash reports and the books do not move. Nothing stored is rewritten: the register reads the records each time. A BIR remittance is unchanged (charged to the columns of the taxes it remits).

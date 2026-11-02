@@ -94,6 +94,22 @@ class CashReportService
             return $line;
         });
 
+        // An approved DV with no check whose journal debits an expense account (for example against Advances for Operating Expenses) is a row of the register of its own;
+        // it is kept apart from the lines so the bank reconciliation and the other reports do not move.
+        $journal = LiquidationReport::query()
+            ->with('journalLines')
+            ->where('school_id', $school->id)
+            ->where('status', 'approved')
+            ->whereNull('paid_at')
+            ->whereNotNull('dv_number')
+            ->whereNotNull('dv_date')
+            ->get()
+            ->filter(fn (LiquidationReport $report) => $sameFund($report->source_of_fund))
+            ->map(fn (LiquidationReport $report) => $this->journalLine($report))
+            ->filter(fn (?array $line) => $line !== null);
+        $journalBefore = round((float) $journal->filter(fn (array $line) => $before($line['date']))->sum('amount'), 2);
+        $journal = $journal->filter(fn (array $line) => ! $before($line['date']) && $line['date']->lte($to))->sortBy(fn (array $line) => $line['date']->format('Ymd').'|'.$line['dv_no'])->values();
+
         $totalReceived = round((float) $periodReceipts->sum('amount'), 2);
         $totalPaid = round((float) $lines->sum(fn (array $line) => $line['amount'] ?? 0), 2);
 
@@ -118,6 +134,8 @@ class CashReportService
             'opening_bank_by_fund' => collect($openingBankByFund)->map(fn ($amount) => round($amount, 2))->filter(fn ($amount) => $amount != 0),
             'receipts' => $periodReceipts,
             'lines' => $lines,
+            'journal' => $journal,
+            'journal_opening' => $journalBefore,
             'total_paid' => $totalPaid,
             'total_received' => $totalReceived,
             'ending' => round($opening + $totalReceived - $totalPaid, 2),
@@ -208,6 +226,29 @@ class CashReportService
             // The DV each part of a remittance made from an alphalist was withheld from (report id => tax): the register charges it to their columns.
             'remittance_sources' => $report->remittance['sources'] ?? null,
             'refund' => $approved ? round((float) $approved->refund_amount, 2) : 0.0,
+        ];
+    }
+
+    /** The expense debits of the journal of a DV with no check, by account code; null when it debits no expense account. @return array<string, mixed>|null */
+    private function journalLine(LiquidationReport $report): ?array
+    {
+        $splits = [];
+        foreach ($report->journalLines as $line) {
+            $code = (string) $line->account_code;
+            if ((float) $line->debit > 0 && $code !== '' && ! in_array($code[0], ['1', '2', '3', '4'], true)) {
+                $splits[$code] = round(($splits[$code] ?? 0) + (float) $line->debit, 2);
+            }
+        }
+        if ($splits === []) {
+            return null;
+        }
+
+        return [
+            'date' => $report->dv_date->copy()->startOfDay(),
+            'dv_no' => (string) $report->dv_number,
+            'payee' => (string) $report->payee,
+            'amount' => round((float) array_sum($splits), 2),
+            'splits' => $splits,
         ];
     }
 
