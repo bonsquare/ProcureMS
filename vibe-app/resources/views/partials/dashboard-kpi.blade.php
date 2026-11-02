@@ -15,6 +15,15 @@
         ['label' => 'Liquidation to review', 'value' => $l['pending'], 'note' => $l['pending'] ? $money($l['pending_amount']).' awaiting review' : $l['approved'].' approved', 'icon' => 'receipt_long', 'tone' => $l['pending'] ? 'amber' : 'green', 'href' => route('liquidation')],
         ['label' => 'Active suppliers', 'value' => $s['active'], 'note' => $s['expiring'] ? $s['expiring'].' with expiring permits' : 'Permits up to date', 'icon' => 'storefront', 'tone' => $s['expiring'] ? 'red' : 'blue', 'href' => route('suppliers')],
     ];
+    // A school sees what it acts on: the completion rate and the supplier count go, and the cash (balance, DVs waiting for payment) is added.
+    if (! $isMasterUser) {
+        $c = $kpi['cash'];
+        $cards = array_values(array_filter($cards, fn (array $card) => ! in_array($card['label'], ['Completion rate', 'Active suppliers'], true)));
+        array_splice($cards, 2, 0, [
+            ['label' => 'Cash balance', 'value' => $c['balance'] === null ? '—' : $money($c['balance']), 'note' => 'Cash received less paid, FY '.$kpi['year'], 'icon' => 'account_balance', 'tone' => ($c['balance'] ?? 0) < 0 ? 'red' : 'green', 'href' => route('cash')],
+            ['label' => 'DVs for payment', 'value' => $c['awaiting'], 'note' => $c['awaiting'] ? $money($c['awaiting_amount']).' to pay' : 'Nothing waiting', 'icon' => 'payments', 'tone' => $c['awaiting'] ? 'amber' : 'green', 'href' => route('cash')],
+        ]);
+    }
     $statusMeta = [
         'draft' => ['Draft', '#9aa8b6'], 'submitted' => ['Submitted', '#cc8535'], 'pending_approval' => ['Pending approval', '#e0a04a'], 'approved' => ['Approved', '#286da8'],
         'for_canvass' => ['For canvass', '#5b9bd5'], 'completed' => ['Completed', '#369878'], 'returned' => ['Returned', '#b8793f'], 'rejected' => ['Rejected', '#b64a50'],
@@ -29,7 +38,10 @@
         <div class="min-w-0">
             <p class="text-xs font-bold uppercase tracking-[.14em] text-white/80">{{ $isMasterUser ? 'KPI Dashboard' : 'School Dashboard' }} <span class="font-semibold text-white/70">· FY {{ $kpi['year'] }}</span></p>
             <h2 class="mt-1 truncate text-2xl font-extrabold tracking-tight text-white">{{ $isMasterUser ? 'All schools' : ($currentSchool?->name ?? 'Your school') }}</h2>
-            @unless($isMasterUser)<p class="mt-1 text-sm text-white/80">Welcome, {{ auth()->user()->name }}. Your procurement, budget, and liquidation at a glance.</p>@endunless
+            @unless($isMasterUser)<p class="mt-1 text-sm text-white/80">Welcome, {{ auth()->user()->name }}. Your procurement, budget, and liquidation at a glance.</p>
+            @php $mySubscription = auth()->user()->activeSubscription(); @endphp
+            @if($mySubscription?->isTrial() && $mySubscription->subscription_end)<a href="{{ route('subscription') }}" class="mt-2 inline-flex items-center gap-1 rounded-full border border-white/30 bg-white/15 px-3 py-1 text-xs font-semibold text-white">Trial · {{ max(0, (int) now()->startOfDay()->diffInDays(\Illuminate\Support\Carbon::parse($mySubscription->subscription_end)->startOfDay(), false)) }} day(s) left</a>@endif
+            @endunless
         </div>
         @if($isMasterUser)
             <div class="flex flex-wrap gap-2 text-xs">
@@ -98,7 +110,7 @@
         </article>
     </div>
 
-    <div class="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-3">
+    <div class="mt-3 grid grid-cols-1 gap-3 {{ $isMasterUser ? 'lg:grid-cols-3' : 'lg:grid-cols-2' }}">
         <article class="rounded-2xl border border-outline-variant/50 shadow-sm bg-white p-4">
             <h3 class="text-base font-bold text-primary">Request pipeline</h3>
             <p class="text-xs text-on-surface-variant">Purchase requests by status</p>
@@ -118,6 +130,7 @@
             @endif
         </article>
 
+        @if($isMasterUser)
         <article class="rounded-2xl border border-outline-variant/50 shadow-sm bg-white p-4">
             <h3 class="text-base font-bold text-primary">Requests per month</h3>
             <p class="text-xs text-on-surface-variant">Last six months</p>
@@ -131,6 +144,7 @@
                 @endforeach
             </div>
         </article>
+        @endif
 
         <article class="rounded-2xl border border-outline-variant/50 shadow-sm bg-white p-4">
             <h3 class="text-base font-bold text-primary">Budget flow</h3>

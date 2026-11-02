@@ -80,6 +80,7 @@ class DashboardKpiService
                 'approved' => $reports->where('status', 'approved')->count(),
                 'pending_amount' => (float) $reports->where('status', 'for_review')->sum('amount'),
             ],
+            'cash' => $this->cash($schoolIds, $year),
             'suppliers' => [
                 'active' => $suppliers->where('status', 'active')->count(),
                 'expiring' => $suppliers->filter(fn ($supplier) => $this->expiresWithin($supplier->business_permit_expiry) || $this->expiresWithin($supplier->philgeps_expiry))->count(),
@@ -92,6 +93,25 @@ class DashboardKpiService
                 'amount' => (float) $request->amount,
             ])->values()->all(),
             'schools' => $this->perSchool($schoolIds, $requests, $matrix),
+        ];
+    }
+
+    /**
+     * The DVs waiting in Cash for payment (a non-cash DV never waits) and, for one school, the cash on hand and in bank this year (receipts less payments).
+     *
+     * @param  Collection<int, int>  $schoolIds
+     * @return array{awaiting: int, awaiting_amount: float, balance: float|null}
+     */
+    private function cash(Collection $schoolIds, int $year): array
+    {
+        $awaiting = LiquidationReport::withoutGlobalScopes()->whereIn('school_id', $schoolIds)->where('status', 'approved')
+            ->whereNotNull('dv_number')->whereNull('paid_at')->where('dv_non_cash', false)->get(['id', 'amount']);
+        $school = $schoolIds->count() === 1 ? School::withoutGlobalScopes()->find($schoolIds->first()) : null;
+
+        return [
+            'awaiting' => $awaiting->count(),
+            'awaiting_amount' => (float) $awaiting->sum('amount'),
+            'balance' => $school ? (float) app(CashReportService::class)->build($school, Carbon::create($year, 1, 1), Carbon::create($year, 12, 31))['ending'] : null,
         ];
     }
 

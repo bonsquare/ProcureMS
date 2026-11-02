@@ -40,7 +40,7 @@ class DashboardKpiTest extends TestCase
         BudgetAllocation::create(['organization_id' => $organizationA->id, 'school_id' => $schoolA->id, 'fiscal_year' => now()->year, 'source_of_fund' => 'MOOE', 'particulars' => 'Supplies', 'amount' => 10000, 'q1_amount' => 2500, 'q2_amount' => 2500, 'q3_amount' => 2500, 'q4_amount' => 2500]);
 
         $response = $this->actingAs($userA)->get(route('home'))->assertOk()
-            ->assertSee('KPI dashboard')->assertSee('Budget utilization')->assertSee('Pending approval')->assertSee('Completion rate')->assertSee('Request pipeline')->assertSee('Budget flow')->assertSee('Needs your attention')->assertSee('Recent requests')->assertSee('Budget by quarter')->assertSee('PR-A-1')->assertSee('School Workspace')->assertSee('School Dashboard')->assertDontSee('My KPI Dashboard')
+            ->assertSee('KPI dashboard')->assertSee('Budget utilization')->assertSee('Pending approval')->assertSee('Cash balance')->assertSee('DVs for payment')->assertDontSee('Completion rate')->assertDontSee('Active suppliers')->assertDontSee('Requests per month')->assertSee('Request pipeline')->assertSee('Budget flow')->assertSee('Needs your attention')->assertSee('Recent requests')->assertSee('Budget by quarter')->assertSee('PR-A-1')->assertSee('School Workspace')->assertSee('School Dashboard')->assertDontSee('My KPI Dashboard')
             ->assertDontSee('School performance');
 
         $kpi = $response->viewData('kpi');

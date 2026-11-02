@@ -1333,3 +1333,9 @@ Every kept alphalist (section 93) keeps each list's total and the tax of every D
 ## 104. Printed AIP ends with the Financial Target per Source of Fund (owner's decision 2026-11-02)
 
 - The printed AIP (`aip-print.blade.php`) has the **Financial Target per Source of Fund** table after the activities table and before the signatures: Source of Fund, 1st to 4th Quarter and Total, one row for each fund and a TOTAL row, from `Aip::fundSummary()` (the same figures as the AIP page). The rest of the AIP print (section 23.1) is unchanged. Tests: `AipPrintFundTest`.
+
+## 105. School Dashboard: what a school sees (owner's decision 2026-11-02)
+
+- This changes the school-user bullet of section 4. The School Dashboard has eight cards: Budget utilization, Budget balance, **Cash balance** (cash received less paid in the fiscal year, from `CashReportService`), **DVs for payment** (count and amount waiting in Cash; a non-cash DV is never counted), Purchase requests, Pending approval, In progress and Liquidation to review. The Completion rate card, the Active suppliers card and the Requests per month chart are not shown to a school (Request pipeline and Budget flow share the row).
+- A school on a trial sees a "Trial · N day(s) left" chip under the welcome line, linking to the Subscription page.
+- The master and sub-master KPI Dashboard is unchanged. Figures come from `DashboardKpiService::forSchools` (new `cash` key). Tests: `DashboardKpiTest`.
