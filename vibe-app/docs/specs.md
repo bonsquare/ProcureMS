@@ -1329,3 +1329,7 @@ Every kept alphalist (section 93) keeps each list's total and the tax of every D
 - The register's Breakdown of Payments has a column for every expense account paid in the period even when no SOB lists it (title from the chart of accounts), so the columns and the Recapitulation add up to Payments.
 - The particulars of a remittance to the BIR made from an alphalist no longer end with the expense account name in brackets.
 - The printed RFQ "Detailed Estimates and Technical Specification" table no longer has the three blank rows before the Grand Total (owner's permission to edit this official document).
+
+## 104. Printed AIP ends with the Financial Target per Source of Fund (owner's decision 2026-11-02)
+
+- The printed AIP (`aip-print.blade.php`) has the **Financial Target per Source of Fund** table after the activities table and before the signatures: Source of Fund, 1st to 4th Quarter and Total, one row for each fund and a TOTAL row, from `Aip::fundSummary()` (the same figures as the AIP page). The rest of the AIP print (section 23.1) is unchanged. Tests: `AipPrintFundTest`.

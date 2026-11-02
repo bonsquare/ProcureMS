@@ -38,6 +38,10 @@
         td.group { background: #fcfcfd; } td.fund { background: #fafbfc; }
         td.num { white-space: nowrap; }
         td.pillar, td.group, td.fund, thead th, tr { break-inside: avoid; }
+        table.fund-summary { margin-top: 1.6rem; }
+        table.fund-summary caption { caption-side: top; text-align: left; font-weight: bold; font-size: 1.1rem; padding-bottom: .4rem; }
+        table.fund-summary td.fund-name { text-align: left; }
+        table.fund-summary tr.grand td { font-weight: bold; background: #f4e4d6; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
         .signatures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6rem; margin-top: 3.6rem; }
         .signatures .label, .signatures .position { font-size: 1.1rem; }
@@ -176,6 +180,21 @@
                     <td>{!! $a ? implode('<br>', array_map('e', $a->remarks_list ?? [])) : '' !!}</td>
                 </tr>
             @endforeach
+        </tbody>
+    </table>
+
+    @php
+        $summary = $aip->fundSummary();
+        $grand = ['q1' => $summary->sum('q1'), 'q2' => $summary->sum('q2'), 'q3' => $summary->sum('q3'), 'q4' => $summary->sum('q4'), 'total' => $summary->sum('total')];
+    @endphp
+    <table class="fund-summary">
+        <caption>Financial Target per Source of Fund</caption>
+        <thead><tr><th style="width:40%">Source of Fund</th><th>1st Quarter</th><th>2nd Quarter</th><th>3rd Quarter</th><th>4th Quarter</th><th>Total</th></tr></thead>
+        <tbody>
+            @foreach($summary as $fund => $row)
+                <tr><td class="fund-name">{{ $fund }}</td>@foreach(['q1', 'q2', 'q3', 'q4'] as $q)<td class="num">{{ $fmt($row[$q]) }}</td>@endforeach<td class="num"><strong>{{ $fmt($row['total']) }}</strong></td></tr>
+            @endforeach
+            <tr class="grand"><td class="fund-name">TOTAL</td>@foreach(['q1', 'q2', 'q3', 'q4'] as $q)<td class="num">{{ $fmt($grand[$q]) }}</td>@endforeach<td class="num">{{ $fmt($grand['total']) }}</td></tr>
         </tbody>
     </table>
 

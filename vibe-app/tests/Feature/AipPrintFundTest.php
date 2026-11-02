@@ -31,6 +31,21 @@ class AipPrintFundTest extends TestCase
         $this->assertSame(count($cols[0]), preg_match_all('/<td/', $firstRow[1]), 'every body row has one cell for each column');
     }
 
+    public function test_the_aip_print_ends_with_the_financial_target_per_source_of_fund(): void
+    {
+        $fx = SobFixture::make();
+        $this->actingAs($fx['user']);
+        $fx['activities'][0]->update(['source_of_fund' => 'MOOE', 'q1_amount' => 100, 'q2_amount' => 50, 'q3_amount' => 0, 'q4_amount' => 0]);
+
+        $html = $this->get(route('aip.print', $fx['aip']))->assertOk()->getContent();
+
+        $this->assertStringContainsString('Financial Target per Source of Fund', $html);
+        $summary = substr($html, strpos($html, 'class="fund-summary"'));
+        $this->assertStringContainsString('MOOE', $summary);
+        $this->assertStringContainsString('150.00', $summary, 'the total of the fund');
+        $this->assertLessThan(strpos($html, 'class="signatures"'), strpos($html, 'class="fund-summary"'), 'the summary comes before the signatures');
+    }
+
     public function test_the_pillar_cell_and_every_identical_value_merge_down_their_rows(): void
     {
         $fx = SobFixture::make();
