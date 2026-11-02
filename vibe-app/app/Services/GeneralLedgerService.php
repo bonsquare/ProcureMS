@@ -38,7 +38,18 @@ class GeneralLedgerService
         $credits = config('financial_reports.receipt_credit');
         $cash = config('financial_reports.cash_account');
         $receipts = CashFundReceipt::query()->whereIn('school_id', $schoolIds)->whereIn('kind', array_keys($credits))->get();
+        // The advance received is booked once: a non-cash DV that records it (Advances for Operating Expenses) is the book entry, so the cash advance receipt of the same amount is not posted again.
+        $advanceDvs = LiquidationReport::query()->whereIn('school_id', $schoolIds)->where('status', 'approved')->where('dv_non_cash', true)->whereNotNull('dv_number')->whereNotNull('dv_date')->with('journalLines')->get()
+            ->map(fn (LiquidationReport $report) => ['school' => $report->school_id, 'amount' => $report->advanceAmount()])->filter(fn (array $advance) => $advance['amount'] > 0)->values()->all();
         foreach ($receipts as $receipt) {
+            if ($receipt->kind === 'cash_advance') {
+                $booked = array_search(true, array_map(fn (array $advance) => $advance['school'] === $receipt->school_id && abs($advance['amount'] - (float) $receipt->amount) < 0.005, $advanceDvs), true);
+                if ($booked !== false) {
+                    unset($advanceDvs[$booked]);
+
+                    continue;
+                }
+            }
             $credit = $credits[$receipt->kind];
             $fund = $receipt->fund_cluster ?: self::DEFAULT_FUND;
             $ref = $receipt->reference ?: $receipt->kindLabel();

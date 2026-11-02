@@ -94,6 +94,14 @@ class LiquidationReport extends Model
         return $line ? collect([['allocation' => $line, 'amount' => (float) $this->amount]]) : collect();
     }
 
+    /** The advance a non-cash DV records: its amount on Advances for Operating Expenses 1990101000, whether it is debited or credited (a receipt credits it). */
+    public function advanceAmount(): float
+    {
+        $lines = $this->journalLines->where('account_code', '1990101000');
+
+        return round(max((float) $lines->sum('debit'), (float) $lines->sum('credit')), 2);
+    }
+
     /** The double-entry journal of the DV, in print order. */
     public function journalLines()
     {

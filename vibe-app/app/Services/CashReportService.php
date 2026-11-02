@@ -64,9 +64,22 @@ class CashReportService
             ->filter(fn (LiquidationReport $report) => $sameFund($report->source_of_fund))
             ->map(fn (LiquidationReport $report) => new CashFundReceipt([
                 'school_id' => $report->school_id, 'received_at' => $report->dv_date, 'kind' => 'cash_advance', 'source_of_fund' => $report->source_of_fund,
-                'amount' => round((float) $report->journalLines->where('account_code', '1990101000')->sum('debit'), 2), 'reference' => LiquidationReport::dvLabel($report->dv_number), 'note' => $report->dv_particulars,
+                'amount' => $report->advanceAmount(), 'reference' => LiquidationReport::dvLabel($report->dv_number), 'note' => $report->dv_particulars,
             ]))
             ->filter(fn (CashFundReceipt $receipt) => (float) $receipt->amount > 0);
+        // An advance typed in the cash receipts form and the non-cash DV that records it are one advance: the receipt (with its date, fund and label) is kept.
+        $typedAdvances = $receipts->where('kind', 'cash_advance')->all();
+        $advances = $advances->filter(function (CashFundReceipt $advance) use (&$typedAdvances) {
+            foreach ($typedAdvances as $key => $typed) {
+                if (abs((float) $typed->amount - (float) $advance->amount) < 0.005) {
+                    unset($typedAdvances[$key]);
+
+                    return false;
+                }
+            }
+
+            return true;
+        });
         $receipts = $receipts->concat($advances)->sortBy(fn (CashFundReceipt $receipt) => $receipt->received_at->format('Ymd'))->values();
 
         $before = fn ($date) => $date->lt($from);

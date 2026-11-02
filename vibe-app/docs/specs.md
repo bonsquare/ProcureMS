@@ -1347,3 +1347,8 @@ Every kept alphalist (section 93) keeps each list's total and the tax of every D
 ## 107. Chart of Accounts loads faster (2026-11-02)
 
 - The rows of each category of `/accounting/chart-of-accounts` wait in a `<template data-rows>` and are put on the page the first time the category opens (Expand all opens every one). The search reads the templates and opens only the categories that match. Nothing else about the page changes. `resources/views/chart-of-accounts.blade.php` only.
+
+## 108. An advance recorded twice is booked once (owner's decision 2026-11-02)
+
+- A non-cash DV that records an advance on Advances for Operating Expenses 1990101000 (`LiquidationReport::advanceAmount()`: the larger of its debit or credit on that account) is the book entry of the advance. `GeneralLedgerService::postings` does not post a typed cash advance receipt of the same school and amount again (one to one), so the Trial Balance has no duplicate Cash in Bank / Advances.
+- In the cash reports (`CashReportService::build`) the same pair is one advance: the typed receipt (date, fund, label) is kept and the DV's own entry is not added. This replaces the debit-only rule of section 103 for the advance. Tests: `DvNonCashTest`.
