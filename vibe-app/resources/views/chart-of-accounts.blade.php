@@ -28,7 +28,7 @@
             @forelse($accounts->groupBy('category') as $category => $group)
                 <tbody class="divide-y divide-outline-variant/20" data-group data-key="{{ \Illuminate\Support\Str::slug($category) }}" data-collapsed>
                     <tr class="cursor-pointer bg-surface-low/60 hover:bg-surface-high" data-head tabindex="0" role="button" aria-expanded="false"><td colspan="6" class="px-4 py-2 text-xs font-bold uppercase tracking-wider text-primary"><span class="flex items-center justify-between gap-3"><span>{{ $category }}</span><span class="flex items-center gap-2 font-semibold normal-case tracking-normal text-on-surface-variant">{{ $group->count() }} account(s)<span class="material-symbols-outlined sum-chevron text-[20px] transition-transform" aria-hidden="true">expand_more</span></span></span></td></tr>
-                    @foreach($group as $account)
+                    <template data-rows>@foreach($group as $account)
                         @php $used = $usage->get($account->id); @endphp
                         <tr>
                             <td class="px-4 py-2"><form method="POST" action="{{ route('chart-of-accounts.update', $account) }}" id="edit-{{ $account->id }}">@csrf @method('PUT')</form><input form="edit-{{ $account->id }}" name="title" value="{{ $account->title }}" required readonly class="w-full rounded border border-transparent bg-transparent px-2 py-1.5 hover:border-outline-variant/50 focus:border-primary focus:bg-white focus:outline-none"></td>
@@ -47,7 +47,7 @@
                                 @endunless
                             </td>
                         </tr>
-                    @endforeach
+                    @endforeach</template>
                 </tbody>
             @empty
                 <tbody><tr><td colspan="6" class="px-4 py-10 text-center text-on-surface-variant">No accounts yet.</td></tr></tbody>
@@ -84,7 +84,9 @@
     const storeKey = 'coa-open';
     const readOpen = () => { try { return JSON.parse(sessionStorage.getItem(storeKey) || '[]'); } catch (error) { return []; } };
     const saveOpen = () => { try { sessionStorage.setItem(storeKey, JSON.stringify(groups.filter((g) => !g.hasAttribute('data-collapsed')).map((g) => g.dataset.key))); } catch (error) { /* storage can be blocked */ } };
-    const setGroup = (group, open) => { group.toggleAttribute('data-collapsed', !open); group.querySelector('[data-head]').setAttribute('aria-expanded', open ? 'true' : 'false'); };
+    // The rows of a category wait in a template (not part of the page) and are put on the page the first time it opens: 1,455 live rows made the page slow.
+    const ensureRows = (group) => { const template = group.querySelector('template[data-rows]'); if (template) { group.append(template.content); template.remove(); } };
+    const setGroup = (group, open) => { if (open) ensureRows(group); group.toggleAttribute('data-collapsed', !open); group.querySelector('[data-head]').setAttribute('aria-expanded', open ? 'true' : 'false'); };
     const remembered = readOpen();
     groups.forEach((group) => {
         setGroup(group, remembered.includes(group.dataset.key));
@@ -99,6 +101,21 @@
         let shown = 0;
         document.querySelectorAll('[data-group]').forEach((group) => {
             let visible = 0;
+            // A category that is not on the page yet is searched in its template; it is put on the page only when something in it matches.
+            const waiting = group.querySelector('template[data-rows]');
+            if (waiting) {
+                const hit = Array.from(waiting.content.querySelectorAll('tr')).some((row) => {
+                    const text = Array.from(row.querySelectorAll('input[name=title], input[name=code]')).map((input) => input.value.toLowerCase()).join(' ');
+                    return (!term || text.includes(term)) && (!category.value || (row.querySelector('input[name=category]')?.value || '') === category.value);
+                });
+                if (hit && (term || category.value)) ensureRows(group);
+            }
+            if (group.querySelector('template[data-rows]')) {
+                const total = group.querySelector('template[data-rows]').content.querySelectorAll('tr').length;
+                group.hidden = !!(term || category.value);
+                if (!(term || category.value)) shown += total;
+                return;
+            }
             group.querySelectorAll('tr:not([data-head])').forEach((row) => {
                 const inputs = row.querySelectorAll('input[name=title], input[name=code]');
                 const text = Array.from(inputs).map((input) => input.value.toLowerCase()).join(' ');

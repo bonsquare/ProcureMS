@@ -1343,3 +1343,7 @@ Every kept alphalist (section 93) keeps each list's total and the tax of every D
 ## 106. Budget page: totals, search, stage steps (owner's decision 2026-11-02)
 
 - Fund Utilization has a TOTAL row (more than one fund line). The ORS list and the Obligations & Transactions list each have a search box and a filter (ORS: stage; transactions: PR or ORS) that hide rows in the page and say "N of M shown". Each ORS shows four step bars (Created, Accounting, DV, Paid) under its stage chip, red when returned. Obligations & Transactions starts collapsed. `resources/views/budget.blade.php` only.
+
+## 107. Chart of Accounts loads faster (2026-11-02)
+
+- The rows of each category of `/accounting/chart-of-accounts` wait in a `<template data-rows>` and are put on the page the first time the category opens (Expand all opens every one). The search reads the templates and opens only the categories that match. Nothing else about the page changes. `resources/views/chart-of-accounts.blade.php` only.

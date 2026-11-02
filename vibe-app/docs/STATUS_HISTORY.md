@@ -129,3 +129,4 @@ Full dated log moved out of CLAUDE.md to keep that file short. Nothing was remov
 - 2026-11-02: The printed AIP ends with the Financial Target per Source of Fund table before the signatures (docs/specs.md section 104). Deployed 2026-11-02 (Railway PENDING).
 - 2026-11-02: School Dashboard shows Cash balance and DVs for payment cards and a trial-days chip; Completion rate, Active suppliers and Requests per month are removed for schools (docs/specs.md section 105). Deployed 2026-11-02 (Railway PENDING).
 - 2026-11-02: Budget page: Fund Utilization total row, search and filters on the ORS and transactions lists, four-step progress on each ORS, transactions collapsed by default (docs/specs.md section 106). Deployed 2026-11-02 (Railway PENDING).
+- 2026-11-02: Chart of Accounts rows are built when a category opens (templates), so the page loads faster (docs/specs.md section 107). Deployed 2026-11-02 (Railway PENDING).
