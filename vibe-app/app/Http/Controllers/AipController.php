@@ -95,7 +95,7 @@ class AipController extends Controller
         return view('aip-show', [
             'aip' => $aip,
             'accounts' => $this->accounts(),
-            'fundOptions' => $this->fundOptions($aip),
+            'fundOptions' => $this->fundOptions($aip, true),
             'pillars' => collect(Aip::PILLARS)->merge(AipKra::whereIn('aip_id', Aip::pluck('id'))->distinct()->pluck('pillar'))->filter()->unique()->values(),
             'canManage' => request()->user()->canManageBudget(),
             'allotments' => $aip->allotments()->get(),
@@ -202,7 +202,7 @@ class AipController extends Controller
         $this->fiscalYears->assertOpen((int) $aip->organization_id, (int) $aip->fiscal_year);
         $data = $request->validate(['source_of_fund' => ['nullable', 'string', 'max:255']]);
 
-        $activity->update(['source_of_fund' => trim((string) ($data['source_of_fund'] ?? '')) ?: null]);
+        $activity->update(['source_of_fund' => $this->sameFundSpelling($aip, $data['source_of_fund'] ?? null)]);
         $this->markRevised($aip);
 
         if ($request->expectsJson()) {
@@ -385,15 +385,29 @@ class AipController extends Controller
             ->where('category', '!=', 'Revenue')->orderBy('code')->get();
     }
 
-    private function fundOptions(Aip $aip): array
+    private function fundOptions(Aip $aip, bool $withUsed = false): array
     {
-        // The standard funds first, then the funds the organization added, and "Others" (the one typed in Specify) always last.
+        // The standard funds first, then the funds the organization added, then the funds this AIP already uses (so a fund typed once is offered on every activity, not typed again
+        // in another spelling), and "Others" (the one typed in Specify) always last. "PTA FUND" and "PTA Fund" are one fund: the first listed spelling is kept, else the capitals one.
+        $used = $withUsed ? $aip->activities()->whereNotNull('source_of_fund')->orderBy('source_of_fund')->pluck('source_of_fund')->map(fn ($fund) => trim($fund))->filter()->all() : [];
+
         return collect($aip->fundOptions())->reject(fn ($fund) => $fund === 'Others')
             ->merge(FundSource::where('organization_id', $aip->organization_id)->where('is_active', true)->orderBy('name')->pluck('name')->reject(fn ($fund) => $fund === 'Others'))
-            ->push('Others')
-            ->unique()
+            ->merge($used)
+            ->reject(fn ($fund) => mb_strtolower($fund) === 'others')
+            ->groupBy(fn ($fund) => mb_strtolower($fund))
+            ->map(fn ($spellings) => $spellings->first(fn ($fund) => $fund === mb_strtoupper($fund)) ?? $spellings->first())
             ->values()
+            ->push('Others')
             ->all();
+    }
+
+    /** A fund typed in another capitalization is saved with the spelling already in the list. */
+    private function sameFundSpelling(Aip $aip, ?string $fund): ?string
+    {
+        $fund = trim((string) $fund);
+
+        return collect($this->fundOptions($aip, true))->first(fn ($option) => mb_strtolower($option) === mb_strtolower($fund)) ?? ($fund !== '' ? $fund : null);
     }
 
     /** @return array{0: array<string, mixed>, 1: array<int, array<string, mixed>>} */
@@ -427,7 +441,8 @@ class AipController extends Controller
             'activities.*.remarks_list.*' => ['nullable', 'string', 'max:500'],
         ], ['activities.required' => 'Add at least one activity under the KRA.', 'activities.min' => 'Add at least one activity under the KRA.', 'activities.*.activity.required' => 'Every activity needs a description.']);
 
-        $activities = collect($data['activities'])->map(function (array $activity) {
+        $activities = collect($data['activities'])->map(function (array $activity) use ($aip) {
+            $activity['source_of_fund'] = $this->sameFundSpelling($aip, $activity['source_of_fund'] ?? null);
             foreach (['q1_amount', 'q2_amount', 'q3_amount', 'q4_amount'] as $quarter) {
                 $activity[$quarter] = (float) ($activity[$quarter] ?? 0);
             }

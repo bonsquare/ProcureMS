@@ -138,7 +138,8 @@
                                         @if($canManage)
                                             @php
                                                 $fund = (string) $a->source_of_fund;
-                                                $listed = in_array($fund, $fundOptions, true);
+                                                $shown = collect($fundOptions)->first(fn ($option) => mb_strtolower($option) === mb_strtolower($fund));
+                                                $listed = $shown !== null;
                                                 $suggested = \App\Models\AipActivity::timelineFor([$a->q1_amount, $a->q2_amount, $a->q3_amount, $a->q4_amount]);
                                                 $quarterMonths = ['Jan – Mar', 'Apr – Jun', 'Jul – Sep', 'Oct – Dec'];
                                             @endphp
@@ -150,7 +151,7 @@
                                                         <select data-fund-select aria-label="Source of fund" class="{{ $field }} !mt-1.5 !py-2 text-sm font-semibold normal-case tracking-normal text-on-surface">
                                                             <option value="">Select source of fund</option>
                                                             @if($fund && !$listed)<option selected>{{ $fund }}</option>@endif
-                                                            @foreach($fundOptions as $option)<option @selected($fund === $option)>{{ $option }}</option>@endforeach
+                                                            @foreach($fundOptions as $option)<option @selected($shown === $option)>{{ $option }}</option>@endforeach
                                                         </select>
                                                     </label>
                                                     <input data-fund-other placeholder="Specify source of fund, then press Enter" class="{{ $field }} !mt-0 !py-2 hidden text-sm">
@@ -285,13 +286,19 @@
                 value.value = select.value;
                 save();
             });
+            // The typed fund saves on Enter and also when the box is left, so it is not lost when the page is reloaded.
+            const saveTyped = () => {
+                const typed = other.value.trim();
+                if (!typed || typed === value.value) { return; }
+                value.value = typed;
+                save();
+            };
             other.addEventListener('keydown', (event) => {
                 if (event.key !== 'Enter') { return; }
                 event.preventDefault();
-                if (!other.value.trim()) { return; }
-                value.value = other.value.trim();
-                save();
+                saveTyped();
             });
+            other.addEventListener('change', saveTyped);
         });
     })();
     (() => {
