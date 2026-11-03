@@ -40,7 +40,7 @@ class SubscriptionController extends Controller
             'daysLeft' => $ends ? (int) now()->startOfDay()->diffInDays($ends->copy()->startOfDay(), false) : null,
             'quote' => $this->pricing->quote($school),
             'settings' => PaymentSettings::get(),
-            'proofs' => PaymentProof::query()->where('school_id', $school->id)->latest('id')->limit(10)->get(),
+            'proofs' => PaymentProof::query()->where('school_id', $school->id)->latest('id')->limit(20)->get(),
             'driveConnected' => $request->user()->driveIsConnected(),
             'canPay' => $request->user()->role === 'school_admin',
         ]);

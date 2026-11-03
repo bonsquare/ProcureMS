@@ -57,6 +57,13 @@
     .app-toast-close { flex: none; border: 0; background: transparent; color: #536273; cursor: pointer; font-size: 1rem; line-height: 1; padding: 0 .125rem; }
     .app-spin { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: app-spin .7s linear infinite; vertical-align: -2px; margin-right: .4rem; }
     .app-toast .app-spin { width: 18px; height: 18px; color: #174b82; margin: 0; flex: none; }
+    /* While a form is being sent, the whole page is covered by one clear notice, so nothing else can be pressed. */
+    #app-busy { position: fixed; inset: 0; margin: 0; padding: 0; border: 0; width: 100%; height: 100%; max-width: none; max-height: none; background: rgba(16, 57, 103, .42); backdrop-filter: blur(3px); color: #1b2a3a; align-items: center; justify-content: center; cursor: progress; }
+    #app-busy:popover-open { display: flex; }
+    .app-busy-card { display: flex; flex-direction: column; align-items: center; gap: .5rem; min-width: 16rem; max-width: calc(100vw - 2rem); border-radius: 1rem; background: #fff; padding: 1.75rem 2.25rem; text-align: center; box-shadow: 0 24px 60px -12px rgba(16, 57, 103, .55); }
+    .app-busy-spin { width: 44px; height: 44px; border-radius: 50%; border: 5px solid rgba(23, 75, 130, .18); border-top-color: #174b82; animation: app-spin .8s linear infinite; }
+    .app-busy-title { margin: .5rem 0 0; font-size: 1.125rem; font-weight: 700; color: #103967; }
+    .app-busy-note { margin: 0; font-size: .8125rem; color: #536273; }
     @keyframes app-spin { to { transform: rotate(360deg); } }
     @media (prefers-reduced-motion: reduce) { .app-spin { animation-duration: 1.6s; } .app-toast { animation: none; } }
     @keyframes apple-arrive { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: none; } }
@@ -115,6 +122,18 @@
             });
         });
 
+        // The cover is a popover, so it sits in the top layer above any open window too.
+        const showBusy = () => {
+            let cover = document.getElementById('app-busy');
+            if (! cover) {
+                cover = document.createElement('div');
+                cover.id = 'app-busy'; cover.setAttribute('popover', 'manual'); cover.setAttribute('role', 'alert');
+                cover.innerHTML = '<div class="app-busy-card"><span class="app-busy-spin" aria-hidden="true"></span><p class="app-busy-title">Processing… please wait</p><p class="app-busy-note">Do not close or refresh this page.</p></div>';
+                document.body.append(cover);
+            }
+            try { if (cover.matches(':popover-open')) cover.hidePopover(); cover.showPopover(); } catch (e) { cover.style.display = 'flex'; }
+            return { dismiss: () => { try { cover.hidePopover(); } catch (e) { cover.style.display = 'none'; } } };
+        };
         const idle = (form) => {
             delete form.dataset.busy;
             form.querySelectorAll('[data-was-disabled]').forEach((button) => { button.disabled = false; if (button.dataset.label !== undefined) button.innerHTML = button.dataset.label; delete button.dataset.wasDisabled; delete button.dataset.label; });
@@ -123,7 +142,7 @@
         window.appBusy = (form, submitter) => {
             if (form.dataset.busy) return false;
             form.dataset.busy = '1';
-            window.appBusyNotice = window.appNotify('Processing… please wait.', 'progress');
+            window.appBusyNotice = showBusy();
             setTimeout(() => {
                 form.querySelectorAll('button[type=submit], button:not([type]), input[type=submit]').forEach((button) => {
                     button.dataset.wasDisabled = '1'; button.disabled = true;

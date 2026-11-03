@@ -73,7 +73,7 @@
             </fieldset></form>
         @endif
     </div></div>
-                @if($settings['qr'])<div class="mx-auto flex shrink-0 flex-col items-center gap-2 sm:mx-0"><button type="button" data-qr-open class="group rounded-2xl bg-white p-3 shadow-md ring-1 ring-outline-variant/40 transition hover:shadow-lg" aria-label="Open the QR code bigger"><img data-qr-large src="{{ $settings['qr'] }}" alt="QR code of the account" class="h-72 w-72 max-w-[calc(100vw-5rem)] object-contain"></button><p class="text-center text-xs font-semibold text-on-surface-variant">Scan with your banking app · tap to enlarge</p></div>@endif
+                @if($settings['qr'])<div class="mx-auto flex w-full shrink-0 flex-col items-center gap-2 sm:sticky sm:top-24 sm:mx-0 sm:w-[26rem] lg:w-[32rem]"><button type="button" data-qr-open class="group w-full rounded-2xl bg-white p-3 shadow-md ring-1 ring-outline-variant/40 transition hover:shadow-lg" aria-label="Open the QR code bigger"><img data-qr-large src="{{ $settings['qr'] }}" alt="QR code of the account" class="h-auto w-full object-contain"></button><p class="text-center text-xs font-semibold text-on-surface-variant">Scan with your banking app · tap to enlarge</p></div>@endif
             </div>
         @else
             <p class="mt-3 text-sm text-on-surface-variant">The administrator has not set the payment details yet. Please check again later.</p>
@@ -82,11 +82,36 @@
 </div>
 
 <section class="{{ $card }} mt-5" data-subscription-proofs>
-    <p class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Your proofs of payment</p>
-    <ul class="mt-3 divide-y divide-outline-variant/30 text-sm">
+    @php
+        $proofTone = ['pending' => 'bg-amber-100 text-amber-800', 'approved' => 'bg-secondary/10 text-secondary', 'rejected' => 'bg-error/10 text-error'];
+        $proofLabel = ['pending' => 'Waiting for review', 'approved' => 'Approved', 'rejected' => 'Rejected'];
+        $proofIcon = ['pending' => 'hourglass_top', 'approved' => 'check_circle', 'rejected' => 'cancel'];
+        $proofCounts = $proofs->countBy('status');
+    @endphp
+    <div class="flex flex-wrap items-center justify-between gap-3">
+        <div><p class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Payment history and status</p><p class="mt-1 text-xs text-on-surface-variant">Every proof you sent and what the administrator decided. The latest 20 are shown.</p></div>
+        <div class="flex flex-wrap gap-2 text-xs font-semibold">@foreach($proofLabel as $key => $text)<span class="rounded-full px-3 py-1 {{ $proofTone[$key] }}">{{ $text }} · {{ $proofCounts[$key] ?? 0 }}</span>@endforeach</div>
+    </div>
+    <ul class="mt-4 divide-y divide-outline-variant/30 text-sm">
         @forelse($proofs as $proof)
-            <li class="flex flex-wrap items-start justify-between gap-2 py-3"><div class="min-w-0"><p class="font-semibold">{{ $proof->reference }} · {{ $peso($proof->amount_to_pay) }}</p><p class="text-xs text-on-surface-variant">Paid {{ $proof->paid_at->format('M d, Y') }} · sent {{ $proof->created_at->format('M d, Y g:i A') }}</p>@if($proof->status === 'rejected' && $proof->reject_reason)<p class="mt-1 text-xs text-error">Rejected: {{ $proof->reject_reason }}</p>@endif</div>
-            <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold {{ ['pending' => 'bg-amber-100 text-amber-800', 'approved' => 'bg-secondary/10 text-secondary', 'rejected' => 'bg-error/10 text-error'][$proof->status] ?? '' }}">{{ ['pending' => 'Waiting for review', 'approved' => 'Approved', 'rejected' => 'Rejected'][$proof->status] ?? $proof->status }}</span></li>
+            <li class="py-4">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="font-semibold">{{ $peso($proof->amount_to_pay) }} <span class="font-normal text-on-surface-variant">· InstaPay Ref. {{ $proof->reference }}</span></p>
+                        <p class="mt-1 text-xs text-on-surface-variant">Paid {{ ($proof->transacted_at ?? $proof->paid_at)?->format($proof->transacted_at ? 'M d, Y g:i A' : 'M d, Y') }}· sent {{ $proof->created_at->format('M d, Y g:i A') }}</p>
+                    </div>
+                    <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold {{ $proofTone[$proof->status] ?? '' }}"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">{{ $proofIcon[$proof->status] ?? 'info' }}</span>{{ $proofLabel[$proof->status] ?? $proof->status }}</span>
+                </div>
+                <p class="mt-2 rounded-lg px-3 py-2 text-xs {{ $proof->status === 'approved' ? 'bg-secondary/5 text-secondary' : ($proof->status === 'rejected' ? 'bg-error/5 text-error' : 'bg-amber-50 text-amber-900') }}">
+                    @if($proof->status === 'approved')
+                        Approved by the administrator{{ $proof->reviewed_at ? ' on '.$proof->reviewed_at->format('M d, Y g:i A') : '' }}. Your subscription was updated.
+                    @elseif($proof->status === 'rejected')
+                        Rejected by the administrator{{ $proof->reviewed_at ? ' on '.$proof->reviewed_at->format('M d, Y g:i A') : '' }}.{{ $proof->reject_reason ? ' Reason: '.$proof->reject_reason : '' }} Please send a new proof.
+                    @else
+                        Sent on {{ $proof->created_at->format('M d, Y g:i A') }}. The administrator has not reviewed it yet.
+                    @endif
+                </p>
+            </li>
         @empty
             <li class="py-4 text-on-surface-variant">You have not sent a proof yet.</li>
         @endforelse

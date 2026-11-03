@@ -1372,3 +1372,23 @@ Every kept alphalist (section 93) keeps each list's total and the tax of every D
 - Presentation only; the fields, wording of the report data and computations are unchanged. Every tab opens with a centered header (school, report title, period or "As of" date, fund cluster).
 - Negative balances show in brackets in the General Ledger, Subsidiary Ledger, Income Statement, Cash Flows and Balance Sheet, as the Trial Balance already did; Debit and Credit columns are unchanged.
 - Stronger borders on table headers, totals and grand totals. When printed, rows do not split across pages, headers repeat, and a Prepared by / Certified correct / Approved by signature block appears (hidden on screen).
+
+## 113. Reports page: Generate in place (owner's decision 2026-11-03)
+
+- On the Reports page each report has a **Generate** button (was Open). The report page is shown in a panel under the list, without its own menu and top bar, and the user stays on Reports; a Close button hides it. The reports and their permissions are unchanged.
+
+## 114. Support messages by email; Support menu hidden (owner's decision 2026-11-03)
+
+- A Support message is saved and emailed to the Customer Services address kept on the Support page (Reply-To is the user, who is answered by email). The Telegram forwarding is no longer used (the Telegram code stays, unused); `support_messages.telegram_status` now records the email delivery (sent, failed, not_configured). Mail is sent with the `MAIL_*` settings of the environment.
+- The Support item is hidden from every menu; the page and route stay and can be shown again.
+
+## 115. Subscriptions page, Payment Settings and school Subscription page (owner's decision 2026-11-03)
+
+- **Master Subscriptions page:** four tabs (Overview, Schools, Payments, Settings; Settings for the master only) with count badges, the last tab remembered; the four figures show on every tab; a Super Admin badge for the master. A click on a school row opens a window with its details and its actions (History, Activate or Renew, Extend, Suspend or Reactivate, and for the master Free plan and Set price); each action still opens its own form with the reason and password. The Payments tab lists **All payment requests** (every proof, all statuses, latest 200) with search and status filter.
+- **Proof view:** View proof opens the Google Drive preview inside the page (view only). The file stays in the school's own Google Drive; only its pointer is kept in the system.
+- **Payment Settings:** account number shown in groups of four on the preview card, Copy buttons, a bigger QR code, the saved QR as a thumbnail in the upload box, status badges that go to the missing field, boxes aligned in full height.
+- **School Subscription page:** a larger QR code that stays in view, and **Payment history and status** (each proof with the administrator's decision, date and rejection reason; the bank account used and the remarks stay for the master only).
+
+## 116. Processing cover (owner's decision 2026-11-03)
+
+- While a form is being sent, the whole page is covered by a "Processing… please wait" notice above any open window, so nothing else can be pressed; it clears when the page reloads or after 60 seconds.

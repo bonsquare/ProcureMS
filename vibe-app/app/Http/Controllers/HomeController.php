@@ -2446,11 +2446,12 @@ class HomeController extends Controller
         return $request->query('h') === $hash ? response()->noContent() : response()->json(['hash' => $hash, 'html' => $html]);
     }
 
-    /** @return array{subscriptions: Collection, pendingPreRegistrations: Collection, pendingProofs: Collection} */
+    /** @return array{subscriptions: Collection, pendingPreRegistrations: Collection, pendingProofs: Collection, allProofs: Collection} */
     private function subscriptionsData(): array
     {
         return [
             'pendingProofs' => PaymentProof::withoutGlobalScopes()->with('school')->where('status', 'pending')->oldest('id')->get(),
+            'allProofs' => PaymentProof::withoutGlobalScopes()->with('school')->latest('id')->limit(200)->get(),
             'subscriptions' => Subscription::with('school')->whereHas('school')->latest()->get(),
             'pendingPreRegistrations' => School::with(['users' => fn ($query) => $query->oldest()])
                 ->where('status', 'inactive')

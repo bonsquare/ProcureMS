@@ -5,9 +5,10 @@ namespace Tests\Feature;
 use App\Models\Organization;
 use App\Models\School;
 use App\Models\SupportMessage;
+use App\Models\SystemSetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class SupportTelegramTest extends TestCase
@@ -27,39 +28,38 @@ class SupportTelegramTest extends TestCase
         config(['services.telegram.token' => 'TEST-TOKEN', 'services.telegram.chat_id' => '555', 'services.telegram.webhook_secret' => 'hook-secret']);
     }
 
-    public function test_a_message_is_saved_and_forwarded_to_telegram(): void
+    public function test_a_message_is_saved_and_emailed_to_customer_services(): void
     {
-        $this->configure();
-        Http::fake(['api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 901]])]);
+        config(['mail.default' => 'array']);
+        SystemSetting::put('support_email', 'help@example.com');
         $user = $this->user('tg1');
 
         $this->actingAs($user)->post(route('support.send'), ['body' => 'My DV is not showing'])->assertRedirect(route('support'));
 
-        $message = SupportMessage::first();
-        $this->assertSame(901, (int) $message->telegram_message_id);
-        $this->assertSame('sent', $message->telegram_status);
-        Http::assertSent(fn ($request) => str_contains($request->url(), 'botTEST-TOKEN/sendMessage') && $request['chat_id'] === '555' && str_contains($request['text'], 'My DV is not showing') && str_contains($request['text'], 'School tg1'));
+        $this->assertSame('sent', SupportMessage::first()->telegram_status);
+        $sent = Mail::mailer('array')->getSymfonyTransport()->messages()->first()->getOriginalMessage();
+        $this->assertSame('help@example.com', $sent->getTo()[0]->getAddress());
+        $this->assertSame($user->email, $sent->getReplyTo()[0]->getAddress());
+        $this->assertStringContainsString('My DV is not showing', $sent->getTextBody());
     }
 
-    public function test_without_a_bot_the_message_is_only_saved(): void
+    public function test_without_a_support_email_the_message_is_only_saved(): void
     {
-        config(['services.telegram.token' => null, 'services.telegram.chat_id' => null]);
-        Http::fake();
+        config(['mail.default' => 'array']);
         $user = $this->user('tg2');
 
         $this->actingAs($user)->post(route('support.send'), ['body' => 'Hello there'])->assertRedirect(route('support'));
 
         $this->assertSame('not_configured', SupportMessage::first()->telegram_status);
-        Http::assertNothingSent();
+        $this->assertCount(0, Mail::mailer('array')->getSymfonyTransport()->messages());
     }
 
     public function test_a_reply_written_in_telegram_comes_back_to_the_user_and_nobody_else_can_answer(): void
     {
         $this->configure();
-        Http::fake(['api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 902]])]);
         $user = $this->user('tg3');
         $other = $this->user('tg4');
-        $this->actingAs($user)->post(route('support.send'), ['body' => 'Need help'])->assertRedirect();
+        SupportMessage::create(['user_id' => $user->id, 'school_id' => $user->school_id, 'body' => 'Need help', 'telegram_message_id' => 902, 'telegram_status' => 'sent']);
         $url = route('telegram.webhook', 'hook-secret');
         $reply = fn (string $chat, array $extra) => ['update_id' => 1, 'message' => ['message_id' => 950, 'chat' => ['id' => (int) $chat], 'text' => 'We fixed it'] + $extra];
 

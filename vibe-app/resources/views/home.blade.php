@@ -43,7 +43,6 @@
                     if (auth()->user()->hasAccess('subscriptions')) $navigation[] = ['icon' => 'card_membership', 'label' => 'Subscriptions', 'route' => 'subscriptions'];
                     if (auth()->user()->hasAccess('schools')) $navigation[] = ['icon' => 'domain', 'label' => 'School Management', 'route' => 'school-management'];
                 }
-                $navigation[] = ['icon' => 'support_agent', 'label' => 'Support', 'route' => 'support'];
                 $navigation[] = ['icon' => 'settings', 'label' => 'School Settings', 'route' => 'school-settings'];
             @endphp
             @foreach ($navigation as $item)

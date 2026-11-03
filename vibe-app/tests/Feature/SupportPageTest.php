@@ -28,6 +28,6 @@ class SupportPageTest extends TestCase
         $this->assertSame('help@example.test', SystemSetting::get('support_email'));
 
         $this->actingAs($schoolUser)->get(route('support'))->assertOk()->assertSee('help@example.test')->assertSee('Mon to Fri, 8 to 5')->assertSee('Support', false);
-        $this->actingAs($schoolUser)->get(route('home'))->assertOk()->assertSee(route('support'));
+        $this->actingAs($schoolUser)->get(route('home'))->assertOk()->assertDontSee(route('support'));
     }
 }

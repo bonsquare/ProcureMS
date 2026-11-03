@@ -11,14 +11,18 @@
 </head>
 <body class="bg-surface font-inter text-on-surface antialiased">
     <aside class="fixed inset-y-0 left-0 z-50 hidden w-60 flex-col bg-[#103967] px-4 py-6 text-white md:flex">@include('partials.brand')<nav class="flex-1 space-y-1" aria-label="Main navigation">
-        @php $navigation=[['icon'=>'dashboard','label'=>'Dashboard','route'=>'home'],['icon'=>'shopping_cart','label'=>'Procurement','route'=>'procurement'],['icon'=>'receipt_long','label'=>'Liquidation','route'=>'liquidation'],['icon'=>'folder','label'=>'Google Drive','route'=>'google-drive'],['icon'=>'bar_chart','label'=>'Reports','route'=>'reports'],['icon'=>'group','label'=>'User Management','route'=>'user-management'],['icon'=>'card_membership','label'=>'Subscriptions','route'=>'subscriptions','active'=>true],['icon'=>'support_agent','label'=>'Support','route'=>'support'],['icon'=>'settings','label'=>'School Settings']]; $navigation = array_values(array_filter($navigation, fn ($item) => match ($item['label'] ?? '') { 'User Management' => (bool) auth()->user()?->isAnyMaster(), 'Subscriptions' => (bool) auth()->user()?->hasAccess('subscriptions'), default => true })); if (auth()->user()?->hasAccess('schools')) { array_splice($navigation, count($navigation) - 1, 0, [['icon'=>'domain','label'=>'School Management','route'=>'school-management']]); } if (auth()->user()?->hasPermission('planning.view') || auth()->user()?->hasPermission('planning.manage')) { array_splice($navigation, 3, 0, [['icon'=>'account_tree','label'=>'Planning','route'=>'planning']]); } @endphp
+        @php $navigation=[['icon'=>'dashboard','label'=>'Dashboard','route'=>'home'],['icon'=>'shopping_cart','label'=>'Procurement','route'=>'procurement'],['icon'=>'receipt_long','label'=>'Liquidation','route'=>'liquidation'],['icon'=>'folder','label'=>'Google Drive','route'=>'google-drive'],['icon'=>'bar_chart','label'=>'Reports','route'=>'reports'],['icon'=>'group','label'=>'User Management','route'=>'user-management'],['icon'=>'card_membership','label'=>'Subscriptions','route'=>'subscriptions','active'=>true],['icon'=>'settings','label'=>'School Settings']]; $navigation = array_values(array_filter($navigation, fn ($item) => match ($item['label'] ?? '') { 'User Management' => (bool) auth()->user()?->isAnyMaster(), 'Subscriptions' => (bool) auth()->user()?->hasAccess('subscriptions'), default => true })); if (auth()->user()?->hasAccess('schools')) { array_splice($navigation, count($navigation) - 1, 0, [['icon'=>'domain','label'=>'School Management','route'=>'school-management']]); } if (auth()->user()?->hasPermission('planning.view') || auth()->user()?->hasPermission('planning.manage')) { array_splice($navigation, 3, 0, [['icon'=>'account_tree','label'=>'Planning','route'=>'planning']]); } @endphp
         @foreach($navigation as $item)<a href="{{ isset($item['route']) ? route($item['route']) : ($item['label'] === 'School Settings' ? route('school-settings') : '#') }}" class="flex min-h-11 items-center rounded-[.55rem] px-3 py-2.5 text-sm font-medium {{ ($item['active'] ?? false) ? 'bg-white/10 font-bold text-white shadow-[inset_3px_0_0_#55c79e]' : 'text-white/80 hover:bg-white/10 hover:text-white' }}"><span class="material-symbols-outlined mr-3 text-[20px]">{{ $item['icon'] }}</span>{{ $item['label'] }}</a> @if(($item['label'] ?? '') === 'Dashboard')<details class="group"><summary class="flex min-h-11 cursor-pointer list-none items-center rounded-[.55rem] px-3 py-2.5 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white"><span class="material-symbols-outlined mr-3 text-[20px]">account_balance_wallet</span><span class="flex-1">Finance</span><span class="material-symbols-outlined text-[18px] transition-transform group-open:rotate-180">expand_more</span></summary><div class="mt-1 space-y-1"><a href="{{ route('budget') }}" class="ml-8 flex items-center rounded-[.55rem] px-3 py-2 text-sm font-medium text-white/75 hover:bg-white/10 hover:text-white"><span class="material-symbols-outlined mr-2 text-[17px]">account_balance</span>Budget</a><a href="{{ route('accounting') }}" class="ml-8 flex items-center rounded-[.55rem] px-3 py-2 text-sm font-medium text-white/75 hover:bg-white/10 hover:text-white"><span class="material-symbols-outlined mr-2 text-[17px]">request_quote</span>Accounting</a><a href="{{ route('chart-of-accounts') }}" class="ml-8 flex items-center rounded-[.55rem] px-3 py-2 text-sm font-medium text-white/75 hover:bg-white/10 hover:text-white"><span class="material-symbols-outlined mr-2 text-[17px]">list_alt</span>Chart of Accounts</a><a href="{{ route('financial-reports') }}" class="ml-8 flex items-center rounded-[.55rem] px-3 py-2 text-sm font-medium text-white/75 hover:bg-white/10 hover:text-white"><span class="material-symbols-outlined mr-2 text-[17px]">assessment</span>Financial Reports</a><a href="{{ route('allotment-registry') }}" class="ml-8 flex items-center rounded-[.55rem] px-3 py-2 text-sm font-medium text-white/75 hover:bg-white/10 hover:text-white"><span class="material-symbols-outlined mr-2 text-[17px]">menu_book</span>Allotment Registry</a><a href="{{ route('cash') }}" class="ml-8 flex items-center rounded-[.55rem] px-3 py-2 text-sm font-medium text-white/75 hover:bg-white/10 hover:text-white"><span class="material-symbols-outlined mr-2 text-[17px]">payments</span>Cash</a></div></details>@endif @endforeach
     </nav><div class="border-t border-white/15 px-2 pt-4 text-[11px] leading-5 text-white/55"><p>Multi-School Procurement System</p><p>Secure operational workspace</p></div></aside>
 
     <div class="md:pl-60"><header class="fixed left-0 right-0 top-0 z-40 flex h-16 items-center justify-between border-b border-outline-variant/30 bg-surface/95 px-4 backdrop-blur md:left-60 md:px-6"><div class="flex items-center gap-3"><button class="rounded p-2 text-on-surface-variant md:hidden" aria-label="Open navigation"><span class="material-symbols-outlined">menu</span></button><div class="min-w-0"><p class="text-[10px] font-bold uppercase tracking-[0.14em] text-primary">Subscription Administration</p><p class="truncate text-sm font-semibold text-on-surface">Subscriptions</p></div></div><div class="flex items-center gap-4"><button class="relative rounded p-1 text-on-surface-variant" aria-label="Notifications"><span class="material-symbols-outlined text-[21px]">notifications</span><span class="absolute right-0 top-0 h-2 w-2 rounded-full bg-error"></span></button><div class="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white"><span class="material-symbols-outlined text-[18px]">person</span></div></div></header>
 
-    <main class="min-h-screen bg-surface px-4 pb-16 pt-24 md:px-6 lg:px-8"><div class="mx-auto max-w-[1600px]">
-        <div class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><div class="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-on-surface-variant"><span class="material-symbols-outlined text-[16px]">card_membership</span><span class="font-semibold text-primary">Plans &amp; Billing</span></div><h1 class="text-[28px] font-semibold leading-9 tracking-tight">Subscriptions</h1><p class="mt-1 text-[15px] leading-6 text-on-surface-variant">Manage school plans, renewals, billing status, and organization subscriptions.</p></div><button type="button" data-sub-open="create" class="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]">add</span>Create Subscription</button></div>
+    <main class="min-h-screen bg-surface px-4 pb-16 pt-24 md:px-6 lg:px-8"><div class="mx-auto max-w-[1600px]" data-sub-tabs data-active="overview">
+        <style>
+            [data-sub-tabs][data-active="overview"] [data-tab-panel]:not([data-tab-panel="overview"]), [data-sub-tabs][data-active="schools"] [data-tab-panel]:not([data-tab-panel="schools"]), [data-sub-tabs][data-active="payments"] [data-tab-panel]:not([data-tab-panel="payments"]), [data-sub-tabs][data-active="settings"] [data-tab-panel]:not([data-tab-panel="settings"]) { display: none; }
+            [data-sub-tabs][data-active="overview"] [data-sub-tab="overview"], [data-sub-tabs][data-active="schools"] [data-sub-tab="schools"], [data-sub-tabs][data-active="payments"] [data-sub-tab="payments"], [data-sub-tabs][data-active="settings"] [data-sub-tab="settings"] { background: #103967; border-color: #103967; color: #fff; }
+        </style>
+        <div class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><div class="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-on-surface-variant"><span class="material-symbols-outlined text-[16px]">card_membership</span><span class="font-semibold text-primary">Plans &amp; Billing</span>@if(auth()->user()->isMaster())<span class="ml-2 inline-flex items-center gap-1 rounded bg-primary px-2 py-0.5 text-[10px] font-bold tracking-wider text-white"><span class="material-symbols-outlined text-[13px]" aria-hidden="true">shield_person</span>Super Admin · {{ auth()->user()->name }}</span>@endif</div><h1 class="text-[28px] font-semibold leading-9 tracking-tight">Subscriptions</h1><p class="mt-1 text-[15px] leading-6 text-on-surface-variant">Manage school plans, renewals, billing status, and organization subscriptions.</p></div><button type="button" data-sub-open="create" class="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]">add</span>Create Subscription</button></div>
 
         @if(session('success'))<div class="mb-5 rounded border border-secondary/30 bg-secondary/10 px-4 py-3 text-sm font-medium text-secondary">{{ session('success') }}</div>@endif
         <div id="subscriptions-live" data-url="{{ route('subscriptions.live') }}" data-hash="{{ $liveHash }}">
@@ -57,7 +61,7 @@
         </script>
 
     @if(auth()->user()->isMaster())
-    <section data-payment-settings class="mt-8 overflow-hidden rounded-2xl border border-outline-variant/40 bg-white">
+    <section data-payment-settings data-tab-panel="settings" class="mt-8 overflow-hidden rounded-2xl border border-outline-variant/40 bg-white">
         @php
             $payReady = filled($paymentSettings['account_name']) && filled($paymentSettings['account_number']);
             $payEmail = filled($paymentSettings['master_email']);
@@ -67,46 +71,50 @@
         <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/30 px-6 py-5">
             <div class="flex items-center gap-3"><span class="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary"><span class="material-symbols-outlined" aria-hidden="true">account_balance</span></span><div><h2 class="text-lg font-semibold tracking-tight">Payment Settings</h2><p class="text-xs text-on-surface-variant">Where a school sends its subscription payment. The schools see this on their Subscription page.</p></div></div>
             <div class="flex flex-wrap gap-2" data-payment-status>
-                <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold {{ $payReady ? 'bg-secondary/10 text-secondary' : 'bg-amber-100 text-amber-800' }}"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">{{ $payReady ? 'check_circle' : 'error' }}</span>{{ $payReady ? 'Account is ready' : 'Account is not complete' }}</span>
-                <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold {{ $payEmail ? 'bg-secondary/10 text-secondary' : 'bg-amber-100 text-amber-800' }}"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">{{ $payEmail ? 'check_circle' : 'mail' }}</span>{{ $payEmail ? 'Proofs are shared with your email' : 'Google email missing: schools cannot send a proof yet' }}</span>
+                <{{ $payReady ? 'span' : 'a href=#pay-account data-pay-goto=pay-account' }} class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold {{ $payReady ? 'bg-secondary/10 text-secondary' : 'bg-amber-100 text-amber-800 hover:bg-amber-200' }}"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">{{ $payReady ? 'check_circle' : 'error' }}</span>{{ $payReady ? 'Account is ready' : 'Complete the account name and number' }}</{{ $payReady ? 'span' : 'a' }}>
+                <{{ $payEmail ? 'span' : 'a href=#pay-email data-pay-goto=pay-email' }} class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold {{ $payEmail ? 'bg-secondary/10 text-secondary' : 'bg-amber-100 text-amber-800 hover:bg-amber-200' }}"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">{{ $payEmail ? 'check_circle' : 'mail' }}</span>{{ $payEmail ? 'Proofs are shared with your email' : 'Add your Google email: schools cannot send a proof yet' }}</{{ $payEmail ? 'span' : 'a' }}>
             </div>
         </div>
         <form method="POST" action="{{ route('payment-settings.update') }}" enctype="multipart/form-data" data-guard="Save the payment details" class="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_21rem]">@csrf @method('PUT')
-            <div class="space-y-5">
+            <div class="flex flex-col gap-5">
                 <fieldset class="rounded-xl border border-outline-variant/40 bg-surface-low/40 p-5">
                     <legend class="px-1 text-xs font-bold uppercase tracking-wider text-primary">1 · The account</legend>
-                    <div class="grid gap-4 sm:grid-cols-2">
+                    <div class="grid gap-4 sm:grid-cols-3">
                         <label class="{{ $payLabel }}">Bank<input name="bank_name" data-pay-bind="bank" maxlength="120" placeholder="GoTyme Bank" value="{{ $paymentSettings['bank_name'] }}" class="{{ $payField }}"></label>
-                        <label class="{{ $payLabel }}">Account name<input name="account_name" data-pay-bind="name" maxlength="120" placeholder="Name on the account" value="{{ $paymentSettings['account_name'] }}" class="{{ $payField }}"></label>
-                        <label class="{{ $payLabel }} sm:col-span-2">Account number<input name="account_number" data-pay-bind="number" maxlength="60" inputmode="numeric" placeholder="0000 0000 0000" value="{{ $paymentSettings['account_number'] }}" class="{{ $payField }} tabular-nums tracking-wider"></label>
+                        <label class="{{ $payLabel }}">Account name<input id="pay-account" name="account_name" data-pay-bind="name" maxlength="120" placeholder="Name on the account" value="{{ $paymentSettings['account_name'] }}" class="{{ $payField }}"></label>
+                        <label class="{{ $payLabel }}">Account number<input name="account_number" data-pay-bind="number" maxlength="60" inputmode="numeric" placeholder="0000 0000 0000" value="{{ $paymentSettings['account_number'] }}" class="{{ $payField }} tabular-nums tracking-wider"></label>
                     </div>
                 </fieldset>
-                <fieldset class="rounded-xl border border-outline-variant/40 bg-surface-low/40 p-5">
+                <div class="grid flex-1 gap-5 xl:grid-cols-2">
+                <fieldset class="flex flex-col rounded-xl border border-outline-variant/40 bg-surface-low/40 p-5">
                     <legend class="px-1 text-xs font-bold uppercase tracking-wider text-primary">2 · Where the proofs go</legend>
-                    <label class="{{ $payLabel }}">Your Google email<input type="email" name="master_email" maxlength="190" autocomplete="email" placeholder="you@gmail.com" value="{{ $paymentSettings['master_email'] }}" class="{{ $payField }}"></label>
+                    <label class="{{ $payLabel }}">Your Google email<input id="pay-email" type="email" name="master_email" maxlength="190" autocomplete="email" placeholder="you@gmail.com" value="{{ $paymentSettings['master_email'] }}" class="{{ $payField }}"></label>
                     <p class="mt-2 text-xs leading-relaxed text-on-surface-variant">Each school keeps its proof in its own Google Drive and shares it read-only with this address only (never public). Use a Google account you can open.</p>
                 </fieldset>
-                <fieldset class="rounded-xl border border-outline-variant/40 bg-surface-low/40 p-5">
+                <fieldset class="flex flex-col rounded-xl border border-outline-variant/40 bg-surface-low/40 p-5">
                     <legend class="px-1 text-xs font-bold uppercase tracking-wider text-primary">3 · The QR code</legend>
-                    <label data-pay-drop class="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-outline-variant/70 bg-white px-4 py-6 text-center transition hover:border-primary hover:bg-primary/5">
-                        <span class="material-symbols-outlined text-[28px] text-primary" aria-hidden="true">qr_code_2</span>
-                        <span class="text-sm font-semibold text-on-surface">Choose an image or drop it here</span>
+                    <label data-pay-drop class="flex flex-1 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-outline-variant/70 bg-white px-4 py-6 text-center transition hover:border-primary hover:bg-primary/5">
+                        <img data-pay-thumb src="{{ $paymentSettings['qr'] ?: '' }}" alt="Saved QR code" class="{{ $paymentSettings['qr'] ? '' : 'hidden' }} h-24 w-24 rounded-lg border border-outline-variant/40 bg-white object-contain p-1">
+                        <span data-pay-icon class="material-symbols-outlined text-[28px] text-primary {{ $paymentSettings['qr'] ? 'hidden' : '' }}" aria-hidden="true">qr_code_2</span>
+                        <span class="text-sm font-semibold text-on-surface" data-pay-title>{{ $paymentSettings['qr'] ? 'Replace the image or drop a new one' : 'Choose an image or drop it here' }}</span>
                         <span class="text-xs text-on-surface-variant" data-pay-file>PNG or JPG, up to 300 KB</span>
                         <input type="file" name="qr" accept="image/png,image/jpeg" data-pay-qr class="sr-only">
                     </label>
                     <p class="mt-2 hidden text-xs font-semibold text-error" data-pay-error></p>
                     @if($paymentSettings['qr'])<label class="mt-3 inline-flex cursor-pointer items-center gap-2 text-xs font-semibold text-on-surface-variant"><input type="checkbox" name="remove_qr" value="1" data-pay-remove class="h-4 w-4 rounded border-outline-variant">Remove the QR code that is saved</label>@endif
                 </fieldset>
+                </div>
             </div>
             <aside class="lg:sticky lg:top-24 lg:self-start" aria-label="What a school sees">
                 <p class="mb-2 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">What a school sees</p>
                 <div class="overflow-hidden rounded-2xl p-5 text-white shadow-lg" style="background:linear-gradient(145deg,#0b2a66 0%,#103967 55%,#1b5088 100%)">
-                    <p class="text-[10px] font-bold uppercase tracking-[.14em] text-white/60">Send the payment to</p>
+                    <p class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-white/60"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">account_balance</span>Send the payment to</p>
                     <p class="mt-3 text-sm font-semibold text-white/80" data-pay-view="bank">{{ $paymentSettings['bank_name'] ?: 'Bank' }}</p>
-                    <p class="mt-0.5 text-lg font-semibold tracking-tight" data-pay-view="name">{{ $paymentSettings['account_name'] ?: 'Account name' }}</p>
-                    <p class="mt-1 font-mono text-base tracking-[.12em] tabular-nums text-white/90" data-pay-view="number">{{ $paymentSettings['account_number'] ?: '0000 0000 0000' }}</p>
-                    <div class="mt-4 grid place-items-center rounded-xl bg-white p-3"><img data-pay-view="qr" src="{{ $paymentSettings['qr'] ?: '' }}" alt="QR code of the account" class="{{ $paymentSettings['qr'] ? '' : 'hidden' }} h-44 w-44 object-contain"><p data-pay-view="noqr" class="{{ $paymentSettings['qr'] ? 'hidden' : '' }} py-12 text-xs font-medium text-on-surface-variant">No QR code yet</p></div>
-                    <p class="mt-3 text-center text-[11px] text-white/60">Amount to pay is shown on the school's page</p>
+                    <div class="mt-0.5 flex items-center justify-between gap-2"><p class="min-w-0 break-words text-lg font-semibold tracking-tight" data-pay-view="name">{{ $paymentSettings['account_name'] ?: 'Account name' }}</p><button type="button" data-pay-copy="name" class="shrink-0 rounded-md border border-white/30 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white/90 hover:bg-white/15">Copy</button></div>
+                    <div class="mt-1 flex items-center justify-between gap-2"><p class="min-w-0 break-all font-mono text-base tracking-[.12em] tabular-nums text-white/90" data-pay-view="number">{{ $paymentSettings['account_number'] ?: '0000 0000 0000' }}</p><button type="button" data-pay-copy="number" class="shrink-0 rounded-md border border-white/30 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white/90 hover:bg-white/15">Copy</button></div>
+                    <div class="mt-4 grid place-items-center rounded-xl bg-white p-3"><img data-pay-view="qr" src="{{ $paymentSettings['qr'] ?: '' }}" alt="QR code of the account" class="{{ $paymentSettings['qr'] ? '' : 'hidden' }} h-64 w-64 object-contain"><p data-pay-view="noqr" class="{{ $paymentSettings['qr'] ? 'hidden' : '' }} py-12 text-xs font-medium text-on-surface-variant">No QR code yet</p></div>
+                    <p class="mt-3 text-center text-xs font-semibold text-white/80">Scan with your bank app or e-wallet</p>
+                    <p class="mt-1 text-center text-[11px] text-white/60">Amount to pay is shown on the school's page</p>
                 </div>
             </aside>
             <div class="flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant/30 pt-5 lg:col-span-2"><p class="text-xs text-on-surface-variant">Saving asks for your reason and your password, and is kept in the history.</p><button class="rounded-xl bg-primary px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-primary-container">Save payment details</button></div>
@@ -118,13 +126,30 @@
                 if (!root) return;
                 const view = (key) => root.querySelector('[data-pay-view="' + key + '"]');
                 const fallback = { bank: 'Bank', name: 'Account name', number: '0000 0000 0000' };
-                root.querySelectorAll('[data-pay-bind]').forEach((input) => input.addEventListener('input', () => { view(input.dataset.payBind).textContent = input.value.trim() || fallback[input.dataset.payBind]; }));
+                // An account number of digits only is shown in groups of four on the card; what is saved is what is typed.
+                const shown = (key, value) => { const clean = value.trim(); return key === 'number' && /^\d+$/.test(clean) ? clean.replace(/(\d{4})(?=\d)/g, '$1 ') : clean; };
+                root.querySelectorAll('[data-pay-bind]').forEach((input) => input.addEventListener('input', () => { view(input.dataset.payBind).textContent = shown(input.dataset.payBind, input.value) || fallback[input.dataset.payBind]; }));
+                view('number').textContent = shown('number', root.querySelector('[data-pay-bind="number"]').value) || fallback.number;
+                root.querySelectorAll('[data-pay-copy]').forEach((button) => button.addEventListener('click', async () => {
+                    const key = button.dataset.payCopy;
+                    const input = root.querySelector('[data-pay-bind="' + key + '"]');
+                    const value = key === 'number' ? input.value.replace(/\s+/g, '') : input.value.trim();
+                    if (!value) return;
+                    try { await navigator.clipboard.writeText(value); } catch (error) { input.select(); document.execCommand('copy'); }
+                    const label = button.textContent; button.textContent = 'Copied'; setTimeout(() => { button.textContent = label; }, 1500);
+                }));
+                document.querySelectorAll('[data-pay-goto]').forEach((link) => link.addEventListener('click', (event) => { event.preventDefault(); const field = document.getElementById(link.dataset.payGoto); field?.scrollIntoView({ behavior: 'smooth', block: 'center' }); field?.focus({ preventScroll: true }); }));
 
                 const file = root.querySelector('[data-pay-qr]');
                 const drop = root.querySelector('[data-pay-drop]');
                 const label = root.querySelector('[data-pay-file]');
                 const error = root.querySelector('[data-pay-error]');
-                const show = (src) => { const img = view('qr'); img.src = src; img.classList.toggle('hidden', !src); view('noqr').classList.toggle('hidden', Boolean(src)); };
+                const show = (src) => {
+                    const img = view('qr'); img.src = src; img.classList.toggle('hidden', !src); view('noqr').classList.toggle('hidden', Boolean(src));
+                    const thumb = root.querySelector('[data-pay-thumb]'); thumb.src = src; thumb.classList.toggle('hidden', !src);
+                    root.querySelector('[data-pay-icon]').classList.toggle('hidden', Boolean(src));
+                    root.querySelector('[data-pay-title]').textContent = src ? 'Replace the image or drop a new one' : 'Choose an image or drop it here';
+                };
                 const fail = (message) => { error.textContent = message; error.classList.remove('hidden'); file.value = ''; label.textContent = 'PNG or JPG, up to 300 KB'; };
                 const pick = (chosen) => {
                     error.classList.add('hidden');
@@ -146,7 +171,7 @@
         </script>
     </section>
 
-    <section data-promo-panel class="mt-8 overflow-hidden rounded border border-outline-variant/30 bg-white">
+    <section data-promo-panel data-tab-panel="settings" class="mt-8 overflow-hidden rounded border border-outline-variant/30 bg-white">
         <div class="flex flex-col justify-between gap-3 border-b border-outline-variant/30 p-5 sm:flex-row sm:items-center"><div><h2 class="text-lg font-semibold">Promo Codes</h2><p class="mt-1 text-xs text-on-surface-variant">A school types a code to pay less for the Annual plan. The price you set for a school always wins over a code.</p></div><button type="button" data-promo-open class="rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container">+ New promo code</button></div>
         <div class="overflow-x-auto"><table class="w-full min-w-[720px] text-left text-sm"><thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant"><tr><th class="px-5 py-3">Code</th><th class="px-5 py-3">Takes off</th><th class="px-5 py-3">Valid</th><th class="px-5 py-3">Used</th><th class="px-5 py-3">Status</th><th class="px-5 py-3 text-right">Actions</th></tr></thead><tbody class="divide-y divide-outline-variant/20">
         @forelse($promoCodes as $promo)
@@ -248,6 +273,17 @@
         <label class="block text-xs font-semibold text-on-surface-variant">Until (optional)<input type="date" name="ends_at" class="w-full rounded border border-outline-variant/50 bg-white px-3 py-2 text-sm outline-none focus:border-primary"></label>
         <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-3"><button type="button" data-sub-close class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Close</button><button class="rounded bg-primary px-4 py-2.5 text-xs font-bold text-white hover:bg-primary-container">Save</button></div>
     </form></dialog>
+    <dialog data-sub-dialog="proof-view" style="width:min(64rem,calc(100% - 2rem))" class="rounded bg-white p-0 text-left shadow-2xl backdrop:bg-black/50"><div class="p-5">
+        <div class="flex items-start justify-between gap-3"><div class="min-w-0"><h2 class="truncate text-lg font-semibold" data-proof-view-title>Proof of payment</h2><p class="mt-0.5 text-xs text-on-surface-variant">View only. The file stays in the school's own Google Drive; nothing is saved on this system. Sign in to Google with the email that received the share.</p></div><button type="button" data-sub-close aria-label="Close" class="rounded p-1 hover:bg-primary hover:text-white"><span class="material-symbols-outlined">close</span></button></div>
+        <iframe data-proof-view-frame title="Proof of payment" class="mt-3 h-[70vh] w-full rounded border border-outline-variant/40 bg-surface-low" referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
+        <p class="mt-2 text-right text-xs"><a data-proof-view-link href="#" target="_blank" rel="noopener" class="font-semibold text-primary hover:underline">Open in Google Drive</a></p>
+    </div></dialog>
+    <dialog data-sub-dialog="school" style="width:min(40rem,calc(100% - 2rem))" class="rounded bg-white p-0 text-left shadow-2xl backdrop:bg-black/50"><div class="max-h-[85vh] overflow-y-auto p-6">
+        <div class="flex items-start justify-between gap-3"><h2 class="text-lg font-semibold" data-sub-view-title>School</h2><button type="button" data-sub-close aria-label="Close" class="rounded p-1 hover:bg-primary hover:text-white"><span class="material-symbols-outlined">close</span></button></div>
+        <div data-sub-view-body class="mt-3 space-y-3 text-sm"></div>
+        <h3 class="mt-5 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Actions</h3>
+        <div data-sub-school-actions class="mt-2 flex flex-wrap gap-2"></div>
+    </div></dialog>
     <dialog data-sub-dialog="view" style="width:min(34rem,calc(100% - 2rem))" class="rounded bg-white p-0 text-left shadow-2xl backdrop:bg-black/50"><div class="max-h-[85vh] overflow-y-auto p-6">
         <div class="flex items-start justify-between gap-3"><h2 class="text-lg font-semibold" data-sub-view-title>Subscription</h2><button type="button" data-sub-close aria-label="Close" class="rounded p-1 hover:bg-primary hover:text-white"><span class="material-symbols-outlined">close</span></button></div>
         <div data-sub-view-body class="mt-3 space-y-3 text-sm"></div>
@@ -260,6 +296,18 @@
             document.addEventListener('click', async (event) => {
                 const close = event.target.closest('[data-sub-close]');
                 if (close) { close.closest('dialog')?.close(); return; }
+                const proofView = event.target.closest('[data-proof-view]');
+                if (proofView) {
+                    const viewer = dialogOf('proof-view');
+                    viewer.querySelector('[data-proof-view-title]').textContent = proofView.dataset.title || 'Proof of payment';
+                    viewer.querySelector('[data-proof-view-frame]').src = 'https://drive.google.com/file/d/' + encodeURIComponent(proofView.dataset.proofView) + '/preview';
+                    viewer.querySelector('[data-proof-view-link]').href = proofView.dataset.link;
+                    viewer.addEventListener('close', () => viewer.querySelector('[data-proof-view-frame]').removeAttribute('src'), { once: true });
+                    viewer.showModal();
+                    return;
+                }
+                const schoolRow = event.target.closest('[data-sub-school]');
+                if (schoolRow) { await openSchool(schoolRow); return; }
                 const button = event.target.closest('[data-sub-open]');
                 if (!button) return;
                 const dialog = dialogOf(button.dataset.subOpen);
@@ -279,6 +327,27 @@
                 }
                 if (button.dataset.subOpen === 'view') await renderView(dialog, button.dataset.url);
                 dialog.showModal();
+            });
+
+            // A click on a school opens its details; the actions of the school are in that window, each opening its own form.
+            const openSchool = async (row) => {
+                const dialog = dialogOf('school');
+                const actions = dialog.querySelector('[data-sub-school-actions]');
+                actions.replaceChildren();
+                row.querySelector('template[data-sub-actions]')?.content.querySelectorAll('button').forEach((source) => {
+                    const button = source.cloneNode(true);
+                    const danger = button.classList.contains('text-error');
+                    button.className = 'inline-flex items-center gap-2 rounded border bg-white px-3 py-2 text-xs font-semibold hover:bg-surface-low ' + (danger ? 'border-error/50 text-error' : 'border-outline-variant/60 text-primary');
+                    button.append(text(button.title));
+                    actions.append(button);
+                });
+                dialog.querySelector('[data-sub-view-title]').textContent = row.dataset.title;
+                dialog.showModal();
+                await renderView(dialog, row.dataset.url);
+            };
+            document.addEventListener('keydown', (event) => {
+                const row = event.target.closest?.('[data-sub-school]');
+                if (row && event.target === row && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openSchool(row); }
             });
 
             const renderView = async (dialog, url) => {
@@ -330,7 +399,38 @@
             };
             document.addEventListener('input', (event) => { if (event.target.closest('[data-sub-filter]')) apply(); });
             document.addEventListener('change', (event) => { if (event.target.closest('[data-sub-filter]')) apply(); });
-            window.subFilters = { save: filters, restore: (saved) => { const search = document.querySelector('[data-sub-filter="search"]'); const status = document.querySelector('[data-sub-filter="status"]'); if (search) search.value = saved.search; if (status) status.value = saved.status; apply(); } };
+            // Payment requests: search and status filter, kept when the live data redraws the list.
+            const proofState = { search: '', status: '' };
+            const applyProofs = () => {
+                const search = document.querySelector('[data-proof-filter="search"]');
+                const status = document.querySelector('[data-proof-filter="status"]');
+                if (search) search.value = proofState.search;
+                if (status) status.value = proofState.status;
+                const needle = proofState.search.trim().toLowerCase();
+                let shown = 0;
+                document.querySelectorAll('[data-proof-row]').forEach((row) => {
+                    const visible = (!needle || row.dataset.text.includes(needle)) && (!proofState.status || row.dataset.status === proofState.status);
+                    row.classList.toggle('hidden', !visible);
+                    if (visible) shown++;
+                });
+                document.querySelector('[data-proof-none]')?.classList.toggle('hidden', shown > 0 || !document.querySelector('[data-proof-row]'));
+            };
+            document.addEventListener('input', (event) => { const control = event.target.closest('[data-proof-filter]'); if (control) { proofState[control.dataset.proofFilter] = control.value; applyProofs(); } });
+            document.addEventListener('change', (event) => { const control = event.target.closest('[data-proof-filter]'); if (control) { proofState[control.dataset.proofFilter] = control.value; applyProofs(); } });
+
+            // The tabs: one group of the page at a time; the last one used is remembered while the browser tab stays open.
+            const tabsRoot = document.querySelector('[data-sub-tabs]');
+            const openTab = (name) => {
+                if (!tabsRoot.querySelector('[data-sub-tab="' + name + '"]')) name = 'overview';
+                tabsRoot.dataset.active = name;
+                try { sessionStorage.setItem('subscriptionsTab', name); } catch (error) {}
+            };
+            document.addEventListener('click', (event) => { const tab = event.target.closest('[data-sub-tab]'); if (tab) openTab(tab.dataset.subTab); });
+            let remembered = 'overview';
+            try { remembered = sessionStorage.getItem('subscriptionsTab') || 'overview'; } catch (error) {}
+            openTab(remembered);
+
+            window.subFilters = { save: filters, restore: (saved) => { const search = document.querySelector('[data-sub-filter="search"]'); const status = document.querySelector('[data-sub-filter="status"]'); if (search) search.value = saved.search; if (status) status.value = saved.status; apply(); applyProofs(); openTab(tabsRoot.dataset.active); } };
         })();
     </script>
     @include('partials.action-guard')

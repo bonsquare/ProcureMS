@@ -4,8 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\SupportMessage;
 use App\Models\SystemSetting;
-use App\Services\TelegramService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use Throwable;
 
 /** The Support tab: how a user reaches Customer Services. The master user keeps the contact details here. */
 class SupportController extends Controller
@@ -24,23 +25,34 @@ class SupportController extends Controller
             'contact' => collect(self::FIELDS)->mapWithKeys(fn (string $key) => [$key => (string) SystemSetting::get($key, '')])->all(),
             'canEdit' => $user->isMaster(),
             'messages' => $messages,
-            'telegramOn' => app(TelegramService::class)->configured(),
+            'mailOn' => (string) SystemSetting::get('support_email', '') !== '',
         ]);
     }
 
-    /** Saves the message and forwards it to the Customer Services Telegram chat; a reply written there comes back to this page. */
-    public function send(Request $request, TelegramService $telegram)
+    /** Saves the message and emails it to the Customer Services address; Customer Services answers the user by email (Reply-To is the user). */
+    public function send(Request $request)
     {
         $data = $request->validate(['body' => ['required', 'string', 'min:3', 'max:2000']]);
         $user = $request->user();
         $message = SupportMessage::create(['organization_id' => $user->organization_id, 'school_id' => $user->school_id, 'user_id' => $user->id, 'body' => trim($data['body'])]);
 
-        $text = "Support #{$message->id}\nSchool: ".($user->school?->name ?? '—')."\nFrom: {$user->name} ({$user->email})\n\n{$message->body}\n\nReply to this message to answer.";
-        $telegramId = $telegram->send($text);
-        $message->update(['telegram_message_id' => $telegramId, 'telegram_status' => $telegramId ? 'sent' : ($telegram->configured() ? 'failed' : 'not_configured')]);
+        $text = "Support #{$message->id}\nSchool: ".($user->school?->name ?? '—')."\nFrom: {$user->name} ({$user->email})\n\n{$message->body}\n\nReply to this email to answer.";
+        $to = (string) SystemSetting::get('support_email', '');
+        $status = 'not_configured';
+        if ($to !== '') {
+            try {
+                Mail::raw($text, fn ($mail) => $mail->to($to)->replyTo($user->email, $user->name)->subject("Support #{$message->id}: {$user->name}"));
+                $status = 'sent';
+            } catch (Throwable $exception) {
+                report($exception);
+                $status = 'failed';
+            }
+        }
+        // The telegram_status column is kept and now records the email delivery.
+        $message->update(['telegram_status' => $status]);
 
-        return redirect()->route('support')->with('success', $telegramId
-            ? 'Your message was sent to Customer Services. Their reply will appear below.'
+        return redirect()->route('support')->with('success', $status === 'sent'
+            ? 'Your message was sent to Customer Services. They will reply to your email.'
             : 'Your message was saved, but it could not be delivered to Customer Services right now. Please use the contact details above.');
     }
 

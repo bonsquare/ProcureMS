@@ -67,7 +67,10 @@ class SubscriptionsLiveTest extends TestCase
 
         $proof->update(['status' => 'approved']);
         $after = $this->getJson(route('subscriptions.live', ['h' => $changed->json('hash')]))->assertOk();
-        $this->assertStringNotContainsString('REF-LIVE', $after->json('html'));
+        // It leaves the proofs waiting for review but stays in the list of all payment requests, as Approved.
+        $this->assertStringNotContainsString('data-sub-open="approve-proof"', $after->json('html'));
+        $this->assertStringContainsString('All payment requests', $after->json('html'));
+        $this->assertStringContainsString('REF-LIVE', $after->json('html'));
     }
 
     public function test_only_who_can_open_subscriptions_gets_the_live_data(): void
