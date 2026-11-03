@@ -4,10 +4,11 @@
     * { box-sizing: border-box; }
     body { margin: 0; background: #fff; color: #111; font-family: Arial, Helvetica, sans-serif; font-size: 10.5px; line-height: 1.3; }
     .paper { width: 100%; margin: 0; padding: 0; background: #fff; }
-    /* The logos follow the header: each logo cell is as tall as the header text and square, and the logo is a little taller than the text (64px to 170px). */
-    .masthead { display: grid; grid-template-columns: auto auto auto; justify-content: center; align-items: center; column-gap: 84px; padding-top: 12px; text-align: center; line-height: 1.4; }
-    .masthead-logo { align-self: stretch; aspect-ratio: 1 / 1; position: relative; min-height: 0; }
-    .masthead-logo img { position: absolute; top: 50%; left: 50%; height: clamp(64px, 150%, 170px); width: auto; max-width: none; object-fit: contain; transform: translate(-50%, calc(-50% + 6px)); }
+    .masthead { display: grid; grid-template-columns: 80px 1fr 80px; align-items: center; column-gap: 8px; text-align: center; line-height: 1.4; }
+    .masthead-logo { display: flex; align-items: center; min-height: 60px; }
+    .masthead-logo-left { justify-content: flex-start; }
+    .masthead-logo-right { justify-content: flex-end; }
+    .masthead-logo img { height: 62px; width: auto; max-width: 80px; object-fit: contain; }
     .masthead .dept { font-size: 13px; font-weight: bold; }
     .masthead .line { font-weight: bold; text-transform: uppercase; }
     .doc-title { text-align: center; margin: 10px 0 6px; }

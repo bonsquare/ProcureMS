@@ -9,10 +9,11 @@
         body { margin: 0; background: #fff; color: #111; font-family: Arial, Helvetica, sans-serif; font-size: 11px; line-height: 1.35; }
         .paper { width: 100%; margin: 0; padding: 0; background: #fff; }
 
-        /* The logos follow the header: each logo cell is as tall as the header text and square, and the logo is a little taller than the text (64px to 170px). */
-        .masthead { display: grid; grid-template-columns: auto auto auto; justify-content: center; align-items: center; column-gap: 96px; padding-top: 14px; text-align: center; line-height: 1.45; margin-bottom: 8px; }
-        .masthead-logo { align-self: stretch; aspect-ratio: 1 / 1; position: relative; min-height: 0; }
-        .masthead-logo img { position: absolute; top: 50%; left: 50%; height: clamp(64px, 150%, 170px); width: auto; max-width: none; object-fit: contain; transform: translate(-50%, calc(-50% + 6px)); }
+        .masthead { display: grid; grid-template-columns: 90px 1fr 90px; align-items: center; column-gap: 8px; text-align: center; line-height: 1.45; }
+        .masthead-logo { display: flex; align-items: center; min-height: 70px; }
+        .masthead-logo-left { justify-content: flex-start; }
+        .masthead-logo-right { justify-content: flex-end; }
+        .masthead-logo img { height: 74px; width: auto; max-width: 90px; object-fit: contain; }
         .masthead .dept { font-size: 14px; font-weight: bold; }
         .masthead .line { font-weight: bold; text-transform: uppercase; }
         .masthead .school { font-size: 13px; font-weight: bold; text-transform: uppercase; margin-top: 2px; }

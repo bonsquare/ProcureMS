@@ -15,10 +15,9 @@
 
         .paper { width: 100%; margin: 0; padding: 0; background: #fff; }
 
-        /* The logos follow the header: each logo cell is as tall as the header text and square, and the logo is a little taller than the text (64px to 170px). */
-        .masthead { display: grid; grid-template-columns: auto auto auto; justify-content: center; align-items: center; column-gap: 9rem; text-align: center; padding-top: 1rem; margin-bottom: 1.4rem; line-height: 1.45; }
-        .masthead-logo { align-self: stretch; aspect-ratio: 1 / 1; position: relative; min-height: 0; }
-        .masthead-logo img { position: absolute; top: 50%; left: 50%; height: clamp(64px, 150%, 170px); width: auto; max-width: none; object-fit: contain; transform: translate(-50%, calc(-50% + .45rem)); }
+        .masthead { position: relative; text-align: center; min-height: 7.2rem; margin-bottom: 1rem; line-height: 1.45; }
+        .masthead img { position: absolute; top: 0; height: 6rem; width: auto; }
+        .masthead .left { left: 6%; } .masthead .right { right: 6%; }
         .masthead .small, .masthead .region, .masthead .division { font-size: .95rem; }
         .masthead .dept { font-size: 1.4rem; font-weight: bold; margin: .2rem 0 .3rem; line-height: 1.3; }
         .masthead .region { font-weight: bold; }
@@ -83,14 +82,12 @@
 
 <main class="paper" data-official-page data-sheets data-page-footer="Annual Implementation Plan" data-doc="aip" data-paper="longbond" data-orientation="landscape" data-margin="10">
     <header class="masthead">
-        <div class="masthead-logo">@if($leftLogo)<img class="official-logo" src="{{ $leftLogo }}" alt="" onerror="this.remove()">@endif</div>
-        <div class="masthead-text">
-            <div class="small">Republic of the Philippines</div>
-            <div class="dept">Department of Education</div>
-            @if($region)<div class="region">{{ strtoupper($region) }}</div>@endif
-            @if($division)<div class="division">{{ $division }}</div>@endif
-        </div>
-        <div class="masthead-logo">@if($rightLogo)<img class="official-logo" src="{{ $rightLogo }}" alt="" onerror="this.remove()">@endif</div>
+        @if($leftLogo)<img class="left official-logo" src="{{ $leftLogo }}" alt="" onerror="this.remove()">@endif
+        @if($rightLogo)<img class="right official-logo" src="{{ $rightLogo }}" alt="" onerror="this.remove()">@endif
+        <div class="small">Republic of the Philippines</div>
+        <div class="dept">Department of Education</div>
+        @if($region)<div class="region">{{ strtoupper($region) }}</div>@endif
+        @if($division)<div class="division">{{ $division }}</div>@endif
     </header>
 
     <div class="doc-title">
