@@ -141,3 +141,4 @@ Full dated log moved out of CLAUDE.md to keep that file short. Nothing was remov
 - 2026-11-03: Dashboard redesign (finance first, Obligation/Liquidation/Disbursement, Planning and SOB, Procurement divider, live badge and clock, meaning panel), pastel cards system-wide, bigger highlighted tabs, menu order, stylesheet cache version, new login page with copyright notice (docs/specs.md section 118). Not deployed yet.
 - 2026-11-03: Pastel colour rule now also covers metric tiles that are links (Procurement overview) and aside boxes (docs/specs.md section 118). Not deployed yet.
 - 2026-11-03: New ProcMS logo on the menus, login and registration pages and as the tab icon; sidebar logo full width, "Civic Operations" caption removed (docs/specs.md section 118). Not deployed yet.
+- 2026-11-03: Accessibility pass on the login page and dashboard; engineering-standards section added to CLAUDE.md (docs/specs.md section 118). Deploy requested the same day.

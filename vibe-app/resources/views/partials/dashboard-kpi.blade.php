@@ -33,19 +33,19 @@
     $yearProgress = (int) round($today->dayOfYear / $daysInYear * 100);
 @endphp
 <section aria-label="KPI dashboard" class="mb-6">
-    <div class="dash-hero mb-5 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-gradient-to-r from-[#14818f] via-[#1a98a8] to-[#f2b134] px-6 py-5 text-white shadow-md">
+    <div class="dash-hero mb-5 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-gradient-to-r from-[#0f6f7e] via-[#14818f] to-[#f2b134] px-6 py-5 text-white shadow-md">
         <div class="min-w-0">
-            <p class="text-xs font-bold uppercase tracking-[.14em] text-white/80">{{ $isMasterUser ? 'KPI Dashboard' : 'School Dashboard' }} <span class="font-semibold text-white/70">· FY {{ $kpi['year'] }}</span></p>
+            <p class="text-xs font-bold uppercase tracking-[.14em] text-white">{{ $isMasterUser ? 'KPI Dashboard' : 'School Dashboard' }} <span class="font-semibold text-white">· FY {{ $kpi['year'] }}</span></p>
             <h2 class="mt-1 truncate text-2xl font-extrabold tracking-tight text-white">{{ $isMasterUser ? 'All schools' : ($currentSchool?->name ?? 'Your school') }}</h2>
-            @unless($isMasterUser)<p class="mt-1 text-sm text-white/80">Welcome, <strong class="font-extrabold text-white">{{ auth()->user()->name }}</strong>. Your procurement, budget, and liquidation at a glance.</p>
+            @unless($isMasterUser)<p class="mt-1 text-sm text-white">Welcome, <strong class="font-extrabold text-white">{{ auth()->user()->name }}</strong>. Your procurement, budget, and liquidation at a glance.</p>
             @php $mySubscription = auth()->user()->activeSubscription(); @endphp
             @if($mySubscription?->isTrial() && $mySubscription->subscription_end)<a href="{{ route('subscription') }}" class="mt-2 inline-flex items-center gap-1 rounded-full border border-white/30 bg-white/15 px-3 py-1 text-xs font-semibold text-white">Trial · {{ max(0, (int) now()->startOfDay()->diffInDays(\Illuminate\Support\Carbon::parse($mySubscription->subscription_end)->startOfDay(), false)) }} day(s) left</a>@endif
             @endunless
         </div>
-        <div class="flex min-w-[15rem] flex-col gap-2 text-xs">
-            <p class="flex w-fit items-center gap-1.5 self-end rounded-full border border-white/30 bg-white/15 px-3 py-1 font-bold text-white" aria-live="polite"><span class="relative flex h-2 w-2"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300 opacity-70"></span><span class="relative inline-block h-2 w-2 rounded-full bg-emerald-300" data-live-dot></span></span><span data-live-status>Live</span></p>
-            <p class="flex flex-wrap items-center gap-x-2 gap-y-1 font-semibold text-white/90"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">calendar_today</span>{{ $today->format('l, F j, Y') }}<span class="text-white/50" aria-hidden="true">·</span><span class="material-symbols-outlined text-[16px]" aria-hidden="true">schedule</span><strong class="tabular-nums font-extrabold text-white" data-live-clock>{{ $today->format('g:i:s A') }}</strong></p>
-            <div><div class="mb-1 flex justify-between font-semibold text-white/85"><span>Fiscal year {{ $kpi['year'] }}</span><span>Day {{ $today->dayOfYear }} of {{ $daysInYear }} · {{ $yearProgress }}%</span></div><div class="dash-bar h-2 overflow-hidden rounded-full bg-white/25" role="progressbar" aria-valuenow="{{ $yearProgress }}" aria-valuemin="0" aria-valuemax="100"><div class="h-full rounded-full bg-white" style="width:{{ $yearProgress }}%"></div></div></div>
+        <div class="flex min-w-[15rem] flex-col gap-2 rounded-xl bg-[#0a3a47]/65 p-3 text-xs">
+            <p class="flex w-fit items-center gap-1.5 self-end rounded-full border border-white/30 bg-white/15 px-3 py-1 font-bold text-white" aria-live="polite"><span class="relative flex h-2 w-2"><span class="absolute inline-flex h-full w-full animate-ping motion-reduce:animate-none rounded-full bg-emerald-300 opacity-70"></span><span class="relative inline-block h-2 w-2 rounded-full bg-emerald-300" data-live-dot></span></span><span data-live-status>Live</span></p>
+            <p class="flex flex-wrap items-center gap-x-2 gap-y-1 font-semibold text-white"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">calendar_today</span>{{ $today->format('l, F j, Y') }}<span class="text-white/50" aria-hidden="true">·</span><span class="material-symbols-outlined text-[16px]" aria-hidden="true">schedule</span><strong class="tabular-nums font-extrabold text-white" data-live-clock>{{ $today->format('g:i:s A') }}</strong></p>
+            <div><div class="mb-1 flex justify-between font-semibold text-white"><span>Fiscal year {{ $kpi['year'] }}</span><span>Day {{ $today->dayOfYear }} of {{ $daysInYear }} · {{ $yearProgress }}%</span></div><div class="dash-bar h-2 overflow-hidden rounded-full bg-white/30" role="progressbar" aria-label="Fiscal year {{ $kpi['year'] }} progress" aria-valuenow="{{ $yearProgress }}" aria-valuemin="0" aria-valuemax="100"><div class="h-full rounded-full bg-white" style="width:{{ $yearProgress }}%"></div></div></div>
         </div>
         @if($isMasterUser)
             <div class="flex flex-wrap gap-2 text-xs">
@@ -69,13 +69,13 @@
     <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3" aria-label="Obligation, liquidation and disbursement">
         @foreach($stages as [$stageLabel, $stageIcon, $stageColor, $stageHref, $stageValue, $stageNote, $stageShare, $stageHint])
             <div class="relative">
-                <a href="{{ $stageHref }}" class="group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg" style="background:linear-gradient(135deg,{{ ['#e6f3fc', '#e4f6ee', '#eeeafb'][$loop->index] }},#fff 135%);border-color:{{ ['#c3e1f5', '#bfe8d6', '#d6cef3'][$loop->index] }}">
+                <a href="{{ $stageHref }}" class="group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f4c5c]" style="background:linear-gradient(135deg,{{ ['#e6f3fc', '#e4f6ee', '#eeeafb'][$loop->index] }},#fff 135%);border-color:{{ ['#c3e1f5', '#bfe8d6', '#d6cef3'][$loop->index] }}">
                     <span class="absolute inset-x-0 top-0 h-1" style="background:{{ $stageColor }}" aria-hidden="true"></span>
                     <div class="flex items-start justify-between gap-3">
-                        <div class="min-w-0"><p class="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant">{{ $loop->iteration }} · {{ $stageLabel }}</p><p data-countup class="mt-1.5 text-3xl font-extrabold leading-none tracking-tight" style="color:{{ $stageColor }}">{{ $stageValue }}</p><p class="mt-1 text-[11px] text-on-surface-variant">{{ $stageHint }}</p></div>
+                        <div class="min-w-0"><p class="text-xs font-bold uppercase tracking-wide text-on-surface-variant">{{ $loop->iteration }} · {{ $stageLabel }}</p><p data-countup class="mt-1.5 text-3xl font-extrabold leading-none tracking-tight" style="color:{{ $stageColor }}">{{ $stageValue }}</p><p class="mt-1 text-xs text-on-surface-variant">{{ $stageHint }}</p></div>
                         <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl" style="background:{{ $stageColor }}1f;color:{{ $stageColor }}"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">{{ $stageIcon }}</span></span>
                     </div>
-                    @if($stageShare !== null)<div class="dash-bar mt-3 h-1.5 overflow-hidden rounded-full bg-surface-container" role="progressbar" aria-valuenow="{{ $stageShare }}" aria-valuemin="0" aria-valuemax="100"><div class="h-full rounded-full" style="width:{{ $stageShare }}%;background:{{ $stageColor }}"></div></div>@endif
+                    @if($stageShare !== null)<div class="dash-bar mt-3 h-1.5 overflow-hidden rounded-full bg-surface-container" role="progressbar" aria-label="{{ $stageLabel }} share" aria-valuenow="{{ $stageShare }}" aria-valuemin="0" aria-valuemax="100"><div class="h-full rounded-full" style="width:{{ $stageShare }}%;background:{{ $stageColor }}"></div></div>@endif
                     <p class="mt-2 text-xs font-medium text-on-surface-variant">{{ $stageNote }}</p>
                 </a>
                 @unless($loop->last)<span class="absolute -right-3 top-1/2 z-10 hidden h-6 w-6 -translate-y-1/2 place-items-center rounded-full bg-primary text-white shadow md:grid" aria-hidden="true"><span class="material-symbols-outlined text-[16px]">chevron_right</span></span>@endunless
@@ -99,7 +99,7 @@
                     <li class="relative"><a href="{{ route('planning') }}#{{ $stepKey }}" class="flex w-full items-center gap-3 rounded-xl border border-outline-variant/50 bg-white p-3 transition hover:border-primary hover:bg-surface-low/60 hover:shadow-sm">
                         <span class="relative z-10 grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-bold ring-4 ring-white {{ $done ? 'bg-secondary text-white' : ($started ? 'bg-amber-400 text-white' : 'bg-rose-200 text-rose-900') }}">@if($done)<span class="material-symbols-outlined text-[18px]" aria-hidden="true">check</span>@else{{ $loop->iteration }}@endif</span>
                         <span class="min-w-0 flex-1"><span class="block text-sm font-bold text-primary">{{ $step['label'] }}</span><span class="block text-xs text-on-surface-variant">{{ $step['total'] }} {{ $step['unit'] }}{{ $step['total'] === 1 ? '' : 's' }}</span></span>
-                        <span class="shrink-0 rounded-full px-3 py-1 text-[11px] font-bold {{ $chip[0] }}">{{ $chip[1] }}</span>
+                        <span class="shrink-0 rounded-full px-3 py-1 text-xs font-bold {{ $chip[0] }}">{{ $chip[1] }}</span>
                     </a></li>
                 @endforeach
             </ol>
@@ -122,9 +122,9 @@
                     @foreach($sobTiles as [$tileLabel, $tileValue, $tileNote, $tileColor, $tileIcon])
                         <div class="relative overflow-hidden rounded-xl border p-3" style="background:{{ ['#e1f4f5', '#e6f3fc', '#e4f6ee'][$loop->index] }};border-color:{{ ['#b7e0e4', '#c3e1f5', '#bfe8d6'][$loop->index] }}" title="{{ $tileLabel }}: {{ number_format($tileValue, 2) }}">
                             <span class="absolute inset-x-0 top-0 h-1" style="background:{{ $tileColor }}" aria-hidden="true"></span>
-                            <p class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-on-surface-variant"><span class="material-symbols-outlined text-[16px]" style="color:{{ $tileColor }}" aria-hidden="true">{{ $tileIcon }}</span>{{ $tileLabel }}</p>
+                            <p class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-on-surface-variant"><span class="material-symbols-outlined text-[16px]" style="color:{{ $tileColor }}" aria-hidden="true">{{ $tileIcon }}</span>{{ $tileLabel }}</p>
                             <p data-countup class="mt-1.5 text-xl font-extrabold tracking-tight" style="color:{{ $tileColor }}">{{ $money($tileValue) }}</p>
-                            <p class="mt-0.5 text-[11px] text-on-surface-variant">{{ $tileNote }}</p>
+                            <p class="mt-0.5 text-xs text-on-surface-variant">{{ $tileNote }}</p>
                             @if($sobAllocated > 0)<div class="dash-bar mt-2 h-1.5 overflow-hidden rounded-full bg-surface-container"><div class="h-full rounded-full" style="width:{{ min(100, round(($loop->index === 0 ? 100 : ($loop->index === 1 ? $sobObligated : max(0, $sobBalance)) / $sobAllocated * 100))) }}%;background:{{ $tileColor }}"></div></div>@endif
                         </div>
                     @endforeach
@@ -196,6 +196,6 @@
             <div><dt class="font-bold text-primary">Budget funded from the SOB</dt><dd>The approved SOB is the actual budget, shown per source of fund and quarter, with how much is obligated.</dd></div>
             @if($isMasterUser)<div><dt class="font-bold text-primary">School performance</dt><dd>Requests, pending and completed counts and budget use for each school.</dd></div>@endif
         </dl>
-        <p class="mt-3 text-[11px] text-on-surface-variant">Figures are for fiscal year {{ $kpi['year'] }}. Amounts show as ₱K (thousands) or ₱M (millions). The page refreshes by itself when the data changes.</p>
+        <p class="mt-3 text-xs text-on-surface-variant">Figures are for fiscal year {{ $kpi['year'] }}. Amounts show as ₱K (thousands) or ₱M (millions). The page refreshes by itself when the data changes.</p>
     </details>
 </section>

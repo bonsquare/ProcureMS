@@ -258,6 +258,15 @@ The planning, procurement, delivery, accounting, cash, liquidation, report and m
 
 A phase is complete only when its database schema, UI, controller/service logic, permissions, organization isolation, transaction links, validation, tests, and user-facing output are all covered. Do not mark a phase complete because only its page or migration exists.
 
+## Engineering standards
+
+This project follows the Laravel Enterprise Skill Library (installed in `~/.claude/skills`; Laravel 13 / PHP 8.4 here).
+
+- Load `laravel-ai-coding-standards` before any code change; it routes to the other skills.
+- Non-negotiable gates before merge: `laravel-code-quality` and `laravel-security` checklists.
+- Public-facing UI (the login and registration pages and any page a client sees) additionally requires `laravel-ui-accessibility` and `laravel-responsive-design` sign-off.
+- **The owner's rules below win over the skills:** the strict minimal change policy, the protected official documents and cash reports, and the "report, don't redesign" rule. A skill may flag a problem, but it never widens a fix beyond what the owner asked for; list the extra finding and ask first.
+
 ---
 
 # Strict minimal change policy

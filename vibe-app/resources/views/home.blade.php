@@ -19,6 +19,7 @@
 @include('partials.favicon')
 </head>
 <body class="bg-surface font-inter text-on-surface antialiased">
+<a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-primary focus:shadow-lg">Skip to main content</a>
     @php
         $isMasterUser = $isMasterUser ?? auth()->user()?->seesAllSchools();
         $currentSchool = $schools->first();
@@ -74,7 +75,7 @@
             <div class="relative flex items-center gap-4"><button id="open-notifications" type="button" class="relative rounded p-1 text-on-surface-variant hover:bg-primary hover:text-white" aria-label="Notifications"><span class="material-symbols-outlined text-[21px]">notifications</span>@if($pendingProcurements || $totalSchools > $activeSchools || $pendingPreRegistrations->count())<span class="absolute right-0 top-0 h-2 w-2 rounded-full bg-error"></span>@endif</button><button id="open-user-menu" type="button" class="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white hover:bg-primary-container" aria-label="User menu"><span class="material-symbols-outlined text-[18px]">person</span></button><div id="user-menu" class="absolute right-0 top-11 hidden w-52 rounded border border-outline-variant/40 bg-white p-2 text-xs shadow-xl"><div class="border-b border-outline-variant/30 px-3 py-2"><p class="font-semibold">{{ auth()->user()->name }}</p><p class="truncate text-on-surface-variant">{{ auth()->user()->email }}</p></div>@if($isMasterUser)<a href="{{ route('user-management') }}" class="mt-1 flex items-center gap-2 rounded px-3 py-2 hover:bg-surface-low"><span class="material-symbols-outlined text-[17px]">manage_accounts</span>User Management</a>@endif<form method="POST" action="{{ route('logout') }}">@csrf<button class="flex w-full items-center gap-2 rounded px-3 py-2 text-left hover:bg-error/10 hover:text-error"><span class="material-symbols-outlined text-[17px]">logout</span>Sign Out</button></form></div></div>
         </header>
 
-        <main class="min-h-screen bg-surface px-4 pb-16 pt-[4.75rem] md:px-6 lg:px-8"><div class="mx-auto max-w-[1600px]">
+        <main id="main-content" tabindex="-1" class="min-h-screen bg-surface px-4 pb-16 pt-[4.75rem] focus:outline-none md:px-6 lg:px-8"><div class="mx-auto max-w-[1600px]">
             @if($isMasterUser && ($lastBackupFailure ?? null))
             <div class="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-error/30 bg-error/5 px-4 py-3 text-sm text-error" role="alert"><span class="material-symbols-outlined" aria-hidden="true">warning</span><span class="flex-1">The last database backup failed on {{ $lastBackupFailure->created_at->timezone('Asia/Manila')->format('M d, Y g:i A') }}.</span><a href="{{ route('backup.index') }}" class="rounded border border-error/40 px-3 py-1 text-xs font-bold hover:bg-error hover:text-white">Open Backup</a></div>
             @endif
@@ -139,7 +140,16 @@
                             if (response.status === 204) { setLive('Live · checked ' + clock(), true); return; }
                             if (!response.ok) throw new Error('live failed');
                             const data = await response.json();
+                            // keep the keyboard place and the open meaning panel across the redraw
+                            const active = document.activeElement;
+                            const inBody = active && body.contains(active);
+                            const focusKey = inBody ? (active.getAttribute('href') || active.id || '') : '';
+                            const summaryIndex = inBody && active.tagName === 'SUMMARY' ? [...body.querySelectorAll('summary')].indexOf(active) : -1;
+                            const openPanels = [...body.querySelectorAll('details')].map((panel) => panel.open);
                             body.innerHTML = data.html; hash = data.hash; countUp(body);
+                            body.querySelectorAll('details').forEach((panel, index) => { if (openPanels[index]) panel.open = true; });
+                            const back = summaryIndex >= 0 ? body.querySelectorAll('summary')[summaryIndex] : (focusKey ? [...body.querySelectorAll('a[href], button, [id]')].find((el) => (el.getAttribute('href') || el.id) === focusKey) : null);
+                            if (back) back.focus({ preventScroll: true });
                             setLive('Live · updated ' + clock(), true);
                         } catch (error) { setLive('Live updates paused · reconnecting', false); }
                     };
