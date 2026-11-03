@@ -139,3 +139,4 @@ Full dated log moved out of CLAUDE.md to keep that file short. Nothing was remov
 - 2026-11-03: Lively colour theme: blue gradient menu, coral buttons and highlights, soft cards, brighter dashboard cards; official documents untouched (docs/specs.md section 117). Not deployed yet.
 - 2026-11-03: Colour theme changed to teal and gold, uniform buttons and spacing, smaller font for the menu sub-links (docs/specs.md section 117). Not deployed yet.
 - 2026-11-03: Dashboard redesign (finance first, Obligation/Liquidation/Disbursement, Planning and SOB, Procurement divider, live badge and clock, meaning panel), pastel cards system-wide, bigger highlighted tabs, menu order, stylesheet cache version, new login page with copyright notice (docs/specs.md section 118). Not deployed yet.
+- 2026-11-03: Pastel colour rule now also covers metric tiles that are links (Procurement overview) and aside boxes (docs/specs.md section 118). Not deployed yet.
