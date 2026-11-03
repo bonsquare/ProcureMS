@@ -4,7 +4,7 @@
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Liquidation · ProcureMS</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config={theme:{extend:{colors:{surface:'#eef3fd','surface-low':'#e3ebfb','surface-container':'#d8e3fa','surface-high':'#c9d8f5',primary:'#1b4fbf','primary-container':'#2f6fe0','on-surface':'#14213d','on-surface-variant':'#3b4a6b',secondary:'#0fa37f','outline-variant':'#8ea6d0',error:'#e0414f'},fontFamily:{inter:['Inter','sans-serif']}}}};</script>
+    <script>tailwind.config={theme:{extend:{colors:{surface:'#eef7f8','surface-low':'#e0eff1','surface-container':'#d1e7ea','surface-high':'#c1dde1',primary:'#14818f','primary-container':'#1a98a8','on-surface':'#12303a','on-surface-variant':'#3d5560',secondary:'#2aa86b','outline-variant':'#86adb4',error:'#e0414f'},fontFamily:{inter:['Inter','sans-serif']}}}};</script>
     <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet"><link rel="stylesheet" href="{{ asset('css/app.css') }}"><style>html{font-size:14px}</style>
 @include('partials.input-fixes')
 @include('partials.favicon')
@@ -15,7 +15,7 @@
     $statusLabels = ['draft' => 'Draft', 'for_review' => 'For Review', 'pending_documents' => 'Pending Documents', 'approved' => 'Approved', 'returned' => 'Returned'];
     $statusTones = ['draft' => 'on-surface-variant', 'for_review' => 'error', 'pending_documents' => 'primary', 'approved' => 'secondary', 'returned' => 'error'];
 @endphp
-<aside class="fixed inset-y-0 left-0 z-50 hidden w-60 flex-col bg-[#1b4fbf] px-4 py-6 text-white md:flex">@include('partials.brand')<nav class="flex-1 space-y-1" aria-label="Main navigation">
+<aside class="fixed inset-y-0 left-0 z-50 hidden w-60 flex-col bg-[#14818f] px-4 py-6 text-white md:flex">@include('partials.brand')<nav class="flex-1 space-y-1" aria-label="Main navigation">
     @php
         $navigation=[['icon'=>'dashboard','label'=>'Dashboard','route'=>'home'],['icon'=>'shopping_cart','label'=>'Procurement','route'=>'procurement'],['icon'=>'receipt_long','label'=>'Liquidation','route'=>'liquidation','active'=>true],['icon'=>'folder','label'=>'Google Drive','route'=>'google-drive'],['icon'=>'bar_chart','label'=>'Reports','route'=>'reports']]; if (auth()->user()?->hasPermission('planning.view') || auth()->user()?->hasPermission('planning.manage')) { array_splice($navigation, 3, 0, [['icon'=>'account_tree','label'=>'Planning','route'=>'planning']]); }
         if ($isMasterUser) { $navigation[]=['icon'=>'group','label'=>'User Management','route'=>'user-management']; if (auth()->user()->hasAccess('subscriptions')) $navigation[]=['icon'=>'card_membership','label'=>'Subscriptions','route'=>'subscriptions']; if (auth()->user()?->hasAccess('schools')) $navigation[]=['icon'=>'domain','label'=>'School Management','route'=>'school-management']; }

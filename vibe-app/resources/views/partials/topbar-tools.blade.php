@@ -4,11 +4,11 @@
     [data-topbar-tools] { display: flex; flex: none; flex-wrap: nowrap; align-items: center; gap: .125rem; margin-left: auto; padding: .25rem .3rem .25rem .95rem; border-radius: 2rem; white-space: nowrap; background: rgba(255, 255, 255, .66); -webkit-backdrop-filter: blur(14px) saturate(160%); backdrop-filter: blur(14px) saturate(160%); box-shadow: inset 0 0 0 1px rgba(16, 57, 103, .1), 0 1px 2px rgba(16, 57, 103, .06); }
     [data-topbar-parent] { flex-wrap: nowrap !important; min-width: 0; }
     [data-topbar-parent] > :not([data-topbar-tools]) { min-width: 0; }
-    [data-topbar-tools] .tt-clock { text-align: right; padding-right: .6rem; font: 700 13px/1.1 Inter, system-ui, sans-serif; letter-spacing: -.01em; color: #1b4fbf; font-variant-numeric: tabular-nums; }
+    [data-topbar-tools] .tt-clock { text-align: right; padding-right: .6rem; font: 700 13px/1.1 Inter, system-ui, sans-serif; letter-spacing: -.01em; color: #14818f; font-variant-numeric: tabular-nums; }
     [data-topbar-tools] .tt-clock small { display: block; margin-top: 1px; font-weight: 500; font-size: 10.5px; letter-spacing: 0; color: #536273; }
     [data-topbar-tools] .tt-sep { align-self: center; width: 1px; height: 1.5rem; margin-right: .2rem; background: rgba(16, 57, 103, .14); }
     [data-topbar-tools] .tt-bell { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem; padding: 0; border-radius: 50%; border: 0; background: transparent; color: #3b4d61; cursor: pointer; transition: background-color 160ms ease, color 160ms ease, transform 140ms cubic-bezier(.2, .8, .2, 1); }
-    [data-topbar-tools] .tt-bell:hover { background: #1b4fbf; color: #fff; }
+    [data-topbar-tools] .tt-bell:hover { background: #14818f; color: #fff; }
     [data-topbar-tools] .tt-bell:active { transform: scale(.94); }
     [data-topbar-tools] .tt-badge { position: absolute; top: 1px; right: 1px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: #ba1a1a; color: #fff; font: 700 10px/16px Inter, system-ui, sans-serif; text-align: center; box-shadow: 0 0 0 2px #fff; }
     [data-topbar-tools] .tt-panel { position: absolute; right: -2.9rem; top: calc(100% + .6rem); z-index: 120; width: min(22rem, calc(100vw - 1.5rem)); max-height: 70vh; overflow-y: auto; border-radius: 1rem; border: 1px solid rgba(16, 57, 103, .12); background: rgba(255, 255, 255, .96); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); box-shadow: 0 24px 56px -14px rgba(16, 57, 103, .45); transform-origin: top right; animation: tt-pop 220ms cubic-bezier(.2, .9, .25, 1.04); }
@@ -21,7 +21,7 @@
     [data-topbar-tools] .tt-item span { display: block; margin-top: 2px; font: 400 12px/1.35 Inter, system-ui, sans-serif; color: #536273; }
     [data-topbar-tools] .tt-item[data-level="warn"] { border-left: 3px solid #d97706; }
     [data-topbar-tools] .tt-item[data-level="error"] { border-left: 3px solid #ba1a1a; }
-    [data-topbar-tools] .tt-item[data-level="info"] { border-left: 3px solid #2f6fe0; }
+    [data-topbar-tools] .tt-item[data-level="info"] { border-left: 3px solid #1a98a8; }
     [data-topbar-tools] .tt-empty { padding: 1.25rem 1rem; text-align: center; font: 400 13px Inter, system-ui, sans-serif; color: #536273; }
     /* The profile icon inside the capsule keeps its own size and its menu opens under it. */
     [data-topbar-tools] > :last-child { flex: none; }

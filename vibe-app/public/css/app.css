@@ -19,16 +19,31 @@ aside.fixed.inset-y-0 > nav a, aside.fixed.inset-y-0 > nav summary { min-height:
 aside.fixed.inset-y-0 > nav a:hover, aside.fixed.inset-y-0 > nav summary:hover { background: #ffffff12 !important; color: #fff; }
 aside.fixed.inset-y-0 > nav a.bg-primary-container { background: #ffffff18 !important; color: #fff; font-weight: 700; box-shadow: inset 3px 0 0 #55c79e; }
 
-/* Lively theme (owner's decision 2026-11-03): a bright blue menu, warm coral buttons and highlights, soft cards.
+/* Lively theme, teal and gold (owner's decision 2026-11-03): a teal menu, teal buttons, gold highlights, soft cards.
    The official documents and their print layouts are not touched. */
-aside.fixed.inset-y-0 { background: linear-gradient(185deg, #0b2f7a 0%, #1646b3 55%, #1f66e0 100%) !important; box-shadow: 4px 0 24px -8px rgba(15, 63, 153, .45); }
-aside.fixed.inset-y-0 > nav a.bg-primary-container { background: #ffffff26 !important; box-shadow: inset 4px 0 0 #ff8a5c; }
+aside.fixed.inset-y-0 { background: linear-gradient(185deg, #0a3a47 0%, #0f4c5c 50%, #17808f 100%) !important; box-shadow: 4px 0 24px -8px rgba(10, 58, 71, .5); }
+aside.fixed.inset-y-0 > nav a.bg-primary-container { background: #ffffff26 !important; box-shadow: inset 4px 0 0 #f2b134; }
 aside.fixed.inset-y-0 > nav a:hover, aside.fixed.inset-y-0 > nav summary:hover { background: #ffffff1f !important; }
-header.fixed { background: linear-gradient(90deg, rgba(255, 255, 255, .92), rgba(228, 238, 255, .92)) !important; box-shadow: 0 2px 0 0 rgba(255, 122, 77, .55), 0 8px 24px -16px rgba(27, 79, 191, .5); }
-button.bg-primary, a.bg-primary, input[type="submit"].bg-primary { background-image: linear-gradient(135deg, #ff7a4d, #e8553a); background-color: #ee6a42; box-shadow: 0 4px 12px -4px rgba(232, 85, 58, .55); transition: filter .15s ease, transform .15s ease, box-shadow .15s ease; }
-button.bg-primary:hover, a.bg-primary:hover, input[type="submit"].bg-primary:hover { background-image: linear-gradient(135deg, #ff8a5c, #f0603f); filter: brightness(1.04); box-shadow: 0 6px 16px -4px rgba(232, 85, 58, .65); }
+header.fixed { background: linear-gradient(90deg, rgba(255, 255, 255, .94), rgba(224, 241, 243, .94)) !important; box-shadow: 0 2px 0 0 rgba(242, 177, 52, .7), 0 8px 24px -16px rgba(15, 76, 92, .5); }
+button.bg-primary, a.bg-primary, input[type="submit"].bg-primary { background-image: linear-gradient(135deg, #1a98a8, #12727f); background-color: #14818f; box-shadow: 0 4px 12px -4px rgba(15, 76, 92, .5); transition: filter .15s ease, transform .15s ease, box-shadow .15s ease; }
+button.bg-primary:hover, a.bg-primary:hover, input[type="submit"].bg-primary:hover { background-image: linear-gradient(135deg, #21a9ba, #14818f); filter: brightness(1.03); box-shadow: 0 6px 16px -4px rgba(15, 76, 92, .6); }
 button.bg-primary:active, a.bg-primary:active { transform: translateY(1px); }
-button.bg-primary:disabled { background-image: none; background-color: #a9b6d3; box-shadow: none; filter: none; }
-main section.bg-white.border, main article.bg-white.border, main form.bg-white.border { border-radius: .9rem; border-color: rgba(142, 166, 208, .45); box-shadow: 0 8px 24px -14px rgba(27, 79, 191, .35); }
-main thead { background-image: linear-gradient(180deg, #eaf1ff, #dfe9fb); }
-main h1 { color: #12327f; }
+button.bg-primary:disabled { background-image: none; background-color: #a3bcc1; box-shadow: none; filter: none; }
+main section.bg-white.border, main article.bg-white.border, main form.bg-white.border { border-radius: .9rem; border-color: rgba(134, 173, 180, .45); border-top: 3px solid #f2b134; box-shadow: 0 8px 24px -14px rgba(15, 76, 92, .35); }
+main thead { background-image: linear-gradient(180deg, #e8f4f5, #daecee); }
+main h1 { color: #0f4c5c; }
+
+/* Buttons: one size, one shape and one gap on every page (owner's decision 2026-11-03).
+   A button in the page or a window is 40px high; a button inside a table row is the compact 32px; icon-only buttons keep their own square size. */
+main :is(button, a)[class*="px-"][class*="py-"][class*="rounded"]:not(td *, th *, [class*="w-8"], [class*="h-8"], [class*="w-9"], [class*="h-9"], [class*="rounded-full"]) { display: inline-flex; align-items: center; justify-content: center; gap: .45rem; min-height: 2.5rem; padding: .5rem 1.1rem; border-radius: .65rem; font-size: .8125rem; line-height: 1.2; font-weight: 600; text-align: center; }
+main td :is(button, a)[class*="px-"][class*="py-"][class*="rounded"]:not([class*="w-8"], [class*="h-8"], [class*="rounded-full"]) { display: inline-flex; align-items: center; justify-content: center; gap: .35rem; min-height: 2rem; padding: .3rem .8rem; border-radius: .55rem; font-size: .75rem; line-height: 1.2; font-weight: 600; }
+main :is(button, a) > .material-symbols-outlined { font-size: 18px; }
+main td :is(button, a) > .material-symbols-outlined { font-size: 16px; }
+/* The space between buttons that sit side by side. */
+main .flex:has(> :is(button, a)[class*="px-"][class*="py-"] + :is(button, a)[class*="px-"][class*="py-"]) { gap: .5rem; }
+main .flex:has(> :is(button, a)[class*="px-"][class*="py-"] + :is(button, a)[class*="px-"][class*="py-"]) > :is(button, a) { margin: 0; }
+
+/* Menu: the links inside a group (for example under Finance) are smaller than the main items. */
+aside.fixed.inset-y-0 > nav details a { font-size: .78rem; font-weight: 500; min-height: 40px; color: #ffffffb8; }
+aside.fixed.inset-y-0 > nav details a .material-symbols-outlined { font-size: 17px; }
+aside.fixed.inset-y-0 > nav details a.bg-primary-container { color: #fff; font-weight: 600; }

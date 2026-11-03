@@ -82,7 +82,7 @@
             <style>
                 #planning-stepper [data-overview][hidden]{display:none}
                 /* The step whose page is open is solid navy, so it cannot be mistaken for the others. */
-                #planning-stepper [aria-pressed="true"]{background:#1b4fbf;border-color:#1b4fbf;border-style:solid;box-shadow:0 4px 12px rgba(16,57,103,.35)}
+                #planning-stepper [aria-pressed="true"]{background:#14818f;border-color:#14818f;border-style:solid;box-shadow:0 4px 12px rgba(16,57,103,.35)}
                 #planning-stepper [aria-pressed="true"] .text-primary,#planning-stepper [aria-pressed="true"] .text-on-surface-variant:not(.material-symbols-outlined),#planning-stepper [aria-pressed="true"] .text-sm{color:#fff}
                 #planning-stepper [aria-pressed="true"] .text-on-surface-variant{color:rgba(255,255,255,.78)}
                 #planning-stepper [aria-pressed="true"] .rounded-full:not(.h-8){background:#fff}

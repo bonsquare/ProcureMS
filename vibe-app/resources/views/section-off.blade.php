@@ -9,8 +9,8 @@
         body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #fff; color: #172538; font-family: Inter, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif; }
         main { width: 100%; padding: 16px; box-sizing: border-box; text-align: center; }
         img { display: block; width: 100%; max-width: 960px; height: auto; margin: 0 auto; }
-        .tab { margin: 8px 0 0; font-size: 0.95rem; font-weight: 600; color: #1b4fbf; }
-        .back { display: inline-block; margin-top: 12px; padding: 10px 22px; border-radius: 10px; background: #1b4fbf; color: #fff; font-size: 0.875rem; font-weight: 700; text-decoration: none; }
+        .tab { margin: 8px 0 0; font-size: 0.95rem; font-weight: 600; color: #14818f; }
+        .back { display: inline-block; margin-top: 12px; padding: 10px 22px; border-radius: 10px; background: #14818f; color: #fff; font-size: 0.875rem; font-weight: 700; text-decoration: none; }
         .back:hover { opacity: .9; }
         .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
     </style>

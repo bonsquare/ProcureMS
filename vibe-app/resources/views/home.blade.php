@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { theme: { extend: {
-            colors: { surface: '#f5f8fb', 'surface-low': '#eef3f7', 'surface-container': '#e4ebf1', 'surface-high': '#d8e2ea', 'surface-highest': '#d8e2ea', primary: '#1b4fbf', 'primary-container': '#2f6fe0', 'on-surface': '#172538', 'on-surface-variant': '#536273', secondary: '#369878', outline: '#7a8794', 'outline-variant': '#cbd7e1', error: '#b64a50' },
+            colors: { surface: '#f5f8fb', 'surface-low': '#eef3f7', 'surface-container': '#e4ebf1', 'surface-high': '#d8e2ea', 'surface-highest': '#d8e2ea', primary: '#14818f', 'primary-container': '#1a98a8', 'on-surface': '#172538', 'on-surface-variant': '#536273', secondary: '#369878', outline: '#7a8794', 'outline-variant': '#cbd7e1', error: '#b64a50' },
             fontFamily: { inter: ['Inter', 'sans-serif'] }
         } } };
     </script>
@@ -24,7 +24,7 @@
         $currentSchool = $schools->first();
         $pendingPreRegistrations = $pendingPreRegistrations ?? collect();
     @endphp
-    <aside id="dashboard-sidebar" class="fixed inset-y-0 left-0 z-50 hidden w-60 flex-col bg-[#1b4fbf] px-4 py-6 text-white md:flex">
+    <aside id="dashboard-sidebar" class="fixed inset-y-0 left-0 z-50 hidden w-60 flex-col bg-[#14818f] px-4 py-6 text-white md:flex">
         @include('partials.brand')
         <nav class="flex-1 space-y-1" aria-label="Main navigation">
             @php
@@ -113,14 +113,14 @@
             <div class="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 {{ $isMasterUser ? 'xl:grid-cols-5' : 'xl:grid-cols-4' }}">
                 @foreach ($metrics as $metric)
                     @php
-                        [$accent, $soft] = match ($metric['tone']) { 'secondary' => ['#2a7f64', '#ddf0e8'], 'error' => ['#b64a50', '#f8e2e4'], default => ['#1b4fbf', '#e7eef4'] };
+                        [$accent, $soft] = match ($metric['tone']) { 'secondary' => ['#2a7f64', '#ddf0e8'], 'error' => ['#b64a50', '#f8e2e4'], default => ['#14818f', '#e7eef4'] };
                     @endphp
                     <article data-dashboard-card="{{ $metric['target'] }}" class="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-outline-variant/50 bg-white p-4 pl-5">
                         <span class="absolute inset-y-0 left-0 w-1" style="background:{{ $accent }}" aria-hidden="true"></span>
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <p class="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant">{{ $metric['label'] }}</p>
-                                <p class="mt-1.5 text-3xl font-bold leading-none tabular-nums" style="color:{{ $metric['tone'] === 'error' ? $accent : '#1b4fbf' }}">{{ $metric['value'] }}</p>
+                                <p class="mt-1.5 text-3xl font-bold leading-none tabular-nums" style="color:{{ $metric['tone'] === 'error' ? $accent : '#14818f' }}">{{ $metric['value'] }}</p>
                             </div>
                             <span class="grid h-10 w-10 shrink-0 place-items-center rounded-lg" style="background:{{ $soft }};color:{{ $accent }}"><span class="material-symbols-outlined text-[21px]" aria-hidden="true">{{ $metric['icon'] }}</span></span>
                         </div>
@@ -148,9 +148,9 @@
                 </div>
                 <div class="border-t border-outline-variant/40 p-5">
                     <p class="text-xs font-bold uppercase tracking-wide text-on-surface-variant">100% of the income is divided</p>
-                    <div class="mt-3 flex h-3 overflow-hidden rounded-full bg-surface-container" role="img" aria-label="30% System Subscription, 20% Allowance, Maintenance and Operating Expense, 50% Net Income"><span class="h-full bg-[#2f6fe0]" style="width:30%"></span><span class="h-full bg-[#d97706]" style="width:20%"></span><span class="h-full bg-[#2a7f64]" style="width:50%"></span></div>
+                    <div class="mt-3 flex h-3 overflow-hidden rounded-full bg-surface-container" role="img" aria-label="30% System Subscription, 20% Allowance, Maintenance and Operating Expense, 50% Net Income"><span class="h-full bg-[#1a98a8]" style="width:30%"></span><span class="h-full bg-[#d97706]" style="width:20%"></span><span class="h-full bg-[#2a7f64]" style="width:50%"></span></div>
                     <dl class="mt-4 grid gap-3 sm:grid-cols-3">
-                        <div class="flex items-start gap-2"><span class="mt-1 h-3 w-3 shrink-0 rounded-full bg-[#2f6fe0]"></span><div><dt class="text-xs text-on-surface-variant">30% · System Subscription</dt><dd class="text-lg font-semibold tabular-nums">{{ $incomePeso($income['system_subscription']) }}</dd></div></div>
+                        <div class="flex items-start gap-2"><span class="mt-1 h-3 w-3 shrink-0 rounded-full bg-[#1a98a8]"></span><div><dt class="text-xs text-on-surface-variant">30% · System Subscription</dt><dd class="text-lg font-semibold tabular-nums">{{ $incomePeso($income['system_subscription']) }}</dd></div></div>
                         <div class="flex items-start gap-2"><span class="mt-1 h-3 w-3 shrink-0 rounded-full bg-[#d97706]"></span><div><dt class="text-xs text-on-surface-variant">20% · Allowance, Maintenance and Operating Expense</dt><dd class="text-lg font-semibold tabular-nums">{{ $incomePeso($income['operating']) }}</dd></div></div>
                         <div class="flex items-start gap-2"><span class="mt-1 h-3 w-3 shrink-0 rounded-full bg-[#2a7f64]"></span><div><dt class="text-xs text-on-surface-variant">50% · Net Income</dt><dd class="text-lg font-semibold tabular-nums">{{ $incomePeso($income['net']) }}</dd></div></div>
                     </dl>

@@ -1397,3 +1397,6 @@ Every kept alphalist (section 93) keeps each list's total and the tax of every D
 
 - The system colours are a bright blue menu (gradient) with warm coral buttons and highlights, a soft light-blue page background, brighter success and error colours, rounded cards with a soft shadow, and brighter dashboard cards. The colours are set in the Tailwind configuration of each page and in the Lively theme section at the end of `public/css/app.css`; the procurement pages follow through `public/css/procurement.css`.
 - The official documents and their print layouts are not changed (docs/specs.md section 55).
+- **Palette changed to teal and gold (owner's choice 2026-11-03, replacing the coral first version):** a teal menu gradient with a gold bar on the active item, teal buttons and tabs, a gold line under the top bar and on top of each card, a light teal page background, and dashboard cards in sky, mint, gold and rose. Success stays green, waiting amber and problems red.
+- **Buttons are uniform:** a button in a page or window is 40px high with the same padding, corners and label size; a button inside a table row is the compact 32px; icon-only square buttons keep their size; buttons side by side are 0.5rem apart.
+- **Menu groups:** the links inside a group (for example under Finance) use a smaller font than the main items.

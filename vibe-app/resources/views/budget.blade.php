@@ -4,7 +4,7 @@
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Budget · ProcureMS</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config={theme:{extend:{colors:{surface:'#eef3fd','surface-low':'#e3ebfb','surface-container':'#d8e3fa','surface-high':'#c9d8f5',primary:'#1b4fbf','primary-container':'#2f6fe0','on-surface':'#14213d','on-surface-variant':'#3b4a6b',secondary:'#0fa37f','outline-variant':'#8ea6d0',error:'#e0414f'},fontFamily:{inter:['Inter','sans-serif']}}}};</script>
+    <script>tailwind.config={theme:{extend:{colors:{surface:'#eef7f8','surface-low':'#e0eff1','surface-container':'#d1e7ea','surface-high':'#c1dde1',primary:'#14818f','primary-container':'#1a98a8','on-surface':'#12303a','on-surface-variant':'#3d5560',secondary:'#2aa86b','outline-variant':'#86adb4',error:'#e0414f'},fontFamily:{inter:['Inter','sans-serif']}}}};</script>
     <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet"><link rel="stylesheet" href="{{ asset('css/app.css') }}"><style>html{font-size:14px}</style>
 @include('partials.input-fixes')
 @include('partials.favicon')
@@ -18,7 +18,7 @@
     $peso = fn ($v) => '₱' . number_format((float) $v, 2);
     $inputClass = 'mt-1 w-full rounded border border-outline-variant/50 bg-white px-3 py-2.5 text-sm outline-none focus:border-primary';
 @endphp
-<aside class="fixed inset-y-0 left-0 z-50 hidden w-60 flex-col bg-[#1b4fbf] px-4 py-6 text-white md:flex">@include('partials.brand')<nav class="flex-1 space-y-1" aria-label="Main navigation">
+<aside class="fixed inset-y-0 left-0 z-50 hidden w-60 flex-col bg-[#14818f] px-4 py-6 text-white md:flex">@include('partials.brand')<nav class="flex-1 space-y-1" aria-label="Main navigation">
     @foreach($navigation as $item)<a href="{{ route($item['route']) }}" class="flex min-h-11 items-center rounded-[.55rem] px-3 py-2.5 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white"><span class="material-symbols-outlined mr-3 text-[20px]">{{ $item['icon'] }}</span>{{ $item['label'] }}</a> @if($item['label']==='Dashboard')<details class="group" open><summary class="flex min-h-11 cursor-pointer list-none items-center rounded-[.55rem] px-3 py-2.5 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white"><span class="material-symbols-outlined mr-3 text-[20px]">account_balance_wallet</span><span class="flex-1">Finance</span><span class="material-symbols-outlined text-[18px] transition-transform group-open:rotate-180">expand_more</span></summary><div class="mt-1 space-y-1"><a href="{{ route('budget') }}" class="ml-8 flex items-center rounded bg-primary-container px-3 py-2 text-sm font-semibold text-white"><span class="material-symbols-outlined mr-2 text-[17px]">account_balance</span>Budget</a><a href="{{ route('accounting') }}" class="ml-8 flex items-center rounded-[.55rem] px-3 py-2 text-sm font-medium text-white/75 hover:bg-white/10 hover:text-white"><span class="material-symbols-outlined mr-2 text-[17px]">request_quote</span>Accounting</a><a href="{{ route('chart-of-accounts') }}" class="ml-8 flex items-center rounded-[.55rem] px-3 py-2 text-sm font-medium text-white/75 hover:bg-white/10 hover:text-white"><span class="material-symbols-outlined mr-2 text-[17px]">list_alt</span>Chart of Accounts</a><a href="{{ route('financial-reports') }}" class="ml-8 flex items-center rounded-[.55rem] px-3 py-2 text-sm font-medium text-white/75 hover:bg-white/10 hover:text-white"><span class="material-symbols-outlined mr-2 text-[17px]">assessment</span>Financial Reports</a><a href="{{ route('allotment-registry') }}" class="ml-8 flex items-center rounded-[.55rem] px-3 py-2 text-sm font-medium text-white/75 hover:bg-white/10 hover:text-white"><span class="material-symbols-outlined mr-2 text-[17px]">menu_book</span>Allotment Registry</a><a href="{{ route('cash') }}" class="ml-8 flex items-center rounded-[.55rem] px-3 py-2 text-sm font-medium text-white/75 hover:bg-white/10 hover:text-white"><span class="material-symbols-outlined mr-2 text-[17px]">payments</span>Cash</a></div></details>@endif @endforeach
 </nav><div class="border-t border-white/15 px-2 pt-4 text-[11px] leading-5 text-white/55"><p>Multi-School Procurement System</p><p>Secure operational workspace</p></div></aside>
 
@@ -146,7 +146,7 @@
 <style>
     #ors-split{display:flex;flex-direction:row-reverse;min-height:0;flex:1}
     #ors-preview-pane{display:flex;min-width:0;flex:1 1 52%;flex-direction:column;background:#d9dee5;border-left:1px solid #cbd7e1}
-    #ors-preview-bar{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:#fff;border-bottom:1px solid #cbd7e1;font-size:12px;font-weight:700;color:#1b4fbf}
+    #ors-preview-bar{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:#fff;border-bottom:1px solid #cbd7e1;font-size:12px;font-weight:700;color:#14818f}
     #ors-preview-bar small{font-weight:400;color:#536273}
     #ors-preview-frame{width:100%;flex:1;min-height:60vh;border:0;background:#d9dee5}
     #ors-form-pane{flex:1 1 48%;min-width:0;overflow-y:auto;max-height:calc(94vh - 4.5rem)}
@@ -339,7 +339,7 @@
     dialog[data-ors-edit]{padding:0}
     .ors-edit-body{display:flex;flex-direction:row-reverse;min-height:0;flex:1;overflow:hidden}
     .ors-edit-preview{display:flex;min-width:0;flex:1 1 52%;flex-direction:column;background:#d9dee5;border-left:1px solid #cbd7e1}
-    .ors-edit-bar{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:#fff;border-bottom:1px solid #cbd7e1;font-size:12px;font-weight:700;color:#1b4fbf}
+    .ors-edit-bar{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:#fff;border-bottom:1px solid #cbd7e1;font-size:12px;font-weight:700;color:#14818f}
     .ors-edit-bar small{font-weight:400;color:#536273}
     .ors-edit-preview iframe{width:100%;flex:1;min-height:60vh;border:0;background:#d9dee5}
     .ors-edit-pane{flex:1 1 48%;min-width:0;overflow-y:auto;max-height:calc(94vh - 4.5rem)}
