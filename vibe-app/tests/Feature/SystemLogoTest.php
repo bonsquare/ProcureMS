@@ -6,64 +6,60 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-/** The ProcureMS logo: the full logo on light pages, the round emblem on navy ones and as the browser-tab icon everywhere. */
+/** The ProcMS logo (owner's new logo 2026-11-03): the full logo on a white plate on the menus, the login page and the registration page, and the emblem as the browser-tab icon everywhere. */
 class SystemLogoTest extends TestCase
 {
     use RefreshDatabase;
 
     private const SIDEBAR_PAGES = ['home', 'budget', 'liquidation', 'accounting', 'reports', 'subscriptions', 'user-management', 'google-drive', 'drive-files.index', 'backup.index', 'procurement'];
 
-    private const EMBLEM = 'images/procurems-emblem.svg';
+    private const EMBLEM = 'images/procurems-emblem.png';
 
-    private const LOGO = 'images/procurems-logo.svg';
+    private const LOGO = 'images/procurems-logo.png';
 
     /** Big enough that the emblem's roof, document and check mark can be made out on a sidebar (3.5rem, 56px). */
     private const EMBLEM_SIZE = 'style="width:3.5rem;height:3.5rem"';
 
-    public function test_the_emblem_file_is_a_clean_transparent_svg_cut_from_the_logo(): void
+    public function test_the_emblem_and_logo_files_are_transparent_pngs_of_the_new_brand(): void
     {
-        $emblem = file_get_contents(public_path(self::EMBLEM));
-        $logo = file_get_contents(public_path(self::LOGO));
+        [$emblemWidth, $emblemHeight, $type] = getimagesize(public_path(self::EMBLEM));
+        $this->assertSame(IMAGETYPE_PNG, $type);
+        $this->assertSame($emblemWidth, $emblemHeight, 'the emblem is square');
 
-        $this->assertStringContainsString('viewBox="21 20 210 210"', $emblem);
-        $this->assertStringNotContainsString('<text', $emblem, 'the wordmark stays out of the emblem');
-        $this->assertStringNotContainsString('<script', $emblem);
-        $this->assertStringNotContainsString('fill="#ffffff"/>', explode('<circle', $emblem)[0], 'no white background plate');
-        // Cut from the logo, not redrawn: the emblem's circle and check mark are the logo's own paths.
-        foreach (['<circle cx="126" cy="125" r="105" fill="#00236f"/>', '<path d="m149 165 7 7 15-17"'] as $piece) {
-            $this->assertStringContainsString($piece, $logo);
-            $this->assertStringContainsString($piece, $emblem);
-        }
+        [$logoWidth, $logoHeight, $logoType] = getimagesize(public_path(self::LOGO));
+        $this->assertSame(IMAGETYPE_PNG, $logoType);
+        $this->assertGreaterThan($logoHeight * 2, $logoWidth, 'the full logo is wide: emblem, name and tagline');
+
+        // Colour type 6 in the PNG header is RGBA: the picture has a transparent background, no plate.
+        $this->assertSame(6, ord(file_get_contents(public_path(self::EMBLEM))[25]));
+        $this->assertSame(6, ord(file_get_contents(public_path(self::LOGO))[25]));
     }
 
-    /** The sign-in page was redesigned (specs section 36): the brand panel and the phone header carry the round emblem with the ProcureMS name, not the full logo. */
-    public function test_the_login_page_shows_the_emblem_with_the_system_name(): void
+    /** The sign-in page was redesigned (specs section 36): the brand panel and the phone header carry the full ProcMS logo on a white plate. */
+    public function test_the_login_page_shows_the_full_logo(): void
     {
         $html = $this->get(route('login'))->assertOk()->getContent();
 
-        $this->assertStringContainsString(self::EMBLEM, $html);
-        $this->assertStringContainsString('ProcureMS', $html);
-        $this->assertStringNotContainsString(self::LOGO, $html);
+        $this->assertStringContainsString('images/procurems-logo-light.png', $html);
+        $this->assertStringContainsString('ProcMS - Plan. Procure. Finance. Report.', $html);
     }
 
-    public function test_the_register_page_shows_the_emblem_with_its_text(): void
+    public function test_the_register_page_shows_the_full_logo_with_its_text(): void
     {
         $this->get(route('register'))->assertOk()
-            ->assertSee(self::EMBLEM, false)->assertSee(self::EMBLEM_SIZE, false)->assertSee('ProcureMS')->assertSee('School Pre-registration');
+            ->assertSee('images/procurems-logo-light.png', false)->assertSee('ProcMS - Plan. Procure. Finance. Report.', false)->assertSee('School Pre-registration');
     }
 
-    public function test_every_sidebar_page_shows_the_emblem_and_keeps_the_brand_text(): void
+    public function test_every_sidebar_page_shows_the_full_logo_and_keeps_the_brand_text(): void
     {
         $master = User::factory()->create(['role' => 'master_user']);
 
         foreach (self::SIDEBAR_PAGES as $page) {
             $html = $this->actingAs($master)->get(route($page))->assertOk()->getContent();
 
-            $this->assertStringContainsString(self::EMBLEM, $html, $page);
-            $this->assertStringContainsString('ProcureMS', $html, $page);
-            $this->assertStringContainsString('Civic Operations', $html, $page);
-            $this->assertStringContainsString(self::EMBLEM_SIZE, $html, $page.' emblem is too small to read');
-            $this->assertStringNotContainsString('account_balance</span></div><div><p class="text-lg', $html, $page.' still has the old icon chip');
+            $this->assertStringContainsString('images/procurems-logo-light.png', $html, $page);
+            $this->assertStringContainsString('ProcMS - Plan. Procure. Finance. Report.', $html, $page);
+            $this->assertStringNotContainsString('text-white/60">Civic Operations', $html, $page.' still has the caption under the logo');
         }
     }
 

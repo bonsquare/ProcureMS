@@ -21,7 +21,7 @@ class SidebarStyleTest extends TestCase
         $master = User::factory()->create(['role' => 'master_user']);
 
         foreach (self::PAGES as $page) {
-            $response = $this->actingAs($master)->get(route($page))->assertOk()->assertSee('Civic Operations')->assertDontSee('All systems operational');
+            $response = $this->actingAs($master)->get(route($page))->assertOk()->assertSee('images/procurems-logo-light.png', false)->assertDontSee('All systems operational');
             if (in_array($page, self::PAGES_WITH_FOOTER, true)) {
                 $response->assertSee('Secure operational workspace');
             }

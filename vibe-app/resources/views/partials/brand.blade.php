@@ -1,9 +1,9 @@
-{{-- The ProcureMS brand (docs: the logo in public/images). $style: 'sidebar' (default, navy sidebars), 'register' (navy panel) or 'login' (light card, full logo). --}}
+{{-- The ProcMS brand: the owner's logo (public/images/procurems-logo.png). On the dark menus and panels the lettering is white (procurems-logo-light.png, the same logo with the dark lettering made light); no box around it. $style: 'sidebar' (default), 'register' (pre-registration panel) or 'login' (light card, the original colours). --}}
 @php($style = $style ?? 'sidebar')
 @if($style === 'login')
-    <div class="mb-8 flex justify-center"><img src="{{ asset('images/procurems-logo.svg') }}" alt="ProcureMS - School Procurement &amp; Liquidation" class="h-32 w-auto sm:h-40"></div>
+    <div class="mb-8 flex justify-center"><img src="{{ asset('images/procurems-logo.png') }}" alt="ProcMS - Plan. Procure. Finance. Report." class="h-24 w-auto sm:h-28"></div>
 @elseif($style === 'register')
-    <div class="relative flex items-center gap-3"><img src="{{ asset('images/procurems-emblem.svg') }}" alt="" class="shrink-0" style="width:3.5rem;height:3.5rem"><div><p class="text-xl font-bold leading-tight">ProcureMS</p><p class="text-xs text-white/70">School Pre-registration</p></div></div>
+    <div class="relative"><img src="{{ asset('images/procurems-logo-light.png') }}" alt="ProcMS - Plan. Procure. Finance. Report." class="h-16 w-auto"><p class="mt-2 text-xs text-white/70">School Pre-registration</p></div>
 @else
-    <div class="mb-8 flex items-center gap-3 px-2"><img src="{{ asset('images/procurems-emblem.svg') }}" alt="" class="shrink-0" style="width:3.5rem;height:3.5rem"><div><p class="text-lg font-bold tracking-tight">ProcureMS</p><p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/55">Civic Operations</p></div></div>
+    <div class="-mx-3 mb-6"><img src="{{ asset('images/procurems-logo-light.png') }}" alt="ProcMS - Plan. Procure. Finance. Report." class="h-auto w-full"></div>
 @endif

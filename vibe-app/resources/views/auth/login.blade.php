@@ -23,8 +23,7 @@
     {{-- Brand panel: shown from large screens up --}}
     <aside class="relative hidden overflow-hidden px-10 py-10 text-white lg:flex xl:px-12 lg:flex-col lg:justify-between">
         <div class="relative flex items-center gap-4">
-            <img src="{{ asset('images/procurems-emblem.svg') }}" alt="" class="h-14 w-14 shrink-0">
-            <div><p class="text-2xl font-bold leading-tight tracking-tight">Procure<span class="text-[#f2b134]">MS</span></p><p class="text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-white/60">School Procurement &amp; Liquidation</p></div>
+            <img src="{{ asset('images/procurems-logo-light.png') }}" alt="ProcMS - Plan. Procure. Finance. Report." class="h-32 w-auto">
         </div>
         <div class="relative max-w-xl">
             <h2 class="text-[2.125rem] font-semibold leading-[1.15] tracking-tight xl:text-[2.5rem]">One workspace, from the plan to the payment.</h2>
@@ -46,7 +45,7 @@
     {{-- Sign in --}}
     <main class="flex items-center justify-center px-4 py-8 sm:px-8">
         <div class="w-full max-w-md">
-            <div class="mb-8 flex items-center justify-center gap-3 lg:hidden"><img src="{{ asset('images/procurems-emblem.svg') }}" alt="" class="h-12 w-12 shrink-0"><div><p class="text-xl font-bold leading-tight tracking-tight text-white">Procure<span class="text-[#f2b134]">MS</span></p><p class="text-[0.625rem] font-semibold uppercase tracking-[0.12em] text-white/70">School Procurement &amp; Liquidation</p></div></div>
+            <div class="mb-6 flex justify-center lg:hidden"><img src="{{ asset('images/procurems-logo-light.png') }}" alt="ProcMS - Plan. Procure. Finance. Report." class="h-20 w-auto"></div>
             <div class="rounded-3xl border border-white/60 border-t-4 border-t-[#f2b134] bg-white/65 p-7 shadow-2xl shadow-[#0a3a47]/30 backdrop-blur-xl sm:p-9" style="-webkit-backdrop-filter:blur(24px) saturate(1.4);backdrop-filter:blur(24px) saturate(1.4)">
                 <h1 class="text-[1.75rem] font-semibold leading-9 tracking-tight">Welcome back</h1>
                 <p class="mt-1.5 text-sm text-on-surface-variant">Sign in to your procurement, accounting, budget, and cash workspace.</p>
