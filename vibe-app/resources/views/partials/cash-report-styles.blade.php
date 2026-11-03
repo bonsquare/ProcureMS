@@ -4,7 +4,7 @@
     * { box-sizing: border-box; }
     body { margin: 0; background: #fff; color: #111; font-family: Arial, Helvetica, sans-serif; font-size: 10.5px; line-height: 1.3; }
     .paper { width: 100%; margin: 0; padding: 0; background: #fff; }
-    .masthead { display: grid; grid-template-columns: 96px auto 96px; justify-content: center; align-items: center; column-gap: 30px; padding-top: 12px; text-align: center; line-height: 1.4; }
+    .masthead { display: grid; grid-template-columns: 96px auto 96px; justify-content: center; align-items: center; column-gap: 52px; padding-top: 12px; text-align: center; line-height: 1.4; }
     .masthead-logo { display: flex; align-items: center; min-height: 80px; }
     .masthead-logo-left { justify-content: flex-end; }
     .masthead-logo-right { justify-content: flex-start; }

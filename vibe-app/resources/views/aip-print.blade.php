@@ -16,7 +16,7 @@
         .paper { width: 100%; margin: 0; padding: 0; background: #fff; }
 
         /* The logos sit right beside the header text, as one centered group, and are as tall as the text block. */
-        .masthead { display: grid; grid-template-columns: 7.4rem auto 7.4rem; justify-content: center; align-items: center; column-gap: 3rem; text-align: center; padding-top: 1rem; margin-bottom: 1.4rem; line-height: 1.45; }
+        .masthead { display: grid; grid-template-columns: 7.4rem auto 7.4rem; justify-content: center; align-items: center; column-gap: 5.5rem; text-align: center; padding-top: 1rem; margin-bottom: 1.4rem; line-height: 1.45; }
         .masthead img { height: 7.4rem; width: auto; max-width: 7.4rem; object-fit: contain; transform: translateY(.45rem); }
         .masthead .left { grid-column: 1; grid-row: 1; justify-self: end; } .masthead .right { grid-column: 3; grid-row: 1; justify-self: start; } .masthead-text { grid-column: 2; grid-row: 1; }
         .masthead .small, .masthead .region, .masthead .division { font-size: .95rem; }
