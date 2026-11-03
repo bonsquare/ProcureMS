@@ -2585,6 +2585,8 @@ class HomeController extends Controller
         abort_unless($organizationId, 403);
 
         $organization = Organization::findOrFail($organizationId);
+        // The code is saved in upper case, so it is compared in upper case too.
+        $request->merge(['organization_code' => strtoupper($data['organization_code'])]);
         $request->validate([
             'organization_code' => [Rule::unique('organizations', 'organization_code')->ignore($organization->id)],
         ]);

@@ -186,6 +186,7 @@ Binding decisions from that log:
 - **New AIP fills itself from the imported SIP, with a Quarter choice (docs/specs.md section 62). FINAL (owner's decision): do not change the AIP generation from the SIP, its quarter choice or its amounts without the owner's explicit permission for that exact change.**
 - Still open before Phase 3 is complete: browser check of the PR form picker, PR numbering/status end-to-end validation, and deciding whether the APP link should be required for PRs.
 - 2026-11-03 interface round (docs/specs.md section 118): the dashboard is redesigned and live, cards are pastel across the system, tabs are bigger, the login page has a full-page background and the proprietary notice. Deployed 2026-11-03 (Railway eb5a4549).
+- 2026-11-03 tests: 27 new tests for routes that had none (docs/specs.md section 118); organization code duplicate check is now case-insensitive. Full suite 1223 passing. Committed, not yet deployed.
 - The Planning page is `/planning`. The source is `resources/views/planning.blade.php`; the controller is `app/Http/Controllers/PlanningController.php`.
 - The last GitHub backup is commit `69d1d35` on `master`. Do not reset or discard local changes.
 - Live: Railway deployment e887896e (2026-10-28 20:44), migrations through `create_system_settings_table` (see the history file for later changes, several marked "not deployed yet").
