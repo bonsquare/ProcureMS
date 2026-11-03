@@ -9,7 +9,7 @@
         body { margin: 0; background: #fff; color: #111; font-family: Arial, Helvetica, sans-serif; font-size: 11px; line-height: 1.35; }
         .paper { width: 100%; margin: 0; padding: 0; background: #fff; }
 
-        .masthead { display: grid; grid-template-columns: 110px auto 110px; justify-content: center; align-items: center; column-gap: 60px; padding-top: 14px; text-align: center; line-height: 1.45; margin-bottom: 8px; }
+        .masthead { display: grid; grid-template-columns: 110px auto 110px; justify-content: center; align-items: center; column-gap: 96px; padding-top: 14px; text-align: center; line-height: 1.45; margin-bottom: 8px; }
         .masthead-logo { display: flex; align-items: center; min-height: 90px; }
         .masthead-logo-left { justify-content: flex-end; }
         .masthead-logo-right { justify-content: flex-start; }
