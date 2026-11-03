@@ -187,6 +187,7 @@ Binding decisions from that log:
 - Still open before Phase 3 is complete: browser check of the PR form picker, PR numbering/status end-to-end validation, and deciding whether the APP link should be required for PRs.
 - 2026-11-03 interface round (docs/specs.md section 118): the dashboard is redesigned and live, cards are pastel across the system, tabs are bigger, the login page has a full-page background and the proprietary notice. Deployed 2026-11-03 (Railway eb5a4549).
 - 2026-11-03 tests: 27 new tests for routes that had none (docs/specs.md section 118); organization code duplicate check is now case-insensitive. Full suite 1223 passing. Committed, not yet deployed.
+- 2026-11-03 same view on Windows and Mac: the root text size now scales with the window height on screens (min 12.25px, max 14px); schema lookups are remembered per table; paratest added (`php artisan test --parallel`); stray HTTP calls blocked in tests. Committed, not yet deployed (docs/specs.md section 118).
 - The Planning page is `/planning`. The source is `resources/views/planning.blade.php`; the controller is `app/Http/Controllers/PlanningController.php`.
 - The last GitHub backup is commit `69d1d35` on `master`. Do not reset or discard local changes.
 - Live: Railway deployment e887896e (2026-10-28 20:44), migrations through `create_system_settings_table` (see the history file for later changes, several marked "not deployed yet").

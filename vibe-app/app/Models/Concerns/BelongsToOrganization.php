@@ -14,12 +14,28 @@ use Illuminate\Support\Facades\Schema;
 
 trait BelongsToOrganization
 {
+    /** Asking the database for a table's columns costs a query each time, so a "yes" is remembered for the rest of the request (a "no" is asked again, in case a migration adds the column). */
+    protected static function tracksOrganization(string $table): bool
+    {
+        static $known = [];
+
+        if (isset($known[$table])) {
+            return true;
+        }
+
+        if (! Schema::hasColumn($table, 'organization_id')) {
+            return false;
+        }
+
+        return $known[$table] = true;
+    }
+
     protected static function bootBelongsToOrganization(): void
     {
         static::addGlobalScope('organization', function ($query) {
             $user = Auth::hasUser() ? Auth::user() : null;
             $table = $query->getModel()->getTable();
-            if ($user && ! $user->seesAllSchools() && Schema::hasColumn($table, 'organization_id')) {
+            if ($user && ! $user->seesAllSchools() && static::tracksOrganization($table)) {
                 // A tenant user without an organization must never fall back to an
                 // unscoped query. Returning no rows is safer than leaking data.
                 if (! $user->organization_id) {
@@ -33,7 +49,7 @@ trait BelongsToOrganization
         });
 
         static::saving(function ($model) {
-            if (! Schema::hasColumn($model->getTable(), 'organization_id')) {
+            if (! static::tracksOrganization($model->getTable())) {
                 return;
             }
 
@@ -57,7 +73,7 @@ trait BelongsToOrganization
         });
 
         static::saving(function ($model) {
-            if (! Schema::hasColumn($model->getTable(), 'organization_id')) {
+            if (! static::tracksOrganization($model->getTable())) {
                 return;
             }
 
