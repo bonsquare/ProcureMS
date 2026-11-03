@@ -4,11 +4,11 @@
     * { box-sizing: border-box; }
     body { margin: 0; background: #fff; color: #111; font-family: Arial, Helvetica, sans-serif; font-size: 10.5px; line-height: 1.3; }
     .paper { width: 100%; margin: 0; padding: 0; background: #fff; }
-    .masthead { display: grid; grid-template-columns: 80px 1fr 80px; align-items: center; column-gap: 8px; text-align: center; line-height: 1.4; }
-    .masthead-logo { display: flex; align-items: center; min-height: 60px; }
-    .masthead-logo-left { justify-content: flex-start; }
-    .masthead-logo-right { justify-content: flex-end; }
-    .masthead-logo img { height: 62px; width: auto; max-width: 80px; object-fit: contain; }
+    .masthead { display: grid; grid-template-columns: 96px auto 96px; justify-content: center; align-items: center; column-gap: 16px; padding-top: 12px; text-align: center; line-height: 1.4; }
+    .masthead-logo { display: flex; align-items: center; min-height: 80px; }
+    .masthead-logo-left { justify-content: flex-end; }
+    .masthead-logo-right { justify-content: flex-start; }
+    .masthead-logo img { height: 82px; width: auto; max-width: 96px; object-fit: contain; transform: translateY(5px); }
     .masthead .dept { font-size: 13px; font-weight: bold; }
     .masthead .line { font-weight: bold; text-transform: uppercase; }
     .doc-title { text-align: center; margin: 10px 0 6px; }

@@ -15,9 +15,10 @@
 
         .paper { width: 100%; margin: 0; padding: 0; background: #fff; }
 
-        .masthead { position: relative; text-align: center; min-height: 7.2rem; margin-bottom: 1rem; line-height: 1.45; }
-        .masthead img { position: absolute; top: 0; height: 6rem; width: auto; }
-        .masthead .left { left: 6%; } .masthead .right { right: 6%; }
+        /* The logos sit right beside the header text, as one centered group, and are as tall as the text block. */
+        .masthead { display: grid; grid-template-columns: 7.4rem auto 7.4rem; justify-content: center; align-items: center; column-gap: 1.6rem; text-align: center; padding-top: 1rem; margin-bottom: 1.4rem; line-height: 1.45; }
+        .masthead img { height: 7.4rem; width: auto; max-width: 7.4rem; object-fit: contain; transform: translateY(.45rem); }
+        .masthead .left { grid-column: 1; grid-row: 1; justify-self: end; } .masthead .right { grid-column: 3; grid-row: 1; justify-self: start; } .masthead-text { grid-column: 2; grid-row: 1; }
         .masthead .small, .masthead .region, .masthead .division { font-size: .95rem; }
         .masthead .dept { font-size: 1.4rem; font-weight: bold; margin: .2rem 0 .3rem; line-height: 1.3; }
         .masthead .region { font-weight: bold; }
@@ -84,10 +85,12 @@
     <header class="masthead">
         @if($leftLogo)<img class="left official-logo" src="{{ $leftLogo }}" alt="" onerror="this.remove()">@endif
         @if($rightLogo)<img class="right official-logo" src="{{ $rightLogo }}" alt="" onerror="this.remove()">@endif
-        <div class="small">Republic of the Philippines</div>
-        <div class="dept">Department of Education</div>
-        @if($region)<div class="region">{{ strtoupper($region) }}</div>@endif
-        @if($division)<div class="division">{{ $division }}</div>@endif
+        <div class="masthead-text">
+            <div class="small">Republic of the Philippines</div>
+            <div class="dept">Department of Education</div>
+            @if($region)<div class="region">{{ strtoupper($region) }}</div>@endif
+            @if($division)<div class="division">{{ $division }}</div>@endif
+        </div>
     </header>
 
     <div class="doc-title">
