@@ -5,7 +5,7 @@
     <title>Subscriptions · ProcureMS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>tailwind.config={theme:{extend:{colors:{surface:'#eef7f8','surface-low':'#e0eff1','surface-container':'#d1e7ea','surface-high':'#c1dde1',primary:'#14818f','primary-container':'#1a98a8','on-surface':'#12303a','on-surface-variant':'#3d5560',secondary:'#2aa86b','outline-variant':'#86adb4',error:'#e0414f'},fontFamily:{inter:['Inter','sans-serif']}}}};</script>
-    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet"><link rel="stylesheet" href="{{ asset('css/app.css') }}"><style>html{font-size:14px}</style>
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet"><link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ filemtime(public_path('css/app.css')) }}"><style>html{font-size:14px}</style>
 @include('partials.input-fixes')
 @include('partials.favicon')
 </head>
@@ -20,7 +20,6 @@
     <main class="min-h-screen bg-surface px-4 pb-16 pt-24 md:px-6 lg:px-8"><div class="mx-auto max-w-[1600px]" data-sub-tabs data-active="overview">
         <style>
             [data-sub-tabs][data-active="overview"] [data-tab-panel]:not([data-tab-panel="overview"]), [data-sub-tabs][data-active="schools"] [data-tab-panel]:not([data-tab-panel="schools"]), [data-sub-tabs][data-active="payments"] [data-tab-panel]:not([data-tab-panel="payments"]), [data-sub-tabs][data-active="settings"] [data-tab-panel]:not([data-tab-panel="settings"]) { display: none; }
-            [data-sub-tabs][data-active="overview"] [data-sub-tab="overview"], [data-sub-tabs][data-active="schools"] [data-sub-tab="schools"], [data-sub-tabs][data-active="payments"] [data-sub-tab="payments"], [data-sub-tabs][data-active="settings"] [data-sub-tab="settings"] { background: #14818f; border-color: #14818f; color: #fff; }
         </style>
         <div class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><div class="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-on-surface-variant"><span class="material-symbols-outlined text-[16px]">card_membership</span><span class="font-semibold text-primary">Plans &amp; Billing</span>@if(auth()->user()->isMaster())<span class="ml-2 inline-flex items-center gap-1 rounded bg-primary px-2 py-0.5 text-[10px] font-bold tracking-wider text-white"><span class="material-symbols-outlined text-[13px]" aria-hidden="true">shield_person</span>Super Admin · {{ auth()->user()->name }}</span>@endif</div><h1 class="text-[28px] font-semibold leading-9 tracking-tight">Subscriptions</h1><p class="mt-1 text-[15px] leading-6 text-on-surface-variant">Manage school plans, renewals, billing status, and organization subscriptions.</p></div><button type="button" data-sub-open="create" class="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]">add</span>Create Subscription</button></div>
 
@@ -423,6 +422,7 @@
             const openTab = (name) => {
                 if (!tabsRoot.querySelector('[data-sub-tab="' + name + '"]')) name = 'overview';
                 tabsRoot.dataset.active = name;
+                tabsRoot.querySelectorAll('[data-sub-tab]').forEach((tab) => { if (tab.dataset.subTab === name) tab.setAttribute('aria-current', 'page'); else tab.removeAttribute('aria-current'); });
                 try { sessionStorage.setItem('subscriptionsTab', name); } catch (error) {}
             };
             document.addEventListener('click', (event) => { const tab = event.target.closest('[data-sub-tab]'); if (tab) openTab(tab.dataset.subTab); });

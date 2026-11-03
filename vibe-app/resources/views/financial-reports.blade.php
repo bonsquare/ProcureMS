@@ -23,9 +23,9 @@
 @if(session('success'))<div class="no-print mb-5 rounded border border-secondary/30 bg-secondary/5 px-4 py-3 text-sm text-secondary">{{ session('success') }}</div>@endif
 @if($errors->any())<div class="no-print mb-5 rounded border border-error/30 bg-error/5 px-4 py-3 text-sm text-error">{{ $errors->first() }}</div>@endif
 
-<div class="no-print mb-4 flex flex-wrap gap-2">
+<div class="no-print app-tabs">
     @foreach($reports as $key => $label)
-        <a href="{{ route('financial-reports', $query(['report' => $key])) }}" class="rounded-lg px-4 py-2 text-sm font-semibold {{ $report === $key ? 'bg-primary text-white' : 'border border-outline-variant/60 bg-white hover:bg-surface-low' }}">{{ $label }}</a>
+        <a href="{{ route('financial-reports', $query(['report' => $key])) }}" @if($report === $key) aria-current="page" @endif class="app-tab">{{ $label }}</a>
     @endforeach
 </div>
 

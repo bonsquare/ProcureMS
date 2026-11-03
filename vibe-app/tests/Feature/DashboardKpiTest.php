@@ -40,7 +40,7 @@ class DashboardKpiTest extends TestCase
         BudgetAllocation::create(['organization_id' => $organizationA->id, 'school_id' => $schoolA->id, 'fiscal_year' => now()->year, 'source_of_fund' => 'MOOE', 'particulars' => 'Supplies', 'amount' => 10000, 'q1_amount' => 2500, 'q2_amount' => 2500, 'q3_amount' => 2500, 'q4_amount' => 2500]);
 
         $response = $this->actingAs($userA)->get(route('home'))->assertOk()
-            ->assertSee('KPI dashboard')->assertSee('Budget utilization')->assertSee('Pending approval')->assertSee('Cash balance')->assertSee('DVs for payment')->assertDontSee('Completion rate')->assertDontSee('Active suppliers')->assertDontSee('Requests per month')->assertSee('Request pipeline')->assertSee('Budget flow')->assertSee('Needs your attention')->assertSee('Recent requests')->assertSee('Budget by quarter')->assertSee('PR-A-1')->assertSee('School Workspace')->assertSee('School Dashboard')->assertDontSee('My KPI Dashboard')
+            ->assertSee('KPI dashboard')->assertSee('Budget utilization')->assertSee('Pending approval')->assertSee('Cash balance')->assertSee('DVs for payment')->assertDontSee('Completion rate')->assertDontSee('Active suppliers')->assertDontSee('Requests per month')->assertDontSee('Request pipeline')->assertDontSee('Budget flow')->assertDontSee('Needs your attention')->assertDontSee('Recent requests')->assertDontSee('Budget by quarter')->assertSee('School Workspace')->assertSee('School Dashboard')->assertDontSee('My KPI Dashboard')
             ->assertDontSee('School performance');
 
         $kpi = $response->viewData('kpi');
@@ -83,5 +83,33 @@ class DashboardKpiTest extends TestCase
 
         $this->post(route('school-settings.school.approve', $pending), ['redirect_to' => 'subscriptions'])->assertRedirect(route('subscriptions'));
         $this->assertSame('active', $pending->fresh()->status);
+    }
+
+    public function test_the_live_dashboard_answers_204_when_nothing_changed_and_redraws_when_it_did(): void
+    {
+        [$organization, $school, $user] = $this->school('live-a');
+        [$otherOrganization, $otherSchool, $otherUser] = $this->school('live-b');
+        $this->request($otherOrganization, $otherSchool, $otherUser, 'PR-OTHER-1', 'pending_approval', 5000);
+        $page = $this->actingAs($user)->get(route('home', ['view' => 'kpi']))->assertOk()->assertSee('Day ', false)->assertSee('data-countup', false);
+        $hash = $page->viewData('dashboardHash');
+
+        $this->getJson(route('dashboard.live', ['h' => $hash]))->assertNoContent();
+
+        $this->request($organization, $school, $user, 'PR-LIVE-1', 'pending_approval', 1000);
+        $changed = $this->getJson(route('dashboard.live', ['h' => $hash]))->assertOk();
+        $this->assertNotSame($hash, $changed->json('hash'));
+        $this->assertStringContainsString('Purchase requests', $changed->json('html'));
+        $this->assertStringNotContainsString('PR-OTHER-1', $changed->json('html'));
+    }
+
+    public function test_the_dashboard_shows_the_obligation_liquidation_and_disbursement_stages(): void
+    {
+        [, , $user] = $this->school('stage-a');
+
+        $page = $this->actingAs($user)->get(route('home', ['view' => 'kpi']))->assertOk()
+            ->assertSee('1 · Obligation', false)->assertSee('2 · Liquidation', false)->assertSee('3 · Disbursement', false);
+        $cash = $page->viewData('kpi')['cash'];
+        $this->assertSame(0, $cash['paid']);
+        $this->assertSame(0.0, $cash['paid_amount']);
     }
 }

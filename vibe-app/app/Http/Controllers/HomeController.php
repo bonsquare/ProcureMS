@@ -152,6 +152,8 @@ class HomeController extends Controller
             $income = $service->summary($incomeYear);
         }
 
+        $kpi = app(DashboardKpiService::class)->forSchools($schoolIds);
+
         return view('home', [
             'income' => $income,
             'incomeYear' => $incomeYear,
@@ -169,13 +171,44 @@ class HomeController extends Controller
                 ->get(),
             'pendingProcurements' => ProcurementRequest::whereIn('school_id', $schoolIds)->whereIn('status', ['submitted', 'pending_approval'])->count(),
             'isMasterUser' => $this->isMasterUser($user),
-            'kpi' => app(DashboardKpiService::class)->forSchools($schoolIds),
+            'kpi' => $kpi,
+            'dashboardHash' => md5(json_encode($kpi)),
             'screenOff' => SystemSetting::screenIsOff(),
             'server' => $user?->isMaster() && request('view') === 'server' ? app(ServerDashboardService::class)->snapshot() : null,
             'systemKpi' => $this->systemKpi($user, $schoolIds, $pendingPreRegistrations),
             'currentSchool' => $this->isMasterUser($user) ? null : $schools->first(),
             'lastBackupFailure' => $this->isMasterUser($user) ? $this->lastBackupFailure() : null,
         ]);
+    }
+
+    /** The KPI part of the dashboard, drawn again when its figures changed (204 when the page already has the same). */
+    public function dashboardLive(Request $request)
+    {
+        $user = $request->user();
+        $isMasterUser = $this->isMasterUser($user);
+        $schools = School::withCount('users')
+            ->when(! $isMasterUser, fn ($query) => $query->whereIn('id', $this->scopedSchoolIds($user)))
+            ->latest()
+            ->get();
+        $schoolIds = $schools->pluck('id');
+        $kpi = app(DashboardKpiService::class)->forSchools($schoolIds);
+        $hash = md5(json_encode($kpi));
+        if ($request->query('h') === $hash) {
+            return response()->noContent();
+        }
+
+        $html = view('partials.dashboard-kpi', [
+            'kpi' => $kpi,
+            'isMasterUser' => $isMasterUser,
+            'currentSchool' => $isMasterUser ? null : $schools->first(),
+            'totalSchools' => $schools->count(),
+            'activeSchools' => $schools->where('status', 'active')->count(),
+            'totalUsers' => User::when(! $isMasterUser, fn ($query) => $query->whereIn('school_id', $schoolIds))->count(),
+            'activeSubscriptions' => Subscription::where('status', 'active')->whereIn('school_id', $schoolIds)->count(),
+            'auditLogs' => AuditLog::with(['user', 'school'])->when(! $isMasterUser, fn ($query) => $query->whereIn('school_id', $schoolIds))->latest()->take(10)->get(),
+        ])->render();
+
+        return response()->json(['hash' => $hash, 'html' => $html]);
     }
 
     /**

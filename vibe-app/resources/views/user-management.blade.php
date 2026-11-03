@@ -5,7 +5,7 @@
     <title>User Management · ProcureMS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>tailwind.config={theme:{extend:{colors:{surface:'#eef7f8','surface-low':'#e0eff1','surface-container':'#d1e7ea','surface-high':'#c1dde1',primary:'#14818f','primary-container':'#1a98a8','on-surface':'#12303a','on-surface-variant':'#3d5560',secondary:'#2aa86b','outline-variant':'#86adb4',error:'#e0414f'},fontFamily:{inter:['Inter','sans-serif']}}}};</script>
-    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet"><link rel="stylesheet" href="{{ asset('css/app.css') }}"><style>html{font-size:14px}</style>
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet"><link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ filemtime(public_path('css/app.css')) }}"><style>html{font-size:14px}</style>
 @include('partials.input-fixes')
 @include('partials.favicon')
 </head>
@@ -18,9 +18,9 @@
     <div class="md:pl-60"><header class="fixed left-0 right-0 top-0 z-40 flex h-16 items-center justify-between border-b border-outline-variant/30 bg-surface/95 px-4 backdrop-blur md:left-60 md:px-6"><div class="flex items-center gap-3"><button class="rounded p-2 text-on-surface-variant md:hidden" aria-label="Open navigation"><span class="material-symbols-outlined">menu</span></button><div class="min-w-0"><p class="text-[10px] font-bold uppercase tracking-[0.14em] text-primary">Organization Access</p><p class="truncate text-sm font-semibold text-on-surface">User Management</p></div></div><div class="flex items-center gap-4"><button class="relative rounded p-1 text-on-surface-variant" aria-label="Notifications"><span class="material-symbols-outlined text-[21px]">notifications</span><span class="absolute right-0 top-0 h-2 w-2 rounded-full bg-error"></span></button><div class="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white"><span class="material-symbols-outlined text-[18px]">person</span></div></div></header>
 
     <main class="min-h-screen bg-surface px-4 pb-16 pt-24 md:px-6 lg:px-8"><div class="mx-auto max-w-[1600px]">
-        <nav class="mb-6 flex gap-2 border-b border-outline-variant/40" aria-label="User management sections">
-            <a href="{{ route('user-management') }}" @if($tab !== 'master-user') aria-current="page" @endif class="-mb-px border-b-2 px-4 py-2.5 text-sm font-semibold {{ $tab !== 'master-user' ? 'border-primary text-primary' : 'border-transparent text-on-surface-variant hover:text-primary' }}">Users</a>
-            <a href="{{ route('user-management', ['tab' => 'master-user']) }}" @if($tab === 'master-user') aria-current="page" @endif class="-mb-px border-b-2 px-4 py-2.5 text-sm font-semibold {{ $tab === 'master-user' ? 'border-primary text-primary' : 'border-transparent text-on-surface-variant hover:text-primary' }}">Master User</a>
+        <nav class="app-tabs" aria-label="User management sections">
+            <a href="{{ route('user-management') }}" @if($tab !== 'master-user') aria-current="page" @endif class="app-tab">Users</a>
+            <a href="{{ route('user-management', ['tab' => 'master-user']) }}" @if($tab === 'master-user') aria-current="page" @endif class="app-tab">Master User</a>
         </nav>
         @if(session('success'))<div class="mb-5 rounded border border-secondary/30 bg-secondary/5 px-4 py-3 text-sm text-secondary">{{ session('success') }}</div>@endif
         @if($tab === 'master-user')

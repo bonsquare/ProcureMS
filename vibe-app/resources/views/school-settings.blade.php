@@ -71,7 +71,7 @@
     @endforeach
 </section>
 
-<nav class="civic-module-tabs" aria-label="School settings sections">
+<nav class="civic-module-tabs civic-module-tabs--large" aria-label="School settings sections">
     @foreach($tabs as $key => [$label, $icon])
         <a href="{{ $key === 'subscription' ? route('subscription') : $tabUrl($key) }}" @if($tab === $key) aria-current="page" @endif class="civic-module-tab {{ $tab === $key ? 'civic-module-tab--active' : '' }}"><span class="material-symbols-outlined" aria-hidden="true">{{ $icon }}</span><span>{{ $label }}</span></a>
     @endforeach

@@ -14,7 +14,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}"><style>html{font-size:14px}</style>
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ filemtime(public_path('css/app.css')) }}"><style>html{font-size:14px}</style>
 @include('partials.input-fixes')
 @include('partials.favicon')
 </head>
@@ -91,7 +91,62 @@
             @elseif($dashboardView === 'server')
             @include('partials.server-dashboard')
             @elseif($dashboardView === 'kpi')
-            @include('partials.dashboard-kpi')
+            <div id="dashboard-live" data-url="{{ route('dashboard.live') }}" data-hash="{{ $dashboardHash }}">
+                <div data-live-body>@include('partials.dashboard-kpi')</div>
+            </div>
+            <script>
+                // Light and live: the numbers count up, and the figures are checked every 30 seconds while this tab is open; the page is only redrawn when a figure changed.
+                (() => {
+                    const box = document.getElementById('dashboard-live');
+                    if (!box) return;
+                    const body = box.querySelector('[data-live-body]');
+                    // the Live badge and the clock sit in the dashboard header, which is redrawn, so they are looked up each time
+                    const setLive = (text, ok) => {
+                        const status = box.querySelector('[data-live-status]'); const dot = box.querySelector('[data-live-dot]');
+                        if (status) status.textContent = text;
+                        if (dot) dot.className = 'inline-block h-2 w-2 rounded-full ' + (ok ? 'bg-emerald-300' : 'bg-amber-300');
+                    };
+                    const showTime = () => { const el = box.querySelector('[data-live-clock]'); if (el && el.firstChild) el.firstChild.nodeValue = new Date().toLocaleTimeString('en-PH', { timeZone: 'Asia/Manila', hour: 'numeric', minute: '2-digit', second: '2-digit' }); };
+                    showTime(); setInterval(() => { if (! document.hidden) showTime(); }, 1000);
+                    let hash = box.dataset.hash;
+                    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                    const countUp = (root) => {
+                        if (reduced) return;
+                        root.querySelectorAll('[data-countup]').forEach((el) => {
+                            const match = el.textContent.trim().match(/^(₱?)([\d,]*\.?\d+)([KM%]?)$/);
+                            if (!match) return;
+                            const [, prefix, number, suffix] = match;
+                            const target = parseFloat(number.replace(/,/g, ''));
+                            const decimals = (number.split('.')[1] || '').length;
+                            const final = el.textContent;
+                            const started = performance.now();
+                            const step = (now) => {
+                                const t = Math.min(1, (now - started) / 800);
+                                const eased = 1 - Math.pow(1 - t, 3);
+                                const value = target * eased;
+                                el.textContent = t === 1 ? final : prefix + (decimals ? value.toFixed(decimals) : Math.round(value).toLocaleString('en-US')) + suffix;
+                                if (t < 1) requestAnimationFrame(step);
+                            };
+                            requestAnimationFrame(step);
+                        });
+                    };
+                    countUp(body);
+                    const clock = () => new Date().toLocaleTimeString('en-PH', { timeZone: 'Asia/Manila', hour: 'numeric', minute: '2-digit' });
+                    const tick = async () => {
+                        if (document.hidden || document.querySelector('dialog[open]')) return;
+                        try {
+                            const response = await fetch(box.dataset.url + '?h=' + encodeURIComponent(hash), { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
+                            if (response.status === 204) { setLive('Live · checked ' + clock(), true); return; }
+                            if (!response.ok) throw new Error('live failed');
+                            const data = await response.json();
+                            body.innerHTML = data.html; hash = data.hash; countUp(body);
+                            setLive('Live · updated ' + clock(), true);
+                        } catch (error) { setLive('Live updates paused · reconnecting', false); }
+                    };
+                    setInterval(tick, 30000);
+                    document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+                })();
+            </script>
             @else
             @php
                 $activeRate = $totalSchools ? round(($activeSchools / $totalSchools) * 100, 1) : 0;

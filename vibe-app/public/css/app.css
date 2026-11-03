@@ -39,11 +39,86 @@ main :is(button, a)[class*="px-"][class*="py-"][class*="rounded"]:not(td *, th *
 main td :is(button, a)[class*="px-"][class*="py-"][class*="rounded"]:not([class*="w-8"], [class*="h-8"], [class*="rounded-full"]) { display: inline-flex; align-items: center; justify-content: center; gap: .35rem; min-height: 2rem; padding: .3rem .8rem; border-radius: .55rem; font-size: .75rem; line-height: 1.2; font-weight: 600; }
 main :is(button, a) > .material-symbols-outlined { font-size: 18px; }
 main td :is(button, a) > .material-symbols-outlined { font-size: 16px; }
-/* The space between buttons that sit side by side. */
-main .flex:has(> :is(button, a)[class*="px-"][class*="py-"] + :is(button, a)[class*="px-"][class*="py-"]) { gap: .5rem; }
-main .flex:has(> :is(button, a)[class*="px-"][class*="py-"] + :is(button, a)[class*="px-"][class*="py-"]) > :is(button, a) { margin: 0; }
-
 /* Menu: the links inside a group (for example under Finance) are smaller than the main items. */
 aside.fixed.inset-y-0 > nav details a { font-size: .78rem; font-weight: 500; min-height: 40px; color: #ffffffb8; }
 aside.fixed.inset-y-0 > nav details a .material-symbols-outlined { font-size: 17px; }
 aside.fixed.inset-y-0 > nav details a.bg-primary-container { color: #fff; font-weight: 600; }
+
+/* Menu order (owner's decision 2026-11-03): Dashboard, Planning, Procurement, Finance, Liquidation, Reports, Google Drive, the master's items, then Settings.
+   Under Finance: Budget, Accounting, Cash, Financial Reports, Chart of Accounts, Allotment Registry. One rule set for every page. */
+:is(aside.fixed.inset-y-0, #civic-navigation) > nav { display: flex; flex-direction: column; gap: .25rem; }
+:is(aside.fixed.inset-y-0, #civic-navigation) > nav > * { margin-top: 0 !important; margin-bottom: 0 !important; }
+:is(aside.fixed.inset-y-0, #civic-navigation) > nav > a[href$="/planning"] { order: 1; }
+:is(aside.fixed.inset-y-0, #civic-navigation) > nav > a[href$="/procurement"] { order: 2; }
+:is(aside.fixed.inset-y-0, #civic-navigation) > nav > details { order: 3; }
+:is(aside.fixed.inset-y-0, #civic-navigation) > nav > a[href$="/liquidation"] { order: 4; }
+:is(aside.fixed.inset-y-0, #civic-navigation) > nav > a[href$="/reports"] { order: 5; }
+:is(aside.fixed.inset-y-0, #civic-navigation) > nav > a[href$="/google-drive"] { order: 6; }
+:is(aside.fixed.inset-y-0, #civic-navigation) > nav > a[href$="/user-management"] { order: 7; }
+:is(aside.fixed.inset-y-0, #civic-navigation) > nav > a[href$="/subscriptions"] { order: 8; }
+:is(aside.fixed.inset-y-0, #civic-navigation) > nav > a[href$="/school-management"] { order: 9; }
+:is(aside.fixed.inset-y-0, #civic-navigation) > nav > a[href$="/school-settings"] { order: 10; }
+:is(aside.fixed.inset-y-0, #civic-navigation) > nav > details > div { display: flex; flex-direction: column; gap: .125rem; }
+:is(aside.fixed.inset-y-0, #civic-navigation) > nav > details > div > a[href$="/budget"] { order: 1; }
+:is(aside.fixed.inset-y-0, #civic-navigation) > nav > details > div > a[href$="/accounting"] { order: 2; }
+:is(aside.fixed.inset-y-0, #civic-navigation) > nav > details > div > a[href$="/cash"] { order: 3; }
+:is(aside.fixed.inset-y-0, #civic-navigation) > nav > details > div > a[href$="/financial-reports"] { order: 4; }
+:is(aside.fixed.inset-y-0, #civic-navigation) > nav > details > div > a[href$="/chart-of-accounts"] { order: 5; }
+:is(aside.fixed.inset-y-0, #civic-navigation) > nav > details > div > a[href$="/allotment-registry"] { order: 6; }
+
+/* Tabs: one bigger style with the open tab clearly highlighted, on every page (owner's request 2026-11-03).
+   A tab bar is .app-tabs with .app-tab links; the open one has aria-current="page". */
+.app-tabs{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1.5rem;border:1px solid #bfdde2;border-radius:1.1rem;background:#fff;padding:.45rem;box-shadow:0 8px 24px -14px #0f4c5c80}
+.app-tabs.app-tabs--inline{margin-bottom:0;border-radius:.9rem;box-shadow:none}
+.app-tabs .app-tab{display:inline-flex;min-height:3rem;cursor:pointer;align-items:center;justify-content:center;gap:.55rem;border:1px solid #d3e6e9;border-radius:.8rem;background:#f1f8f9;padding:.55rem 1.1rem;color:#0f4c5c;font-size:.95rem;font-weight:700;line-height:1.2;text-decoration:none;transition:background-color .15s,border-color .15s,transform .15s,box-shadow .15s}
+.app-tabs .app-tab .material-symbols-outlined{font-size:22px;color:#14818f}
+.app-tabs .app-tab:hover{background:#e0f1f3;border-color:#14818f;color:#0f4c5c;transform:translateY(-1px)}
+.app-tabs .app-tab[aria-current="page"],.app-tabs .app-tab[aria-current="page"]:hover{border-color:#0f6f7e;background:linear-gradient(135deg,#1a98a8,#0f6f7e);color:#fff;font-weight:800;box-shadow:0 8px 18px -6px #14818f99,inset 0 -4px 0 #f2b134;transform:none}
+.app-tabs .app-tab[aria-current="page"] .material-symbols-outlined{color:#fff}
+.app-tabs .app-tab:focus-visible{outline:3px solid #64a9e3;outline-offset:1px}
+
+/* Dashboard motion: light and quick, off for people who prefer less motion. */
+@keyframes dash-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes dash-rise { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes dash-ring { from { stroke-dasharray: 0 113.1; } }
+.dash-bar > div, .dash-bar > i { transform-origin: left center; animation: dash-grow .9s cubic-bezier(.2, .8, .2, 1) both; }
+.dash-spark { transform-origin: bottom center; animation: dash-rise .7s cubic-bezier(.2, .8, .2, 1) both; }
+.dash-ring { animation: dash-ring 1s cubic-bezier(.2, .8, .2, 1) both; }
+.dash-hero + div a:focus-visible { outline: 3px solid #64a9e3; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .dash-bar > div, .dash-bar > i, .dash-spark, .dash-ring { animation: none; } }
+
+.dash-ring-seg { animation: dash-seg 1s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes dash-seg { from { stroke-dasharray: 0 100; } }
+@media (prefers-reduced-motion: reduce) { .dash-ring-seg { animation: none; } }
+
+/* Cards: pastel colours on every stat tile, in turn (owner's request 2026-11-03). Plain selectors only, so pages stay light. */
+main article.flex.items-center.justify-between.rounded.border.bg-white.p-5, main article[data-dashboard-card], main article.civic-metric-card, main article.relative.flex.items-center.justify-between.rounded-lg.border.bg-white[class*="pl-4"][class*="pr-3"] { background-image: linear-gradient(135deg, var(--pc-bg, #e1f4f5), #fff 135%); border-color: var(--pc-edge, #b7e0e4); }
+main article.flex.items-center.justify-between.rounded.border.bg-white.p-5 :is(p, .civic-metric-card__label):first-child { color: var(--pc-ink, #0f7482); }
+main article.flex.items-center.justify-between.rounded.border.bg-white.p-5:nth-child(7n+1), main article[data-dashboard-card]:nth-child(7n+1), main article.civic-metric-card:nth-child(7n+1), main article.relative.flex.items-center.justify-between.rounded-lg.border.bg-white[class*="pl-4"][class*="pr-3"]:nth-child(7n+1) { --pc-bg: #e1f4f5; --pc-edge: #b7e0e4; --pc-ink: #0f7482; }
+main article.flex.items-center.justify-between.rounded.border.bg-white.p-5:nth-child(7n+2), main article[data-dashboard-card]:nth-child(7n+2), main article.civic-metric-card:nth-child(7n+2), main article.relative.flex.items-center.justify-between.rounded-lg.border.bg-white[class*="pl-4"][class*="pr-3"]:nth-child(7n+2) { --pc-bg: #e4f6ee; --pc-edge: #bfe8d6; --pc-ink: #1d8566; }
+main article.flex.items-center.justify-between.rounded.border.bg-white.p-5:nth-child(7n+3), main article[data-dashboard-card]:nth-child(7n+3), main article.civic-metric-card:nth-child(7n+3), main article.relative.flex.items-center.justify-between.rounded-lg.border.bg-white[class*="pl-4"][class*="pr-3"]:nth-child(7n+3) { --pc-bg: #eeeafb; --pc-edge: #d6cef3; --pc-ink: #6a55b8; }
+main article.flex.items-center.justify-between.rounded.border.bg-white.p-5:nth-child(7n+4), main article[data-dashboard-card]:nth-child(7n+4), main article.civic-metric-card:nth-child(7n+4), main article.relative.flex.items-center.justify-between.rounded-lg.border.bg-white[class*="pl-4"][class*="pr-3"]:nth-child(7n+4) { --pc-bg: #fdeee3; --pc-edge: #f8d5bc; --pc-ink: #c0612a; }
+main article.flex.items-center.justify-between.rounded.border.bg-white.p-5:nth-child(7n+5), main article[data-dashboard-card]:nth-child(7n+5), main article.civic-metric-card:nth-child(7n+5), main article.relative.flex.items-center.justify-between.rounded-lg.border.bg-white[class*="pl-4"][class*="pr-3"]:nth-child(7n+5) { --pc-bg: #e6f3fc; --pc-edge: #c3e1f5; --pc-ink: #1b6fa8; }
+main article.flex.items-center.justify-between.rounded.border.bg-white.p-5:nth-child(7n+6), main article[data-dashboard-card]:nth-child(7n+6), main article.civic-metric-card:nth-child(7n+6), main article.relative.flex.items-center.justify-between.rounded-lg.border.bg-white[class*="pl-4"][class*="pr-3"]:nth-child(7n+6) { --pc-bg: #fdf5d9; --pc-edge: #f4e4a0; --pc-ink: #a47a0a; }
+main article.flex.items-center.justify-between.rounded.border.bg-white.p-5:nth-child(7n+7), main article[data-dashboard-card]:nth-child(7n+7), main article.civic-metric-card:nth-child(7n+7), main article.relative.flex.items-center.justify-between.rounded-lg.border.bg-white[class*="pl-4"][class*="pr-3"]:nth-child(7n+7) { --pc-bg: #fdebee; --pc-edge: #f6c8d0; --pc-ink: #b8455a; }
+main article.flex.items-center.justify-between.rounded.border.bg-white.p-5:hover, main article[data-dashboard-card]:hover, main article.civic-metric-card:hover, main article.relative.flex.items-center.justify-between.rounded-lg.border.bg-white[class*="pl-4"][class*="pr-3"]:hover { box-shadow: 0 10px 22px -12px rgba(15, 76, 92, .45); }
+
+/* Every white card in the system gets a pastel, in turn (owner's request 2026-11-03: not just the dashboard).
+   Windows, buttons, inputs and the official documents are not cards and keep their own look; a table inside a card stays white. */
+main :is(article, section, div, form, details)[class~="bg-white"][class~="border"][class*="rounded"]:not([class*="rounded-full"], [class*="shadow-2xl"], [class*="sticky"], [class*="fixed"], [class*="divide-y"]),
+main .civic-stage { background-image: linear-gradient(135deg, var(--pc-bg, #e1f4f5), #fff 135%); border-color: var(--pc-edge, #b7e0e4); }
+main :is(article, section, div, form, details)[class~="bg-white"][class~="border"][class*="rounded"]:not([class*="rounded-full"], [class*="shadow-2xl"], [class*="sticky"], [class*="fixed"], [class*="divide-y"]):nth-child(7n+1),
+main .civic-stage:nth-child(7n+1) { --pc-bg: #e1f4f5; --pc-edge: #b7e0e4; }
+main :is(article, section, div, form, details)[class~="bg-white"][class~="border"][class*="rounded"]:not([class*="rounded-full"], [class*="shadow-2xl"], [class*="sticky"], [class*="fixed"], [class*="divide-y"]):nth-child(7n+2),
+main .civic-stage:nth-child(7n+2) { --pc-bg: #e4f6ee; --pc-edge: #bfe8d6; }
+main :is(article, section, div, form, details)[class~="bg-white"][class~="border"][class*="rounded"]:not([class*="rounded-full"], [class*="shadow-2xl"], [class*="sticky"], [class*="fixed"], [class*="divide-y"]):nth-child(7n+3),
+main .civic-stage:nth-child(7n+3) { --pc-bg: #eeeafb; --pc-edge: #d6cef3; }
+main :is(article, section, div, form, details)[class~="bg-white"][class~="border"][class*="rounded"]:not([class*="rounded-full"], [class*="shadow-2xl"], [class*="sticky"], [class*="fixed"], [class*="divide-y"]):nth-child(7n+4),
+main .civic-stage:nth-child(7n+4) { --pc-bg: #fdeee3; --pc-edge: #f8d5bc; }
+main :is(article, section, div, form, details)[class~="bg-white"][class~="border"][class*="rounded"]:not([class*="rounded-full"], [class*="shadow-2xl"], [class*="sticky"], [class*="fixed"], [class*="divide-y"]):nth-child(7n+5),
+main .civic-stage:nth-child(7n+5) { --pc-bg: #e6f3fc; --pc-edge: #c3e1f5; }
+main :is(article, section, div, form, details)[class~="bg-white"][class~="border"][class*="rounded"]:not([class*="rounded-full"], [class*="shadow-2xl"], [class*="sticky"], [class*="fixed"], [class*="divide-y"]):nth-child(7n+6),
+main .civic-stage:nth-child(7n+6) { --pc-bg: #fdf5d9; --pc-edge: #f4e4a0; }
+main :is(article, section, div, form, details)[class~="bg-white"][class~="border"][class*="rounded"]:not([class*="rounded-full"], [class*="shadow-2xl"], [class*="sticky"], [class*="fixed"], [class*="divide-y"]):nth-child(7n+7),
+main .civic-stage:nth-child(7n+7) { --pc-bg: #fdebee; --pc-edge: #f6c8d0; }
+main :is(article, section, div, form, details)[class~="bg-white"][class~="border"] :is(table, .divide-y) { background-color: #fff; }

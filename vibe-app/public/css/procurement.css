@@ -91,3 +91,11 @@ main th{font-size:.68rem!important}
 .civic-nav > nav::-webkit-scrollbar { width: 6px; }
 .civic-nav > nav::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, .35); border-radius: 999px; }
 .civic-nav > :not(nav) { flex-shrink: 0; }
+
+/* School Settings tabs: bigger, with the open tab clearly highlighted (owner's request 2026-11-03). */
+.civic-module-tabs{gap:.4rem;margin-bottom:1.5rem;border:1px solid #bfdde2;border-radius:1.1rem;background:#fff;padding:.45rem;box-shadow:0 8px 24px -14px #0f4c5c80}
+.civic-module-tabs .civic-module-tab{min-height:3.25rem;gap:.6rem;border:1px solid #d3e6e9;border-radius:.8rem;background:#f1f8f9;padding:.6rem 1.15rem;color:#0f4c5c;font-size:.95rem;font-weight:700}
+.civic-module-tabs .civic-module-tab .material-symbols-outlined{font-size:24px;color:#14818f}
+.civic-module-tabs .civic-module-tab:hover{background:#e0f1f3;border-color:#14818f;color:#0f4c5c;transform:translateY(-1px)}
+.civic-module-tabs .civic-module-tab--active,.civic-module-tabs .civic-module-tab--active:hover{border-color:#0f6f7e;background:linear-gradient(135deg,#1a98a8,#0f6f7e);color:#fff;font-weight:800;box-shadow:0 8px 18px -6px #14818f99,inset 0 -4px 0 #f2b134;transform:none}
+.civic-module-tabs .civic-module-tab--active .material-symbols-outlined,.civic-module-tabs .civic-module-tab--active:hover .material-symbols-outlined{color:#fff}

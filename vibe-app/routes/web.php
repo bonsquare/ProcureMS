@@ -51,6 +51,7 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::get('/', [HomeController::class, 'index'])->name('home');
+    Route::get('/dashboard/live', [HomeController::class, 'dashboardLive'])->name('dashboard.live');
     Route::get('/dashboard/diagnostics', [HomeController::class, 'dashboardDiagnostics'])->name('dashboard.diagnostics');
     Route::get('/dashboard/audit-logs/export', [HomeController::class, 'exportAuditLogs'])->name('dashboard.audit-logs.export');
     Route::post('/schools', [HomeController::class, 'storeSchool'])->name('schools.store');

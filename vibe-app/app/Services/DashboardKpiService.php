@@ -100,17 +100,20 @@ class DashboardKpiService
      * The DVs waiting in Cash for payment (a non-cash DV never waits) and, for one school, the cash on hand and in bank this year (receipts less payments).
      *
      * @param  Collection<int, int>  $schoolIds
-     * @return array{awaiting: int, awaiting_amount: float, balance: float|null}
+     * @return array{awaiting: int, awaiting_amount: float, paid: int, paid_amount: float, balance: float|null}
      */
     private function cash(Collection $schoolIds, int $year): array
     {
         $awaiting = LiquidationReport::withoutGlobalScopes()->whereIn('school_id', $schoolIds)->where('status', 'approved')
             ->whereNotNull('dv_number')->whereNull('paid_at')->where('dv_non_cash', false)->get(['id', 'amount']);
+        $paid = LiquidationReport::withoutGlobalScopes()->whereIn('school_id', $schoolIds)->whereNotNull('paid_at')->whereYear('paid_at', $year)->where('dv_non_cash', false)->get(['id', 'amount']);
         $school = $schoolIds->count() === 1 ? School::withoutGlobalScopes()->find($schoolIds->first()) : null;
 
         return [
             'awaiting' => $awaiting->count(),
             'awaiting_amount' => (float) $awaiting->sum('amount'),
+            'paid' => $paid->count(),
+            'paid_amount' => (float) $paid->sum('amount'),
             'balance' => $school ? (float) app(CashReportService::class)->build($school, Carbon::create($year, 1, 1), Carbon::create($year, 12, 31))['ending'] : null,
         ];
     }

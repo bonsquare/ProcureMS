@@ -17,9 +17,9 @@
     $tabs = ['overview' => ['Overview', 'dashboard', $tabWaiting], 'schools' => ['Schools', 'school', 0], 'payments' => ['Payments', 'receipt_long', $pendingProofs->count()]];
     if ($isMasterUser) { $tabs['settings'] = ['Settings', 'settings', 0]; }
 @endphp
-<div class="mb-6 flex flex-wrap gap-2 border-b border-outline-variant/30 pb-3" role="tablist" aria-label="Subscriptions sections">
+<div class="app-tabs" role="tablist" aria-label="Subscriptions sections">
     @foreach($tabs as $key => [$tabLabel, $tabIcon, $tabCount])
-        <button type="button" role="tab" data-sub-tab="{{ $key }}" class="inline-flex items-center gap-2 rounded-lg border border-outline-variant/60 bg-white px-4 py-2.5 text-sm font-semibold hover:bg-surface-low"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">{{ $tabIcon }}</span>{{ $tabLabel }}@if($tabCount > 0)<span class="rounded-full bg-error px-2 py-0.5 text-[11px] font-bold text-white">{{ $tabCount }}</span>@endif</button>
+        <button type="button" role="tab" data-sub-tab="{{ $key }}" class="app-tab"><span class="material-symbols-outlined" aria-hidden="true">{{ $tabIcon }}</span>{{ $tabLabel }}@if($tabCount > 0)<span class="rounded-full bg-error px-2 py-0.5 text-[11px] font-bold text-white">{{ $tabCount }}</span>@endif</button>
     @endforeach
 </div>
 <div data-tab-panel="overview">@include('partials.schools-for-activation')</div>

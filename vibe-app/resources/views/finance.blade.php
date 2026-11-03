@@ -5,7 +5,7 @@
     <title>{{ $section === 'cash' ? 'Cash' : 'Accounting' }} · ProcureMS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>tailwind.config={theme:{extend:{colors:{surface:'#eef7f8','surface-low':'#e0eff1','surface-container':'#d1e7ea','surface-high':'#c1dde1',primary:'#14818f','primary-container':'#1a98a8','on-surface':'#12303a','on-surface-variant':'#3d5560',secondary:'#2aa86b','outline-variant':'#86adb4',error:'#e0414f'},fontFamily:{inter:['Inter','sans-serif']}}}};</script>
-    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet"><link rel="stylesheet" href="{{ asset('css/app.css') }}"><style>html{font-size:14px}</style>
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet"><link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ filemtime(public_path('css/app.css')) }}"><style>html{font-size:14px}</style>
 @include('partials.input-fixes')
 @include('partials.favicon')
 </head>
@@ -50,10 +50,10 @@
     @endphp
     <section class="overflow-hidden rounded-xl border border-outline-variant/40 bg-white shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/30 bg-surface-low/60 p-3">
-            <nav class="flex flex-wrap gap-1.5" aria-label="Views">
+            <nav class="app-tabs app-tabs--inline" aria-label="Views">
                 @foreach($tabs as $key => $label)
                     @php [$tabIcon, $badge] = $tabMeta[$key] ?? ['list', 'bg-primary text-white']; $count = in_array($key, ['all', 'reports'], true) ? null : $counts->get($key, 0); @endphp
-                    <a href="{{ route($section, ['tab' => $key]) }}" @if($tab === $key) aria-current="page" @endif class="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition {{ $tab === $key ? 'bg-primary text-white shadow' : 'bg-white text-on-surface-variant ring-1 ring-outline-variant/40 hover:bg-surface-high' }}"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">{{ $tabIcon }}</span>{{ $label }}@if($count !== null)<span class="min-w-[1.25rem] rounded-full px-1.5 py-0.5 text-center text-[10px] leading-none {{ $tab === $key ? 'bg-white/25 text-white' : ($count > 0 ? $badge : 'bg-surface-high text-on-surface-variant') }}">{{ $count }}</span>@endif</a>
+                    <a href="{{ route($section, ['tab' => $key]) }}" @if($tab === $key) aria-current="page" @endif class="app-tab"><span class="material-symbols-outlined"  aria-hidden="true">{{ $tabIcon }}</span>{{ $label }}@if($count !== null)<span class="min-w-[1.25rem] rounded-full px-1.5 py-0.5 text-center text-[10px] leading-none {{ $tab === $key ? 'bg-white/25 text-white' : ($count > 0 ? $badge : 'bg-surface-high text-on-surface-variant') }}">{{ $count }}</span>@endif</a>
                 @endforeach
             </nav>
             <div class="flex items-center gap-2">
