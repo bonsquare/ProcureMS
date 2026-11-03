@@ -112,4 +112,37 @@ class DashboardKpiTest extends TestCase
         $this->assertSame(0, $cash['paid']);
         $this->assertSame(0.0, $cash['paid_amount']);
     }
+
+    public function test_the_dashboard_is_usable_with_a_keyboard_and_a_screen_reader(): void
+    {
+        [$organization, $school, $user] = $this->school('a11y-a');
+        $this->request($organization, $school, $user, 'PR-A11Y-1', 'pending_approval', 1000);
+
+        $html = $this->actingAs($user)->get(route('home', ['view' => 'kpi']))->assertOk()->getContent();
+
+        // A skip link that lands on the main area.
+        $this->assertStringContainsString('href="#main-content"', $html);
+        $this->assertMatchesRegularExpression('/<main id="main-content" tabindex="-1"/', $html);
+        // Every progress bar has a name, so it is not read as a bare number.
+        $this->assertGreaterThan(0, substr_count($html, 'role="progressbar"'));
+        $this->assertSame(substr_count($html, 'role="progressbar"'), preg_match_all('/role="progressbar" aria-label="[^"]+"/', $html));
+        // The sparkline lists its six monthly numbers, and the pulsing dot stops for people who reduce motion.
+        $this->assertMatchesRegularExpression('/aria-label="Monthly requests, last six months: (\d+, ){5}\d+"/', $html);
+        $this->assertStringContainsString('animate-ping motion-reduce:animate-none', $html);
+        // The cards show where the keyboard is.
+        $this->assertStringContainsString('focus-visible:outline-2', $html);
+    }
+
+    public function test_the_live_redraw_keeps_the_labels_and_the_script_keeps_the_keyboard_place(): void
+    {
+        [$organization, $school, $user] = $this->school('a11y-live');
+        $page = $this->actingAs($user)->get(route('home', ['view' => 'kpi']))->assertOk();
+        $this->request($organization, $school, $user, 'PR-A11Y-2', 'pending_approval', 1000);
+
+        $live = $this->getJson(route('dashboard.live', ['h' => $page->viewData('dashboardHash')]))->assertOk()->json('html');
+
+        $this->assertStringContainsString('role="progressbar" aria-label=', $live);
+        // The redraw script remembers the focused card and the open meaning panel.
+        $page->assertSee('const focusKey', false)->assertSee('openPanels', false)->assertSee('back.focus({ preventScroll: true })', false);
+    }
 }
