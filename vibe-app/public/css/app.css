@@ -10,7 +10,7 @@ aside.fixed.inset-y-0 > nav::-webkit-scrollbar-thumb { background: rgba(255, 255
 aside.fixed.inset-y-0 > :not(nav) { flex-shrink: 0; }
 
 /* Sidebar look shared with the Procurement pages (civic navigation): paler navy, 15rem wide, same links. */
-aside.fixed.inset-y-0.w-72 { width: 15rem !important; background: #103967 !important; }
+aside.fixed.inset-y-0.w-72 { width: 15rem !important; }
 @media (min-width: 768px) {
   .md\:pl-72 { padding-left: 15rem !important; }
   header.md\:left-72 { left: 15rem !important; }
@@ -18,3 +18,17 @@ aside.fixed.inset-y-0.w-72 { width: 15rem !important; background: #103967 !impor
 aside.fixed.inset-y-0 > nav a, aside.fixed.inset-y-0 > nav summary { min-height: 44px; border-radius: .55rem; padding: .65rem .75rem; font-size: .875rem; font-weight: 500; color: #ffffffc9; }
 aside.fixed.inset-y-0 > nav a:hover, aside.fixed.inset-y-0 > nav summary:hover { background: #ffffff12 !important; color: #fff; }
 aside.fixed.inset-y-0 > nav a.bg-primary-container { background: #ffffff18 !important; color: #fff; font-weight: 700; box-shadow: inset 3px 0 0 #55c79e; }
+
+/* Lively theme (owner's decision 2026-11-03): a bright blue menu, warm coral buttons and highlights, soft cards.
+   The official documents and their print layouts are not touched. */
+aside.fixed.inset-y-0 { background: linear-gradient(185deg, #0b2f7a 0%, #1646b3 55%, #1f66e0 100%) !important; box-shadow: 4px 0 24px -8px rgba(15, 63, 153, .45); }
+aside.fixed.inset-y-0 > nav a.bg-primary-container { background: #ffffff26 !important; box-shadow: inset 4px 0 0 #ff8a5c; }
+aside.fixed.inset-y-0 > nav a:hover, aside.fixed.inset-y-0 > nav summary:hover { background: #ffffff1f !important; }
+header.fixed { background: linear-gradient(90deg, rgba(255, 255, 255, .92), rgba(228, 238, 255, .92)) !important; box-shadow: 0 2px 0 0 rgba(255, 122, 77, .55), 0 8px 24px -16px rgba(27, 79, 191, .5); }
+button.bg-primary, a.bg-primary, input[type="submit"].bg-primary { background-image: linear-gradient(135deg, #ff7a4d, #e8553a); background-color: #ee6a42; box-shadow: 0 4px 12px -4px rgba(232, 85, 58, .55); transition: filter .15s ease, transform .15s ease, box-shadow .15s ease; }
+button.bg-primary:hover, a.bg-primary:hover, input[type="submit"].bg-primary:hover { background-image: linear-gradient(135deg, #ff8a5c, #f0603f); filter: brightness(1.04); box-shadow: 0 6px 16px -4px rgba(232, 85, 58, .65); }
+button.bg-primary:active, a.bg-primary:active { transform: translateY(1px); }
+button.bg-primary:disabled { background-image: none; background-color: #a9b6d3; box-shadow: none; filter: none; }
+main section.bg-white.border, main article.bg-white.border, main form.bg-white.border { border-radius: .9rem; border-color: rgba(142, 166, 208, .45); box-shadow: 0 8px 24px -14px rgba(27, 79, 191, .35); }
+main thead { background-image: linear-gradient(180deg, #eaf1ff, #dfe9fb); }
+main h1 { color: #12327f; }

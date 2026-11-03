@@ -130,7 +130,7 @@
     dialog[data-split][open]{display:flex;flex-direction:row;overflow:hidden}
     dialog[data-split] .split-form{flex:1 1 44%;min-width:0;overflow-y:auto;max-height:94vh}
     dialog[data-split] .split-preview{display:flex;flex:1 1 56%;min-width:0;flex-direction:column;background:#d9dee5;border-left:1px solid #cbd7e1}
-    dialog[data-split] .split-bar{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:#fff;border-bottom:1px solid #cbd7e1;font-size:12px;font-weight:700;color:#103967}
+    dialog[data-split] .split-bar{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:#fff;border-bottom:1px solid #cbd7e1;font-size:12px;font-weight:700;color:#1b4fbf}
     dialog[data-split] .split-bar small{font-weight:400;color:#536273}
     dialog[data-split] iframe{width:100%;flex:1;border:0;background:#d9dee5}
     @media(max-width:1023px){dialog[data-split][open]{flex-direction:column;overflow-y:auto}dialog[data-split] .split-form{max-height:none;overflow:visible}dialog[data-split] .split-preview{min-height:60vh}}

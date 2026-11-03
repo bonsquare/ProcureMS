@@ -6,7 +6,7 @@
     <title>Trial · ProcureMS</title>
     @include('partials.favicon')
     <style>
-        :root { color-scheme: light; --navy: #103967; --green: #2a7f64; --ink: #0f172a; --muted: #536273; }
+        :root { color-scheme: light; --navy: #1b4fbf; --green: #2a7f64; --ink: #0f172a; --muted: #536273; }
         * { box-sizing: border-box; }
         body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 1.5rem; background: radial-gradient(1100px 360px at 50% -80px, #d3e2f2 0%, rgba(211, 226, 242, 0) 72%), #e6ebf1; font: 15px/1.5 Inter, "Segoe UI", system-ui, Arial, sans-serif; color: var(--ink); }
         main { width: min(34rem, 100%); background: #fff; border-radius: 1rem; padding: 2rem; box-shadow: 0 24px 60px -20px rgba(16, 57, 103, .35); border-top: 4px solid var(--green); }

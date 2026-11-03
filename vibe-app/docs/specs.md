@@ -1392,3 +1392,8 @@ Every kept alphalist (section 93) keeps each list's total and the tax of every D
 ## 116. Processing cover (owner's decision 2026-11-03)
 
 - While a form is being sent, the whole page is covered by a "Processing… please wait" notice above any open window, so nothing else can be pressed; it clears when the page reloads or after 60 seconds.
+
+## 117. Lively colour theme (owner's decision 2026-11-03)
+
+- The system colours are a bright blue menu (gradient) with warm coral buttons and highlights, a soft light-blue page background, brighter success and error colours, rounded cards with a soft shadow, and brighter dashboard cards. The colours are set in the Tailwind configuration of each page and in the Lively theme section at the end of `public/css/app.css`; the procurement pages follow through `public/css/procurement.css`.
+- The official documents and their print layouts are not changed (docs/specs.md section 55).

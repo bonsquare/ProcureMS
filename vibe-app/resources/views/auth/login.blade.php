@@ -4,7 +4,7 @@
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign in · ProcureMS</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config={theme:{extend:{colors:{surface:'#f5f8fb',primary:'#103967','primary-container':'#174b82','on-surface':'#172538','on-surface-variant':'#536273',secondary:'#369878','outline-variant':'#cbd7e1',error:'#b64a50'},fontFamily:{inter:['Inter','sans-serif']}}}};</script>
+    <script>tailwind.config={theme:{extend:{colors:{surface:'#f5f8fb',primary:'#1b4fbf','primary-container':'#2f6fe0','on-surface':'#14213d','on-surface-variant':'#536273',secondary:'#0fa37f','outline-variant':'#cbd7e1',error:'#e0414f'},fontFamily:{inter:['Inter','sans-serif']}}}};</script>
     <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet"><link rel="stylesheet" href="{{ asset('css/app.css') }}">
 @include('partials.input-fixes')
 @include('partials.favicon')
@@ -12,7 +12,7 @@
 <body class="min-h-screen bg-surface font-inter text-on-surface">
 <div class="grid min-h-screen lg:grid-cols-[minmax(0,5fr)_minmax(0,4fr)]">
     {{-- Brand panel: shown from large screens up --}}
-    <aside class="relative hidden overflow-hidden bg-gradient-to-br from-[#0b2a52] via-primary to-[#174b82] px-12 py-12 text-white lg:flex lg:flex-col lg:justify-between">
+    <aside class="relative hidden overflow-hidden bg-gradient-to-br from-[#0b2a52] via-primary to-[#2f6fe0] px-12 py-12 text-white lg:flex lg:flex-col lg:justify-between">
         <div class="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-white/5"></div>
         <div class="pointer-events-none absolute -bottom-40 -left-24 h-[28rem] w-[28rem] rounded-full bg-secondary/15"></div>
         <div class="relative flex items-center gap-4">

@@ -12,7 +12,7 @@
         :where({!! $screen !!}) :where(button:not(:disabled), a[class*="ring-1"], a[class*="rounded-lg"]):active { transform: scale(.97); }
 
         /* Keyboard focus is clear and soft. */
-        :where({!! $screen !!}) :where(button, a, summary):focus-visible { outline: 2px solid #174b82; outline-offset: 2px; border-radius: .375rem; }
+        :where({!! $screen !!}) :where(button, a, summary):focus-visible { outline: 2px solid #2f6fe0; outline-offset: 2px; border-radius: .375rem; }
 
         /* Windows: a blurred, dimmed background and an arrival with a soft spring. */
         :where({!! $screen !!}) dialog::backdrop { backdrop-filter: blur(6px) saturate(140%); }
@@ -50,19 +50,19 @@
     .app-toast { pointer-events: auto; display: flex; align-items: flex-start; gap: .625rem; border-radius: .75rem; border: 1px solid rgba(16, 57, 103, .14); background: rgba(255, 255, 255, .92); padding: .75rem .875rem; font-size: .8125rem; line-height: 1.35; color: #1b2a3a; box-shadow: 0 12px 32px -10px rgba(16, 57, 103, .35); backdrop-filter: blur(10px) saturate(160%); animation: apple-arrive 280ms cubic-bezier(.2, .9, .25, 1.04); transition: opacity 240ms ease, transform 240ms ease; }
     .app-toast[data-type="done"] { border-color: rgba(21, 128, 61, .35); } .app-toast[data-type="done"] .app-toast-icon { color: #15803d; }
     .app-toast[data-type="error"] { border-color: rgba(186, 26, 26, .4); } .app-toast[data-type="error"] .app-toast-icon { color: #ba1a1a; }
-    .app-toast[data-type="info"] .app-toast-icon { color: #174b82; }
+    .app-toast[data-type="info"] .app-toast-icon { color: #2f6fe0; }
     .app-toast.leaving { opacity: 0; transform: translateY(-6px); }
     .app-toast-icon { font-family: 'Material Symbols Outlined'; font-size: 20px; line-height: 1; flex: none; font-feature-settings: 'liga'; }
     .app-toast-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
     .app-toast-close { flex: none; border: 0; background: transparent; color: #536273; cursor: pointer; font-size: 1rem; line-height: 1; padding: 0 .125rem; }
     .app-spin { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: app-spin .7s linear infinite; vertical-align: -2px; margin-right: .4rem; }
-    .app-toast .app-spin { width: 18px; height: 18px; color: #174b82; margin: 0; flex: none; }
+    .app-toast .app-spin { width: 18px; height: 18px; color: #2f6fe0; margin: 0; flex: none; }
     /* While a form is being sent, the whole page is covered by one clear notice, so nothing else can be pressed. */
     #app-busy { position: fixed; inset: 0; margin: 0; padding: 0; border: 0; width: 100%; height: 100%; max-width: none; max-height: none; background: rgba(16, 57, 103, .42); backdrop-filter: blur(3px); color: #1b2a3a; align-items: center; justify-content: center; cursor: progress; }
     #app-busy:popover-open { display: flex; }
     .app-busy-card { display: flex; flex-direction: column; align-items: center; gap: .5rem; min-width: 16rem; max-width: calc(100vw - 2rem); border-radius: 1rem; background: #fff; padding: 1.75rem 2.25rem; text-align: center; box-shadow: 0 24px 60px -12px rgba(16, 57, 103, .55); }
-    .app-busy-spin { width: 44px; height: 44px; border-radius: 50%; border: 5px solid rgba(23, 75, 130, .18); border-top-color: #174b82; animation: app-spin .8s linear infinite; }
-    .app-busy-title { margin: .5rem 0 0; font-size: 1.125rem; font-weight: 700; color: #103967; }
+    .app-busy-spin { width: 44px; height: 44px; border-radius: 50%; border: 5px solid rgba(23, 75, 130, .18); border-top-color: #2f6fe0; animation: app-spin .8s linear infinite; }
+    .app-busy-title { margin: .5rem 0 0; font-size: 1.125rem; font-weight: 700; color: #1b4fbf; }
     .app-busy-note { margin: 0; font-size: .8125rem; color: #536273; }
     @keyframes app-spin { to { transform: rotate(360deg); } }
     @media (prefers-reduced-motion: reduce) { .app-spin { animation-duration: 1.6s; } .app-toast { animation: none; } }

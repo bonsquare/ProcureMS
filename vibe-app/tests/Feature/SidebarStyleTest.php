@@ -33,8 +33,8 @@ class SidebarStyleTest extends TestCase
         $tailwindPages = file_get_contents(public_path('css/app.css'));
         $procurementPages = file_get_contents(public_path('css/procurement.css'));
 
-        $this->assertStringContainsString('--civic-navy:#103967', $procurementPages);
-        $this->assertStringContainsString('aside.fixed.inset-y-0.w-72 { width: 15rem !important; background: #103967 !important; }', $tailwindPages);
+        $this->assertStringContainsString('--civic-navy:#1b4fbf', $procurementPages);
+        $this->assertStringContainsString('aside.fixed.inset-y-0.w-72 { width: 15rem !important; }', $tailwindPages);
         $this->assertStringContainsString('.md\:pl-72 { padding-left: 15rem !important; }', $tailwindPages);
         $this->assertStringContainsString('header.md\:left-72 { left: 15rem !important; }', $tailwindPages);
     }

@@ -22,7 +22,7 @@
         body:has(aside.fixed.left-0) dialog[data-split] { width: min(calc(100vw - 15rem - 1.5rem), 1320px) !important; }
     }
     .modal-x { position: absolute; top: .5rem; right: .5rem; z-index: 5; display: inline-flex; height: 2.25rem; width: 2.25rem; align-items: center; justify-content: center; border-radius: .5rem; background: #fff; color: #536273; box-shadow: 0 0 0 1px #cbd7e1; }
-    .modal-x:hover { background: #103967; color: #fff; }
+    .modal-x:hover { background: #1b4fbf; color: #fff; }
     dialog[data-split] .split-bar, #ors-preview-bar, #dv-preview-bar { padding-right: 3.25rem; }
 </style>
 <script>

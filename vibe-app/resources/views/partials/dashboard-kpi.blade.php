@@ -2,7 +2,7 @@
     $money = fn (float $value) => $value >= 1000000 ? '₱'.rtrim(rtrim(number_format($value / 1000000, 2), '0'), '.').'M' : ($value >= 1000 ? '₱'.rtrim(rtrim(number_format($value / 1000, 1), '0'), '.').'K' : '₱'.number_format($value, 0));
     $p = $kpi['procurement']; $b = $kpi['budget']; $l = $kpi['liquidation']; $s = $kpi['suppliers'];
     $tone = fn (string $name) => match ($name) {
-        'blue' => ['#e2edf7', '#286da8', '#c5dbef', '#eaf3fb'], 'green' => ['#ddf0e8', '#2a7f64', '#bfe3d3', '#e8f6f0'], 'amber' => ['#fff0dc', '#b46f1f', '#f2d9b0', '#fff6e8'], 'red' => ['#f8e2e4', '#b64a50', '#efc3c7', '#fdeeef'], default => ['#e7eef4', '#103967', '#cbd7e1', '#eef3f8'],
+        'blue' => ['#dbe8ff', '#1b5fd8', '#b9d0fb', '#eaf2ff'], 'green' => ['#d3f5e8', '#0b8a68', '#a8e6cf', '#e6faf2'], 'amber' => ['#ffe9cf', '#d9731a', '#fbd1a0', '#fff4e6'], 'red' => ['#ffdde0', '#d63a49', '#f9b8be', '#fff0f1'], default => ['#e7eef4', '#1b4fbf', '#cbd7e1', '#eef3f8'],
     };
     $utilTone = $b['utilization'] >= 100 ? 'red' : ($b['utilization'] >= 80 ? 'amber' : 'green');
     $cards = [
@@ -30,11 +30,11 @@
     ];
     $statusTotal = max(1, array_sum($p['by_status']));
     $maxMonth = max(1, collect($p['monthly'])->max('count'));
-    $flow = [['Allocated', $b['allocated'], '#103967'], ['Obligated', $b['obligated'], '#286da8'], ['Liquidated', $b['liquidated'], '#369878']];
+    $flow = [['Allocated', $b['allocated'], '#1b4fbf'], ['Obligated', $b['obligated'], '#286da8'], ['Liquidated', $b['liquidated'], '#369878']];
     $flowMax = max(1, $b['allocated'], $b['obligated']);
 @endphp
 <section aria-label="KPI dashboard" class="mb-6">
-    <div class="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-gradient-to-r from-[#103967] via-[#174b82] to-[#286da8] px-6 py-5 text-white shadow-md">
+    <div class="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-gradient-to-r from-[#1b4fbf] via-[#2f6fe0] to-[#ff7a4d] px-6 py-5 text-white shadow-md">
         <div class="min-w-0">
             <p class="text-xs font-bold uppercase tracking-[.14em] text-white/80">{{ $isMasterUser ? 'KPI Dashboard' : 'School Dashboard' }} <span class="font-semibold text-white/70">· FY {{ $kpi['year'] }}</span></p>
             <h2 class="mt-1 truncate text-2xl font-extrabold tracking-tight text-white">{{ $isMasterUser ? 'All schools' : ($currentSchool?->name ?? 'Your school') }}</h2>
@@ -54,7 +54,7 @@
 
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         @foreach($cards as $card)
-            @php [$soft, $strong, $edge, $tint] = $tone($card['tone']); $value = in_array($card['tone'], ['amber', 'red'], true) ? $strong : '#103967'; @endphp
+            @php [$soft, $strong, $edge, $tint] = $tone($card['tone']); $value = in_array($card['tone'], ['amber', 'red'], true) ? $strong : '#1b4fbf'; @endphp
             <a href="{{ $card['href'] }}" class="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-outline-variant/50 shadow-sm bg-gradient-to-br from-white to-surface-low/70 p-4 pl-5 transition duration-200 hover:-translate-y-0.5 hover:border-action/50 hover:shadow-lg">
                 <span class="absolute inset-y-0 left-0 w-1" style="background:{{ $strong }}" aria-hidden="true"></span>
                 <div class="flex items-start justify-between gap-3">

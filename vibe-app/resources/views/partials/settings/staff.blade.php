@@ -1,6 +1,6 @@
 @php
     $groupStyle = [
-        'bac_role' => ['#e4edf6', '#103967', 'gavel'],
+        'bac_role' => ['#e4edf6', '#1b4fbf', 'gavel'],
         'procurement_role' => ['#e2edf7', '#286da8', 'shopping_cart'],
         'document_role' => ['#ddf0e8', '#2a7f64', 'description'],
     ];

@@ -4,7 +4,7 @@
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pre-register School · ProcureMS</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config={theme:{extend:{colors:{surface:'#faf8ff','surface-low':'#f4f3fa','surface-container':'#eeedf4',primary:'#00236f','primary-container':'#1e3a8a','on-surface':'#1a1b21','on-surface-variant':'#444651',secondary:'#006c4a','outline-variant':'#c5c5d3',error:'#ba1a1a'},fontFamily:{inter:['Inter','sans-serif']}}}};</script>
+    <script>tailwind.config={theme:{extend:{colors:{surface:'#faf8ff','surface-low':'#f4f3fa','surface-container':'#eeedf4',primary:'#1b4fbf','primary-container':'#1e3a8a','on-surface':'#1a1b21','on-surface-variant':'#444651',secondary:'#006c4a','outline-variant':'#c5c5d3',error:'#ba1a1a'},fontFamily:{inter:['Inter','sans-serif']}}}};</script>
     <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet"><link rel="stylesheet" href="{{ asset('css/app.css') }}">
     <style>
         body { background: radial-gradient(1200px 500px at 50% -120px, #dbe7f5 0%, rgba(219,231,245,0) 70%), #f3f6fa; }
@@ -17,11 +17,11 @@
         #register-form input:focus, #register-form select:focus, #register-form textarea:focus { border-color: #286da8; box-shadow: 0 0 0 3px rgba(40,109,168,.16); }
         #register-form input:disabled { background: #f1f5f9; color: #64748b; cursor: not-allowed; }
         .reg-section { display: flex; align-items: center; gap: .75rem; padding-bottom: .9rem; border-bottom: 1px solid #e3eaf1; }
-        .reg-section .badge { display: grid; place-items: center; flex: none; height: 2.1rem; width: 2.1rem; border-radius: .65rem; background: #e4edf6; color: #103967; }
-        .reg-section h2 { margin: 0; font-size: 1rem; font-weight: 700; color: #103967; }
+        .reg-section .badge { display: grid; place-items: center; flex: none; height: 2.1rem; width: 2.1rem; border-radius: .65rem; background: #e4edf6; color: #1b4fbf; }
+        .reg-section h2 { margin: 0; font-size: 1rem; font-weight: 700; color: #1b4fbf; }
         .reg-section p { margin: .1rem 0 0; font-size: .76rem; color: #64748b; }
         .reg-step { display: inline-flex; align-items: center; gap: .5rem; border-radius: 999px; background: rgba(255,255,255,.12); padding: .35rem .8rem .35rem .4rem; font-size: .75rem; font-weight: 600; color: #fff; }
-        .reg-step b { display: grid; place-items: center; height: 1.4rem; width: 1.4rem; border-radius: 999px; background: #fff; color: #103967; font-size: .7rem; }
+        .reg-step b { display: grid; place-items: center; height: 1.4rem; width: 1.4rem; border-radius: 999px; background: #fff; color: #1b4fbf; font-size: .7rem; }
         .reg-actions { position: sticky; bottom: 0; z-index: 5; margin: 0 -1.5rem -1.5rem; padding: .9rem 1.5rem; background: rgba(255,255,255,.95); backdrop-filter: blur(6px); border-top: 1px solid #dbe4ec; border-radius: 0 0 1rem 1rem; }
         @media (min-width: 640px) { .reg-actions { margin: 0 -2rem -2rem; padding: .9rem 2rem; } }
     </style>
@@ -30,7 +30,7 @@
 </head>
 <body class="min-h-screen px-4 py-8 font-inter text-on-surface">
     <main class="mx-auto w-full max-w-4xl overflow-hidden rounded-2xl border border-outline-variant/30 bg-white shadow-xl shadow-slate-900/5">
-        <div class="relative overflow-hidden px-6 py-7 text-white sm:px-8" style="background:linear-gradient(135deg,#0b2a66 0%,#103967 55%,#1b5088 100%)">
+        <div class="relative overflow-hidden px-6 py-7 text-white sm:px-8" style="background:linear-gradient(135deg,#0b2a66 0%,#1b4fbf 55%,#1b5088 100%)">
             <span class="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-white/5" aria-hidden="true"></span>
             <span class="pointer-events-none absolute -bottom-24 right-24 h-48 w-48 rounded-full bg-white/5" aria-hidden="true"></span>
             @include('partials.brand', ['style' => 'register'])
@@ -49,7 +49,7 @@
         <form id="register-form" method="POST" action="{{ route('register.store') }}" class="grid grid-cols-1 gap-5 p-6 sm:p-8 md:grid-cols-2">@csrf<input type="hidden" name="system_user_confirmed" id="system-user-confirmed" value="">
             <input type="hidden" name="registration_type" id="registration-type" value="{{ old('registration_type', 'new') }}">
             <label for="vacant-toggle" class="reg-vacant flex cursor-pointer items-start gap-3 rounded-xl border-2 p-4 md:col-span-2">
-                <input type="checkbox" id="vacant-toggle" class="mt-1 h-5 w-5 shrink-0 accent-[#103967]">
+                <input type="checkbox" id="vacant-toggle" class="mt-1 h-5 w-5 shrink-0 accent-[#1b4fbf]">
                 <span><span class="flex items-center gap-2 text-sm font-bold text-primary"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">swap_horiz</span>Take over a vacant school</span><span class="mt-1 block text-xs text-on-surface-variant">Tick this if your school is already registered and has no user. You then fill in only your own information, and receive the school's data after the master approves. Leave it unticked to register a new school and fill in everything.</span></span>
             </label>
             <style>.reg-vacant { border-color: #cdd8e2; background: #fff; transition: border-color .15s, background .15s; } .reg-vacant:has(input:checked) { border-color: #286da8; background: #eef4fa; }</style>

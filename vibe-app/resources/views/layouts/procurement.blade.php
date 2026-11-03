@@ -6,7 +6,7 @@
     <title>@yield('title', 'Procurement') · ProcureMS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config={theme:{extend:{colors:{surface:'#e6edf4','surface-low':'#dbe5ee','surface-container':'#cfdbe6','surface-high':'#c0cfdd',primary:'#103967','primary-container':'#174b82',action:'#286da8',secondary:'#369878',attention:'#cc8535',error:'#b64a50','on-surface':'#172538','on-surface-variant':'#374a5d','outline-variant':'#7f95a9'},fontFamily:{inter:['Inter','sans-serif']}}}};
+        tailwind.config={theme:{extend:{colors:{surface:'#eef3fd','surface-low':'#e3ebfb','surface-container':'#d8e3fa','surface-high':'#c9d8f5',primary:'#1b4fbf','primary-container':'#2f6fe0',action:'#286da8',secondary:'#0fa37f',attention:'#cc8535',error:'#e0414f','on-surface':'#14213d','on-surface-variant':'#3b4a6b','outline-variant':'#8ea6d0'},fontFamily:{inter:['Inter','sans-serif']}}}};
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
