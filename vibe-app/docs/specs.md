@@ -1366,3 +1366,9 @@ Every kept alphalist (section 93) keeps each list's total and the tax of every D
 - The Support page (section 110) has a **Message Customer Services** form. A message is saved (`support_messages`) and forwarded by a Telegram bot to the Customer Services chat (`TelegramService`, config `services.telegram`: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `TELEGRAM_WEBHOOK_SECRET`). Not configured, or Telegram refuses: the message is saved only and the user is told so.
 - A reply written in that chat, as a Telegram reply to the forwarded message or as `#<number> text`, comes back through `POST /telegram/webhook/{secret}` (CSRF exempt; the secret is checked in the address and in the `X-Telegram-Bot-Api-Secret-Token` header; only the configured chat can answer) and is saved as a `support_replies` row; the message becomes Answered. `php artisan telegram:webhook https://domain` registers the webhook (public https address only).
 - A user sees only their own messages and the replies; the master sees all. `support.send` is allowed even when a subscription is read-only, so a lapsed school can still reach Customer Services. Limit: 10 messages a minute per user. Tests: `SupportTelegramTest`, `SupportPageTest`.
+
+## 112. Financial Reports presentation (owner's decision 2026-11-03)
+
+- Presentation only; the fields, wording of the report data and computations are unchanged. Every tab opens with a centered header (school, report title, period or "As of" date, fund cluster).
+- Negative balances show in brackets in the General Ledger, Subsidiary Ledger, Income Statement, Cash Flows and Balance Sheet, as the Trial Balance already did; Debit and Credit columns are unchanged.
+- Stronger borders on table headers, totals and grand totals. When printed, rows do not split across pages, headers repeat, and a Prepared by / Certified correct / Approved by signature block appears (hidden on screen).
