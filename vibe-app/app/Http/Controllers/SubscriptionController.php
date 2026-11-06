@@ -6,6 +6,7 @@ use App\Exceptions\DriveNotConnected;
 use App\Models\AuditLog;
 use App\Models\PaymentProof;
 use App\Models\School;
+use App\Models\Subscription;
 use App\Services\GoogleDriveService;
 use App\Services\SubscriptionPricing;
 use App\Support\PaymentSettings;
@@ -34,16 +35,46 @@ class SubscriptionController extends Controller
         $subscription = $request->user()->activeSubscription();
         $ends = $subscription?->status === 'grace_period' ? ($subscription->grace_period_end ?? $subscription->subscription_end) : $subscription?->subscription_end;
 
+        $quote = $this->pricing->quote($school);
+
         return view('subscription', [
             'school' => $school,
             'subscription' => $subscription,
             'daysLeft' => $ends ? (int) now()->startOfDay()->diffInDays($ends->copy()->startOfDay(), false) : null,
-            'quote' => $this->pricing->quote($school),
+            'quote' => $quote,
+            'nextBilling' => $this->nextBilling($subscription, (float) $quote['amount']),
             'settings' => PaymentSettings::get(),
             'proofs' => PaymentProof::query()->where('school_id', $school->id)->latest('id')->limit(20)->get(),
             'driveConnected' => $request->user()->driveIsConnected(),
             'canPay' => $request->user()->role === 'school_admin',
         ]);
+    }
+
+    /**
+     * The next billing period: the year that follows the current one, what it costs, when the bill opens (30 days before the current period ends)
+     * and when it is due (the day the current period ends; the grace period, when there is one, ends later).
+     *
+     * @return array<string, mixed>|null
+     */
+    private function nextBilling(?Subscription $subscription, float $amount): ?array
+    {
+        if (! $subscription?->subscription_end) {
+            return null;
+        }
+        $due = $subscription->subscription_end->copy()->startOfDay();
+        $opens = $due->copy()->subDays(30);
+        $today = now()->startOfDay();
+
+        return [
+            'from' => $due->copy()->addDay(), 'to' => $due->copy()->addYear(), 'amount' => $amount,
+            'opens' => $opens, 'due' => $due, 'grace_end' => $subscription->grace_period_end?->copy()->startOfDay(),
+            'state' => match (true) {
+                $today->gt($due) => 'overdue',
+                $today->gte($opens) => 'open',
+                default => 'upcoming',
+            },
+            'days' => (int) $today->diffInDays($due, false),
+        ];
     }
 
     /** The price after the promo code the school typed (the price the master set for the school always wins). */

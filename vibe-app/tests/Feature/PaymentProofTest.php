@@ -241,12 +241,12 @@ class PaymentProofTest extends TestCase
         $this->assertSame(0, PaymentProof::withoutGlobalScopes()->count());
     }
 
-    public function test_the_remarks_are_for_the_master_only(): void
+    public function test_the_school_sees_its_own_payment_details_and_the_master_sees_them_with_the_school(): void
     {
         $this->school->forceFill(['name' => 'Rosa D. Reyes', 'username' => 'rosa.reyes'])->save();
         $this->submit(['remarks' => 'Nature-XYZ-123', 'bank_account_used' => 'GCash 0999-111-2222', 'reference' => 'INSTA-9876'])->assertSessionHasNoErrors();
 
-        $this->actingAs($this->school)->get(route('subscription'))->assertOk()->assertDontSee('Nature-XYZ-123')->assertDontSee('GCash 0999-111-2222')->assertSee('INSTA-9876');
+        $this->actingAs($this->school)->get(route('subscription'))->assertOk()->assertSee('Nature-XYZ-123')->assertSee('GCash 0999-111-2222')->assertSee('INSTA-9876');
 
         auth()->logout();
         $panel = $this->actingAs($this->master)->getJson(route('subscriptions.live'))->assertOk()->json('html');

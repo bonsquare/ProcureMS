@@ -20,15 +20,37 @@
 @if(session('success'))<div class="mb-5 rounded border border-secondary/30 bg-secondary/5 px-4 py-3 text-sm text-secondary">{{ session('success') }}</div>@endif
 @if($readOnly)<div class="mb-5 rounded border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">Your school is read-only until the subscription is paid. You can still send your proof of payment from this page.</div>@endif
 
-<div class="grid gap-5 lg:grid-cols-2">
+<div class="grid gap-5 lg:grid-cols-3">
     <section class="{{ $card }}" data-subscription-status>
         <p class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Your plan</p>
         <div class="mt-2 flex items-center gap-3"><h2 class="text-2xl font-semibold">{{ $subscription ? \Illuminate\Support\Str::headline((string) $subscription->plan) : 'No plan yet' }}</h2><span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold {{ $tone }}">{{ \Illuminate\Support\Str::headline($status) }}</span></div>
         @if($subscription?->subscription_end)
             <p class="mt-2 text-sm text-on-surface-variant">Until {{ $subscription->subscription_end->format('F j, Y') }}@if($daysLeft !== null) · <strong class="{{ $daysLeft < 0 ? 'text-error' : 'text-on-surface' }}">{{ $daysLeft < 0 ? 'ended '.abs($daysLeft).' '.\Illuminate\Support\Str::plural('day', abs($daysLeft)).' ago' : ($daysLeft === 0 ? 'ends today' : $daysLeft.' '.\Illuminate\Support\Str::plural('day', $daysLeft).' left') }}</strong>@endif</p>
         @endif
+        @if($subscription?->starts_at && $subscription?->subscription_end && $subscription->subscription_end->gt($subscription->starts_at))
+            @php $termDays = max(1, $subscription->starts_at->diffInDays($subscription->subscription_end)); $termUsed = (int) min(100, max(0, round($subscription->starts_at->diffInDays(now()->startOfDay(), false) / $termDays * 100))); @endphp
+            <div class="mt-4"><div class="mb-1 flex justify-between text-[11px] font-semibold text-on-surface-variant"><span>{{ $subscription->starts_at->format('M j, Y') }}</span><span>{{ $termUsed }}% of the term used</span><span>{{ $subscription->subscription_end->format('M j, Y') }}</span></div><div class="h-2 overflow-hidden rounded-full bg-primary/15" role="progressbar" aria-label="Subscription term used" aria-valuenow="{{ $termUsed }}" aria-valuemin="0" aria-valuemax="100"><div class="h-full rounded-full bg-primary" style="width:{{ $termUsed }}%"></div></div></div>
+        @endif
         @if($subscription?->isTrial())<p class="mt-3 rounded-lg bg-primary/5 px-3 py-2 text-xs text-primary">The trial lets you try the system, but nothing can be printed and payments cannot be recorded. The Annual plan removes these limits.</p>@endif
     </section>
+
+    @if($nextBilling)
+    @php
+        $stateTone = ['upcoming' => 'bg-primary/10 text-primary', 'open' => 'bg-amber-100 text-amber-800', 'overdue' => 'bg-error/10 text-error'][$nextBilling['state']];
+        $stateText = ['upcoming' => 'Not open yet', 'open' => 'Open: pay before the due date', 'overdue' => 'Overdue'][$nextBilling['state']];
+    @endphp
+    <section class="{{ $card }}" data-next-billing>
+        <div class="flex items-start justify-between gap-2"><p class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Next billing period</p><span class="inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold {{ $stateTone }}">{{ $stateText }}</span></div>
+        <p class="mt-2 text-2xl font-semibold tabular-nums">{{ $peso($nextBilling['amount']) }}</p>
+        <p class="text-xs text-on-surface-variant">{{ $nextBilling['from']->format('M j, Y') }} to {{ $nextBilling['to']->format('M j, Y') }}</p>
+        <dl class="mt-3 space-y-1.5 text-sm">
+            <div class="flex justify-between gap-3"><dt class="text-on-surface-variant">Billing date</dt><dd class="font-semibold tabular-nums">{{ $nextBilling['opens']->format('M j, Y') }}</dd></div>
+            <div class="flex justify-between gap-3"><dt class="text-on-surface-variant">Due date</dt><dd class="font-semibold tabular-nums {{ $nextBilling['state'] === 'overdue' ? 'text-error' : '' }}">{{ $nextBilling['due']->format('M j, Y') }}</dd></div>
+            @if($nextBilling['grace_end'])<div class="flex justify-between gap-3"><dt class="text-on-surface-variant">Grace period ends</dt><dd class="font-semibold tabular-nums">{{ $nextBilling['grace_end']->format('M j, Y') }}</dd></div>@endif
+        </dl>
+        <p class="mt-3 text-xs text-on-surface-variant">@if($nextBilling['state'] === 'overdue'){{ abs($nextBilling['days']) }} {{ \Illuminate\Support\Str::plural('day', abs($nextBilling['days'])) }} past the due date.@else{{ $nextBilling['days'] }} {{ \Illuminate\Support\Str::plural('day', $nextBilling['days']) }} to the due date. The price follows your promo code or the price set for your school.@endif</p>
+    </section>
+    @endif
 
     <section class="{{ $card }}" data-subscription-price>
         <p class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Annual plan · what you pay</p>
@@ -44,7 +66,7 @@
         @endif
     </section>
 
-    <section class="{{ $card }} lg:col-span-2" data-subscription-account>
+    <section class="{{ $card }} lg:col-span-3" data-subscription-account>
         <p class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant"><span class="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[11px] text-white">1</span>Send the payment to</p>
         @if(filled($settings['account_name']) && filled($settings['account_number']))
             <div class="mt-3 flex flex-col gap-4 sm:flex-row sm:items-start">
@@ -84,38 +106,55 @@
 <section class="{{ $card }} mt-5" data-subscription-proofs>
     @php
         $proofTone = ['pending' => 'bg-amber-100 text-amber-800', 'approved' => 'bg-secondary/10 text-secondary', 'rejected' => 'bg-error/10 text-error'];
+        $proofBar = ['pending' => 'border-l-amber-400', 'approved' => 'border-l-secondary', 'rejected' => 'border-l-error'];
         $proofLabel = ['pending' => 'Waiting for review', 'approved' => 'Approved', 'rejected' => 'Rejected'];
         $proofIcon = ['pending' => 'hourglass_top', 'approved' => 'check_circle', 'rejected' => 'cancel'];
         $proofCounts = $proofs->countBy('status');
+        $approvedTotal = (float) $proofs->where('status', 'approved')->sum('amount_to_pay');
     @endphp
-    <div class="flex flex-wrap items-center justify-between gap-3">
-        <div><p class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Payment history and status</p><p class="mt-1 text-xs text-on-surface-variant">Every proof you sent and what the administrator decided. The latest 20 are shown.</p></div>
-        <div class="flex flex-wrap gap-2 text-xs font-semibold">@foreach($proofLabel as $key => $text)<span class="rounded-full px-3 py-1 {{ $proofTone[$key] }}">{{ $text }} · {{ $proofCounts[$key] ?? 0 }}</span>@endforeach</div>
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><span class="material-symbols-outlined text-[22px]" aria-hidden="true">receipt_long</span></span>
+            <div><p class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Payment history and status</p><p class="mt-0.5 text-xs text-on-surface-variant">Every proof you sent and what the administrator decided. The latest 20 are shown.</p></div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 text-xs font-semibold">
+            @foreach($proofLabel as $key => $text)<span class="rounded-full px-3 py-1 {{ $proofTone[$key] }}">{{ $text }} · {{ $proofCounts[$key] ?? 0 }}</span>@endforeach
+            <span class="rounded-full bg-primary/10 px-3 py-1 text-primary">Total approved · {{ $peso($approvedTotal) }}</span>
+        </div>
     </div>
-    <ul class="mt-4 divide-y divide-outline-variant/30 text-sm">
-        @forelse($proofs as $proof)
-            <li class="py-4">
-                <div class="flex flex-wrap items-start justify-between gap-3">
-                    <div class="min-w-0">
-                        <p class="font-semibold">{{ $peso($proof->amount_to_pay) }} <span class="font-normal text-on-surface-variant">· InstaPay Ref. {{ $proof->reference }}</span></p>
-                        <p class="mt-1 text-xs text-on-surface-variant">Paid {{ ($proof->transacted_at ?? $proof->paid_at)?->format($proof->transacted_at ? 'M d, Y g:i A' : 'M d, Y') }}· sent {{ $proof->created_at->format('M d, Y g:i A') }}</p>
-                    </div>
-                    <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold {{ $proofTone[$proof->status] ?? '' }}"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">{{ $proofIcon[$proof->status] ?? 'info' }}</span>{{ $proofLabel[$proof->status] ?? $proof->status }}</span>
-                </div>
-                <p class="mt-2 rounded-lg px-3 py-2 text-xs {{ $proof->status === 'approved' ? 'bg-secondary/5 text-secondary' : ($proof->status === 'rejected' ? 'bg-error/5 text-error' : 'bg-amber-50 text-amber-900') }}">
-                    @if($proof->status === 'approved')
-                        Approved by the administrator{{ $proof->reviewed_at ? ' on '.$proof->reviewed_at->format('M d, Y g:i A') : '' }}. Your subscription was updated.
-                    @elseif($proof->status === 'rejected')
-                        Rejected by the administrator{{ $proof->reviewed_at ? ' on '.$proof->reviewed_at->format('M d, Y g:i A') : '' }}.{{ $proof->reject_reason ? ' Reason: '.$proof->reject_reason : '' }} Please send a new proof.
-                    @else
-                        Sent on {{ $proof->created_at->format('M d, Y g:i A') }}. The administrator has not reviewed it yet.
-                    @endif
-                </p>
-            </li>
-        @empty
-            <li class="py-4 text-on-surface-variant">You have not sent a proof yet.</li>
-        @endforelse
-    </ul>
+    <div class="mt-4 overflow-x-auto rounded-xl border border-outline-variant/40">
+        <table class="w-full min-w-[900px] text-left text-sm">
+            <thead class="bg-surface-low text-[11px] uppercase tracking-wider text-on-surface-variant"><tr><th class="px-4 py-2.5">Bank / E-Wallet</th><th class="px-4 py-2.5">InstaPay Ref. No.</th><th class="px-4 py-2.5">Date of Payment</th><th class="px-4 py-2.5 text-right">Amount Paid</th><th class="px-4 py-2.5">Status</th><th class="px-4 py-2.5">Remarks</th><th class="px-4 py-2.5">Proof</th></tr></thead>
+            @forelse($proofs as $proof)
+                <tbody class="border-t border-outline-variant/30">
+                    <tr class="align-top">
+                        <td class="px-4 pb-1 pt-3 break-words">{{ $proof->bank_account_used ?: '—' }}</td>
+                        <td class="px-4 pb-1 pt-3 font-semibold break-all">{{ $proof->reference }}</td>
+                        <td class="px-4 pb-1 pt-3 tabular-nums"><span class="font-semibold">{{ ($proof->transacted_at ?? $proof->paid_at)?->format('M d, Y') ?? '—' }}</span><span class="block text-xs text-on-surface-variant">{{ $proof->transacted_at?->format('g:i A') }}</span></td>
+                        <td class="px-4 pb-1 pt-3 text-right tabular-nums"><span class="font-semibold">{{ $peso($proof->amount_to_pay) }}</span>@if(((float) $proof->discount_amount) > 0)<span class="block text-xs text-on-surface-variant">{{ $peso($proof->list_price) }} − {{ $peso($proof->discount_amount) }} discount</span>@endif</td>
+                        <td class="px-4 pb-1 pt-3"><span class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $proofTone[$proof->status] ?? '' }}"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">{{ $proofIcon[$proof->status] ?? 'info' }}</span>{{ $proofLabel[$proof->status] ?? $proof->status }}</span></td>
+                        <td class="px-4 pb-1 pt-3 break-words text-xs text-on-surface-variant">{{ $proof->remarks ?: '—' }}</td>
+                        <td class="px-4 pb-1 pt-3 text-xs">@if($proof->drive_link)<a href="{{ $proof->drive_link }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 break-all font-semibold text-primary hover:underline"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">attach_file</span>{{ $proof->file_name ?: 'Open the file' }}</a>@else<span class="text-on-surface-variant">—</span>@endif</td>
+                    </tr>
+                    <tr>
+                        <td colspan="7" class="px-4 pb-3 pt-1">
+                            <p class="break-words rounded-md px-2.5 py-1.5 text-xs leading-snug {{ $proof->status === 'approved' ? 'bg-secondary/5 text-secondary' : ($proof->status === 'rejected' ? 'bg-error/5 text-error' : 'bg-amber-50 text-amber-900') }}">
+                                @if($proof->status === 'approved')
+                                    Approved by the administrator{{ $proof->reviewed_at ? ' on '.$proof->reviewed_at->format('M d, Y g:i A') : '' }}. Your subscription was updated.
+                                @elseif($proof->status === 'rejected')
+                                    Rejected by the administrator{{ $proof->reviewed_at ? ' on '.$proof->reviewed_at->format('M d, Y g:i A') : '' }}.{{ $proof->reject_reason ? ' Reason: '.$proof->reject_reason : '' }} Please send a new proof.
+                                @else
+                                    Sent on {{ $proof->created_at->format('M d, Y g:i A') }}. The administrator has not reviewed it yet.
+                                @endif
+                            </p>
+                        </td>
+                    </tr>
+                </tbody>
+            @empty
+                <tbody><tr><td colspan="7" class="px-4 py-8 text-center text-on-surface-variant">You have not sent a proof yet.</td></tr></tbody>
+            @endforelse
+        </table>
+    </div>
 </section>
 
 <dialog data-qr-dialog class="rounded-2xl bg-white p-4 shadow-2xl backdrop:bg-black/60" style="width:min(34rem,calc(100% - 1.5rem))">

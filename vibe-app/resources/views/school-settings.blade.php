@@ -14,7 +14,7 @@
         'info' => ['School Information', 'domain'],
         'users' => ['System Users', 'manage_accounts'],
         'staff' => ['Employees & Roles', 'badge'],
-        'papers' => ['Liquidation Papers', 'checklist'],
+        'papers' => ['Documentary Requirements', 'checklist'],
     ];
     if (! $isMasterUser) {
         $tabs['transfer'] = ['Official Station Management', 'swap_horiz'];
