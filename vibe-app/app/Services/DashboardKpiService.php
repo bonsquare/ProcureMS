@@ -106,14 +106,15 @@ class DashboardKpiService
     {
         $awaiting = LiquidationReport::withoutGlobalScopes()->whereIn('school_id', $schoolIds)->where('status', 'approved')
             ->whereNotNull('dv_number')->whereNull('paid_at')->where('dv_non_cash', false)->get(['id', 'amount']);
-        $paid = LiquidationReport::withoutGlobalScopes()->whereIn('school_id', $schoolIds)->whereNotNull('paid_at')->whereYear('paid_at', $year)->where('dv_non_cash', false)->get(['id', 'amount']);
+        $paid = LiquidationReport::withoutGlobalScopes()->whereIn('school_id', $schoolIds)->whereNotNull('paid_at')->whereYear('paid_at', $year)->where('dv_non_cash', false)->get(['id', 'amount', 'dv_deductions']);
         $school = $schoolIds->count() === 1 ? School::withoutGlobalScopes()->find($schoolIds->first()) : null;
 
         return [
             'awaiting' => $awaiting->count(),
             'awaiting_amount' => (float) $awaiting->sum('amount'),
             'paid' => $paid->count(),
-            'paid_amount' => (float) $paid->sum('amount'),
+            // The cash paid out is the DV less its deductions (withheld tax stays a liability until it is remitted), as in the cash reports.
+            'paid_amount' => round((float) $paid->sum(fn (LiquidationReport $report) => (float) $report->amount - app(CashReportService::class)->deductionsOf($report)), 2),
             'balance' => $school ? (float) app(CashReportService::class)->build($school, Carbon::create($year, 1, 1), Carbon::create($year, 12, 31))['ending'] : null,
         ];
     }

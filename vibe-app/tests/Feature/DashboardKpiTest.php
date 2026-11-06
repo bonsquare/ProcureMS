@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\BudgetAllocation;
+use App\Models\LiquidationReport;
 use App\Models\Organization;
 use App\Models\ProcurementRequest;
 use App\Models\School;
@@ -111,6 +112,23 @@ class DashboardKpiTest extends TestCase
         $cash = $page->viewData('kpi')['cash'];
         $this->assertSame(0, $cash['paid']);
         $this->assertSame(0.0, $cash['paid_amount']);
+    }
+
+    public function test_the_disbursement_is_the_dv_amount_less_the_tax_withheld_from_it(): void
+    {
+        [$organization, $school, $user] = $this->school('paid-a');
+        $paid = fn (string $number, float $amount, array $deductions) => LiquidationReport::create([
+            'organization_id' => $organization->id, 'school_id' => $school->id, 'report_number' => 'LR-'.$number, 'ors_number' => 'ORS-'.$number, 'dv_number' => 'DV-'.$number,
+            'amount' => $amount, 'status' => 'approved', 'payee' => 'Store', 'purpose' => 'Purchase', 'source_of_fund' => 'MOOE', 'dv_deductions' => $deductions,
+            'payment_mode' => 'MDS Check', 'payment_reference' => 'CHK-'.$number, 'paid_at' => now()->startOfYear()->addDays(10),
+        ]);
+        $paid('1', 89230, ['withholding_tax' => 4780.18]);
+        $paid('2', 1000, []);
+
+        $cash = $this->actingAs($user)->get(route('home', ['view' => 'kpi']))->assertOk()->viewData('kpi')['cash'];
+
+        $this->assertSame(2, $cash['paid']);
+        $this->assertSame(85449.82, $cash['paid_amount']);
     }
 
     public function test_the_dashboard_is_usable_with_a_keyboard_and_a_screen_reader(): void

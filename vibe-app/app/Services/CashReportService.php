@@ -218,7 +218,7 @@ class CashReportService
     }
 
     /** The total of the "Less:" deductions of the DV, 0 when it has none. */
-    private function deductionsOf(LiquidationReport $report): float
+    public function deductionsOf(LiquidationReport $report): float
     {
         $saved = $report->dv_deductions ?? [];
         $other = collect($saved['other'] ?? [])->sum(fn ($row) => (float) ($row['amount'] ?? 0));

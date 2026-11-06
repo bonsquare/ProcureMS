@@ -142,3 +142,4 @@ Full dated log moved out of CLAUDE.md to keep that file short. Nothing was remov
 - 2026-11-03: Pastel colour rule now also covers metric tiles that are links (Procurement overview) and aside boxes (docs/specs.md section 118). Deployed 2026-11-03 (Railway eb5a4549).
 - 2026-11-03: New ProcMS logo on the menus, login and registration pages and as the tab icon; sidebar logo full width, "Civic Operations" caption removed (docs/specs.md section 118). Deployed 2026-11-03 (Railway eb5a4549).
 - 2026-11-03: Accessibility pass on the login page and dashboard; engineering-standards section added to CLAUDE.md (docs/specs.md section 118). Deployed 2026-11-03 (Railway eb5a4549).
+- 2026-11-06: Dashboard Disbursement is net of withheld tax (matches the cash reports); login notice restyled and the right column fits one screen (docs/specs.md section 119).
