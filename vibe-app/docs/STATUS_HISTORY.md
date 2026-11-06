@@ -144,3 +144,4 @@ Full dated log moved out of CLAUDE.md to keep that file short. Nothing was remov
 - 2026-11-03: Accessibility pass on the login page and dashboard; engineering-standards section added to CLAUDE.md (docs/specs.md section 118). Deployed 2026-11-03 (Railway eb5a4549).
 - 2026-11-06: Dashboard Disbursement is net of withheld tax (matches the cash reports); login notice restyled and the right column fits one screen (docs/specs.md section 119).
 - 2026-11-06: Allotment Registry: Edit and Delete for manual allotments, returning to the registry (docs/specs.md section 119).
+- 2026-11-06: IARS with many items: item names upward, header as tall as the longest name (wraps past 32 mm), Arial header, roomier rows and School Head block; FINAL (docs/specs.md section 119).
