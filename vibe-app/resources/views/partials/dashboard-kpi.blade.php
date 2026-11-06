@@ -33,18 +33,29 @@
     $yearProgress = (int) round($today->dayOfYear / $daysInYear * 100);
 @endphp
 <section aria-label="KPI dashboard" class="mb-6">
-    <div class="dash-hero mb-5 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-gradient-to-r from-[#0f6f7e] via-[#14818f] to-[#f2b134] px-6 py-5 text-white shadow-md">
+    <div class="dash-hero relative isolate mb-5 flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-2xl border border-white/50 px-6 py-5 text-white" style="background:linear-gradient(120deg,rgba(15,111,126,.88),rgba(20,129,143,.80) 55%,rgba(242,177,52,.72));-webkit-backdrop-filter:blur(18px) saturate(170%);backdrop-filter:blur(18px) saturate(170%);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),inset 0 -1px 0 rgba(255,255,255,.15),0 14px 34px -12px rgba(10,58,71,.5)">
+        <span class="pointer-events-none absolute -left-10 -top-16 -z-10 h-48 w-48 rounded-full bg-white/25 blur-3xl" aria-hidden="true"></span>
+        <span class="pointer-events-none absolute -bottom-20 right-24 -z-10 h-52 w-52 rounded-full bg-[#f2b134]/45 blur-3xl" aria-hidden="true"></span>
+        <span class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-1/2 bg-gradient-to-b from-white/20 to-transparent" aria-hidden="true"></span>
         <div class="min-w-0">
-            <p class="text-xs font-bold uppercase tracking-[.14em] text-white">{{ $isMasterUser ? 'KPI Dashboard' : 'School Dashboard' }} <span class="font-semibold text-white">· FY {{ $kpi['year'] }}</span></p>
-            <h2 class="mt-1 truncate text-2xl font-extrabold tracking-tight text-white">{{ $isMasterUser ? 'All schools' : ($currentSchool?->name ?? 'Your school') }}</h2>
-            @unless($isMasterUser)<p class="mt-1 text-sm text-white">Welcome, <strong class="font-extrabold text-white">{{ auth()->user()->name }}</strong>. Your procurement, budget, and liquidation at a glance.</p>
+            <p class="text-base font-bold uppercase tracking-[.14em] text-white">{{ $isMasterUser ? 'KPI Dashboard' : 'School Dashboard' }} <span class="font-semibold text-white">· FY {{ $kpi['year'] }}</span></p>
+            <h2 class="mt-1.5 truncate text-4xl font-extrabold tracking-tight text-white">{{ $isMasterUser ? 'All schools' : ($currentSchool?->name ?? 'Your school') }}</h2>
+            @unless($isMasterUser)<p class="mt-2 text-lg text-white">Welcome, <strong class="font-extrabold text-white">{{ auth()->user()->name }}</strong>. Your procurement, budget, and liquidation at a glance.</p>
             @php $mySubscription = auth()->user()->activeSubscription(); @endphp
             @if($mySubscription?->isTrial() && $mySubscription->subscription_end)<a href="{{ route('subscription') }}" class="mt-2 inline-flex items-center gap-1 rounded-full border border-white/30 bg-white/15 px-3 py-1 text-xs font-semibold text-white">Trial · {{ max(0, (int) now()->startOfDay()->diffInDays(\Illuminate\Support\Carbon::parse($mySubscription->subscription_end)->startOfDay(), false)) }} day(s) left</a>@endif
             @endunless
         </div>
-        <div class="flex min-w-[15rem] flex-col gap-2 rounded-xl bg-[#0a3a47]/65 p-3 text-xs">
-            <p class="flex w-fit items-center gap-1.5 self-end rounded-full border border-white/30 bg-white/15 px-3 py-1 font-bold text-white" aria-live="polite"><span class="relative flex h-2 w-2"><span class="absolute inline-flex h-full w-full animate-ping motion-reduce:animate-none rounded-full bg-emerald-300 opacity-70"></span><span class="relative inline-block h-2 w-2 rounded-full bg-emerald-300" data-live-dot></span></span><span data-live-status>Live</span></p>
-            <div><div class="mb-1 flex justify-between font-semibold text-white"><span>Fiscal year {{ $kpi['year'] }}</span><span>Day {{ $today->dayOfYear }} of {{ $daysInYear }} · {{ $yearProgress }}%</span></div><div class="dash-bar h-2 overflow-hidden rounded-full bg-white/30" role="progressbar" aria-label="Fiscal year {{ $kpi['year'] }} progress" aria-valuenow="{{ $yearProgress }}" aria-valuemin="0" aria-valuemax="100"><div class="h-full rounded-full bg-white" style="width:{{ $yearProgress }}%"></div></div></div>
+        <div class="w-full min-w-[15rem] rounded-2xl border border-white/40 px-4 py-3 text-white sm:w-64" style="background:linear-gradient(135deg,rgba(255,255,255,.34),rgba(255,255,255,.10));-webkit-backdrop-filter:blur(16px) saturate(170%);backdrop-filter:blur(16px) saturate(170%);box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -1px 0 rgba(255,255,255,.12),0 10px 28px -8px rgba(10,58,71,.45);text-shadow:0 1px 2px rgba(10,58,71,.35)">
+            <div class="flex items-center justify-between gap-3">
+                <p class="text-xs font-bold uppercase tracking-[.14em] text-white">Fiscal year {{ $kpi['year'] }}</p>
+                <p class="flex items-center gap-1.5 rounded-full border border-white/40 bg-white/20 px-2.5 py-0.5 text-[11px] font-bold text-white" aria-live="polite"><span class="relative flex h-2 w-2"><span class="absolute inline-flex h-full w-full animate-ping motion-reduce:animate-none rounded-full bg-emerald-300 opacity-70"></span><span class="relative inline-block h-2 w-2 rounded-full bg-emerald-300" data-live-dot></span></span><span data-live-status>Live</span></p>
+            </div>
+            <div class="mt-2 flex items-end justify-between gap-3">
+                <p class="text-4xl font-extrabold leading-none tabular-nums text-white">{{ $yearProgress }}<span class="text-xl font-bold">%</span></p>
+                <p class="pb-0.5 text-right text-xs font-semibold leading-snug text-white">Day {{ $today->dayOfYear }} of {{ $daysInYear }}<br><span class="font-medium text-white/90">{{ $daysInYear - $today->dayOfYear }} days to year end</span></p>
+            </div>
+            <div class="dash-bar mt-2.5 h-2.5 overflow-hidden rounded-full bg-white/25" role="progressbar" aria-label="Fiscal year {{ $kpi['year'] }} progress" aria-valuenow="{{ $yearProgress }}" aria-valuemin="0" aria-valuemax="100"><div class="h-full rounded-full bg-white" style="width:{{ $yearProgress }}%"></div></div>
+            <div class="mt-1 flex justify-between text-[10px] font-semibold uppercase tracking-wider text-white/90"><span>Jan 1</span><span>Dec 31</span></div>
         </div>
         @if($isMasterUser)
             <div class="flex flex-wrap gap-2 text-xs">

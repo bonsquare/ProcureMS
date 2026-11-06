@@ -153,3 +153,4 @@ Full dated log moved out of CLAUDE.md to keep that file short. Nothing was remov
 - 2026-11-06: Cash cards net of tax, Cash Disbursement Reports tab, Bank Reconciliation form fixes, Cash Summaries page, and Reports & Analytics generating its own reports (docs/specs.md section 119). Committed, not yet deployed.
 - 2026-11-06: clock and notification bell work on every page again (bad selector escape fixed); accounting reviewers are told of ORS for review and ready for a DV (docs/specs.md section 119). Committed, not yet deployed.
 - 2026-11-06: dashboard header card: date and time line removed, Live pill without a time, year progress bar kept (docs/specs.md section 119). Committed, not yet deployed.
+- 2026-11-06: dashboard header redesigned as glass with larger text and a smaller fiscal-year card (docs/specs.md section 119).
