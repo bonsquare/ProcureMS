@@ -82,12 +82,16 @@ class NotificationsTest extends TestCase
         $this->report($user, ['status' => 'approved', 'dv_number' => 'DV-1']);
         $this->report($user, ['status' => 'approved', 'dv_number' => 'DV-2', 'paid_at' => now()]);
         $this->report($user, ['status' => 'pending_documents']);
+        $this->report($user, ['status' => 'for_review']);
+        $this->report($user, ['status' => 'approved']);
 
         $titles = $this->titles($user);
 
         $this->assertContains('1 ORS returned to you', $titles);
         $this->assertContains('1 DV waiting for payment', $titles);
         $this->assertContains('1 ORS with missing papers', $titles);
+        $this->assertContains('1 ORS for your review', $titles);
+        $this->assertContains('1 ORS ready for a DV', $titles);
 
         auth()->logout();
         $inspector = $this->schoolUser('active', 200, 'inspector', 'S2');
@@ -118,6 +122,8 @@ class NotificationsTest extends TestCase
         $this->assertSame(1, substr_count($html, 'data-topbar-tools-script'));
         $this->assertStringContainsString(trim(json_encode(route('notifications')), '"'), $html);
         $this->assertStringContainsString(trim(json_encode(route('server-time')), '"'), $html);
+        // The script must build a valid selector: a bad escape in it stopped the clock and the bell on every page.
+        $this->assertStringContainsString('document.querySelector(\'[data\\\\2d official-page]\')', $html);
         auth()->logout();
         $this->actingAs($this->schoolUser('active', 200, 'school_admin', 'B2'))->get(route('subscription'))->assertSee('data-topbar-tools-script', false);
     }

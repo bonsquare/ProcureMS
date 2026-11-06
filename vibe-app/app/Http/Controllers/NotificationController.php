@@ -79,6 +79,12 @@ class NotificationController extends Controller
         if ($user->hasPermission('cash.pay') && ($waiting = $reports()->where('status', 'approved')->whereNotNull('dv_number')->whereNull('paid_at')->where('dv_non_cash', false)->count()) > 0) {
             $items->push($this->item($waiting.' '.Str::plural('DV', $waiting).' waiting for payment', 'Record the payment in Cash.', route('cash'), 'info'));
         }
+        if ($user->hasPermission('accounting.approve') && ($review = $reports()->where('status', 'for_review')->count()) > 0) {
+            $items->push($this->item($review.' ORS for your review', 'Review it, then approve it or ask for the missing papers.', route('accounting', ['tab' => 'for_review']), 'info'));
+        }
+        if ($user->hasPermission('accounting.approve') && ($ready = $reports()->where('status', 'approved')->whereNull('dv_number')->count()) > 0) {
+            $items->push($this->item($ready.' ORS ready for a DV', 'Create the Disbursement Voucher that goes to Cash.', route('accounting', ['tab' => 'for_dv']), 'info'));
+        }
         if ($user->hasPermission('accounting.approve') && ($missing = $reports()->where('status', 'pending_documents')->count()) > 0) {
             $items->push($this->item($missing.' ORS with missing papers', 'Papers are asked for before the ORS can go on.', route('accounting', ['tab' => 'pending_documents']), 'warn'));
         }

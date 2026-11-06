@@ -151,3 +151,4 @@ Full dated log moved out of CLAUDE.md to keep that file short. Nothing was remov
 - 2026-11-06: Budget Operations counts and lists only actual obligations (ORS), not procurement requests without an ORS (docs/specs.md section 119). Committed, not yet deployed.
 - 2026-11-06: Accounting Review shows eight cards: Total ORS Amount counts only real ORS; DV cards are net of withheld tax; advances shown apart (docs/specs.md section 119). Committed, not yet deployed.
 - 2026-11-06: Cash cards net of tax, Cash Disbursement Reports tab, Bank Reconciliation form fixes, Cash Summaries page, and Reports & Analytics generating its own reports (docs/specs.md section 119). Committed, not yet deployed.
+- 2026-11-06: clock and notification bell work on every page again (bad selector escape fixed); accounting reviewers are told of ORS for review and ready for a DV (docs/specs.md section 119). Committed, not yet deployed.
