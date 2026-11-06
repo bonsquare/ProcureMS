@@ -676,16 +676,32 @@
 
         const creditAccountFor = (mode) => (mode === 'MDS Check' || mode === 'ADA') ? MDS : '';
 
-        window.journalOpen = (button) => {
+        // A non-cash DV that records the advance received starts as Dr Cash-MDS / Cr Advances for Operating Expenses; a payment starts as Dr expense / Cr cash.
+        const ADVANCES = '1990101000';
+        const nonCash = form.querySelector('[name=dv_non_cash]');
+        let opened = null;
+        const fillJournal = () => {
             rows.innerHTML = '';
-            amount = cents(button.dataset.amountRaw);
+            if (! opened) return;
             const total = (amount / 100).toFixed(2);
+            if (nonCash && nonCash.checked) {
+                addRow(MDS, total, '');
+                addRow(ADVANCES, '', total);
+                refresh();
+                return;
+            }
             // An ORS charged to several UACS codes debits each of them with its own amount.
-            let charged = []; try { charged = JSON.parse(button.dataset.expenseLines || '[]'); } catch (error) { charged = []; }
-            if (charged.length > 1) { charged.forEach((charge) => addRow(charge.code || '', charge.amount, '')); } else { addRow(button.dataset.expenseCode || '', total, ''); }
+            let charged = []; try { charged = JSON.parse(opened.dataset.expenseLines || '[]'); } catch (error) { charged = []; }
+            if (charged.length > 1) { charged.forEach((charge) => addRow(charge.code || '', charge.amount, '')); } else { addRow(opened.dataset.expenseCode || '', total, ''); }
             addRow(creditAccountFor(form.querySelector('[name=payment_mode]').value), '', total, true);
             syncDeductions();
         };
+        window.journalOpen = (button) => {
+            opened = button;
+            amount = cents(button.dataset.amountRaw);
+            fillJournal();
+        };
+        if (nonCash) { nonCash.addEventListener('change', fillJournal); }
 
         // The "Less:" deductions are credited to Due to BIR and only the net is credited to cash, while the cash line is still the one filled in by itself.
         const DUE_TO_BIR = '2020101000';

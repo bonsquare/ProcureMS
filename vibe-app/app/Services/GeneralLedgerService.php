@@ -2,14 +2,13 @@
 
 namespace App\Services;
 
-use App\Models\CashFundReceipt;
 use App\Models\ChartOfAccount;
 use App\Models\LiquidationReport;
 use App\Models\OpeningBalance;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
-/** Builds the books on the fly: opening balances, cash fund receipts and approved disbursement vouchers become postings, and every financial report reads them. */
+/** Builds the books on the fly from the journal only: opening balances and the journal entries of approved disbursement vouchers become postings, and every financial report reads them. Nothing is posted that is not in a journal (owner's rule 2026-11-06). */
 class GeneralLedgerService
 {
     public const DEFAULT_FUND = 'General Fund';
@@ -33,29 +32,6 @@ class GeneralLedgerService
 
         foreach (OpeningBalance::query()->whereIn('school_id', $schoolIds)->get() as $row) {
             $postings->push($this->posting('opening', $row->as_of, $row->account_code, $row->account_title, $row->debit, $row->credit, $row->school_id, $row->fund_cluster, 'Opening balance', 'Opening balance', 'Opening balance'));
-        }
-
-        $credits = config('financial_reports.receipt_credit');
-        $cash = config('financial_reports.cash_account');
-        $receipts = CashFundReceipt::query()->whereIn('school_id', $schoolIds)->whereIn('kind', array_keys($credits))->get();
-        // The advance received is booked once: a non-cash DV that records it (Advances for Operating Expenses) is the book entry, so the cash advance receipt of the same amount is not posted again.
-        $advanceDvs = LiquidationReport::query()->whereIn('school_id', $schoolIds)->where('status', 'approved')->where('dv_non_cash', true)->whereNotNull('dv_number')->whereNotNull('dv_date')->with('journalLines')->get()
-            ->map(fn (LiquidationReport $report) => ['school' => $report->school_id, 'amount' => $report->advanceAmount()])->filter(fn (array $advance) => $advance['amount'] > 0)->values()->all();
-        foreach ($receipts as $receipt) {
-            if ($receipt->kind === 'cash_advance') {
-                $booked = array_search(true, array_map(fn (array $advance) => $advance['school'] === $receipt->school_id && abs($advance['amount'] - (float) $receipt->amount) < 0.005, $advanceDvs), true);
-                if ($booked !== false) {
-                    unset($advanceDvs[$booked]);
-
-                    continue;
-                }
-            }
-            $credit = $credits[$receipt->kind];
-            $fund = $receipt->fund_cluster ?: self::DEFAULT_FUND;
-            $ref = $receipt->reference ?: $receipt->kindLabel();
-            $sub = $receipt->source_of_fund ?: $receipt->kindLabel();
-            $postings->push($this->posting('receipt', $receipt->received_at, $cash['code'], $cash['title'], $receipt->amount, 0, $receipt->school_id, $fund, $ref, $receipt->kindLabel(), $sub));
-            $postings->push($this->posting('receipt', $receipt->received_at, $credit['code'], $credit['title'], 0, $receipt->amount, $receipt->school_id, $fund, $ref, $receipt->kindLabel(), $sub));
         }
 
         $reports = LiquidationReport::query()->whereIn('school_id', $schoolIds)->where('status', 'approved')->whereNotNull('dv_number')->whereNotNull('dv_date')->with(['journalLines'])->get();
@@ -192,6 +168,13 @@ class GeneralLedgerService
         $lines = $this->postings($schoolIds, $fundCluster, $asOf);
         $assets = $this->accountRows($lines, 'Assets', 'debit');
         $liabilities = $this->accountRows($lines, 'Liabilities', 'credit');
+        // An account that ends on the side opposite to its class (an asset with a credit balance, a liability with a debit balance) is shown on the other side, as a positive amount.
+        $opposite = fn (array $row) => $this->cents($row['amount']) < 0;
+        $flipped = fn (array $row) => ['amount' => $this->money(-$this->cents($row['amount']))] + $row;
+        [$assets, $liabilities] = [
+            $assets->reject($opposite)->concat($liabilities->filter($opposite)->map($flipped))->sortBy('account_code')->values(),
+            $liabilities->reject($opposite)->concat($assets->filter($opposite)->map($flipped))->sortBy('account_code')->values(),
+        ];
         $equity = $this->accountRows($lines, 'Equity', 'credit');
         $surplus = $this->statementRows($lines, 'Revenue', 'credit')->flatten(1)->sum(fn (array $r) => $this->cents($r['amount']))
             - $this->statementRows($lines, 'Expense', 'debit')->flatten(1)->sum(fn (array $r) => $this->cents($r['amount']));

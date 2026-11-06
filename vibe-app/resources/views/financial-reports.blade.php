@@ -15,7 +15,7 @@
 <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
     <div>
         <h1 class="text-[28px] font-semibold leading-9 tracking-tight">Financial Reports</h1>
-        <p class="mt-1 text-[15px] leading-6 text-on-surface-variant">Built from approved disbursement vouchers, cash fund receipts and the opening balances below.</p>
+        <p class="mt-1 text-[15px] leading-6 text-on-surface-variant">Built from the journals of approved disbursement vouchers and the opening balances below.</p>
     </div>
     <button type="button" onclick="window.print()" class="no-print flex items-center gap-2 rounded-lg border border-outline-variant/60 bg-white px-4 py-2.5 text-sm font-semibold hover:bg-surface-low"><span class="material-symbols-outlined text-[18px]">print</span>Print</button>
 </div>

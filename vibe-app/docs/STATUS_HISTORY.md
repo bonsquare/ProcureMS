@@ -147,3 +147,4 @@ Full dated log moved out of CLAUDE.md to keep that file short. Nothing was remov
 - 2026-11-06: IARS with many items: item names upward, header as tall as the longest name (wraps past 32 mm), Arial header, roomier rows and School Head block; FINAL (docs/specs.md section 119).
 - 2026-11-06: Bank Reconciliation cash downloaded form refuses a cash advance that a non-cash DV already records (docs/specs.md section 119). Committed, not yet deployed.
 - 2026-11-06: DV numbering changed to YYYY-MM-XXXX, the number running through the year (docs/specs.md section 119). Committed, not yet deployed.
+- 2026-11-06: books built from journals only (no auto-posted receipts); Create DV pre-fills the advance journal; balance sheet shows Advances as a liability instead of a negative asset (docs/specs.md section 119). Committed, not yet deployed.

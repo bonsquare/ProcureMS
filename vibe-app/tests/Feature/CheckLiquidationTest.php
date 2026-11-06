@@ -10,7 +10,6 @@ use App\Models\CashRegisterCheck;
 use App\Models\CashReportHistory;
 use App\Models\ChartOfAccount;
 use App\Models\CheckLiquidation;
-use App\Models\DvJournalLine;
 use App\Models\LiquidationReport;
 use App\Models\Organization;
 use App\Models\School;
@@ -250,8 +249,8 @@ class CheckLiquidationTest extends TestCase
         $this->assertSame(1, CashFundReceipt::where('kind', 'refund')->count());
         $ledger = $this->ledger($school);
         $this->assertArrayNotHasKey(self::OFFICE, $ledger);
-        $this->assertEquals(1000, $ledger['1010202024']['debit']);
-        $this->assertEquals(1000, $ledger['1990101000']['credit']);
+        $this->assertArrayNotHasKey('1010202024', $ledger, 'the books are the journals only: the refund is not posted by itself');
+        $this->assertArrayNotHasKey('1990101000', $ledger);
 
         $receipt = CashFundReceipt::where('kind', 'refund')->first();
         $this->delete(route('cash.fund.destroy', $receipt))->assertStatus(422);

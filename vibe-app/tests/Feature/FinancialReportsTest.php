@@ -49,14 +49,17 @@ class FinancialReportsTest extends TestCase
         return $report;
     }
 
-    /** Opening Dr cash / Cr surplus 10,000; NCA 50,000 on 1 Feb; DV of 8,000 on 1 Mar. */
+    /** Opening Dr cash / Cr surplus 10,000; NCA 50,000 on 1 Feb (a journal entry: Dr cash / Cr subsidy); DV of 8,000 on 1 Mar. */
     private function books(string $code = 'FR1'): array
     {
         [$school, $user] = $this->tenant($code);
         foreach ([[self::CASH, 'Cash in Bank', 10000, 0], [self::SURPLUS, 'Accumulated Surplus/(Deficit)', 0, 10000]] as [$account, $title, $debit, $credit]) {
             OpeningBalance::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'fund_cluster' => 'General Fund', 'as_of' => '2026-01-01', 'account_code' => $account, 'account_title' => $title, 'debit' => $debit, 'credit' => $credit]);
         }
-        CashFundReceipt::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'received_at' => '2026-02-01', 'kind' => 'nca', 'source_of_fund' => 'MOOE', 'fund_cluster' => 'General Fund', 'amount' => 50000, 'reference' => 'NCA-1', 'created_by' => $user->id]);
+        $nca = LiquidationReport::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'report_number' => 'LR-NCA-1', 'ors_number' => 'ORS-NCA-1', 'dv_number' => 'NCA-1', 'dv_date' => '2026-02-01', 'amount' => 50000, 'status' => 'approved', 'payee' => 'NCA', 'purpose' => 'NCA received', 'source_of_fund' => 'MOOE', 'dv_non_cash' => true]);
+        foreach ([[self::CASH, 'Cash in Bank', 50000, 0], ['4030101000', 'Subsidy from National Government', 0, 50000]] as $number => [$account, $title, $debit, $credit]) {
+            DvJournalLine::create(['organization_id' => $school->organization_id, 'liquidation_report_id' => $nca->id, 'line_no' => $number + 1, 'account_code' => $account, 'account_title' => $title, 'debit' => $debit, 'credit' => $credit]);
+        }
         $this->dv($school, '0001', '2026-03-01');
 
         return [$school, $user];
@@ -67,13 +70,13 @@ class FinancialReportsTest extends TestCase
         return new GeneralLedgerService;
     }
 
-    public function test_postings_include_opening_receipt_and_approved_dv(): void
+    public function test_postings_are_the_opening_balances_and_the_journals_of_approved_dvs(): void
     {
         [$school] = $this->books();
 
         $postings = $this->service()->postings([$school->id], null);
 
-        $this->assertSame(['opening' => 2, 'receipt' => 2, 'dv' => 2], $postings->countBy('source')->all());
+        $this->assertSame(['opening' => 2, 'dv' => 4], $postings->countBy('source')->all());
         $this->assertSame(68000.0, round($postings->sum(fn ($p) => (float) $p['debit']), 2));
         $this->assertSame(68000.0, round($postings->sum(fn ($p) => (float) $p['credit']), 2));
     }
@@ -247,6 +250,23 @@ class FinancialReportsTest extends TestCase
         $this->assertSame('42000.00', $bs['equity']->firstWhere('account_title', 'Current surplus/(deficit)')['amount']);
     }
 
+    public function test_an_advance_with_a_credit_balance_is_shown_as_a_liability_not_a_negative_asset(): void
+    {
+        [$school] = $this->books('FR12A');
+        $dv = LiquidationReport::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'report_number' => 'LR-ADV-1', 'ors_number' => 'ORS-ADV-1', 'dv_number' => 'ADV-1', 'dv_date' => '2026-03-02', 'amount' => 5000, 'status' => 'approved', 'payee' => 'Cashier', 'purpose' => 'Advances', 'ors_kind' => 'other', 'dv_non_cash' => true]);
+        foreach ([[self::CASH, 'Cash in Bank', 5000, 0], ['1990101000', 'Advances for Operating Expenses', 0, 5000]] as $number => [$account, $title, $debit, $credit]) {
+            DvJournalLine::create(['organization_id' => $school->organization_id, 'liquidation_report_id' => $dv->id, 'line_no' => $number + 1, 'account_code' => $account, 'account_title' => $title, 'debit' => $debit, 'credit' => $credit]);
+        }
+
+        $bs = $this->service()->balanceSheet([$school->id], null, Carbon::parse('2026-12-31'));
+
+        $this->assertSame('57000.00', $bs['totalAssets']);
+        $this->assertSame('5000.00', $bs['totalLiabilities']);
+        $this->assertSame('5000.00', $bs['liabilities']->firstWhere('account_code', '1990101000')['amount']);
+        $this->assertNull($bs['assets']->firstWhere('account_code', '1990101000'));
+        $this->assertTrue($bs['balanced']);
+    }
+
     public function test_balance_sheet_as_of_before_the_dv_excludes_it(): void
     {
         [$school] = $this->books('FR13');
@@ -276,7 +296,7 @@ class FinancialReportsTest extends TestCase
 
         $this->page($user, $school, ['report' => 'tb'])->assertOk()->assertSee('B. Opening')->assertSee('52,000.00')->assertSee('58,000.00')->assertDontSee('Out of balance');
         $this->page($user, $school, ['report' => 'gl', 'account' => self::CASH])->assertOk()->assertSee('NCA-1')->assertSee('52,000.00');
-        $this->page($user, $school, ['report' => 'sl', 'account' => self::CASH])->assertOk()->assertSee('Payee 0001')->assertSee('MOOE');
+        $this->page($user, $school, ['report' => 'sl', 'account' => self::CASH])->assertOk()->assertSee('Payee 0001')->assertSee('NCA');
         $this->page($user, $school, ['report' => 'is'])->assertOk()->assertSee('42,000.00');
         $this->page($user, $school, ['report' => 'bs'])->assertOk()->assertSee('52,000.00')->assertSee('Current surplus/(deficit)');
     }
