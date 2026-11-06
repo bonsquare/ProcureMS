@@ -29,7 +29,7 @@ class DocumentNumberService
 
             $counter->increment('last_number');
 
-            return sprintf('%s-%d-%0'.$padding.'d', $prefix, $year, $counter->last_number);
+            return $this->format($type, $prefix, $year, $padding, $counter->last_number);
         }, 3);
     }
 
@@ -44,7 +44,17 @@ class DocumentNumberService
             ->value('last_number') ?? 0;
         $last = max($last, $this->existingMaximum($organizationId, $type, $prefix, $year));
 
-        return sprintf('%s-%d-%0'.$padding.'d', $prefix, $year, $last + 1);
+        return $this->format($type, $prefix, $year, $padding, $last + 1);
+    }
+
+    /** A disbursement voucher is numbered YYYY-MM-XXXX (the month it is created; the number runs on through the year); every other document is PREFIX-YYYY-XXXX. */
+    private function format(string $type, string $prefix, int $year, int $padding, int $number): string
+    {
+        if ($type === 'disbursement_voucher') {
+            return sprintf('%d-%02d-%0'.$padding.'d', $year, now()->month, $number);
+        }
+
+        return sprintf('%s-%d-%0'.$padding.'d', $prefix, $year, $number);
     }
 
     private function configuredPrefix(int $organizationId, string $type, string $fallback): string
@@ -73,15 +83,17 @@ class DocumentNumberService
             return 0;
         }
 
+        // A disbursement voucher number is YYYY-MM-XXXX; the earlier DV-YYYY-XXXX numbers still count toward the running number.
+        $monthly = $type === 'disbursement_voucher';
         $query = DB::table($table)
             ->where('organization_id', $organizationId)
-            ->where($column, 'like', $prefix.'-'.$year.'-%');
+            ->where(fn ($match) => $match->where($column, 'like', $prefix.'-'.$year.'-%')->when($monthly, fn ($or) => $or->orWhere($column, 'like', $year.'-__-%')));
         foreach ($extra as $key => $value) {
             $query->where($key, $value);
         }
 
         return $query->pluck($column)
-            ->map(fn ($number) => preg_match('/^'.preg_quote($prefix, '/').'-'.$year.'-(\d+)$/', (string) $number, $matches) ? (int) $matches[1] : 0)
+            ->map(fn ($number) => preg_match('/^'.preg_quote($prefix, '/').'-'.$year.'-(\d+)$/', (string) $number, $matches) || ($monthly && preg_match('/^'.$year.'-\d{2}-(\d+)$/', (string) $number, $matches)) ? (int) $matches[1] : 0)
             ->max() ?? 0;
     }
 }

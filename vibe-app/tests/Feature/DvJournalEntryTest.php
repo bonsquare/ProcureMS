@@ -247,6 +247,6 @@ class DvJournalEntryTest extends TestCase
             'journal' => [['account_code' => $c['expense'], 'debit' => '10000'], ['account_code' => $c['cash'], 'credit' => '10000']],
         ]);
 
-        $this->get(route('accounting', ['tab' => 'with_dv']))->assertOk()->assertSee('DV-')->assertDontSee('Journal entry · 2 lines', false);
+        $this->get(route('accounting', ['tab' => 'with_dv']))->assertOk()->assertSee(now()->format('Y-m').'-0001')->assertDontSee('Journal entry · 2 lines', false);
     }
 }

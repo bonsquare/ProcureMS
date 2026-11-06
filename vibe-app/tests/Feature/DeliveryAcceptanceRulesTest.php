@@ -228,7 +228,7 @@ class DeliveryAcceptanceRulesTest extends TestCase
         $this->approvedOrs($organization, $school, null);
         $master = User::factory()->create(['role' => 'master_user', 'organization_id' => null, 'school_id' => null]);
 
-        $this->actingAs($master)->get(route('accounting', ['tab' => 'for_dv']))->assertOk()->assertSee('data-next-dv="DV-'.$year.'-0008"', false);
+        $this->actingAs($master)->get(route('accounting', ['tab' => 'for_dv']))->assertOk()->assertSee('data-next-dv="'.now()->format('Y-m').'-0008"', false);
     }
 
     public function test_the_liquidation_page_cannot_return_an_ors_that_is_paid_or_already_has_a_dv(): void
