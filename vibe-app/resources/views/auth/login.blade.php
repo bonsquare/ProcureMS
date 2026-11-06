@@ -44,10 +44,10 @@
     </aside>
 
     {{-- Sign in --}}
-    <main id="main" tabindex="-1" class="flex items-center justify-center px-4 py-8 focus:outline-none sm:px-8">
+    <main id="main" tabindex="-1" class="flex items-center justify-center px-4 py-8 focus:outline-none sm:px-8 lg:py-4">
         <div class="w-full max-w-md">
             <div class="mb-6 flex justify-center lg:hidden"><img src="{{ asset('images/procurems-logo-light.png') }}" alt="ProcMS - Plan. Procure. Finance. Report." class="h-20 w-auto"></div>
-            <div class="rounded-3xl border border-white/60 border-t-4 border-t-[#f2b134] bg-white/65 p-7 shadow-2xl shadow-[#0a3a47]/30 backdrop-blur-xl sm:p-9" style="-webkit-backdrop-filter:blur(24px) saturate(1.4);backdrop-filter:blur(24px) saturate(1.4)">
+            <div class="rounded-3xl border border-white/60 border-t-4 border-t-[#f2b134] bg-white/65 p-7 shadow-2xl shadow-[#0a3a47]/30 backdrop-blur-xl sm:p-9 lg:p-6" style="-webkit-backdrop-filter:blur(24px) saturate(1.4);backdrop-filter:blur(24px) saturate(1.4)">
                 <h1 class="text-[1.75rem] font-semibold leading-9 tracking-tight">Welcome back</h1>
                 <p class="mt-1.5 text-sm text-on-surface-variant">Sign in to your procurement, accounting, budget, and cash workspace.</p>
                 @if(session('success'))<div class="mt-5 rounded-lg border border-secondary/30 bg-secondary/10 px-4 py-3 text-sm font-medium text-secondary">{{ session('success') }}</div>@endif
@@ -57,14 +57,14 @@
                     <ul class="mt-1 list-disc pl-6">@error('email')<li><a href="#email" class="font-semibold underline">{{ $message }}</a></li>@enderror @error('password')<li><a href="#password" class="font-semibold underline">{{ $message }}</a></li>@enderror</ul>
                 </div>
                 @endif
-                <form id="login-form" method="POST" action="{{ route('login.store') }}" class="mt-6 space-y-4">@csrf
+                <form id="login-form" method="POST" action="{{ route('login.store') }}" class="mt-6 space-y-4 lg:mt-4 lg:space-y-3">@csrf
             <div><label for="email" class="text-xs font-semibold text-on-surface-variant">Email or username</label><input id="email" name="email" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Email address or username" value="{{ old('email') }}" required @unless($errors->any()) autofocus @endunless @error('email') aria-invalid="true" aria-describedby="email-error" @enderror class="mt-2 w-full rounded-lg border border-white/70 bg-white/80 px-3 py-2.5 text-sm outline-none placeholder:text-slate-600 focus:border-[#0b5f6b] focus:ring-2 focus:ring-[#0b5f6b]">@error('email')<p id="email-error" class="mt-1 flex items-center gap-1 text-xs font-semibold text-[#8f1a26]"><span class="material-symbols-outlined text-[1rem]" aria-hidden="true">error</span>{{ $message }}</p>@enderror</div>
             <div><label for="password" class="text-xs font-semibold text-on-surface-variant">Password</label><div class="relative mt-2"><input id="password" name="password" type="password" required autocomplete="current-password" @error('password') aria-invalid="true" aria-describedby="password-error" @enderror class="w-full rounded-lg border border-white/70 bg-white/80 py-2.5 pl-3 pr-11 text-sm outline-none focus:border-[#0b5f6b] focus:ring-2 focus:ring-[#0b5f6b]"><button type="button" id="toggle-password" aria-label="Show password" aria-pressed="false" class="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-r text-on-surface-variant hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0b5f6b]"><span class="material-symbols-outlined text-[1.25rem]" aria-hidden="true">visibility</span></button></div>@error('password')<p id="password-error" class="mt-1 flex items-center gap-1 text-xs font-semibold text-[#8f1a26]"><span class="material-symbols-outlined text-[1rem]" aria-hidden="true">error</span>{{ $message }}</p>@enderror</div>
             @include('auth.partials-turnstile', ['action' => 'login'])
                     <label class="flex items-center gap-2 text-xs text-on-surface-variant"><input type="checkbox" name="remember" value="1" class="h-4 w-4 accent-primary">Remember me</label>
                     <button id="sign-in-button" type="submit" class="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-white shadow-md shadow-primary/20 transition hover:bg-primary-container focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"><span class="button-label">Sign in</span><span id="signin-status" class="sr-only" role="status"></span><span class="button-spinner hidden h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden="true"></span></button>
                 </form>
-                <div class="my-6 flex items-center gap-3 text-xs font-semibold uppercase tracking-wider text-on-surface-variant/70"><span class="h-px flex-1 bg-outline-variant/50"></span>New here<span class="h-px flex-1 bg-outline-variant/50"></span></div>
+                <div class="my-6 flex items-center gap-3 lg:my-4 text-xs font-semibold uppercase tracking-wider text-on-surface-variant/70"><span class="h-px flex-1 bg-outline-variant/50"></span>New here<span class="h-px flex-1 bg-outline-variant/50"></span></div>
                 <a href="{{ route('register') }}" class="flex w-full items-center justify-center gap-2 rounded-lg border border-[#0b5f6b] px-4 py-2.5 text-sm font-semibold text-[#0b5f6b] transition hover:bg-[#0b5f6b] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0b5f6b] focus-visible:ring-offset-2"><span class="material-symbols-outlined text-[1.125rem]" aria-hidden="true">app_registration</span>Pre-register school</a>
                 <p class="mt-2 text-center text-xs text-on-surface-variant">New school or office? Start with a pre-registration.</p>
                 @if(app()->environment('local'))
@@ -75,12 +75,12 @@
                 <p class="mt-6 border-t border-outline-variant/20 pt-5 text-xs text-on-surface-variant">Demo School Admin: <span class="font-semibold">demo@gmail.com</span> / <span class="font-semibold">password</span></p>
                 @endif
             </div>
-            <p class="mt-6 text-center text-xs text-white [text-shadow:0_1px_3px_rgba(0,0,0,.4)]">Secure sign-in · Your session is protected</p>
-            <div class="mt-4 rounded-xl border border-white/30 bg-black/40 px-4 py-3 text-center text-xs leading-relaxed text-white backdrop-blur-sm">
-                <p class="text-xs font-bold text-white">© 2026 ProcMS - Celsys</p>
-                <p class="mt-1">Designed, Developed &amp; Coded by <strong class="font-bold text-white">Bonifacio Jr. Orong &amp; Rizza Mae Orong</strong></p>
-                <p class="mt-1 font-bold text-white">Proprietary Software — All Rights Reserved.</p>
-                <p class="mt-1 text-white">Unauthorized copying, reproduction, modification, distribution, or commercial use of this software or any portion thereof is prohibited without prior written authorization from the developer.</p>
+            <p class="mt-6 text-center text-xs text-white lg:mt-3 [text-shadow:0_1px_3px_rgba(0,0,0,.4)]">Secure sign-in · Your session is protected</p>
+            <div class="mt-4 rounded-xl border border-white/60 bg-white/65 px-4 py-3 lg:mt-3 lg:py-2.5 text-center text-xs leading-relaxed text-on-surface shadow-lg shadow-[#0a3a47]/20 backdrop-blur-xl">
+                <p class="text-xs font-bold text-primary">© 2026 ProcMS - Celsys</p>
+                <p class="mt-3 lg:mt-2">Designed, Developed &amp; Coded by<br><strong class="text-sm font-bold text-primary whitespace-nowrap">Bonifacio Jr. Orong &amp; Rizza Mae Orong</strong></p>
+                <p class="mt-3 font-bold text-on-surface lg:mt-2">Proprietary Software — All Rights Reserved.</p>
+                <p class="mt-3 border-t border-outline-variant/60 pt-3 text-[11px] lg:mt-2 lg:pt-2 text-on-surface-variant">Unauthorized copying, reproduction, modification, distribution, or commercial use of this software or any portion thereof is prohibited without prior written authorization from the developer.</p>
             </div>
         </div>
     </main>
