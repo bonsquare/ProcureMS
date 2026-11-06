@@ -156,16 +156,12 @@ class OrsStatusPrintTest extends TestCase
         $this->get(route('liquidation.print', LiquidationReport::firstOrFail()))->assertOk()->assertSee('March 12, 2026');
     }
 
-    public function test_the_budget_page_shows_the_stage_of_a_request_not_its_raw_status(): void
+    public function test_the_budget_page_counts_and_lists_only_actual_obligations_not_a_request_without_an_ors(): void
     {
         [$school, $user] = $this->tenant();
         $this->actingAs($user);
         $pr = ProcurementRequest::create(['organization_id' => $school->organization_id, 'school_id' => $school->id, 'requested_by' => $user->id, 'request_number' => 'PR-2026-STG', 'title' => 'Rice', 'amount' => 1500, 'status' => 'for_canvass', 'source_of_fund' => 'MOOE']);
-        $this->get(route('budget'))->assertOk()->assertSee('Canvass');
-
-        ProcurementDocument::create(['organization_id' => $school->organization_id, 'procurement_request_id' => $pr->id, 'created_by' => $user->id, 'document_type' => 'purchase_order', 'document_number' => 'PO-2026-004', 'document_date' => now(), 'supplier_or_recipient' => 'Ors Supplier', 'status' => 'prepared']);
-
-        $this->get(route('budget'))->assertOk()->assertDontSee('For Canvass');
+        $this->get(route('budget'))->assertOk()->assertDontSee('PR-2026-STG');
     }
 
     public function test_a_school_user_with_the_accounting_permissions_can_review_the_ors_and_one_without_cannot(): void

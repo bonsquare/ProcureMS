@@ -8,7 +8,6 @@ use App\Models\ProcurementRequest;
 use App\Models\School;
 use App\Models\Supplier;
 use App\Services\BudgetService;
-use App\Services\ProcurementWorkspaceService;
 use App\Support\SignatorySlots;
 use Illuminate\Http\Request;
 
@@ -33,19 +32,17 @@ class BudgetController extends Controller
             ->when($selectedSchoolId && $schoolIds->contains((int) $selectedSchoolId), fn ($q) => $q->where('school_id', $selectedSchoolId));
 
         $allocations = BudgetAllocation::with('school')->where('fiscal_year', $year)->tap($schoolFilter)->latest()->get();
-        $obligations = ProcurementRequest::with('liquidationReports', 'documents')->whereYear('created_at', $year)->tap($schoolFilter)->get();
-
-        $directOrs = LiquidationReport::withOrs()->whereNull('procurement_request_id')->whereYear('created_at', $year)->tap($schoolFilter)->get();
+        // Only an actual obligation counts: a procurement request is not obligated until it has an ORS (owner's rule 2026-11-06).
+        $obligations = LiquidationReport::withOrs()->with('procurementRequest')->whereYear('created_at', $year)->tap($schoolFilter)->get();
+        $fundOf = fn ($o) => $o->source_of_fund ?: $o->procurementRequest?->source_of_fund;
 
         // Utilization per school + fund source.
-        $lines = $allocations->groupBy(fn ($a) => $a->school_id.'|'.$a->source_of_fund)->map(function ($group) use ($obligations, $directOrs) {
+        $lines = $allocations->groupBy(fn ($a) => $a->school_id.'|'.$a->source_of_fund)->map(function ($group) use ($obligations, $fundOf) {
             $first = $group->first();
-            $matching = $obligations->where('school_id', $first->school_id)->where('source_of_fund', $first->source_of_fund);
-            $direct = $directOrs->where('school_id', $first->school_id)->where('source_of_fund', $first->source_of_fund);
+            $matching = $obligations->filter(fn ($o) => $o->school_id === $first->school_id && $fundOf($o) === $first->source_of_fund);
             $allocated = $group->sum('amount');
-            $obligated = $matching->sum('amount') + $direct->sum('amount');
-            $liquidated = $matching->flatMap->liquidationReports->where('status', 'approved')->sum('amount')
-                + $direct->where('status', 'approved')->sum('amount');
+            $obligated = $matching->sum('amount');
+            $liquidated = $matching->where('status', 'approved')->sum('amount');
 
             return [
                 'school' => $first->school?->name,
@@ -58,11 +55,10 @@ class BudgetController extends Controller
             ];
         })->values();
 
-        $isUnbudgeted = fn ($r) => ! $allocations->contains(fn ($a) => $a->school_id === $r->school_id && $a->source_of_fund === $r->source_of_fund);
-        $unbudgeted = $obligations->filter($isUnbudgeted)->sum('amount') + $directOrs->filter($isUnbudgeted)->sum('amount');
+        $isUnbudgeted = fn ($r) => ! $allocations->contains(fn ($a) => $a->school_id === $r->school_id && $a->source_of_fund === $fundOf($r));
+        $unbudgeted = $obligations->filter($isUnbudgeted)->sum('amount');
 
-        $transactions = $obligations->map(fn ($r) => ['date' => $r->created_at, 'type' => 'PR', 'ref' => $r->request_number, 'description' => $r->title, 'school_id' => $r->school_id, 'fund' => $r->source_of_fund, 'amount' => $r->amount, 'status' => app(ProcurementWorkspaceService::class)->summary($r)['stage_label'], 'url' => route('procurement.edit', $r)])
-            ->concat($directOrs->map(fn ($o) => ['date' => $o->created_at, 'type' => 'ORS (no PR)', 'ref' => $o->ors_number, 'description' => $o->purpose, 'school_id' => $o->school_id, 'fund' => $o->source_of_fund, 'amount' => $o->amount, 'status' => $o->status, 'url' => route('liquidation', ['search' => $o->ors_number])]))
+        $transactions = $obligations->map(fn ($o) => ['date' => $o->created_at, 'type' => 'ORS', 'ref' => $o->ors_number, 'description' => $o->purpose, 'school_id' => $o->school_id, 'fund' => $fundOf($o), 'amount' => $o->amount, 'status' => $o->status, 'url' => route('liquidation', ['search' => $o->ors_number])])
             ->sortByDesc('date')->values();
 
         $orsList = LiquidationReport::withOrs()->with(['school', 'procurementRequest.budgetAllocation', 'budgetAllocation'])->whereYear('created_at', $year)->tap($schoolFilter)->latest()->get();
