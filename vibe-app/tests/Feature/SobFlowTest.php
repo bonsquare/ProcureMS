@@ -146,6 +146,28 @@ class SobFlowTest extends TestCase
         $page->assertSee('Items funded from the SOB')->assertSee('Manual allotments')->assertSee('A MANUAL BUDGET LINE')->assertSee('Add manual allotment');
     }
 
+    public function test_a_manual_allotment_is_edited_and_deleted_from_the_registry_and_returns_to_it(): void
+    {
+        $fx = SobFixture::make();
+        $plan = $this->draft($fx, 4);
+        app(SobService::class)->addItem($plan, $this->line($fx, ['particulars' => 'Bond paper']));
+        $this->actingAs($fx['user']);
+        $this->post(route('planning.sob.approve', $plan))->assertSessionHasNoErrors();
+        $manual = BudgetAllocation::withoutGlobalScopes()->first()->replicate();
+        $manual->program = 'A MANUAL BUDGET LINE';
+        $manual->remarks = null;
+        $manual->budget_ref_no = 'BA-MANUAL';
+        $manual->save();
+
+        $this->get(route('allotment-registry', ['year' => 2026]))->assertOk()
+            ->assertSee(route('budget.allocation.edit', [$manual, 'return' => 'registry']), false)->assertSee('Delete BA-MANUAL');
+        $this->get(route('budget.allocation.edit', [$manual, 'return' => 'registry']))->assertOk()->assertSee('name="return" value="registry"', false);
+
+        $this->delete(route('budget.allocation.destroy', $manual), ['return' => 'registry'])
+            ->assertRedirect(route('allotment-registry', ['year' => $manual->fiscal_year, 'school_id' => $manual->school_id]));
+        $this->assertNull(BudgetAllocation::withoutGlobalScopes()->where('budget_ref_no', 'BA-MANUAL')->first());
+    }
+
     public function test_the_budget_allocation_page_is_live_and_shows_the_sob_lines(): void
     {
         $fx = SobFixture::make();

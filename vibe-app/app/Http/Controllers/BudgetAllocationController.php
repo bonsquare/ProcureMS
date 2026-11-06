@@ -14,6 +14,7 @@ use App\Services\BudgetService;
 use App\Services\DocumentNumberService;
 use App\Services\FiscalYearService;
 use App\Services\MasterTransactionService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -213,7 +214,7 @@ class BudgetAllocationController extends Controller
         $budgetAllocation->transaction?->recordEvent('budget', 'allocation_updated', null, 'allocated', $budgetAllocation->budget_ref_no, ['budget_allocation_id' => $budgetAllocation->id]);
         $this->audit($request, $budgetAllocation, 'budget_item_updated');
 
-        return redirect()->route('budget.allocation', ['year' => $budgetAllocation->fiscal_year, 'school_id' => $budgetAllocation->school_id])->with('success', 'Budget item updated.');
+        return $this->backTo($request, $budgetAllocation)->with('success', 'Budget item updated.');
     }
 
     public function show(BudgetAllocation $budgetAllocation)
@@ -246,7 +247,17 @@ class BudgetAllocationController extends Controller
         $this->audit($request, $budgetAllocation, 'budget_item_deleted');
         $budgetAllocation->delete();
 
-        return redirect()->route('budget.allocation', ['year' => $budgetAllocation->fiscal_year])->with('success', 'Budget item removed.');
+        return $this->backTo($request, $budgetAllocation, false)->with('success', 'Budget item removed.');
+    }
+
+    /** Back to the Allotment Registry when the change was started from it, else to the Budget Allocation page. */
+    private function backTo(Request $request, BudgetAllocation $item, bool $withSchool = true): RedirectResponse
+    {
+        if ($request->input('return') === 'registry') {
+            return redirect()->route('allotment-registry', ['year' => $item->fiscal_year, 'school_id' => $item->school_id]);
+        }
+
+        return redirect()->route('budget.allocation', array_filter(['year' => $item->fiscal_year, 'school_id' => $withSchool ? $item->school_id : null]));
     }
 
     public function close(Request $request)
