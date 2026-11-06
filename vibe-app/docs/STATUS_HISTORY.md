@@ -155,3 +155,4 @@ Full dated log moved out of CLAUDE.md to keep that file short. Nothing was remov
 - 2026-11-06: dashboard header card: date and time line removed, Live pill without a time, year progress bar kept (docs/specs.md section 119). Committed, not yet deployed.
 - 2026-11-06: dashboard header redesigned as glass with larger text and a smaller fiscal-year card (docs/specs.md section 119).
 - 2026-11-06: card colours without yellow or peach; School Settings tab Documentary Requirements; Subscription page with the next billing period and a payment history table (docs/specs.md section 119). Committed, not yet deployed.
+- 2026-11-06: Subscription proof form redesigned with a sender card, proofs open in a window, user ID shown with four digits (docs/specs.md section 119).

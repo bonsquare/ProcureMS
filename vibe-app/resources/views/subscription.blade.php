@@ -82,16 +82,56 @@
                 <a href="{{ route('google-drive') }}" class="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]">link</span>Connect Google Drive</a>
             </div>
             @endunless
-            <form method="POST" action="{{ route('subscription.proof') }}" enctype="multipart/form-data" class="mt-3 grid gap-3 sm:grid-cols-2 {{ $driveConnected ? '' : 'opacity-60' }}">@csrf<fieldset class="contents" @disabled(! $driveConnected)>
-                <p class="sm:col-span-2 rounded-lg bg-surface-low px-3 py-2 text-xs text-on-surface-variant" data-proof-sender>Sent by <strong class="text-on-surface">{{ auth()->user()->name }}</strong> · username <strong class="text-on-surface">{{ auth()->user()->username }}</strong> · User ID <strong class="tabular-nums text-on-surface">{{ auth()->user()->id }}</strong>. This goes with the proof.</p>
-                <label class="{{ $label }}">InstaPay Ref. No.<input name="reference" required maxlength="100" value="{{ old('reference') }}" class="{{ $field }}"></label>
-                <label class="{{ $label }}">Date and time of the transaction<input type="datetime-local" name="transacted_at" required max="{{ now()->format('Y-m-d\TH:i') }}" value="{{ old('transacted_at', now()->format('Y-m-d\TH:i')) }}" class="{{ $field }}"></label>
-                <label class="{{ $label }}">Bank account used<input name="bank_account_used" required maxlength="120" placeholder="Bank or e-wallet and the account number you paid from" value="{{ old('bank_account_used') }}" class="{{ $field }}"></label>
-                <label class="{{ $label }}">Amount paid (₱)<input name="amount" data-proof-amount readonly value="{{ number_format($quote['amount'], 2, '.', '') }}" class="{{ $field }} bg-surface-low text-right tabular-nums"></label>
-                <label class="{{ $label }} sm:col-span-2">Remarks · nature of the payment<input name="remarks" required maxlength="255" placeholder="For example: Annual subscription of the school" value="{{ old('remarks') }}" class="{{ $field }}"></label>
-                <label class="{{ $label }} sm:col-span-2">Photo or PDF of the proof (up to 5 MB)<input type="file" name="file" required accept="image/jpeg,image/png,image/webp,application/pdf" class="{{ $field }}"></label>
+            @php
+                $in = 'mt-1.5 w-full rounded-lg border border-outline-variant/60 bg-white px-3 py-2.5 text-sm text-on-surface shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15';
+                $cap = 'flex items-center gap-1.5 text-xs font-semibold text-on-surface';
+                $hint = 'mt-1 block text-[11px] font-normal text-on-surface-variant';
+            @endphp
+            <form method="POST" action="{{ route('subscription.proof') }}" enctype="multipart/form-data" class="mt-3 grid gap-x-4 gap-y-4 sm:grid-cols-2 {{ $driveConnected ? '' : 'opacity-60' }}" data-proof-form>@csrf<fieldset class="contents" @disabled(! $driveConnected)>
+                @php
+                    $sender = auth()->user();
+                    $senderRows = array_filter([
+                        ['badge', 'User ID', str_pad((string) $sender->id, 4, '0', STR_PAD_LEFT)],
+                        ['alternate_email', 'Username', $sender->username],
+                        ['work', 'Role', \App\Models\User::ROLES[$sender->role] ?? \Illuminate\Support\Str::headline((string) $sender->role)],
+                        ['school', 'School', $school->name],
+                        ['mail', 'Email', $sender->email],
+                        ['workspace_premium', 'Plan', $subscription ? \Illuminate\Support\Str::headline((string) $subscription->plan).' · '.\Illuminate\Support\Str::headline($status) : null],
+                        ['event', 'Sending on', now()->format('M j, Y g:i A')],
+                    ], fn (array $row) => filled($row[2]));
+                @endphp
+                <div class="sm:col-span-2 overflow-hidden rounded-xl border border-secondary/25 bg-white shadow-sm" data-proof-sender>
+                    <div class="flex items-center gap-3 border-b border-secondary/15 bg-secondary/5 px-4 py-3">
+                        <span class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#14818f] to-[#0f6f7e] text-base font-bold text-white" aria-hidden="true">{{ strtoupper(mb_substr((string) $sender->name, 0, 1)) }}</span>
+                        <div class="min-w-0 flex-1"><p class="text-[10px] font-bold uppercase tracking-wider text-secondary">Sent by</p><p class="truncate text-base font-semibold text-on-surface">{{ $sender->name }}</p></div>
+                        <span class="inline-flex shrink-0 items-center gap-1 rounded-full bg-secondary/10 px-2.5 py-1 text-[11px] font-semibold text-secondary"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">verified_user</span>Goes with the proof</span>
+                    </div>
+                    <dl class="grid grid-cols-2 gap-x-4 gap-y-3 px-4 py-3 sm:grid-cols-3 lg:grid-cols-4">
+                        @foreach($senderRows as [$icon, $term, $value])
+                            <div class="flex min-w-0 items-start gap-2"><span class="material-symbols-outlined mt-0.5 text-[17px] text-primary" aria-hidden="true">{{ $icon }}</span><div class="min-w-0"><dt class="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">{{ $term }}</dt><dd class="break-words text-sm font-semibold text-on-surface {{ in_array($term, ['User ID', 'Sending on'], true) ? 'tabular-nums' : '' }}">{{ $value }}</dd></div></div>
+                        @endforeach
+                    </dl>
+                </div>
+
+                <label class="block"><span class="{{ $cap }}"><span class="material-symbols-outlined text-[16px] text-primary" aria-hidden="true">account_balance</span>Bank / E-Wallet <span class="text-error" aria-hidden="true">*</span></span><input name="bank_account_used" required maxlength="120" autocomplete="off" placeholder="For example: GCash 0917 123 4567" value="{{ old('bank_account_used') }}" class="{{ $in }}"><span class="{{ $hint }}">The bank or e-wallet and the account number you paid from.</span></label>
+                <label class="block"><span class="{{ $cap }}"><span class="material-symbols-outlined text-[16px] text-primary" aria-hidden="true">tag</span>InstaPay Ref. No. <span class="text-error" aria-hidden="true">*</span></span><input name="reference" required maxlength="100" autocomplete="off" placeholder="The reference number of the transfer" value="{{ old('reference') }}" class="{{ $in }}"><span class="{{ $hint }}">Copy it from your transfer receipt.</span></label>
+
+                <label class="block"><span class="{{ $cap }}"><span class="material-symbols-outlined text-[16px] text-primary" aria-hidden="true">event</span>Date of Payment <span class="text-error" aria-hidden="true">*</span></span><input type="datetime-local" name="transacted_at" required max="{{ now()->format('Y-m-d\TH:i') }}" value="{{ old('transacted_at', now()->format('Y-m-d\TH:i')) }}" class="{{ $in }}"><span class="{{ $hint }}">The date and time of the transaction, as on the receipt.</span></label>
+                <label class="block"><span class="{{ $cap }}"><span class="material-symbols-outlined text-[16px] text-primary" aria-hidden="true">payments</span>Amount Paid (₱)</span><input name="amount" data-proof-amount readonly value="{{ number_format($quote['amount'], 2, '.', '') }}" class="{{ $in }} bg-surface-low text-right text-base font-semibold tabular-nums"><span class="{{ $hint }}">Set by your plan and promo code. Pay exactly this amount.</span></label>
+
+                <label class="block sm:col-span-2"><span class="{{ $cap }}"><span class="material-symbols-outlined text-[16px] text-primary" aria-hidden="true">notes</span>Remarks <span class="text-error" aria-hidden="true">*</span></span><input name="remarks" required maxlength="255" placeholder="For example: Annual subscription of the school" value="{{ old('remarks') }}" class="{{ $in }}"><span class="{{ $hint }}">The nature of the payment.</span></label>
+
+                <div class="sm:col-span-2">
+                    <span class="{{ $cap }}"><span class="material-symbols-outlined text-[16px] text-primary" aria-hidden="true">attach_file</span>Proof <span class="text-error" aria-hidden="true">*</span></span>
+                    <label class="mt-1.5 flex cursor-pointer items-center gap-3 rounded-xl border-2 border-dashed border-outline-variant/70 bg-white px-4 py-4 transition hover:border-primary hover:bg-primary/5 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
+                        <span class="material-symbols-outlined text-[30px] text-primary" aria-hidden="true">cloud_upload</span>
+                        <span class="min-w-0 flex-1"><span class="block text-sm font-semibold" data-proof-file-name>Choose a photo or PDF of the receipt</span><span class="block text-[11px] text-on-surface-variant" data-proof-file-hint>JPG, PNG, WEBP or PDF · up to 5 MB</span></span>
+                        <span class="shrink-0 rounded-lg border border-primary px-3 py-1.5 text-xs font-semibold text-primary">Browse</span>
+                        <input type="file" name="file" required accept="image/jpeg,image/png,image/webp,application/pdf" class="sr-only" data-proof-file>
+                    </label>
+                </div>
                 <input type="hidden" name="promo_code" data-proof-promo value="">
-                <div class="sm:col-span-2 flex justify-end"><button class="rounded-lg bg-primary px-5 py-2.5 text-xs font-bold text-white hover:bg-primary-container">Send proof of payment</button></div>
+                <div class="sm:col-span-2 flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant/30 pt-4"><p class="text-[11px] text-on-surface-variant"><span class="text-error" aria-hidden="true">*</span> Required. The proof is kept in your own Google Drive and shared only with the administrator.</p><button class="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-xs font-bold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">send</span>Send proof of payment</button></div>
             </fieldset></form>
         @endif
     </div></div>
@@ -134,7 +174,7 @@
                         <td class="px-4 pb-1 pt-3 text-right tabular-nums"><span class="font-semibold">{{ $peso($proof->amount_to_pay) }}</span>@if(((float) $proof->discount_amount) > 0)<span class="block text-xs text-on-surface-variant">{{ $peso($proof->list_price) }} − {{ $peso($proof->discount_amount) }} discount</span>@endif</td>
                         <td class="px-4 pb-1 pt-3"><span class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $proofTone[$proof->status] ?? '' }}"><span class="material-symbols-outlined text-[14px]" aria-hidden="true">{{ $proofIcon[$proof->status] ?? 'info' }}</span>{{ $proofLabel[$proof->status] ?? $proof->status }}</span></td>
                         <td class="px-4 pb-1 pt-3 break-words text-xs text-on-surface-variant">{{ $proof->remarks ?: '—' }}</td>
-                        <td class="px-4 pb-1 pt-3 text-xs">@if($proof->drive_link)<a href="{{ $proof->drive_link }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 break-all font-semibold text-primary hover:underline"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">attach_file</span>{{ $proof->file_name ?: 'Open the file' }}</a>@else<span class="text-on-surface-variant">—</span>@endif</td>
+                        <td class="px-4 pb-1 pt-3 text-xs">@if($proof->drive_link)<a href="{{ $proof->drive_link }}" target="_blank" rel="noopener" data-proof-open data-name="{{ $proof->file_name ?: 'Proof of payment' }}" data-preview="{{ $proof->drive_file_id ? 'https://drive.google.com/file/d/'.$proof->drive_file_id.'/preview' : '' }}" class="inline-flex items-center gap-1 break-all font-semibold text-primary hover:underline"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">attach_file</span>{{ $proof->file_name ?: 'Open the file' }}</a>@else<span class="text-on-surface-variant">—</span>@endif</td>
                     </tr>
                     <tr>
                         <td colspan="7" class="px-4 pb-3 pt-1">
@@ -157,12 +197,50 @@
     </div>
 </section>
 
+<dialog data-proof-dialog aria-label="Proof of payment" class="rounded-2xl bg-white p-0 shadow-2xl backdrop:bg-black/60" style="width:min(60rem,calc(100% - 1.5rem))">
+    <div class="flex items-center justify-between gap-3 border-b border-outline-variant/40 px-4 py-3">
+        <div class="min-w-0"><p class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Proof of payment</p><p data-proof-title class="truncate text-sm font-semibold"></p></div>
+        <div class="flex shrink-0 items-center gap-2"><a data-proof-drive target="_blank" rel="noopener" class="rounded-lg border border-outline-variant/60 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-surface-low">Open in Google Drive</a><button type="button" data-proof-close aria-label="Close" class="rounded-full p-2 hover:bg-primary hover:text-white"><span class="material-symbols-outlined">close</span></button></div>
+    </div>
+    <iframe data-proof-frame title="Proof of payment" class="w-full bg-surface-low" style="height:min(78vh,48rem)"></iframe>
+</dialog>
 <dialog data-qr-dialog class="rounded-2xl bg-white p-4 shadow-2xl backdrop:bg-black/60" style="width:min(34rem,calc(100% - 1.5rem))">
     <div class="flex justify-end"><button type="button" data-qr-close aria-label="Close" class="rounded-full p-2 hover:bg-primary hover:text-white"><span class="material-symbols-outlined">close</span></button></div>
     <div class="grid place-items-center"><img src="{{ $settings['qr'] ?: '' }}" alt="QR code of the account, large" class="w-full max-w-[28rem] object-contain" style="max-height:78vh"></div>
     <p class="mt-2 text-center text-xs font-semibold text-on-surface-variant">Scan with your banking app</p>
 </dialog>
 <script>
+    // A proof opens in a window over the page, shown from the school's own Google Drive; without a preview address the link opens in a new tab as before.
+    (() => {
+        const dialog = document.querySelector('[data-proof-dialog]');
+        const frame = document.querySelector('[data-proof-frame]');
+        document.querySelectorAll('[data-proof-open]').forEach((link) => link.addEventListener('click', (event) => {
+            if (! link.dataset.preview || ! dialog) return;
+            event.preventDefault();
+            frame.src = link.dataset.preview;
+            dialog.querySelector('[data-proof-title]').textContent = link.dataset.name;
+            dialog.querySelector('[data-proof-drive]').href = link.href;
+            dialog.showModal();
+        }));
+        const close = () => { dialog?.close(); if (frame) frame.removeAttribute('src'); };
+        document.querySelector('[data-proof-close]')?.addEventListener('click', close);
+        dialog?.addEventListener('click', (event) => { if (event.target === dialog) close(); });
+        dialog?.addEventListener('cancel', () => { if (frame) frame.removeAttribute('src'); });
+    })();
+    // The chosen proof file: its name and size are shown, and one over 5 MB is refused before it is sent.
+    (() => {
+        const input = document.querySelector('[data-proof-file]');
+        if (! input) return;
+        const name = document.querySelector('[data-proof-file-name]');
+        const hint = document.querySelector('[data-proof-file-hint]');
+        input.addEventListener('change', () => {
+            const file = input.files[0];
+            if (! file) { name.textContent = 'Choose a photo or PDF of the receipt'; hint.textContent = 'JPG, PNG, WEBP or PDF · up to 5 MB'; return; }
+            const size = file.size >= 1048576 ? (file.size / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(file.size / 1024)) + ' KB';
+            if (file.size > 5 * 1048576) { input.value = ''; name.textContent = 'The file is too large'; hint.textContent = file.name + ' is ' + size + '. The limit is 5 MB.'; return; }
+            name.textContent = file.name; hint.textContent = size + 
+        });
+    })();
     document.querySelector('[data-copy]')?.addEventListener('click', (event) => { const button = event.currentTarget; navigator.clipboard?.writeText(button.dataset.copy).then(() => { const icon = button.firstElementChild; icon.textContent = 'check'; setTimeout(() => icon.textContent = 'content_copy', 1500); }); });
     (() => {
         const dialog = document.querySelector('[data-qr-dialog]');

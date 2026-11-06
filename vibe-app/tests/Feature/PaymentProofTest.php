@@ -246,11 +246,11 @@ class PaymentProofTest extends TestCase
         $this->school->forceFill(['name' => 'Rosa D. Reyes', 'username' => 'rosa.reyes'])->save();
         $this->submit(['remarks' => 'Nature-XYZ-123', 'bank_account_used' => 'GCash 0999-111-2222', 'reference' => 'INSTA-9876'])->assertSessionHasNoErrors();
 
-        $this->actingAs($this->school)->get(route('subscription'))->assertOk()->assertSee('Nature-XYZ-123')->assertSee('GCash 0999-111-2222')->assertSee('INSTA-9876');
+        $this->actingAs($this->school)->get(route('subscription'))->assertOk()->assertSee('Nature-XYZ-123')->assertSee('GCash 0999-111-2222')->assertSee('INSTA-9876')->assertSee('data-proof-open', false)->assertSee('data-proof-dialog', false);
 
         auth()->logout();
         $panel = $this->actingAs($this->master)->getJson(route('subscriptions.live'))->assertOk()->json('html');
-        foreach (['Nature-XYZ-123', 'GCash 0999-111-2222', 'INSTA-9876', 'Rosa D. Reyes', 'rosa.reyes', 'User ID '.$this->school->id, 'Annual'] as $detail) {
+        foreach (['Nature-XYZ-123', 'GCash 0999-111-2222', 'INSTA-9876', 'Rosa D. Reyes', 'rosa.reyes', 'User ID '.str_pad((string) $this->school->id, 4, '0', STR_PAD_LEFT), 'Annual'] as $detail) {
             $this->assertStringContainsString($detail, $panel);
         }
     }
