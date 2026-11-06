@@ -69,4 +69,32 @@ class DvNonCashTest extends TestCase
         $data = app(CashReportService::class)->build($school, now()->startOfMonth(), now()->endOfMonth());
         $this->assertSame(1, $data['receipts']->count(), 'the typed receipt and the DV are one advance in the cash reports');
     }
+
+    public function test_a_cash_advance_already_recorded_by_a_non_cash_dv_is_not_typed_again(): void
+    {
+        $organization = Organization::create(['name' => 'nc3', 'slug' => 'nc3', 'status' => 'active']);
+        $school = School::create(['organization_id' => $organization->id, 'code' => 'N3', 'name' => 'Typed Twice School', 'status' => 'active']);
+        $master = User::factory()->create(['role' => 'master_user', 'organization_id' => null, 'school_id' => null]);
+        $report = LiquidationReport::create([
+            'organization_id' => $organization->id, 'school_id' => $school->id, 'report_number' => 'LR-N3-1', 'ors_number' => 'ORS-N3-1', 'ors_kind' => 'other',
+            'amount' => 7000, 'status' => 'approved', 'payee' => 'Cash-MDS', 'purpose' => 'Advances received', 'source_of_fund' => 'MOOE',
+        ]);
+        $this->actingAs($master)->post(route('accounting.dv.store', $report), [
+            'dv_date' => now()->toDateString(), 'payee' => 'Cash-MDS', 'dv_particulars' => 'Advances received', 'payment_mode' => 'MDS Check', 'dv_non_cash' => '1',
+            'journal' => [
+                ['account_code' => '1010404000', 'debit' => '7000', 'credit' => ''],
+                ['account_code' => '1990101000', 'debit' => '', 'credit' => '7000'],
+            ],
+        ])->assertRedirect();
+        $typed = fn (float $amount, string $kind = 'cash_advance', string $fund = 'MOOE') => $this->post(route('cash.fund.store'), [
+            'school_id' => $school->id, 'received_at' => now()->toDateString(), 'kind' => $kind, 'source_of_fund' => $fund, 'amount' => $amount,
+        ]);
+
+        $typed(7000)->assertSessionHasErrors('amount');
+        $this->assertSame(0, CashFundReceipt::count());
+        $typed(7000, 'nca')->assertSessionHasNoErrors();
+        $typed(5000)->assertSessionHasNoErrors();
+        $typed(7000, 'cash_advance', 'Canteen')->assertSessionHasNoErrors();
+        $this->assertSame(3, CashFundReceipt::count());
+    }
 }

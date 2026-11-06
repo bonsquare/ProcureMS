@@ -32,7 +32,7 @@ class CashReportController extends Controller
     }
 
     /** @return array<string, mixed> */
-    private function validatedReceipt(Request $request): array
+    private function validatedReceipt(Request $request, ?CashFundReceipt $existing = null): array
     {
         $data = $request->validate([
             'school_id' => ['required', 'integer'],
@@ -47,8 +47,34 @@ class CashReportController extends Controller
         ]);
         abort_unless($this->schoolIds()->contains((int) $data['school_id']), 403);
         $data['fund_cluster'] = (($data['fund_cluster'] ?? null) ?: 'General Fund');
+        $this->refuseAdvanceAlreadyInDv($data, $existing);
 
         return $data;
+    }
+
+    /**
+     * A cash advance is recorded by its non-cash DV (Dr cash / Cr Advances for Operating Expenses 1990101000) and reaches the Bank Reconciliation by itself, so it is not typed again.
+     * Refused when an approved non-cash DV of the same fund and amount has no typed advance yet; a typed advance that is edited without a new amount is left alone.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function refuseAdvanceAlreadyInDv(array $data, ?CashFundReceipt $existing): void
+    {
+        $amount = round((float) $data['amount'], 2);
+        $sameFund = fn (?string $fund) => strcasecmp(trim((string) $fund), trim((string) $data['source_of_fund'])) === 0;
+        if ($data['kind'] !== 'cash_advance' || ($existing && $existing->kind === 'cash_advance' && abs((float) $existing->amount - $amount) < 0.005)) {
+            return;
+        }
+
+        $dvs = LiquidationReport::query()->with('journalLines')->where('school_id', $data['school_id'])->where('status', 'approved')->where('dv_non_cash', true)
+            ->whereNotNull('dv_number')->whereNotNull('dv_date')->get()
+            ->filter(fn (LiquidationReport $dv) => $sameFund($dv->source_of_fund) && abs($dv->advanceAmount() - $amount) < 0.005)->values();
+        $typed = CashFundReceipt::query()->where('school_id', $data['school_id'])->where('kind', 'cash_advance')->when($existing, fn ($query) => $query->whereKeyNot($existing->id))->get()
+            ->filter(fn (CashFundReceipt $receipt) => $sameFund($receipt->source_of_fund) && abs((float) $receipt->amount - $amount) < 0.005)->count();
+
+        if ($dvs->count() > $typed) {
+            throw ValidationException::withMessages(['amount' => sprintf('Already recorded by %s: a cash advance of this amount and fund is in the Bank Reconciliation from its DV, so there is no need to enter it again.', LiquidationReport::dvLabel($dvs[$typed]->dv_number))]);
+        }
     }
 
     private function back(int $schoolId, string $message): RedirectResponse|JsonResponse
@@ -79,7 +105,7 @@ class CashReportController extends Controller
     {
         abort_unless($this->schoolIds()->contains($cashFundReceipt->school_id), 403);
         abort_if($cashFundReceipt->check_liquidation_id, 422, 'A refund comes from a check liquidation; reopen the liquidation to change it.');
-        $data = $this->validatedReceipt($request);
+        $data = $this->validatedReceipt($request, $cashFundReceipt);
         abort_unless((int) $data['school_id'] === $cashFundReceipt->school_id, 403);
         $cashFundReceipt->update($data);
         $this->audit($request, 'cash_fund_updated', $cashFundReceipt);

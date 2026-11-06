@@ -145,3 +145,4 @@ Full dated log moved out of CLAUDE.md to keep that file short. Nothing was remov
 - 2026-11-06: Dashboard Disbursement is net of withheld tax (matches the cash reports); login notice restyled and the right column fits one screen (docs/specs.md section 119).
 - 2026-11-06: Allotment Registry: Edit and Delete for manual allotments, returning to the registry (docs/specs.md section 119).
 - 2026-11-06: IARS with many items: item names upward, header as tall as the longest name (wraps past 32 mm), Arial header, roomier rows and School Head block; FINAL (docs/specs.md section 119).
+- 2026-11-06: Bank Reconciliation cash downloaded form refuses a cash advance that a non-cash DV already records (docs/specs.md section 119). Committed, not yet deployed.
