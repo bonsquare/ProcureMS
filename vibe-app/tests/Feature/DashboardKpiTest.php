@@ -60,16 +60,16 @@ class DashboardKpiTest extends TestCase
         $this->request($organizationB, $schoolB, $userB, 'PR-D-1', 'approved', 700);
 
         $this->actingAs($master)->get(route('home'))->assertOk()
-            ->assertSee('System Master Dashboard')->assertSee('System KPIs')->assertSee('Audit events')->assertSee('KPI Dashboard')->assertDontSee('Branding Settings')->assertDontSee('Master Account')->assertSee('Total Schools')->assertDontSee('School performance')->assertDontSee('Budget flow');
+            ->assertSee('System Master Dashboard')->assertSee('System KPIs')->assertSee('Audit events')->assertDontSee('KPI Dashboard')->assertSee('Proofs to review')->assertSee('Ending within 30 days')->assertDontSee('Pending PRs')->assertDontSee('Branding Settings')->assertDontSee('Master Account')->assertSee('Total Schools')->assertDontSee('School performance')->assertDontSee('Budget flow');
 
         $system = $this->actingAs($master)->get(route('home'))->getContent();
         $this->assertLessThan(strpos($system, 'id="schools-section"'), strpos($system, 'aria-label="System KPIs"'), 'System KPIs sit above the school list');
         $this->assertGreaterThan(strpos($system, 'Total Schools'), strpos($system, 'aria-label="System KPIs"'));
 
+        // The super admin has one dashboard: the old KPI view opens the same page.
         $response = $this->actingAs($master)->get(route('home', ['view' => 'kpi']))->assertOk()
-            ->assertSee('KPI dashboard')->assertSee('All schools')->assertSee('School performance')->assertSee('kpi-c School')->assertSee('kpi-d School');
+            ->assertSee('Proofs to review')->assertDontSee('Planning flow')->assertSee('kpi-c School')->assertSee('kpi-d School');
 
-        $this->assertSame(2, $response->viewData('kpi')['procurement']['total']);
         $this->assertCount(2, $response->viewData('kpi')['schools']);
     }
 

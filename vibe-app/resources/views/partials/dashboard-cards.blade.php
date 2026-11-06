@@ -6,7 +6,7 @@
     ];
     $pastelFor = ['Budget utilization' => 'teal', 'Budget balance' => 'mint', 'Cash balance' => 'sky', 'DVs for payment' => 'butter', 'Purchase requests' => 'lavender', 'Pending approval' => 'peach', 'In progress' => 'sky', 'Liquidation to review' => 'rose', 'Completion rate' => 'mint', 'Active suppliers' => 'butter'];
 @endphp
-<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 {{ count($cards) === 2 ? '' : (count($cards) === 6 ? 'xl:grid-cols-3' : 'xl:grid-cols-4') }}">
         @foreach($cards as $card)
             @php [$cardBg, $cardEdge, $strong, $soft] = $pastels[$pastelFor[$card['label']] ?? 'teal']; $value = $card['tone'] === 'red' ? '#c2303f' : $strong; @endphp
             <a href="{{ $card['href'] }}" class="group relative flex flex-col justify-between overflow-hidden rounded-2xl border shadow-sm p-4 pl-5 transition duration-200 hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f4c5c]" style="background:linear-gradient(135deg,{{ $cardBg }},#fff 135%);border-color:{{ $cardEdge }}">

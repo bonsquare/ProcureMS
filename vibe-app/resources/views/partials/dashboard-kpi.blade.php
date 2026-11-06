@@ -33,9 +33,9 @@
     $yearProgress = (int) round($today->dayOfYear / $daysInYear * 100);
 @endphp
 <section aria-label="KPI dashboard" class="mb-6">
-    <div class="dash-hero relative isolate mb-5 flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-2xl border border-white/50 px-6 py-5 text-white" style="background:linear-gradient(120deg,rgba(15,111,126,.88),rgba(20,129,143,.80) 55%,rgba(242,177,52,.72));-webkit-backdrop-filter:blur(18px) saturate(170%);backdrop-filter:blur(18px) saturate(170%);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),inset 0 -1px 0 rgba(255,255,255,.15),0 14px 34px -12px rgba(10,58,71,.5)">
+    <div class="dash-hero relative isolate mb-5 flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-2xl border border-white/50 px-6 py-5 text-white" style="background:linear-gradient(120deg,rgba(15,111,126,.88),rgba(20,129,143,.80) 55%,rgba(58,160,196,.78));-webkit-backdrop-filter:blur(18px) saturate(170%);backdrop-filter:blur(18px) saturate(170%);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),inset 0 -1px 0 rgba(255,255,255,.15),0 14px 34px -12px rgba(10,58,71,.5)">
         <span class="pointer-events-none absolute -left-10 -top-16 -z-10 h-48 w-48 rounded-full bg-white/25 blur-3xl" aria-hidden="true"></span>
-        <span class="pointer-events-none absolute -bottom-20 right-24 -z-10 h-52 w-52 rounded-full bg-[#f2b134]/45 blur-3xl" aria-hidden="true"></span>
+        <span class="pointer-events-none absolute -bottom-20 right-24 -z-10 h-52 w-52 rounded-full bg-[#5cc3e0]/45 blur-3xl" aria-hidden="true"></span>
         <span class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-1/2 bg-gradient-to-b from-white/20 to-transparent" aria-hidden="true"></span>
         <div class="min-w-0">
             <p class="text-base font-bold uppercase tracking-[.14em] text-white">{{ $isMasterUser ? 'KPI Dashboard' : 'School Dashboard' }} <span class="font-semibold text-white">· FY {{ $kpi['year'] }}</span></p>
@@ -66,6 +66,9 @@
         @endif
     </div>
 
+    @if($isMasterUser)
+        @include('partials.dashboard-platform')
+    @else
     @include('partials.dashboard-cards', ['cards' => $financeCards, 'tone' => $tone])
 
     @php
@@ -156,33 +159,10 @@
         </article>
     </div>
 
-    <div class="mb-3 mt-8 flex items-center gap-3" role="separator" aria-label="Procurement"><span class="material-symbols-outlined text-[20px] text-[#14818f]" aria-hidden="true">shopping_cart</span><h3 class="text-sm font-extrabold uppercase tracking-[.14em] text-[#0f4c5c]">Procurement</h3><span class="h-0.5 flex-1 rounded-full bg-gradient-to-r from-[#14818f] to-[#f2b134]/40" aria-hidden="true"></span></div>
+    <div class="mb-3 mt-8 flex items-center gap-3" role="separator" aria-label="Procurement"><span class="material-symbols-outlined text-[20px] text-[#14818f]" aria-hidden="true">shopping_cart</span><h3 class="text-sm font-extrabold uppercase tracking-[.14em] text-[#0f4c5c]">Procurement</h3><span class="h-0.5 flex-1 rounded-full bg-gradient-to-r from-[#14818f] to-[#5cc3e0]/40" aria-hidden="true"></span></div>
     <div>@include('partials.dashboard-cards', ['cards' => $requestCards, 'tone' => $tone])</div>
-
-    @if($isMasterUser && count($kpi['schools']) > 0)
-        <article class="mt-3 overflow-hidden rounded-2xl border border-outline-variant/50 shadow-sm bg-white">
-            <div class="border-b border-outline-variant/40 px-4 py-3"><h3 class="text-base font-bold text-primary">School performance</h3><p class="text-xs text-on-surface-variant">Requests and budget use per school</p></div>
-            <div class="overflow-x-auto">
-                <table class="w-full min-w-[640px] text-left text-xs">
-                    <thead class="bg-surface-low text-xs uppercase tracking-wider text-on-surface-variant"><tr><th class="px-4 py-2">School</th><th class="px-4 py-2 text-right">Requests</th><th class="px-4 py-2 text-right">Pending</th><th class="px-4 py-2 text-right">Completed</th><th class="px-4 py-2">Budget used</th></tr></thead>
-                    <tbody class="divide-y divide-outline-variant/40">
-                        @foreach($kpi['schools'] as $row)
-                            <tr class="hover:bg-surface-low/50">
-                                <td class="px-4 py-2 font-semibold">{{ $row['name'] }}</td>
-                                <td class="px-4 py-2 text-right">{{ $row['requests'] }}</td>
-                                <td class="px-4 py-2 text-right">@if($row['pending'])<span class="rounded-full bg-attention/15 px-2 py-0.5 font-bold text-attention">{{ $row['pending'] }}</span>@else<span class="text-on-surface-variant">0</span>@endif</td>
-                                <td class="px-4 py-2 text-right">{{ $row['completed'] }}</td>
-                                <td class="px-4 py-2">
-                                    @if($row['utilization'] === null)<span class="text-on-surface-variant">No allocation</span>
-                                    @else<div class="flex items-center gap-2"><div class="h-1.5 w-28 overflow-hidden rounded-full bg-surface-container"><div class="h-full rounded-full" style="width:{{ min(100, $row['utilization']) }}%;background:{{ $row['utilization'] >= 100 ? '#b64a50' : ($row['utilization'] >= 80 ? '#cc8535' : '#369878') }}"></div></div><span class="font-semibold">{{ $row['utilization'] }}%</span><span class="text-on-surface-variant">{{ $money($row['obligated']) }} / {{ $money($row['allocated']) }}</span></div>@endif
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </article>
     @endif
+    @unless($isMasterUser)
     <details class="mt-3 rounded-2xl border border-outline-variant/50 bg-white p-4 shadow-sm">
         <summary class="flex cursor-pointer items-center gap-2 text-sm font-bold text-primary"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">info</span>What these numbers mean</summary>
         <dl class="mt-3 grid grid-cols-1 gap-x-8 gap-y-2 text-xs text-on-surface-variant md:grid-cols-2">
@@ -208,4 +188,5 @@
         </dl>
         <p class="mt-3 text-xs text-on-surface-variant">Figures are for fiscal year {{ $kpi['year'] }}. Amounts show as ₱K (thousands) or ₱M (millions). The page refreshes by itself when the data changes.</p>
     </details>
+    @endunless
 </section>

@@ -95,7 +95,7 @@ class SubscriptionAdminTest extends TestCase
             $this->post(route($route, $this->school), $payload + ['reason' => 'Why', 'password' => 'not-it'])->assertSessionHasErrors('password');
         }
         $this->assertSame('trial', $this->sub()->status, 'nothing was changed');
-        $this->assertSame(0, AuditLog::withoutGlobalScopes()->where('action', 'like', 'subscription_%')->count());
+        $this->assertSame(0, AuditLog::withoutGlobalScopes()->where('action', 'like', 'subscription_%')->where('metadata', 'not like', '%"source":"request"%')->count());
     }
 
     public function test_a_sub_master_cannot_grant_free_or_set_a_price_but_can_suspend(): void

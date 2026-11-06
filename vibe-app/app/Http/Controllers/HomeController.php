@@ -21,6 +21,7 @@ use App\Models\SharedLogo;
 use App\Models\SobItem;
 use App\Models\StaffRoleOption;
 use App\Models\Subscription;
+use App\Models\SubscriptionPayment;
 use App\Models\Supplier;
 use App\Models\SystemSetting;
 use App\Models\Unit;
@@ -172,7 +173,8 @@ class HomeController extends Controller
             'pendingProcurements' => ProcurementRequest::whereIn('school_id', $schoolIds)->whereIn('status', ['submitted', 'pending_approval'])->count(),
             'isMasterUser' => $this->isMasterUser($user),
             'kpi' => $kpi,
-            'dashboardHash' => md5(json_encode($kpi)),
+            'platform' => $platform = $this->isMasterUser($user) ? $this->platform($kpi) : null,
+            'dashboardHash' => md5(json_encode([$kpi, $platform])),
             'screenOff' => SystemSetting::screenIsOff(),
             'server' => $user?->isMaster() && request('view') === 'server' ? app(ServerDashboardService::class)->snapshot() : null,
             'systemKpi' => $this->systemKpi($user, $schoolIds, $pendingPreRegistrations),
@@ -192,13 +194,15 @@ class HomeController extends Controller
             ->get();
         $schoolIds = $schools->pluck('id');
         $kpi = app(DashboardKpiService::class)->forSchools($schoolIds);
-        $hash = md5(json_encode($kpi));
+        $platform = $isMasterUser ? $this->platform($kpi) : null;
+        $hash = md5(json_encode([$kpi, $platform]));
         if ($request->query('h') === $hash) {
             return response()->noContent();
         }
 
         $html = view('partials.dashboard-kpi', [
             'kpi' => $kpi,
+            'platform' => $platform,
             'isMasterUser' => $isMasterUser,
             'currentSchool' => $isMasterUser ? null : $schools->first(),
             'totalSchools' => $schools->count(),
@@ -209,6 +213,42 @@ class HomeController extends Controller
         ])->render();
 
         return response()->json(['hash' => $hash, 'html' => $html]);
+    }
+
+    /**
+     * What the super admin runs: the schools, their subscriptions, the income and the proofs of payment waiting (not a school's own budget).
+     *
+     * @param  array<string, mixed>  $kpi
+     * @return array<string, mixed>
+     */
+    private function platform(array $kpi): array
+    {
+        $today = now()->startOfDay();
+        $schools = School::withoutGlobalScopes()->with(['subscriptions' => fn ($query) => $query->withoutGlobalScopes()->latest('id')])->withCount('users')->orderBy('name')->get();
+        $performance = collect($kpi['schools'])->keyBy('name');
+        $income = app(SubscriptionIncomeService::class);
+        $rows = $schools->map(function (School $school) use ($today, $performance) {
+            $subscription = $school->subscriptions->first();
+            $ends = $subscription?->status === 'grace_period' ? ($subscription->grace_period_end ?? $subscription->subscription_end) : $subscription?->subscription_end;
+
+            return [
+                'name' => $school->name, 'school_status' => $school->status, 'status' => $subscription?->status ?? 'none', 'plan' => $subscription?->plan,
+                'ends' => $ends?->format('M d, Y'), 'days' => $ends ? (int) $today->diffInDays($ends->copy()->startOfDay(), false) : null,
+                'users' => $school->users_count, 'requests' => $performance[$school->name]['requests'] ?? 0, 'utilization' => $performance[$school->name]['utilization'] ?? null,
+            ];
+        })->all();
+        $status = collect($rows)->countBy('status');
+        $year = (int) now()->format('Y');
+        $thisMonth = round((float) SubscriptionPayment::withoutGlobalScopes()->whereYear('paid_at', $year)->whereMonth('paid_at', now()->month)->sum('amount'), 2);
+
+        return [
+            'schools' => count($rows), 'active_schools' => $schools->where('status', 'active')->count(), 'waiting' => $schools->where('status', 'inactive')->count(),
+            'status' => $status->all(), 'ending_soon' => collect($rows)->filter(fn (array $row) => $row['days'] !== null && $row['days'] >= 0 && $row['days'] <= 30 && in_array($row['status'], ['active', 'trial', 'free'], true))->count(),
+            'locked' => collect($rows)->filter(fn (array $row) => in_array($row['status'], ['expired', 'suspended'], true))->count(),
+            'users' => $income->summary($year)['users'], 'income_year' => $income->summary($year)['gross'], 'income_month' => $thisMonth, 'year' => $year,
+            'proofs' => PaymentProof::withoutGlobalScopes()->where('status', PaymentProof::PENDING)->count(),
+            'rows' => $rows,
+        ];
     }
 
     /**

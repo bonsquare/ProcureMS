@@ -119,7 +119,7 @@ class ReturnedOrsEditTest extends TestCase
         $this->assertSame('3000.00', $report->amount, 'the amount stays');
         $this->assertSame('approved', $report->status, 'it does not go back to review');
         $this->assertNotNull($report->paid_at);
-        $this->assertSame('Corrected', AuditLog::latest('id')->first()->metadata['reason']);
+        $this->assertSame('Corrected', AuditLog::where('metadata', 'not like', '%"source":"request"%')->latest('id')->first()->metadata['reason']);
     }
 
     public function test_an_edit_needs_a_reason_and_the_users_own_password(): void

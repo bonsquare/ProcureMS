@@ -7,6 +7,7 @@ use App\Http\Middleware\EnsurePermission;
 use App\Http\Middleware\EnsureScreenIsOn;
 use App\Http\Middleware\EnsureStationConfirmed;
 use App\Http\Middleware\EnsureSubscriptionAllowsWrites;
+use App\Http\Middleware\RecordUserActions;
 use App\Http\Middleware\RestrictTrialActions;
 use App\Http\Middleware\ShowDriveReconnectBanner;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
@@ -37,6 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('web', EnsureAccountActive::class);
         $middleware->appendToGroup('web', EnsureStationConfirmed::class);
         $middleware->appendToGroup('web', ShowDriveReconnectBanner::class);
+        $middleware->appendToGroup('web', RecordUserActions::class);
         // The Sub-master limits must run before route-model binding, so a refusal never depends on the record existing.
         $middleware->appendToGroup('web', EnforceSubMasterLimits::class);
         $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: EnforceSubMasterLimits::class);
