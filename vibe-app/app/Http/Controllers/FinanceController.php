@@ -12,6 +12,7 @@ use App\Models\DvJournalLine;
 use App\Models\LiquidationReport;
 use App\Models\School;
 use App\Models\SchoolStaff;
+use App\Services\CashReportService;
 use App\Services\DocumentNumberService;
 use App\Services\LiquidationChecklistService;
 use App\Support\LiquidationChecklist;
@@ -61,6 +62,9 @@ class FinanceController extends Controller
         $counts = $all->groupBy('status')->map->count();
         $forDv = $all->where('status', 'approved')->whereNull('dv_number');
         $withDv = $all->whereNotNull('dv_number');
+        $cashDvs = $withDv->reject->dv_non_cash;
+        // Cash actually paid out by a DV is its amount less the tax it withholds; the withheld tax is paid by the remittance DV.
+        $net = fn (LiquidationReport $report) => (float) $report->amount - app(CashReportService::class)->deductionsOf($report);
         $counts->put('for_dv', $forDv->count());
         $counts->put('with_dv', $withDv->count());
 
@@ -87,7 +91,11 @@ class FinanceController extends Controller
                 ['For Review', $counts->get('for_review', 0), 'pending_actions', 'error', false],
                 ['Pending Documents', $counts->get('pending_documents', 0), 'folder_open', 'primary', false],
                 ['Ready for DV', $forDv->count(), 'description', 'secondary', false],
-                ['Total ORS Amount', $all->sum('amount'), 'payments', 'primary', true],
+                ['Total ORS Amount', $all->filter->ors_number->reject->dv_non_cash->sum('amount'), 'payments', 'primary', true],
+                ['DVs This Month', $withDv->filter(fn ($r) => $r->dv_date?->isSameMonth(now()))->count(), 'event', 'secondary', false],
+                ['DVs Awaiting Payment', $cashDvs->whereNull('paid_at')->sum($net), 'hourglass_top', 'error', true],
+                ['DVs Paid', $cashDvs->whereNotNull('paid_at')->sum($net), 'task_alt', 'secondary', true],
+                ['Advances Recorded (non-cash)', $withDv->filter->dv_non_cash->sum('amount'), 'account_balance_wallet', 'primary', true],
             ],
         ]);
     }
