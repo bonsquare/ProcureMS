@@ -46,17 +46,16 @@ class ReportsPageTest extends TestCase
         foreach (BudgetAllocationController::REPORTS as $type => $title) {
             $response->assertSee($title)->assertSee(route('budget.allocation.report', $type), false);
         }
-        $response->assertSee('Allotment Registry')->assertSee(route('allotment-registry'), false)
-            ->assertSee('Chart of Accounts')->assertSee(route('chart-of-accounts'), false)
-            ->assertSee('Accounting: ORS and DV')->assertSee(route('accounting'), false)
-            ->assertSee('Cash reports')->assertSee(route('cash', ['tab' => 'reports']), false)
-            ->assertSee('Annual Implementation Plan (AIP)');
+        $response->assertSee('Allotment Registry')->assertSee(route('reports.generate', 'allotment-registry'), false)
+            ->assertSee('Chart of Accounts')->assertSee(route('reports.generate', 'chart-of-accounts'), false)
+            ->assertSee('Accounting: ORS and DV')->assertSee(route('reports.generate', 'accounting'), false)
+            ->assertSee('Cash Disbursement Report')->assertSee(route('reports.generate', 'cash'), false)
+            ->assertSee('Annual Implementation Plan (AIP)')->assertSee(route('reports.generate', 'aip'), false);
 
         $this->get(route('budget.allocation.report', 'annual'))->assertOk();
-        $this->get(route('allotment-registry'))->assertOk();
-        $this->get(route('chart-of-accounts'))->assertOk();
-        $this->get(route('accounting'))->assertOk();
-        $this->get(route('cash', ['tab' => 'reports']))->assertOk();
+        foreach (['aip', 'allotment-registry', 'chart-of-accounts', 'accounting', 'cash'] as $type) {
+            $this->get(route('reports.generate', $type))->assertOk();
+        }
     }
 
     public function test_a_viewer_sees_only_the_reports_the_role_can_open(): void
@@ -68,7 +67,7 @@ class ReportsPageTest extends TestCase
 
         $this->actingAs($viewer)->get(route('reports'))->assertOk()
             ->assertSee('Annual Budget Allocation Report')->assertSee('Allotment Registry')
-            ->assertDontSee('The accounts of the organization and where they are used.')->assertDontSee('Accounting: ORS and DV')->assertDontSee('Cash reports');
+            ->assertDontSee('The accounts of the organization and where they are used.')->assertDontSee('Accounting: ORS and DV')->assertDontSee('Cash Disbursement Report');
     }
 
     public function test_a_role_with_no_report_gets_a_plain_message(): void

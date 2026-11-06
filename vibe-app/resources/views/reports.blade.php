@@ -24,22 +24,22 @@
             $user = auth()->user();
             $reports = [];
             if ($user->hasPermission('planning.view')) {
-                $reports[] = ['icon' => 'event_note', 'title' => 'Annual Implementation Plan (AIP)', 'description' => 'Yearly activities, quarterly financial targets and source of fund per school. An approved AIP creates the budget allotments.', 'category' => 'Planning', 'url' => route('planning').'#aip'];
+                $reports[] = ['icon' => 'event_note', 'title' => 'Annual Implementation Plan (AIP)', 'description' => 'Yearly activities, quarterly financial targets and source of fund per school. An approved AIP creates the budget allotments.', 'category' => 'Planning', 'url' => route('reports.generate', 'aip')];
             }
             if ($user->hasPermission('budget.view')) {
                 foreach (\App\Http\Controllers\BudgetAllocationController::REPORTS as $type => $title) {
                     $reports[] = ['icon' => 'bar_chart', 'title' => $title, 'description' => 'Read from the Budget Allocation records; on screen or as a CSV file.', 'category' => 'Budget', 'url' => route('budget.allocation.report', $type)];
                 }
-                $reports[] = ['icon' => 'account_balance_wallet', 'title' => 'Allotment Registry', 'description' => 'The allotments of the school, their obligations and their balance.', 'category' => 'Budget', 'url' => route('allotment-registry')];
+                $reports[] = ['icon' => 'account_balance_wallet', 'title' => 'Allotment Registry', 'description' => 'The allotments of the school, their obligations and their balance.', 'category' => 'Budget', 'url' => route('reports.generate', 'allotment-registry')];
             }
             if ($user->hasPermission('accounting.view') || $user->hasPermission('accounting.manage')) {
-                $reports[] = ['icon' => 'menu_book', 'title' => 'Chart of Accounts', 'description' => 'The accounts of the organization and where they are used.', 'category' => 'Accounting', 'url' => route('chart-of-accounts')];
+                $reports[] = ['icon' => 'menu_book', 'title' => 'Chart of Accounts', 'description' => 'The accounts of the organization and where they are used.', 'category' => 'Accounting', 'url' => route('reports.generate', 'chart-of-accounts')];
             }
             if ($user->hasPermission('accounting.view')) {
-                $reports[] = ['icon' => 'fact_check', 'title' => 'Accounting: ORS and DV', 'description' => 'Obligation Requests and Disbursement Vouchers with their review status.', 'category' => 'Accounting', 'url' => route('accounting')];
+                $reports[] = ['icon' => 'fact_check', 'title' => 'Accounting: ORS and DV', 'description' => 'Obligation Requests and Disbursement Vouchers with their review status.', 'category' => 'Accounting', 'url' => route('reports.generate', 'accounting')];
             }
             if ($user->hasPermission('cash.pay')) {
-                $reports[] = ['icon' => 'payments', 'title' => 'Cash reports', 'description' => 'Report of Checks Issued, Checks and Advices, Cash Disbursement Register and Bank Reconciliation.', 'category' => 'Cash', 'url' => route('cash', ['tab' => 'reports'])];
+                $reports[] = ['icon' => 'payments', 'title' => 'Cash Disbursement Report', 'description' => 'The DVs paid in the year with the check or ADA reference, the tax withheld and the cash paid; on screen or as a CSV file.', 'category' => 'Cash', 'url' => route('reports.generate', 'cash')];
             }
         @endphp
         <section class="overflow-hidden rounded border border-outline-variant/30 bg-white"><div class="border-b border-outline-variant/30 p-5"><h2 class="text-lg font-semibold">Reports</h2><p class="mt-1 text-xs text-on-surface-variant">The reports of the system, from the school's own records. Choose Generate to show a report below.</p></div>@if($reports === [])<p class="p-5 text-sm text-on-surface-variant">No reports are available for your role.</p>@else<div class="grid grid-cols-1 divide-y divide-outline-variant/20 md:grid-cols-2 md:divide-x md:divide-y-0">@foreach($reports as $report)<div class="flex items-center justify-between gap-4 p-5"><div class="flex min-w-0 items-start gap-3"><span class="material-symbols-outlined text-2xl text-primary">{{ $report['icon'] }}</span><div class="min-w-0"><h3 class="text-sm font-semibold">{{ $report['title'] }}</h3><p class="mt-1 text-xs leading-5 text-on-surface-variant">{{ $report['description'] }}</p><span class="mt-2 inline-flex rounded bg-surface-low px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant">{{ $report['category'] }}</span></div></div><button type="button" data-report-url="{{ $report['url'] }}" data-report-title="{{ $report['title'] }}" class="report-generate shrink-0 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary-container">Generate</button></div>@endforeach</div>@endif</section>

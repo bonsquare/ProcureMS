@@ -20,7 +20,7 @@
     // DV numbers already start with "DV-": show them as they are, never "DV DV-...".
     $dvLabel = fn ($number) => preg_match('/^DV\b/i', (string) $number) ? $number : 'DV ' . $number;
     $tabs = $isCash
-        ? ['unpaid' => 'DVs For Payment', 'paid' => 'Paid', 'cancelled' => 'Cancelled Checks'] + (auth()->user()?->hasPermission('cash.pay') ? ['reports' => 'Reports'] : [])
+        ? ['unpaid' => 'DVs For Payment', 'paid' => 'Paid', 'cancelled' => 'Cancelled Checks'] + (auth()->user()?->hasPermission('cash.pay') ? ['reports' => 'Cash Disbursement Reports'] : [])
         : ['for_review' => 'For Review', 'pending_documents' => 'Pending Documents', 'returned' => 'Returned', 'for_dv' => 'Ready for DV', 'with_dv' => 'With DV', 'all' => 'All'];
     $tones = ['for_review' => 'error', 'pending_documents' => 'primary', 'approved' => 'secondary', 'returned' => 'error', 'draft' => 'on-surface-variant'];
     $inputClass = 'mt-1 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary';

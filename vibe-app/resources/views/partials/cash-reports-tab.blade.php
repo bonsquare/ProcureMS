@@ -24,6 +24,10 @@
                     <span><span class="block text-sm font-bold text-primary">{{ $title }}</span><span class="mt-1 block text-xs text-on-surface-variant">{{ $hint }}</span></span>
                 </button>
             @endforeach
+            <a href="{{ route('cash.summaries', ['school_id' => $reportSchool->id]) }}" class="group flex items-start gap-3 rounded-xl border border-outline-variant/50 border-l-4 border-l-secondary bg-white p-4 text-left shadow-sm transition hover:shadow-md">
+                <span class="material-symbols-outlined text-[24px] text-secondary" aria-hidden="true">monitoring</span>
+                <span><span class="block text-sm font-bold text-primary">Cash Summaries</span><span class="mt-1 block text-xs text-on-surface-variant">Cash position, tax withheld and remitted, advances, and paid DVs by payee.</span></span>
+            </a>
         </div>
     </section>
     <section id="cash-history-section" class="overflow-hidden rounded-xl border border-outline-variant/60 bg-white shadow-sm">
@@ -237,11 +241,12 @@
             quarterSelect.value = keep;
             applyQuarter();
         });
-        ['cash-report-from', 'cash-report-to'].forEach((id) => field(id).addEventListener('input', () => {
+        // 'change' too: a kept report opened for Edit sets From and To by script, and the Period covered box has to follow.
+        ['cash-report-from', 'cash-report-to'].forEach((id) => ['input', 'change'].forEach((type) => field(id).addEventListener(type, () => {
             const fromYear = parseInt((field('cash-report-from').value || '').slice(0, 4), 10);
             if (fromYear) yearInput.value = fromYear;
             syncQuarter();
-        }));
+        })));
         syncQuarter();
         const schedule = () => { clearTimeout(timer); timer = setTimeout(() => refresh(), 600); };
         const manualKey = { officer_id: 'officer', received_by_id: 'received_by' };
@@ -406,7 +411,7 @@
             }
             fundList.forEach((item) => {
                 const row = document.createElement('tr');
-                [item.date_label, item.kind_label + (item.source_of_fund ? ' · ' + item.source_of_fund : ''), item.reference || '-', item.amount_label].forEach((text, index) => {
+                [item.date_label, item.kind_label + (item.source_of_fund ? ' · ' + item.source_of_fund : ''), (item.reference || '-') + (item.recorded_by_dv ? ' (also recorded by ' + item.recorded_by_dv + ')' : ''), item.amount_label].forEach((text, index) => {
                     const cell = document.createElement('td');
                     cell.className = index === 3 ? 'px-2 py-2 text-right font-semibold tabular-nums' : (index === 0 ? 'px-3 py-2' : 'px-2 py-2');
                     cell.textContent = text; row.append(cell);
@@ -463,11 +468,13 @@
         field('cash-fund-source').addEventListener('change', showFundOther);
         field('cash-report-source').addEventListener('change', () => { field('cash-report-source-other-wrap').classList.toggle('hidden', field('cash-report-source').value !== 'Others'); schedule(); });
         field('cash-report-source-other').addEventListener('input', schedule);
+        // The Date of a new cash downloaded entry starts at the From date of the period and follows it until it is typed by hand.
+        const alignFundDate = () => { const date = field('cash-fund-date'); if (!date.value || date.dataset.auto === date.value) { date.value = field('cash-report-from').value; date.dataset.auto = date.value; } };
         const toggleBank = (on) => {
             modal.querySelectorAll('[data-bank-only]').forEach((box) => box.classList.toggle('hidden', !on));
-            if (on) { resetFund(); if (!field('cash-fund-date').value) field('cash-fund-date').value = field('cash-report-from').value; loadFund(); }
+            if (on) { resetFund(); alignFundDate(); loadFund(); }
         };
-        ['cash-report-school', 'cash-report-from', 'cash-report-to'].forEach((id) => field(id).addEventListener('change', () => { if (!modal.querySelector('[data-bank-only]').classList.contains('hidden')) loadFund(); }));
+        ['cash-report-school', 'cash-report-from', 'cash-report-to'].forEach((id) => field(id).addEventListener('change', () => { if (!modal.querySelector('[data-bank-only]').classList.contains('hidden')) { alignFundDate(); loadFund(); } }));
         // Cash Disbursement Register only: the check numbers typed by hand; each one pulls its details into the register.
         const checkRows = field('cash-check-rows');
         const checkError = field('cash-check-error');

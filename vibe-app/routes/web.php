@@ -16,6 +16,7 @@ use App\Http\Controllers\DriveFileController;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\FinancialReportController;
 use App\Http\Controllers\FormGeneratorController;
+use App\Http\Controllers\GeneratedReportController;
 use App\Http\Controllers\GoogleDriveController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MasterUserController;
@@ -225,6 +226,7 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::post('/cash/fund-receipts', [CashReportController::class, 'storeReceipt'])->middleware('permission:cash.pay')->name('cash.fund.store');
     Route::put('/cash/fund-receipts/{cashFundReceipt}', [CashReportController::class, 'updateReceipt'])->middleware('permission:cash.pay')->name('cash.fund.update')->whereNumber('cashFundReceipt');
     Route::delete('/cash/fund-receipts/{cashFundReceipt}', [CashReportController::class, 'destroyReceipt'])->middleware('permission:cash.pay')->name('cash.fund.destroy')->whereNumber('cashFundReceipt');
+    Route::get('/cash/summaries', [CashReportController::class, 'summaries'])->middleware('permission:cash.pay')->name('cash.summaries');
     Route::get('/cash/reports/roci', [CashReportController::class, 'roci'])->middleware('permission:cash.pay')->name('cash.report.roci');
     Route::get('/cash/reports/checks-advices', [CashReportController::class, 'checksAdvices'])->middleware('permission:cash.pay')->name('cash.report.checks');
     Route::get('/cash/reports/register', [CashReportController::class, 'register'])->middleware('permission:cash.pay')->name('cash.report.register');
@@ -250,6 +252,7 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::post('/drive-files', [DriveFileController::class, 'store'])->middleware('drive.connected')->name('drive-files.store');
     Route::delete('/drive-files/{driveFile}', [DriveFileController::class, 'destroy'])->whereNumber('driveFile')->name('drive-files.destroy');
     Route::get('/reports', [HomeController::class, 'reports'])->middleware('permission:reports.view')->name('reports');
+    Route::get('/reports/generate/{type}', [GeneratedReportController::class, 'show'])->middleware('permission:reports.view')->name('reports.generate');
     Route::get('/support', [SupportController::class, 'show'])->name('support');
     Route::put('/support', [SupportController::class, 'update'])->name('support.update');
     Route::post('/support/messages', [SupportController::class, 'send'])->middleware('throttle:10,1')->name('support.send');

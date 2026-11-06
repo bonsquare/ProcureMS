@@ -12,6 +12,7 @@ use App\Models\LiquidationReport;
 use App\Models\School;
 use App\Models\SchoolStaff;
 use App\Services\CashReportService;
+use App\Services\CashSummaryService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -478,13 +479,37 @@ class CashReportController extends Controller
         $data = $request->validate(['school_id' => ['required', 'integer'], 'from' => ['required', 'date'], 'to' => ['required', 'date', 'after_or_equal:from']]);
         abort_unless($this->schoolIds()->contains((int) $data['school_id']), 403);
 
+        // The non-cash DVs that record an advance: a typed cash advance of the same amount (and the same fund, when the DV has one) names its DV, so nobody types it twice.
+        $advanceDvs = LiquidationReport::query()->with('journalLines')->where('school_id', $data['school_id'])->where('status', 'approved')->where('dv_non_cash', true)->whereNotNull('dv_number')->get()
+            ->filter(fn (LiquidationReport $dv) => $dv->advanceAmount() > 0);
+        $dvOf = function (CashFundReceipt $receipt) use ($advanceDvs): string {
+            $dv = $receipt->kind !== 'cash_advance' ? null : $advanceDvs->first(fn (LiquidationReport $dv) => (blank($dv->source_of_fund) || strcasecmp(trim((string) $dv->source_of_fund), trim((string) $receipt->source_of_fund)) === 0) && abs($dv->advanceAmount() - (float) $receipt->amount) < 0.005);
+
+            return $dv ? LiquidationReport::dvLabel($dv->dv_number) : '';
+        };
+
         return response()->json(CashFundReceipt::query()->where('school_id', $data['school_id'])
             ->whereBetween('received_at', [Carbon::parse($data['from'])->startOfDay(), Carbon::parse($data['to'])->endOfDay()])
             ->orderBy('received_at')->orderBy('id')->get()
             ->map(fn (CashFundReceipt $receipt) => [
                 'id' => $receipt->id, 'received_at' => $receipt->received_at->toDateString(), 'date_label' => $receipt->received_at->format('M d, Y'),
                 'kind' => $receipt->kind, 'kind_label' => $receipt->kindLabel(), 'amount' => (string) $receipt->amount, 'amount_label' => number_format((float) $receipt->amount, 2),
-                'reference' => (string) $receipt->reference, 'note' => (string) $receipt->note, 'source_of_fund' => (string) $receipt->source_of_fund, 'fund_cluster' => (string) $receipt->fund_cluster, 'bank_account_number' => (string) $receipt->bank_account_number,
+                'reference' => (string) $receipt->reference, 'recorded_by_dv' => $dvOf($receipt), 'note' => (string) $receipt->note, 'source_of_fund' => (string) $receipt->source_of_fund, 'fund_cluster' => (string) $receipt->fund_cluster, 'bank_account_number' => (string) $receipt->bank_account_number,
             ])->values());
+    }
+
+    /** The cash summaries of a school and period: cash position, tax withheld and remitted, advances, and paid DVs by payee (read-only). */
+    public function summaries(Request $request, CashSummaryService $summaries)
+    {
+        $schools = School::query()->whereIn('id', $this->schoolIds())->orderBy('name')->get();
+        $school = $schools->firstWhere('id', (int) $request->query('school_id')) ?? $schools->first();
+        abort_unless($school, 404);
+        $quarter = now()->startOfQuarter();
+        $date = fn (?string $value, Carbon $default) => rescue(fn () => Carbon::parse((string) $value), $default, false) ?: $default;
+        $from = $date($request->query('from'), $quarter);
+        $to = $date($request->query('to'), $quarter->copy()->endOfQuarter());
+        abort_if($to->lt($from), 422, 'The end of the period is before its start.');
+
+        return view('cash-summaries', ['schools' => $schools, 'school' => $school, 'from' => $from, 'to' => $to] + $summaries->build($school, $from, $to));
     }
 }

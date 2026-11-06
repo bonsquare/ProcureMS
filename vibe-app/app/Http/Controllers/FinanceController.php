@@ -137,6 +137,8 @@ class FinanceController extends Controller
         $all = $this->reports()->where('status', 'approved')->whereNotNull('dv_number')->where('dv_non_cash', false)->get();
         $paid = $all->whereNotNull('paid_at');
         $unpaid = $all->whereNull('paid_at');
+        // Cash actually paid out by a DV is its amount less the tax it withholds (the remittance DV pays that tax).
+        $net = fn (LiquidationReport $report) => (float) $report->amount - app(CashReportService::class)->deductionsOf($report);
         $cancelledChecks = CancelledCheck::with('canceller')->whereIn('school_id', $this->schoolIds())->latest('cancelled_at')->get();
 
         return view('finance', [
@@ -148,9 +150,9 @@ class FinanceController extends Controller
             'rows' => in_array($tab, ['cancelled', 'reports'], true) ? collect() : ($tab === 'paid' ? $paid : $unpaid)->sortByDesc($tab === 'paid' ? 'paid_at' : 'approved_at'),
             'metrics' => [
                 ['DVs For Payment', $unpaid->count(), 'schedule', 'error', false],
-                ['Payable Amount', $unpaid->sum('amount'), 'request_quote', 'primary', true],
-                ['Paid This Month', $paid->filter(fn ($r) => $r->paid_at->isSameMonth(now()))->sum('amount'), 'payments', 'secondary', true],
-                ['Total Disbursed', $paid->sum('amount'), 'account_balance_wallet', 'secondary', true],
+                ['Payable Amount', $unpaid->sum($net), 'request_quote', 'primary', true],
+                ['Paid This Month', $paid->filter(fn ($r) => $r->paid_at->isSameMonth(now()))->sum($net), 'payments', 'secondary', true],
+                ['Total Disbursed', $paid->sum($net), 'account_balance_wallet', 'secondary', true],
             ],
         ] + ($tab === 'reports' ? $this->reportsTabData($request) : []));
     }
