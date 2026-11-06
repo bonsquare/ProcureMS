@@ -4,16 +4,18 @@ namespace App\Services;
 
 use App\Models\DocumentCounter;
 use App\Models\Organization;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class DocumentNumberService
 {
-    public function next(int $organizationId, string $type, string $prefix, ?int $year = null, int $padding = 4): string
+    public function next(int $organizationId, string $type, string $prefix, ?int $year = null, int $padding = 4, ?string $date = null): string
     {
-        $year ??= now()->year;
+        $moment = $date ? Carbon::parse($date) : now();
+        $year ??= $moment->year;
         $prefix = $this->configuredPrefix($organizationId, $type, $prefix);
 
-        return DB::transaction(function () use ($organizationId, $type, $prefix, $year, $padding) {
+        return DB::transaction(function () use ($organizationId, $type, $prefix, $year, $padding, $moment) {
             DocumentCounter::query()->firstOrCreate([
                 'organization_id' => $organizationId,
                 'document_type' => $type,
@@ -29,13 +31,14 @@ class DocumentNumberService
 
             $counter->increment('last_number');
 
-            return $this->format($type, $prefix, $year, $padding, $counter->last_number);
+            return $this->format($type, $prefix, $year, $padding, $counter->last_number, $moment);
         }, 3);
     }
 
-    public function preview(int $organizationId, string $type, string $prefix, ?int $year = null, int $padding = 4): string
+    public function preview(int $organizationId, string $type, string $prefix, ?int $year = null, int $padding = 4, ?string $date = null): string
     {
-        $year ??= now()->year;
+        $moment = $date ? Carbon::parse($date) : now();
+        $year ??= $moment->year;
         $prefix = $this->configuredPrefix($organizationId, $type, $prefix);
         $last = DocumentCounter::query()
             ->where('organization_id', $organizationId)
@@ -44,14 +47,20 @@ class DocumentNumberService
             ->value('last_number') ?? 0;
         $last = max($last, $this->existingMaximum($organizationId, $type, $prefix, $year));
 
-        return $this->format($type, $prefix, $year, $padding, $last + 1);
+        return $this->format($type, $prefix, $year, $padding, $last + 1, $moment);
     }
 
-    /** A disbursement voucher is numbered YYYY-MM-XXXX (the month it is created; the number runs on through the year); every other document is PREFIX-YYYY-XXXX. */
-    private function format(string $type, string $prefix, int $year, int $padding, int $number): string
+    /** A disbursement voucher number YYYY-MM-XXXX carries the year and month of the DV date: the same number with the year and month of the given date. */
+    public function forDate(string $number, string $date): string
+    {
+        return preg_match('/^\d{4}-\d{2}-(\d+)$/', $number, $matches) ? Carbon::parse($date)->format('Y-m').'-'.$matches[1] : $number;
+    }
+
+    /** A disbursement voucher is numbered YYYY-MM-XXXX (the month of the DV date; the number runs on through the year); every other document is PREFIX-YYYY-XXXX. */
+    private function format(string $type, string $prefix, int $year, int $padding, int $number, Carbon $moment): string
     {
         if ($type === 'disbursement_voucher') {
-            return sprintf('%d-%02d-%0'.$padding.'d', $year, now()->month, $number);
+            return sprintf('%d-%02d-%0'.$padding.'d', $year, $moment->month, $number);
         }
 
         return sprintf('%s-%d-%0'.$padding.'d', $prefix, $year, $number);

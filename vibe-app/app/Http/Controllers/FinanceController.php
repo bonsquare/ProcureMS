@@ -457,8 +457,12 @@ class FinanceController extends Controller
         $data['dv_include_appropriation'] = (bool) ($data['dv_include_appropriation'] ?? false);
         $data['dv_non_cash'] = (bool) ($data['dv_non_cash'] ?? false);
 
-        $data['dv_number'] = $editing ? $liquidationReport->dv_number : ($data['dv_number'] ?? app(DocumentNumberService::class)
-            ->next((int) $liquidationReport->organization_id, 'disbursement_voucher', 'DV'));
+        $numbers = app(DocumentNumberService::class);
+        $data['dv_number'] = $editing ? $liquidationReport->dv_number : $numbers->forDate($data['dv_number'] ?? $numbers
+            ->next((int) $liquidationReport->organization_id, 'disbursement_voucher', 'DV', date: $data['dv_date']), $data['dv_date']);
+        if (! $editing && LiquidationReport::query()->where('organization_id', $liquidationReport->organization_id)->where('dv_number', $data['dv_number'])->whereKeyNot($liquidationReport->id)->exists()) {
+            throw ValidationException::withMessages(['dv_number' => 'This DV number is already used.']);
+        }
         DB::transaction(function () use ($liquidationReport, $data, $lines, $editing) {
             if ($editing) {
                 $liquidationReport->journalLines()->delete();

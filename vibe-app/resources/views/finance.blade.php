@@ -485,6 +485,12 @@
         show(dvModal);
         if (window.refreshDvPreview) window.refreshDvPreview();
     }));
+    // The number of a new DV is YYYY-MM-XXXX with the year and month of its DV date: it follows the date.
+    document.querySelector('#dv-form [name=dv_date]').addEventListener('change', (event) => {
+        const number = document.querySelector('#dv-form [name=dv_number]');
+        const date = event.target.value;
+        if (date && /^\d{4}-\d{2}-\d+$/.test(number.value)) { number.value = date.slice(0, 7) + number.value.slice(7); }
+    });
     document.querySelectorAll('[data-pay]').forEach((b) => b.addEventListener('click', () => {
         document.getElementById('pay-form').action = b.dataset.pay;
         document.getElementById('pay-title').textContent = b.dataset.label + ' · ' + b.dataset.amount;
