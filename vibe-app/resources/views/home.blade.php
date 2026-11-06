@@ -107,8 +107,6 @@
                         if (status) status.textContent = text;
                         if (dot) dot.className = 'inline-block h-2 w-2 rounded-full ' + (ok ? 'bg-emerald-300' : 'bg-amber-300');
                     };
-                    const showTime = () => { const el = box.querySelector('[data-live-clock]'); if (el && el.firstChild) el.firstChild.nodeValue = new Date().toLocaleTimeString('en-PH', { timeZone: 'Asia/Manila', hour: 'numeric', minute: '2-digit', second: '2-digit' }); };
-                    showTime(); setInterval(() => { if (! document.hidden) showTime(); }, 1000);
                     let hash = box.dataset.hash;
                     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
                     const countUp = (root) => {
@@ -132,12 +130,11 @@
                         });
                     };
                     countUp(body);
-                    const clock = () => new Date().toLocaleTimeString('en-PH', { timeZone: 'Asia/Manila', hour: 'numeric', minute: '2-digit' });
                     const tick = async () => {
                         if (document.hidden || document.querySelector('dialog[open]')) return;
                         try {
                             const response = await fetch(box.dataset.url + '?h=' + encodeURIComponent(hash), { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
-                            if (response.status === 204) { setLive('Live · checked ' + clock(), true); return; }
+                            if (response.status === 204) { setLive('Live', true); return; }
                             if (!response.ok) throw new Error('live failed');
                             const data = await response.json();
                             // keep the keyboard place and the open meaning panel across the redraw
@@ -150,7 +147,7 @@
                             body.querySelectorAll('details').forEach((panel, index) => { if (openPanels[index]) panel.open = true; });
                             const back = summaryIndex >= 0 ? body.querySelectorAll('summary')[summaryIndex] : (focusKey ? [...body.querySelectorAll('a[href], button, [id]')].find((el) => (el.getAttribute('href') || el.id) === focusKey) : null);
                             if (back) back.focus({ preventScroll: true });
-                            setLive('Live · updated ' + clock(), true);
+                            setLive('Live', true);
                         } catch (error) { setLive('Live updates paused · reconnecting', false); }
                     };
                     setInterval(tick, 30000);
