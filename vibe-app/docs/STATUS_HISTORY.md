@@ -158,3 +158,4 @@ Full dated log moved out of CLAUDE.md to keep that file short. Nothing was remov
 - 2026-11-06: Subscription proof form redesigned with a sender card, proofs open in a window, user ID shown with four digits (docs/specs.md section 119).
 
 - 2026-11-06: Super admin dashboard: the KPI tab is gone and the System Master Dashboard shows six platform cards (schools, subscriptions, proofs to review, ending soon, income, users); the Health/Tasks/Audit cards are removed; every user action that saves, changes or deletes is written to the audit log by RecordUserActions (docs/specs.md section 119).
+- 2026-11-06: Server Dashboard: one 'not connected' notice instead of three empty cards when Railway is not connected, and a Next Railway bill card (billing period end, days left) (docs/specs.md section 119).

@@ -24,7 +24,7 @@ class ServerDashboardTest extends TestCase
         config(['services.railway.token' => 'tok', 'services.railway.project_id' => 'proj', 'services.server_dashboard.url' => 'http://example.test', 'services.server_dashboard.domain_expires_at' => now()->addDays(30)->toDateString()]);
         Http::fake([
             'backboard.railway.com/*' => Http::response(['data' => [
-                'project' => ['name' => 'procurems', 'subscriptionPlanLimit' => ['includedUsageDollars' => 5, 'containers' => ['cpu' => 2, 'memoryBytes' => 1000000000, 'diskBytes' => 1000000000]], 'workspace' => ['plan' => 'HOBBY', 'customer' => ['currentUsage' => 0.4034, 'creditBalance' => 5, 'remainingUsageCreditBalance' => 4.5966, 'isTrialing' => true, 'trialDaysRemaining' => 26]], 'volumes' => ['edges' => [['node' => ['volumeInstances' => ['edges' => [['node' => ['currentSizeMB' => 59.2, 'sizeMB' => 500]]]]]]]], 'services' => ['edges' => [['node' => ['name' => 'procurems']]]], 'environments' => ['edges' => [['node' => ['name' => 'production']]]]],
+                'project' => ['name' => 'procurems', 'subscriptionPlanLimit' => ['includedUsageDollars' => 5, 'containers' => ['cpu' => 2, 'memoryBytes' => 1000000000, 'diskBytes' => 1000000000]], 'workspace' => ['plan' => 'HOBBY', 'customer' => ['currentUsage' => 0.4034, 'creditBalance' => 5, 'remainingUsageCreditBalance' => 4.5966, 'isTrialing' => true, 'trialDaysRemaining' => 26, 'billingPeriod' => ['start' => '2026-10-20T00:00:00Z', 'end' => '2026-11-20T00:00:00Z']]], 'volumes' => ['edges' => [['node' => ['volumeInstances' => ['edges' => [['node' => ['currentSizeMB' => 59.2, 'sizeMB' => 500]]]]]]]], 'services' => ['edges' => [['node' => ['name' => 'procurems']]]], 'environments' => ['edges' => [['node' => ['name' => 'production']]]]],
                 'deployments' => ['edges' => [['node' => ['status' => 'SUCCESS', 'createdAt' => '2026-10-13T22:18:00Z']]]],
                 'estimatedUsage' => [['measurement' => 'NETWORK_TX_GB', 'estimatedValue' => 10], ['measurement' => 'MEMORY_USAGE_GB', 'estimatedValue' => 1000]],
             ]]),
@@ -39,6 +39,8 @@ class ServerDashboardTest extends TestCase
             ->assertSee('59.2 MB')
             ->assertSee('$4.60 left to spend')
             ->assertSee('SUCCESS')
+            ->assertSee('Next Railway bill')
+            ->assertSee('Nov 20, 2026')
             ->assertSee('Online');
 
         $this->assertSame([], array_filter(array_merge(...array_values(array_map(fn ($part) => is_array($part) ? $part : [], Cache::get('server-dashboard')))), 'is_object'), 'Only plain values may be cached.');

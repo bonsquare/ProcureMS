@@ -26,6 +26,8 @@ class ServerDashboardService
         $at = fn (?int $time) => $time ? Carbon::createFromTimestamp($time) : null;
         if ($raw['hosting']['connected']) {
             $raw['hosting']['last_deploy'] = $at($raw['hosting']['last_deploy']);
+            $raw['hosting']['plan']['billing_start'] = $at($raw['hosting']['plan']['billing_start']);
+            $raw['hosting']['plan']['billing_end'] = $at($raw['hosting']['plan']['billing_end']);
             $raw['hosting']['deployments'] = array_map(fn ($d) => ['status' => $d['status'], 'at' => $at($d['at'])], $raw['hosting']['deployments']);
         }
         $raw['domain']['ssl_expires'] = $at($raw['domain']['ssl_expires']);
@@ -45,7 +47,7 @@ class ServerDashboardService
         }
 
         try {
-            $query = 'query($id:String!){project(id:$id){name subscriptionPlanLimit workspace{plan customer{currentUsage creditBalance remainingUsageCreditBalance isTrialing trialDaysRemaining billingPeriod{end}}} volumes{edges{node{volumeInstances{edges{node{currentSizeMB sizeMB}}}}}} services{edges{node{name}}} environments{edges{node{name}}}}'
+            $query = 'query($id:String!){project(id:$id){name subscriptionPlanLimit workspace{plan customer{currentUsage creditBalance remainingUsageCreditBalance isTrialing trialDaysRemaining billingPeriod{start end}}} volumes{edges{node{volumeInstances{edges{node{currentSizeMB sizeMB}}}}}} services{edges{node{name}}} environments{edges{node{name}}}}'
                 .' deployments(first:5,input:{projectId:$id}){edges{node{status createdAt}}}'
                 .' estimatedUsage(projectId:$id,measurements:[CPU_USAGE,MEMORY_USAGE_GB,NETWORK_TX_GB,DISK_USAGE_GB]){measurement estimatedValue}}';
             $response = Http::withToken($token)->timeout(8)->post('https://backboard.railway.com/graphql/v2', ['query' => $query, 'variables' => ['id' => $project]]);
@@ -66,6 +68,8 @@ class ServerDashboardService
             'credit' => $customer ? (float) $customer['creditBalance'] : (float) ($limit['includedUsageDollars'] ?? 0),
             'used' => $customer ? round((float) $customer['currentUsage'], 2) : null,
             'remaining' => $customer ? round((float) $customer['remainingUsageCreditBalance'], 2) : null,
+            'billing_start' => ! empty($customer['billingPeriod']['start']) ? Carbon::parse($customer['billingPeriod']['start'])->timestamp : null,
+            'billing_end' => ! empty($customer['billingPeriod']['end']) ? Carbon::parse($customer['billingPeriod']['end'])->timestamp : null,
             'trial_days' => $customer && $customer['isTrialing'] ? $customer['trialDaysRemaining'] : null,
             'cpu' => $limit['containers']['cpu'] ?? null,
             'memory_gb' => isset($limit['containers']['memoryBytes']) ? $limit['containers']['memoryBytes'] / 1e9 : null,

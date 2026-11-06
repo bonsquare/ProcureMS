@@ -3,15 +3,19 @@
     $days = fn ($date) => $date ? (int) now()->startOfDay()->diffInDays($date->copy()->startOfDay(), false) : null;
     $dayTone = fn (?int $n) => $n === null ? 'text-on-surface-variant' : ($n <= 14 ? 'text-error' : ($n <= 45 ? 'text-[#b46f1f]' : 'text-secondary'));
     $sslDays = $days($d['ssl_expires']); $domainDays = $days($d['expires_at']);
+    $billDays = $h['connected'] ? $days($h['plan']['billing_end'] ?? null) : null;
     $statusOk = in_array($h['last_status'] ?? '', ['SUCCESS', 'DEPLOYING', 'BUILDING', 'INITIALIZING'], true);
     $cards = [
         ['Site status', $d['up'] ? 'Online' : 'Down', $d['response_ms'] !== null ? $d['response_ms'].' ms response' : 'No response', 'public', $d['up'] ? 'text-secondary' : 'text-error'],
         ['SSL certificate', $sslDays === null ? '—' : $sslDays.' days', $d['ssl_expires'] ? 'Expires '.$d['ssl_expires']->format('M d, Y') : 'Could not read the certificate', 'lock', $dayTone($sslDays)],
         ['Domain renewal', $domainDays === null ? '—' : $domainDays.' days', $d['expires_at'] ? 'Expires '.$d['expires_at']->format('M d, Y').($d['renewal_price'] ? ' · renews at '.$d['renewal_price'] : '') : 'Set DOMAIN_EXPIRES_AT to track this', 'event', $dayTone($domainDays)],
         ['Hosting bill so far', $h['connected'] ? '$'.number_format($h['plan']['used'] ?? $h['estimated_cost'], 2) : '—', $h['connected'] ? ($h['plan']['used'] !== null ? 'Billed usage this period, from Railway' : 'Estimate from usage so far') : 'Railway not connected', 'payments', 'text-primary'],
+        ['Next Railway bill', $h['connected'] && $h['plan']['billing_end'] ? $h['plan']['billing_end']->format('M d, Y') : '—', $h['connected'] && $h['plan']['billing_end'] ? ($billDays === 0 ? 'Due today' : ($billDays < 0 ? abs($billDays).' day(s) overdue' : 'Due in '.$billDays.' day(s)')).' · billing period '.$h['plan']['billing_start']?->format('M d').' to '.$h['plan']['billing_end']->format('M d') : 'Railway not connected', 'event_upcoming', $dayTone($billDays)],
         ['Last deploy', $h['connected'] ? $h['last_status'] : '—', $h['connected'] && $h['last_deploy'] ? $h['last_deploy']->timezone('Asia/Manila')->format('M d, g:i A') : 'Railway not connected', 'rocket_launch', $h['connected'] ? ($statusOk ? 'text-secondary' : 'text-error') : 'text-on-surface-variant'],
         ['Services', $h['connected'] ? $h['services'] : '—', $h['connected'] ? implode(', ', $h['environments']) : 'Railway not connected', 'dns', 'text-primary'],
     ];
+    // Without Railway the three hosting cards would only say 'not connected'; one notice below says it once.
+    if (! $h['connected']) { $cards = array_slice($cards, 0, 3); }
     $usageRows = [['CPU_USAGE', 'CPU', 'vCPU-min', 0], ['MEMORY_USAGE_GB', 'Memory', 'GB-min', 0], ['NETWORK_TX_GB', 'Network out', 'GB', 2], ['DISK_USAGE_GB', 'Disk', 'GB-min', 0]];
 @endphp
 <section aria-label="Server dashboard" class="mb-6">
@@ -24,9 +28,6 @@
         <a href="{{ route('home', ['view' => 'server']) }}" class="inline-flex min-h-11 items-center gap-2 rounded-lg border border-primary/30 px-4 text-xs font-bold text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[17px]" aria-hidden="true">refresh</span>Reload</a>
     </div>
 
-    @unless($h['connected'])
-        <div class="mb-4 flex items-start gap-2 rounded-lg border border-[#f2d9b0] bg-[#fff6e8] px-4 py-3 text-sm text-[#8a5413]" role="status"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">info</span><span>{{ $h['note'] }}</span></div>
-    @endunless
 
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         @foreach($cards as [$label, $value, $note, $icon, $tone])
@@ -43,6 +44,12 @@
         @endforeach
     </div>
 
+    @unless($h['connected'])
+        <div class="mt-4 flex items-start gap-3 rounded-xl border border-[#f2d9b0] bg-[#fff6e8] px-5 py-4 text-[#8a5413]" role="status">
+            <span class="material-symbols-outlined mt-0.5 text-[22px]" aria-hidden="true">cloud_off</span>
+            <div class="min-w-0 text-sm"><p class="font-bold">Hosting figures are not connected</p><p class="mt-0.5">{{ $h['note'] }}</p><p class="mt-2 text-xs">Hosting bill, last deploy and services appear here once a valid Railway token is set as <strong>RAILWAY_API_TOKEN</strong> (Railway: Account Settings, Tokens).</p></div>
+        </div>
+    @endunless
     @if($h['connected'])
     @php
         $pl = $h['plan']; $creditPct = $pl['credit'] > 0 && $pl['used'] !== null ? min(100, round($pl['used'] / $pl['credit'] * 100, 1)) : 0;
