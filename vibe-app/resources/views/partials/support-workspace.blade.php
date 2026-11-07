@@ -1,26 +1,10 @@
-@php
-    $chipClass = fn (string $status) => ['for_process' => 'bg-secondary/10 text-secondary', 'approved' => 'bg-emerald-100 text-emerald-800', 'on_hold' => 'bg-slate-200 text-slate-700', 'resolved' => 'bg-slate-200 text-slate-700'][$status] ?? 'bg-amber-100 text-amber-800';
-@endphp
 <div class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(15rem,21rem)_minmax(0,1fr)]">
     <aside class="min-w-0 rounded border border-outline-variant/30 bg-white p-4" aria-labelledby="req-list">
         <div class="flex items-center justify-between gap-2">
             <h2 id="req-list" class="text-sm font-bold uppercase tracking-wide text-on-surface-variant">{{ $canEdit ? 'All requests' : 'Your requests' }}</h2>
             <a href="{{ route('support') }}" class="inline-flex min-h-11 items-center gap-1 rounded-lg bg-primary px-3 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">add</span>Create request</a>
         </div>
-        @if($messages->isEmpty())
-            <p class="mt-3 text-sm text-on-surface-variant">No requests yet. Create one and Customer Services will answer here.</p>
-        @else
-            <ul class="mt-3 space-y-2">
-                @foreach($messages as $item)
-                    <li><a href="{{ route('support.show', $item) }}" @if($current && $current->id === $item->id) aria-current="page" @endif class="block rounded-xl border p-3 hover:bg-surface-low {{ $current && $current->id === $item->id ? 'border-primary bg-primary/5' : 'border-outline-variant/40' }}">
-                        <span class="block break-words text-sm font-semibold">{{ $item->subject ?: 'Support request' }}</span>
-                        <span class="block break-all text-[11px] font-semibold text-on-surface-variant">{{ $item->ticket_no }}</span>
-                        @if($canEdit)<span class="block break-words text-[11px] text-on-surface-variant">{{ $item->user?->name }}@if($item->school) · {{ $item->school->name }}@endif</span>@endif
-                        <span class="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-on-surface-variant"><span class="rounded-full px-2 py-0.5 font-bold {{ $chipClass($item->status) }}">{{ \App\Support\SupportStatus::label($item->status) }}</span><span>{{ $item->created_at->format('M d, Y g:i A') }}</span></span>
-                    </a></li>
-                @endforeach
-            </ul>
-        @endif
+        <div id="support-list" class="mt-3 md:max-h-[70vh] md:overflow-y-auto md:pr-1">@include('partials.support-list')</div>
     </aside>
 
     <section class="min-w-0 rounded border border-outline-variant/30 bg-white p-5" aria-label="{{ $current ? 'Conversation' : 'Create a request' }}">

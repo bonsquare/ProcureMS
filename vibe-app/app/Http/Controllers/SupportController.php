@@ -40,6 +40,21 @@ class SupportController extends Controller
         return $this->page($request, $supportMessage->load(['replies.attachments', 'attachments', 'user', 'school']));
     }
 
+    /** What the open conversation page asks for every few seconds: the conversation and the request list as they are now. */
+    public function poll(Request $request, SupportMessage $supportMessage)
+    {
+        abort_unless($request->user()->isMaster() || (int) $supportMessage->user_id === (int) $request->user()->id, 404);
+        $supportMessage->load(['replies.attachments', 'attachments', 'user', 'school']);
+        $data = ['current' => $supportMessage, 'canEdit' => $request->user()->isMaster(), 'messages' => $this->requests($request)];
+
+        return response()->json([
+            'signature' => $supportMessage->thread_signature,
+            'open' => SupportStatus::isOpen($supportMessage->status),
+            'html' => view('partials.support-thread', $data)->render(),
+            'list' => view('partials.support-list', $data)->render(),
+        ]);
+    }
+
     /** The user answers on a request that is still open; the answer goes to the Telegram chat under the request message. */
     public function reply(Request $request, SupportMessage $supportMessage, TelegramService $telegram, SupportAttachments $files)
     {
@@ -81,13 +96,20 @@ class SupportController extends Controller
         return collect($attached)->map(fn (SupportAttachment $file) => "\n📎 {$file->name} — ".app(GoogleDriveService::class)->webLink($file->drive_file_id))->implode('');
     }
 
+    /** A user sees only their own conversation with Customer Services; the master sees all of them. */
+    private function requests(Request $request)
+    {
+        $user = $request->user();
+
+        return SupportMessage::query()->with(['user', 'school'])
+            ->when(! $user->isMaster(), fn ($query) => $query->where('user_id', $user->id))
+            ->latest('updated_at')->latest('id')->limit(50)->get();
+    }
+
     private function page(Request $request, ?SupportMessage $current)
     {
         $user = $request->user();
-        // A user sees only their own conversation with Customer Services; the master sees all of them.
-        $messages = SupportMessage::query()->with(['user', 'school'])
-            ->when(! $user->isMaster(), fn ($query) => $query->where('user_id', $user->id))
-            ->latest('updated_at')->latest('id')->limit(50)->get();
+        $messages = $this->requests($request);
 
         return view('support', [
             'contact' => collect(self::FIELDS)->mapWithKeys(fn (string $key) => [$key => (string) SystemSetting::get($key, '')])->all(),

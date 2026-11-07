@@ -97,4 +97,38 @@ class SupportConversationTest extends TestCase
         $this->actingAs($user)->post(route('support.reply', $request), ['body' => ''])->assertSessionHasErrors('body');
         $this->assertSame(0, SupportReply::count());
     }
+
+    public function test_the_open_conversation_can_be_refreshed_and_the_signature_changes_with_a_new_message(): void
+    {
+        $user = $this->user('c8');
+        $request = $this->request($user);
+
+        $first = $this->actingAs($user)->getJson(route('support.poll', $request))->assertOk()->assertJsonPath('open', true)->assertSee('My print is blank');
+        $before = $first->json('signature');
+
+        $request->replies()->create(['body' => 'We are checking it', 'sender' => 'staff']);
+
+        $after = $this->getJson(route('support.poll', $request))->assertOk()->assertSee('We are checking it');
+        $this->assertNotSame($before, $after->json('signature'));
+    }
+
+    public function test_the_refresh_reports_a_resolved_request_and_is_private(): void
+    {
+        $owner = $this->user('c9');
+        $other = $this->user('c10');
+        $request = $this->request($owner, ['status' => 'resolved', 'resolved_at' => now()]);
+
+        $this->actingAs($owner)->getJson(route('support.poll', $request))->assertOk()->assertJsonPath('open', false);
+        $this->actingAs($other)->getJson(route('support.poll', $request))->assertNotFound();
+    }
+
+    public function test_the_page_carries_what_the_refresh_needs(): void
+    {
+        $user = $this->user('c11');
+        $request = $this->request($user);
+
+        $this->actingAs($user)->get(route('support.show', $request))->assertOk()
+            ->assertSee('data-poll="'.route('support.poll', $request).'"', false)
+            ->assertSee('id="support-thread"', false);
+    }
 }

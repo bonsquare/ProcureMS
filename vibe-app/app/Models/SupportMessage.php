@@ -22,6 +22,12 @@ class SupportMessage extends Model
         return 'SUP-'.$this->created_at->format('Ymd-Hi').'-'.str_pad((string) $this->id, 4, '0', STR_PAD_LEFT);
     }
 
+    /** Changes whenever the conversation changes (a new message, a status or a handler), so the open page knows when to refresh. */
+    public function getThreadSignatureAttribute(): string
+    {
+        return md5($this->status.'|'.$this->assigned_name.'|'.$this->replies()->count().'|'.$this->replies()->max('id'));
+    }
+
     public function getFiledAtAttribute(): string
     {
         return $this->created_at->format('M d, Y g:i A');
