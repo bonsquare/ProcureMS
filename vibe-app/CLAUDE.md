@@ -195,7 +195,7 @@ Binding decisions from that log:
 - 2026-11-07 failed nightly backup also sent to Telegram once the bot variables are set (docs/specs.md section 119). Deployed 2026-11-07 (9bab75d8).
 - The Planning page is `/planning`. The source is `resources/views/planning.blade.php`; the controller is `app/Http/Controllers/PlanningController.php`.
 - The last GitHub backup is commit `69d1d35` on `master`. Do not reset or discard local changes.
-- Live: Railway deployment 9bab75d8 (2026-11-07 14:54), migrations through `add_print_paper_to_schools_table` (see the history file for later changes).
+- Live: Railway deployment b1828f57 (2026-11-07 15:04), migrations through `add_print_paper_to_schools_table` (see the history file for later changes).
 
 ## Standing workflow (owner's instruction 2026-10-16)
 
