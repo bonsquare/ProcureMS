@@ -46,7 +46,7 @@ class PrintSettingsEndpointTest extends TestCase
         [$school, $user] = $this->tenant('endpoint-a');
 
         $this->actingAs($user)->put(route('school-settings.printing.update'), $this->form($school, ['documents' => ['sob' => ['top' => '12', 'right' => '8', 'bottom' => '14', 'left' => '8']]]))
-            ->assertRedirect(route('school-settings', ['ui' => 'staff-save-v7', 'school_id' => $school->id, 'tab' => 'printing']))->assertSessionHasNoErrors();
+            ->assertRedirect(route('school-settings', ['ui' => 'staff-save-v7', 'school_id' => $school->id, 'tab' => 'printing']))->assertSessionHasNoErrors()->assertSessionHas('success');
 
         $found = app(PrintSettings::class)->forSchool($school->id);
         $this->assertSame($this->set(15.0, 10.0, 15.0, 10.0), $found['default']);

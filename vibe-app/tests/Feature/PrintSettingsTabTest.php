@@ -71,4 +71,21 @@ class PrintSettingsTabTest extends TestCase
 
         $this->actingAs($user)->get($this->tab($school))->assertOk()->assertDontSee('data-guard="Save the print settings"', false);
     }
+
+    public function test_a_refused_save_keeps_what_was_typed(): void
+    {
+        [$school, $user] = $this->tenant('tab-f');
+        $url = $this->tab($school);
+
+        $this->actingAs($user)->from($url)->put(route('school-settings.printing.update'), ['school_id' => $school->id, 'default' => ['top' => '41', 'right' => '10', 'bottom' => '15', 'left' => '10']])->assertRedirect($url);
+
+        $this->get($url)->assertSee('name="default[top]" value="41"', false)->assertSee('name="default[right]" value="10"', false);
+    }
+
+    public function test_documents_that_ignore_the_default_are_marked(): void
+    {
+        [$school, $user] = $this->tenant('tab-g');
+
+        $this->actingAs($user)->get($this->tab($school))->assertSee('Own row only');
+    }
 }

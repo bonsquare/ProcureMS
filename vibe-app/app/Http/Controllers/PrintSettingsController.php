@@ -42,7 +42,7 @@ class PrintSettingsController extends Controller
         $change = $settings->save($school, $default, $documents);
         AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $school->id, 'action' => 'print_settings_changed', 'metadata' => $change]);
 
-        return redirect()->route('school-settings', ['ui' => 'staff-save-v7', 'school_id' => $school->id, 'tab' => 'printing'])->with('status', 'The print settings were saved.');
+        return redirect()->route('school-settings', ['ui' => 'staff-save-v7', 'school_id' => $school->id, 'tab' => 'printing'])->with('success', 'The print settings were saved.');
     }
 
     /** Four margins in mm, or null when every box is blank (the default applies); a half-filled set is refused. */

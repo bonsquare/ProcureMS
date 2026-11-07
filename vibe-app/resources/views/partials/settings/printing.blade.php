@@ -3,6 +3,8 @@
     $sides = ['top' => 'Top', 'right' => 'Right', 'bottom' => 'Bottom', 'left' => 'Left'];
     $mm = fn ($value) => $value === null ? '' : rtrim(rtrim(number_format((float) $value, 2, '.', ''), '0'), '.');
     $default = $printSettings['default'] ?? null;
+    // These pages have no margin of their own to replace, so only their own row changes them.
+    $ownRowOnly = ['dv', 'ors', 'pr', 'reconciliation', 'rfq', 'po', 'ntp', 'noa', 'abstract', 'iar', 'ris', 'iars', 'ics', 'generic'];
     $box = 'mt-1 h-11 w-full min-w-0 rounded-lg border border-outline-variant bg-white px-3 text-sm font-normal outline-none focus:border-action focus:ring-2 focus:ring-action/20 disabled:bg-surface-low disabled:text-on-surface-variant';
 @endphp
 <style>
@@ -26,7 +28,7 @@
                 <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
                     @foreach($sides as $side => $label)
                         <label class="min-w-0 text-[11px] font-bold uppercase tracking-wide text-on-surface-variant">{{ $label }} (mm)
-                            <input type="number" inputmode="decimal" step="0.5" min="0" max="40" name="default[{{ $side }}]" value="{{ $mm($default[$side] ?? null) }}" data-demo="{{ $side }}" @disabled(! $canEdit) class="{{ $box }}">
+                            <input type="number" inputmode="decimal" step="0.5" min="0" max="40" name="default[{{ $side }}]" value="{{ old('default.'.$side, $mm($default[$side] ?? null)) }}" data-demo="{{ $side }}" @disabled(! $canEdit) class="{{ $box }}">
                         </label>
                     @endforeach
                 </div>
@@ -39,7 +41,7 @@
     <section class="rounded-xl border border-outline-variant/60 bg-white shadow-sm" aria-labelledby="print-documents">
         <div class="border-b border-outline-variant/40 bg-[#eef4fa] px-5 py-3">
             <h3 id="print-documents" class="text-sm font-bold text-primary">Margins of one document</h3>
-            <p class="mt-0.5 break-words text-xs text-on-surface-variant">Fill in all four boxes to give a document its own margins. The Obligation Request (ORS) and the Disbursement Voucher (DV) are fixed forms: they follow only their own row here, not the default.</p>
+            <p class="mt-0.5 break-words text-xs text-on-surface-variant">Fill in all four boxes to give a document its own margins. Documents marked "Own row only" (the ORS, DV and the procurement documents) are fixed forms: they do not follow the default and change only when their own row is filled in.</p>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full min-w-[640px] text-sm">
@@ -55,14 +57,14 @@
                     @foreach(\App\Services\PrintSettings::DOCUMENTS as $key => $name)
                         @php $own = $printSettings['documents'][$key] ?? null; @endphp
                         <tr class="border-b border-outline-variant/20 last:border-0" data-doc-row="{{ $key }}">
-                            <th scope="row" class="min-w-0 break-words px-5 py-2 text-left font-medium">{{ $name }}</th>
+                            <th scope="row" class="min-w-0 break-words px-5 py-2 text-left font-medium">{{ $name }}@if(in_array($key, $ownRowOnly, true))<span class="mt-0.5 block text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">Own row only</span>@endif</th>
                             @foreach($sides as $side => $label)
                                 <td class="px-2 py-2">
-                                    <input type="number" inputmode="decimal" step="0.5" min="0" max="40" name="documents[{{ $key }}][{{ $side }}]" value="{{ $mm($own[$side] ?? null) }}" placeholder="{{ $mm($default[$side] ?? null) ?: 'default' }}" aria-label="{{ $name }}, {{ strtolower($label) }} margin in millimetres" @disabled(! $canEdit) class="{{ $box }} w-24">
+                                    <input type="number" inputmode="decimal" step="0.5" min="0" max="40" name="documents[{{ $key }}][{{ $side }}]" value="{{ old('documents.'.$key.'.'.$side, $mm($own[$side] ?? null)) }}" placeholder="{{ $mm($default[$side] ?? null) ?: 'default' }}" aria-label="{{ $name }}, {{ strtolower($label) }} margin in millimetres" @disabled(! $canEdit) class="{{ str_replace('w-full ', '', $box) }} w-24">
                                 </td>
                             @endforeach
                             <td class="px-5 py-2 text-right">
-                                @if($canEdit)<button type="button" data-clear-row class="inline-flex h-11 items-center rounded-lg px-3 text-xs font-bold text-action hover:bg-action/10">Use default</button>@endif
+                                @if($canEdit)<button type="button" data-clear-row aria-label="Use default for {{ $name }}" class="inline-flex h-11 items-center rounded-lg px-3 text-xs font-bold text-action hover:bg-action/10">Use default</button>@endif
                             </td>
                         </tr>
                     @endforeach
