@@ -67,8 +67,10 @@ class SupportTicketNumberTest extends TestCase
         $this->actingAs($user)->post(route('support.send'), ['type' => 'general', 'subject' => 'For Update', 'body' => 'Problem with the system printing'])->assertSessionHasNoErrors();
 
         $ticket = SupportMessage::first();
-        Http::assertSent(fn ($r) => str_contains((string) $r['text'], 'Ticket '.$ticket->ticket_no.' · For Update')
-            && str_contains((string) $r['text'], 'Nov 07, 2026 5:45 PM · Pending') && ! str_contains((string) $r['text'], 'Support #'));
+        Http::assertSent(fn ($r) => str_contains((string) $r['text'], 'New Support Request · '.$ticket->ticket_no)
+            && str_contains((string) $r['text'], 'Subject: For Update') && str_contains((string) $r['text'], 'Status: Pending')
+            && str_contains((string) $r['text'], 'Filed: Nov 07, 2026 5:45 PM') && str_contains((string) $r['text'], 'Issue')
+            && str_contains((string) $r['text'], '/close '.$ticket->id) && ! str_contains((string) $r['text'], 'Support #'));
     }
 
     public function test_commands_accept_the_short_number_and_the_full_ticket_number(): void

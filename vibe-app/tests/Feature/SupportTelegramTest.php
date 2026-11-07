@@ -58,7 +58,7 @@ class SupportTelegramTest extends TestCase
         $message = SupportMessage::first();
         $this->assertSame(77, (int) $message->telegram_message_id);
         $this->assertSame('sent', $message->telegram_status);
-        Http::assertSent(fn ($r) => str_contains($r->url(), '/sendMessage') && str_contains($r->body(), 'Telegram please') && str_contains($r->body(), 'Reply to this message'));
+        Http::assertSent(fn ($r) => str_contains($r->url(), '/sendMessage') && str_contains($r->body(), 'Telegram please') && str_contains($r->body(), 'Reply directly to this message'));
     }
 
     public function test_without_a_support_email_the_message_is_only_saved(): void

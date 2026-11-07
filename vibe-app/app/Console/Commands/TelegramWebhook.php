@@ -26,6 +26,7 @@ class TelegramWebhook extends Command
         }
         $result = $telegram->setWebhook($url);
         $this->line(json_encode($result));
+        $this->line(json_encode($telegram->setCommands()));
 
         return ($result['ok'] ?? false) ? self::SUCCESS : self::FAILURE;
     }

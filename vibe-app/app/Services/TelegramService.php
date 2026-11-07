@@ -49,6 +49,20 @@ class TelegramService
         ])->json() ?? [];
     }
 
+    /** Fills the menu Telegram shows when someone types "/" in the chat. */
+    public function setCommands(): array
+    {
+        return Http::timeout(15)->post($this->url('setMyCommands'), ['commands' => [
+            ['command' => 'assign', 'description' => 'Take a request (or: /assign 12 @name)'],
+            ['command' => 'process', 'description' => 'Set the request to On process'],
+            ['command' => 'hold', 'description' => 'Set the request to On hold'],
+            ['command' => 'approve', 'description' => 'Set the request to Approved'],
+            ['command' => 'resolve', 'description' => 'Set the request to Resolved'],
+            ['command' => 'queue', 'description' => 'List the requests not yet resolved'],
+            ['command' => 'mine', 'description' => 'List my requests'],
+        ]])->json() ?? [];
+    }
+
     private function url(string $method): string
     {
         return 'https://api.telegram.org/bot'.config('services.telegram.token').'/'.$method;
