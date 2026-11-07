@@ -35,7 +35,7 @@
         td.pillar .pillar-lines { display: flex; justify-content: center; align-items: center; gap: .35rem; }
         td.pillar span { display: block; line-height: 1.25; }
         td.kra strong { font-weight: bold; }
-        td.num { white-space: nowrap; }
+        td.num { white-space: nowrap; text-align: center; padding-left: .2rem; padding-right: .2rem; }
         td.left { text-align: left; }
         .empty td { height: 2.2rem; }
 
@@ -53,8 +53,7 @@
 @include('partials.input-fixes')
 @include('partials.print-clean')
 <script>
-    /* Sets the size of 1rem from the width of the paper on screen (print sets it in CSS), and the size of the table text: the largest from 10pt down
-       to 8pt (on the long bond paper) that keeps the pages the document needs at 8pt. This runs before the shared print-pages script measures the rows. */
+    /* Sets the size of 1rem from the width of the paper on screen (print sets it in CSS), and the size of the table text: 9.5pt. This runs before the shared print-pages script measures the rows. */
     (function () {
         var MM = 96 / 25.4;
         var REM_PER_PT = 4 / 3 / 10.012;
@@ -71,9 +70,13 @@
             window.dispatchEvent(new Event('beforeprint'));
             return document.querySelectorAll('[data-official-page] > .doc-page').length;
         }
-        // A figure never printed over the next column: every number stays inside its own cell at this size.
-        function numbersFit() {
-            return !Array.prototype.some.call(document.querySelectorAll('td.num'), function (cell) { return cell.scrollWidth > cell.clientWidth + 1; });
+        // A figure never prints over the next column: one too wide for its cell (a six-figure amount) takes just enough smaller type to fit it.
+        function fitNumbers() {
+            var cells = Array.prototype.slice.call(document.querySelectorAll('td.num'));
+            cells.forEach(function (cell) { cell.style.fontSize = ''; });
+            cells.forEach(function (cell) {
+                if (cell.scrollWidth > cell.clientWidth + 1) { cell.style.fontSize = (parseFloat(getComputedStyle(cell).fontSize) * (cell.clientWidth - 1) / cell.scrollWidth) + 'px'; }
+            });
         }
         function fit() {
             if (fitting) { size(); return; }
@@ -81,15 +84,8 @@
             try {
                 size();
                 seen = (document.getElementById('official-page-style') || {}).textContent;
-                var steps = [];
-                for (var pt = 8; pt <= 10; pt += 0.25) { steps.push(pt); }
-                var needed = pagesAt(8);
-                var low = 0, high = steps.length - 1;
-                while (low < high) {
-                    var middle = Math.ceil((low + high) / 2);
-                    if (pagesAt(steps[middle]) <= needed && numbersFit()) { low = middle; } else { high = middle - 1; }
-                }
-                pagesAt(steps[low]);
+                pagesAt(9.5);
+                fitNumbers();
             } finally {
                 fitting = false;
             }
