@@ -185,3 +185,4 @@ Full dated log moved out of CLAUDE.md to keep that file short. Nothing was remov
 - 2026-11-07: Support ticket numbers SUP-YYYYMMDD-HHMM-NNNN with date and time; Pending until answered, then On process (docs/specs.md section 119). Committed, not yet deployed.
 - 2026-11-07: Telegram request card with buttons (take, assign to staff, set status), each change recorded in the group (docs/specs.md section 119). Committed, not yet deployed.
 - 2026-11-07: Payment proof notice in Telegram now has the sender, payment details and the proof link (docs/specs.md section 119). Committed, not yet deployed.
+- 2026-11-07: Telegram topic per request (opens on take, closes on resolve/close, purged after 5 days); card buttons two per row (docs/specs.md section 119). Committed, not yet deployed.

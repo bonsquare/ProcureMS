@@ -46,7 +46,7 @@ class SupportCommandsTest extends TestCase
 
     private function botSaid(string $needle): void
     {
-        Http::assertSent(fn ($r) => str_contains((string) $r['text'], $needle));
+        Http::assertSent(fn ($r) => str_contains((string) ($r['text'] ?? ''), $needle));
     }
 
     public function test_assign_takes_the_request_for_the_sender_and_the_second_person_is_told_who_has_it(): void
@@ -123,7 +123,7 @@ class SupportCommandsTest extends TestCase
 
         $this->say('/mine');
         $this->botSaid('Mine request');
-        Http::assertSent(fn ($r) => str_contains((string) $r['text'], 'Your requests') && ! str_contains((string) $r['text'], 'Free request'));
+        Http::assertSent(fn ($r) => str_contains((string) ($r['text'] ?? ''), 'Your requests') && ! str_contains((string) ($r['text'] ?? ''), 'Free request'));
         $this->assertSame('pending', $free->fresh()->status);
     }
 

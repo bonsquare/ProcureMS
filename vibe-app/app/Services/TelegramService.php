@@ -15,13 +15,13 @@ class TelegramService
     }
 
     /** Sends the text to the Customer Services chat (as a reply to message $replyTo when given); returns the id of the message sent, or null when it could not be sent. */
-    public function send(string $text, ?int $replyTo = null, ?array $keyboard = null): ?int
+    public function send(string $text, ?int $replyTo = null, ?array $keyboard = null, ?int $thread = null): ?int
     {
         if (! $this->configured()) {
             return null;
         }
         try {
-            $response = Http::timeout(8)->post($this->url('sendMessage'), array_filter(['chat_id' => config('services.telegram.chat_id'), 'text' => $text, 'reply_to_message_id' => $replyTo, 'reply_markup' => $keyboard ? ['inline_keyboard' => $keyboard] : null]));
+            $response = Http::timeout(8)->post($this->url('sendMessage'), array_filter(['chat_id' => config('services.telegram.chat_id'), 'text' => $text, 'reply_to_message_id' => $replyTo, 'reply_markup' => $keyboard ? ['inline_keyboard' => $keyboard] : null, 'message_thread_id' => $thread]));
 
             if (! $response->successful()) {
                 Log::warning('Telegram message was not sent.', ['status' => $response->status(), 'error' => $response->json('description')]);
@@ -35,6 +35,38 @@ class TelegramService
 
             return null;
         }
+    }
+
+    /** Opens a topic in the group and returns its id, or null when the group has no topics or the bot may not manage them. */
+    public function createTopic(string $name): ?int
+    {
+        if (! $this->configured()) {
+            return null;
+        }
+        try {
+            $response = Http::timeout(8)->post($this->url('createForumTopic'), ['chat_id' => config('services.telegram.chat_id'), 'name' => mb_substr($name, 0, 128)]);
+            if (! $response->successful()) {
+                Log::warning('Telegram topic was not created.', ['error' => $response->json('description')]);
+
+                return null;
+            }
+
+            return (int) $response->json('result.message_thread_id') ?: null;
+        } catch (Throwable $exception) {
+            Log::warning('Telegram topic was not created.', ['error' => $exception->getMessage()]);
+
+            return null;
+        }
+    }
+
+    public function closeTopic(int $thread): void
+    {
+        $this->call('closeForumTopic', ['chat_id' => config('services.telegram.chat_id'), 'message_thread_id' => $thread]);
+    }
+
+    public function deleteTopic(int $thread): void
+    {
+        $this->call('deleteForumTopic', ['chat_id' => config('services.telegram.chat_id'), 'message_thread_id' => $thread]);
     }
 
     /** Rewrites a message the bot sent earlier (its text and buttons). An empty keyboard removes the buttons. */

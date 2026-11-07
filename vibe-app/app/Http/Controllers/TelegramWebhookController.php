@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SupportMessage;
 use App\Services\SupportCard;
 use App\Services\SupportDesk;
+use App\Services\SupportTopic;
 use App\Services\TelegramService;
 use App\Support\SupportStatus;
 use Illuminate\Http\Request;
@@ -56,7 +57,7 @@ class TelegramWebhookController extends Controller
         }
 
         if ($support && ! SupportStatus::isOpen($support->status)) {
-            $telegram->send("{$support->ticket_no} is resolved. Your message was not delivered.", $messageId);
+            $this->say($telegram, $support, "{$support->ticket_no} is resolved. Your message was not delivered.", $messageId);
         } elseif ($support) {
             $support->replies()->create(['body' => $text, 'sender' => 'staff', 'telegram_message_id' => $messageId]);
             if ($support->status === 'pending') {
@@ -64,7 +65,7 @@ class TelegramWebhookController extends Controller
                 $this->refreshCard($support->fresh(), $telegram);
             }
             // Marks the question as answered in the chat, so nobody has to scroll to find what is still open.
-            $telegram->send("✅ {$support->ticket_no} answered", $support->telegram_message_id);
+            $this->say($telegram, $support, "✅ {$support->ticket_no} answered");
         } elseif (! str_starts_with($text, '/')) {
             // Never guess: a message that cannot be tied to one ticket is not sent to any user.
             Log::warning('Telegram staff message matched no support ticket and was not delivered.', ['telegram_message_id' => $messageId]);
@@ -107,6 +108,7 @@ class TelegramWebhookController extends Controller
 
         $actorId = (int) ($from['id'] ?? 0);
         $actor = (string) ($from['first_name'] ?? 'Staff');
+        $wasOpen = SupportStatus::isOpen($support->status);
         if ($name === 'assign' && preg_match('/@(\w+)/', $argument, $who)) {
             $desk->assignToName($support, '@'.$who[1]);
             $line = "👤 {$support->ticket_no} · @{$who[1]}";
@@ -114,7 +116,7 @@ class TelegramWebhookController extends Controller
             $line = $desk->apply($support, $name === 'assign' ? 'take' : $name, $actorId, $actor);
         }
         $telegram->send($line, $anchor);
-        $this->refreshCard($support->fresh(), $telegram);
+        $this->refreshCard($support->fresh(), $telegram, $wasOpen ? $line : null);
     }
 
     /** A tap on one of the buttons under a request card. */
@@ -135,6 +137,7 @@ class TelegramWebhookController extends Controller
         }
         [, , $action] = $parts;
         $cardId = (int) ($support->telegram_message_id ?: data_get($callback, 'message.message_id'));
+        $wasOpen = SupportStatus::isOpen($support->status);
         $telegram->answer($callbackId);
 
         if ($action === 'pick' && SupportStatus::isOpen($support->status)) {
@@ -160,12 +163,21 @@ class TelegramWebhookController extends Controller
             return;
         }
         $telegram->send($line, $cardId);
-        $this->refreshCard($support->fresh(), $telegram);
+        $this->refreshCard($support->fresh(), $telegram, $wasOpen ? $line : null);
     }
 
     /** Rewrites the request card so it always shows the current status and assignee (and no buttons once finished). */
-    private function refreshCard(SupportMessage $support, TelegramService $telegram): void
+    private function refreshCard(SupportMessage $support, TelegramService $telegram, ?string $line = null): void
     {
+        // The topic opens once someone holds the request and closes when the request has just ended ($line is the record of that change).
+        $topics = app(SupportTopic::class);
+        if (! SupportStatus::isOpen($support->status)) {
+            if ($line !== null) {
+                $topics->close($support, $line);
+            }
+        } else {
+            $support = $topics->ensure($support);
+        }
         if ($support->telegram_message_id) {
             $telegram->edit((int) $support->telegram_message_id, SupportCard::text($support), SupportCard::keyboard($support));
         }
@@ -179,8 +191,23 @@ class TelegramWebhookController extends Controller
         }
     }
 
+    /** Writes into the request's topic when it has one, otherwise under its card (or as a reply to $fallback). */
+    private function say(TelegramService $telegram, SupportMessage $support, string $text, ?int $fallback = null): void
+    {
+        if ($support->telegram_thread_id) {
+            $telegram->send($text, null, null, (int) $support->telegram_thread_id);
+
+            return;
+        }
+        $telegram->send($text, $support->telegram_message_id ?: $fallback);
+    }
+
     private function repliedTicket(array $message): ?SupportMessage
     {
+        $thread = (int) data_get($message, 'message_thread_id');
+        if ($thread > 0 && ($inTopic = SupportMessage::query()->where('telegram_thread_id', $thread)->first())) {
+            return $inTopic;
+        }
         $repliedTo = data_get($message, 'reply_to_message.message_id');
 
         return $repliedTo ? SupportMessage::query()->where('telegram_message_id', (int) $repliedTo)->first() : null;

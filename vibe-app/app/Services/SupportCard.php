@@ -18,6 +18,7 @@ final class SupportCard
             ."📝 Subject: {$request->subject}\n"
             .SupportStatus::icon($request->status).' Status: '.SupportStatus::label($request->status)."\n"
             .'🙋 Assigned: '.($request->assigned_name ?: 'nobody yet')."\n"
+            .($request->telegram_thread_id ? '💬 Conversation: https://t.me/c/'.ltrim(str_replace('-100', '', (string) config('services.telegram.chat_id')), '-').'/'.$request->telegram_thread_id."\n" : '')
             ."🕒 Filed: {$request->filed_at}\n"
             .'🏫 School: '.($request->school?->name ?? '—')."\n"
             .'👤 From: '.($request->user?->name ?? '—')."\n\n"
@@ -36,10 +37,12 @@ final class SupportCard
         }
         $button = fn (string $label, string $action) => ['text' => $label, 'callback_data' => "s:{$request->id}:{$action}"];
 
+        // Two buttons per row, so each label gets half the screen width on a phone.
         return [
             [$button('🙋 Take it', 'take'), $button('👥 Assign to…', 'pick')],
-            [$button('🟡 Pending', 'pending'), $button('▶️ For process', 'process'), $button('⏸ On hold', 'hold')],
-            [$button('✅ Resolve', 'resolve'), $button('🔒 Close', 'close')],
+            [$button('🟡 Pending', 'pending'), $button('▶️ On process', 'process')],
+            [$button('⏸ On hold', 'hold'), $button('✅ Resolve', 'resolve')],
+            [$button('🔒 Close', 'close')],
         ];
     }
 

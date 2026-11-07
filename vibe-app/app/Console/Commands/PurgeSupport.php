@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\SupportAttachment;
 use App\Models\SupportMessage;
 use App\Models\SupportReply;
+use App\Services\TelegramService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -17,10 +18,11 @@ class PurgeSupport extends Command
 
     protected $description = 'Delete support requests that were resolved more than five days ago, with their replies and file links (the files stay in the users\' own Google Drive)';
 
-    public function handle(): int
+    public function handle(TelegramService $telegram): int
     {
         $ids = SupportMessage::query()->where('status', 'resolved')->where('resolved_at', '<=', now()->subDays(self::KEEP_DAYS))->pluck('id');
         if ($ids->isNotEmpty()) {
+            SupportMessage::query()->whereIn('id', $ids)->whereNotNull('telegram_thread_id')->pluck('telegram_thread_id')->each(fn ($thread) => $telegram->deleteTopic((int) $thread));
             DB::transaction(function () use ($ids) {
                 foreach ($ids->chunk(200) as $chunk) {
                     SupportAttachment::query()->whereIn('support_message_id', $chunk)->delete();
