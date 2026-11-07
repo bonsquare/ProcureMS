@@ -100,7 +100,7 @@ class PrintSettingsEngineTest extends TestCase
     {
         $pages = File::get(resource_path('views/partials/print-pages.blade.php'));
 
-        $this->assertStringContainsString('height: var(--doc-page-h, auto) !important; min-height: 0 !important', $pages);
+        $this->assertStringContainsString('height: var(--doc-page-h, auto) !important; min-height: 0 !important; overflow: visible; display: flow-root', $pages);
         $this->assertStringContainsString('.doc-footer { position: absolute;', $pages);
         $this->assertStringContainsString("* MM - 4) + 'px'", $pages);
     }

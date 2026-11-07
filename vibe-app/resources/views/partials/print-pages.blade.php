@@ -23,7 +23,7 @@
     .doc-footer { position: absolute; left: var(--sheet-pl, 0); right: var(--sheet-pr, 0); bottom: var(--sheet-pb, 0); display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; font-size: var(--doc-footer-size, .75rem); color: #333; line-height: 1.2; }
     .doc-footer .center { text-align: center; } .doc-footer .right { text-align: right; }
     @media print {
-        html .is-sheets .doc-page { height: var(--doc-page-h, auto) !important; min-height: 0 !important; overflow: visible; }
+        html .is-sheets .doc-page { height: var(--doc-page-h, auto) !important; min-height: 0 !important; overflow: visible; display: flow-root; }
         .doc-footer { left: 0; right: 0; bottom: 0; }
     }
 </style>
