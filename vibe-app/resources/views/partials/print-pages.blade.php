@@ -30,7 +30,7 @@
 <script>
     (function () {
         var MM = 96 / 25.4;
-        var busy = false;
+        var busy = false, laidOutFor = null;
 
         function siblingsAfter(node) {
             var list = [];
@@ -532,6 +532,11 @@
             var spec = style && /size:\s*([\d.]+)mm\s+([\d.]+)mm;\s*margin:\s*([\d.]+)mm\s+([\d.]+)mm\s+([\d.]+)mm\s+([\d.]+)mm/.exec(style.textContent);
             var units = page && unitsOf(page);
             if (!units || !units.length || !spec || busy) { return; }
+            // Rows are measured with the page's own fonts, so nothing is laid out before the page and its fonts have loaded.
+            if (document.readyState !== 'complete' || (document.fonts && document.fonts.status === 'loading')) { return; }
+            // The same paper and margins as the last time: the pages are already laid out (the engine fires load, DOMContentLoaded, style changes and beforeprint, and each pass is slow on a long document).
+            var key = style.textContent;
+            if (key === laidOutFor && page.querySelector(':scope > .doc-page')) { return; }
             busy = true;
             try {
                 units.forEach(function (unit) {
@@ -554,6 +559,7 @@
                         factor -= 0.05;
                     }
                 }
+                laidOutFor = key;
             } finally {
                 busy = false;
             }
@@ -564,6 +570,7 @@
             if (style) { new MutationObserver(paginate).observe(style, { childList: true, characterData: true, subtree: true }); }
             window.addEventListener('beforeprint', paginate);
             window.addEventListener('load', paginate);
+            if (document.fonts && document.fonts.ready) { document.fonts.ready.then(paginate); }
             paginate();
         });
     })();

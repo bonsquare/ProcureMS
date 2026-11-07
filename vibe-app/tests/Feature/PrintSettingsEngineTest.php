@@ -113,4 +113,13 @@ class PrintSettingsEngineTest extends TestCase
         $this->assertSame('folio', $this->settingsOf($this->get(route('planning.sob.print', $plan))->assertOk()->getContent())['paper']);
         $this->assertStringContainsString('settings.paper', File::get(resource_path('views/partials/print-clean.blade.php')));
     }
+
+    public function test_the_paginator_lays_a_document_out_once_per_paper_and_only_after_the_page_has_loaded(): void
+    {
+        $pages = File::get(resource_path('views/partials/print-pages.blade.php'));
+
+        $this->assertStringContainsString('if (key === laidOutFor', $pages);
+        $this->assertStringContainsString("document.readyState !== 'complete'", $pages);
+        $this->assertStringContainsString('document.fonts.ready.then(paginate)', $pages);
+    }
 }
