@@ -25,11 +25,11 @@
 ## Review Focus
 
 - A user opens another user's request URL: 404, never the content (task 3).
-- Two staff send `/assign` at once: exactly one wins, the other is told who (task 6).
+- Two staff send `/assign` at once: exactly one wins, the other is told who (tasks 4, 5).
 - A resolved request receives a user reply or an `/hold`: refused, status unchanged (tasks 3, 5).
-- A purge runs while a request is resolved 4 days 23 hours ago: it stays (task 9).
-- An attachment of the wrong type, over 5 MB, or a 4th file: refused with a message, nothing saved (task 8).
-- Drive not connected when attaching: the text message is still saved and the user is told to connect Drive (task 8).
+- A purge runs while a request is resolved 4 days 23 hours ago: it stays (task 8).
+- An attachment of the wrong type, over 5 MB, or a 4th file: refused with a message, nothing saved (task 7).
+- Drive not connected when attaching: the text message is still saved and the user is told to connect Drive (task 7).
 
 ---
 
