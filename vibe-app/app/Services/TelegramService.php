@@ -13,14 +13,14 @@ class TelegramService
         return (string) config('services.telegram.token') !== '' && (string) config('services.telegram.chat_id') !== '';
     }
 
-    /** Sends the text to the Customer Services chat; returns the id of the message sent, or null when it could not be sent. */
-    public function send(string $text): ?int
+    /** Sends the text to the Customer Services chat (as a reply to message $replyTo when given); returns the id of the message sent, or null when it could not be sent. */
+    public function send(string $text, ?int $replyTo = null): ?int
     {
         if (! $this->configured()) {
             return null;
         }
         try {
-            $response = Http::timeout(8)->post($this->url('sendMessage'), ['chat_id' => config('services.telegram.chat_id'), 'text' => $text]);
+            $response = Http::timeout(8)->post($this->url('sendMessage'), array_filter(['chat_id' => config('services.telegram.chat_id'), 'text' => $text, 'reply_to_message_id' => $replyTo]));
 
             return $response->successful() ? (int) $response->json('result.message_id') : null;
         } catch (Throwable) {

@@ -102,4 +102,16 @@ class SupportTelegramTest extends TestCase
 
         $this->assertSame('Please try again', $message->replies()->first()->body);
     }
+
+    public function test_the_chat_is_told_which_message_was_answered(): void
+    {
+        $this->configure();
+        Http::fake(['api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 99]])]);
+        $user = $this->user('tg6');
+        $message = SupportMessage::create(['user_id' => $user->id, 'school_id' => $user->school_id, 'body' => 'Question', 'telegram_message_id' => 61, 'telegram_status' => 'sent']);
+
+        $this->postJson(route('telegram.webhook', 'hook-secret'), ['message' => ['message_id' => 12, 'chat' => ['id' => 555], 'text' => 'Done', 'reply_to_message' => ['message_id' => 61]]])->assertOk();
+
+        Http::assertSent(fn ($r) => str_contains($r->url(), '/sendMessage') && str_contains($r->body(), 'Support #'.$message->id.' answered') && str_contains($r->body(), '"reply_to_message_id":61'));
+    }
 }

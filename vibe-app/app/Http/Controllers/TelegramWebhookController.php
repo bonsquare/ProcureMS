@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\SupportMessage;
+use App\Services\TelegramService;
 use Illuminate\Http\Request;
 
 /** Receives what is written in the Customer Services Telegram chat: a reply to a forwarded message (or "#12 text") becomes the answer shown to the user on the Support page. */
 class TelegramWebhookController extends Controller
 {
-    public function handle(Request $request, string $secret)
+    public function handle(Request $request, string $secret, TelegramService $telegram)
     {
         $expected = (string) config('services.telegram.webhook_secret');
         abort_unless($expected !== '' && hash_equals($expected, $secret), 404);
@@ -36,6 +37,8 @@ class TelegramWebhookController extends Controller
         if ($support) {
             $support->replies()->create(['body' => $text, 'telegram_message_id' => $message['message_id'] ?? null]);
             $support->update(['status' => 'answered']);
+            // Marks the question as answered in the chat, so nobody has to scroll to find what is still open.
+            $telegram->send("✅ Support #{$support->id} answered", $support->telegram_message_id);
         }
 
         return response()->json(['ok' => true]);
