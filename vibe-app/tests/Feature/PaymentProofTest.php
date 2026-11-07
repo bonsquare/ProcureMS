@@ -46,6 +46,28 @@ class PaymentProofTest extends TestCase
         return $this->actingAs($as ?? $this->school)->post(route('subscription.proof'), $overrides + ['reference' => 'GCASH-1', 'bank_account_used' => 'GCash 0917 123 4567', 'transacted_at' => now()->subHour()->format('Y-m-d\TH:i'), 'remarks' => 'Annual subscription', 'amount' => '1000.00', 'file' => $this->image()]);
     }
 
+    public function test_a_submitted_proof_posts_a_short_notice_in_telegram_without_the_file_or_the_email(): void
+    {
+        config(['services.telegram.token' => 'T', 'services.telegram.chat_id' => '555']);
+        Http::fake(['api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 4]])]);
+
+        $this->submit()->assertSessionHasNoErrors();
+
+        Http::assertSent(fn (Request $r) => str_contains($r->url(), '/sendMessage') && str_contains((string) $r['text'], '🧾 Payment proof')
+            && str_contains((string) $r['text'], 'GCASH-1') && str_contains((string) $r['text'], '1,000.00') && str_contains((string) $r['text'], $this->school->school->name)
+            && ! str_contains((string) $r['text'], $this->school->email) && ! str_contains((string) $r['text'], 'drive.google'));
+    }
+
+    public function test_a_telegram_failure_never_stops_the_proof(): void
+    {
+        config(['services.telegram.token' => 'T', 'services.telegram.chat_id' => '555']);
+        Http::fake(['api.telegram.org/*' => Http::response(['ok' => false], 500)]);
+
+        $this->submit()->assertRedirect(route('subscription'))->assertSessionHasNoErrors();
+
+        $this->assertSame('pending', $this->proof()->status);
+    }
+
     private function proof(): PaymentProof
     {
         return PaymentProof::withoutGlobalScopes()->latest('id')->firstOrFail();

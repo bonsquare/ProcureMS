@@ -9,6 +9,7 @@ use App\Models\School;
 use App\Models\Subscription;
 use App\Services\GoogleDriveService;
 use App\Services\SubscriptionPricing;
+use App\Services\TelegramService;
 use App\Support\PaymentSettings;
 use Carbon\Carbon;
 use Illuminate\Contracts\Cache\LockTimeoutException;
@@ -27,7 +28,7 @@ class SubscriptionController extends Controller
 
     private const MIMES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
 
-    public function __construct(private SubscriptionPricing $pricing, private GoogleDriveService $drive) {}
+    public function __construct(private SubscriptionPricing $pricing, private GoogleDriveService $drive, private TelegramService $telegram) {}
 
     public function show(Request $request): View
     {
@@ -141,6 +142,9 @@ class SubscriptionController extends Controller
             'drive_file_id' => $stored['id'], 'drive_link' => $this->drive->webLink($stored['id']), 'file_name' => Str::limit(basename($file->getClientOriginalName()), 150, ''), 'mime' => $mime, 'size' => $stored['size'], 'sha256' => $sha,
         ]);
         AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $school->id, 'action' => 'subscription_proof_submitted', 'auditable_type' => PaymentProof::class, 'auditable_id' => $proof->id, 'metadata' => ['reason' => null, 'reference' => $proof->reference, 'bank_account_used' => $proof->bank_account_used, 'sent_by' => $proof->submitted_by_name.' (@'.$proof->submitted_by_username.', user '.$proof->user_id.')', 'amount' => (string) $proof->amount_to_pay]]);
+
+        // A short notice for Customer Services: no file and no email. A Telegram failure never stops the proof.
+        $this->telegram->send('🧾 Payment proof · '.$school->name.' · ₱'.number_format((float) $proof->amount_to_pay, 2).' · ref '.$proof->reference);
 
         return redirect()->route('subscription')->with('success', 'Your proof of payment was sent. The administrator will check it and activate your school.');
     }

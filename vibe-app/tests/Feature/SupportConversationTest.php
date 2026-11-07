@@ -81,6 +81,14 @@ class SupportConversationTest extends TestCase
         $this->assertLessThan(strpos($html, 'Then the user'), strpos($html, 'First from staff'));
     }
 
+    public function test_the_user_sees_only_the_first_name_of_the_person_handling_the_request(): void
+    {
+        $user = $this->user('c7');
+        $request = $this->request($user, ['assigned_name' => 'Anna Reyes', 'assigned_telegram_id' => 5, 'status' => 'for_process']);
+
+        $this->actingAs($user)->get(route('support.show', $request))->assertOk()->assertSee('Handled by Anna')->assertDontSee('Reyes');
+    }
+
     public function test_a_reply_needs_text(): void
     {
         $user = $this->user('c6');
