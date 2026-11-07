@@ -177,3 +177,4 @@ Full dated log moved out of CLAUDE.md to keep that file short. Nothing was remov
 - 2026-11-07: failed nightly backup is sent to Telegram when the bot is set up (docs/specs.md section 119). Deployed 2026-11-07 (9bab75d8).
 - 2026-11-07: Telegram bot token and chat id set on Railway; test message delivered to the Celsys Support Center group (deployment b1828f57).
 - 2026-11-07: Telegram bot token rotated (old one revoked); deployment 1b39222c.
+- 2026-11-07: Telegram webhook registered at procms.celsys.trade (secret set on Railway, deployment 3f0e4867): replies written in the Celsys Support Center group can reach the Support page.
