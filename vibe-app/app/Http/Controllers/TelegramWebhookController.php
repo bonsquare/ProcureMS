@@ -41,11 +41,11 @@ class TelegramWebhookController extends Controller
         }
 
         if ($support && $close) {
-            $support->update(['status' => 'closed']);
+            $support->update(['status' => 'resolved', 'resolved_at' => now()]);
             $telegram->send("🔒 Support #{$support->id} closed", $support->telegram_message_id);
         } elseif ($support) {
             $support->replies()->create(['body' => $text, 'telegram_message_id' => $message['message_id'] ?? null]);
-            $support->update(['status' => 'answered']);
+            $support->update(['status' => 'for_process']);
             // Marks the question as answered in the chat, so nobody has to scroll to find what is still open.
             $telegram->send("✅ Support #{$support->id} answered", $support->telegram_message_id);
         } elseif (! str_starts_with($text, '/') || $close) {

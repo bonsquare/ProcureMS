@@ -87,10 +87,10 @@ class SupportTelegramTest extends TestCase
 
         $this->postJson($url, $reply('555', ['reply_to_message' => ['message_id' => 902]]), ['X-Telegram-Bot-Api-Secret-Token' => 'hook-secret'])->assertOk();
         $message = SupportMessage::first()->fresh();
-        $this->assertSame('answered', $message->status);
+        $this->assertSame('for_process', $message->status);
         $this->assertSame('We fixed it', $message->replies->first()->body);
 
-        $this->actingAs($user)->get(route('support'))->assertOk()->assertSee('We fixed it')->assertSee('Answered');
+        $this->actingAs($user)->get(route('support'))->assertOk()->assertSee('We fixed it')->assertSee('For process');
         $this->actingAs($other)->get(route('support'))->assertOk()->assertDontSee('We fixed it')->assertDontSee('Need help');
     }
 
@@ -145,7 +145,7 @@ class SupportTelegramTest extends TestCase
         $this->hook(['text' => '#9999 Wrong number', 'reply_to_message' => ['message_id' => 1]]);
 
         $this->assertSame(0, $message->replies()->count());
-        $this->assertSame('open', $message->fresh()->status);
+        $this->assertSame('pending', $message->fresh()->status);
         Http::assertSentCount(2);
         Http::assertSent(fn ($r) => str_contains($r->body(), 'not delivered') && str_contains($r->body(), 'Reply to the ticket message'));
     }
@@ -161,9 +161,9 @@ class SupportTelegramTest extends TestCase
         $this->hook(['text' => '/close', 'reply_to_message' => ['message_id' => 41]]);
         $this->hook(['text' => '/close '.$byNumber->id]);
 
-        $this->assertSame('closed', $byReply->fresh()->status);
-        $this->assertSame('closed', $byNumber->fresh()->status);
-        $this->actingAs($user)->get(route('support'))->assertSee('Closed');
+        $this->assertSame('resolved', $byReply->fresh()->status);
+        $this->assertSame('resolved', $byNumber->fresh()->status);
+        $this->actingAs($user)->get(route('support'))->assertSee('Resolved');
     }
 
     public function test_a_failed_telegram_send_is_logged(): void
