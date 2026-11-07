@@ -29,6 +29,20 @@ final class SupportCard
             ."\n✅ To close: Send /close {$request->id}";
     }
 
+    /** The header at the top of a request's topic: who and what, the current status and assignee, the client's message. */
+    public static function topicText(SupportMessage $request): string
+    {
+        $request->loadMissing(['user', 'school', 'attachments']);
+        $files = $request->attachments->map(fn ($file) => "\n📎 {$file->name} — ".app(GoogleDriveService::class)->webLink($file->drive_file_id))->implode('');
+
+        return "💬 {$request->ticket_no} · {$request->subject}\n"
+            .SupportStatus::icon($request->status).' Status: '.SupportStatus::label($request->status)."\n"
+            .'🙋 Assigned: '.($request->assigned_name ?: 'nobody yet')."\n"
+            .'👤 From: '.($request->user?->name ?? '—').' · 🏫 '.($request->school?->name ?? '—')
+            ."\n\n{$request->body}{$files}\n\n"
+            .'Write here to answer the client: your messages are sent to them. Use the buttons to set the status; every change is also recorded in the main group.';
+    }
+
     /** @return list<list<array{text: string, callback_data: string}>> */
     public static function keyboard(SupportMessage $request): array
     {

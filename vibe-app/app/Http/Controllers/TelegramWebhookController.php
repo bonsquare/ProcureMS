@@ -109,6 +109,13 @@ class TelegramWebhookController extends Controller
         $actorId = (int) ($from['id'] ?? 0);
         $actor = (string) ($from['first_name'] ?? 'Staff');
         $wasOpen = SupportStatus::isOpen($support->status);
+        // A bare /assign never guesses: if the request is already held, or the sender is the group itself (an anonymous admin), staff pick who gets it.
+        $anonymous = ! empty($message['sender_chat']) || ! empty($from['is_bot']) || $actorId === 0;
+        if ($name === 'assign' && ! preg_match('/@(\w+)/', $argument) && ($anonymous || $support->assigned_name)) {
+            $telegram->send("👥 Assign {$support->ticket_no} to:", $anchor, SupportCard::staffKeyboard($support, $desk->staff()));
+
+            return;
+        }
         if ($name === 'assign' && preg_match('/@(\w+)/', $argument, $who)) {
             $desk->assignToName($support, '@'.$who[1]);
             $line = "👤 {$support->ticket_no} · @{$who[1]}";
@@ -136,17 +143,20 @@ class TelegramWebhookController extends Controller
             return;
         }
         [, , $action] = $parts;
-        $cardId = (int) ($support->telegram_message_id ?: data_get($callback, 'message.message_id'));
+        $tapped = (int) data_get($callback, 'message.message_id');
+        $cardId = (int) ($support->telegram_message_id ?: $tapped);
+        // The buttons also sit in the request's topic and under a typed /assign list; a tap changes the message it was made on.
+        $onList = $tapped > 0 && $tapped !== (int) $support->telegram_message_id && $tapped !== (int) $support->telegram_thread_card_id;
         $wasOpen = SupportStatus::isOpen($support->status);
         $telegram->answer($callbackId);
 
         if ($action === 'pick' && SupportStatus::isOpen($support->status)) {
-            $telegram->editKeyboard($cardId, SupportCard::staffKeyboard($support, $desk->staff()));
+            $telegram->editKeyboard($tapped ?: $cardId, SupportCard::staffKeyboard($support, $desk->staff()));
 
             return;
         }
         if ($action === 'back') {
-            $telegram->editKeyboard($cardId, SupportCard::keyboard($support));
+            $onList ? $telegram->edit($tapped, 'Assignment cancelled.', []) : $telegram->editKeyboard($tapped ?: $cardId, SupportCard::keyboard($support));
 
             return;
         }
@@ -162,6 +172,9 @@ class TelegramWebhookController extends Controller
         } else {
             return;
         }
+        if ($onList) {
+            $telegram->edit($tapped, $line, []);
+        }
         $telegram->send($line, $cardId);
         $this->refreshCard($support->fresh(), $telegram, $wasOpen ? $line : null);
     }
@@ -171,12 +184,12 @@ class TelegramWebhookController extends Controller
     {
         // The topic opens once someone holds the request and closes when the request has just ended ($line is the record of that change).
         $topics = app(SupportTopic::class);
-        if (! SupportStatus::isOpen($support->status)) {
-            if ($line !== null) {
-                $topics->close($support, $line);
-            }
-        } else {
+        if (SupportStatus::isOpen($support->status)) {
             $support = $topics->ensure($support);
+        }
+        $topics->refresh($support);
+        if ($line !== null) {
+            SupportStatus::isOpen($support->status) ? $topics->note($support, $line) : $topics->close($support, $line);
         }
         if ($support->telegram_message_id) {
             $telegram->edit((int) $support->telegram_message_id, SupportCard::text($support), SupportCard::keyboard($support));

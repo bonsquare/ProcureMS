@@ -176,4 +176,43 @@ class SupportButtonsTest extends TestCase
 
         $this->assertSame('Okay na po ba?', $ticket->replies()->first()?->body);
     }
+
+    private function typeAssign(SupportMessage $ticket, array $from): void
+    {
+        $this->postJson(route('telegram.webhook', 'hook-secret'), ['message' => ['message_id' => 703, 'chat' => ['id' => 555], 'from' => $from, 'text' => '/assign', 'reply_to_message' => ['message_id' => (int) $ticket->telegram_message_id]]])->assertOk();
+    }
+
+    public function test_typing_assign_on_a_taken_request_offers_the_staff_instead_of_reassigning(): void
+    {
+        $ticket = $this->ticket(['assigned_name' => 'Anna', 'assigned_telegram_id' => 11]);
+        $this->tap($ticket, 'noop', 22, 'Ben');
+
+        $this->typeAssign($ticket, ['id' => 22, 'first_name' => 'Ben']);
+
+        $this->assertSame('Anna', $ticket->fresh()->assigned_name);
+        $this->sentTo('sendMessage', fn ($r) => str_contains(json_encode($r['reply_markup'] ?? []), 's:'.$ticket->id.':to:22'));
+    }
+
+    public function test_assign_typed_by_the_group_itself_offers_the_staff_and_never_assigns_the_group(): void
+    {
+        $ticket = $this->ticket();
+        $this->tap($ticket, 'noop', 22, 'Ben');
+
+        $this->typeAssign($ticket, ['id' => 1087968824, 'is_bot' => true, 'first_name' => 'Group', 'username' => 'GroupAnonymousBot']);
+
+        $this->assertNull($ticket->fresh()->assigned_name);
+        $this->sentTo('sendMessage', fn ($r) => str_contains(json_encode($r['reply_markup'] ?? []), 's:'.$ticket->id.':to:22'));
+    }
+
+    public function test_picking_from_the_typed_list_assigns_and_removes_that_list(): void
+    {
+        $ticket = $this->ticket(['assigned_name' => 'Anna', 'assigned_telegram_id' => 11]);
+        $this->tap($ticket, 'noop', 22, 'Ben');
+
+        $this->postJson(route('telegram.webhook', 'hook-secret'), ['callback_query' => ['id' => 'cb2', 'from' => ['id' => 11, 'first_name' => 'Anna'], 'data' => 's:'.$ticket->id.':to:22',
+            'message' => ['message_id' => 5555, 'chat' => ['id' => 555]]]])->assertOk();
+
+        $this->assertSame('Ben', $ticket->fresh()->assigned_name);
+        $this->sentTo('editMessageText', fn ($r) => (int) $r['message_id'] === 5555 && $r['reply_markup'] === ['inline_keyboard' => []] && str_contains((string) $r['text'], 'Assigned to Ben'));
+    }
 }

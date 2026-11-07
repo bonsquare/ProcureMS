@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 /** A message a user sent to Customer Services; the bot forwards it to Telegram and a reply there is saved as a SupportReply. */
 class SupportMessage extends Model
 {
-    protected $fillable = ['organization_id', 'school_id', 'user_id', 'body', 'telegram_message_id', 'telegram_status', 'status', 'type', 'subject', 'assigned_name', 'assigned_telegram_id', 'resolved_at', 'telegram_thread_id'];
+    protected $fillable = ['organization_id', 'school_id', 'user_id', 'body', 'telegram_message_id', 'telegram_status', 'status', 'type', 'subject', 'assigned_name', 'assigned_telegram_id', 'resolved_at', 'telegram_thread_id', 'telegram_thread_card_id'];
 
     protected $attributes = ['status' => 'pending'];
 

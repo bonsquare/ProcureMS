@@ -60,7 +60,7 @@ class SupportCommandsTest extends TestCase
 
         $this->postJson(route('telegram.webhook', 'hook-secret'), ['message' => ['message_id' => 701, 'chat' => ['id' => 555], 'from' => ['id' => 22, 'first_name' => 'Ben'], 'text' => '/assign'] + $this->replyTo($ticket)])->assertOk();
         $this->assertSame('Anna', $ticket->fresh()->assigned_name);
-        $this->botSaid('already has '.$ticket->ticket_no);
+        $this->botSaid('Assign '.$ticket->ticket_no.' to:');
     }
 
     public function test_assign_can_give_a_request_to_a_named_person_by_number(): void

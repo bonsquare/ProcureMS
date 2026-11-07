@@ -120,7 +120,7 @@ class SupportTopicTest extends TestCase
         $this->say('/hold', ['message_thread_id' => 77]);
 
         $this->assertSame('on_hold', $ticket->fresh()->status);
-        $this->sentTo('sendMessage', fn ($r) => str_contains((string) $r['text'], $ticket->ticket_no.' · On hold') && (int) $r['reply_to_message_id'] === (int) $ticket->telegram_message_id);
+        $this->sentTo('sendMessage', fn ($r) => str_contains((string) $r['text'], $ticket->ticket_no.' · On hold') && (int) ($r['reply_to_message_id'] ?? 0) === (int) $ticket->telegram_message_id);
     }
 
     public function test_the_clients_web_reply_goes_into_the_topic(): void
@@ -152,5 +152,21 @@ class SupportTopicTest extends TestCase
 
         $this->assertNull(SupportMessage::find($ticket->id));
         $this->sentTo('deleteForumTopic', fn ($r) => (int) $r['message_thread_id'] === 77);
+    }
+
+    public function test_the_topic_starts_with_a_header_showing_status_and_assignee_that_follows_every_change(): void
+    {
+        $ticket = $this->ticket();
+
+        $this->tap($ticket, 'take');
+
+        $this->sentTo('sendMessage', fn ($r) => (int) ($r['message_thread_id'] ?? 0) === 77 && str_contains((string) $r['text'], 'Status: Pending') && str_contains((string) $r['text'], 'Assigned: Anna')
+            && str_contains(json_encode($r['reply_markup'] ?? []), 's:'.$ticket->id.':hold'));
+        $this->assertSame(900, (int) $ticket->fresh()->telegram_thread_card_id);
+
+        $this->tap($ticket, 'hold');
+
+        $this->sentTo('editMessageText', fn ($r) => (int) $r['message_id'] === 900 && str_contains((string) $r['text'], 'Status: On hold'));
+        $this->sentTo('sendMessage', fn ($r) => (int) ($r['message_thread_id'] ?? 0) === 77 && str_contains((string) $r['text'], $ticket->ticket_no.' · On hold'));
     }
 }
