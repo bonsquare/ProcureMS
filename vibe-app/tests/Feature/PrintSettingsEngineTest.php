@@ -131,4 +131,12 @@ class PrintSettingsEngineTest extends TestCase
             $this->assertStringNotContainsString('--doc-footer-size:', File::get($view), basename($view));
         }
     }
+
+    public function test_the_sip_text_size_is_chosen_so_that_no_figure_runs_into_the_next_column(): void
+    {
+        $sip = File::get(resource_path('views/sip-print.blade.php'));
+
+        $this->assertStringContainsString('function numbersFit()', $sip);
+        $this->assertStringContainsString('pagesAt(steps[middle]) <= needed && numbersFit()', $sip);
+    }
 }

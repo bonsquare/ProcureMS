@@ -71,6 +71,10 @@
             window.dispatchEvent(new Event('beforeprint'));
             return document.querySelectorAll('[data-official-page] > .doc-page').length;
         }
+        // A figure never printed over the next column: every number stays inside its own cell at this size.
+        function numbersFit() {
+            return !Array.prototype.some.call(document.querySelectorAll('td.num'), function (cell) { return cell.scrollWidth > cell.clientWidth + 1; });
+        }
         function fit() {
             if (fitting) { size(); return; }
             fitting = true;
@@ -83,7 +87,7 @@
                 var low = 0, high = steps.length - 1;
                 while (low < high) {
                     var middle = Math.ceil((low + high) / 2);
-                    if (pagesAt(steps[middle]) <= needed) { low = middle; } else { high = middle - 1; }
+                    if (pagesAt(steps[middle]) <= needed && numbersFit()) { low = middle; } else { high = middle - 1; }
                 }
                 pagesAt(steps[low]);
             } finally {
