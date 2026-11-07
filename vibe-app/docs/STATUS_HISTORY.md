@@ -176,3 +176,4 @@ Full dated log moved out of CLAUDE.md to keep that file short. Nothing was remov
 - 2026-11-07: restore drill: the latest Google Drive backup (procms-2026-11-07-0000.sqlite, 1.7 MB) was downloaded on the live server, passed integrity_check and matched live table counts (users, schools, organizations); 29 automatic backups, all successful. Nothing changed on live.
 - 2026-11-07: failed nightly backup is sent to Telegram when the bot is set up (docs/specs.md section 119). Deployed 2026-11-07 (9bab75d8).
 - 2026-11-07: Telegram bot token and chat id set on Railway; test message delivered to the Celsys Support Center group (deployment b1828f57).
+- 2026-11-07: Telegram bot token rotated (old one revoked); deployment 1b39222c.
