@@ -145,20 +145,20 @@ Full dated log moved out of CLAUDE.md to keep that file short. Nothing was remov
 - 2026-11-06: Dashboard Disbursement is net of withheld tax (matches the cash reports); login notice restyled and the right column fits one screen (docs/specs.md section 119).
 - 2026-11-06: Allotment Registry: Edit and Delete for manual allotments, returning to the registry (docs/specs.md section 119).
 - 2026-11-06: IARS with many items: item names upward, header as tall as the longest name (wraps past 32 mm), Arial header, roomier rows and School Head block; FINAL (docs/specs.md section 119).
-- 2026-11-06: Bank Reconciliation cash downloaded form refuses a cash advance that a non-cash DV already records (docs/specs.md section 119). Committed, not yet deployed.
-- 2026-11-06: DV numbering changed to YYYY-MM-XXXX, the number running through the year (docs/specs.md section 119). Committed, not yet deployed.
-- 2026-11-06: books built from journals only (no auto-posted receipts); Create DV pre-fills the advance journal; balance sheet shows Advances as a liability instead of a negative asset (docs/specs.md section 119). Committed, not yet deployed.
-- 2026-11-06: Budget Operations counts and lists only actual obligations (ORS), not procurement requests without an ORS (docs/specs.md section 119). Committed, not yet deployed.
-- 2026-11-06: Accounting Review shows eight cards: Total ORS Amount counts only real ORS; DV cards are net of withheld tax; advances shown apart (docs/specs.md section 119). Committed, not yet deployed.
-- 2026-11-06: Cash cards net of tax, Cash Disbursement Reports tab, Bank Reconciliation form fixes, Cash Summaries page, and Reports & Analytics generating its own reports (docs/specs.md section 119). Committed, not yet deployed.
-- 2026-11-06: clock and notification bell work on every page again (bad selector escape fixed); accounting reviewers are told of ORS for review and ready for a DV (docs/specs.md section 119). Committed, not yet deployed.
-- 2026-11-06: dashboard header card: date and time line removed, Live pill without a time, year progress bar kept (docs/specs.md section 119). Committed, not yet deployed.
+- 2026-11-06: Bank Reconciliation cash downloaded form refuses a cash advance that a non-cash DV already records (docs/specs.md section 119). Deployed 2026-11-07 (0c76b217).
+- 2026-11-06: DV numbering changed to YYYY-MM-XXXX, the number running through the year (docs/specs.md section 119). Deployed 2026-11-07 (0c76b217).
+- 2026-11-06: books built from journals only (no auto-posted receipts); Create DV pre-fills the advance journal; balance sheet shows Advances as a liability instead of a negative asset (docs/specs.md section 119). Deployed 2026-11-07 (0c76b217).
+- 2026-11-06: Budget Operations counts and lists only actual obligations (ORS), not procurement requests without an ORS (docs/specs.md section 119). Deployed 2026-11-07 (0c76b217).
+- 2026-11-06: Accounting Review shows eight cards: Total ORS Amount counts only real ORS; DV cards are net of withheld tax; advances shown apart (docs/specs.md section 119). Deployed 2026-11-07 (0c76b217).
+- 2026-11-06: Cash cards net of tax, Cash Disbursement Reports tab, Bank Reconciliation form fixes, Cash Summaries page, and Reports & Analytics generating its own reports (docs/specs.md section 119). Deployed 2026-11-07 (0c76b217).
+- 2026-11-06: clock and notification bell work on every page again (bad selector escape fixed); accounting reviewers are told of ORS for review and ready for a DV (docs/specs.md section 119). Deployed 2026-11-07 (0c76b217).
+- 2026-11-06: dashboard header card: date and time line removed, Live pill without a time, year progress bar kept (docs/specs.md section 119). Deployed 2026-11-07 (0c76b217).
 - 2026-11-06: dashboard header redesigned as glass with larger text and a smaller fiscal-year card (docs/specs.md section 119).
-- 2026-11-06: card colours without yellow or peach; School Settings tab Documentary Requirements; Subscription page with the next billing period and a payment history table (docs/specs.md section 119). Committed, not yet deployed.
+- 2026-11-06: card colours without yellow or peach; School Settings tab Documentary Requirements; Subscription page with the next billing period and a payment history table (docs/specs.md section 119). Deployed 2026-11-07 (0c76b217).
 - 2026-11-06: Subscription proof form redesigned with a sender card, proofs open in a window, user ID shown with four digits (docs/specs.md section 119).
 
 - 2026-11-06: Super admin dashboard: the KPI tab is gone and the System Master Dashboard shows six platform cards (schools, subscriptions, proofs to review, ending soon, income, users); the Health/Tasks/Audit cards are removed; every user action that saves, changes or deletes is written to the audit log by RecordUserActions (docs/specs.md section 119).
 - 2026-11-06: Server Dashboard: one 'not connected' notice instead of three empty cards when Railway is not connected, and a Next Railway bill card (billing period end, days left) (docs/specs.md section 119).
 - 2026-11-07: six-digit PIN replaces the password for every edit/delete (Reason + PIN window), New User Registration page, editable ORS Responsibility Center and split charges, non-cash switch card, no-overlapping-text standard, print blank-page fix and cropped ORS/DV paper (docs/specs.md section 119).
 - 2026-11-07: the Reason + PIN window now also guards the other edit and delete buttons (AIP, SOB, APP, APP-CSE, POW, SIP, budget lines, chart of accounts, suppliers, units, settings, user management, cash fund and check register) through RequireActionPin (docs/specs.md section 119). Deployed 2026-11-07 (9cac3006).
-- 2026-11-07: SOB and other page-by-page documents print with a 13 mm minimum margin so a printer minimum margin no longer pushes a row and the footer onto extra pages (docs/specs.md section 119). Committed, not yet deployed.
+- 2026-11-07: SOB and other page-by-page documents print with a 13 mm minimum margin so a printer minimum margin no longer pushes a row and the footer onto extra pages (docs/specs.md section 119). Deployed 2026-11-07 (0c76b217).
