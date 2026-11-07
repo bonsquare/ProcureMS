@@ -71,7 +71,8 @@ class SupportTopicTest extends TestCase
         $this->tap($ticket, 'take');
 
         $this->assertSame(77, (int) $ticket->fresh()->telegram_thread_id);
-        $this->sentTo('createForumTopic', fn ($r) => str_contains((string) $r['name'], $ticket->ticket_no) && str_contains((string) $r['name'], 'Printing'));
+        // The title is short so the subject stays readable in the topic list: short number, subject, requester.
+        $this->sentTo('createForumTopic', fn ($r) => str_starts_with((string) $r['name'], '#'.str_pad((string) $ticket->id, 4, '0', STR_PAD_LEFT).' · Printing · '.$ticket->user->name) && ! str_contains((string) $r['name'], 'SUP-'));
         $this->sentTo('sendMessage', fn ($r) => (int) ($r['message_thread_id'] ?? 0) === 77 && str_contains((string) $r['text'], 'It prints blank') && str_contains((string) $r['text'], $ticket->ticket_no));
         $this->sentTo('editMessageText', fn ($r) => str_contains((string) $r['text'], 'https://t.me/c/4457287957/77'));
     }

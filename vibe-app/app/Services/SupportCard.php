@@ -8,20 +8,22 @@ use App\Support\SupportStatus;
 /** The request card the bot posts in the main Telegram group: its text (always the current status and assignee) and its buttons. */
 final class SupportCard
 {
+    /** Ticket number on top, then the subject, then who asked; the rest follows. */
     public static function text(SupportMessage $request): string
     {
         $request->loadMissing(['user', 'school', 'attachments']);
         $files = $request->attachments->map(fn ($file) => "📎 {$file->name} — ".app(GoogleDriveService::class)->webLink($file->drive_file_id))->implode("\n");
 
-        return ($request->type === 'subscription' ? '🧾' : '🆕')." New Support Request · {$request->ticket_no}\n"
-            .'🗂 Category: '.($request->type === 'subscription' ? 'Subscription' : 'General help')."\n"
+        return ($request->type === 'subscription' ? '🧾' : '🆕')." New Support Request\n"
+            ."🎫 {$request->ticket_no}\n"
             ."📝 Subject: {$request->subject}\n"
+            .'👤 From: '.($request->user?->name ?? '—')."\n"
+            .'🗂 Category: '.($request->type === 'subscription' ? 'Subscription' : 'General help')."\n"
             .SupportStatus::icon($request->status).' Status: '.SupportStatus::label($request->status)."\n"
             .'🙋 Assigned: '.($request->assigned_name ?: 'nobody yet')."\n"
             .($request->telegram_thread_id ? '💬 Conversation: https://t.me/c/'.ltrim(str_replace('-100', '', (string) config('services.telegram.chat_id')), '-').'/'.$request->telegram_thread_id."\n" : '')
             ."🕒 Filed: {$request->filed_at}\n"
-            .'🏫 School: '.($request->school?->name ?? '—')."\n"
-            .'👤 From: '.($request->user?->name ?? '—')."\n\n"
+            .'🏫 School: '.($request->school?->name ?? '—')."\n\n"
             ."Issue\n{$request->body}\n"
             .($files !== '' ? "\nAttachment\n{$files}\n" : '')
             ."\n↩️ To reply: Reply directly to this message. Your reply will be sent to the requester."
@@ -29,16 +31,17 @@ final class SupportCard
             ."\n✅ To close: Send /close {$request->id}";
     }
 
-    /** The header at the top of a request's topic: who and what, the current status and assignee, the client's message. */
+    /** The header at the top of a request's topic: ticket, subject, requester, the current status and assignee, the client's message. */
     public static function topicText(SupportMessage $request): string
     {
         $request->loadMissing(['user', 'school', 'attachments']);
         $files = $request->attachments->map(fn ($file) => "\n📎 {$file->name} — ".app(GoogleDriveService::class)->webLink($file->drive_file_id))->implode('');
 
-        return "💬 {$request->ticket_no} · {$request->subject}\n"
+        return "💬 {$request->ticket_no}\n"
+            ."📝 Subject: {$request->subject}\n"
+            .'👤 From: '.($request->user?->name ?? '—').' · 🏫 '.($request->school?->name ?? '—')."\n"
             .SupportStatus::icon($request->status).' Status: '.SupportStatus::label($request->status)."\n"
-            .'🙋 Assigned: '.($request->assigned_name ?: 'nobody yet')."\n"
-            .'👤 From: '.($request->user?->name ?? '—').' · 🏫 '.($request->school?->name ?? '—')
+            .'🙋 Assigned: '.($request->assigned_name ?: 'nobody yet')
             ."\n\n{$request->body}{$files}\n\n"
             .'Write here to answer the client: your messages are sent to them. Use the buttons to set the status; every change is also recorded in the main group.';
     }

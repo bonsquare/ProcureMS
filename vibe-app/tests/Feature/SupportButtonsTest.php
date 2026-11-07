@@ -215,4 +215,33 @@ class SupportButtonsTest extends TestCase
         $this->assertSame('Ben', $ticket->fresh()->assigned_name);
         $this->sentTo('editMessageText', fn ($r) => (int) $r['message_id'] === 5555 && $r['reply_markup'] === ['inline_keyboard' => []] && str_contains((string) $r['text'], 'Assigned to Ben'));
     }
+
+    public function test_a_bare_assign_with_no_ticket_lists_the_open_requests_then_the_staff(): void
+    {
+        $open = $this->ticket(['subject' => 'Open one']);
+        $done = $this->ticket(['subject' => 'Done one', 'status' => 'resolved', 'resolved_at' => now()]);
+        $this->tap($open, 'noop', 22, 'Ben');
+
+        $this->postJson(route('telegram.webhook', 'hook-secret'), ['message' => ['message_id' => 704, 'chat' => ['id' => 555], 'from' => ['id' => 11, 'first_name' => 'Anna'], 'text' => '/assign']])->assertOk();
+
+        $this->sentTo('sendMessage', fn ($r) => str_contains(json_encode($r['reply_markup'] ?? []), 's:'.$open->id.':pick') && ! str_contains(json_encode($r['reply_markup'] ?? []), 's:'.$done->id.':pick'));
+
+        $this->postJson(route('telegram.webhook', 'hook-secret'), ['callback_query' => ['id' => 'cb3', 'from' => ['id' => 11, 'first_name' => 'Anna'], 'data' => 's:'.$open->id.':pick',
+            'message' => ['message_id' => 6666, 'chat' => ['id' => 555]]]])->assertOk();
+
+        $this->sentTo('editMessageReplyMarkup', fn ($r) => (int) $r['message_id'] === 6666 && str_contains(json_encode($r['reply_markup']), 's:'.$open->id.':to:22'));
+    }
+
+    public function test_the_card_shows_the_ticket_number_then_the_subject_then_the_requester(): void
+    {
+        $ticket = $this->ticket(['subject' => 'Printer is blank']);
+        $this->tap($ticket, 'take');
+
+        $this->sentTo('editMessageText', function ($r) use ($ticket) {
+            $text = (string) $r['text'];
+            $order = [strpos($text, $ticket->ticket_no), strpos($text, 'Subject: Printer is blank'), strpos($text, 'From: '.$ticket->user->name)];
+
+            return ! in_array(false, $order, true) && $order === collect($order)->sort()->values()->all() && strpos($text, 'Status:') > $order[2];
+        });
+    }
 }

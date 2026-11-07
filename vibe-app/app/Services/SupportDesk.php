@@ -101,6 +101,20 @@ class SupportDesk
         return true;
     }
 
+    /** "/assign" with no request in sight: the open requests as buttons (unassigned first); a tap then offers the staff. */
+    public function openRequestsPrompt(): array
+    {
+        $open = $this->open()->sortBy(fn (SupportMessage $request) => $request->assigned_telegram_id === null ? 0 : 1)->take(10);
+        if ($open->isEmpty()) {
+            return ['text' => 'Nothing is waiting.', 'keyboard' => null];
+        }
+
+        return ['text' => '👥 Which request do you want to assign?', 'keyboard' => $open->map(fn (SupportMessage $request) => [[
+            'text' => '#'.str_pad((string) $request->id, 4, '0', STR_PAD_LEFT).' · '.mb_substr($request->subject ?: 'Support request', 0, 28).($request->assigned_name ? ' · '.$this->firstName($request->assigned_name) : ''),
+            'callback_data' => "s:{$request->id}:pick",
+        ]])->values()->all()];
+    }
+
     /** Every request that is not resolved, by status, with the unassigned ones first. */
     public function queue(): string
     {

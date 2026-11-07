@@ -93,6 +93,12 @@ class TelegramWebhookController extends Controller
         if (! $support && preg_match('/(?:SUP-\d{8}-\d{4}-|#)?(\d+)/', $argument, $number)) {
             $support = SupportMessage::query()->find((int) $number[1]);
         }
+        if (! $support && $name === 'assign' && $argument === '') {
+            $prompt = $desk->openRequestsPrompt();
+            $telegram->send($prompt['text'], $messageId, $prompt['keyboard']);
+
+            return;
+        }
         if (! $support) {
             Log::warning('Telegram support command matched no ticket.', ['command' => $name]);
             $telegram->send("/{$name} was not applied: reply to the ticket message, or add its number, for example \"/{$name} 12\".", $messageId);
@@ -109,9 +115,8 @@ class TelegramWebhookController extends Controller
         $actorId = (int) ($from['id'] ?? 0);
         $actor = (string) ($from['first_name'] ?? 'Staff');
         $wasOpen = SupportStatus::isOpen($support->status);
-        // A bare /assign never guesses: if the request is already held, or the sender is the group itself (an anonymous admin), staff pick who gets it.
-        $anonymous = ! empty($message['sender_chat']) || ! empty($from['is_bot']) || $actorId === 0;
-        if ($name === 'assign' && ! preg_match('/@(\w+)/', $argument) && ($anonymous || $support->assigned_name)) {
+        // A bare /assign never guesses (an anonymous admin posts as the group itself): staff pick who gets it.
+        if ($name === 'assign' && ! preg_match('/@(\w+)/', $argument)) {
             $telegram->send("👥 Assign {$support->ticket_no} to:", $anchor, SupportCard::staffKeyboard($support, $desk->staff()));
 
             return;

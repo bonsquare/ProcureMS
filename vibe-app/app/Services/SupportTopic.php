@@ -16,7 +16,8 @@ class SupportTopic
         if ($request->telegram_thread_id || ! SupportStatus::isOpen($request->status) || ! $request->assigned_name) {
             return $request;
         }
-        $thread = $this->telegram->createTopic($request->ticket_no.' · '.($request->subject ?: 'Support request'));
+        $request->loadMissing('user');
+        $thread = $this->telegram->createTopic('#'.str_pad((string) $request->id, 4, '0', STR_PAD_LEFT).' · '.($request->subject ?: 'Support request').' · '.($request->user?->name ?? '—'));
         if ($thread === null) {
             return $request;
         }

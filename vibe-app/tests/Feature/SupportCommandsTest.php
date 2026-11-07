@@ -49,17 +49,13 @@ class SupportCommandsTest extends TestCase
         Http::assertSent(fn ($r) => str_contains((string) ($r['text'] ?? ''), $needle));
     }
 
-    public function test_assign_takes_the_request_for_the_sender_and_the_second_person_is_told_who_has_it(): void
+    public function test_a_bare_assign_never_assigns_it_offers_the_staff_to_choose_from(): void
     {
         $ticket = $this->ticket();
 
         $this->say('/assign', $this->replyTo($ticket));
-        $this->assertSame('Anna', $ticket->fresh()->assigned_name);
-        $this->assertSame(11, (int) $ticket->fresh()->assigned_telegram_id);
-        $this->botSaid($ticket->ticket_no.' · Assigned to Anna');
 
-        $this->postJson(route('telegram.webhook', 'hook-secret'), ['message' => ['message_id' => 701, 'chat' => ['id' => 555], 'from' => ['id' => 22, 'first_name' => 'Ben'], 'text' => '/assign'] + $this->replyTo($ticket)])->assertOk();
-        $this->assertSame('Anna', $ticket->fresh()->assigned_name);
+        $this->assertNull($ticket->fresh()->assigned_name);
         $this->botSaid('Assign '.$ticket->ticket_no.' to:');
     }
 
