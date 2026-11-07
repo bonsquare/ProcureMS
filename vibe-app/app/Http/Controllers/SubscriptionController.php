@@ -8,6 +8,7 @@ use App\Models\PaymentProof;
 use App\Models\School;
 use App\Models\Subscription;
 use App\Services\GoogleDriveService;
+use App\Services\PaymentProofNotice;
 use App\Services\SubscriptionPricing;
 use App\Services\TelegramService;
 use App\Support\PaymentSettings;
@@ -144,41 +145,22 @@ class SubscriptionController extends Controller
         AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $school->id, 'action' => 'subscription_proof_submitted', 'auditable_type' => PaymentProof::class, 'auditable_id' => $proof->id, 'metadata' => ['reason' => null, 'reference' => $proof->reference, 'bank_account_used' => $proof->bank_account_used, 'sent_by' => $proof->submitted_by_name.' (@'.$proof->submitted_by_username.', user '.$proof->user_id.')', 'amount' => (string) $proof->amount_to_pay]]);
 
         // The notice for Customer Services: who sent it, the payment details and the link to the proof in the sender's Drive (no email). A Telegram failure never stops the proof.
-        $this->telegram->send($this->proofNotice($proof, $school));
+        $proof->refresh();
+        $this->telegram->send(PaymentProofNotice::text($proof, $school), null, PaymentProofNotice::keyboard($proof));
 
         return redirect()->route('subscription')->with('success', 'Your proof of payment was sent. The administrator will check it and activate your school.');
     }
 
     /** The checks that stop a proof before anything is uploaded; the same file is looked for first, so a repeated file is named as such. */
-    /** The Telegram notice of a payment proof: sender, amount (with the discount), account, date, reference, remarks and the Drive link of the proof. */
-    private function proofNotice(PaymentProof $proof, School $school): string
-    {
-        $amount = '₱'.number_format((float) $proof->amount_to_pay, 2);
-        if ((float) $proof->discount_amount > 0) {
-            $amount .= ' (price ₱'.number_format((float) $proof->list_price, 2).' − discount ₱'.number_format((float) $proof->discount_amount, 2).')';
-        }
-
-        return "🧾 New Payment Proof · {$school->name}\n"
-            .'🏫 School: '.$school->name.($school->code ? " ({$school->code})" : '')."\n"
-            ."👤 Sent by: {$proof->submitted_by_name} (@{$proof->submitted_by_username})\n"
-            ."💰 Amount: {$amount}\n"
-            ."🏦 Account used: {$proof->bank_account_used}\n"
-            .'🕒 Paid on: '.$proof->transacted_at->format('M d, Y g:i A')."\n"
-            ."🔢 Reference: {$proof->reference}\n"
-            .($proof->remarks ? "📝 Remarks: {$proof->remarks}\n" : '')
-            ."\nProof of payment\n📎 {$proof->file_name} — {$proof->drive_link}\n"
-            ."\nThe file is in the sender's Google Drive, shared with the administrator email only.";
-    }
-
     private function assertAllowed(School $school, array $data, string $mime, string $sha): void
     {
         if (! in_array($mime, self::MIMES, true)) {
             throw ValidationException::withMessages(['file' => 'The proof must be a photo (JPG, PNG or WEBP) or a PDF.']);
         }
-        if (PaymentProof::withoutGlobalScopes()->where('sha256', $sha)->whereIn('status', [PaymentProof::PENDING, PaymentProof::APPROVED])->exists()) {
+        if (PaymentProof::withoutGlobalScopes()->where('sha256', $sha)->whereIn('status', [...PaymentProof::OPEN, PaymentProof::APPROVED])->exists()) {
             throw ValidationException::withMessages(['file' => 'This file was already used as a proof of payment.']);
         }
-        if (PaymentProof::query()->where('school_id', $school->id)->where('status', PaymentProof::PENDING)->exists()) {
+        if (PaymentProof::query()->where('school_id', $school->id)->whereIn('status', PaymentProof::OPEN)->exists()) {
             throw ValidationException::withMessages(['proof' => 'You already have a proof waiting for review. Please wait for the administrator to decide it.']);
         }
         if (PaymentProof::query()->where('school_id', $school->id)->where('created_at', '>=', now()->startOfDay())->count() >= self::DAILY_LIMIT) {

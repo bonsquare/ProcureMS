@@ -26,6 +26,7 @@ use App\Models\Supplier;
 use App\Models\SystemSetting;
 use App\Models\Unit;
 use App\Models\User;
+use App\Rules\CurrentPin;
 use App\Services\AppItemLinkService;
 use App\Services\BudgetService;
 use App\Services\DashboardKpiService;
@@ -34,6 +35,7 @@ use App\Services\FiscalYearService;
 use App\Services\GoogleDriveService;
 use App\Services\LiquidationChecklistService;
 use App\Services\MasterTransactionService;
+use App\Services\PrintSettings;
 use App\Services\ProcurementWorkspaceService;
 use App\Services\ServerDashboardService;
 use App\Services\SubscriptionIncomeService;
@@ -246,7 +248,7 @@ class HomeController extends Controller
             'status' => $status->all(), 'ending_soon' => collect($rows)->filter(fn (array $row) => $row['days'] !== null && $row['days'] >= 0 && $row['days'] <= 30 && in_array($row['status'], ['active', 'trial', 'free'], true))->count(),
             'locked' => collect($rows)->filter(fn (array $row) => in_array($row['status'], ['expired', 'suspended'], true))->count(),
             'users' => $income->summary($year)['users'], 'income_year' => $income->summary($year)['gross'], 'income_month' => $thisMonth, 'year' => $year,
-            'proofs' => PaymentProof::withoutGlobalScopes()->where('status', PaymentProof::PENDING)->count(),
+            'proofs' => PaymentProof::withoutGlobalScopes()->whereIn('status', PaymentProof::OPEN)->count(),
             'rows' => $rows,
         ];
     }
@@ -479,7 +481,7 @@ class HomeController extends Controller
     public function destroyProcurement(Request $request, ProcurementRequest $procurementRequest)
     {
         abort_unless($this->scopedSchoolIds()->contains($procurementRequest->school_id), 403);
-        $request->validate(['pin' => ['required', new \App\Rules\CurrentPin]]);
+        $request->validate(['pin' => ['required', new CurrentPin]]);
 
         $number = $procurementRequest->request_number;
         $transaction = $procurementRequest->transaction;
@@ -2383,7 +2385,7 @@ class HomeController extends Controller
 
         $data = $request->validate([
             'reason' => [$preview ? 'nullable' : 'required', 'string', 'max:255'],
-            'pin' => [$preview ? 'nullable' : 'required', new \App\Rules\CurrentPin],
+            'pin' => [$preview ? 'nullable' : 'required', new CurrentPin],
             'payee' => ['nullable', 'string', 'max:255'],
             'payee_office' => ['nullable', 'string', 'max:255'],
             'payee_address' => ['nullable', 'string', 'max:255'],
@@ -2488,7 +2490,7 @@ class HomeController extends Controller
     public function destroyLiquidation(Request $request, LiquidationReport $liquidationReport)
     {
         abort_unless($request->user()->canCreateObligation() && $this->scopedSchoolIds()->contains($liquidationReport->school_id), 403);
-        $data = $request->validate(['reason' => ['required', 'string', 'max:255'], 'pin' => ['required', new \App\Rules\CurrentPin]]);
+        $data = $request->validate(['reason' => ['required', 'string', 'max:255'], 'pin' => ['required', new CurrentPin]]);
 
         $number = $liquidationReport->ors_number ?: $liquidationReport->report_number;
         $transaction = $liquidationReport->transaction;
@@ -2589,7 +2591,7 @@ class HomeController extends Controller
     private function subscriptionsData(): array
     {
         return [
-            'pendingProofs' => PaymentProof::withoutGlobalScopes()->with('school')->where('status', 'pending')->oldest('id')->get(),
+            'pendingProofs' => PaymentProof::withoutGlobalScopes()->with('school')->whereIn('status', PaymentProof::OPEN)->oldest('id')->get(),
             'allProofs' => PaymentProof::withoutGlobalScopes()->with('school')->latest('id')->limit(200)->get(),
             'subscriptions' => Subscription::with('school')->whereHas('school')->latest()->get(),
             'pendingPreRegistrations' => School::with(['users' => fn ($query) => $query->oldest()])
@@ -2662,8 +2664,8 @@ class HomeController extends Controller
             ...(request('tab') === 'transfer' && ! $isMasterUser ? app(StationTransferController::class)->pageData(request()->user()) : []),
             'schools' => $schools,
             'selectedSchool' => $selectedSchool,
-            'printSettings' => app(\App\Services\PrintSettings::class)->forSchool($selectedSchool?->id),
-            'printPaper' => app(\App\Services\PrintSettings::class)->paper($selectedSchool?->id),
+            'printSettings' => app(PrintSettings::class)->forSchool($selectedSchool?->id),
+            'printPaper' => app(PrintSettings::class)->paper($selectedSchool?->id),
             'selectedOrganization' => $selectedOrganization,
             'staff' => $staff,
             'isMasterUser' => $isMasterUser,

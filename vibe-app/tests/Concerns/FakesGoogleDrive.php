@@ -20,6 +20,9 @@ trait FakesGoogleDrive
 
     private ?array $tokenFailure = null;
 
+    /** When set, every Telegram call answers with this message id (a question the bot sent can then be replied to). */
+    private ?int $telegramMessageId = null;
+
     private function user(string $code = 'A', string $role = 'school_admin'): User
     {
         $organization = Organization::create(['name' => "Org {$code}", 'slug' => "org-{$code}", 'status' => 'active']);
@@ -36,6 +39,9 @@ trait FakesGoogleDrive
     {
         Http::fake(function (Request $request) {
             $url = $request->url();
+            if ($this->telegramMessageId !== null && str_contains($url, 'api.telegram.org')) {
+                return Http::response(['ok' => true, 'result' => ['message_id' => $this->telegramMessageId]]);
+            }
             if (str_contains($url, 'oauth2.googleapis.com/token')) {
                 if ($this->tokenFailure) {
                     return Http::response($this->tokenFailure, 400);

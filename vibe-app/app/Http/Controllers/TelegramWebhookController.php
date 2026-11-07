@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\SupportMessage;
+use App\Services\ProofDecisions;
 use App\Services\SupportCard;
 use App\Services\SupportDesk;
 use App\Services\SupportTopic;
@@ -40,6 +41,10 @@ class TelegramWebhookController extends Controller
         $this->learnStaff((array) ($message['from'] ?? []), $desk);
         $text = trim((string) ($message['text'] ?? ''));
         if ($text === '') {
+            return response()->json(['ok' => true]);
+        }
+        // A reply to the bot's "write the reason" question about a payment proof.
+        if (app(ProofDecisions::class)->answerPrompt($message)) {
             return response()->json(['ok' => true]);
         }
         $messageId = isset($message['message_id']) ? (int) $message['message_id'] : null;
@@ -142,6 +147,11 @@ class TelegramWebhookController extends Controller
         $callbackId = (string) ($callback['id'] ?? '');
         $actorId = (int) ($from['id'] ?? 0);
         $actor = (string) ($from['first_name'] ?? 'Staff');
+        if (preg_match('/^p:(\d+):(\w+)$/', (string) ($callback['data'] ?? ''), $proof)) {
+            app(ProofDecisions::class)->button($callback, (int) $proof[1], $proof[2]);
+
+            return;
+        }
         if (! preg_match('/^s:(\d+):(\w+)(?::(\d+))?$/', (string) ($callback['data'] ?? ''), $parts) || ! ($support = SupportMessage::query()->find((int) $parts[1]))) {
             $telegram->answer($callbackId);
 

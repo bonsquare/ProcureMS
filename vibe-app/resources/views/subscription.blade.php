@@ -145,10 +145,10 @@
 
 <section class="{{ $card }} mt-5" data-subscription-proofs>
     @php
-        $proofTone = ['pending' => 'bg-amber-100 text-amber-800', 'approved' => 'bg-secondary/10 text-secondary', 'rejected' => 'bg-error/10 text-error'];
-        $proofBar = ['pending' => 'border-l-amber-400', 'approved' => 'border-l-secondary', 'rejected' => 'border-l-error'];
-        $proofLabel = ['pending' => 'Waiting for review', 'approved' => 'Approved', 'rejected' => 'Rejected'];
-        $proofIcon = ['pending' => 'hourglass_top', 'approved' => 'check_circle', 'rejected' => 'cancel'];
+        $proofTone = ['pending' => 'bg-amber-100 text-amber-800', 'for_process' => 'bg-sky-100 text-sky-800', 'approved' => 'bg-secondary/10 text-secondary', 'rejected' => 'bg-error/10 text-error'];
+        $proofBar = ['pending' => 'border-l-amber-400', 'for_process' => 'border-l-sky-400','approved' => 'border-l-secondary', 'rejected' => 'border-l-error'];
+        $proofLabel = ['pending' => 'Waiting for review', 'for_process' => 'For process','approved' => 'Approved', 'rejected' => 'Rejected'];
+        $proofIcon = ['pending' => 'hourglass_top', 'for_process' => 'pending_actions','approved' => 'check_circle', 'rejected' => 'cancel'];
         $proofCounts = $proofs->countBy('status');
         $approvedTotal = (float) $proofs->where('status', 'approved')->sum('amount_to_pay');
     @endphp
@@ -183,6 +183,8 @@
                                     Approved by the administrator{{ $proof->reviewed_at ? ' on '.$proof->reviewed_at->format('M d, Y g:i A') : '' }}. Your subscription was updated.
                                 @elseif($proof->status === 'rejected')
                                     Rejected by the administrator{{ $proof->reviewed_at ? ' on '.$proof->reviewed_at->format('M d, Y g:i A') : '' }}.{{ $proof->reject_reason ? ' Reason: '.$proof->reject_reason : '' }} Please send a new proof.
+                                @elseif($proof->status === 'for_process')
+                                    The administrator is checking your proof.{{ $proof->reject_reason ? ' Remark: '.$proof->reject_reason : '' }} You do not need to send it again.
                                 @else
                                     Sent on {{ $proof->created_at->format('M d, Y g:i A') }}. The administrator has not reviewed it yet.
                                 @endif

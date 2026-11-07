@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\AuditLog;
 use App\Models\PaymentProof;
 use App\Models\PromoCode;
 use App\Models\Subscription;
@@ -293,5 +294,130 @@ class PaymentProofTest extends TestCase
         PaymentSettings::put(['qr' => 'data:image/png;base64,AAAA']);
 
         $this->actingAs($this->school)->get(route('subscription'))->assertOk()->assertSee('data-qr-large', false)->assertSee('data-qr-dialog', false)->assertSee('Scan with your banking app');
+    }
+
+    // ---- Deciding a proof from the Telegram group -------------------------------------------------------------------------------------
+
+    private function telegramProof(bool $approvers = true): PaymentProof
+    {
+        config(['services.telegram.token' => 'T', 'services.telegram.chat_id' => '555', 'services.telegram.webhook_secret' => 'hook-secret',
+            'services.telegram.approvers' => $approvers ? '777='.$this->master->email.', 888=nobody@example.com' : '']);
+        $this->telegramMessageId = 900;
+        $this->submit()->assertSessionHasNoErrors();
+
+        return $this->proof();
+    }
+
+    private function proofTap(PaymentProof $proof, string $action, int $by = 777, string $name = 'Bonifacio'): void
+    {
+        $this->postJson(route('telegram.webhook', 'hook-secret'), ['callback_query' => ['id' => 'pcb', 'from' => ['id' => $by, 'first_name' => $name], 'data' => 'p:'.$proof->id.':'.$action,
+            'message' => ['message_id' => 5000, 'chat' => ['id' => 555]]]])->assertOk();
+    }
+
+    private function proofReason(string $text, int $by = 777, int $prompt = 900): void
+    {
+        $this->postJson(route('telegram.webhook', 'hook-secret'), ['message' => ['message_id' => 801, 'chat' => ['id' => 555], 'from' => ['id' => $by, 'first_name' => 'Bonifacio'], 'text' => $text, 'reply_to_message' => ['message_id' => $prompt]]])->assertOk();
+    }
+
+    private function telegramSaw(string $method, callable $check): void
+    {
+        Http::assertSent(fn (Request $r) => str_contains($r->url(), '/'.$method) && $check($r));
+    }
+
+    public function test_the_payment_proof_notice_carries_the_decision_buttons(): void
+    {
+        $proof = $this->telegramProof();
+
+        $this->telegramSaw('sendMessage', fn ($r) => str_contains((string) $r['text'], 'New Payment Proof')
+            && str_contains(json_encode($r['reply_markup'] ?? []), 'p:'.$proof->id.':approve') && str_contains(json_encode($r['reply_markup'] ?? []), 'p:'.$proof->id.':decline') && str_contains(json_encode($r['reply_markup'] ?? []), 'p:'.$proof->id.':process'));
+    }
+
+    public function test_nobody_can_decide_a_proof_until_approvers_are_set_and_only_listed_accounts_can(): void
+    {
+        $proof = $this->telegramProof(false);
+        $this->proofTap($proof, 'approve');
+        $this->proofTap($proof, 'yes');
+        $this->assertSame('pending', $proof->fresh()->status);
+
+        config(['services.telegram.approvers' => '777='.$this->master->email]);
+        $this->proofTap($proof, 'yes', 999, 'Stranger');
+        $this->assertSame('pending', $proof->fresh()->status);
+        $this->telegramSaw('answerCallbackQuery', fn ($r) => str_contains((string) ($r['text'] ?? ''), 'not allowed') && ($r['show_alert'] ?? false) === true);
+    }
+
+    public function test_approving_from_telegram_asks_to_confirm_then_activates_the_school_like_the_web_does(): void
+    {
+        $proof = $this->telegramProof();
+
+        $this->proofTap($proof, 'approve');
+        $this->assertSame('pending', $proof->fresh()->status);
+        $this->telegramSaw('editMessageReplyMarkup', fn ($r) => str_contains(json_encode($r['reply_markup']), 'p:'.$proof->id.':yes'));
+
+        $this->proofTap($proof, 'yes');
+
+        $this->assertSame(['approved', $this->master->id], [$proof->fresh()->status, $proof->fresh()->reviewed_by]);
+        $this->assertSame(['annual', 'active'], [Subscription::withoutGlobalScopes()->where('school_id', $this->school->school_id)->first()->plan, Subscription::withoutGlobalScopes()->where('school_id', $this->school->school_id)->first()->status]);
+        $this->assertSame(1, SubscriptionPayment::withoutGlobalScopes()->count());
+        $this->assertTrue(AuditLog::query()->where('action', 'subscription_proof_approved')->where('metadata->via', 'telegram')->exists());
+        $this->telegramSaw('sendMessage', fn ($r) => str_contains((string) $r['text'], 'Approved') && str_contains((string) $r['text'], $this->school->school->name) && str_contains((string) $r['text'], 'Bonifacio'));
+        $this->telegramSaw('editMessageText', fn ($r) => (int) $r['message_id'] === 5000 && $r['reply_markup'] === ['inline_keyboard' => []] && str_contains((string) $r['text'], 'Approved'));
+    }
+
+    public function test_declining_asks_for_the_reason_and_the_school_sees_it(): void
+    {
+        $proof = $this->telegramProof();
+
+        $this->proofTap($proof, 'decline');
+        $this->assertSame('pending', $proof->fresh()->status);
+        $this->telegramSaw('sendMessage', fn ($r) => str_contains((string) $r['text'], 'reason') && ($r['reply_markup']['force_reply'] ?? false) === true && (int) $r['reply_to_message_id'] === 5000);
+
+        $this->proofReason('The photo is blurry, please send a clear one');
+
+        $this->assertSame(['rejected', $this->master->id, 'The photo is blurry, please send a clear one'], [$proof->fresh()->status, $proof->fresh()->reviewed_by, $proof->fresh()->reject_reason]);
+        auth()->logout();
+        $this->actingAs($this->school)->get(route('subscription'))->assertOk()->assertSee('The photo is blurry, please send a clear one');
+    }
+
+    public function test_for_process_keeps_the_proof_open_shows_the_remark_and_can_still_be_approved(): void
+    {
+        $proof = $this->telegramProof();
+
+        $this->proofTap($proof, 'process');
+        $this->proofReason('Waiting for the bank to confirm the transfer');
+
+        $this->assertSame(['for_process', 'Waiting for the bank to confirm the transfer'], [$proof->fresh()->status, $proof->fresh()->reject_reason]);
+        $this->telegramSaw('editMessageText', fn ($r) => (int) $r['message_id'] === 5000 && str_contains(json_encode($r['reply_markup']), 'p:'.$proof->id.':approve') && str_contains((string) $r['text'], 'For process'));
+        auth()->logout();
+        $this->actingAs($this->school)->get(route('subscription'))->assertOk()->assertSee('Waiting for the bank to confirm the transfer')->assertSee('For process');
+        $this->submit(['file' => $this->image('b')])->assertSessionHasErrors();
+
+        $this->proofTap($proof, 'yes');
+
+        $this->assertSame('approved', $proof->fresh()->status);
+    }
+
+    public function test_a_reason_from_someone_not_allowed_or_too_long_changes_nothing(): void
+    {
+        $proof = $this->telegramProof();
+        $this->proofTap($proof, 'decline');
+
+        $this->proofReason('Not mine to decide', 999);
+        $this->proofReason(str_repeat('x', 300));
+
+        $this->assertSame('pending', $proof->fresh()->status);
+        $this->telegramSaw('sendMessage', fn ($r) => str_contains((string) $r['text'], '255'));
+    }
+
+    public function test_a_decided_proof_is_not_decided_again_from_telegram(): void
+    {
+        $proof = $this->telegramProof();
+        $this->proofTap($proof, 'yes');
+
+        $this->proofTap($proof, 'decline');
+        $this->proofReason('Too late');
+
+        $this->assertSame('approved', $proof->fresh()->status);
+        $this->assertNull($proof->fresh()->reject_reason);
+        $this->assertSame(1, SubscriptionPayment::withoutGlobalScopes()->count());
     }
 }

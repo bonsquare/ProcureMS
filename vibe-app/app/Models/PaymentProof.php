@@ -16,6 +16,12 @@ class PaymentProof extends Model
 
     public const REJECTED = 'rejected';
 
+    /** Being checked: still open, with a remark the school can read. */
+    public const FOR_PROCESS = 'for_process';
+
+    /** The proofs still waiting for a decision. */
+    public const OPEN = [self::PENDING, self::FOR_PROCESS];
+
     protected $fillable = ['organization_id', 'school_id', 'user_id', 'subscription_id', 'reference', 'bank_account_used', 'paid_at', 'transacted_at', 'remarks', 'submitted_by_name', 'submitted_by_username', 'list_price', 'discount_amount', 'promo_code_id', 'amount_to_pay', 'drive_file_id', 'drive_link', 'file_name', 'mime', 'size', 'sha256', 'status', 'reviewed_by', 'reviewed_at', 'reject_reason'];
 
     protected function casts(): array
@@ -40,6 +46,6 @@ class PaymentProof extends Model
 
     public function isPending(): bool
     {
-        return $this->status === self::PENDING;
+        return in_array($this->status, self::OPEN, true);
     }
 }

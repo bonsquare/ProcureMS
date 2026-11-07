@@ -52,6 +52,8 @@ return [
         'token' => env('TELEGRAM_BOT_TOKEN'),
         'chat_id' => env('TELEGRAM_CHAT_ID'),
         'webhook_secret' => env('TELEGRAM_WEBHOOK_SECRET'),
+        // Who may decide a payment proof in the group: "telegram_id=master@email, ...". Empty means nobody.
+        'approvers' => env('TELEGRAM_APPROVERS', ''),
     ],
 
     'railway' => [

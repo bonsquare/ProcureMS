@@ -82,9 +82,26 @@ class TelegramService
     }
 
     /** Answers a button tap (Telegram shows the text briefly and stops the button's spinner). */
-    public function answer(string $callbackId, string $text = ''): void
+    public function answer(string $callbackId, string $text = '', bool $alert = false): void
     {
-        $this->call('answerCallbackQuery', array_filter(['callback_query_id' => $callbackId, 'text' => $text]));
+        $this->call('answerCallbackQuery', array_filter(['callback_query_id' => $callbackId, 'text' => $text, 'show_alert' => $alert]));
+    }
+
+    /** Asks a question as a reply to message $replyTo and opens the reply box for whoever answers; returns the id of the question. */
+    public function ask(string $text, int $replyTo): ?int
+    {
+        if (! $this->configured()) {
+            return null;
+        }
+        try {
+            $response = Http::timeout(8)->post($this->url('sendMessage'), ['chat_id' => config('services.telegram.chat_id'), 'text' => $text, 'reply_to_message_id' => $replyTo, 'reply_markup' => ['force_reply' => true, 'selective' => true]]);
+
+            return $response->successful() ? ((int) $response->json('result.message_id') ?: null) : null;
+        } catch (Throwable $exception) {
+            Log::warning('Telegram question was not sent.', ['error' => $exception->getMessage()]);
+
+            return null;
+        }
     }
 
     private function call(string $method, array $payload): void

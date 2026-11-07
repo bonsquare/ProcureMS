@@ -34,7 +34,7 @@ class NotificationController extends Controller
         if ($user->hasAccess('schools') && ($waiting = School::withoutGlobalScopes()->where('status', 'inactive')->count()) > 0) {
             $items->push($this->item($waiting.' '.Str::plural('school', $waiting).' waiting for activation', 'A school registered and needs to be activated.', route('subscriptions'), 'warn'));
         }
-        if ($user->hasAccess('subscriptions') && ($proofs = PaymentProof::withoutGlobalScopes()->where('status', PaymentProof::PENDING)->count()) > 0) {
+        if ($user->hasAccess('subscriptions') && ($proofs = PaymentProof::withoutGlobalScopes()->whereIn('status', PaymentProof::OPEN)->count()) > 0) {
             $items->push($this->item($proofs.' '.Str::plural('proof', $proofs).' of payment to review', 'Check the proof in the school\'s Google Drive, then approve or reject it.', route('subscriptions'), 'warn'));
         }
 

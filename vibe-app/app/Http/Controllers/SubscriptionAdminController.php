@@ -9,6 +9,8 @@ use App\Models\School;
 use App\Models\Subscription;
 use App\Models\SubscriptionPayment;
 use App\Models\User;
+use App\Rules\CurrentPin;
+use App\Services\PaymentProofReview;
 use App\Services\SubscriptionPricing;
 use App\Services\SubscriptionService;
 use App\Support\PaymentSettings;
@@ -16,14 +18,13 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /** The buttons of the Subscriptions page, for the master and the sub-masters. Free and the price of a school are the Super admin's alone. */
 class SubscriptionAdminController extends Controller
 {
-    public function __construct(private SubscriptionService $subscriptions, private SubscriptionPricing $pricing) {}
+    public function __construct(private SubscriptionService $subscriptions, private SubscriptionPricing $pricing, private PaymentProofReview $reviews) {}
 
     public function store(Request $request): RedirectResponse
     {
@@ -249,21 +250,7 @@ class SubscriptionAdminController extends Controller
         $this->authorizeMaster($request);
         $data = $request->validate($this->guard());
 
-        $school = DB::transaction(function () use ($proof, $request, $data) {
-            $locked = $this->pendingProof($proof);
-            $school = School::withoutGlobalScopes()->findOrFail($locked->school_id);
-            $this->subscriptions->activateAnnual($school, [
-                'amount' => $locked->amount_to_pay, 'list_price' => $locked->list_price, 'discount_amount' => $locked->discount_amount, 'promo_code_id' => $locked->promo_code_id,
-                'reference' => $locked->reference, 'paid_at' => $locked->paid_at->toDateString(), 'proof_id' => $locked->id, 'method' => 'bank_transfer', 'reason' => $data['reason'],
-            ], $request->user());
-            if ($locked->promo_code_id) {
-                PromoCode::query()->whereKey($locked->promo_code_id)->increment('used_count');
-            }
-            $locked->update(['status' => PaymentProof::APPROVED, 'reviewed_by' => $request->user()->id, 'reviewed_at' => now(), 'reject_reason' => null]);
-            $this->note($school, $request->user(), 'subscription_proof_approved', $data['reason'], ['reference' => $locked->reference, 'amount' => (string) $locked->amount_to_pay]);
-
-            return $school;
-        });
+        $school = $this->reviews->approve($proof, $request->user(), $data['reason']);
 
         return back()->with('success', 'The proof of '.$school->name.' was approved: the school is on the Annual plan.');
     }
@@ -273,32 +260,15 @@ class SubscriptionAdminController extends Controller
         $this->authorizeMaster($request);
         $data = $request->validate($this->guard());
 
-        $school = DB::transaction(function () use ($proof, $request, $data) {
-            $locked = $this->pendingProof($proof);
-            $locked->update(['status' => PaymentProof::REJECTED, 'reviewed_by' => $request->user()->id, 'reviewed_at' => now(), 'reject_reason' => $data['reason']]);
-            $school = School::withoutGlobalScopes()->findOrFail($locked->school_id);
-            $this->note($school, $request->user(), 'subscription_proof_rejected', $data['reason'], ['reference' => $locked->reference]);
-
-            return $school;
-        });
+        $school = $this->reviews->reject($proof, $request->user(), $data['reason']);
 
         return back()->with('success', 'The proof of '.$school->name.' was rejected; the school sees your reason.');
-    }
-
-    /** The proof, locked, and only while it is waiting: a proof is decided once. */
-    private function pendingProof(int $id): PaymentProof
-    {
-        $proof = PaymentProof::withoutGlobalScopes()->lockForUpdate()->findOrFail($id);
-        throw_unless($proof->isPending(), ValidationException::withMessages(['proof' => 'This proof was already decided.']));
-        throw_if(PaymentProof::withoutGlobalScopes()->where('sha256', $proof->sha256)->where('status', PaymentProof::APPROVED)->whereKeyNot($proof->id)->exists(), ValidationException::withMessages(['proof' => 'The same file was already approved as a proof of payment.']));
-
-        return $proof;
     }
 
     /** @return array<string, array<int, mixed>> the reason and the user's own password every action asks for */
     private function guard(): array
     {
-        return ['reason' => ['required', 'string', 'max:255'], 'pin' => ['required', new \App\Rules\CurrentPin]];
+        return ['reason' => ['required', 'string', 'max:255'], 'pin' => ['required', new CurrentPin]];
     }
 
     private function authorizeMaster(Request $request): void
@@ -309,7 +279,7 @@ class SubscriptionAdminController extends Controller
     /** The master records a payment for the school: the amount is the one the school owes (the price set for it, else the list price). */
     private function record(School $school, array $data, User $by, string $reason): void
     {
-        throw_if(PaymentProof::withoutGlobalScopes()->where('school_id', $school->id)->where('status', PaymentProof::PENDING)->exists(), ValidationException::withMessages(['proof' => $school->name.' has a proof of payment waiting: approve or reject it instead of recording a second payment.']));
+        throw_if(PaymentProof::withoutGlobalScopes()->where('school_id', $school->id)->whereIn('status', PaymentProof::OPEN)->exists(), ValidationException::withMessages(['proof' => $school->name.' has a proof of payment waiting: approve or reject it instead of recording a second payment.']));
         $quote = $this->pricing->quote($school);
         $this->subscriptions->activateAnnual($school, [
             'amount' => $quote['amount'], 'list_price' => $quote['list_price'], 'discount_amount' => $quote['discount'], 'reference' => $data['reference'],

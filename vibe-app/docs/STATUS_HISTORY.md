@@ -190,3 +190,4 @@ Full dated log moved out of CLAUDE.md to keep that file short. Nothing was remov
 - 2026-11-07: /assign always shows the staff (or the open requests first); card and topic header show ticket, subject, requester; short topic title (docs/specs.md section 119). Deployed 2026-11-07 (a32a3c40).
 - 2026-11-07: Support page as a chat with live refresh (docs/specs.md section 119). Deployed 2026-11-07 (a8148194).
 - 2026-11-07: Status buttons also under the client reply and the answered line (docs/specs.md section 119). Committed, not yet deployed.
+- 2026-11-07: Payment proofs approved, declined or put For process from Telegram, with a remark the school sees (docs/specs.md section 119). Committed, not yet deployed; needs TELEGRAM_APPROVERS on Railway.
