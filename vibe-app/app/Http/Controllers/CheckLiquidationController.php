@@ -75,7 +75,7 @@ class CheckLiquidationController extends Controller
     public function reopen(Request $request, LiquidationReport $liquidationReport): JsonResponse
     {
         $this->authorizeCheck($request, $liquidationReport, 'liquidation.approve');
-        $data = $request->validate(['reason' => ['required', 'string', 'max:255'], 'password' => ['required', 'current_password']]);
+        $data = $request->validate(['reason' => ['required', 'string', 'max:255'], 'pin' => ['required', new \App\Rules\CurrentPin]]);
         $liquidation = CheckLiquidation::query()->where('liquidation_report_id', $liquidationReport->id)->firstOrFail();
         $this->service->reopen($liquidation, $request->user(), $data['reason']);
 

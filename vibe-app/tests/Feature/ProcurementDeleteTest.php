@@ -43,7 +43,7 @@ class ProcurementDeleteTest extends TestCase
     {
         [$pr, $master, $report] = $this->requestWithEverything('del');
 
-        $this->actingAs($master)->delete(route('procurement.destroy', $pr), ['password' => self::PASSWORD])
+        $this->actingAs($master)->delete(route('procurement.destroy', $pr), ['pin' => '123456'])
             ->assertRedirect(route('procurement.requests'));
 
         $this->assertDatabaseMissing('procurement_requests', ['id' => $pr->id]);
@@ -59,7 +59,7 @@ class ProcurementDeleteTest extends TestCase
     {
         [$pr, $master] = $this->requestWithEverything('keep');
 
-        $this->actingAs($master)->delete(route('procurement.destroy', $pr), ['password' => 'wrong'])->assertSessionHasErrors('password');
+        $this->actingAs($master)->delete(route('procurement.destroy', $pr), ['pin' => 'wrong'])->assertSessionHasErrors('pin');
 
         $this->assertDatabaseHas('procurement_requests', ['id' => $pr->id]);
     }
@@ -71,7 +71,7 @@ class ProcurementDeleteTest extends TestCase
         $school = School::create(['organization_id' => $organization->id, 'code' => 'OTH', 'name' => 'Other', 'status' => 'active']);
         $outsider = User::factory()->create(['role' => 'school_admin', 'organization_id' => $organization->id, 'school_id' => $school->id, 'password' => Hash::make(self::PASSWORD)]);
 
-        $this->actingAs($outsider)->delete(route('procurement.destroy', $pr), ['password' => self::PASSWORD])->assertNotFound();
+        $this->actingAs($outsider)->delete(route('procurement.destroy', $pr), ['pin' => '123456'])->assertNotFound();
 
         $this->assertDatabaseHas('procurement_requests', ['id' => $pr->id]);
     }

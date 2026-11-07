@@ -38,7 +38,7 @@ class SubscriptionAdminTest extends TestCase
 
     private function guard(array $data = [], string $reason = 'Because'): array
     {
-        return $data + ['reason' => $reason, 'password' => 'password'];
+        return $data + ['reason' => $reason, 'pin' => '123456'];
     }
 
     public function test_activate_records_the_payment_the_school_owes_and_makes_it_annual(): void
@@ -91,8 +91,8 @@ class SubscriptionAdminTest extends TestCase
     {
         foreach (['subscriptions.suspend', 'subscriptions.reactivate', 'subscriptions.extend', 'subscriptions.activate', 'subscriptions.free.grant', 'subscriptions.free.remove', 'subscriptions.price'] as $route) {
             $payload = ['days' => 3, 'amount' => '500', 'ends_at' => now()->addMonth()->toDateString(), 'reference' => 'R', 'paid_at' => now()->toDateString()];
-            $this->post(route($route, $this->school), $payload + ['reason' => '', 'password' => 'password'])->assertSessionHasErrors('reason');
-            $this->post(route($route, $this->school), $payload + ['reason' => 'Why', 'password' => 'not-it'])->assertSessionHasErrors('password');
+            $this->post(route($route, $this->school), $payload + ['reason' => '', 'pin' => '123456'])->assertSessionHasErrors('reason');
+            $this->post(route($route, $this->school), $payload + ['reason' => 'Why', 'pin' => 'not-it'])->assertSessionHasErrors('pin');
         }
         $this->assertSame('trial', $this->sub()->status, 'nothing was changed');
         $this->assertSame(0, AuditLog::withoutGlobalScopes()->where('action', 'like', 'subscription_%')->where('metadata', 'not like', '%"source":"request"%')->count());

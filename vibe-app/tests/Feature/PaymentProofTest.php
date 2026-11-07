@@ -55,7 +55,7 @@ class PaymentProofTest extends TestCase
     {
         auth()->logout();
 
-        return $this->actingAs($this->master)->post(route('subscriptions.proofs.'.$action, $proof), $data + ['reason' => 'Checked', 'password' => 'password']);
+        return $this->actingAs($this->master)->post(route('subscriptions.proofs.'.$action, $proof), $data + ['reason' => 'Checked', 'pin' => '123456']);
     }
 
     public function test_the_school_sees_list_price_discount_and_amount_to_pay(): void
@@ -199,7 +199,7 @@ class PaymentProofTest extends TestCase
         $other = $this->user('P3');
         $this->connection($other);
         $this->actingAs($other)->get(route('subscription'))->assertOk()->assertDontSee('ONLY-MINE');
-        $this->post(route('subscriptions.proofs.approve', $proof), ['reason' => 'x', 'password' => 'password'])->assertForbidden();
+        $this->post(route('subscriptions.proofs.approve', $proof), ['reason' => 'x', 'pin' => '123456'])->assertForbidden();
         $this->assertSame('pending', $proof->fresh()->status);
     }
 

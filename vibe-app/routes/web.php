@@ -21,6 +21,7 @@ use App\Http\Controllers\GoogleDriveController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MasterUserController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PinController;
 use App\Http\Controllers\PlanningController;
 use App\Http\Controllers\SchoolManagementController;
 use App\Http\Controllers\SchoolSettingsController;
@@ -255,6 +256,7 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::get('/reports/generate/{type}', [GeneratedReportController::class, 'show'])->middleware('permission:reports.view')->name('reports.generate');
     Route::get('/support', [SupportController::class, 'show'])->name('support');
     Route::put('/support', [SupportController::class, 'update'])->name('support.update');
+    Route::post('/account/pin', [PinController::class, 'store'])->middleware('throttle:10,1')->name('account.pin');
     Route::post('/support/messages', [SupportController::class, 'send'])->middleware('throttle:10,1')->name('support.send');
     Route::post('/demo/reset', [DemoController::class, 'reset'])->name('demo.reset');
     Route::get('/user-management', [UserDirectoryController::class, 'index'])->name('user-management');

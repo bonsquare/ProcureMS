@@ -303,5 +303,20 @@
 
 </g>
 </svg></div>
+<script>
+    // The paper around the drawn form is trimmed: the view box follows what is drawn (plus a small edge), and the sheet is as tall as that needs at 8.5in wide.
+    (function () {
+        var svg = document.querySelector('.sheet svg');
+        if (!svg) { return; }
+        try {
+            var box = svg.getBBox(), edge = 12;
+            if (!box.width || !box.height) { return; }
+            var x = Math.max(0, box.x - edge), y = Math.max(0, box.y - edge);
+            var w = Math.min(612, box.x + box.width + edge) - x, h = Math.min(936, box.y + box.height + edge) - y;
+            svg.setAttribute('viewBox', x + ' ' + y + ' ' + w + ' ' + h);
+            svg.parentNode.style.height = (8.5 * h / w) + 'in';
+        } catch (e) { /* keeps the full page */ }
+    })();
+</script>
 </body>
 </html>

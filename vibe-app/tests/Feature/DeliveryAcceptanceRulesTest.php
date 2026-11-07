@@ -160,7 +160,7 @@ class DeliveryAcceptanceRulesTest extends TestCase
         $report->forceFill(['dv_number' => 'DV-D-1', 'dv_date' => now()->toDateString(), 'dv_particulars' => 'Old', 'payment_mode' => 'MDS Check'])->save();
         $master = User::factory()->create(['role' => 'master_user', 'organization_id' => null, 'school_id' => null, 'password' => bcrypt('edit-pass-123')]);
 
-        $this->actingAs($master)->post(route('accounting.dv.store', $report), $this->dvForm() + ['dv_number' => 'DV-D-1', 'reason' => 'Correction', 'password' => 'edit-pass-123'])
+        $this->actingAs($master)->post(route('accounting.dv.store', $report), $this->dvForm() + ['dv_number' => 'DV-D-1', 'reason' => 'Correction', 'pin' => '123456'])
             ->assertSessionHasNoErrors();
 
         $this->assertSame('Office supplies', $report->fresh()->dv_particulars);

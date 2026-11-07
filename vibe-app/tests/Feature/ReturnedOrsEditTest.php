@@ -44,7 +44,7 @@ class ReturnedOrsEditTest extends TestCase
 
     private function form(array $overrides = []): array
     {
-        return array_replace(['payee' => 'Right Supplier', 'payee_office' => 'Main Office', 'payee_address' => 'Kidapawan City', 'payee_tin' => '123-456', 'purpose' => 'Corrected purpose', 'amount' => '2500', 'notes' => 'Fixed', 'ors_fund_cluster' => '101102', 'reason' => 'Corrected', 'password' => 'password'], $overrides);
+        return array_replace(['payee' => 'Right Supplier', 'payee_office' => 'Main Office', 'payee_address' => 'Kidapawan City', 'payee_tin' => '123-456', 'purpose' => 'Corrected purpose', 'amount' => '2500', 'notes' => 'Fixed', 'ors_fund_cluster' => '101102', 'reason' => 'Corrected', 'pin' => '123456'], $overrides);
     }
 
     public function test_the_budget_page_offers_edit_with_the_accounting_remarks(): void
@@ -106,6 +106,18 @@ class ReturnedOrsEditTest extends TestCase
         $this->assertSame('Corrected purpose', $report->fresh()->purpose);
     }
 
+    public function test_the_responsibility_center_can_be_corrected_and_is_kept_when_the_field_is_not_sent(): void
+    {
+        [$report, $user] = $this->returnedOrs();
+        $report->update(['responsibility_center_code' => 'RC-OLD']);
+
+        $this->actingAs($user)->patch(route('liquidation.update', $report), $this->form(['responsibility_center_code' => 'RC-NEW']))->assertSessionHasNoErrors();
+        $this->assertSame('RC-NEW', $report->fresh()->responsibility_center_code);
+
+        $this->patch(route('liquidation.update', $report), $this->form())->assertSessionHasNoErrors();
+        $this->assertSame('RC-NEW', $report->fresh()->responsibility_center_code, 'a form without the field leaves it alone');
+    }
+
     public function test_an_ors_with_a_dv_is_corrected_in_place_while_its_amount_and_payee_stay(): void
     {
         [$report, $user] = $this->returnedOrs();
@@ -127,7 +139,7 @@ class ReturnedOrsEditTest extends TestCase
         [$report, $user] = $this->returnedOrs();
 
         $this->actingAs($user)->patch(route('liquidation.update', $report), $this->form(['reason' => '']))->assertSessionHasErrors('reason');
-        $this->patch(route('liquidation.update', $report), $this->form(['password' => 'not-it']))->assertSessionHasErrors('password');
+        $this->patch(route('liquidation.update', $report), $this->form(['pin' => 'not-it']))->assertSessionHasErrors('pin');
         $this->assertSame('Wrong Supplier', $report->fresh()->payee);
     }
 

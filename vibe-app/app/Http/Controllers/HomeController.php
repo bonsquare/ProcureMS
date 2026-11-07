@@ -479,7 +479,7 @@ class HomeController extends Controller
     public function destroyProcurement(Request $request, ProcurementRequest $procurementRequest)
     {
         abort_unless($this->scopedSchoolIds()->contains($procurementRequest->school_id), 403);
-        $request->validate(['password' => ['required', 'current_password']]);
+        $request->validate(['pin' => ['required', new \App\Rules\CurrentPin]]);
 
         $number = $procurementRequest->request_number;
         $transaction = $procurementRequest->transaction;
@@ -2383,7 +2383,7 @@ class HomeController extends Controller
 
         $data = $request->validate([
             'reason' => [$preview ? 'nullable' : 'required', 'string', 'max:255'],
-            'password' => [$preview ? 'nullable' : 'required', 'current_password'],
+            'pin' => [$preview ? 'nullable' : 'required', new \App\Rules\CurrentPin],
             'payee' => ['nullable', 'string', 'max:255'],
             'payee_office' => ['nullable', 'string', 'max:255'],
             'payee_address' => ['nullable', 'string', 'max:255'],
@@ -2392,6 +2392,10 @@ class HomeController extends Controller
             'amount' => ['required', 'numeric', 'min:0.01'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'ors_fund_cluster' => ['nullable', 'string', 'max:100'],
+            'responsibility_center_code' => ['nullable', 'string', 'max:100'],
+            'charges' => ['nullable', 'array', 'max:10'],
+            'charges.*.budget_allocation_id' => ['nullable', 'integer', 'exists:budget_allocations,id'],
+            'charges.*.amount' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         // The amount of an ORS made from a Purchase Order is the PO's; only a direct ORS can change it, and the budget is checked again without counting this ORS twice.
@@ -2399,30 +2403,92 @@ class HomeController extends Controller
         if ($inPlace && trim((string) ($data['payee'] ?? '')) !== trim((string) $liquidationReport->payee)) {
             throw ValidationException::withMessages(['payee' => 'The payee of an ORS that has a DV or a payment cannot be changed. Cancel the check first.']);
         }
+        $charges = $this->editedCharges($request, $liquidationReport, $inPlace);
         $amount = $amountIsFixed ? (float) $liquidationReport->amount : round((float) $data['amount'], 2);
-        if (! $amountIsFixed && $amount !== (float) $liquidationReport->amount) {
+        if ($charges) {
+            // The lines decide the amount of a direct ORS; an ORS from a Purchase Order keeps the PO's amount, which the lines must add up to.
+            $amount = $liquidationReport->procurement_request_id ? (float) $liquidationReport->amount : round((float) $charges->sum('amount'), 2);
+            if (! $liquidationReport->procurement_request_id) {
+                app(BudgetService::class)->assertAvailable('amount', (int) $liquidationReport->school_id, $liquidationReport->source_of_fund, $amount, null, null, $liquidationReport->id);
+            }
+        }
+        if (! $charges && ! $amountIsFixed && $amount !== (float) $liquidationReport->amount) {
             $budget = ['school_id' => $liquidationReport->school_id, 'source_of_fund' => $liquidationReport->source_of_fund, 'budget_allocation_id' => $liquidationReport->budget_allocation_id];
             app(BudgetService::class)->assertAvailable('amount', (int) $liquidationReport->school_id, $liquidationReport->source_of_fund, $amount, null, null, $liquidationReport->id);
             $this->assertBudgetItem($budget, $amount, null, $liquidationReport->id);
         }
 
         $before = $liquidationReport->only(['amount', 'payee', 'purpose']);
+        if ($charges) {
+            $before['charges'] = $this->chargesText($liquidationReport->chargedLines());
+        }
         $previousStatus = $liquidationReport->status;
         $liquidationReport->update([
             'payee' => $data['payee'] ?? null, 'payee_office' => $data['payee_office'] ?? null, 'payee_address' => $data['payee_address'] ?? null, 'payee_tin' => $data['payee_tin'] ?? null,
             'purpose' => $data['purpose'], 'amount' => $amount, 'notes' => $data['notes'] ?? null, 'ors_fund_cluster' => $data['ors_fund_cluster'] ?? null,
-        ] + ($inPlace ? [] : ['status' => 'for_review', 'approved_at' => null]));
+        ] + (array_key_exists('responsibility_center_code', $data) ? ['responsibility_center_code' => $data['responsibility_center_code']] : []) + ($charges ? ['budget_allocation_id' => $charges->first()['budget_allocation_id']] : []) + ($inPlace ? [] : ['status' => 'for_review', 'approved_at' => null]));
+        if ($charges) {
+            // One line is the ORS's own; two or more are kept apart as its split.
+            $liquidationReport->lines()->delete();
+            if ($charges->count() >= 2) {
+                foreach ($charges as $index => $charge) {
+                    $liquidationReport->lines()->create(['organization_id' => $liquidationReport->organization_id, 'budget_allocation_id' => $charge['budget_allocation_id'], 'line_no' => $index + 1, 'amount' => $charge['amount']]);
+                }
+            }
+        }
         $liquidationReport->transaction?->recordEvent('budget', 'ors_resubmitted', $previousStatus, 'for_review', $liquidationReport->ors_number, ['before' => $before]);
-        AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $liquidationReport->school_id, 'action' => 'ors_resubmitted', 'auditable_type' => LiquidationReport::class, 'auditable_id' => $liquidationReport->id, 'metadata' => ['ors' => $liquidationReport->ors_number, 'reason' => $data['reason'] ?? null, 'before' => $before, 'after' => $liquidationReport->only(['amount', 'payee', 'purpose'])]]);
+        AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $liquidationReport->school_id, 'action' => 'ors_resubmitted', 'auditable_type' => LiquidationReport::class, 'auditable_id' => $liquidationReport->id, 'metadata' => ['ors' => $liquidationReport->ors_number, 'reason' => $data['reason'] ?? null, 'before' => $before, 'after' => $liquidationReport->only(['amount', 'payee', 'purpose']) + ($charges ? ['charges' => $this->chargesText($liquidationReport->unsetRelation('lines')->chargedLines())] : [])]]);
 
         return back()->with('success', ($liquidationReport->ors_number ?: $liquidationReport->report_number).($inPlace ? ' updated.' : ' corrected and sent back to Accounting for review.'));
+    }
+
+    /** The budget lines an edited ORS is charged to, or null when the edit leaves them alone (a locked ORS, or a form without lines). Checked like a new ORS: one school and fund, each line once, each with enough balance. */
+    private function editedCharges(Request $request, LiquidationReport $report, bool $inPlace): ?Collection
+    {
+        if ($inPlace || ! $request->has('charges')) {
+            return null;
+        }
+
+        $charges = collect($request->input('charges', []))
+            ->filter(fn ($row) => filled($row['budget_allocation_id'] ?? null) && (float) ($row['amount'] ?? 0) > 0)
+            ->map(fn ($row) => ['budget_allocation_id' => (int) $row['budget_allocation_id'], 'amount' => round((float) $row['amount'], 2)])->values();
+        if ($charges->isEmpty()) {
+            throw ValidationException::withMessages(['charges' => 'Charge the ORS to at least one budget line, with its amount.']);
+        }
+        if ($charges->pluck('budget_allocation_id')->unique()->count() !== $charges->count()) {
+            throw ValidationException::withMessages(['charges' => 'Each budget line (UACS code) can be used once in an ORS.']);
+        }
+        if ($report->procurement_request_id && abs((float) $charges->sum('amount') - (float) $report->amount) > 0.009) {
+            throw ValidationException::withMessages(['charges' => sprintf('The amounts of the budget lines (₱%s) must add up to the amount of the Purchase Order (₱%s).', number_format((float) $charges->sum('amount'), 2), number_format((float) $report->amount, 2))]);
+        }
+
+        $lines = BudgetAllocation::whereIn('id', $charges->pluck('budget_allocation_id'))->get()->keyBy('id');
+        foreach ($charges as $charge) {
+            $line = $lines->get($charge['budget_allocation_id']);
+            if (! $line || (int) $line->school_id !== (int) $report->school_id) {
+                throw ValidationException::withMessages(['charges' => 'A budget line belongs to a different school.']);
+            }
+            if ($report->source_of_fund && strcasecmp((string) $line->source_of_fund, (string) $report->source_of_fund) !== 0) {
+                throw ValidationException::withMessages(['charges' => 'All the budget lines of one ORS must be of the same fund ('.$report->source_of_fund.').']);
+            }
+            $this->assertInApprovedSob(['budget_allocation_id' => $line->id]);
+            app(BudgetService::class)->assertItemAvailable('charges', $line->id, (float) $charge['amount'], $report->procurement_request_id, $report->id);
+        }
+
+        return $charges;
+    }
+
+    /** @param  Collection<int, array{allocation: ?BudgetAllocation, amount: float}>  $charges */
+    private function chargesText($charges): string
+    {
+        return $charges->map(fn ($charge) => ($charge['allocation']?->uacs_code ?? '?').' ₱'.number_format((float) $charge['amount'], 2))->implode(' | ');
     }
 
     /** Deletes an ORS with everything made from it: its DV, journal entry, papers and cancelled checks (a PR it came from stays). */
     public function destroyLiquidation(Request $request, LiquidationReport $liquidationReport)
     {
         abort_unless($request->user()->canCreateObligation() && $this->scopedSchoolIds()->contains($liquidationReport->school_id), 403);
-        $data = $request->validate(['reason' => ['required', 'string', 'max:255'], 'password' => ['required', 'current_password']]);
+        $data = $request->validate(['reason' => ['required', 'string', 'max:255'], 'pin' => ['required', new \App\Rules\CurrentPin]]);
 
         $number = $liquidationReport->ors_number ?: $liquidationReport->report_number;
         $transaction = $liquidationReport->transaction;
@@ -2452,7 +2518,7 @@ class HomeController extends Controller
             // Something typed is not valid yet (an empty purpose, an amount over the budget): the ORS is still drawn, with what is valid.
             $liquidationReport->forceFill(array_filter([
                 'payee' => $request->input('payee'), 'payee_office' => $request->input('payee_office'), 'payee_address' => $request->input('payee_address'),
-                'payee_tin' => $request->input('payee_tin'), 'purpose' => $request->input('purpose'), 'ors_fund_cluster' => $request->input('ors_fund_cluster'),
+                'payee_tin' => $request->input('payee_tin'), 'purpose' => $request->input('purpose'), 'ors_fund_cluster' => $request->input('ors_fund_cluster'), 'responsibility_center_code' => $request->input('responsibility_center_code'),
             ], fn ($value) => $value !== null));
 
             return response($this->printOrs($liquidationReport)->render());

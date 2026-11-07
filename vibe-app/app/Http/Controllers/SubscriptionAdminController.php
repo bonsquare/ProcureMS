@@ -298,7 +298,7 @@ class SubscriptionAdminController extends Controller
     /** @return array<string, array<int, mixed>> the reason and the user's own password every action asks for */
     private function guard(): array
     {
-        return ['reason' => ['required', 'string', 'max:255'], 'password' => ['required', 'current_password']];
+        return ['reason' => ['required', 'string', 'max:255'], 'pin' => ['required', new \App\Rules\CurrentPin]];
     }
 
     private function authorizeMaster(Request $request): void

@@ -231,7 +231,7 @@ class FinanceController extends Controller
 
         $data = $request->validate([
             'reason' => ['required', 'string', 'max:255'],
-            'password' => ['required', 'current_password'],
+            'pin' => ['required', new \App\Rules\CurrentPin],
         ]);
 
         abort_if($liquidationReport->checkLiquidation?->isApproved(), 422, 'This check is already liquidated. Reopen its liquidation in the Liquidation tab before cancelling the check.');
@@ -277,9 +277,9 @@ class FinanceController extends Controller
             'received_by' => ['nullable', 'string', 'max:120'],
             'payment_remarks' => ['nullable', 'string', 'max:255'],
             'reason' => ['required', 'string', 'max:255'],
-            'password' => ['required', 'current_password'],
+            'pin' => ['required', new \App\Rules\CurrentPin],
         ]);
-        $fields = Arr::except($data, ['reason', 'password']);
+        $fields = Arr::except($data, ['reason', 'pin']);
         $before = $liquidationReport->only(array_keys($fields));
         $liquidationReport->update($fields);
         AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $liquidationReport->school_id, 'action' => 'payment_edited', 'auditable_type' => LiquidationReport::class, 'auditable_id' => $liquidationReport->id, 'metadata' => ['dv' => $liquidationReport->dv_number, 'reason' => $data['reason'], 'before' => $before, 'after' => $liquidationReport->only(array_keys($fields))]]);
@@ -415,7 +415,7 @@ class FinanceController extends Controller
             'journal.*.credit' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
         ] + ($editing ? [
             'reason' => [$preview ? 'nullable' : 'required', 'string', 'max:255'],
-            'password' => [$preview ? 'nullable' : 'required', 'current_password'],
+            'pin' => [$preview ? 'nullable' : 'required', new \App\Rules\CurrentPin],
         ] : []), [
             'journal.required' => 'Add the journal entry: at least one debit and one credit line.',
             'journal.min' => 'The journal entry needs at least two lines (a debit and a credit).',
@@ -438,7 +438,7 @@ class FinanceController extends Controller
             }
             $lines = [];
         }
-        unset($data['journal'],$data['deductions'], $data['deductions_other'], $data['reason'], $data['password']);
+        unset($data['journal'],$data['deductions'], $data['deductions_other'], $data['reason'], $data['pin']);
         $deductions = collect(LiquidationReport::DV_DEDUCTIONS)->keys()
             ->mapWithKeys(fn ($key) => [$key => round((float) $request->input('deductions.'.$key, 0), 2)])->filter(fn ($value) => $value > 0);
         $others = collect($request->input('deductions_other', []))
@@ -506,7 +506,7 @@ class FinanceController extends Controller
             'purpose' => ['nullable', 'string', 'max:255'],
             'payee' => ['required', 'string', 'max:255'],
             'reason' => ['required', 'string', 'max:255'],
-            'password' => ['required', 'current_password'],
+            'pin' => ['required', new \App\Rules\CurrentPin],
         ]);
         $before = $liquidationReport->only(['amount', 'purpose', 'payee']);
         $liquidationReport->update(['amount' => round((float) $data['amount'], 2), 'purpose' => $data['purpose'] ?? null, 'payee' => $data['payee']]);

@@ -87,7 +87,9 @@
         html, body { background: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .official-toolbar, .no-print { display: none !important; }
         .official-sheet { margin: 0 !important; padding: 0 !important; width: auto !important; min-height: 0 !important; zoom: 1 !important; background: #fff !important; background-image: none !important; box-shadow: none !important; border-radius: 0 !important; break-after: page; page-break-after: always; }
-        .official-sheet:last-of-type { break-after: auto; page-break-after: auto; }
+        /* Only a sheet followed by another sheet breaks the page: other elements after the last sheet (the notice box) must not cause a blank page. */
+        .official-sheet:not(:has(~ .official-sheet)) { break-after: auto; page-break-after: auto; }
+        #app-toasts, [popover] { display: none !important; }
         .is-sheets .doc-page { margin: 0 !important; padding: 0 !important; min-height: 0 !important; background: none !important; box-shadow: none !important; border-radius: 0 !important; break-after: page; page-break-after: always; }
         .is-sheets .doc-page:last-child { break-after: auto; page-break-after: auto; }
         .is-pages .official-pg { margin-bottom: 0 !important; box-shadow: none !important; border-radius: 0 !important; }

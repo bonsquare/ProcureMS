@@ -51,14 +51,14 @@ class CancelledCheckTest extends TestCase
     private function cancelled(float $amount = 10000): array
     {
         [$report, $master, $organization] = $this->paidOrs($amount);
-        $this->actingAs($master)->post(route('cash.cancel', $report), ['reason' => 'Wrong amount', 'password' => self::PASSWORD]);
+        $this->actingAs($master)->post(route('cash.cancel', $report), ['reason' => 'Wrong amount', 'pin' => '123456']);
 
         return [$report->fresh(), $master, $organization];
     }
 
     private function orsEdit(array $overrides = []): array
     {
-        return array_replace(['amount' => '9000', 'payee' => 'Check Supplier', 'purpose' => 'Office supplies', 'reason' => 'Corrected amount', 'password' => self::PASSWORD], $overrides);
+        return array_replace(['amount' => '9000', 'payee' => 'Check Supplier', 'purpose' => 'Office supplies', 'reason' => 'Corrected amount', 'pin' => '123456'], $overrides);
     }
 
     private function dvForm(float $amount = 9000, array $overrides = []): array
@@ -90,7 +90,7 @@ class CancelledCheckTest extends TestCase
     {
         [$report, $master] = $this->paidOrs(10000);
 
-        $this->actingAs($master)->post(route('cash.cancel', $report), ['reason' => 'Wrong amount on the check', 'password' => self::PASSWORD])
+        $this->actingAs($master)->post(route('cash.cancel', $report), ['reason' => 'Wrong amount on the check', 'pin' => '123456'])
             ->assertRedirect(route('cash', ['tab' => 'cancelled']));
 
         $check = CancelledCheck::sole();
@@ -115,8 +115,8 @@ class CancelledCheckTest extends TestCase
     {
         [$report, $master] = $this->paidOrs();
 
-        $this->actingAs($master)->post(route('cash.cancel', $report), ['reason' => '', 'password' => self::PASSWORD])->assertSessionHasErrors('reason');
-        $this->post(route('cash.cancel', $report), ['reason' => 'Typo', 'password' => 'not-the-password'])->assertSessionHasErrors('password');
+        $this->actingAs($master)->post(route('cash.cancel', $report), ['reason' => '', 'pin' => '123456'])->assertSessionHasErrors('reason');
+        $this->post(route('cash.cancel', $report), ['reason' => 'Typo', 'pin' => 'not-the-password'])->assertSessionHasErrors('pin');
 
         $this->assertSame(0, CancelledCheck::count());
         $this->assertNotNull($report->fresh()->paid_at);
@@ -128,7 +128,7 @@ class CancelledCheckTest extends TestCase
         [$report, $master] = $this->paidOrs();
         $report->update(['paid_at' => null]);
 
-        $this->actingAs($master)->post(route('cash.cancel', $report), ['reason' => 'Typo', 'password' => self::PASSWORD])->assertStatus(422);
+        $this->actingAs($master)->post(route('cash.cancel', $report), ['reason' => 'Typo', 'pin' => '123456'])->assertStatus(422);
         $this->assertSame(0, CancelledCheck::count());
     }
 
@@ -149,7 +149,7 @@ class CancelledCheckTest extends TestCase
         [$report, $master] = $this->cancelled(10000);
 
         $this->actingAs($master)->patch(route('accounting.ors.update', $report), $this->orsEdit(['reason' => '']))->assertSessionHasErrors('reason');
-        $this->patch(route('accounting.ors.update', $report), $this->orsEdit(['password' => 'wrong-password']))->assertSessionHasErrors('password');
+        $this->patch(route('accounting.ors.update', $report), $this->orsEdit(['pin' => 'wrong-password']))->assertSessionHasErrors('pin');
 
         $this->assertSame('10000.00', $report->fresh()->amount);
     }
@@ -184,11 +184,11 @@ class CancelledCheckTest extends TestCase
             ['account_code' => '2020101000', 'debit' => '', 'credit' => '500'],
         ]]);
 
-        $this->actingAs($master)->post(route('accounting.dv.store', $report), $corrected + ['reason' => '', 'password' => self::PASSWORD])->assertSessionHasErrors('reason');
-        $this->post(route('accounting.dv.store', $report), $corrected + ['reason' => 'Tax missed', 'password' => 'wrong-password'])->assertSessionHasErrors('password');
+        $this->actingAs($master)->post(route('accounting.dv.store', $report), $corrected + ['reason' => '', 'pin' => '123456'])->assertSessionHasErrors('reason');
+        $this->post(route('accounting.dv.store', $report), $corrected + ['reason' => 'Tax missed', 'pin' => 'wrong-password'])->assertSessionHasErrors('pin');
         $this->assertSame(2, DvJournalLine::count());
 
-        $this->post(route('accounting.dv.store', $report), $corrected + ['reason' => 'Tax missed', 'password' => self::PASSWORD])->assertSessionHasNoErrors();
+        $this->post(route('accounting.dv.store', $report), $corrected + ['reason' => 'Tax missed', 'pin' => '123456'])->assertSessionHasNoErrors();
 
         $report->refresh();
         $this->assertSame('DV-CC-1', $report->dv_number);
@@ -200,7 +200,7 @@ class CancelledCheckTest extends TestCase
     {
         [$report, $master] = $this->reissuedDv();
 
-        $this->actingAs($master)->post(route('accounting.dv.store', $report), $this->dvForm(10000) + ['reason' => 'Typo', 'password' => self::PASSWORD])->assertSessionHasErrors('journal');
+        $this->actingAs($master)->post(route('accounting.dv.store', $report), $this->dvForm(10000) + ['reason' => 'Typo', 'pin' => '123456'])->assertSessionHasErrors('journal');
 
         $this->assertSame(2, DvJournalLine::count());
         $this->assertSame('9000.00', $report->fresh()->journalLines->first()->debit);
@@ -216,8 +216,8 @@ class CancelledCheckTest extends TestCase
         $this->assertFalse($report->reissue_pending);
         $this->assertSame('CHK-2', $report->payment_reference);
         $this->assertSame(1, CancelledCheck::count());
-        $this->post(route('accounting.dv.store', $report), $this->dvForm(9000, ['payee' => 'Someone Else']) + ['reason' => 'Late', 'password' => self::PASSWORD])->assertSessionHasErrors('payee');
-        $this->post(route('accounting.dv.store', $report), $this->dvForm(9000) + ['reason' => 'Late', 'password' => self::PASSWORD])->assertSessionHasNoErrors();
+        $this->post(route('accounting.dv.store', $report), $this->dvForm(9000, ['payee' => 'Someone Else']) + ['reason' => 'Late', 'pin' => '123456'])->assertSessionHasErrors('payee');
+        $this->post(route('accounting.dv.store', $report), $this->dvForm(9000) + ['reason' => 'Late', 'pin' => '123456'])->assertSessionHasNoErrors();
         $this->assertSame('CHK-2', $report->fresh()->payment_reference, 'the check stays');
     }
 
@@ -227,9 +227,9 @@ class CancelledCheckTest extends TestCase
         $check = $report->payment_reference;
         $url = route('cash.payment.update', $report);
 
-        $this->actingAs($master)->patch($url, ['bank_name' => 'LBP', 'reason' => '', 'password' => self::PASSWORD])->assertSessionHasErrors('reason');
-        $this->patch($url, ['bank_name' => 'LBP', 'reason' => 'Wrong bank', 'password' => 'not-it'])->assertSessionHasErrors('password');
-        $this->patch($url, ['bank_name' => 'LBP', 'received_by' => 'Juan', 'reason' => 'Wrong bank', 'password' => self::PASSWORD])->assertSessionHasNoErrors();
+        $this->actingAs($master)->patch($url, ['bank_name' => 'LBP', 'reason' => '', 'pin' => '123456'])->assertSessionHasErrors('reason');
+        $this->patch($url, ['bank_name' => 'LBP', 'reason' => 'Wrong bank', 'pin' => 'not-it'])->assertSessionHasErrors('pin');
+        $this->patch($url, ['bank_name' => 'LBP', 'received_by' => 'Juan', 'reason' => 'Wrong bank', 'pin' => '123456'])->assertSessionHasNoErrors();
 
         $report->refresh();
         $this->assertSame(['LBP', 'Juan', $check], [$report->bank_name, $report->received_by, $report->payment_reference]);
@@ -242,7 +242,7 @@ class CancelledCheckTest extends TestCase
         [$report, $master] = $this->paidOrs();
         $this->actingAs($master)->get(route('cash', ['tab' => 'paid']))->assertOk()->assertSee(route('cash.cancel', $report));
 
-        $this->post(route('cash.cancel', $report), ['reason' => 'Wrong amount', 'password' => self::PASSWORD]);
+        $this->post(route('cash.cancel', $report), ['reason' => 'Wrong amount', 'pin' => '123456']);
         $this->get(route('cash', ['tab' => 'cancelled']))->assertOk()->assertSee('CHK-1')->assertSee('DV-CC-1')->assertSee('Wrong amount')->assertSee('₱10,000.00');
         $this->get(route('accounting', ['tab' => 'for_review']))->assertOk()->assertSee('Edit ORS')->assertSee(route('accounting.ors.update', $report));
 
@@ -262,7 +262,7 @@ class CancelledCheckTest extends TestCase
 
         $this->assertSame(10000.0, $totals()['disbursement']);
 
-        $this->actingAs($master)->post(route('cash.cancel', $report), ['reason' => 'Wrong amount', 'password' => self::PASSWORD]);
+        $this->actingAs($master)->post(route('cash.cancel', $report), ['reason' => 'Wrong amount', 'pin' => '123456']);
         $this->assertSame(0.0, $totals()['disbursement']);
         $this->assertSame(10000.0, $totals()['obligation']);
 
@@ -290,7 +290,7 @@ class CancelledCheckTest extends TestCase
         $this->assertSame('General Fund', $report->payment_fund_cluster);
         $this->assertSame(now()->toDateString(), $report->check_date->toDateString());
 
-        $this->actingAs($master)->post(route('cash.cancel', $report), ['reason' => 'Wrong amount', 'password' => self::PASSWORD]);
+        $this->actingAs($master)->post(route('cash.cancel', $report), ['reason' => 'Wrong amount', 'pin' => '123456']);
 
         $report->refresh();
         $this->assertNull($report->bank_name);
@@ -306,12 +306,12 @@ class CancelledCheckTest extends TestCase
         [$report] = $this->paidOrs();
         $viewer = User::factory()->create(['role' => 'viewer', 'organization_id' => $report->organization_id, 'school_id' => $report->school_id, 'password' => Hash::make(self::PASSWORD)]);
 
-        $this->actingAs($viewer)->post(route('cash.cancel', $report), ['reason' => 'x', 'password' => self::PASSWORD])->assertForbidden();
+        $this->actingAs($viewer)->post(route('cash.cancel', $report), ['reason' => 'x', 'pin' => '123456'])->assertForbidden();
         $this->assertNotNull($report->fresh()->paid_at);
 
         Subscription::create(['organization_id' => $report->organization_id, 'school_id' => $report->school_id, 'plan' => 'professional', 'billing_cycle' => 'monthly', 'amount' => 0, 'payment_status' => 'paid', 'starts_at' => now()->subDay(), 'ends_at' => now()->addMonth()]);
         $cashier = User::factory()->create(['role' => 'cashier', 'organization_id' => $report->organization_id, 'school_id' => $report->school_id, 'password' => Hash::make(self::PASSWORD)]);
-        $this->actingAs($cashier)->post(route('cash.cancel', $report), ['reason' => 'Wrong amount', 'password' => self::PASSWORD])->assertRedirect();
+        $this->actingAs($cashier)->post(route('cash.cancel', $report), ['reason' => 'Wrong amount', 'pin' => '123456'])->assertRedirect();
         $this->patch(route('accounting.ors.update', $report), $this->orsEdit())->assertForbidden();
         $this->assertSame('10000.00', $report->fresh()->amount);
     }
@@ -323,7 +323,7 @@ class CancelledCheckTest extends TestCase
         $school = School::create(['organization_id' => $other->id, 'code' => 'OT', 'name' => 'Other School', 'status' => 'active']);
         $intruder = User::factory()->create(['role' => 'school_admin', 'organization_id' => $other->id, 'school_id' => $school->id, 'password' => Hash::make(self::PASSWORD)]);
 
-        $this->actingAs($intruder)->post(route('cash.cancel', $report), ['reason' => 'Typo', 'password' => self::PASSWORD])->assertNotFound();
+        $this->actingAs($intruder)->post(route('cash.cancel', $report), ['reason' => 'Typo', 'pin' => '123456'])->assertNotFound();
         $this->assertSame(0, CancelledCheck::count());
         $this->assertNotNull($report->fresh()->paid_at);
     }
@@ -336,7 +336,10 @@ class CancelledCheckTest extends TestCase
         $this->assertStringContainsString('Confirm the change', $accounting);
         $this->assertStringNotContainsString('current-password', $accounting);
         $this->assertStringContainsString('autocomplete="new-password" readonly', $accounting);
-        $this->assertStringContainsString('name="reason" required maxlength="255" autocomplete="off" readonly', $accounting);
+        $this->assertStringContainsString('id="action-guard-reason" required maxlength="255" autocomplete="off" readonly', $accounting);
+        // Every edit, update and delete form opens the one reason-and-PIN window; none keeps its own inline fields.
+        $this->assertStringNotContainsString('name="reason"', $accounting);
+        $this->assertStringContainsString('data-guard="Save the changes to', $accounting);
 
         $cash = $this->get(route('cash', ['tab' => 'paid']))->assertOk()->getContent();
         $this->assertStringNotContainsString('current-password', $cash);

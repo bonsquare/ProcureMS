@@ -398,7 +398,7 @@ class OrsStatusPrintTest extends TestCase
         $this->actingAs($user)->post(route('liquidation.store'), $this->payload($school))->assertSessionHasNoErrors();
         $ors = LiquidationReport::firstOrFail();
 
-        $guard = ['reason' => 'Typo', 'password' => 'password'];
+        $guard = ['reason' => 'Typo', 'pin' => '123456'];
         $this->patch(route('liquidation.update', $ors), ['purpose' => 'Corrected purpose', 'amount' => '900', 'payee' => 'New Payee'] + $guard)->assertSessionHasNoErrors();
         $this->assertSame(['Corrected purpose', 'New Payee', 'for_review'], [$ors->fresh()->purpose, $ors->fresh()->payee, $ors->fresh()->status]);
 
@@ -417,11 +417,11 @@ class OrsStatusPrintTest extends TestCase
         $ors->update(['dv_number' => 'DV-2026-0001', 'paid_at' => now()]);
         LiquidationDocumentCheck::create(['organization_id' => $school->organization_id, 'liquidation_report_id' => $ors->id, 'item_key' => 'supporting_paper', 'state' => 'received']);
 
-        $this->delete(route('liquidation.destroy', $ors), ['reason' => 'Duplicate', 'password' => 'wrong'])->assertSessionHasErrors('password');
-        $this->delete(route('liquidation.destroy', $ors), ['password' => 'secret-pass-123'])->assertSessionHasErrors('reason');
+        $this->delete(route('liquidation.destroy', $ors), ['reason' => 'Duplicate', 'pin' => 'wrong'])->assertSessionHasErrors('pin');
+        $this->delete(route('liquidation.destroy', $ors), ['pin' => '123456'])->assertSessionHasErrors('reason');
         $this->assertSame(1, LiquidationReport::count());
 
-        $this->delete(route('liquidation.destroy', $ors), ['reason' => 'Duplicate', 'password' => 'secret-pass-123'])->assertSessionHasNoErrors();
+        $this->delete(route('liquidation.destroy', $ors), ['reason' => 'Duplicate', 'pin' => '123456'])->assertSessionHasNoErrors();
         $this->assertSame('Duplicate', AuditLog::where('action', 'deleted_ors')->first()->metadata['reason']);
         $this->assertSame(0, LiquidationReport::count());
         $this->assertSame(0, LiquidationDocumentCheck::count());

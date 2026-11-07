@@ -45,7 +45,7 @@ class AlphalistController extends Controller
     public function update(Request $request, CashReportHistory $history, AlphalistService $alphalist)
     {
         $this->assertChangeable($request, $history);
-        $request->validate(['reason' => ['required', 'string', 'max:255'], 'password' => ['required', 'current_password']]);
+        $request->validate(['reason' => ['required', 'string', 'max:255'], 'pin' => ['required', new \App\Rules\CurrentPin]]);
         $request->merge(['school_id' => $history->school_id, 'month' => $history->period_from->format('Y-m')]);
         $data = $this->viewData($request, $alphalist);
         $before = ['fund' => $history->source_of_fund, 'total' => (float) $history->total_payments];
@@ -58,7 +58,7 @@ class AlphalistController extends Controller
     public function destroy(Request $request, CashReportHistory $history)
     {
         $this->assertChangeable($request, $history);
-        $request->validate(['reason' => ['required', 'string', 'max:255'], 'password' => ['required', 'current_password']]);
+        $request->validate(['reason' => ['required', 'string', 'max:255'], 'pin' => ['required', new \App\Rules\CurrentPin]]);
         AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $history->school_id, 'action' => 'alphalist_deleted', 'auditable_type' => CashReportHistory::class, 'auditable_id' => $history->id, 'metadata' => ['period' => $history->period_text, 'fund' => $history->source_of_fund, 'total' => (float) $history->total_payments, 'reason' => $request->input('reason')]]);
         $history->delete();
 

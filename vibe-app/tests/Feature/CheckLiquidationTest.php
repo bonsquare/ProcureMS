@@ -148,8 +148,8 @@ class CheckLiquidationTest extends TestCase
         $this->save($user, $check, [['account_code' => self::OFFICE, 'amount' => 10000]]);
         $this->postJson(route('check-liquidation.approve', $check));
 
-        $this->postJson(route('check-liquidation.reopen', $check), ['reason' => 'Wrong account', 'password' => 'wrong'])->assertJsonValidationErrors('password');
-        $this->postJson(route('check-liquidation.reopen', $check), ['reason' => 'Wrong account', 'password' => 'secret-pass-123'])->assertOk();
+        $this->postJson(route('check-liquidation.reopen', $check), ['reason' => 'Wrong account', 'pin' => 'wrong'])->assertJsonValidationErrors('pin');
+        $this->postJson(route('check-liquidation.reopen', $check), ['reason' => 'Wrong account', 'pin' => '123456'])->assertOk();
 
         $liquidation = $check->checkLiquidation()->first();
         $this->assertSame('draft', $liquidation->status);
@@ -175,11 +175,11 @@ class CheckLiquidationTest extends TestCase
         $this->save($user, $check, [['account_code' => self::OFFICE, 'amount' => 10000]]);
         $this->postJson(route('check-liquidation.approve', $check));
 
-        $this->post(route('cash.cancel', $check), ['reason' => 'Wrong', 'password' => 'secret-pass-123'])->assertStatus(422);
+        $this->post(route('cash.cancel', $check), ['reason' => 'Wrong', 'pin' => '123456'])->assertStatus(422);
         $this->assertSame(0, CancelledCheck::count());
 
-        $this->postJson(route('check-liquidation.reopen', $check), ['reason' => 'Cancelling', 'password' => 'secret-pass-123']);
-        $this->post(route('cash.cancel', $check), ['reason' => 'Wrong', 'password' => 'secret-pass-123']);
+        $this->postJson(route('check-liquidation.reopen', $check), ['reason' => 'Cancelling', 'pin' => '123456']);
+        $this->post(route('cash.cancel', $check), ['reason' => 'Wrong', 'pin' => '123456']);
         $this->assertSame(1, CancelledCheck::count());
         $this->assertSame(0, CheckLiquidation::count());
     }
@@ -255,7 +255,7 @@ class CheckLiquidationTest extends TestCase
         $receipt = CashFundReceipt::where('kind', 'refund')->first();
         $this->delete(route('cash.fund.destroy', $receipt))->assertStatus(422);
 
-        $this->postJson(route('check-liquidation.reopen', $check), ['reason' => 'Fix', 'password' => 'secret-pass-123']);
+        $this->postJson(route('check-liquidation.reopen', $check), ['reason' => 'Fix', 'pin' => '123456']);
         $this->assertSame(0, CashFundReceipt::where('kind', 'refund')->count());
     }
 
@@ -323,7 +323,7 @@ class CheckLiquidationTest extends TestCase
         $cancelled = $this->check($school, $user, 3000, 'CHK-2');
         $this->actingAs($user);
         $this->approvedLiquidation($user, $done, [['account_code' => self::OFFICE, 'amount' => 10000]]);
-        $this->post(route('cash.cancel', $cancelled), ['reason' => 'Wrong', 'password' => 'secret-pass-123'])->assertRedirect();
+        $this->post(route('cash.cancel', $cancelled), ['reason' => 'Wrong', 'pin' => '123456'])->assertRedirect();
 
         $data = $this->register($school);
         $row = $data['lines']->firstWhere('check_no', 'CHK-2');

@@ -421,7 +421,7 @@ class CashReportController extends Controller
     public function updateHistory(Request $request, CashReportHistory $history)
     {
         abort_unless($this->schoolIds()->contains($history->school_id), 403);
-        $data = $request->validate(['reason' => ['required', 'string', 'max:255'], 'password' => ['required', 'current_password'], 'query' => ['nullable', 'string', 'max:4000']]);
+        $data = $request->validate(['reason' => ['required', 'string', 'max:255'], 'pin' => ['required', new \App\Rules\CurrentPin], 'query' => ['nullable', 'string', 'max:4000']]);
 
         // The values of the edited form (the report window) replace the kept ones; without them the kept header is used again.
         parse_str((string) ($data['query'] ?? ''), $edited);
@@ -453,7 +453,7 @@ class CashReportController extends Controller
     public function destroyHistory(Request $request, CashReportHistory $history)
     {
         abort_unless($this->schoolIds()->contains($history->school_id), 403);
-        $data = $request->validate(['reason' => ['required', 'string', 'max:255'], 'password' => ['required', 'current_password']]);
+        $data = $request->validate(['reason' => ['required', 'string', 'max:255'], 'pin' => ['required', new \App\Rules\CurrentPin]]);
 
         AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $history->school_id, 'action' => 'cash_report_history_deleted', 'auditable_type' => CashReportHistory::class, 'auditable_id' => $history->id, 'metadata' => ['report' => $history->label(), 'period' => $history->period_text, 'fund' => $history->source_of_fund, 'report_no' => $history->report_no, 'reason' => $data['reason']]]);
         $history->delete();

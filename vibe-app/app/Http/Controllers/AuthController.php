@@ -101,11 +101,14 @@ class AuthController extends Controller
             'system_user_email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'system_user_phone' => ['required', 'string', 'max:50'],
             'system_user_password' => ['required', 'string', 'min:12', 'confirmed'],
+            'system_user_pin' => ['required', 'digits:6', 'confirmed'],
             'system_user_confirmed' => ['accepted'],
             'privacy_accepted' => ['accepted'],
         ], [
             'system_user_confirmed.accepted' => 'Please confirm that your full name and username are final.',
             'privacy_accepted.accepted' => 'Please read and accept the Privacy Policy to register.',
+            'system_user_pin.digits' => 'The PIN is exactly 6 digits.',
+            'system_user_pin.confirmed' => 'The two PINs do not match.',
             'system_user_middle_initial.size' => 'The middle initial is one letter only, or leave it blank.',
             'system_user_middle_initial.alpha' => 'The middle initial is one letter only, or leave it blank.',
         ]);
@@ -131,6 +134,8 @@ class AuthController extends Controller
                 'system_user_phone',
                 'system_user_password',
                 'system_user_password_confirmation',
+                'system_user_pin',
+                'system_user_pin_confirmation',
                 'system_user_confirmed',
                 'privacy_accepted',
             ])->all();
@@ -152,6 +157,7 @@ class AuthController extends Controller
                 'email' => $data['system_user_email'],
                 'phone' => $data['system_user_phone'],
                 'password' => $data['system_user_password'],
+                'pin' => $data['system_user_pin'],
                 'role' => 'school_admin',
                 'organization_id' => $organization->id,
                 'school_id' => $school->id,
@@ -174,7 +180,7 @@ class AuthController extends Controller
 
         return redirect()
             ->route('login')
-            ->with('success', 'Pre-registration submitted. Please wait for the master account to approve and activate your school.');
+            ->with('success', 'Registration submitted. Please wait for the master account to approve and activate your school.');
     }
 
     /** A new person asks to take over a school that has no user; no school is created. */
@@ -190,11 +196,14 @@ class AuthController extends Controller
             'system_user_email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'system_user_phone' => ['required', 'string', 'max:50'],
             'system_user_password' => ['required', 'string', 'min:12', 'confirmed'],
+            'system_user_pin' => ['required', 'digits:6', 'confirmed'],
             'system_user_confirmed' => ['accepted'],
             'privacy_accepted' => ['accepted'],
         ], [
             'system_user_confirmed.accepted' => 'Please confirm that your full name and username are final.',
             'privacy_accepted.accepted' => 'Please read and accept the Privacy Policy to register.',
+            'system_user_pin.digits' => 'The PIN is exactly 6 digits.',
+            'system_user_pin.confirmed' => 'The two PINs do not match.',
             'system_user_middle_initial.size' => 'The middle initial is one letter only, or leave it blank.',
             'system_user_middle_initial.alpha' => 'The middle initial is one letter only, or leave it blank.',
         ]);
@@ -206,6 +215,7 @@ class AuthController extends Controller
             'email' => $data['system_user_email'],
             'phone' => $data['system_user_phone'],
             'password' => $data['system_user_password'],
+            'pin' => $data['system_user_pin'],
             'position' => $data['system_user_position'],
             'privacy_accepted_at' => now(),
             'privacy_policy_version' => User::PRIVACY_POLICY_VERSION,

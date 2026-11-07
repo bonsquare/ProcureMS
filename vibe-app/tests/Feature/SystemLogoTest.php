@@ -47,7 +47,7 @@ class SystemLogoTest extends TestCase
     public function test_the_register_page_shows_the_full_logo_with_its_text(): void
     {
         $this->get(route('register'))->assertOk()
-            ->assertSee('images/procurems-logo-light.png', false)->assertSee('ProcMS - Plan. Procure. Finance. Report.', false)->assertSee('School Pre-registration');
+            ->assertSee('images/procurems-logo-light.png', false)->assertSee('ProcMS - Plan. Procure. Finance. Report.', false)->assertSee('New User Registration');
     }
 
     public function test_every_sidebar_page_shows_the_full_logo_and_keeps_the_brand_text(): void

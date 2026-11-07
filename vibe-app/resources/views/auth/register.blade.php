@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pre-register School · ProcureMS</title>
+    <title>New User Registration · ProcureMS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>tailwind.config={theme:{extend:{colors:{surface:'#faf8ff','surface-low':'#f4f3fa','surface-container':'#eeedf4',primary:'#14818f','primary-container':'#1e3a8a','on-surface':'#1a1b21','on-surface-variant':'#444651',secondary:'#006c4a','outline-variant':'#c5c5d3',error:'#ba1a1a'},fontFamily:{inter:['Inter','sans-serif']}}}};</script>
     <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet"><link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ filemtime(public_path('css/app.css')) }}">
@@ -20,8 +20,19 @@
         .reg-section .badge { display: grid; place-items: center; flex: none; height: 2.1rem; width: 2.1rem; border-radius: .65rem; background: #e4edf6; color: #14818f; }
         .reg-section h2 { margin: 0; font-size: 1rem; font-weight: 700; color: #14818f; }
         .reg-section p { margin: .1rem 0 0; font-size: .76rem; color: #64748b; }
-        .reg-step { display: inline-flex; align-items: center; gap: .5rem; border-radius: 999px; background: rgba(255,255,255,.12); padding: .35rem .8rem .35rem .4rem; font-size: .75rem; font-weight: 600; color: #fff; }
+        .reg-steps { position: sticky; top: 0; z-index: 10; display: flex; flex-wrap: wrap; gap: .5rem; padding: .7rem 1.5rem; background: rgba(255,255,255,.95); backdrop-filter: blur(6px); border-bottom: 1px solid #dbe4ec; }
+        @media (min-width: 640px) { .reg-steps { padding-left: 2rem; padding-right: 2rem; } }
+        .reg-step { display: inline-flex; align-items: center; gap: .5rem; border-radius: 999px; background: #eef4fa; padding: .35rem .85rem .35rem .4rem; font-size: .75rem; font-weight: 600; color: #3f5163; text-decoration: none; transition: background .15s, color .15s; }
+        .reg-step:hover { background: #dbe7f5; }
         .reg-step b { display: grid; place-items: center; height: 1.4rem; width: 1.4rem; border-radius: 999px; background: #fff; color: #14818f; font-size: .7rem; }
+        .reg-step[aria-current=step] { background: #14818f; color: #fff; }
+        .reg-step[aria-current=step] b { background: #fff; color: #14818f; }
+        [data-step] { scroll-margin-top: 4.5rem; }
+        .reg-choice { display: flex; flex-direction: column; gap: .35rem; text-align: left; border: 2px solid #cdd8e2; border-radius: .9rem; background: #fff; padding: 1rem 1.1rem; cursor: pointer; transition: border-color .15s, background .15s, box-shadow .15s; }
+        .reg-choice:hover { border-color: #86adb4; }
+        .reg-choice[aria-pressed=true] { border-color: #14818f; background: #eaf6f8; box-shadow: 0 0 0 3px rgba(20,129,143,.15); }
+        .reg-choice .reg-tick { margin-left: auto; display: none; color: #14818f; }
+        .reg-choice[aria-pressed=true] .reg-tick { display: inline-block; }
         .reg-actions { position: sticky; bottom: 0; z-index: 5; margin: 0 -1.5rem -1.5rem; padding: .9rem 1.5rem; background: rgba(255,255,255,.95); backdrop-filter: blur(6px); border-top: 1px solid #dbe4ec; border-radius: 0 0 1rem 1rem; }
         @media (min-width: 640px) { .reg-actions { margin: 0 -2rem -2rem; padding: .9rem 2rem; } }
     </style>
@@ -29,15 +40,15 @@
 @include('partials.favicon')
 </head>
 <body class="min-h-screen px-4 py-8 font-inter text-on-surface">
-    <main class="mx-auto w-full max-w-4xl overflow-hidden rounded-2xl border border-outline-variant/30 bg-white shadow-xl shadow-slate-900/5">
+    <main class="mx-auto w-full max-w-4xl overflow-clip rounded-2xl border border-outline-variant/30 bg-white shadow-xl shadow-slate-900/5">
         <div class="relative overflow-hidden px-6 py-7 text-white sm:px-8" style="background:linear-gradient(135deg,#0b2a66 0%,#14818f 55%,#1b5088 100%)">
             <span class="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-white/5" aria-hidden="true"></span>
             <span class="pointer-events-none absolute -bottom-24 right-24 h-48 w-48 rounded-full bg-white/5" aria-hidden="true"></span>
             @include('partials.brand', ['style' => 'register'])
-            <h1 class="relative mt-6 text-3xl font-bold tracking-tight">Pre-register your school</h1>
-            <p class="relative mt-2 max-w-2xl text-sm leading-6 text-white/80">Encode the school details and the person who will manage the school. The account is available after the master account reviews and activates the school.</p>
-            <div class="relative mt-5 flex flex-wrap gap-2"><span class="reg-step"><b>1</b>School Details</span><span class="reg-step"><b>2</b>System User Information</span><span class="reg-step"><b>3</b>Master Approval</span></div>
+            <h1 class="relative mt-6 text-3xl font-bold tracking-tight" style="color:#fff">New User Registration</h1>
+            <p class="relative mt-2 max-w-2xl text-sm leading-6 text-white/80">Create your ProcMS account. Choose whether you are registering a new school or taking over a school that has no user, then fill in your own details. The master administrator reviews your registration, and you can sign in once it is approved.</p>
         </div>
+        <nav class="reg-steps" aria-label="Registration steps"><a href="#reg-step-1-new" class="reg-step" data-step-link="1" aria-current="step"><b>1</b>School Details</a><a href="#reg-step-2" class="reg-step" data-step-link="2"><b>2</b>System User Information</a><a href="#privacy-policy" class="reg-step" data-step-link="3"><b>3</b>Master Approval</a></nav>
 
         @if($errors->any())
             <div class="mx-6 mt-6 rounded-xl border border-error/30 bg-error/10 px-4 py-3 text-sm text-error sm:mx-8">
@@ -48,21 +59,21 @@
 
         <form id="register-form" method="POST" action="{{ route('register.store') }}" class="grid grid-cols-1 gap-5 p-6 sm:p-8 md:grid-cols-2">@csrf<input type="hidden" name="system_user_confirmed" id="system-user-confirmed" value="">
             <input type="hidden" name="registration_type" id="registration-type" value="{{ old('registration_type', 'new') }}">
-            <label for="vacant-toggle" class="reg-vacant flex cursor-pointer items-start gap-3 rounded-xl border-2 p-4 md:col-span-2">
-                <input type="checkbox" id="vacant-toggle" class="mt-1 h-5 w-5 shrink-0 accent-[#14818f]">
-                <span><span class="flex items-center gap-2 text-sm font-bold text-primary"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">swap_horiz</span>Take over a vacant school</span><span class="mt-1 block text-xs text-on-surface-variant">Tick this if your school is already registered and has no user. You then fill in only your own information, and receive the school's data after the master approves. Leave it unticked to register a new school and fill in everything.</span></span>
-            </label>
-            <style>.reg-vacant { border-color: #cdd8e2; background: #fff; transition: border-color .15s, background .15s; } .reg-vacant:has(input:checked) { border-color: #286da8; background: #eef4fa; }</style>
-
+            <input type="checkbox" id="vacant-toggle" class="sr-only" tabindex="-1" aria-hidden="true">
+            <div class="grid gap-3 sm:grid-cols-2 md:col-span-2" role="group" aria-label="What are you registering?">
+                <button type="button" class="reg-choice" data-reg-choice="new" aria-pressed="true"><span class="flex items-center gap-2 text-sm font-bold text-primary"><span class="material-symbols-outlined text-[22px]" aria-hidden="true">domain_add</span>Register a new school<span class="material-symbols-outlined reg-tick text-[20px]" aria-hidden="true">check_circle</span></span><span class="text-xs font-normal leading-5 text-on-surface-variant">Your school is not in the system yet. Fill in the school details and your own information.</span></button>
+                <button type="button" class="reg-choice" data-reg-choice="takeover" aria-pressed="false"><span class="flex items-center gap-2 text-sm font-bold text-primary"><span class="material-symbols-outlined text-[22px]" aria-hidden="true">swap_horiz</span>Take over a vacant school<span class="material-symbols-outlined reg-tick text-[20px]" aria-hidden="true">check_circle</span></span><span class="text-xs font-normal leading-5 text-on-surface-variant">Your school is already registered and has no user. Fill in only your own information; you receive the school's data after the master approves.</span></button>
+            </div>
+            
             <div id="takeover-fields" class="space-y-3 md:col-span-2" hidden>
-                <div class="reg-section"><span class="badge"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">swap_horiz</span></span><div><h2>1 &middot; Official Station Request</h2><p>You do not choose a school here. Fill in only your own information below and send your request. The master account assigns your Official Station, the school you will manage, when it approves you.</p></div></div>
+                <div class="reg-section" id="reg-step-1-takeover" data-step="1"><span class="badge"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">swap_horiz</span></span><div><h2>1 &middot; Official Station Request</h2><p>You do not choose a school here. Fill in only your own information below and send your request. The master account assigns your Official Station, the school you will manage, when it approves you.</p></div></div>
                 <label class="block text-xs font-semibold text-on-surface-variant">Which school do you manage? <span class="font-normal">(optional, helps the master)</span>
                     <textarea name="takeover_note" rows="2" maxlength="500" placeholder="School name and division, if you want to tell the master" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary">{{ old('takeover_note') }}</textarea>
                 </label>
             </div>
 
             <div id="new-school-fields" class="contents">
-            <div class="reg-section md:col-span-2"><span class="badge"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">domain</span></span><div><h2>1 · School Details</h2><p>These are the same details used when the master account adds a new school.</p></div></div>
+            <div class="reg-section md:col-span-2" id="reg-step-1-new" data-step="1"><span class="badge"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">domain</span></span><div><h2>1 · School Details</h2><p>These are the same details used when the master account adds a new school.</p></div></div>
 
             <label class="text-xs font-semibold text-on-surface-variant">School ID / Code<input value="System generated after submission" disabled class="mt-2 w-full cursor-not-allowed rounded border border-outline-variant/50 bg-surface-container px-3 py-2.5 text-sm font-normal text-on-surface-variant"></label>
             <label class="text-xs font-semibold text-on-surface-variant">School Name <span class="text-error">*</span><input name="name" required value="{{ old('name') }}" placeholder="Official school name" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
@@ -75,7 +86,7 @@
             <label class="text-xs font-semibold text-on-surface-variant md:col-span-2">School Address<textarea name="address" rows="2" placeholder="Complete school address" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary">{{ old('address') }}</textarea></label>
             </div>
 
-            <div class="reg-section mt-3 md:col-span-2"><span class="badge"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">manage_accounts</span></span><div><h2>2 · System User Information</h2><p>This person will manage the school after approval. The full name and username cannot be changed later.</p></div></div>
+            <div class="reg-section mt-3 md:col-span-2" id="reg-step-2" data-step="2"><span class="badge"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">manage_accounts</span></span><div><h2>2 · System User Information</h2><p>This person will manage the school after approval. The full name and username cannot be changed later.</p></div></div>
 
             <div class="grid grid-cols-1 items-end gap-4 sm:grid-cols-[1fr_9rem_1fr] md:col-span-2">
                 <label class="text-xs font-semibold text-on-surface-variant">Given Name <span class="text-error">*</span><input name="system_user_given_name" required maxlength="100" autocomplete="given-name" value="{{ old('system_user_given_name') }}" placeholder="e.g. Maria" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary" data-name-part></label>
@@ -86,10 +97,12 @@
             <label class="text-xs font-semibold text-on-surface-variant">Position <span class="text-error">*</span><input name="system_user_position" required maxlength="255" value="{{ old('system_user_position') }}" placeholder="e.g. School Head" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
             <label class="text-xs font-semibold text-on-surface-variant">Email Address <span class="text-error">*</span><input type="email" name="system_user_email" required value="{{ old('system_user_email') }}" placeholder="admin@school.edu.ph" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
             <label class="text-xs font-semibold text-on-surface-variant">Contact Number <span class="text-error">*</span><input name="system_user_phone" required maxlength="50" autocomplete="tel" value="{{ old('system_user_phone') }}" placeholder="Mobile number" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
-            <label class="text-xs font-semibold text-on-surface-variant">Password <span class="text-error">*</span><input type="password" name="system_user_password" required minlength="12" autocomplete="new-password" placeholder="Minimum 8 characters" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
-            <label class="text-xs font-semibold text-on-surface-variant">Confirm Password <span class="text-error">*</span><input type="password" name="system_user_password_confirmation" required minlength="12" autocomplete="new-password" placeholder="Repeat password" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"></label>
+            <label class="text-xs font-semibold text-on-surface-variant">Password <span class="text-error">*</span><input type="password" name="system_user_password" required minlength="12" autocomplete="new-password" placeholder="At least 12 characters" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"><span id="password-hint" class="mt-1 block text-[11px] font-normal text-on-surface-variant">Use at least 12 characters: a short sentence is easy to remember.</span></label>
+            <label class="text-xs font-semibold text-on-surface-variant">Confirm Password <span class="text-error">*</span><input type="password" name="system_user_password_confirmation" required minlength="12" autocomplete="new-password" placeholder="Repeat password" class="mt-2 w-full rounded border border-outline-variant/50 bg-surface-low px-3 py-2.5 text-sm font-normal outline-none focus:border-primary"><span id="password-match" class="mt-1 block min-h-4 text-[11px] font-normal" aria-live="polite"></span></label>
+            @include('partials.pin-boxes', ['name' => 'system_user_pin', 'label' => 'PIN (6 digits)', 'hint' => 'Typed instead of your password when you confirm an edit.'])
+            @include('partials.pin-boxes', ['name' => 'system_user_pin_confirmation', 'label' => 'Confirm PIN', 'hint' => 'Type the same 6 digits again.', 'matchId' => 'pin-match'])
 
-            <section id="privacy-policy" class="rounded-xl border border-outline-variant/60 bg-surface-low p-4 md:col-span-2" aria-labelledby="privacy-title">
+            <section id="privacy-policy" data-step="3" class="rounded-xl border border-outline-variant/60 bg-surface-low p-4 md:col-span-2" aria-labelledby="privacy-title">
                 <h2 id="privacy-title" class="flex items-center gap-2 text-sm font-bold text-primary"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">shield_lock</span>Privacy Policy</h2>
                 <div class="mt-2 max-h-40 space-y-2 overflow-y-auto pr-1 text-xs leading-5 text-on-surface-variant">
                     <p><b>What we collect.</b> The information you enter on this form: your full name, username, position, e-mail address, contact number, password (stored only in scrambled form), and, when you register a new school, the school's name, type, address and contact details.</p>
@@ -131,15 +144,47 @@
             const apply = () => {
                 const isTakeover = toggle.checked;
                 type.value = isTakeover ? 'takeover' : 'new';
+                syncChoices();
                 fields.hidden = isTakeover; takeover.hidden = ! isTakeover;
                 // The school fields use display: contents, which ignores the hidden attribute.
                 fields.style.display = isTakeover ? 'none' : '';
                 fields.querySelectorAll('input, select, textarea').forEach((input) => { input.disabled = isTakeover; });
                 takeover.querySelectorAll('select, textarea, input').forEach((input) => { input.disabled = ! isTakeover; });
             };
+            const choices = document.querySelectorAll('[data-reg-choice]');
+            const syncChoices = () => choices.forEach((card) => card.setAttribute('aria-pressed', String((card.dataset.regChoice === 'takeover') === toggle.checked)));
+            choices.forEach((card) => card.addEventListener('click', () => { toggle.checked = card.dataset.regChoice === 'takeover'; apply(); }));
             toggle.checked = type.value === 'takeover';
             toggle.addEventListener('change', apply);
             apply();
+
+            // The step bar follows the section on screen; its first pill jumps to the school or request section.
+            const links = [...document.querySelectorAll('[data-step-link]')];
+            const markStep = () => {
+                const sections = [...document.querySelectorAll('[data-step]')].filter((section) => section.getClientRects().length);
+                let current = 1;
+                sections.forEach((section) => { if (section.getBoundingClientRect().top <= window.innerHeight * 0.45) current = Number(section.dataset.step); });
+                if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) current = 3;
+                links.forEach((link) => { if (Number(link.dataset.stepLink) === current) link.setAttribute('aria-current', 'step'); else link.removeAttribute('aria-current'); });
+            };
+            links[0].addEventListener('click', (event) => { event.preventDefault(); document.getElementById(toggle.checked ? 'reg-step-1-takeover' : 'reg-step-1-new').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+            let queued = false;
+            const queue = () => { if (queued) return; queued = true; requestAnimationFrame(() => { queued = false; markStep(); }); };
+            window.addEventListener('scroll', queue, { passive: true });
+            window.addEventListener('resize', queue);
+            toggle.addEventListener('change', queue);
+            markStep();
+
+            // Live hints while typing: password length and match (the PIN boxes check their own match).
+            const hint = (el, ok, text) => { el.textContent = text; el.style.color = text ? (ok ? '#0f7a4d' : '#ba1a1a') : ''; };
+            const regForm = document.getElementById('register-form');
+            const checkSecrets = () => {
+                const password = regForm.elements.system_user_password, again = regForm.elements.system_user_password_confirmation;
+                const length = document.getElementById('password-hint');
+                if (password.value) { length.textContent = password.value.length >= 12 ? 'Long enough.' : (12 - password.value.length) + ' more character(s) needed.'; length.style.color = password.value.length >= 12 ? '#0f7a4d' : '#6b7280'; }
+                hint(document.getElementById('password-match'), password.value === again.value, again.value ? (password.value === again.value ? 'Passwords match.' : 'Passwords do not match.') : '');
+            };
+            regForm.addEventListener('input', checkSecrets);
 
             // Before the registration is sent, show the name and username for a last check.
             const form = document.getElementById('register-form');

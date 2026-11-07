@@ -133,7 +133,7 @@
         $('cl-save').onclick = async () => { try { await call(base + '/' + current.id, 'PUT', payload()); await open(current.id); msg('Draft saved.', true); } catch (e) { msg(e.message); } };
         if ($('cl-approve')) {
             $('cl-approve').onclick = async () => { try { await call(base + '/' + current.id, 'PUT', payload()); await call(base + '/' + current.id + '/approve', 'POST'); const id = current.id; await open(id); msg('Liquidation approved.', true); } catch (e) { msg(e.message); } };
-            $('cl-reopen').onclick = async () => { const reason = prompt('Reason for reopening this liquidation:'); if (!reason) { return; } const password = prompt('Enter your password to confirm:'); if (!password) { return; } try { await call(base + '/' + current.id + '/reopen', 'POST', {reason, password}); await open(current.id); msg('Liquidation reopened as a draft.', true); } catch (e) { msg(e.message); } };
+            $('cl-reopen').onclick = async () => { const answer = await window.actionGuard('Reopen this liquidation'); if (!answer) { return; } try { await call(base + '/' + current.id + '/reopen', 'POST', answer); await open(current.id); msg('Liquidation reopened as a draft.', true); } catch (e) { msg(e.message); } };
         }
         init();
     })();
@@ -144,5 +144,6 @@
 
 @include('partials.profile-menu')
 @include('partials.mobile-nav')
+@include('partials.action-guard')
 </body>
 </html>

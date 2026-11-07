@@ -84,8 +84,8 @@ class SubscriptionReviewFixesTest extends TestCase
         $first = $this->proof($school, $user, str_repeat('c', 64));
         $second = $this->proof($school, $user, str_repeat('c', 64));
 
-        $this->asMaster()->post(route('subscriptions.proofs.approve', $first), ['reason' => 'ok', 'password' => 'password'])->assertSessionHasNoErrors();
-        $this->post(route('subscriptions.proofs.approve', $second), ['reason' => 'ok', 'password' => 'password'])->assertSessionHasErrors('proof');
+        $this->asMaster()->post(route('subscriptions.proofs.approve', $first), ['reason' => 'ok', 'pin' => '123456'])->assertSessionHasNoErrors();
+        $this->post(route('subscriptions.proofs.approve', $second), ['reason' => 'ok', 'pin' => '123456'])->assertSessionHasErrors('proof');
 
         $this->assertSame(1, SubscriptionPayment::withoutGlobalScopes()->count());
         $this->assertSame('pending', $second->fresh()->status);
@@ -134,7 +134,7 @@ class SubscriptionReviewFixesTest extends TestCase
         [$school, $user] = $this->school('R9', 'trial', 'trial', 2);
         $this->proof($school, $user, str_repeat('d', 64));
 
-        $this->asMaster()->post(route('subscriptions.activate', $school), ['reason' => 'x', 'password' => 'password', 'reference' => 'CASH', 'paid_at' => now()->toDateString()])->assertSessionHasErrors('proof');
+        $this->asMaster()->post(route('subscriptions.activate', $school), ['reason' => 'x', 'pin' => '123456', 'reference' => 'CASH', 'paid_at' => now()->toDateString()])->assertSessionHasErrors('proof');
 
         $this->assertSame(0, SubscriptionPayment::withoutGlobalScopes()->count());
     }
@@ -143,7 +143,7 @@ class SubscriptionReviewFixesTest extends TestCase
     {
         [$school] = $this->school('R10', 'trial', 'trial', 1);
 
-        $this->asMaster()->post(route('subscriptions.store'), ['school_id' => $school->id, 'mode' => 'trial', 'reason' => 'x', 'password' => 'password'])->assertSessionHasErrors('school_id');
+        $this->asMaster()->post(route('subscriptions.store'), ['school_id' => $school->id, 'mode' => 'trial', 'reason' => 'x', 'pin' => '123456'])->assertSessionHasErrors('school_id');
 
         $this->assertSame(now()->addDay()->toDateString(), Subscription::withoutGlobalScopes()->where('school_id', $school->id)->first()->subscription_end->toDateString(), 'the trial was not restarted');
     }

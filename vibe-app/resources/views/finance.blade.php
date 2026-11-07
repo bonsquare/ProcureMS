@@ -132,11 +132,9 @@
                     <button type="button" data-history="{{ route('liquidation.history', $r) }}" title="History of {{ $label }}" aria-label="History of {{ $label }}" class="inline-flex h-8 w-8 items-center justify-center rounded border border-outline-variant/60 bg-white text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">history</span></button>
                     @if(auth()->user()->hasPermission('cash.pay') && $isCash && $r->paid_at)
                         <button type="button" onclick="document.getElementById('cancel-{{ $r->id }}').showModal()" class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-error ring-1 ring-error/30 hover:bg-error hover:text-white"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">cancel</span>Cancel Check</button>
-                        <dialog id="cancel-{{ $r->id }}" style="width:min(28rem,calc(100% - 2rem))" class="rounded bg-white p-0 text-left shadow-2xl backdrop:bg-black/50"><form method="POST" action="{{ route('cash.cancel', $r) }}" class="space-y-3 p-6">@csrf
+                        <dialog id="cancel-{{ $r->id }}" style="width:min(28rem,calc(100% - 2rem))" class="rounded bg-white p-0 text-left shadow-2xl backdrop:bg-black/50"><form method="POST" action="{{ route('cash.cancel', $r) }}" data-guard="Cancel check {{ $r->payment_reference }}" class="space-y-3 p-6">@csrf
                             <h2 class="text-lg font-semibold">Cancel check {{ $r->payment_reference }}</h2>
                             <p class="text-xs text-on-surface-variant">{{ $label }} · {{ $dvLabel($r->dv_number) }} · {{ $peso($r->amount) }}. The check goes to the Cancelled Checks register and the ORS, DV and journal entry open for editing.</p>
-                            <label class="block text-xs font-semibold text-on-surface-variant">Reason <span class="text-error">*</span><input name="reason" required maxlength="255" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" class="{{ $inputClass }}"></label>
-                            <label class="block text-xs font-semibold text-on-surface-variant">Your password <span class="text-error">*</span><input type="password" name="password" required autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly')" class="{{ $inputClass }}"></label>
                             <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-3"><button type="button" onclick="this.closest('dialog').close()" class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Close</button><button class="rounded bg-error px-4 py-2.5 text-xs font-bold text-white hover:opacity-90">Cancel Check</button></div>
                         </form></dialog>
                         <button type="button" onclick="document.getElementById('edit-pay-{{ $r->id }}').showModal()" class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-primary ring-1 ring-outline-variant/50 hover:bg-primary hover:text-white"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">edit</span>Edit Payment</button>
@@ -158,14 +156,12 @@
                     @if(auth()->user()->hasPermission('cash.pay') && $isCash && ! $r->paid_at)<button type="button" data-pay="{{ route('cash.pay', $r) }}" data-label="{{ $label }}" data-amount="{{ $peso($r->amount) }}" data-mode="{{ $r->payment_mode }}" data-dv-date="{{ $r->dv_date?->toDateString() }}" data-fund-cluster="{{ $r->dv_fund_cluster ?: 'General Fund' }}" data-bank="{{ $r->school?->bank_name }}" data-account-name="{{ $r->school?->bank_account_name }}" data-account-number="{{ $r->school?->bank_account_number }}" class="inline-flex items-center gap-1 rounded-lg bg-secondary px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:opacity-90"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">payments</span>Record Payment</button>@endif
                     @if(auth()->user()->hasPermission('accounting.approve') && ! $isCash && $r->reissue_pending && ! $r->dv_number && $r->status !== 'approved')
                         <button type="button" onclick="document.getElementById('edit-ors-{{ $r->id }}').showModal()" class="inline-flex items-center gap-1 rounded-lg bg-secondary px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:opacity-90"><span class="material-symbols-outlined text-[15px]" aria-hidden="true">edit</span>Edit ORS</button>
-                        <dialog id="edit-ors-{{ $r->id }}" style="width:min(32rem,calc(100% - 2rem))" class="rounded bg-white p-0 text-left shadow-2xl backdrop:bg-black/50"><form method="POST" action="{{ route('accounting.ors.update', $r) }}" class="space-y-3 p-6">@csrf @method('PATCH')
+                        <dialog id="edit-ors-{{ $r->id }}" style="width:min(32rem,calc(100% - 2rem))" class="rounded bg-white p-0 text-left shadow-2xl backdrop:bg-black/50"><form method="POST" action="{{ route('accounting.ors.update', $r) }}" data-guard="Save the changes to {{ $label }}" class="space-y-3 p-6">@csrf @method('PATCH')
                             <h2 class="text-lg font-semibold">Edit {{ $label }}</h2>
                             <p class="text-xs text-on-surface-variant">The check was cancelled. Correct the ORS, then approve it to send it to Ready for DV.</p>
                             <label class="block text-xs font-semibold text-on-surface-variant">Amount <span class="text-error">*</span><input type="number" step="0.01" min="0.01" name="amount" required value="{{ number_format((float) $r->amount, 2, '.', '') }}" class="{{ $inputClass }} text-right"></label>
                             <label class="block text-xs font-semibold text-on-surface-variant">Supplier / Payee <span class="text-error">*</span><input name="payee" required maxlength="255" value="{{ $payee }}" class="{{ $inputClass }}"></label>
                             <label class="block text-xs font-semibold text-on-surface-variant">Particulars<input name="purpose" maxlength="255" value="{{ $r->purpose }}" class="{{ $inputClass }}"></label>
-                            <label class="block text-xs font-semibold text-on-surface-variant">Reason for the change <span class="text-error">*</span><input name="reason" required maxlength="255" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" class="{{ $inputClass }}"></label>
-                            <label class="block text-xs font-semibold text-on-surface-variant">Your password <span class="text-error">*</span><input type="password" name="password" required autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly')" class="{{ $inputClass }}"></label>
                             <div class="flex justify-end gap-2 border-t border-outline-variant/30 pt-3"><button type="button" onclick="this.closest('dialog').close()" class="rounded border border-outline-variant/60 px-4 py-2.5 text-xs font-semibold hover:bg-primary hover:text-white">Close</button><button class="rounded bg-primary px-4 py-2.5 text-xs font-bold text-white hover:bg-primary-container">Save changes</button></div>
                         </form></dialog>
                     @endif
@@ -214,7 +210,7 @@
                                 <div class="ors-edit-body">
                                     <aside class="ors-edit-preview" aria-label="Official DV preview"><div class="ors-edit-bar"><span>Official DV (updates as you edit)</span><span class="flex items-center gap-3"><small data-status>Updates as you type</small><select data-zoom aria-label="Preview zoom" class="rounded border border-outline-variant/60 bg-white px-2 py-1 text-xs font-semibold"><option value="fit">Fit width</option><option value="0.5">50%</option><option value="0.75">75%</option><option value="1">100%</option></select></span></div><iframe title="Official DV preview"></iframe></aside>
                                     <div class="ors-edit-pane">
-                                    <form id="edit-dv-form-{{ $r->id }}" method="POST" action="{{ route('accounting.dv.store', $r) }}" class="ors-edit-form space-y-4 p-4">@csrf
+                                    <form id="edit-dv-form-{{ $r->id }}" method="POST" action="{{ route('accounting.dv.store', $r) }}" data-guard="Save the changes to {{ $dvLabel($r->dv_number) }}" class="ors-edit-form space-y-4 p-4">@csrf
                                 <section>
                                     <h3 class="mb-2 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Voucher</h3>
                                     @php $acceptedNote = app(\App\Services\ProcurementWorkspaceService::class)->acceptedNote($r->procurementRequest, (float) $r->amount); @endphp
@@ -228,7 +224,7 @@
                                         <label class="text-xs font-semibold text-on-surface-variant">Payee <span class="text-error">*</span><input name="payee" required maxlength="255" value="{{ $payee }}" class="{{ $inputClass }}"></label>
                                         <label class="text-xs font-semibold text-on-surface-variant">Particulars <span class="text-error">*</span><input name="dv_particulars" required maxlength="255" value="{{ $r->dv_particulars }}" class="{{ $inputClass }}"></label>
                                     </div>
-                                    <label class="mt-3 flex items-start gap-2 text-xs font-semibold text-on-surface-variant"><input type="checkbox" name="dv_non_cash" value="1" @checked($r->dv_non_cash) @disabled($r->paid_at) class="mt-0.5 h-4 w-4 rounded border-outline-variant"><span>Non-cash transaction<span class="block font-normal">Recorded in the journal entry only: no payment and no cash report.</span></span></label>
+                                    <label class="nc-card mt-3" title="This DV is already paid, so it can no longer be switched."><input type="checkbox" role="switch" name="dv_non_cash" value="1" @checked($r->dv_non_cash) @disabled($r->paid_at) class="sr-only"><span class="nc-icon material-symbols-outlined" aria-hidden="true">menu_book</span><span class="min-w-0 flex-1"><span class="block text-[13px] font-bold text-on-surface">Non-cash transaction</span><span class="mt-0.5 block text-xs font-normal leading-5 text-on-surface-variant">Turn it on when nothing is paid out, for example receiving cash advances in Cash-MDS. It is recorded in the journal entry only.</span><span class="mt-1 inline-flex items-center gap-1 text-[11px] font-bold"><span class="nc-state-off text-on-surface-variant">Off: a cash transaction, with payment and cash reports.</span><span class="nc-state-on text-primary">On: journal entry only, no payment and no cash report.</span></span></span><span class="nc-switch" aria-hidden="true"></span></label>
                                 </section>
                                 <section data-edit-journal>
                                     <div class="mb-2 flex flex-wrap items-baseline justify-between gap-2"><h3 class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Journal entry</h3><p class="text-[11px] text-on-surface-variant">Total debit = total credit = {{ $peso($r->amount) }}</p></div>
@@ -248,14 +244,6 @@
                                     @foreach(($r->dv_deductions['other'] ?? []) as $i => $other)
                                         <div class="mt-3 grid grid-cols-[1fr_8rem] gap-3"><input name="deductions_other[{{ $i }}][label]" value="{{ $other['label'] }}" maxlength="40" class="{{ $inputClass }} mt-0"><input type="number" step="0.01" min="0" name="deductions_other[{{ $i }}][amount]" value="{{ $other['amount'] }}" class="{{ $inputClass }} mt-0 text-right"></div>
                                     @endforeach
-                                </section>
-                                <section class="rounded-lg border border-amber-300/70 bg-amber-50 p-4">
-                                    <h3 class="text-[11px] font-bold uppercase tracking-wider text-amber-900">Confirm the change</h3>
-                                    <p class="mb-3 mt-0.5 text-[11px] text-amber-900/80">Write the reason and type your own password. Both are kept in the audit log.</p>
-                                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                        <label class="text-xs font-semibold text-on-surface-variant">Reason for the change <span class="text-error">*</span><input name="reason" required maxlength="255" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" class="{{ $inputClass }}"></label>
-                                        <label class="text-xs font-semibold text-on-surface-variant">Your password <span class="text-error">*</span><input type="password" name="password" required autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly')" class="{{ $inputClass }}"></label>
-                                    </div>
                                 </section>
                             
                                     </form>
@@ -365,7 +353,7 @@
             <div id="deduction-others" class="mt-2 space-y-2"></div>
             <button type="button" id="deduction-add" class="mt-2 inline-flex items-center gap-1 rounded border border-outline-variant/60 bg-white px-3 py-1.5 text-xs font-semibold text-primary hover:bg-surface-low"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">add</span>Add other deduction</button>
         </div>
-        <label class="flex items-start gap-2 text-xs font-semibold text-on-surface-variant md:col-span-2"><input type="checkbox" name="dv_non_cash" value="1" @checked(old('dv_non_cash')) class="mt-0.5 h-4 w-4 rounded border-outline-variant"><span>Non-cash transaction<span class="block font-normal">Left unchecked, the DV is a cash transaction (payment and cash reports). Check it when nothing is paid out, for example receiving advances in Cash-MDS: it is recorded in the journal entry only.</span></span></label>
+        <label class="nc-card md:col-span-2"><input type="checkbox" role="switch" name="dv_non_cash" value="1" @checked(old('dv_non_cash'))  class="sr-only"><span class="nc-icon material-symbols-outlined" aria-hidden="true">menu_book</span><span class="min-w-0 flex-1"><span class="block text-[13px] font-bold text-on-surface">Non-cash transaction</span><span class="mt-0.5 block text-xs font-normal leading-5 text-on-surface-variant">Turn it on when nothing is paid out, for example receiving advances in Cash-MDS. It is recorded in the journal entry only.</span><span class="mt-1 inline-flex items-center gap-1 text-[11px] font-bold"><span class="nc-state-off text-on-surface-variant">Off: a cash transaction, with payment and cash reports.</span><span class="nc-state-on text-primary">On: journal entry only, no payment and no cash report.</span></span></span><span class="nc-switch" aria-hidden="true"></span></label>
         <label class="flex items-start gap-2 text-xs font-semibold text-on-surface-variant md:col-span-2"><input type="checkbox" name="dv_include_appropriation" value="1" @checked(old('dv_include_appropriation')) class="mt-0.5 h-4 w-4 rounded border-outline-variant"><span>Add the APPROPRIATION table to the printed DV<span class="block font-normal">Columns: Appropriation, P/A/P, OR No., Amount, Expense Code. Left unchecked, the DV prints without it.</span></span></label>
         @foreach(($dvDialogPanels ?? []) as $signatorySchoolId => $signatoryRows)
             <section data-signatories-school="{{ $signatorySchoolId }}" class="hidden rounded-xl border border-outline-variant/50 bg-surface-low/50 p-3 md:col-span-2">
@@ -393,6 +381,8 @@
 
 <style>
     dialog[data-ors-edit]{padding:0}
+    /* The split edit window keeps one tall size, so the official document beside the form is always shown in full, whatever the form holds. */
+    @media(min-width:1024px){dialog[data-ors-edit][data-split]>div{height:94vh}}
     .ors-edit-body{display:flex;flex-direction:row-reverse;min-height:0;flex:1;overflow:hidden}
     .ors-edit-preview{display:flex;min-width:0;flex:1 1 52%;flex-direction:column;background:#d9dee5;border-left:1px solid #cbd7e1}
     .ors-edit-bar{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:#fff;border-bottom:1px solid #cbd7e1;font-size:12px;font-weight:700;color:#14818f}
@@ -401,6 +391,22 @@
     .ors-edit-pane{flex:1 1 48%;min-width:0;overflow-y:auto;max-height:calc(94vh - 4.5rem)}
     .ors-edit-form label{display:block;line-height:1.2}
     .ors-edit-form input:not([type=checkbox]),.ors-edit-form select,.ors-edit-form textarea{display:block;width:100%;margin-top:.25rem;padding-top:.4rem;padding-bottom:.4rem;font-size:.8125rem}
+    /* The non-cash switch card: a core choice, so it is large, clear and shows its state in words. */
+    .nc-card.nc-card{display:flex;align-items:center;gap:.85rem;padding:.8rem 1rem;border:2px solid #cdd8e2;border-radius:.9rem;background:#fff;cursor:pointer;line-height:1.3;transition:border-color .15s,background .15s,box-shadow .15s}
+    .nc-card:hover{border-color:#86adb4}
+    .nc-card:has(input:checked){border-color:#14818f;background:#eaf6f8;box-shadow:0 0 0 3px rgba(20,129,143,.15)}
+    .nc-card:has(input:focus-visible){outline:2px solid #14818f;outline-offset:2px}
+    .nc-card:has(input:disabled){opacity:.6;cursor:not-allowed}
+    .nc-icon{display:grid;place-items:center;flex:none;width:2.5rem;height:2.5rem;border-radius:.7rem;background:#e4edf6;color:#14818f;font-size:22px}
+    .nc-card:has(input:checked) .nc-icon{background:#14818f;color:#fff}
+    .nc-switch{position:relative;flex:none;width:2.75rem;height:1.5rem;border-radius:999px;background:#9fb0bf;transition:background .15s}
+    .nc-switch::after{content:'';position:absolute;top:.2rem;left:.2rem;width:1.1rem;height:1.1rem;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .15s}
+    .nc-card input:checked ~ .nc-switch{background:#14818f}
+    .nc-card input:checked ~ .nc-switch::after{transform:translateX(1.25rem)}
+    .nc-state-on{display:none}
+    .nc-card:has(input:checked) .nc-state-on{display:inline}
+    .nc-card:has(input:checked) .nc-state-off{display:none}
+    @media(prefers-reduced-motion:reduce){.nc-card,.nc-switch,.nc-switch::after{transition:none}}
     @media(max-width:1023px){.ors-edit-body{flex-direction:column-reverse;overflow-y:auto}.ors-edit-preview{flex:none}.ors-edit-pane{max-height:none;overflow:visible}}
 </style>
 <script>
@@ -434,7 +440,7 @@
                 status.textContent = 'Updating preview...';
                 const body = new FormData(form);
                 body.delete('_method');
-                body.delete('password'); // the preview never needs the password
+                body.delete('pin'); // the preview never needs the PIN
                 try {
                     const response = await fetch(dialog.dataset.preview, { method: 'POST', body, signal: controller.signal, headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' } });
                     const html = await response.text();

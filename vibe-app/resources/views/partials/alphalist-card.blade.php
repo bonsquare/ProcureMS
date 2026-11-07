@@ -74,25 +74,21 @@
                                 </div>
                                 @if($canChangeAlpha)
                                     <dialog id="alpha-edit-{{ $entry->id }}" class="w-[min(92vw,26rem)] rounded-xl p-0 text-xs shadow-2xl backdrop:bg-black/40">
-                                        <form method="POST" action="{{ route('liquidation.alphalist.update', $entry) }}" class="space-y-3 p-5">@csrf @method('PUT')
+                                        <form method="POST" action="{{ route('liquidation.alphalist.update', $entry) }}" data-guard="Update the alphalist of {{ $entry->period_text }}" class="space-y-3 p-5">@csrf @method('PUT')
                                             <h4 class="text-sm font-semibold">Edit the alphalist of {{ $entry->period_text }}</h4>
                                             <p class="text-on-surface-variant">{{ $entry->school?->name }}. Update makes it again from today's figures.</p>
                                             @if($entryDvs->isNotEmpty())<p class="rounded bg-[#fdf4e3] px-3 py-2 font-semibold text-[#7a5410]">Remittance DV already issued ({{ $entryDvs->map(fn ($dv) => $dv->dv_number ?: $dv->report_number)->implode(', ') }}): it keeps its own amount and register columns.</p>@endif
                                             <label class="{{ $alphaLabel }}">Source of fund<input name="source_of_fund" list="alpha-funds" value="{{ $entry->params['source_of_fund'] ?? '' }}" placeholder="All funds" class="{{ $alphaBox }}"></label>
                                             <label class="{{ $alphaLabel }}">School TIN<input name="school_tin" value="{{ $entry->params['school_tin'] ?? '' }}" class="{{ $alphaBox }}"></label>
                                             <label class="{{ $alphaLabel }}">Signatory<input name="signatory_name" value="{{ $entry->params['signatory_name'] ?? '' }}" placeholder="School Head (default)" class="{{ $alphaBox }}"></label>
-                                            <label class="{{ $alphaLabel }}">Reason<input name="reason" required class="{{ $alphaBox }}"></label>
-                                            <label class="{{ $alphaLabel }}">Your password<input type="password" name="password" required autocomplete="current-password" class="{{ $alphaBox }}"></label>
                                             <div class="flex justify-end gap-2 pt-1"><button type="button" data-alpha-close class="rounded-lg border border-outline-variant/60 px-4 py-2 font-semibold">Cancel</button><button class="rounded-lg bg-primary px-4 py-2 font-semibold text-white hover:bg-primary-container">Update</button></div>
                                         </form>
                                     </dialog>
                                     <dialog id="alpha-delete-{{ $entry->id }}" class="w-[min(92vw,26rem)] rounded-xl p-0 text-xs shadow-2xl backdrop:bg-black/40">
-                                        <form method="POST" action="{{ route('liquidation.alphalist.destroy', $entry) }}" class="space-y-3 p-5">@csrf @method('DELETE')
+                                        <form method="POST" action="{{ route('liquidation.alphalist.destroy', $entry) }}" data-guard="Delete the alphalist of {{ $entry->period_text }}" class="space-y-3 p-5">@csrf @method('DELETE')
                                             <h4 class="text-sm font-semibold text-error">Delete the alphalist of {{ $entry->period_text }}?</h4>
                                             <p class="text-on-surface-variant">{{ $entry->school?->name }} · {{ $entry->source_of_fund ?: 'All funds' }} · ₱{{ number_format((float) $entry->total_payments, 2) }}</p>
                                             @if($entryDvs->isNotEmpty())<p class="rounded bg-[#fdf4e3] px-3 py-2 font-semibold text-[#7a5410]">Remittance DV already issued ({{ $entryDvs->map(fn ($dv) => $dv->dv_number ?: $dv->report_number)->implode(', ') }}): the DV stays, with its own amount and register columns.</p>@endif
-                                            <label class="{{ $alphaLabel }}">Reason<input name="reason" required class="{{ $alphaBox }}"></label>
-                                            <label class="{{ $alphaLabel }}">Your password<input type="password" name="password" required autocomplete="current-password" class="{{ $alphaBox }}"></label>
                                             <div class="flex justify-end gap-2 pt-1"><button type="button" data-alpha-close class="rounded-lg border border-outline-variant/60 px-4 py-2 font-semibold">Cancel</button><button class="rounded-lg bg-error px-4 py-2 font-semibold text-white">Delete</button></div>
                                         </form>
                                     </dialog>

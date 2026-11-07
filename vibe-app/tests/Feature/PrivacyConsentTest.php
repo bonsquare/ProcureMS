@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\AuditLog;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class PrivacyConsentTest extends TestCase
@@ -16,9 +17,24 @@ class PrivacyConsentTest extends TestCase
         return [
             'name' => 'Privacy Test School', 'system_user_given_name' => 'Pia', 'system_user_surname' => 'Santos', 'system_user_username' => 'pia.santos',
             'system_user_position' => 'Principal', 'system_user_email' => 'pia@example.test', 'system_user_phone' => '09170000009',
-            'system_user_password' => 'secret-pass-1', 'system_user_password_confirmation' => 'secret-pass-1', 'system_user_confirmed' => '1',
+            'system_user_password' => 'secret-pass-1', 'system_user_password_confirmation' => 'secret-pass-1', 'system_user_pin' => '123456', 'system_user_pin_confirmation' => '123456', 'system_user_confirmed' => '1',
             ...$extra,
         ];
+    }
+
+    public function test_registration_needs_a_six_digit_pin_and_keeps_it_hashed(): void
+    {
+        $this->get(route('register'))->assertOk()->assertSee('name="system_user_pin"', false);
+        $form = $this->school(['privacy_accepted' => '1']);
+
+        $this->post(route('register.store'), array_diff_key($form, ['system_user_pin' => 1]))->assertSessionHasErrors('system_user_pin');
+        $this->post(route('register.store'), ['system_user_pin' => '12345', 'system_user_pin_confirmation' => '12345'] + $form)->assertSessionHasErrors('system_user_pin');
+        $this->post(route('register.store'), ['system_user_pin_confirmation' => '654321'] + $form)->assertSessionHasErrors('system_user_pin');
+        $this->assertDatabaseMissing('users', ['email' => 'pia@example.test']);
+
+        $this->post(route('register.store'), $form)->assertSessionHasNoErrors();
+        $user = User::where('email', 'pia@example.test')->firstOrFail();
+        $this->assertTrue(Hash::check('123456', $user->pin));
     }
 
     public function test_the_form_shows_the_privacy_policy_and_the_confirmation_dialog_wiring(): void

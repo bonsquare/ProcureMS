@@ -3,7 +3,7 @@
 @if($style === 'login')
     <div class="mb-8 flex justify-center"><img src="{{ asset('images/procurems-logo.png') }}" alt="ProcMS - Plan. Procure. Finance. Report." class="h-24 w-auto sm:h-28"></div>
 @elseif($style === 'register')
-    <div class="relative"><img src="{{ asset('images/procurems-logo-light.png') }}" alt="ProcMS - Plan. Procure. Finance. Report." class="h-16 w-auto"><p class="mt-2 text-xs text-white/70">School Pre-registration</p></div>
+    <div class="relative"><img src="{{ asset('images/procurems-logo-light.png') }}" alt="ProcMS - Plan. Procure. Finance. Report." class="h-16 w-auto"></div>
 @else
     <div class="-mx-3 mb-6"><img src="{{ asset('images/procurems-logo-light.png') }}" alt="ProcMS - Plan. Procure. Finance. Report." class="h-auto w-full"></div>
 @endif

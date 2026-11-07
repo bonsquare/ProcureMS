@@ -97,20 +97,20 @@ class AlphalistTest extends TestCase
         $entry = CashReportHistory::where('report', 'alphalist')->sole();
 
         $this->paid($school, 'Plain Store', 1000, '2026-10-20', 'direct');
-        $this->put(route('liquidation.alphalist.update', $entry), ['source_of_fund' => 'MOOE', 'school_tin' => '111-222', 'reason' => 'New payment', 'password' => 'wrong'])->assertSessionHasErrors('password');
-        $this->put(route('liquidation.alphalist.update', $entry), ['source_of_fund' => 'MOOE', 'school_tin' => '111-222', 'reason' => 'New payment', 'password' => 'password'])->assertRedirect(route('liquidation'));
+        $this->put(route('liquidation.alphalist.update', $entry), ['source_of_fund' => 'MOOE', 'school_tin' => '111-222', 'reason' => 'New payment', 'pin' => 'wrong'])->assertSessionHasErrors('pin');
+        $this->put(route('liquidation.alphalist.update', $entry), ['source_of_fund' => 'MOOE', 'school_tin' => '111-222', 'reason' => 'New payment', 'pin' => '123456'])->assertRedirect(route('liquidation'));
         $entry->refresh();
         $this->assertEquals(400, $entry->total_payments, 'made again from the figures of today: 4% of 10,000');
         $this->assertSame('111-222', $entry->params['school_tin']);
-        $this->assertArrayNotHasKey('password', $entry->params);
+        $this->assertArrayNotHasKey('pin', $entry->params);
         $this->assertSame('NOVEMBER 2026', $entry->period_text);
 
-        $this->actingAs($other)->delete(route('liquidation.alphalist.destroy', $entry), ['reason' => 'x', 'password' => 'password'])->assertNotFound();
+        $this->actingAs($other)->delete(route('liquidation.alphalist.destroy', $entry), ['reason' => 'x', 'pin' => '123456'])->assertNotFound();
         // With a remittance DV issued it can still be updated and deleted (owner's decision 2026-10-25): the DV keeps its own amount and sources.
         $this->actingAs($user)->post(route('liquidation.alphalist.dv', [$entry, '1600PT']))->assertRedirect();
         $this->get(route('liquidation'))->assertSee('Remittance DV already issued');
-        $this->put(route('liquidation.alphalist.update', $entry), ['source_of_fund' => 'MOOE', 'reason' => 'Signatory', 'signatory_name' => 'New Head', 'password' => 'password'])->assertRedirect(route('liquidation'));
-        $this->delete(route('liquidation.alphalist.destroy', $entry), ['reason' => 'Duplicate', 'password' => 'password'])->assertRedirect(route('liquidation'));
+        $this->put(route('liquidation.alphalist.update', $entry), ['source_of_fund' => 'MOOE', 'reason' => 'Signatory', 'signatory_name' => 'New Head', 'pin' => '123456'])->assertRedirect(route('liquidation'));
+        $this->delete(route('liquidation.alphalist.destroy', $entry), ['reason' => 'Duplicate', 'pin' => '123456'])->assertRedirect(route('liquidation'));
         $this->assertSame(0, CashReportHistory::where('report', 'alphalist')->count());
         $this->assertEquals(300, LiquidationReport::whereNotNull('remittance')->sole()->amount, 'the DV stays as it was issued');
     }

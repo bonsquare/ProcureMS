@@ -25,7 +25,7 @@ class PromoAndPaymentSettingsTest extends TestCase
 
     private function guard(array $data = [], string $reason = 'Because'): array
     {
-        return $data + ['reason' => $reason, 'password' => 'password'];
+        return $data + ['reason' => $reason, 'pin' => '123456'];
     }
 
     private function promo(array $overrides = []): array
@@ -113,8 +113,8 @@ class PromoAndPaymentSettingsTest extends TestCase
     public function test_changes_ask_reason_and_password_and_are_audited(): void
     {
         $this->post(route('promo-codes.store'), $this->promo(['reason' => '']))->assertSessionHasErrors('reason');
-        $this->post(route('promo-codes.store'), $this->promo(['password' => 'wrong']))->assertSessionHasErrors('password');
-        $this->put(route('payment-settings.update'), ['account_name' => 'X', 'reason' => '', 'password' => 'password'])->assertSessionHasErrors('reason');
+        $this->post(route('promo-codes.store'), $this->promo(['pin' => 'wrong']))->assertSessionHasErrors('pin');
+        $this->put(route('payment-settings.update'), ['account_name' => 'X', 'reason' => '', 'pin' => '123456'])->assertSessionHasErrors('reason');
         $this->assertSame(0, PromoCode::count());
 
         $this->post(route('promo-codes.store'), $this->promo(['reason' => 'New promo']));

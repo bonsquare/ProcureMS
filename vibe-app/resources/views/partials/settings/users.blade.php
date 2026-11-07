@@ -30,6 +30,7 @@
                                 @if(auth()->user()->seesAllSchools() || $user->is(auth()->user()))
                                 <button type="button" data-user-edit="{{ $user->id }}" class="inline-flex h-8 items-center gap-1 rounded-lg border border-primary/40 px-2.5 text-[11px] font-bold text-primary hover:bg-primary hover:text-white" aria-label="Edit {{ $user->name }}"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">edit</span>Edit</button>
                                 <button type="button" data-user-password="{{ $user->id }}" class="inline-flex h-8 items-center gap-1 rounded-lg border border-outline-variant px-2.5 text-[11px] font-bold text-on-surface-variant hover:bg-surface-container" aria-label="Change password for {{ $user->name }}"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">key</span>Password</button>
+                                @if($user->is(auth()->user()))<button type="button" data-user-pin class="inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-lg border border-outline-variant px-2.5 text-[11px] font-bold text-on-surface-variant hover:bg-surface-container" aria-label="Set or reset your PIN"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">pin</span>PIN{{ filled($user->pin) ? '' : ' not set' }}</button>@endif
                                 @else
                                 <span class="inline-flex h-8 items-center gap-1 rounded-lg bg-surface-container px-2.5 text-[11px] font-bold text-on-surface-variant" title="Only the owner of this account or the master user can change it."><span class="material-symbols-outlined text-[16px]" aria-hidden="true">lock</span>View only</span>
                                 @endif
@@ -70,6 +71,31 @@
     </form>
 </dialog>
 
+{{-- Own PIN: typed instead of the password when an edit is confirmed; the login password is the proof for setting or resetting it. --}}
+<dialog id="user-pin" class="{{ $dialog }}" aria-labelledby="user-pin-title" aria-describedby="user-pin-intro">
+    <form method="POST" action="{{ route('account.pin') }}" class="p-6" autocomplete="off">
+        @csrf
+        <div class="mb-5 flex items-start gap-3">
+            <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary" aria-hidden="true"><span class="material-symbols-outlined">pin</span></span>
+            <div class="min-w-0 flex-1"><h2 id="user-pin-title" class="text-lg font-bold leading-tight">{{ filled(auth()->user()->pin) ? 'Change or reset your PIN' : 'Set your PIN' }}</h2><p id="user-pin-intro" class="mt-1 text-xs leading-5 text-on-surface-variant">Your PIN is asked when you confirm an edit, so you never type your password for that. If you forgot it, set a new one here with your login password.</p></div>
+            <button type="button" data-close class="grid h-11 w-11 shrink-0 place-items-center rounded-lg hover:bg-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary" aria-label="Close"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
+        </div>
+        @if($errors->pin->any())
+            <p id="user-pin-error" role="alert" class="mb-4 flex items-start gap-2 rounded-lg border border-error/30 bg-error/10 px-3 py-2.5 text-xs font-semibold text-error"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">error</span><span>{{ $errors->pin->first() }}</span></p>
+        @endif
+        <div class="space-y-4">
+            @include('partials.pin-boxes', ['name' => 'pin', 'label' => 'New PIN (6 digits)', 'hint' => 'Numbers only. Pick something you can remember but others cannot guess.'])
+            @include('partials.pin-boxes', ['name' => 'pin_confirmation', 'label' => 'Repeat the new PIN', 'matchId' => 'user-pin-match'])
+            <div class="border-t border-outline-variant/40 pt-4">
+                <label for="user-pin-password" class="block text-xs font-bold">Your login password <span class="text-error" aria-hidden="true">*</span><span class="sr-only">(required)</span></label>
+                <input id="user-pin-password" type="password" name="password" required autocomplete="current-password" aria-describedby="user-pin-password-hint" class="{{ $field }}">
+                <p id="user-pin-password-hint" class="mt-1 text-[11px] font-normal text-on-surface-variant">This proves it is you. It is the password you use to sign in.</p>
+            </div>
+        </div>
+        <div class="mt-6 flex justify-end gap-2"><button type="button" data-close class="min-h-11 rounded-lg border border-outline-variant px-5 py-2 text-xs font-bold hover:bg-surface-container">Cancel</button><button class="min-h-11 rounded-lg bg-primary px-6 py-2 text-xs font-bold text-white hover:bg-primary-container">Save PIN</button></div>
+    </form>
+</dialog>
+
 {{-- Change password --}}
 <dialog id="user-password" class="{{ $dialog }}">
     <form method="POST" id="user-password-form" class="p-5">
@@ -98,6 +124,9 @@
             document.getElementById('user-edit-self').classList.toggle('hidden', !user.self);
             document.getElementById('user-edit').showModal();
         }));
+        const openPin = () => { const dialog = document.getElementById('user-pin'); dialog.showModal(); dialog.querySelector('[data-pin-box]')?.focus(); };
+        document.querySelectorAll('[data-user-pin]').forEach((button) => button.addEventListener('click', openPin));
+        @if($errors->pin->any()) openPin(); @endif
         document.querySelectorAll('[data-user-password]').forEach((button) => button.addEventListener('click', () => {
             const id = button.dataset.userPassword; const user = users[id]; const form = document.getElementById('user-password-form');
             form.action = passwordUrl.replace('__ID__', id);

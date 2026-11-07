@@ -116,7 +116,7 @@
                     <p class="mt-1 text-center text-[11px] text-white/60">Amount to pay is shown on the school's page</p>
                 </div>
             </aside>
-            <div class="flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant/30 pt-5 lg:col-span-2"><p class="text-xs text-on-surface-variant">Saving asks for your reason and your password, and is kept in the history.</p><button class="rounded-xl bg-primary px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-primary-container">Save payment details</button></div>
+            <div class="flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant/30 pt-5 lg:col-span-2"><p class="text-xs text-on-surface-variant">Saving asks for your reason and your PIN, and is kept in the history.</p><button class="rounded-xl bg-primary px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-primary-container">Save payment details</button></div>
         </form>
         <script>
             // The card on the right follows what is typed and the image that is chosen, before anything is saved.

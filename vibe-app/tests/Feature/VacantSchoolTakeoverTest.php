@@ -40,7 +40,7 @@ class VacantSchoolTakeoverTest extends TestCase
             'registration_type' => 'takeover',
             'system_user_given_name' => 'Nina', 'system_user_middle_initial' => 'R', 'system_user_surname' => 'Lopez', 'system_user_username' => 'nina.lopez',
             'system_user_position' => 'Administrative Officer', 'system_user_email' => 'nina@example.com', 'system_user_phone' => '09170000001',
-            'system_user_password' => 'secret-pass-1', 'system_user_password_confirmation' => 'secret-pass-1', 'system_user_confirmed' => '1', 'privacy_accepted' => '1',
+            'system_user_password' => 'secret-pass-1', 'system_user_password_confirmation' => 'secret-pass-1', 'system_user_pin' => '123456', 'system_user_pin_confirmation' => '123456', 'system_user_confirmed' => '1', 'privacy_accepted' => '1',
             ...$extra,
         ];
     }
@@ -267,10 +267,10 @@ class VacantSchoolTakeoverTest extends TestCase
         $this->assertSame('approved', $request->fresh()->status);
     }
 
-    public function test_the_register_page_uses_a_checkbox_for_a_vacant_school(): void
+    public function test_the_register_page_offers_two_cards_for_a_new_or_a_vacant_school(): void
     {
         $this->get(route('register'))->assertOk()->assertSee('id="vacant-toggle"', false)->assertSee('type="checkbox"', false)
-            ->assertSee('fill in only your own information')->assertSee('register a new school and fill in everything')
+            ->assertSee('Fill in only your own information')->assertSee('Register a new school')->assertSee('data-reg-choice="takeover"', false)
             ->assertSee('name="name"', false);
     }
 

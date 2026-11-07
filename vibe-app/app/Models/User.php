@@ -13,8 +13,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role', 'organization_id', 'school_id', 'position', 'office', 'procurement_role', 'bac_role', 'username', 'user_code', 'phone', 'status', 'last_login_at', 'password_changed_at', 'deactivated_at', 'deactivation_reason', 'deactivation_note'])]
-#[Hidden(['password', 'remember_token'])]
+#[Fillable(['name', 'email', 'password', 'pin', 'role', 'organization_id', 'school_id', 'position', 'office', 'procurement_role', 'bac_role', 'username', 'user_code', 'phone', 'status', 'last_login_at', 'password_changed_at', 'deactivated_at', 'deactivation_reason', 'deactivation_note'])]
+#[Hidden(['password', 'pin', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
@@ -23,7 +23,7 @@ class User extends Authenticatable
     /** Version of the Privacy Policy text shown on the registration form; change it when the text changes. */
     public const PRIVACY_POLICY_VERSION = '2026-10';
 
-    protected $fillable = ['name', 'email', 'password', 'role', 'organization_id', 'school_id', 'position', 'office', 'procurement_role', 'bac_role', 'username', 'user_code', 'phone', 'status', 'last_login_at', 'password_changed_at', 'deactivated_at', 'deactivation_reason', 'deactivation_note', 'privacy_accepted_at', 'privacy_policy_version'];
+    protected $fillable = ['name', 'email', 'password', 'pin', 'role', 'organization_id', 'school_id', 'position', 'office', 'procurement_role', 'bac_role', 'username', 'user_code', 'phone', 'status', 'last_login_at', 'password_changed_at', 'deactivated_at', 'deactivation_reason', 'deactivation_note', 'privacy_accepted_at', 'privacy_policy_version'];
 
     protected static function booted(): void
     {
@@ -212,6 +212,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'pin' => 'hashed',
             'last_login_at' => 'datetime',
             'password_changed_at' => 'datetime',
             'deactivated_at' => 'datetime',
