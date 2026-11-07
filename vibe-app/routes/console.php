@@ -19,3 +19,6 @@ Schedule::command('backup:database')->dailyAt('00:00')->timezone('Asia/Manila');
 
 // The demo copy starts clean every day: nothing a client enters is kept past 12:00 midnight Philippine time. Never runs on the live system.
 Schedule::command('demo:reset --force')->dailyAt('00:00')->timezone('Asia/Manila')->when(fn () => (bool) config('app.demo'));
+
+// Support requests resolved more than five days ago are removed from the system to save space (the files stay in the users' own Google Drive).
+Schedule::command('support:purge')->dailyAt('01:00')->timezone('Asia/Manila');
