@@ -186,5 +186,5 @@ Full dated log moved out of CLAUDE.md to keep that file short. Nothing was remov
 - 2026-11-07: Telegram request card with buttons (take, assign to staff, set status), each change recorded in the group (docs/specs.md section 119). Deployed 2026-11-07 (e8f931b3).
 - 2026-11-07: Payment proof notice in Telegram now has the sender, payment details and the proof link (docs/specs.md section 119). Deployed 2026-11-07 (e8f931b3).
 - 2026-11-07: Telegram topic per request (opens on take, closes on resolve/close, purged after 5 days); card buttons two per row (docs/specs.md section 119). Deployed 2026-11-07 (e8f931b3).
-- 2026-11-07: Topic header with status; /assign shows a staff list when the request is held or the sender is anonymous; replies to bot lines under a card count (docs/specs.md section 119). Committed, not yet deployed.
-- 2026-11-07: /assign always shows the staff (or the open requests first); card and topic header show ticket, subject, requester; short topic title (docs/specs.md section 119). Committed, not yet deployed.
+- 2026-11-07: Topic header with status; /assign shows a staff list when the request is held or the sender is anonymous; replies to bot lines under a card count (docs/specs.md section 119). Deployed 2026-11-07 (a32a3c40).
+- 2026-11-07: /assign always shows the staff (or the open requests first); card and topic header show ticket, subject, requester; short topic title (docs/specs.md section 119). Deployed 2026-11-07 (a32a3c40).
