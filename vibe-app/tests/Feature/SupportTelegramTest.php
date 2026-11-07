@@ -8,6 +8,7 @@ use App\Models\SupportMessage;
 use App\Models\SystemSetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
@@ -41,6 +42,21 @@ class SupportTelegramTest extends TestCase
         $this->assertSame('help@example.com', $sent->getTo()[0]->getAddress());
         $this->assertSame($user->email, $sent->getReplyTo()[0]->getAddress());
         $this->assertStringContainsString('My DV is not showing', $sent->getTextBody());
+    }
+
+    public function test_a_message_is_also_sent_to_the_telegram_chat_and_a_reply_there_finds_it(): void
+    {
+        config(['mail.default' => 'array']);
+        $this->configure();
+        Http::fake(['api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 77]])]);
+        $user = $this->user('tg-send');
+
+        $this->actingAs($user)->post(route('support.send'), ['body' => 'Telegram please'])->assertRedirect(route('support'))->assertSessionHas('success');
+
+        $message = SupportMessage::first();
+        $this->assertSame(77, (int) $message->telegram_message_id);
+        $this->assertSame('sent', $message->telegram_status);
+        Http::assertSent(fn ($r) => str_contains($r->url(), '/sendMessage') && str_contains($r->body(), 'Telegram please') && str_contains($r->body(), 'Reply to this message'));
     }
 
     public function test_without_a_support_email_the_message_is_only_saved(): void

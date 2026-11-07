@@ -193,6 +193,7 @@ Binding decisions from that log:
 - 2026-11-07 Print Settings Manager: Printing tab in School Settings (page margins per school, one default and optional per-document rows) read by the shared print engine (docs/specs.md section 119). Deployed 2026-11-07 (54419fac).
 - 2026-11-07 production readiness: SQLite WAL + busy timeout, Symfony security updates (docs/specs.md section 119). Deployed 2026-11-07 (c3c8365b).
 - 2026-11-07 failed nightly backup also sent to Telegram once the bot variables are set (docs/specs.md section 119). Deployed 2026-11-07 (9bab75d8).
+- 2026-11-07 Support messages also sent to Telegram (docs/specs.md section 119). Committed, not yet deployed.
 - The Planning page is `/planning`. The source is `resources/views/planning.blade.php`; the controller is `app/Http/Controllers/PlanningController.php`.
 - The last GitHub backup is commit `69d1d35` on `master`. Do not reset or discard local changes.
 - Live: Railway deployment 3f0e4867 (2026-11-07 15:34), migrations through `add_print_paper_to_schools_table` (see the history file for later changes).

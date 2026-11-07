@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\SupportMessage;
 use App\Models\SystemSetting;
+use App\Services\TelegramService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
@@ -30,7 +31,7 @@ class SupportController extends Controller
     }
 
     /** Saves the message and emails it to the Customer Services address; Customer Services answers the user by email (Reply-To is the user). */
-    public function send(Request $request)
+    public function send(Request $request, TelegramService $telegram)
     {
         $data = $request->validate(['body' => ['required', 'string', 'min:3', 'max:2000']]);
         $user = $request->user();
@@ -48,11 +49,19 @@ class SupportController extends Controller
                 $status = 'failed';
             }
         }
-        // The telegram_status column is kept and now records the email delivery.
-        $message->update(['telegram_status' => $status]);
+        // The same message goes to the Customer Services Telegram chat; a reply there comes back to this page.
+        $telegramId = $telegram->send("Support #{$message->id}
+School: ".($user->school?->name ?? '—')."
+From: {$user->name} ({$user->email})
 
-        return redirect()->route('support')->with('success', $status === 'sent'
-            ? 'Your message was sent to Customer Services. They will reply to your email.'
+{$message->body}
+
+Reply to this message to answer.");
+        // The telegram_status column records the delivery: email, or Telegram when that is the only way in.
+        $message->update(['telegram_message_id' => $telegramId, 'telegram_status' => $telegramId && $status !== 'sent' ? 'sent' : $status]);
+
+        return redirect()->route('support')->with('success', $telegramId || $status === 'sent'
+            ? 'Your message was sent to Customer Services. '.($telegramId ? 'Their reply will appear below.' : 'They will reply to your email.')
             : 'Your message was saved, but it could not be delivered to Customer Services right now. Please use the contact details above.');
     }
 
