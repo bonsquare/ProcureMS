@@ -11,6 +11,8 @@
     - The rows that fit one printed page go in one `.doc-page` block: the screen shows each block as its own sheet, the print breaks after each.
       Every page after the first gets its own copy of the heading rows (the table's thead, or a row marked data-repeat-head), and a cell merged down several
       rows (rowspan) restarts at the top of the next page.
+    - A table marked data-split-merged (SIP) also shares the words of a text cell merged down several rows between the pages it is cut across, by the height
+      of the rows on each page, so a group of rows can start near the bottom of a page.
     - A table marked data-split-rows (SIP, AIP) also flows its text across a page break: a row that does not fit the room left on the page is split in
       two rows, the first keeps the words that fit in each cell, the second carries the rest to the next page; both keep every border of the cells.
     - A page element marked data-page-footer="Title" gets a footer in every page block (Page X of Y in the middle, the title on the right) and keeps
@@ -113,6 +115,8 @@
                         Array.prototype.forEach.call(row.cells, function (cell, i) { cell.innerHTML = row._whole[i]; });
                         row.removeAttribute('data-split-a');
                     });
+                    // A merged cell whose words were shared between pages gets all its words back.
+                    Array.prototype.forEach.call(tbody.querySelectorAll('[data-split-m]'), function (cell) { cell.innerHTML = cell._whole; cell.removeAttribute('data-split-m'); });
                     Array.prototype.forEach.call(tbody.querySelectorAll('[data-rs]'), function (cell) { cell.rowSpan = +cell.dataset.rs; });
                 });
             });
@@ -139,14 +143,26 @@
         }
 
         // A cell merged across a page break is cut in two: the first part ends the page, a copy starts the next one.
-        function cutMergedCells(rows, starts) {
+        // With splitText (a table marked data-split-merged) the words of a text cell are shared between its pieces by the height of the rows each piece covers,
+        // so the text flows on to the next page instead of every piece repeating all of it and needing room for it.
+        function cutMergedCells(rows, starts, splitText) {
             var cells = gridOf(rows);
+            var heights = splitText ? rows.map(function (row) { return row.getBoundingClientRect().height; }) : null;
             starts.forEach(function (k) {
                 cells.slice().forEach(function (item) {
                     if (item.row >= k || item.row + item.span <= k) { return; }
                     var copy = item.el.cloneNode(true);
                     copy.setAttribute('data-clone', '');
                     copy.removeAttribute('data-rs');
+                    var tokens = splitText ? tokensOf(item.el) : null;
+                    if (tokens && tokens.length > 1) {
+                        var upper = 0, lower = 0;
+                        for (var r = item.row; r < item.row + item.span; r++) { if (r < k) { upper += heights[r]; } else { lower += heights[r]; } }
+                        var count = Math.min(tokens.length - 1, Math.max(1, Math.round(tokens.length * upper / ((upper + lower) || 1))));
+                        if (!item.el.hasAttribute('data-clone') && !item.el.hasAttribute('data-split-m')) { item.el._whole = item.el.innerHTML; item.el.setAttribute('data-split-m', ''); }
+                        fillTokens(item.el, tokens.slice(0, count));
+                        fillTokens(copy, tokens.slice(count));
+                    }
                     copy.rowSpan = item.row + item.span - k;
                     item.el.rowSpan = k - item.row;
                     var entry = { el: copy, row: k, col: item.col, span: copy.rowSpan };
@@ -266,6 +282,7 @@
             var repeatHeight = repeated ? repeated.getBoundingClientRect().height : 0;
             var position = table.getBoundingClientRect().top - origin.getBoundingClientRect().top + (table.tHead ? table.tHead.getBoundingClientRect().height : 0);
             var splitting = table.hasAttribute('data-split-rows');
+            var splitMerged = table.hasAttribute('data-split-merged');
             var merged = null;
             var naturals = new Map();
             // What a page that ends at row `last` and starts at row `first` adds because the merged cells cut by its edges keep their whole text
@@ -276,6 +293,8 @@
                 merged.forEach(function (item) {
                     var end = item.row + item.span - 1;
                     if (end < first || item.row > last) { return; }
+                    // A text cell shares its words between the pages, so a piece never needs the whole text.
+                    if (splitMerged && (tokensOf(item.el) || []).length > 1) { return; }
                     var from = Math.max(item.row, first), to = Math.min(end, last);
                     if (from === item.row && to === end) { return; }
                     var sum = 0;
@@ -409,7 +428,7 @@
             var table = unit.table, levels = unit.levels;
             var head = [];
             if (unit.legacy) { for (var before = levels[0].child.previousElementSibling; before; before = before.previousElementSibling) { head.unshift(before); } }
-            cutMergedCells(made.rows, made.starts);
+            cutMergedCells(made.rows, made.starts, unit.table.hasAttribute('data-split-merged'));
 
             // The boxes of one page: the form's own for the first, copies of them for every other. The last place is the table (or nothing).
             var boxesOf = function (container, inner) {

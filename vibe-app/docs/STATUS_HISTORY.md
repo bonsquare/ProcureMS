@@ -171,3 +171,4 @@ Full dated log moved out of CLAUDE.md to keep that file short. Nothing was remov
 - 2026-11-07: SIP figures no longer overlap the next column: the table text size is chosen so every figure fits its cell (docs/specs.md section 119). Deployed 2026-11-07 (db061b1c).
 - 2026-11-07: SIP amounts centred and fitted to their cells, other text unchanged (docs/specs.md section 119). Deployed 2026-11-07 (db061b1c).
 - 2026-11-07: SIP text size now keeps every word and figure whole in its cell (no cut words, no overlapping amounts) (docs/specs.md section 119). Deployed 2026-11-07 (db061b1c).
+- 2026-11-07: SIP pages fill up: the words of a merged text cell flow on to the next page (docs/specs.md section 119). Committed, not yet deployed.

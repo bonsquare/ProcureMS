@@ -142,4 +142,14 @@ class PrintSettingsEngineTest extends TestCase
         $this->assertStringContainsString('function fitNumbers()', $sip);
         $this->assertStringContainsString('td.num { white-space: nowrap; text-align: center;', $sip);
     }
+
+    public function test_the_sip_shares_the_words_of_a_merged_cell_between_the_pages_it_is_cut_across(): void
+    {
+        $pages = File::get(resource_path('views/partials/print-pages.blade.php'));
+
+        $this->assertStringContainsString('<table data-paginate data-split-rows data-split-merged>', File::get(resource_path('views/sip-print.blade.php')));
+        $this->assertStringContainsString('function cutMergedCells(rows, starts, splitText)', $pages);
+        $this->assertStringContainsString("querySelectorAll('[data-split-m]')", $pages);
+        $this->assertStringNotContainsString('data-split-merged', File::get(resource_path('views/aip-print.blade.php')));
+    }
 }
