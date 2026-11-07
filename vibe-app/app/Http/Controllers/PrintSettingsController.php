@@ -18,7 +18,7 @@ class PrintSettingsController extends Controller
     public function update(Request $request, PrintSettings $settings): RedirectResponse
     {
         $margin = ['nullable', 'numeric', 'between:0,40'];
-        $rules = ['school_id' => ['required', 'integer'], 'default' => ['nullable', 'array'], 'documents' => ['nullable', 'array'], 'paper' => ['nullable', Rule::in(array_keys(PrintSettings::PAPERS))]];
+        $rules = ['school_id' => ['required', 'integer'], 'default' => ['nullable', 'array'], 'documents' => ['nullable', 'array', 'max:'.count(PrintSettings::DOCUMENTS)], 'documents.*' => ['array'], 'paper' => ['nullable', Rule::in(array_keys(PrintSettings::PAPERS))]];
         foreach (self::SIDES as $side) {
             $rules['default.'.$side] = $margin;
             $rules['documents.*.'.$side] = $margin;

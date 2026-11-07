@@ -130,4 +130,15 @@ class PrintSettingsEndpointTest extends TestCase
         $this->actingAs($user)->put(route('school-settings.printing.update'), ['school_id' => $school->id, 'paper' => 'poster'])->assertSessionHasErrors('paper');
         $this->assertNull(app(PrintSettings::class)->paper($school->id));
     }
+
+    public function test_a_malformed_documents_field_is_refused_not_a_server_error(): void
+    {
+        [$school, $user] = $this->tenant('endpoint-r');
+
+        $this->actingAs($user)->put(route('school-settings.printing.update'), $this->form($school, ['documents' => ['sob' => 'x']]))->assertSessionHasErrors('documents.sob');
+
+        $many = array_fill_keys(array_map(fn ($n) => 'k'.$n, range(1, 40)), ['top' => '1', 'right' => '1', 'bottom' => '1', 'left' => '1']);
+        $this->put(route('school-settings.printing.update'), $this->form($school, ['documents' => $many]))->assertSessionHasErrors('documents');
+        $this->assertSame(0, PrintSetting::withoutGlobalScopes()->count());
+    }
 }

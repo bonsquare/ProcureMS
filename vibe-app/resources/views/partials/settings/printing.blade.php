@@ -18,7 +18,7 @@
     <p class="mt-1 break-words text-xs text-on-surface-variant">The empty space around the page (in millimetres) of every printed document of this school. Set one default for all, and give a document its own margins only if it needs them. Leave a box empty to use the default.</p>
 </div>
 
-<form method="POST" action="{{ route('school-settings.printing.update') }}" @if($canEdit) data-guard="Save the print settings" @endif class="grid items-start gap-5">
+<form method="POST" action="{{ route('school-settings.printing.update') }}" @if($canEdit) data-guard="Save the print settings" @endif class="grid grid-cols-[minmax(0,1fr)] items-start gap-5">
     @csrf @method('PUT')
     <input type="hidden" name="school_id" value="{{ $selectedSchool->id }}">
 

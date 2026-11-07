@@ -167,3 +167,4 @@ Full dated log moved out of CLAUDE.md to keep that file short. Nothing was remov
 - 2026-11-07: default paper size per school in the Printing tab (schools.print_paper), so documents open on the paper loaded in the printer, e.g. Folio (docs/specs.md section 119). Deployed 2026-11-07 (b5c3a212).
 - 2026-11-07: SIP and other page-by-page print pages no longer lay the document out nine times on opening; once per paper and margins, after the fonts load (docs/specs.md section 119). Committed, not yet deployed.
 - 2026-11-07: one footer look for every paged document: hairline rule, 8 pt, bold page number, grey title (docs/specs.md section 119). Committed, not yet deployed.
+- 2026-11-07: Printing tab fits narrow screens and the save endpoint refuses malformed rows (docs/specs.md section 119). Committed, not yet deployed.
