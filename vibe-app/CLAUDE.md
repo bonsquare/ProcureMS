@@ -193,7 +193,7 @@ Binding decisions from that log:
 - 2026-11-07 Print Settings Manager: Printing tab in School Settings (page margins per school, one default and optional per-document rows) read by the shared print engine (docs/specs.md section 119). Deployed 2026-11-07 (54419fac).
 - The Planning page is `/planning`. The source is `resources/views/planning.blade.php`; the controller is `app/Http/Controllers/PlanningController.php`.
 - The last GitHub backup is commit `69d1d35` on `master`. Do not reset or discard local changes.
-- Live: Railway deployment 54419fac (2026-11-07 11:20), migrations through `create_print_settings_table` (see the history file for later changes).
+- Live: Railway deployment 38260c91 (2026-11-07 11:35), migrations through `create_print_settings_table` (see the history file for later changes).
 
 ## Standing workflow (owner's instruction 2026-10-16)
 
