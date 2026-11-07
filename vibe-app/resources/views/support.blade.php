@@ -8,6 +8,7 @@
 </div>
 
 @if(session('success'))<div class="mb-5 rounded border border-secondary/30 bg-secondary/5 px-4 py-3 text-sm text-secondary">{{ session('success') }}</div>@endif
+@if(session('error'))<div class="mb-5 rounded border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="alert">{{ session('error') }} @if(str_contains((string) session('error'), 'Google Drive'))<a href="{{ route('google-drive') }}" class="font-semibold underline">Open Google Drive</a>@endif</div>@endif
 @if($errors->any())<div class="mb-5 rounded border border-error/30 bg-error/5 px-4 py-3 text-sm text-error">{{ $errors->first() }}</div>@endif
 
 @include('partials.support-workspace')

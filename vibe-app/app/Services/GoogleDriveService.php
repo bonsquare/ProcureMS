@@ -20,7 +20,7 @@ class GoogleDriveService
 
     public const ROOT_FOLDER = 'ProcMS';
 
-    public const FOLDERS = ['Backup', 'Logo', 'Files', 'Proofs'];
+    public const FOLDERS = ['Backup', 'Logo', 'Files', 'Proofs', 'Support'];
 
     private const FOLDER_MIME = 'application/vnd.google-apps.folder';
 

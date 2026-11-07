@@ -30,4 +30,10 @@ class SupportMessage extends Model
     {
         return $this->hasMany(SupportReply::class)->orderBy('id');
     }
+
+    /** The files of the first message of the request (the ones of an answer belong to that answer). */
+    public function attachments()
+    {
+        return $this->hasMany(SupportAttachment::class)->whereNull('support_reply_id')->orderBy('id');
+    }
 }
