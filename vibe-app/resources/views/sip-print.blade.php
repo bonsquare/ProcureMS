@@ -63,8 +63,8 @@
         var root = document.documentElement;
         function size() {
             var style = document.getElementById('official-page-style');
-            var spec = style && /size:\s*([\d.]+)mm\s+([\d.]+)mm;\s*margin:\s*([\d.]+)mm\s+([\d.]+)mm/.exec(style.textContent);
-            if (spec) { root.style.setProperty('--sip-fs', (((+spec[1] - 2 * spec[4]) * MM) / 117.1) + 'px'); }
+            var spec = style && /size:\s*([\d.]+)mm\s+([\d.]+)mm;\s*margin:\s*([\d.]+)mm\s+([\d.]+)mm\s+([\d.]+)mm\s+([\d.]+)mm/.exec(style.textContent);
+            if (spec) { root.style.setProperty('--sip-fs', (((+spec[1] - spec[4] - spec[6]) * MM) / 117.1) + 'px'); }
         }
         function pagesAt(pt) {
             root.style.setProperty('--sip-t', (pt * REM_PER_PT) + 'rem');

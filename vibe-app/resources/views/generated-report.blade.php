@@ -7,6 +7,7 @@
     $box = 'rounded border border-outline-variant/60 bg-white px-3 py-2 text-xs';
 @endphp
 <style>@media print { aside, header, .no-print { display: none !important; } .md\:pl-72 { padding-left: 0 !important; } main { padding: 0 !important; } }</style>
+@include('partials.print-margin')
 <div class="no-print mb-4 flex flex-wrap items-end justify-between gap-3">
     <form method="GET" action="{{ route('reports.generate', $type) }}" class="flex flex-wrap items-end gap-2">
         <label class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">School<select name="school_id" class="{{ $box }} mt-1 block"><option value="">All schools</option>@foreach($schools as $school)<option value="{{ $school->id }}" @selected((string) $school->id === (string) $selectedSchoolId)>{{ $school->name }}</option>@endforeach</select></label>

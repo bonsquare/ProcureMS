@@ -11,6 +11,7 @@
 @if(session('success'))<div class="no-print mb-5 rounded border border-secondary/30 bg-secondary/5 px-4 py-3 text-sm text-secondary">{{ session('success') }}</div>@endif
 @if($errors->any())<div class="no-print mb-5 rounded border border-error/30 bg-error/5 px-4 py-3 text-sm text-error">{{ $errors->first() }}</div>@endif
 <style>@media print { aside, header, .no-print { display: none !important; } .md\:pl-72 { padding-left: 0 !important; } main { padding: 0 !important; } }</style>
+@include('partials.print-margin')
 <div class="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
     <div>
         <h1 class="text-[28px] font-semibold leading-9 tracking-tight">Registry of Allotments, Obligations and Disbursements</h1>

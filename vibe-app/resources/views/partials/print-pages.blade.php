@@ -20,7 +20,7 @@
 --}}
 <style>
     /* Footer of a page that has data-page-footer: the page number in the middle, the title on the right, at the bottom of the printable area. */
-    .doc-footer { position: absolute; left: var(--sheet-px, 0); right: var(--sheet-px, 0); bottom: var(--sheet-py, 0); display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; font-size: var(--doc-footer-size, .75rem); color: #333; line-height: 1.2; }
+    .doc-footer { position: absolute; left: var(--sheet-pl, 0); right: var(--sheet-pr, 0); bottom: var(--sheet-pb, 0); display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; font-size: var(--doc-footer-size, .75rem); color: #333; line-height: 1.2; }
     .doc-footer .center { text-align: center; } .doc-footer .right { text-align: right; }
     @media print {
         html .is-sheets .doc-page { min-height: var(--doc-page-h, 0) !important; }
@@ -453,14 +453,14 @@
             var root = document.documentElement;
             // A page that carries a footer (data-page-footer on the page element) keeps two lines of room at the bottom for it.
             var footed = page.hasAttribute('data-page-footer');
-            var availableHeight = (+spec[2] - 2 * spec[3]) * MM - 3 - (footed ? 2 * parseFloat(getComputedStyle(root).fontSize) : 0);
+            var availableHeight = (+spec[2] - spec[3] - spec[5]) * MM - 3 - (footed ? 2 * parseFloat(getComputedStyle(root).fontSize) : 0);
             var capacity = availableHeight * factor;
 
             // Measure the way the page prints: the paper inside its margins, at full size.
             var kept = { zoom: page.style.zoom, width: page.style.width, preview: root.style.getPropertyValue('--preview-zoom') };
             root.style.setProperty('--preview-zoom', 1);
             page.style.zoom = 1;
-            page.style.width = ((+spec[1] - 2 * spec[4]) * MM) + 'px';
+            page.style.width = ((+spec[1] - spec[4] - spec[6]) * MM) + 'px';
             var made = units.map(function (unit) { return unit.flow ? flowPlan(unit, capacity) : plan(page, unit, capacity, reserves); });
             var kids = Array.prototype.slice.call(page.children);
             page.style.zoom = kept.zoom;
@@ -494,7 +494,7 @@
             blocks.forEach(function (element) { page.appendChild(element); });
             // Footer of every page: the page number in the middle, the title of the document (the value of data-page-footer) on the right.
             if (footed) {
-                root.style.setProperty('--doc-page-h', ((+spec[2] - 2 * spec[3]) * MM - 4) + 'px');
+                root.style.setProperty('--doc-page-h', ((+spec[2] - spec[3] - spec[5]) * MM - 20) + 'px'); // 20 px (5 mm) of room: at some margins the last page was a few pixels taller than the sheet and its footer printed alone on one more page
                 blocks.forEach(function (element, number) {
                     var footer = document.createElement('div');
                     footer.setAttribute('data-doc-footer', '');
@@ -529,7 +529,7 @@
         function paginate() {
             var style = document.getElementById('official-page-style');
             var page = document.querySelector('[data-official-page][data-sheets]');
-            var spec = style && /size:\s*([\d.]+)mm\s+([\d.]+)mm;\s*margin:\s*([\d.]+)mm\s+([\d.]+)mm/.exec(style.textContent);
+            var spec = style && /size:\s*([\d.]+)mm\s+([\d.]+)mm;\s*margin:\s*([\d.]+)mm\s+([\d.]+)mm\s+([\d.]+)mm\s+([\d.]+)mm/.exec(style.textContent);
             var units = page && unitsOf(page);
             if (!units || !units.length || !spec || busy) { return; }
             busy = true;

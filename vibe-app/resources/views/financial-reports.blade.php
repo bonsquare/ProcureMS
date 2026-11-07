@@ -12,6 +12,7 @@
     $needsAccount = in_array($report, ['gl', 'sl'], true);
 @endphp
 <style>@media print { aside, header, nav, .no-print { display: none !important; } main { margin: 0 !important; padding: 0 !important; } .report-sign { display: grid !important; } tr { break-inside: avoid; } thead { display: table-header-group; } }</style>
+@include('partials.print-margin')
 <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
     <div>
         <h1 class="text-[28px] font-semibold leading-9 tracking-tight">Financial Reports</h1>

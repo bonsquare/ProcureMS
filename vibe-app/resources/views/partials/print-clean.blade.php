@@ -74,7 +74,7 @@
     img.official-logo { object-fit: contain; }
     /* data-sheets: every .doc-page is its own sheet on screen (a gap between pages instead of one tall paper). */
     .official-sheet.is-sheets { background: none; box-shadow: none; border-radius: 0; padding: 0 !important; min-height: 0 !important; }
-    .is-sheets .doc-page { position: relative; margin: 0 auto 24px; padding: var(--sheet-py, 0) var(--sheet-px, 0); min-height: var(--sheet-h, 0); background: #fff; border-radius: 2px;
+    .is-sheets .doc-page { position: relative; margin: 0 auto 24px; padding: var(--sheet-pt, 0) var(--sheet-pr, 0) var(--sheet-pb, 0) var(--sheet-pl, 0); min-height: var(--sheet-h, 0); background: #fff; border-radius: 2px;
         box-shadow: 0 1px 2px rgba(15, 23, 42, .14), 0 10px 32px rgba(15, 23, 42, .2); }
     .is-sheets .doc-page:last-child { margin-bottom: 0; }
     .is-sheets .doc-page > .official-fill, .is-sheets .doc-page > [data-chain] { margin-top: 0 !important; margin-bottom: 0 !important; break-before: auto !important; break-after: auto !important; page-break-before: auto !important; page-break-after: auto !important; }
@@ -104,6 +104,7 @@
         td, th { overflow-wrap: break-word; }
     }
 </style>
+<script type="application/json" id="print-settings">{!! json_encode(app(\App\Services\PrintSettings::class)->forSchool($printSchoolId ?? auth()->user()?->school_id), JSON_HEX_TAG | JSON_HEX_AMP) !!}</script>
 <script>
     function closePrintTab(fallbackUrl) {
         window.close();
@@ -124,7 +125,14 @@
             var first = pages[0];
             var docKey = 'officialPrint.' + (first.dataset.doc || document.title.split(' ')[0] || 'doc');
             var single = first.hasAttribute('data-single-page');
-            var baseMargin = parseFloat(first.dataset.margin || '0');
+            // The margins (mm): the document's own row of the school's print settings, else the school default (only for documents that carry a margin of
+            // their own; ORS and DV are drawn to fit the sheet), else the margin written in the document's file.
+            var settings = { default: null, documents: {} };
+            try { settings = JSON.parse(document.getElementById('print-settings').textContent) || settings; } catch (e) { /* keeps the file's margin */ }
+            var own = settings.documents && settings.documents[first.dataset.doc];
+            var chosen = own || (settings.default && first.hasAttribute('data-margin') ? settings.default : null);
+            var fileMargin = parseFloat(first.dataset.margin || '0');
+            var fileM = chosen ? { top: +chosen.top, right: +chosen.right, bottom: +chosen.bottom, left: +chosen.left } : { top: fileMargin, right: fileMargin, bottom: fileMargin, left: fileMargin };
             var state = Object.assign({ paper: first.dataset.paper || 'a4', orientation: first.dataset.orientation || 'portrait', width: 215.9, height: 330.2, zoom: 'fit' }, store(docKey) || {});
             // ?paper=a4&orientation=landscape (or paper=custom&width=&height=) opens the document on that paper.
             var query = new URLSearchParams(location.search);
@@ -184,7 +192,7 @@
                 if (first.dataset.orientation === 'landscape') { base = [base[1], base[0]]; }
                 paged = sheets.every(function (item) {
                     var m = measure(item, base[0]);
-                    return item.tops.length > 0 && m.topHeight <= (base[1] - 2 * baseMargin) * MM * 1.04;
+                    return item.tops.length > 0 && m.topHeight <= (base[1] - fileM.top - fileM.bottom) * MM * 1.04;
                 });
             }
 
@@ -197,23 +205,23 @@
 
             function layout() {
                 var dims = paperMm(), pw = dims[0], ph = dims[1];
-                var marginX = baseMargin, marginY = baseMargin;
+                var mTop = fileM.top, mRight = fileM.right, mBottom = fileM.bottom, mLeft = fileM.left;
                 // A document laid out page by page (data-sheets) counts its rows against the paper inside the margins. Printers refuse to print closer to the edge than
                 // their own limit (an Epson L3210 asks for 0.49" at the bottom), and the browser then makes the page shorter than counted: a row spills over and a
                 // page holding only the footer follows. A margin of 13 mm (0.51") is above those limits (14 mm and more made the AIP count its pages badly).
-                if (sheets.some(function (item) { return item.page.hasAttribute('data-sheets'); })) { marginY = Math.max(marginY, 13); }
+                if (sheets.some(function (item) { return item.page.hasAttribute('data-sheets'); })) { mTop = Math.max(mTop, 13); mBottom = Math.max(mBottom, 13); }
                 var result = sheets.map(function (item) {
                     var m = measure(item, pw);
-                    var zoom = Math.min(1, ((pw - (item.page.hasAttribute('data-sheets') ? 0 : 2 * marginX)) * MM) / m.width);
+                    var zoom = Math.min(1, ((pw - (item.page.hasAttribute('data-sheets') ? 0 : mLeft + mRight)) * MM) / m.width);
                     // 3% headroom: text re-wraps slightly when scaled, so a form scaled to the exact sheet height can overflow by a line.
-                    if (paged) { zoom = Math.min(zoom, ((ph - 2 * marginY) * MM) / ((single ? m.height : m.topHeight) * 1.03)); }
+                    if (paged) { zoom = Math.min(zoom, ((ph - mTop - mBottom) * MM) / ((single ? m.height : m.topHeight) * 1.03)); }
                     return { item: item, zoom: zoom, naturalH: m.height };
                 });
                 // A form that runs past one page gets a small top/bottom page margin so continuation pages never touch the paper edge.
-                var flows = !paged && result.some(function (r) { return r.naturalH * r.zoom > (ph - 2 * marginY) * MM + 2; });
-                if (flows) { marginY = Math.max(marginY, 8); }
+                var flows = !paged && result.some(function (r) { return r.naturalH * r.zoom > (ph - mTop - mBottom) * MM + 2; });
+                if (flows) { mTop = Math.max(mTop, 8); mBottom = Math.max(mBottom, 8); }
                 result.forEach(function (r) {
-                    var availableH = (ph - 2 * marginY) * MM - 3;
+                    var availableH = (ph - mTop - mBottom) * MM - 3;
                     r.item.page.style.zoom = r.zoom;
                     r.item.fills.forEach(function (node) {
                         var fillH = Math.max(0, availableH / r.zoom) + 'px';
@@ -224,16 +232,18 @@
                     });
                     if (paged) { r.item.tops.forEach(function (node, index) { node.style.breakBefore = index ? 'page' : ''; }); }
                     // Forms that carry their own margins (no sheet padding) show each page as a separate sheet.
-                    var separate = paged && !single && !marginX && !marginY && !r.item.page.hasAttribute('data-sheets');
+                    var separate = paged && !single && !mLeft && !mRight && !mTop && !mBottom && !r.item.page.hasAttribute('data-sheets');
                     r.item.sheet.classList.toggle('is-pages', separate);
                     r.item.tops.forEach(function (node) { node.classList.toggle('official-pg', separate); });
                     r.item.sheet.style.minHeight = ph + 'mm';
-                    r.item.sheet.style.padding = marginY + 'mm ' + marginX + 'mm';
+                    r.item.sheet.style.padding = mTop + 'mm ' + mRight + 'mm ' + mBottom + 'mm ' + mLeft + 'mm';
                     r.item.sheet.style.setProperty('--sheet-h', ph + 'mm');
-                    r.item.sheet.style.setProperty('--sheet-px', marginX + 'mm');
-                    r.item.sheet.style.setProperty('--sheet-py', marginY + 'mm');
+                    r.item.sheet.style.setProperty('--sheet-pt', mTop + 'mm');
+                    r.item.sheet.style.setProperty('--sheet-pr', mRight + 'mm');
+                    r.item.sheet.style.setProperty('--sheet-pb', mBottom + 'mm');
+                    r.item.sheet.style.setProperty('--sheet-pl', mLeft + 'mm');
                 });
-                pageStyle.textContent = '@page { size: ' + pw + 'mm ' + ph + 'mm; margin: ' + marginY + 'mm ' + marginX + 'mm; }';
+                pageStyle.textContent = '@page { size: ' + pw + 'mm ' + ph + 'mm; margin: ' + mTop + 'mm ' + mRight + 'mm ' + mBottom + 'mm ' + mLeft + 'mm; }';
                 var preview = state.zoom === 'fit' ? Math.min(1, (window.innerWidth - 40) / (pw * MM)) : (+state.zoom || 1);
                 document.documentElement.style.setProperty('--preview-zoom', preview);
             }

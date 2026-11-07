@@ -5,6 +5,7 @@
 <style>aside, header.fixed { display: none !important; } .md\:pl-72 { padding-left: 0 !important; } main { padding-top: 24px !important; background: #fff !important; } body { background: #fff !important; }</style>
 @endif
 <style>@media print { aside, header, .no-print { display: none !important; } .md\:pl-72 { padding-left: 0 !important; } main { padding: 0 !important; } }</style>
+@include('partials.print-margin')
 @php $th = 'px-4 py-3 text-xs font-semibold uppercase tracking-wider text-on-surface-variant'; @endphp
 <div class="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
     <div>

@@ -56,8 +56,8 @@
         var MM = 96 / 25.4;
         function size() {
             var style = document.getElementById('official-page-style');
-            var spec = style && /size:\s*([\d.]+)mm\s+([\d.]+)mm;\s*margin:\s*([\d.]+)mm\s+([\d.]+)mm/.exec(style.textContent);
-            if (spec) { document.documentElement.style.setProperty('--aip-fs', (((+spec[1] - 2 * spec[4]) * MM) / 117.1) + 'px'); }
+            var spec = style && /size:\s*([\d.]+)mm\s+([\d.]+)mm;\s*margin:\s*([\d.]+)mm\s+([\d.]+)mm\s+([\d.]+)mm\s+([\d.]+)mm/.exec(style.textContent);
+            if (spec) { document.documentElement.style.setProperty('--aip-fs', (((+spec[1] - spec[4] - spec[6]) * MM) / 117.1) + 'px'); }
         }
         document.addEventListener('DOMContentLoaded', function () {
             var style = document.getElementById('official-page-style');
