@@ -54,7 +54,6 @@
             thead { display: table-header-group; }
             .signatures, .summary { break-inside: avoid; }
         }
-        :root { --doc-footer-size: 8px; }
     </style>
 @include('partials.input-fixes')
 @include('partials.print-clean')

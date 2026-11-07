@@ -122,4 +122,13 @@ class PrintSettingsEngineTest extends TestCase
         $this->assertStringContainsString("document.readyState !== 'complete'", $pages);
         $this->assertStringContainsString('document.fonts.ready.then(paginate)', $pages);
     }
+
+    public function test_every_page_footer_has_the_same_rule_and_size_and_no_document_overrides_it(): void
+    {
+        $this->assertStringContainsString('border-top: .5pt solid #7b8794', File::get(resource_path('views/partials/print-pages.blade.php')));
+        $this->assertStringContainsString('var(--doc-footer-size, 8pt)', File::get(resource_path('views/partials/print-pages.blade.php')));
+        foreach (glob(resource_path('views/*.blade.php')) as $view) {
+            $this->assertStringNotContainsString('--doc-footer-size:', File::get($view), basename($view));
+        }
+    }
 }

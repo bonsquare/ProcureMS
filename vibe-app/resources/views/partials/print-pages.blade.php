@@ -20,8 +20,8 @@
 --}}
 <style>
     /* Footer of a page that has data-page-footer: the page number in the middle, the title on the right, at the bottom of the printable area. */
-    .doc-footer { position: absolute; left: var(--sheet-pl, 0); right: var(--sheet-pr, 0); bottom: var(--sheet-pb, 0); display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; font-size: var(--doc-footer-size, .75rem); color: #333; line-height: 1.2; }
-    .doc-footer .center { text-align: center; } .doc-footer .right { text-align: right; }
+    .doc-footer { position: absolute; left: var(--sheet-pl, 0); right: var(--sheet-pr, 0); bottom: var(--sheet-pb, 0); display: grid; grid-template-columns: 1fr auto 1fr; align-items: baseline; column-gap: 12px; padding-top: 3px; border-top: .5pt solid #7b8794; font-size: var(--doc-footer-size, 8pt); letter-spacing: .02em; color: #1f2933; line-height: 1.25; }
+    .doc-footer .center { text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; } .doc-footer .right { text-align: right; color: #3e4c59; overflow-wrap: anywhere; }
     @media print {
         html .is-sheets .doc-page { height: var(--doc-page-h, auto) !important; min-height: 0 !important; overflow: visible; display: flow-root; }
         .doc-footer { left: 0; right: 0; bottom: 0; }
