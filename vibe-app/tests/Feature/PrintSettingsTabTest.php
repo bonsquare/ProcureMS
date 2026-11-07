@@ -1,0 +1,74 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Organization;
+use App\Models\School;
+use App\Models\Subscription;
+use App\Models\User;
+use App\Services\PrintSettings;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+/** The Printing tab of School Settings: the default margins and the margins of one document. */
+class PrintSettingsTabTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private function tenant(string $slug, string $role = 'school_admin'): array
+    {
+        $organization = Organization::create(['name' => $slug, 'slug' => $slug, 'status' => 'active']);
+        $school = School::create(['organization_id' => $organization->id, 'code' => strtoupper($slug), 'name' => $slug.' School', 'status' => 'active']);
+        Subscription::create(['organization_id' => $organization->id, 'school_id' => $school->id, 'plan' => 'professional', 'billing_cycle' => 'monthly', 'amount' => 0, 'payment_status' => 'paid', 'starts_at' => now()->subDay(), 'ends_at' => now()->addMonth()]);
+
+        return [$school, User::factory()->create(['organization_id' => $organization->id, 'school_id' => $school->id, 'role' => $role])];
+    }
+
+    private function tab(School $school): string
+    {
+        return route('school-settings', ['ui' => 'staff-save-v7', 'school_id' => $school->id, 'tab' => 'printing']);
+    }
+
+    public function test_the_printing_tab_shows_the_default_and_every_document(): void
+    {
+        [$school, $user] = $this->tenant('tab-a');
+
+        $page = $this->actingAs($user)->get($this->tab($school))->assertOk()->assertSee('Printing')->assertSee('name="default[top]"', false)->assertSee('name="default[left]"', false)
+            ->assertSee('data-guard="Save the print settings"', false)->assertSee('13 mm');
+
+        foreach (array_keys(PrintSettings::DOCUMENTS) as $key) {
+            $page->assertSee('name="documents['.$key.'][top]"', false);
+        }
+        $page->assertSee(PrintSettings::DOCUMENTS['sob']);
+    }
+
+    public function test_saved_values_are_shown_in_the_boxes(): void
+    {
+        [$school, $user] = $this->tenant('tab-b');
+        app(PrintSettings::class)->save($school, ['top' => 15, 'right' => 10, 'bottom' => 15, 'left' => 10], ['sob' => ['top' => 12, 'right' => 8, 'bottom' => 14, 'left' => 8]]);
+
+        $this->actingAs($user)->get($this->tab($school))->assertOk()
+            ->assertSee('name="default[top]" value="15"', false)->assertSee('name="documents[sob][bottom]" value="14"', false);
+    }
+
+    public function test_a_school_without_settings_shows_blank_document_boxes(): void
+    {
+        [$school, $user] = $this->tenant('tab-c');
+
+        $this->actingAs($user)->get($this->tab($school))->assertOk()->assertSee('name="documents[sob][top]" value=""', false);
+    }
+
+    public function test_the_tab_is_offered_in_the_tab_bar(): void
+    {
+        [$school, $user] = $this->tenant('tab-d');
+
+        $this->actingAs($user)->get(route('school-settings', ['ui' => 'staff-save-v7', 'school_id' => $school->id]))->assertOk()->assertSee('tab=printing', false);
+    }
+
+    public function test_a_user_without_the_permission_sees_the_values_but_no_save_button(): void
+    {
+        [$school, $user] = $this->tenant('tab-e', 'auditor');
+
+        $this->actingAs($user)->get($this->tab($school))->assertOk()->assertDontSee('data-guard="Save the print settings"', false);
+    }
+}
