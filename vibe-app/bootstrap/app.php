@@ -39,6 +39,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('web', EnsureStationConfirmed::class);
         $middleware->appendToGroup('web', ShowDriveReconnectBanner::class);
         $middleware->appendToGroup('web', RecordUserActions::class);
+        $middleware->appendToGroup('web', \App\Http\Middleware\RequireActionPin::class);
         // The Sub-master limits must run before route-model binding, so a refusal never depends on the record existing.
         $middleware->appendToGroup('web', EnforceSubMasterLimits::class);
         $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: EnforceSubMasterLimits::class);

@@ -20,7 +20,7 @@
                 <tr class="border-b border-outline-variant/20"><td colspan="5" class="px-3 pb-3">
                     <details class="rounded border border-outline-variant/30 bg-surface-low/50 p-3">
                         <summary class="cursor-pointer text-xs font-bold text-primary">Edit {{ $sub->name }}</summary>
-                        <form method="POST" action="{{ route('master-user.sub-masters.update', $sub->id) }}" class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">@csrf @method('PUT')
+                        <form data-guard="Save the changes to this Sub-master" method="POST" action="{{ route('master-user.sub-masters.update', $sub->id) }}" class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">@csrf @method('PUT')
                             <label class="text-xs font-semibold text-on-surface-variant">Full name<input name="name" required value="{{ $sub->name }}" class="{{ $input }}"></label>
                             <label class="text-xs font-semibold text-on-surface-variant">Username<input name="username" required value="{{ $sub->username }}" class="{{ $input }}"></label>
                             <label class="text-xs font-semibold text-on-surface-variant">E-mail<input type="email" name="email" required value="{{ $sub->email }}" class="{{ $input }}"></label>
@@ -36,7 +36,7 @@
                                 <input type="password" name="password_confirmation" required minlength="12" placeholder="Confirm new password" autocomplete="new-password" class="{{ $input }}">
                                 <button class="rounded border border-primary/40 px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary hover:text-white">Reset password</button>
                             </form>
-                            <form method="POST" action="{{ route('master-user.sub-masters.status', $sub->id) }}" class="space-y-2">@csrf @method('PUT')
+                            <form data-guard="Change the status of this Sub-master" method="POST" action="{{ route('master-user.sub-masters.status', $sub->id) }}" class="space-y-2">@csrf @method('PUT')
                                 <p class="text-xs font-bold">Status</p>
                                 @if(($sub->status ?: 'active') === 'active')
                                     <input type="hidden" name="status" value="inactive"><button class="rounded border border-error/40 px-3 py-1.5 text-xs font-bold text-error hover:bg-error hover:text-white" onclick="return confirm('Deactivate this Sub-master? They cannot sign in until you reactivate them.')">Deactivate</button>

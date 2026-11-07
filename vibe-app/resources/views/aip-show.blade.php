@@ -111,7 +111,7 @@
                         @if($canManage)
                             <div class="flex shrink-0 items-center gap-1">
                                 <a href="{{ route('aip.kras.edit', [$aip, $kra]) }}" class="mr-1 flex items-center gap-1 rounded bg-secondary px-3 py-2 text-xs font-semibold text-white hover:opacity-90"><span class="material-symbols-outlined text-[16px]">edit</span>Edit KRA</a>
-                                <form method="POST" action="{{ route('aip.kras.destroy', [$aip, $kra]) }}" class="inline" onsubmit="return confirm('Remove this KRA and all of its activities?')">@csrf @method('DELETE')<button title="Delete KRA" aria-label="Delete KRA" class="{{ $icon }} text-error"><span class="material-symbols-outlined text-[20px]">delete</span></button></form>
+                                <form data-guard="Remove this KRA and its activities" method="POST" action="{{ route('aip.kras.destroy', [$aip, $kra]) }}" class="inline" onsubmit="return confirm('Remove this KRA and all of its activities?')">@csrf @method('DELETE')<button title="Delete KRA" aria-label="Delete KRA" class="{{ $icon }} text-error"><span class="material-symbols-outlined text-[20px]">delete</span></button></form>
                             </div>
                         @endif
                     </div>
@@ -128,7 +128,7 @@
                                     @if($canManage)
                                         <div class="flex shrink-0 items-center gap-1">
                                             <a href="{{ route('aip.kras.edit', [$aip, $kra]) }}#activity-{{ $loop->index }}" class="flex items-center gap-1 rounded bg-secondary px-3 py-2 text-xs font-semibold text-white hover:opacity-90"><span class="material-symbols-outlined text-[16px]">edit</span>Edit</a>
-                                            <form method="POST" action="{{ route('aip.activities.destroy', [$aip, $a]) }}" class="inline" onsubmit="return confirm('Remove this activity?')">@csrf @method('DELETE')<button title="Delete activity" aria-label="Delete activity" class="{{ $icon }} text-error"><span class="material-symbols-outlined text-[20px]">delete</span></button></form>
+                                            <form data-guard="Remove this activity" method="POST" action="{{ route('aip.activities.destroy', [$aip, $a]) }}" class="inline" onsubmit="return confirm('Remove this activity?')">@csrf @method('DELETE')<button title="Delete activity" aria-label="Delete activity" class="{{ $icon }} text-error"><span class="material-symbols-outlined text-[20px]">delete</span></button></form>
                                         </div>
                                     @endif
                                 </div>

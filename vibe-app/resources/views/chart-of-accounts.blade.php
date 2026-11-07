@@ -31,7 +31,7 @@
                     <template data-rows>@foreach($group as $account)
                         @php $used = $usage->get($account->id); @endphp
                         <tr>
-                            <td class="px-4 py-2"><form method="POST" action="{{ route('chart-of-accounts.update', $account) }}" id="edit-{{ $account->id }}">@csrf @method('PUT')</form><input form="edit-{{ $account->id }}" name="title" value="{{ $account->title }}" required readonly class="w-full rounded border border-transparent bg-transparent px-2 py-1.5 hover:border-outline-variant/50 focus:border-primary focus:bg-white focus:outline-none"></td>
+                            <td class="px-4 py-2"><form data-guard="Save the changes to this account" method="POST" action="{{ route('chart-of-accounts.update', $account) }}" id="edit-{{ $account->id }}">@csrf @method('PUT')</form><input form="edit-{{ $account->id }}" name="title" value="{{ $account->title }}" required readonly class="w-full rounded border border-transparent bg-transparent px-2 py-1.5 hover:border-outline-variant/50 focus:border-primary focus:bg-white focus:outline-none"></td>
                             <td class="px-4 py-2"><input form="edit-{{ $account->id }}" name="code" value="{{ $account->code }}" required readonly class="w-full rounded border border-transparent bg-transparent px-2 py-1.5 tabular-nums hover:border-outline-variant/50 focus:border-primary focus:bg-white focus:outline-none"></td>
                             <td class="px-4 py-2"><input form="edit-{{ $account->id }}" name="category" list="coa-categories" value="{{ $account->category }}" required readonly class="w-full rounded border border-transparent bg-transparent px-2 py-1.5 hover:border-outline-variant/50 focus:border-primary focus:bg-white focus:outline-none"></td>
                             <td class="px-4 py-2 text-right tabular-nums">{{ $used->items ?? 0 }}</td>
@@ -43,7 +43,7 @@
                                     <button type="button" data-cancel title="Cancel" aria-label="Cancel" class="inline-flex h-8 w-8 items-center justify-center rounded hover:bg-surface-container text-on-surface-variant"><span class="material-symbols-outlined text-[20px]">close</span></button>
                                 </span>
                                 @unless($used)
-                                    <form method="POST" action="{{ route('chart-of-accounts.destroy', $account) }}" class="inline" data-delete onsubmit="return confirm('Delete this account?')">@csrf @method('DELETE')<button title="Delete" aria-label="Delete" class="inline-flex h-8 w-8 items-center justify-center rounded hover:bg-surface-container text-error"><span class="material-symbols-outlined text-[20px]">delete</span></button></form>
+                                    <form data-guard="Delete this account" method="POST" action="{{ route('chart-of-accounts.destroy', $account) }}" class="inline" data-delete onsubmit="return confirm('Delete this account?')">@csrf @method('DELETE')<button title="Delete" aria-label="Delete" class="inline-flex h-8 w-8 items-center justify-center rounded hover:bg-surface-container text-error"><span class="material-symbols-outlined text-[20px]">delete</span></button></form>
                                 @endunless
                             </td>
                         </tr>

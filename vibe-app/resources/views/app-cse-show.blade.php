@@ -35,7 +35,7 @@
 <details open id="plan-details" class="mb-5 overflow-hidden rounded-xl border border-outline-variant/60 bg-white shadow-sm">
     <summary class="flex cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center gap-3 bg-[#eef4fa] px-5 py-3"><span class="material-symbols-outlined sum-chevron shrink-0 text-[20px] text-primary transition-transform" aria-hidden="true">expand_more</span><span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-white">1</span><span><h2 class="text-sm font-bold text-primary">Details</h2><span class="block text-xs text-on-surface-variant">Office, contact person, date prepared and the approved budget.</span></span></summary>
     @if($editable)
-        <form method="POST" action="{{ route('planning.app-cse.update', $plan) }}" class="grid gap-4 border-t border-outline-variant/40 p-5 md:grid-cols-3">@csrf @method('PUT')
+        <form data-guard="Save the changes to this APP-CSE" method="POST" action="{{ route('planning.app-cse.update', $plan) }}" class="grid gap-4 border-t border-outline-variant/40 p-5 md:grid-cols-3">@csrf @method('PUT')
             <label class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant md:col-span-2">Department/Bureau/Office<input name="office_name" value="{{ old('office_name', $plan->office_name) }}" maxlength="255" class="{{ $box }}"></label>
             <label class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Agency Account Code<input name="account_code" value="{{ old('account_code', $plan->account_code) }}" maxlength="255" class="{{ $box }}"></label>
             <label class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Region<input name="region" value="{{ old('region', $plan->region) }}" maxlength="255" class="{{ $box }}"></label>
@@ -225,7 +225,7 @@
 {{-- Signatories of the APP-CSE: at the very bottom of the page, side by side (a form of their own: only the signatory fields are sent). --}}
 <section class="mb-8 overflow-hidden rounded-xl border border-outline-variant/60 bg-white shadow-sm">
     <div class="flex items-center gap-3 border-b border-outline-variant/40 bg-[#eef4fa] px-5 py-3"><span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-white">4</span><div><h2 class="text-sm font-bold text-primary">Signatories</h2><p class="text-xs text-on-surface-variant">Who signs the printed APP-CSE.</p></div></div>
-    <form method="POST" action="{{ route('planning.app-cse.update', $plan) }}" class="p-5">@csrf @method('PUT')
+    <form data-guard="Save the signatories of this APP-CSE" method="POST" action="{{ route('planning.app-cse.update', $plan) }}" class="p-5">@csrf @method('PUT')
         @php
             $cseDefs = [];
             foreach ([['prepared_by', 'Prepared by', 'Prepared by:', 'Property/Supply Officer'], ['noted_by', 'Noted by', 'NOTED:', 'School Head'], ['certified_by', 'Certified funds available', 'Certified Funds Available / Certified Appropriate Funds Available:', 'Accountant / Local Budget Officer']] as [$slotKey, $slotLegend, $slotTitle, $slotPosition]) {

@@ -47,7 +47,7 @@
                     </div>
                     <div class="flex items-center gap-1.5">
                         <button type="button" data-staff-edit="{{ $member->id }}" class="inline-flex h-8 items-center gap-1 rounded-lg border border-primary/40 px-3 text-[11px] font-bold text-primary hover:bg-primary hover:text-white" aria-label="Manage roles of {{ $member->name }}"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">manage_accounts</span>Roles</button>
-                        <form method="POST" action="{{ route('school-settings.employees.destroy', $member) }}" onsubmit="return confirm('Remove {{ addslashes($member->name) }} from the employee list?')">@csrf @method('DELETE')<input type="hidden" name="school_id" value="{{ $selectedSchool->id }}"><button class="grid h-8 w-8 place-items-center rounded-lg border border-outline-variant text-on-surface-variant hover:border-error hover:bg-error hover:text-white" aria-label="Remove {{ $member->name }}" title="Remove"><span class="material-symbols-outlined text-[17px]" aria-hidden="true">delete</span></button></form>
+                        <form data-guard="Remove this employee" method="POST" action="{{ route('school-settings.employees.destroy', $member) }}" onsubmit="return confirm('Remove {{ addslashes($member->name) }} from the employee list?')">@csrf @method('DELETE')<input type="hidden" name="school_id" value="{{ $selectedSchool->id }}"><button class="grid h-8 w-8 place-items-center rounded-lg border border-outline-variant text-on-surface-variant hover:border-error hover:bg-error hover:text-white" aria-label="Remove {{ $member->name }}" title="Remove"><span class="material-symbols-outlined text-[17px]" aria-hidden="true">delete</span></button></form>
                     </div>
                 </li>
             @endforeach
@@ -94,7 +94,7 @@
 </dialog>
 
 <dialog id="staff-edit" class="{{ $dialog }}">
-    <form method="POST" id="staff-edit-form" class="p-5">
+    <form data-guard="Save the changes to this employee" method="POST" id="staff-edit-form" class="p-5">
         @csrf @method('PUT')
         <input type="hidden" name="school_id" value="{{ $selectedSchool->id }}">
         <div class="mb-4 flex items-start justify-between"><div><h3 class="text-lg font-bold">Employee roles</h3><p class="text-xs text-on-surface-variant">Employee no. <strong id="staff-edit-code"></strong></p></div><button type="button" data-close class="rounded-lg p-1 hover:bg-surface-container" aria-label="Close"><span class="material-symbols-outlined">close</span></button></div>

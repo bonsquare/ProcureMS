@@ -22,7 +22,7 @@
     <div class="mb-5 rounded border border-error/30 bg-error/5 px-4 py-3 text-sm text-error"><p class="font-semibold">Please fix the following:</p><ul class="mt-1 list-disc pl-5">@foreach(collect($errors->all())->unique()->take(5) as $message)<li>{{ $message }}</li>@endforeach</ul></div>
 @endif
 
-<form id="kra-page-form" method="POST" action="{{ $editing ? route('aip.kras.update', [$aip, $kra]) : route('aip.kras.store', $aip) }}" class="space-y-5">
+<form @if($editing) data-guard="Save the changes to this KRA" @endif id="kra-page-form" method="POST" action="{{ $editing ? route('aip.kras.update', [$aip, $kra]) : route('aip.kras.store', $aip) }}" class="space-y-5">
     @csrf @if($editing) @method('PUT') @endif
 
     <section class="overflow-hidden rounded-xl border border-outline-variant/60 bg-white shadow-sm">

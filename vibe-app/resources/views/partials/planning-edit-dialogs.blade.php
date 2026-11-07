@@ -7,7 +7,7 @@
 
 {{-- SIP program --}}
 <dialog id="dlg-sip" class="{{ $dialog }}">
-    <form method="POST" class="grid gap-3 p-5 sm:grid-cols-2">@csrf @method('PUT')
+    <form data-guard="Save the changes to this program" method="POST" class="grid gap-3 p-5 sm:grid-cols-2">@csrf @method('PUT')
         <h3 class="text-lg font-bold sm:col-span-2">Edit SIP program</h3>
         <label class="text-xs font-semibold">Plan Start Year (Year 1)<input required type="number" name="school_year" min="2000" max="2100" class="{{ $field }}"></label>
         <label class="text-xs font-semibold">Planning period<input name="planning_period" maxlength="100" placeholder="e.g. 2026-2028" class="{{ $field }}"></label>
@@ -55,7 +55,7 @@
 
 {{-- SIP activity --}}
 <dialog id="dlg-activity" class="{{ $dialog }}">
-    <form method="POST" class="grid gap-3 p-5 sm:grid-cols-3">@csrf @method('PUT')
+    <form data-guard="Save the changes to this activity" method="POST" class="grid gap-3 p-5 sm:grid-cols-3">@csrf @method('PUT')
         <h3 class="text-lg font-bold sm:col-span-3">Edit SIP activity</h3>
         <label class="text-xs font-semibold sm:col-span-3">Activity<input required name="activity" maxlength="1000" class="{{ $field }}"></label>
         @foreach([1, 2, 3] as $y)<label class="text-xs font-semibold">Physical Y{{ $y }}<input type="number" min="0" step="0.01" name="physical_year{{ $y }}" class="{{ $field }}"></label>@endforeach
@@ -69,7 +69,7 @@
 
 {{-- APP item --}}
 <dialog id="dlg-app-item" class="{{ $dialog }}">
-    <form method="POST" class="grid gap-3 p-5 sm:grid-cols-2">@csrf @method('PUT')
+    <form data-guard="Save the changes to this APP item" method="POST" class="grid gap-3 p-5 sm:grid-cols-2">@csrf @method('PUT')
         <h3 class="text-lg font-bold sm:col-span-2">Edit APP item</h3>
         <label class="text-xs font-semibold sm:col-span-2">Procurement item<input required name="procurement_item" maxlength="255" class="{{ $field }}"></label>
         <label class="text-xs font-semibold sm:col-span-2">Specifications<input name="specifications" maxlength="2000" class="{{ $field }}"></label>
@@ -86,7 +86,7 @@
 
 {{-- SOB: its quarter and fund --}}
 <dialog id="dlg-sob" class="w-[min(94vw,32rem)] rounded-2xl border border-outline-variant/60 p-0 shadow-2xl backdrop:bg-slate-900/40">
-    <form method="POST" class="grid gap-3 p-5 sm:grid-cols-2">@csrf @method('PUT')
+    <form data-guard="Save the changes to this SOB" method="POST" class="grid gap-3 p-5 sm:grid-cols-2">@csrf @method('PUT')
         <h3 class="text-lg font-bold sm:col-span-2">Edit SOB</h3>
         <p class="-mt-1 text-xs text-on-surface-variant sm:col-span-2">Change the quarter or the source of fund of this SOB.</p>
         <label class="text-xs font-semibold">Quarter<select required name="quarter" class="{{ $field }}">@foreach(\App\Models\SobPlan::QUARTERS as $quarter => $quarterLabel)<option value="{{ $quarter }}">{{ $quarterLabel }}</option>@endforeach</select></label>

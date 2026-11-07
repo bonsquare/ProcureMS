@@ -50,7 +50,7 @@
 
 {{-- Edit user --}}
 <dialog id="user-edit" class="{{ $dialog }}">
-    <form method="POST" id="user-edit-form" class="p-5">
+    <form data-guard="Save the changes to this user" method="POST" id="user-edit-form" class="p-5">
         @csrf @method('PUT')
         <input type="hidden" name="school_id" value="{{ $selectedSchool->id }}">
         <div class="mb-4 flex items-start justify-between"><div><h3 class="text-lg font-bold">Edit system user</h3><p class="text-xs text-on-surface-variant">User ID <strong id="user-edit-code"></strong> cannot be changed.</p></div><button type="button" data-close class="rounded-lg p-1 hover:bg-surface-container" aria-label="Close"><span class="material-symbols-outlined">close</span></button></div>

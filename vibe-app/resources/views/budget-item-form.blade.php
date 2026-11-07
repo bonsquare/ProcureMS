@@ -17,7 +17,7 @@
 @if(session('success'))<div class="mb-5 rounded border border-secondary/30 bg-secondary/5 px-4 py-3 text-sm text-secondary">{{ session('success') }}</div>@endif
 @if($errors->any())<div class="mb-5 rounded border border-error/30 bg-error/5 px-4 py-3 text-sm text-error">{{ $errors->first() }}</div>@endif
 
-<form method="POST" action="{{ $editing ? route('budget.allocation.update', $item) : route('budget.allocation.store') }}" class="space-y-4">
+<form @if($editing) data-guard="Save the changes to this budget line" @endif method="POST" action="{{ $editing ? route('budget.allocation.update', $item) : route('budget.allocation.store') }}" class="space-y-4">
     @csrf @if($editing) @method('PUT') @endif @if(request('return') === 'registry')<input type="hidden" name="return" value="registry">@endif
 
     <section class="rounded border border-outline-variant/30 bg-white p-5">

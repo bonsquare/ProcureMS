@@ -51,6 +51,7 @@
 <main class="min-h-screen bg-surface px-4 pb-16 pt-24 md:px-6 lg:px-8"><div class="mx-auto max-w-[1600px]">
 @yield('content')
 </div></main></div>
+@include('partials.action-guard')
 @stack('scripts')
 @include('partials.profile-menu')
 @include('partials.mobile-nav')

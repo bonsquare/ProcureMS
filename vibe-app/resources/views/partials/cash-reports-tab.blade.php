@@ -426,8 +426,9 @@
                 });
                 const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = 'Delete'; remove.className = 'font-semibold text-error hover:underline';
                 remove.addEventListener('click', async () => {
-                    if (!confirm('Delete this record of cash downloaded?')) return;
-                    await fundRequest('DELETE', receiptsBase + '/' + item.id, {});
+                    const answer = await window.actionGuard('Delete this record of cash downloaded'); if (!answer) return;
+                    const gone = await fundRequest('DELETE', receiptsBase + '/' + item.id, answer);
+                    if (!gone.ok) { const body = await gone.json().catch(() => ({})); fundError.textContent = Object.values(body.errors || {})[0]?.[0] || body.message || 'It could not be deleted.'; fundError.classList.remove('hidden'); return; }
                     resetFund(); loadFund(); refresh();
                 });
                 actions.append(edit, remove); row.append(actions); fundRows.append(row);
@@ -452,7 +453,10 @@
             event.preventDefault();
             fundError.classList.add('hidden');
             const id = field('cash-fund-id').value;
+            const answer = id ? await window.actionGuard('Save the changes to this record of cash downloaded') : {};
+            if (!answer) return;
             const response = await fundRequest(id ? 'PUT' : 'POST', id ? receiptsBase + '/' + id : receiptsStore, {
+                ...answer,
                 school_id: field('cash-report-school').value, received_at: field('cash-fund-date').value, kind: field('cash-fund-kind').value, source_of_fund: field('cash-fund-source').value === 'Others' ? field('cash-fund-other').value.trim() : field('cash-fund-source').value,
                 amount: field('cash-fund-amount').value, reference: field('cash-fund-reference').value, note: field('cash-fund-note').value,
             });
@@ -494,7 +498,12 @@
                 });
                 const actions = document.createElement('td'); actions.className = 'whitespace-nowrap px-3 py-2 text-right';
                 const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = 'Remove'; remove.className = 'font-semibold text-error hover:underline';
-                remove.addEventListener('click', async () => { await checkRequest('DELETE', checksBase + '/' + item.id, {}); loadChecks(); refresh(); });
+                remove.addEventListener('click', async () => {
+                    const answer = await window.actionGuard('Remove check ' + item.check_number + ' from the register'); if (!answer) return;
+                    const gone = await checkRequest('DELETE', checksBase + '/' + item.id, answer);
+                    if (!gone.ok) { const body = await gone.json().catch(() => ({})); alert(Object.values(body.errors || {})[0]?.[0] || body.message || 'It could not be removed.'); return; }
+                    loadChecks(); refresh();
+                });
                 actions.append(remove); row.append(actions); checkRows.append(row);
             });
         };

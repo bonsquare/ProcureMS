@@ -8,7 +8,7 @@
     <section class="rounded border border-outline-variant/30 bg-white p-5">
         <h2 class="text-lg font-semibold">Account details</h2>
         <p class="mt-1 text-xs text-on-surface-variant">Your own master account. If you change the e-mail or the username, that is what you use the next time you sign in.@unless($canRename) Your name and username can only be changed by the master user.@endunless</p>
-        <form method="POST" action="{{ route('master-user.update') }}" class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">@csrf @method('PUT')
+        <form data-guard="Save the changes to your profile" method="POST" action="{{ route('master-user.update') }}" class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">@csrf @method('PUT')
             <label class="text-xs font-semibold text-on-surface-variant sm:col-span-2">Full name<input name="name" required value="{{ old('name', $me->name) }}" {{ $locked }} class="{{ $input }}{{ $canRename ? '' : ' bg-surface-container text-on-surface-variant' }}">@error('name')<span class="mt-1 block text-error">{{ $message }}</span>@enderror</label>
             <label class="text-xs font-semibold text-on-surface-variant">Username<input name="username" required value="{{ old('username', $me->username) }}" {{ $locked }} class="{{ $input }}{{ $canRename ? '' : ' bg-surface-container text-on-surface-variant' }}">@error('username')<span class="mt-1 block text-error">{{ $message }}</span>@enderror</label>
             <label class="text-xs font-semibold text-on-surface-variant">E-mail<input type="email" name="email" required value="{{ old('email', $me->email) }}" class="{{ $input }}">@error('email')<span class="mt-1 block text-error">{{ $message }}</span>@enderror</label>

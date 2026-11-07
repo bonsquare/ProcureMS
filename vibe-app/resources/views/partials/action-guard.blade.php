@@ -1,3 +1,4 @@
+@once
 {{-- Extra protection for an edit, update or delete: a form with data-guard="Title" opens this window and asks for a reason and the user's own 6-digit PIN before it is sent. Script code can ask the same with `await window.actionGuard('Title')`, which gives {reason, pin} or null. A person with no PIN, or who forgot it, sets a new one here with the login password. A button with data-history="url" lists what was done to that record. --}}
 <dialog id="action-guard" aria-labelledby="action-guard-title" aria-describedby="action-guard-intro" style="width:min(30rem,calc(100% - 2rem))" class="rounded-2xl border border-outline-variant/40 bg-white p-0 text-left shadow-2xl backdrop:bg-black/50">
     <form method="dialog" class="p-6" id="action-guard-form">
@@ -102,6 +103,7 @@
             const guarded = event.target;
             if (! guarded.matches || ! guarded.matches('form[data-guard]') || guarded.dataset.guarded === '1') return;
             event.preventDefault();
+            event.stopImmediatePropagation(); // the old confirm() of the form is replaced by this window
             target = guarded;
             open(guarded.dataset.guard);
         }, true);
@@ -187,3 +189,4 @@
         });
     })();
 </script>
+@endonce

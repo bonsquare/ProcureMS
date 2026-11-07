@@ -41,7 +41,7 @@
                     <span class="material-symbols-outlined text-on-surface-variant">description</span>
                     <div class="min-w-0 flex-1"><p class="truncate text-sm font-semibold">{{ $file->name }}</p><p class="text-xs text-on-surface-variant">{{ $file->size >= 1048576 ? round($file->size / 1048576, 1).' MB' : max(1, round($file->size / 1024)).' KB' }} · {{ $file->created_at->format('M d, Y') }}</p></div>
                     <a href="{{ $drive->webLink($file->drive_file_id) }}" target="_blank" rel="noopener" class="rounded border border-primary/40 px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary hover:text-white">Open in Drive</a>
-                    <form method="POST" action="{{ route('drive-files.destroy', $file->id) }}" onsubmit="return confirm('Delete this file from your Google Drive?')">@csrf @method('DELETE')<button class="rounded border border-error/40 px-3 py-1.5 text-xs font-bold text-error hover:bg-error hover:text-white">Delete</button></form>
+                    <form data-guard="Delete this file from your Google Drive" method="POST" action="{{ route('drive-files.destroy', $file->id) }}" onsubmit="return confirm('Delete this file from your Google Drive?')">@csrf @method('DELETE')<button class="rounded border border-error/40 px-3 py-1.5 text-xs font-bold text-error hover:bg-error hover:text-white">Delete</button></form>
                 </div>
             @empty
                 <p class="p-5 text-sm text-on-surface-variant">No files yet.</p>

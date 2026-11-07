@@ -19,7 +19,7 @@
             <div><dt class="text-xs font-semibold text-on-surface-variant">Password changed</dt><dd>{{ $account->password_changed_at?->format('M d, Y') ?? 'Never' }}</dd></div>
             @unless($isActive)<div><dt class="text-xs font-semibold text-on-surface-variant">Inactive since</dt><dd>{{ $account->deactivated_at?->format('M d, Y') ?? '—' }}@if($account->deactivation_reason) · {{ $account->deactivation_reason }}@endif</dd></div>@endunless
         </dl>
-        <form method="POST" action="{{ route('user-management.users.update', $account->id) }}" class="mt-5 grid grid-cols-1 gap-4 border-t border-outline-variant/20 pt-5 sm:grid-cols-2">@csrf @method('PUT')
+        <form data-guard="Save the changes to this user" method="POST" action="{{ route('user-management.users.update', $account->id) }}" class="mt-5 grid grid-cols-1 gap-4 border-t border-outline-variant/20 pt-5 sm:grid-cols-2">@csrf @method('PUT')
             <p class="text-xs text-on-surface-variant sm:col-span-2">The name and username can only be changed by the user.</p>
             <label class="text-xs font-semibold text-on-surface-variant">E-mail<input type="email" name="email" required value="{{ old('email', $account->email) }}" class="{{ $input }}">@error('email')<span class="mt-1 block text-error">{{ $message }}</span>@enderror</label>
             <label class="text-xs font-semibold text-on-surface-variant">Phone<input name="phone" value="{{ old('phone', $account->phone) }}" class="{{ $input }}">@error('phone')<span class="mt-1 block text-error">{{ $message }}</span>@enderror</label>

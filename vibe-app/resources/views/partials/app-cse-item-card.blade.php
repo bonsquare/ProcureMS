@@ -6,7 +6,7 @@
     <div class="border-b border-outline-variant/10 last:border-0">
         <div class="px-4 py-2">
             @if($itemEditable)
-            <form method="POST" action="{{ route('planning.app-cse.items.update', $item) }}">@csrf @method('PUT')
+            <form data-guard="Save the changes to this item" method="POST" action="{{ route('planning.app-cse.items.update', $item) }}">@csrf @method('PUT')
             @endif
                 <div class="grid items-center gap-x-1 text-sm" style="{{ $rowColumns }}">
                     <div class="min-w-0 pr-2">
@@ -28,7 +28,7 @@
             @if($itemEditable)
                 <div class="mt-2 flex items-center gap-3"><button class="rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-white hover:bg-primary-container">Save item</button></div>
             </form>
-            <form method="POST" action="{{ route('planning.app-cse.items.destroy', $item) }}" class="mt-1" onsubmit="return confirm('Remove this item from the APP-CSE?')">@csrf @method('DELETE')<button class="text-xs font-semibold text-error hover:underline">Remove</button></form>
+            <form data-guard="Remove this item from the APP-CSE" method="POST" action="{{ route('planning.app-cse.items.destroy', $item) }}" class="mt-1" onsubmit="return confirm('Remove this item from the APP-CSE?')">@csrf @method('DELETE')<button class="text-xs font-semibold text-error hover:underline">Remove</button></form>
             @endif
         </div>
     </div>

@@ -96,7 +96,7 @@
                             <a href="{{ route('budget.allocation.show', $i) }}" title="View" aria-label="View" class="{{ $icon }} text-primary"><span class="material-symbols-outlined text-[20px]">visibility</span></a>
                             @if($canManage && !$i->closed_at)<a href="{{ route('budget.allocation.edit', $i) }}" title="Edit" aria-label="Edit" class="{{ $icon }} text-primary"><span class="material-symbols-outlined text-[20px]">edit</span></a>@endif
                             <a href="{{ route('budget.allocation.show', [$i, 'print' => 1]) }}" target="_blank" rel="noopener" title="Print" aria-label="Print" class="{{ $icon }} text-on-surface-variant"><span class="material-symbols-outlined text-[20px]">print</span></a>
-                            @if($canManage && !$i->closed_at)<form method="POST" action="{{ route('budget.allocation.destroy', $i) }}" class="inline" onsubmit="return confirm('Delete this budget line?')">@csrf @method('DELETE')<button title="Delete" aria-label="Delete" class="{{ $icon }} text-error"><span class="material-symbols-outlined text-[20px]">delete</span></button></form>@endif
+                            @if($canManage && !$i->closed_at)<form data-guard="Delete this budget line" method="POST" action="{{ route('budget.allocation.destroy', $i) }}" class="inline" onsubmit="return confirm('Delete this budget line?')">@csrf @method('DELETE')<button title="Delete" aria-label="Delete" class="{{ $icon }} text-error"><span class="material-symbols-outlined text-[20px]">delete</span></button></form>@endif
                         </td>
                     </tr>
                 @empty

@@ -99,7 +99,7 @@
             <tbody class="divide-y divide-outline-variant/20">
                 @forelse($openings as $opening)
                     <tr><td class="px-4 py-2">{{ $opening->as_of->format('Y-m-d') }}</td><td class="px-4 py-2">{{ $opening->fund_cluster }}</td><td class="px-4 py-2">{{ $opening->account_code }} · {{ $opening->account_title }}</td><td class="px-4 py-2 text-right tabular-nums">{{ $num($opening->debit) }}</td><td class="px-4 py-2 text-right tabular-nums">{{ $num($opening->credit) }}</td>
-                        <td class="px-4 py-2 text-right">@if($canManage)<form method="POST" action="{{ route('financial-reports.opening.destroy', $opening) }}" onsubmit="return confirm('Delete this opening balance?')">@csrf @method('DELETE')<button class="text-sm font-semibold text-error hover:underline">Delete</button></form>@endif</td></tr>
+                        <td class="px-4 py-2 text-right">@if($canManage)<form data-guard="Delete this opening balance" method="POST" action="{{ route('financial-reports.opening.destroy', $opening) }}" onsubmit="return confirm('Delete this opening balance?')">@csrf @method('DELETE')<button class="text-sm font-semibold text-error hover:underline">Delete</button></form>@endif</td></tr>
                 @empty
                     <tr><td colspan="6" class="px-4 py-4 text-center text-on-surface-variant">No opening balances yet.</td></tr>
                 @endforelse

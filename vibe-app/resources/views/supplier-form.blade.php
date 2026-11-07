@@ -21,7 +21,7 @@
     <p class="mt-2 text-sm text-on-surface-variant">This data will appear on the NOA, NTP, PO and other procurement documents.</p>
 </header>
 @if($errors->any())<div role="alert" class="civic-alert" style="border-color:#e4b4b7;background:#f8e2e4;color:#8a2f35">Please check the highlighted fields below.</div>@endif
-<form method="POST" action="{{ $editing ? route('suppliers.update', $supplier) : route('suppliers.store') }}" class="space-y-4">
+<form @if($editing) data-guard="Save the changes to this supplier" @endif method="POST" action="{{ $editing ? route('suppliers.update', $supplier) : route('suppliers.store') }}" class="space-y-4">
     @csrf
     @if($abstractBack)<input type="hidden" name="return_to" value="abstract"><input type="hidden" name="return_request" value="{{ $abstractReturn->id }}">@endif
     @if($editing) @method('PUT') @endif

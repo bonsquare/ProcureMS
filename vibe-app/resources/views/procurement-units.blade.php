@@ -17,7 +17,7 @@
                 <li class="flex items-center justify-between gap-3 px-5 py-3">
                     <span class="text-sm font-semibold">{{ $unit->name }}</span>
                     @if(request()->user()->hasPermission('supplier.manage'))
-                        <form method="POST" action="{{ route('units.destroy', $unit) }}" onsubmit="return confirm('Remove the unit {{ addslashes($unit->name) }}? Existing requests keep the unit they already use.')">@csrf @method('DELETE')<button class="rounded-lg border border-error/50 px-3 py-1.5 text-xs font-bold text-error hover:bg-error hover:text-white">Remove</button></form>
+                        <form data-guard="Remove this unit" method="POST" action="{{ route('units.destroy', $unit) }}" onsubmit="return confirm('Remove the unit {{ addslashes($unit->name) }}? Existing requests keep the unit they already use.')">@csrf @method('DELETE')<button class="rounded-lg border border-error/50 px-3 py-1.5 text-xs font-bold text-error hover:bg-error hover:text-white">Remove</button></form>
                     @endif
                 </li>
             @endforeach

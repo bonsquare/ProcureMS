@@ -145,6 +145,7 @@
             });
         })();
     </script>
+    @include('partials.action-guard')
     @stack('scripts')
 <script>
     (() => {
