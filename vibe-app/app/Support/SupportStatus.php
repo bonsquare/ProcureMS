@@ -14,6 +14,11 @@ final class SupportStatus
         return self::LABELS[$status] ?? 'Pending';
     }
 
+    public static function icon(string $status): string
+    {
+        return ['pending' => '🟡', 'for_process' => '▶️', 'on_hold' => '⏸', 'approved' => '👍', 'resolved' => '✅'][$status] ?? '🟡';
+    }
+
     public static function isOpen(string $status): bool
     {
         return $status !== 'resolved';

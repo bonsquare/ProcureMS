@@ -100,7 +100,7 @@ class SupportTicketNumberTest extends TestCase
         $ticket = $this->ticket();
 
         $this->say('/process', ['reply_to_message' => ['message_id' => 61]]);
-        Http::assertSent(fn ($r) => str_contains((string) $r['text'], $ticket->ticket_no.' on process'));
+        Http::assertSent(fn ($r) => str_contains((string) $r['text'], $ticket->ticket_no.' · On process'));
 
         $this->say('/queue');
         Http::assertSent(fn ($r) => str_contains((string) $r['text'], 'On process:') && str_contains((string) $r['text'], $ticket->ticket_no));

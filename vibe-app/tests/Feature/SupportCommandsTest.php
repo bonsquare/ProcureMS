@@ -56,7 +56,7 @@ class SupportCommandsTest extends TestCase
         $this->say('/assign', $this->replyTo($ticket));
         $this->assertSame('Anna', $ticket->fresh()->assigned_name);
         $this->assertSame(11, (int) $ticket->fresh()->assigned_telegram_id);
-        $this->botSaid($ticket->ticket_no.' · Anna');
+        $this->botSaid($ticket->ticket_no.' · Assigned to Anna');
 
         $this->postJson(route('telegram.webhook', 'hook-secret'), ['message' => ['message_id' => 701, 'chat' => ['id' => 555], 'from' => ['id' => 22, 'first_name' => 'Ben'], 'text' => '/assign'] + $this->replyTo($ticket)])->assertOk();
         $this->assertSame('Anna', $ticket->fresh()->assigned_name);
@@ -79,7 +79,7 @@ class SupportCommandsTest extends TestCase
 
         $this->say('/process', $this->replyTo($byReply));
         $this->assertSame('for_process', $byReply->fresh()->status);
-        $this->botSaid('on process');
+        $this->botSaid('On process');
 
         $this->say('/hold '.$byNumber->id);
         $this->assertSame('on_hold', $byNumber->fresh()->status);

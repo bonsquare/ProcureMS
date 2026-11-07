@@ -1,0 +1,66 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\SupportMessage;
+use App\Support\SupportStatus;
+
+/** The request card the bot posts in the main Telegram group: its text (always the current status and assignee) and its buttons. */
+final class SupportCard
+{
+    public static function text(SupportMessage $request): string
+    {
+        $request->loadMissing(['user', 'school', 'attachments']);
+        $files = $request->attachments->map(fn ($file) => "📎 {$file->name} — ".app(GoogleDriveService::class)->webLink($file->drive_file_id))->implode("\n");
+
+        return ($request->type === 'subscription' ? '🧾' : '🆕')." New Support Request · {$request->ticket_no}\n"
+            .'🗂 Category: '.($request->type === 'subscription' ? 'Subscription' : 'General help')."\n"
+            ."📝 Subject: {$request->subject}\n"
+            .SupportStatus::icon($request->status).' Status: '.SupportStatus::label($request->status)."\n"
+            .'🙋 Assigned: '.($request->assigned_name ?: 'nobody yet')."\n"
+            ."🕒 Filed: {$request->filed_at}\n"
+            .'🏫 School: '.($request->school?->name ?? '—')."\n"
+            .'👤 From: '.($request->user?->name ?? '—')."\n\n"
+            ."Issue\n{$request->body}\n"
+            .($files !== '' ? "\nAttachment\n{$files}\n" : '')
+            ."\n↩️ To reply: Reply directly to this message. Your reply will be sent to the requester."
+            ."\n🔘 Use the buttons below to take it, assign it and set its status."
+            ."\n✅ To close: Send /close {$request->id}";
+    }
+
+    /** @return list<list<array{text: string, callback_data: string}>> */
+    public static function keyboard(SupportMessage $request): array
+    {
+        if (! SupportStatus::isOpen($request->status)) {
+            return [];
+        }
+        $button = fn (string $label, string $action) => ['text' => $label, 'callback_data' => "s:{$request->id}:{$action}"];
+
+        return [
+            [$button('🙋 Take it', 'take'), $button('👥 Assign to…', 'pick')],
+            [$button('🟡 Pending', 'pending'), $button('▶️ For process', 'process'), $button('⏸ On hold', 'hold')],
+            [$button('✅ Resolve', 'resolve'), $button('🔒 Close', 'close')],
+        ];
+    }
+
+    /**
+     * One button per staff member the group has seen, with how many open requests each holds.
+     *
+     * @param  array<int, string>  $staff  Telegram id => name
+     * @return list<list<array{text: string, callback_data: string}>>
+     */
+    public static function staffKeyboard(SupportMessage $request, array $staff): array
+    {
+        $rows = [];
+        foreach (array_chunk(array_keys($staff), 2) as $pair) {
+            $rows[] = array_map(function (int $id) use ($request, $staff) {
+                $open = SupportMessage::withoutGlobalScopes()->where('assigned_telegram_id', $id)->where('status', '!=', 'resolved')->count();
+
+                return ['text' => '👤 '.$staff[$id].' ('.$open.')', 'callback_data' => "s:{$request->id}:to:{$id}"];
+            }, $pair);
+        }
+        $rows[] = [['text' => '⬅️ Back', 'callback_data' => "s:{$request->id}:back"]];
+
+        return $rows;
+    }
+}

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\SupportMessage;
+use App\Models\SystemSetting;
 use App\Support\SupportStatus;
 use Illuminate\Support\Collection;
 
@@ -10,6 +11,69 @@ use Illuminate\Support\Collection;
 class SupportDesk
 {
     private const QUEUE_LIMIT = 50;
+
+    /** What each button or command does: the status it sets, its mark and its name in the record. */
+    private const ACTIONS = [
+        'pending' => ['pending', '🟡', 'Pending'],
+        'process' => ['for_process', '▶️', 'On process'],
+        'hold' => ['on_hold', '⏸', 'On hold'],
+        'approve' => ['approved', '👍', 'Approved'],
+        'resolve' => ['resolved', '✅', 'Resolved'],
+        'close' => ['resolved', '🔒', 'Closed'],
+    ];
+
+    /** Does a button or command: "take" or a status action. Returns the line to record in the group. */
+    public function apply(SupportMessage $request, string $action, int $actorId, string $actorName): string
+    {
+        if (! SupportStatus::isOpen($request->status)) {
+            return "{$request->ticket_no} is resolved.";
+        }
+        if ($action === 'take') {
+            if (! $this->assign($request, $actorId, $actorName)) {
+                return $request->fresh()->assigned_name." already has {$request->ticket_no}.";
+            }
+
+            return $this->record('👤', $request, 'Assigned to '.$request->fresh()->assigned_name, $actorName);
+        }
+        [$status, $icon, $label] = self::ACTIONS[$action];
+        $this->setStatus($request, $status);
+
+        return $this->record($icon, $request, $label, $actorName);
+    }
+
+    /** Gives the request to a staff member, replacing whoever held it. Returns the line to record in the group. */
+    public function reassign(SupportMessage $request, int $staffId, string $staffName, string $actorName): string
+    {
+        if (! SupportStatus::isOpen($request->status)) {
+            return "{$request->ticket_no} is resolved.";
+        }
+        $request->update(['assigned_telegram_id' => $staffId, 'assigned_name' => mb_substr($staffName, 0, 80)]);
+
+        return $this->record('👤', $request, 'Assigned to '.$staffName, $actorName);
+    }
+
+    private function record(string $icon, SupportMessage $request, string $what, string $actorName): string
+    {
+        return "{$icon} {$request->ticket_no} · {$what} — by {$actorName} · ".now()->format('M d, g:i A');
+    }
+
+    /** Remembers a person seen in the group, so "Assign to…" can offer them. */
+    public function rememberStaff(int $telegramId, string $name): void
+    {
+        $staff = $this->staff();
+        if ($telegramId > 0 && ($staff[$telegramId] ?? null) !== $name) {
+            $staff[$telegramId] = mb_substr($name, 0, 80);
+            SystemSetting::put('support_staff', json_encode($staff));
+        }
+    }
+
+    /** @return array<int, string> Telegram id => name */
+    public function staff(): array
+    {
+        $list = json_decode((string) SystemSetting::get('support_staff', '{}'), true);
+
+        return collect(is_array($list) ? $list : [])->mapWithKeys(fn ($name, $id) => [(int) $id => (string) $name])->all();
+    }
 
     /** Takes the request for this person. Only one person can win: the update succeeds only while nobody holds it. */
     public function assign(SupportMessage $request, int $telegramId, string $name): bool

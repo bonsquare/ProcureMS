@@ -10,6 +10,7 @@ use App\Models\SystemSetting;
 use App\Models\User;
 use App\Services\GoogleDriveService;
 use App\Services\SupportAttachments;
+use App\Services\SupportCard;
 use App\Services\TelegramService;
 use App\Support\SupportStatus;
 use Illuminate\Http\Request;
@@ -74,26 +75,6 @@ class SupportController extends Controller
         }
     }
 
-    /** The card staff see in Telegram when a request is created. @param  list<SupportAttachment>  $attached */
-    private function requestText(SupportMessage $message, User $user, array $attached): string
-    {
-        $files = collect($attached)->map(fn (SupportAttachment $file) => "📎 {$file->name} — ".app(GoogleDriveService::class)->webLink($file->drive_file_id))->implode("\n");
-
-        return ($message->type === 'subscription' ? '🧾' : '🆕')." New Support Request · {$message->ticket_no}\n"
-            .'🗂 Category: '.($message->type === 'subscription' ? 'Subscription' : 'General help')."\n"
-            ."📝 Subject: {$message->subject}\n"
-            ."🟡 Status: Pending\n"
-            ."🕒 Filed: {$message->filed_at}\n"
-            .'🏫 School: '.($user->school?->name ?? '—')."\n"
-            ."👤 From: {$user->name}\n\n"
-            ."Issue\n{$message->body}\n"
-            .($files !== '' ? "\nAttachment\n{$files}\n" : '')
-            ."\n↩️ To reply: Reply directly to this message. Your reply will be sent to the requester."
-            ."\n🙋 To take it: Reply /assign"
-            ."\n🔄 To change status: /process · /hold · /approve · /resolve"
-            ."\n✅ To close: Send /close {$message->id}";
-    }
-
     /** @param  list<SupportAttachment>  $attached */
     private function fileLines(array $attached): string
     {
@@ -139,7 +120,7 @@ class SupportController extends Controller
         }
         // The same message goes to the Customer Services Telegram chat; a reply there comes back to this page.
         // The sender's email stays out of the chat; staff answer here and the reply reaches the user on this page.
-        $telegramId = $telegram->send($this->requestText($message, $user, $attached));
+        $telegramId = $telegram->send(SupportCard::text($message), null, SupportCard::keyboard($message));
         // The telegram_status column records the delivery: email, or Telegram when that is the only way in.
         $message->update(['telegram_message_id' => $telegramId, 'telegram_status' => $telegramId && $status !== 'sent' ? 'sent' : $status]);
 
