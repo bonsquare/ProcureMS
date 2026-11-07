@@ -10,7 +10,7 @@ A school user opens a **Request** on the Support page and talks to Customer Serv
 
 - **Request**: one support item (today "message"). Button: "Create request". List: "Your requests".
 - **Type**: `general` (General help) or `subscription` (Subscription).
-- **Statuses**: Pending (new) , For process, On hold, Approved, Resolved. Resolved ends the chat.
+- **Statuses**: Pending (new), For process, On hold, Approved, Resolved. Resolved ends the chat.
 
 ## Data
 

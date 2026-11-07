@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(php -r ' *)"
+      "Bash(php -r ' *)",
+      "Bash(python \"C:/Users/BONIFA~1/AppData/Local/Temp/claude/c--Users-Bonifacio-Orong-Documents-ChatGPT-Liquidation-and-Procurement-System/d7d9cef0-8810-4700-bbe3-f4bd87246d99/scratchpad/tabs2.py\")"
     ]
   }
 }
