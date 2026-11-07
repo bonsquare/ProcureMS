@@ -44,6 +44,9 @@
         .signatures .name { margin: 4.4rem 14% 0; padding-bottom: .3rem; border-bottom: 1px solid #111; text-align: center; font-weight: bold; font-size: 1.2rem; text-transform: uppercase; }
         .signatures .position { margin-top: .4rem; text-align: center; }
 
+        /* Used while measuring: a word wider than its cell shows as overflow instead of being cut in two. */
+        html.probe-words th, html.probe-words td { overflow-wrap: normal; word-wrap: normal; }
+        html.probe-words td.num { padding-left: .35rem; padding-right: .35rem; } /* a figure also keeps a little air on each side */
         @media print {
             thead th, td.pillar { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             tr { break-inside: avoid; }
@@ -71,6 +74,14 @@
             window.dispatchEvent(new Event('beforeprint'));
             return document.querySelectorAll('[data-official-page] > .doc-page').length;
         }
+        // Every word and every figure stays whole inside its cell at this size (a word wider than its cell would be cut in two).
+        function textFits() {
+            root.classList.add('probe-words');
+            var wide = Array.prototype.some.call(document.querySelectorAll('[data-official-page] td, [data-official-page] th'), function (cell) { return cell.scrollWidth > cell.clientWidth + 1; });
+            root.classList.remove('probe-words');
+            return !wide;
+        }
+
         // A figure never prints over the next column. The amounts of the physical targets and the amounts of the financial targets each take the one size
         // that fits the widest of them in its cell, so the columns stay even; the rest of the text keeps its size.
         function fitNumbers() {
@@ -96,7 +107,7 @@
                 var low = 0, high = steps.length - 1;
                 while (low < high) {
                     var middle = Math.ceil((low + high) / 2);
-                    if (pagesAt(steps[middle]) <= needed) { low = middle; } else { high = middle - 1; }
+                    if (pagesAt(steps[middle]) <= needed && textFits()) { low = middle; } else { high = middle - 1; }
                 }
                 pagesAt(steps[low]);
                 fitNumbers();
