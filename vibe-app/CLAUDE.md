@@ -199,6 +199,7 @@ Binding decisions from that log:
 - 2026-11-07 Support requests with chat, five statuses, Telegram assign/queue, Drive attachments and 5-day purge (docs/specs.md section 119). Deployed 2026-11-07 (66c70410).
 - 2026-11-07 Support ticket numbers with date and time; Pending then On process when answered (docs/specs.md section 119). Committed, not yet deployed.
 - 2026-11-07 Telegram buttons: take, assign to staff, set status; changes recorded in the group (docs/specs.md section 119). Committed, not yet deployed.
+- 2026-11-07 Payment proof notice in Telegram: sender, payment details and proof link (docs/specs.md section 119). Committed, not yet deployed.
 - The Planning page is `/planning`. The source is `resources/views/planning.blade.php`; the controller is `app/Http/Controllers/PlanningController.php`.
 - The last GitHub backup is commit `69d1d35` on `master`. Do not reset or discard local changes.
 - Live: Railway deployment 66c70410 (2026-11-07 17:39), migrations through `add_print_paper_to_schools_table` (see the history file for later changes).

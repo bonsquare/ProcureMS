@@ -46,16 +46,27 @@ class PaymentProofTest extends TestCase
         return $this->actingAs($as ?? $this->school)->post(route('subscription.proof'), $overrides + ['reference' => 'GCASH-1', 'bank_account_used' => 'GCash 0917 123 4567', 'transacted_at' => now()->subHour()->format('Y-m-d\TH:i'), 'remarks' => 'Annual subscription', 'amount' => '1000.00', 'file' => $this->image()]);
     }
 
-    public function test_a_submitted_proof_posts_a_short_notice_in_telegram_without_the_file_or_the_email(): void
+    public function test_a_submitted_proof_posts_the_sender_the_payment_details_and_the_proof_link_in_telegram(): void
     {
         config(['services.telegram.token' => 'T', 'services.telegram.chat_id' => '555']);
         Http::fake(['api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 4]])]);
 
         $this->submit()->assertSessionHasNoErrors();
 
-        Http::assertSent(fn (Request $r) => str_contains($r->url(), '/sendMessage') && str_contains((string) $r['text'], '🧾 Payment proof')
-            && str_contains((string) $r['text'], 'GCASH-1') && str_contains((string) $r['text'], '1,000.00') && str_contains((string) $r['text'], $this->school->school->name)
-            && ! str_contains((string) $r['text'], $this->school->email) && ! str_contains((string) $r['text'], 'drive.google'));
+        $proof = $this->proof();
+        Http::assertSent(function (Request $r) use ($proof) {
+            if (! str_contains($r->url(), '/sendMessage')) {
+                return false;
+            }
+            $text = (string) $r['text'];
+
+            return str_contains($text, '🧾 New Payment Proof')
+                && str_contains($text, $this->school->school->name) && str_contains($text, 'Sent by: '.$this->school->name.' (@'.$this->school->username.')')
+                && str_contains($text, '₱1,000.00') && str_contains($text, 'GCash 0917 123 4567') && str_contains($text, 'Reference: GCASH-1')
+                && str_contains($text, 'Remarks: Annual subscription') && str_contains($text, 'Paid on: ')
+                && str_contains($text, 'Proof of payment') && str_contains($text, $proof->file_name.' — '.$proof->drive_link)
+                && ! str_contains($text, $this->school->email);
+        });
     }
 
     public function test_a_telegram_failure_never_stops_the_proof(): void

@@ -143,13 +143,33 @@ class SubscriptionController extends Controller
         ]);
         AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $school->id, 'action' => 'subscription_proof_submitted', 'auditable_type' => PaymentProof::class, 'auditable_id' => $proof->id, 'metadata' => ['reason' => null, 'reference' => $proof->reference, 'bank_account_used' => $proof->bank_account_used, 'sent_by' => $proof->submitted_by_name.' (@'.$proof->submitted_by_username.', user '.$proof->user_id.')', 'amount' => (string) $proof->amount_to_pay]]);
 
-        // A short notice for Customer Services: no file and no email. A Telegram failure never stops the proof.
-        $this->telegram->send('🧾 Payment proof · '.$school->name.' · ₱'.number_format((float) $proof->amount_to_pay, 2).' · ref '.$proof->reference);
+        // The notice for Customer Services: who sent it, the payment details and the link to the proof in the sender's Drive (no email). A Telegram failure never stops the proof.
+        $this->telegram->send($this->proofNotice($proof, $school));
 
         return redirect()->route('subscription')->with('success', 'Your proof of payment was sent. The administrator will check it and activate your school.');
     }
 
     /** The checks that stop a proof before anything is uploaded; the same file is looked for first, so a repeated file is named as such. */
+    /** The Telegram notice of a payment proof: sender, amount (with the discount), account, date, reference, remarks and the Drive link of the proof. */
+    private function proofNotice(PaymentProof $proof, School $school): string
+    {
+        $amount = '₱'.number_format((float) $proof->amount_to_pay, 2);
+        if ((float) $proof->discount_amount > 0) {
+            $amount .= ' (price ₱'.number_format((float) $proof->list_price, 2).' − discount ₱'.number_format((float) $proof->discount_amount, 2).')';
+        }
+
+        return "🧾 New Payment Proof · {$school->name}\n"
+            .'🏫 School: '.$school->name.($school->code ? " ({$school->code})" : '')."\n"
+            ."👤 Sent by: {$proof->submitted_by_name} (@{$proof->submitted_by_username})\n"
+            ."💰 Amount: {$amount}\n"
+            ."🏦 Account used: {$proof->bank_account_used}\n"
+            .'🕒 Paid on: '.$proof->transacted_at->format('M d, Y g:i A')."\n"
+            ."🔢 Reference: {$proof->reference}\n"
+            .($proof->remarks ? "📝 Remarks: {$proof->remarks}\n" : '')
+            ."\nProof of payment\n📎 {$proof->file_name} — {$proof->drive_link}\n"
+            ."\nThe file is in the sender's Google Drive, shared with the administrator email only.";
+    }
+
     private function assertAllowed(School $school, array $data, string $mime, string $sha): void
     {
         if (! in_array($mime, self::MIMES, true)) {

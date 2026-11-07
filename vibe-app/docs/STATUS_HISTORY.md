@@ -184,3 +184,4 @@ Full dated log moved out of CLAUDE.md to keep that file short. Nothing was remov
 - 2026-11-07: Support requests: conversation page, five statuses, Telegram assign/status/queue commands, attachments in the user's own Drive, 5-day purge (docs/specs.md section 119). Deployed 2026-11-07 (66c70410).
 - 2026-11-07: Support ticket numbers SUP-YYYYMMDD-HHMM-NNNN with date and time; Pending until answered, then On process (docs/specs.md section 119). Committed, not yet deployed.
 - 2026-11-07: Telegram request card with buttons (take, assign to staff, set status), each change recorded in the group (docs/specs.md section 119). Committed, not yet deployed.
+- 2026-11-07: Payment proof notice in Telegram now has the sender, payment details and the proof link (docs/specs.md section 119). Committed, not yet deployed.
