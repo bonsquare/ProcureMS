@@ -269,6 +269,12 @@ This project follows the Laravel Enterprise Skill Library (installed in `~/.clau
 - Load `laravel-ai-coding-standards` before any code change; it routes to the other skills.
 - Non-negotiable gates before merge: `laravel-code-quality` and `laravel-security` checklists.
 - Public-facing UI (the login and registration pages and any page a client sees) additionally requires `laravel-ui-accessibility` and `laravel-responsive-design` sign-off.
+- **No overlapping, clipped or overflowing text (every screen, every new or edited UI):**
+  - Text must wrap inside its box. In a flex row, the element holding text gets `min-w-0 flex-1` plus `break-words`, and icons, badges and buttons get `shrink-0`. In a grid use `minmax(0, 1fr)`, never a bare `1fr`.
+  - Rows that hold several items (a title and a chip, a label and a button) use `flex-wrap`, so a narrow window moves the item down instead of squeezing it over its neighbour.
+  - No fixed `width` or `height` on a box that holds text. Use `min-h`, `max-w` and padding. `whitespace-nowrap` is only for short labels and buttons that have room; a long label wraps or is shortened.
+  - Never use `overflow-hidden`, `truncate` or a clipped box to hide text the user needs (a note, an amount, a name). `truncate` is only for a name that also has a `title` or is shown in full elsewhere.
+  - Check long content before calling UI done: a long name, a six-figure peso amount, a two-sentence note, at about 320, 768 and 1280 px wide and at 200% text size. If a browser check was not possible, say so in the report instead of claiming the layout is fine.
 - **The owner's rules below win over the skills:** the strict minimal change policy, the protected official documents and cash reports, and the "report, don't redesign" rule. A skill may flag a problem, but it never widens a fix beyond what the owner asked for; list the extra finding and ask first.
 
 ---
