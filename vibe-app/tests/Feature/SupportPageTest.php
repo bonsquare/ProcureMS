@@ -4,9 +4,11 @@ namespace Tests\Feature;
 
 use App\Models\Organization;
 use App\Models\School;
+use App\Models\SupportMessage;
 use App\Models\SystemSetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class SupportPageTest extends TestCase
@@ -28,6 +30,39 @@ class SupportPageTest extends TestCase
         $this->assertSame('help@example.test', SystemSetting::get('support_email'));
 
         $this->actingAs($schoolUser)->get(route('support'))->assertOk()->assertSee('help@example.test')->assertSee('Mon to Fri, 8 to 5')->assertSee('Support', false);
-        $this->actingAs($schoolUser)->get(route('home'))->assertOk()->assertDontSee(route('support'));
+        $this->actingAs($schoolUser)->get(route('home'))->assertOk()->assertSee('href="'.route('support').'"', false);
+    }
+
+    private function schoolUser(string $slug = 'rq'): User
+    {
+        $organization = Organization::create(['name' => $slug, 'slug' => $slug, 'status' => 'active']);
+        $school = School::create(['organization_id' => $organization->id, 'code' => strtoupper($slug), 'name' => 'School '.$slug, 'status' => 'active']);
+
+        return User::factory()->create(['role' => 'school_admin', 'organization_id' => $organization->id, 'school_id' => $school->id]);
+    }
+
+    public function test_a_request_needs_a_subject_and_a_known_type(): void
+    {
+        $user = $this->schoolUser('rq1');
+
+        $this->actingAs($user)->post(route('support.send'), ['type' => 'general', 'subject' => '', 'body' => 'Help me please'])->assertSessionHasErrors('subject');
+        $this->post(route('support.send'), ['type' => 'other', 'subject' => 'Hi', 'body' => 'Help me please'])->assertSessionHasErrors('type');
+        $this->assertSame(0, SupportMessage::count());
+
+        $this->post(route('support.send'), ['type' => 'subscription', 'subject' => 'Renewal', 'body' => 'I want to renew'])->assertSessionHasNoErrors();
+        $request = SupportMessage::first();
+        $this->assertSame('subscription', $request->type);
+        $this->assertSame('Renewal', $request->subject);
+        $this->assertSame('pending', $request->status);
+    }
+
+    public function test_a_subscription_request_is_marked_in_telegram(): void
+    {
+        config(['services.telegram.token' => 'T', 'services.telegram.chat_id' => '555']);
+        Http::fake(['api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 3]])]);
+
+        $this->actingAs($this->schoolUser('rq2'))->post(route('support.send'), ['type' => 'subscription', 'subject' => 'Renewal', 'body' => 'I want to renew'])->assertSessionHasNoErrors();
+
+        Http::assertSent(fn ($r) => str_contains((string) $r['text'], '🧾') && str_contains((string) $r['text'], 'Renewal'));
     }
 }

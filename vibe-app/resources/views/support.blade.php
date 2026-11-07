@@ -54,8 +54,12 @@
     <h2 class="text-lg font-semibold">Message Customer Services</h2>
     <p class="mt-1 text-xs text-on-surface-variant">Your message goes straight to Customer Services{{ $mailOn ? '' : ' (no Customer Services email is set yet: it is saved only)' }}. They will reply to your email.</p>
     <form method="POST" action="{{ route('support.send') }}" class="mt-3">@csrf
-        <label class="block text-xs font-semibold text-on-surface-variant">Your message<textarea name="body" rows="3" required minlength="3" maxlength="2000" placeholder="Describe what you need help with, and the page you were on." class="{{ $inputClass }}">{{ old('body') }}</textarea></label>
-        <div class="mt-2 flex justify-end"><button class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">send</span>Send message</button></div>
+        <div class="grid grid-cols-1 gap-3 md:grid-cols-[14rem_minmax(0,1fr)]">
+            <label class="block text-xs font-semibold text-on-surface-variant">Type<select name="type" class="{{ $inputClass }}"><option value="general" @selected(old('type', 'general') === 'general')>General help</option><option value="subscription" @selected(old('type') === 'subscription')>Subscription</option></select>@error('type')<span class="mt-1 block text-error">{{ $message }}</span>@enderror</label>
+            <label class="block text-xs font-semibold text-on-surface-variant">Subject<input name="subject" required maxlength="120" value="{{ old('subject') }}" placeholder="In a few words" class="{{ $inputClass }}">@error('subject')<span class="mt-1 block text-error">{{ $message }}</span>@enderror</label>
+        </div>
+        <label class="mt-3 block text-xs font-semibold text-on-surface-variant">Your message<textarea name="body" rows="3" required minlength="3" maxlength="2000" placeholder="Describe what you need help with, and the page you were on." class="{{ $inputClass }}">{{ old('body') }}</textarea></label>
+        <div class="mt-2 flex justify-end"><button class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary-container"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">send</span>Create request</button></div>
     </form>
 
     @if($messages->isNotEmpty())

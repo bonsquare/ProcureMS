@@ -64,6 +64,7 @@
                             <p class="mt-1.5 inline-flex rounded-full bg-surface-container px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">{{ str($menuUser?->role)->replace('_', ' ')->title() }}</p>
                             @if($menuUser?->school)<p class="mt-1 truncate text-on-surface-variant">{{ $menuUser->school->name }}</p>@endif
                         </div>
+                        <a role="menuitem" href="{{ route('support') }}" class="mt-1 flex items-center gap-2 rounded-lg px-3 py-2 font-semibold hover:bg-surface-low"><span class="material-symbols-outlined text-[17px]" aria-hidden="true">support_agent</span>Support</a>
                         <a role="menuitem" href="{{ route('school-settings') }}" class="mt-1 flex items-center gap-2 rounded-lg px-3 py-2 font-semibold hover:bg-surface-low"><span class="material-symbols-outlined text-[17px]" aria-hidden="true">settings</span>School Settings</a>
                         @if($menuUser?->hasAccess('transfers'))
                             @php $pendingTransfers = \App\Models\StationTransferRequest::where('status', 'pending')->count() + \App\Models\SchoolTakeoverRequest::where('status', 'pending')->whereNull('school_id')->count(); @endphp

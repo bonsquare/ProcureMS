@@ -7,6 +7,7 @@ use App\Models\SystemSetting;
 use App\Services\TelegramService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\Rule;
 use Throwable;
 
 /** The Support tab: how a user reaches Customer Services. The master user keeps the contact details here. */
@@ -33,9 +34,9 @@ class SupportController extends Controller
     /** Saves the message and emails it to the Customer Services address; Customer Services answers the user by email (Reply-To is the user). */
     public function send(Request $request, TelegramService $telegram)
     {
-        $data = $request->validate(['body' => ['required', 'string', 'min:3', 'max:2000']]);
+        $data = $request->validate(['type' => ['required', Rule::in(['general', 'subscription'])], 'subject' => ['required', 'string', 'max:120'], 'body' => ['required', 'string', 'min:3', 'max:2000']]);
         $user = $request->user();
-        $message = SupportMessage::create(['organization_id' => $user->organization_id, 'school_id' => $user->school_id, 'user_id' => $user->id, 'body' => trim($data['body'])]);
+        $message = SupportMessage::create(['organization_id' => $user->organization_id, 'school_id' => $user->school_id, 'user_id' => $user->id, 'type' => $data['type'], 'subject' => trim($data['subject']), 'body' => trim($data['body'])]);
 
         $text = "Support #{$message->id}\nSchool: ".($user->school?->name ?? '—')."\nFrom: {$user->name} ({$user->email})\n\n{$message->body}\n\nReply to this email to answer.";
         $to = (string) SystemSetting::get('support_email', '');
@@ -51,7 +52,7 @@ class SupportController extends Controller
         }
         // The same message goes to the Customer Services Telegram chat; a reply there comes back to this page.
         // The sender's email stays out of the chat; staff answer here and the reply reaches the user on this page.
-        $telegramId = $telegram->send("Support #{$message->id}\nSchool: ".($user->school?->name ?? '—')."\nFrom: {$user->name}\n\n{$message->body}\n\nReply to this message to answer, or send /close to close it.");
+        $telegramId = $telegram->send(($message->type === 'subscription' ? '🧾 ' : '')."Support #{$message->id} · {$message->subject}\nSchool: ".($user->school?->name ?? '—')."\nFrom: {$user->name}\n\n{$message->body}\n\nReply to this message to answer, or send /close to close it.");
         // The telegram_status column records the delivery: email, or Telegram when that is the only way in.
         $message->update(['telegram_message_id' => $telegramId, 'telegram_status' => $telegramId && $status !== 'sent' ? 'sent' : $status]);
 

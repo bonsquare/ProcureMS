@@ -17,6 +17,7 @@
     if ($isMasterUser && auth()->user()->hasAccess('schools')) {
         $navigation[] = ['icon' => 'domain', 'label' => 'School Management', 'route' => 'school-management'];
     }
+                $navigation[] = ['icon' => 'support_agent', 'label' => 'Support', 'route' => 'support'];
                 $navigation[] = ['icon' => 'settings', 'label' => 'School Settings', 'route' => 'school-settings'];
 @endphp
 <aside id="civic-navigation" class="civic-nav" aria-label="Main navigation">

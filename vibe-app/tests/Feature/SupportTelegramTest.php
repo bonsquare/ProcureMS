@@ -37,7 +37,7 @@ class SupportTelegramTest extends TestCase
         SystemSetting::put('support_email', 'help@example.com');
         $user = $this->user('tg1');
 
-        $this->actingAs($user)->post(route('support.send'), ['body' => 'My DV is not showing'])->assertRedirect(route('support'));
+        $this->actingAs($user)->post(route('support.send'), ['type' => 'general', 'subject' => 'Help', 'body' => 'My DV is not showing'])->assertRedirect(route('support'));
 
         $this->assertSame('sent', SupportMessage::first()->telegram_status);
         $sent = Mail::mailer('array')->getSymfonyTransport()->messages()->first()->getOriginalMessage();
@@ -53,7 +53,7 @@ class SupportTelegramTest extends TestCase
         Http::fake(['api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 77]])]);
         $user = $this->user('tg-send');
 
-        $this->actingAs($user)->post(route('support.send'), ['body' => 'Telegram please'])->assertRedirect(route('support'))->assertSessionHas('success');
+        $this->actingAs($user)->post(route('support.send'), ['type' => 'general', 'subject' => 'Help', 'body' => 'Telegram please'])->assertRedirect(route('support'))->assertSessionHas('success');
 
         $message = SupportMessage::first();
         $this->assertSame(77, (int) $message->telegram_message_id);
@@ -66,7 +66,7 @@ class SupportTelegramTest extends TestCase
         config(['mail.default' => 'array']);
         $user = $this->user('tg2');
 
-        $this->actingAs($user)->post(route('support.send'), ['body' => 'Hello there'])->assertRedirect(route('support'));
+        $this->actingAs($user)->post(route('support.send'), ['type' => 'general', 'subject' => 'Help', 'body' => 'Hello there'])->assertRedirect(route('support'));
 
         $this->assertSame('not_configured', SupportMessage::first()->telegram_status);
         $this->assertCount(0, Mail::mailer('array')->getSymfonyTransport()->messages());
@@ -129,7 +129,7 @@ class SupportTelegramTest extends TestCase
         Http::fake(['api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 5]])]);
         $user = $this->user('tg7');
 
-        $this->actingAs($user)->post(route('support.send'), ['body' => 'Private question'])->assertRedirect();
+        $this->actingAs($user)->post(route('support.send'), ['type' => 'general', 'subject' => 'Help', 'body' => 'Private question'])->assertRedirect();
 
         Http::assertSent(fn ($r) => str_contains($r->body(), 'Private question') && ! str_contains($r->body(), $user->email));
     }
