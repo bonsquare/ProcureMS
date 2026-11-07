@@ -173,3 +173,4 @@ Full dated log moved out of CLAUDE.md to keep that file short. Nothing was remov
 - 2026-11-07: SIP text size now keeps every word and figure whole in its cell (no cut words, no overlapping amounts) (docs/specs.md section 119). Deployed 2026-11-07 (db061b1c).
 - 2026-11-07: SIP pages fill up: the words of a merged text cell flow on to the next page (docs/specs.md section 119). Deployed 2026-11-07 (80d430ed).
 - 2026-11-07: SQLite WAL mode enabled and Symfony packages updated (composer audit clean) for production readiness (docs/specs.md section 119). Deployed 2026-11-07 (c3c8365b).
+- 2026-11-07: restore drill: the latest Google Drive backup (procms-2026-11-07-0000.sqlite, 1.7 MB) was downloaded on the live server, passed integrity_check and matched live table counts (users, schools, organizations); 29 automatic backups, all successful. Nothing changed on live.
