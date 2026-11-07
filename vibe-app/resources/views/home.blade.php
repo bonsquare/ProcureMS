@@ -44,8 +44,8 @@
                     if (auth()->user()->hasAccess('subscriptions')) $navigation[] = ['icon' => 'card_membership', 'label' => 'Subscriptions', 'route' => 'subscriptions'];
                     if (auth()->user()->hasAccess('schools')) $navigation[] = ['icon' => 'domain', 'label' => 'School Management', 'route' => 'school-management'];
                 }
-                $navigation[] = ['icon' => 'support_agent', 'label' => 'Support', 'route' => 'support'];
                 $navigation[] = ['icon' => 'settings', 'label' => 'School Settings', 'route' => 'school-settings'];
+                $navigation[] = ['icon' => 'support_agent', 'label' => 'Support', 'route' => 'support'];
             @endphp
             @foreach ($navigation as $item)
                 <a href="{{ route($item['route']) }}" class="flex min-h-11 items-center rounded-[.55rem] px-3 py-2.5 text-sm font-medium {{ ($item['active'] ?? false) ? 'bg-white/10 font-bold text-white shadow-[inset_3px_0_0_#55c79e]' : 'text-white/80 hover:bg-white/10 hover:text-white' }}"><span class="material-symbols-outlined mr-3 text-[20px]">{{ $item['icon'] }}</span>{{ $item['label'] }}</a>

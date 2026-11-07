@@ -64,7 +64,6 @@
                             <p class="mt-1.5 inline-flex rounded-full bg-surface-container px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-on-surface-variant">{{ str($menuUser?->role)->replace('_', ' ')->title() }}</p>
                             @if($menuUser?->school)<p class="mt-1 truncate text-on-surface-variant">{{ $menuUser->school->name }}</p>@endif
                         </div>
-                        <a role="menuitem" href="{{ route('support') }}" class="mt-1 flex items-center gap-2 rounded-lg px-3 py-2 font-semibold hover:bg-surface-low"><span class="material-symbols-outlined text-[17px]" aria-hidden="true">support_agent</span>Support</a>
                         <a role="menuitem" href="{{ route('school-settings') }}" class="mt-1 flex items-center gap-2 rounded-lg px-3 py-2 font-semibold hover:bg-surface-low"><span class="material-symbols-outlined text-[17px]" aria-hidden="true">settings</span>School Settings</a>
                         @if($menuUser?->hasAccess('transfers'))
                             @php $pendingTransfers = \App\Models\StationTransferRequest::where('status', 'pending')->count() + \App\Models\SchoolTakeoverRequest::where('status', 'pending')->whereNull('school_id')->count(); @endphp
@@ -73,6 +72,7 @@
                         @if($menuUser?->seesAllSchools())
                             <a role="menuitem" href="{{ route('user-management') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 font-semibold hover:bg-surface-low"><span class="material-symbols-outlined text-[17px]" aria-hidden="true">manage_accounts</span>User Management</a>
                         @endif
+                        <a role="menuitem" href="{{ route('support') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 font-semibold hover:bg-surface-low"><span class="material-symbols-outlined text-[17px]" aria-hidden="true">support_agent</span>Support</a>
                         <form method="POST" action="{{ route('logout') }}">@csrf<button type="submit" role="menuitem" class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left font-semibold hover:bg-error/10 hover:text-error"><span class="material-symbols-outlined text-[17px]" aria-hidden="true">logout</span>Sign out</button></form>
                     </div>
                 </div>
@@ -164,5 +164,6 @@
         document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !menu.classList.contains('hidden')) { close(); button.focus(); } });
     })();
 </script>
+@include('partials.support-fab')
 </body>
 </html>

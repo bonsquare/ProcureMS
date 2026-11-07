@@ -15,8 +15,8 @@
     $navigation = [['icon'=>'dashboard','label'=>'Dashboard','route'=>'home'],['icon'=>'shopping_cart','label'=>'Procurement','route'=>'procurement'],['icon'=>'receipt_long','label'=>'Liquidation','route'=>'liquidation'],['icon'=>'folder','label'=>'Google Drive','route'=>'google-drive'],['icon'=>'bar_chart','label'=>'Reports','route'=>'reports']];
     if (auth()->user()?->hasPermission('planning.view') || auth()->user()?->hasPermission('planning.manage')) { array_splice($navigation, 3, 0, [['icon'=>'account_tree','label'=>'Planning','route'=>'planning']]); }
     if ($isMasterUser) { $navigation[]=['icon'=>'group','label'=>'User Management','route'=>'user-management']; if (auth()->user()->hasAccess('subscriptions')) $navigation[]=['icon'=>'card_membership','label'=>'Subscriptions','route'=>'subscriptions']; if (auth()->user()?->hasAccess('schools')) $navigation[]=['icon'=>'domain','label'=>'School Management','route'=>'school-management']; }
-    $navigation[]=['icon'=>'support_agent','label'=>'Support','route'=>'support'];
     $navigation[]=['icon'=>'settings','label'=>'School Settings','route'=>'school-settings'];
+    $navigation[]=['icon'=>'support_agent','label'=>'Support','route'=>'support'];
     // The page you are on is the highlighted item (never a fixed one): the key is the route name of its sidebar link.
     $routeName = request()->route()?->getName() ?? '';
     $activeNav = match (true) {

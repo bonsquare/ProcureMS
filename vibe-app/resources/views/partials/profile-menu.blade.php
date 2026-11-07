@@ -24,3 +24,5 @@
         });
     })();
 </script>
+
+@include('partials.support-fab')
