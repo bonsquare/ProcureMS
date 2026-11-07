@@ -67,19 +67,22 @@ final class SupportCard
      * One button per staff member the group has seen, with how many open requests each holds.
      *
      * @param  array<int, string>  $staff  Telegram id => name
+     * @param  bool  $fromList  true on a message made only to pick the assignee (the typed /assign lists)
      * @return list<list<array{text: string, callback_data: string}>>
      */
-    public static function staffKeyboard(SupportMessage $request, array $staff): array
+    public static function staffKeyboard(SupportMessage $request, array $staff, bool $fromList = false): array
     {
+        // From a typed /assign list the picked name replaces that list message; from any other message the buttons are put back.
+        $to = $fromList ? 'lto' : 'to';
         $rows = [];
         foreach (array_chunk(array_keys($staff), 2) as $pair) {
-            $rows[] = array_map(function (int $id) use ($request, $staff) {
+            $rows[] = array_map(function (int $id) use ($request, $staff, $to) {
                 $open = SupportMessage::withoutGlobalScopes()->where('assigned_telegram_id', $id)->where('status', '!=', 'resolved')->count();
 
-                return ['text' => '👤 '.$staff[$id].' ('.$open.')', 'callback_data' => "s:{$request->id}:to:{$id}"];
+                return ['text' => '👤 '.$staff[$id].' ('.$open.')', 'callback_data' => "s:{$request->id}:{$to}:{$id}"];
             }, $pair);
         }
-        $rows[] = [['text' => '⬅️ Back', 'callback_data' => "s:{$request->id}:back"]];
+        $rows[] = [['text' => '⬅️ Back', 'callback_data' => "s:{$request->id}:".($fromList ? 'lback' : 'back')]];
 
         return $rows;
     }

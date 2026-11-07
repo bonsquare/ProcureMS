@@ -204,6 +204,7 @@ Binding decisions from that log:
 - 2026-11-07 Topic header with status; /assign offers the staff list when held or anonymous (docs/specs.md section 119). Deployed 2026-11-07 (a32a3c40).
 - 2026-11-07 /assign always shows the staff list; ticket, subject, requester order; short topic title (docs/specs.md section 119). Deployed 2026-11-07 (a32a3c40).
 - 2026-11-07 Support page as a chat with live refresh (docs/specs.md section 119). Deployed 2026-11-07 (a8148194).
+- 2026-11-07 Status buttons also under the client reply and the answered line (docs/specs.md section 119). Committed, not yet deployed.
 - The Planning page is `/planning`. The source is `resources/views/planning.blade.php`; the controller is `app/Http/Controllers/PlanningController.php`.
 - The last GitHub backup is commit `69d1d35` on `master`. Do not reset or discard local changes.
 - Live: Railway deployment a8148194 (2026-11-07 20:40), migrations through `add_print_paper_to_schools_table` (see the history file for later changes).

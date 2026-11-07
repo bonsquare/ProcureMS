@@ -65,7 +65,7 @@ class TelegramWebhookController extends Controller
                 $this->refreshCard($support->fresh(), $telegram);
             }
             // Marks the question as answered in the chat, so nobody has to scroll to find what is still open.
-            $this->say($telegram, $support, "✅ {$support->ticket_no} answered");
+            $this->say($telegram, $support, "✅ {$support->ticket_no} answered", null, SupportCard::keyboard($support->fresh()));
         } elseif (! str_starts_with($text, '/')) {
             // Never guess: a message that cannot be tied to one ticket is not sent to any user.
             Log::warning('Telegram staff message matched no support ticket and was not delivered.', ['telegram_message_id' => $messageId]);
@@ -117,7 +117,7 @@ class TelegramWebhookController extends Controller
         $wasOpen = SupportStatus::isOpen($support->status);
         // A bare /assign never guesses (an anonymous admin posts as the group itself): staff pick who gets it.
         if ($name === 'assign' && ! preg_match('/@(\w+)/', $argument)) {
-            $telegram->send("👥 Assign {$support->ticket_no} to:", $anchor, SupportCard::staffKeyboard($support, $desk->staff()));
+            $telegram->send("👥 Assign {$support->ticket_no} to:", $anchor, SupportCard::staffKeyboard($support, $desk->staff(), true));
 
             return;
         }
@@ -150,35 +150,40 @@ class TelegramWebhookController extends Controller
         [, , $action] = $parts;
         $tapped = (int) data_get($callback, 'message.message_id');
         $cardId = (int) ($support->telegram_message_id ?: $tapped);
-        // The buttons also sit in the request's topic and under a typed /assign list; a tap changes the message it was made on.
-        $onList = $tapped > 0 && $tapped !== (int) $support->telegram_message_id && $tapped !== (int) $support->telegram_thread_card_id;
+        // The buttons sit on the card, in the topic header, and under the client's replies and the "answered" lines; a tap works on the message it was made on.
+        // The typed /assign lists use their own actions (lpick, lto, lback), because those messages exist only to pick someone.
         $wasOpen = SupportStatus::isOpen($support->status);
         $telegram->answer($callbackId);
+        $here = $tapped ?: $cardId;
 
-        if ($action === 'pick' && SupportStatus::isOpen($support->status)) {
-            $telegram->editKeyboard($tapped ?: $cardId, SupportCard::staffKeyboard($support, $desk->staff()));
+        if (in_array($action, ['pick', 'lpick'], true) && $wasOpen) {
+            $telegram->editKeyboard($here, SupportCard::staffKeyboard($support, $desk->staff(), $action === 'lpick'));
 
             return;
         }
         if ($action === 'back') {
-            $onList ? $telegram->edit($tapped, 'Assignment cancelled.', []) : $telegram->editKeyboard($tapped ?: $cardId, SupportCard::keyboard($support));
+            $telegram->editKeyboard($here, SupportCard::keyboard($support));
 
             return;
         }
-        if ($action === 'to') {
+        if ($action === 'lback') {
+            $telegram->edit($here, 'Assignment cancelled.', []);
+
+            return;
+        }
+        if (in_array($action, ['to', 'lto'], true)) {
             $staffId = (int) ($parts[3] ?? 0);
             $name = $desk->staff()[$staffId] ?? null;
             if ($name === null) {
                 return;
             }
             $line = $desk->reassign($support, $staffId, $name, $actor);
+            // A list made to pick someone is replaced by the result; any other message gets its usual buttons back.
+            $action === 'lto' ? $telegram->edit($here, $line, []) : $telegram->editKeyboard($here, SupportCard::keyboard($support->fresh()));
         } elseif (in_array($action, ['take', 'pending', 'process', 'hold', 'approve', 'resolve', 'close'], true)) {
             $line = $desk->apply($support, $action, $actorId, $actor);
         } else {
             return;
-        }
-        if ($onList) {
-            $telegram->edit($tapped, $line, []);
         }
         $telegram->send($line, $cardId);
         $this->refreshCard($support->fresh(), $telegram, $wasOpen ? $line : null);
@@ -210,14 +215,14 @@ class TelegramWebhookController extends Controller
     }
 
     /** Writes into the request's topic when it has one, otherwise under its card (or as a reply to $fallback). */
-    private function say(TelegramService $telegram, SupportMessage $support, string $text, ?int $fallback = null): void
+    private function say(TelegramService $telegram, SupportMessage $support, string $text, ?int $fallback = null, ?array $keyboard = null): void
     {
         if ($support->telegram_thread_id) {
-            $telegram->send($text, null, null, (int) $support->telegram_thread_id);
+            $telegram->send($text, null, $keyboard, (int) $support->telegram_thread_id);
 
             return;
         }
-        $telegram->send($text, $support->telegram_message_id ?: $fallback);
+        $telegram->send($text, $support->telegram_message_id ?: $fallback, $keyboard);
     }
 
     private function repliedTicket(array $message): ?SupportMessage

@@ -111,7 +111,7 @@ class SupportDesk
 
         return ['text' => '👥 Which request do you want to assign?', 'keyboard' => $open->map(fn (SupportMessage $request) => [[
             'text' => '#'.str_pad((string) $request->id, 4, '0', STR_PAD_LEFT).' · '.mb_substr($request->subject ?: 'Support request', 0, 28).($request->assigned_name ? ' · '.$this->firstName($request->assigned_name) : ''),
-            'callback_data' => "s:{$request->id}:pick",
+            'callback_data' => "s:{$request->id}:lpick",
         ]])->values()->all()];
     }
 

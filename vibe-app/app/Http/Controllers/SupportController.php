@@ -68,7 +68,7 @@ class SupportController extends Controller
         $reply = $supportMessage->replies()->create(['body' => trim($data['body']), 'sender' => 'user', 'user_id' => $user->id]);
         $supportMessage->touch();
         [$attached, $problem] = $this->attach($files, $user, $request->file('files', []), $supportMessage, $reply);
-        $telegram->send("💬 {$supportMessage->ticket_no} · {$user->name}\n\n".trim($data['body']).$this->fileLines($attached), $supportMessage->telegram_thread_id ? null : ($supportMessage->telegram_message_id ? (int) $supportMessage->telegram_message_id : null), null, $supportMessage->telegram_thread_id ? (int) $supportMessage->telegram_thread_id : null);
+        $telegram->send("💬 {$supportMessage->ticket_no} · {$user->name}\n\n".trim($data['body']).$this->fileLines($attached), $supportMessage->telegram_thread_id ? null : ($supportMessage->telegram_message_id ? (int) $supportMessage->telegram_message_id : null), SupportCard::keyboard($supportMessage), $supportMessage->telegram_thread_id ? (int) $supportMessage->telegram_thread_id : null);
 
         return redirect()->route('support.show', $supportMessage)->with('success', 'Your answer was sent to Customer Services.')->with('error', $problem);
     }

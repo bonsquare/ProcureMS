@@ -190,7 +190,7 @@ class SupportButtonsTest extends TestCase
         $this->typeAssign($ticket, ['id' => 22, 'first_name' => 'Ben']);
 
         $this->assertSame('Anna', $ticket->fresh()->assigned_name);
-        $this->sentTo('sendMessage', fn ($r) => str_contains(json_encode($r['reply_markup'] ?? []), 's:'.$ticket->id.':to:22'));
+        $this->sentTo('sendMessage', fn ($r) => str_contains(json_encode($r['reply_markup'] ?? []), 's:'.$ticket->id.':lto:22'));
     }
 
     public function test_assign_typed_by_the_group_itself_offers_the_staff_and_never_assigns_the_group(): void
@@ -201,7 +201,7 @@ class SupportButtonsTest extends TestCase
         $this->typeAssign($ticket, ['id' => 1087968824, 'is_bot' => true, 'first_name' => 'Group', 'username' => 'GroupAnonymousBot']);
 
         $this->assertNull($ticket->fresh()->assigned_name);
-        $this->sentTo('sendMessage', fn ($r) => str_contains(json_encode($r['reply_markup'] ?? []), 's:'.$ticket->id.':to:22'));
+        $this->sentTo('sendMessage', fn ($r) => str_contains(json_encode($r['reply_markup'] ?? []), 's:'.$ticket->id.':lto:22'));
     }
 
     public function test_picking_from_the_typed_list_assigns_and_removes_that_list(): void
@@ -209,7 +209,7 @@ class SupportButtonsTest extends TestCase
         $ticket = $this->ticket(['assigned_name' => 'Anna', 'assigned_telegram_id' => 11]);
         $this->tap($ticket, 'noop', 22, 'Ben');
 
-        $this->postJson(route('telegram.webhook', 'hook-secret'), ['callback_query' => ['id' => 'cb2', 'from' => ['id' => 11, 'first_name' => 'Anna'], 'data' => 's:'.$ticket->id.':to:22',
+        $this->postJson(route('telegram.webhook', 'hook-secret'), ['callback_query' => ['id' => 'cb2', 'from' => ['id' => 11, 'first_name' => 'Anna'], 'data' => 's:'.$ticket->id.':lto:22',
             'message' => ['message_id' => 5555, 'chat' => ['id' => 555]]]])->assertOk();
 
         $this->assertSame('Ben', $ticket->fresh()->assigned_name);
@@ -224,12 +224,12 @@ class SupportButtonsTest extends TestCase
 
         $this->postJson(route('telegram.webhook', 'hook-secret'), ['message' => ['message_id' => 704, 'chat' => ['id' => 555], 'from' => ['id' => 11, 'first_name' => 'Anna'], 'text' => '/assign']])->assertOk();
 
-        $this->sentTo('sendMessage', fn ($r) => str_contains(json_encode($r['reply_markup'] ?? []), 's:'.$open->id.':pick') && ! str_contains(json_encode($r['reply_markup'] ?? []), 's:'.$done->id.':pick'));
+        $this->sentTo('sendMessage', fn ($r) => str_contains(json_encode($r['reply_markup'] ?? []), 's:'.$open->id.':lpick') && ! str_contains(json_encode($r['reply_markup'] ?? []), 's:'.$done->id.':lpick'));
 
-        $this->postJson(route('telegram.webhook', 'hook-secret'), ['callback_query' => ['id' => 'cb3', 'from' => ['id' => 11, 'first_name' => 'Anna'], 'data' => 's:'.$open->id.':pick',
+        $this->postJson(route('telegram.webhook', 'hook-secret'), ['callback_query' => ['id' => 'cb3', 'from' => ['id' => 11, 'first_name' => 'Anna'], 'data' => 's:'.$open->id.':lpick',
             'message' => ['message_id' => 6666, 'chat' => ['id' => 555]]]])->assertOk();
 
-        $this->sentTo('editMessageReplyMarkup', fn ($r) => (int) $r['message_id'] === 6666 && str_contains(json_encode($r['reply_markup']), 's:'.$open->id.':to:22'));
+        $this->sentTo('editMessageReplyMarkup', fn ($r) => (int) $r['message_id'] === 6666 && str_contains(json_encode($r['reply_markup']), 's:'.$open->id.':lto:22'));
     }
 
     public function test_the_card_shows_the_ticket_number_then_the_subject_then_the_requester(): void
@@ -243,5 +243,36 @@ class SupportButtonsTest extends TestCase
 
             return ! in_array(false, $order, true) && $order === collect($order)->sort()->values()->all() && strpos($text, 'Status:') > $order[2];
         });
+    }
+
+    public function test_the_clients_web_reply_and_the_answered_line_carry_the_buttons(): void
+    {
+        $ticket = $this->ticket();
+
+        $this->actingAs($ticket->user)->post(route('support.reply', $ticket), ['body' => 'Any news?'])->assertRedirect();
+        $this->sentTo('sendMessage', fn ($r) => str_contains((string) $r['text'], 'Any news?') && str_contains(json_encode($r['reply_markup'] ?? []), 's:'.$ticket->id.':hold'));
+
+        $this->postJson(route('telegram.webhook', 'hook-secret'), ['message' => ['message_id' => 710, 'chat' => ['id' => 555], 'from' => ['id' => 11, 'first_name' => 'Anna'], 'text' => 'Checking now', 'reply_to_message' => ['message_id' => (int) $ticket->telegram_message_id]]])->assertOk();
+        $this->sentTo('sendMessage', fn ($r) => str_contains((string) $r['text'], 'answered') && str_contains(json_encode($r['reply_markup'] ?? []), 's:'.$ticket->id.':resolve'));
+    }
+
+    public function test_buttons_on_a_reply_message_work_and_assigning_from_them_keeps_the_message_and_its_buttons(): void
+    {
+        $ticket = $this->ticket();
+        $this->tap($ticket, 'noop', 22, 'Ben');
+        $reply = fn (string $data) => $this->postJson(route('telegram.webhook', 'hook-secret'), ['callback_query' => ['id' => 'cb4', 'from' => ['id' => 11, 'first_name' => 'Anna'], 'data' => 's:'.$ticket->id.':'.$data,
+            'message' => ['message_id' => 7777, 'chat' => ['id' => 555]]]])->assertOk();
+
+        $reply('hold');
+        $this->assertSame('on_hold', $ticket->fresh()->status);
+
+        $reply('pick');
+        $this->sentTo('editMessageReplyMarkup', fn ($r) => (int) $r['message_id'] === 7777 && str_contains(json_encode($r['reply_markup']), 's:'.$ticket->id.':to:22'));
+
+        $reply('to:22');
+        $this->assertSame('Ben', $ticket->fresh()->assigned_name);
+        // The message keeps its text; only its buttons are put back.
+        $this->sentTo('editMessageReplyMarkup', fn ($r) => (int) $r['message_id'] === 7777 && str_contains(json_encode($r['reply_markup']), 's:'.$ticket->id.':hold'));
+        Http::assertNotSent(fn (Request $r) => str_contains($r->url(), 'editMessageText') && (int) ($r['message_id'] ?? 0) === 7777);
     }
 }
