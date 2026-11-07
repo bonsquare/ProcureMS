@@ -132,11 +132,12 @@ class PrintSettingsEngineTest extends TestCase
         }
     }
 
-    public function test_the_sip_text_is_9_5_pt_with_centred_figures_that_never_run_into_the_next_column(): void
+    public function test_the_sip_keeps_its_text_size_and_only_fits_the_centred_amounts_to_their_cells(): void
     {
         $sip = File::get(resource_path('views/sip-print.blade.php'));
 
-        $this->assertStringContainsString('pagesAt(9.5);', $sip);
+        $this->assertStringContainsString('pagesAt(steps[low]);', $sip);
+        $this->assertStringNotContainsString('pagesAt(9.5);', $sip);
         $this->assertStringContainsString('function fitNumbers()', $sip);
         $this->assertStringContainsString('td.num { white-space: nowrap; text-align: center;', $sip);
     }

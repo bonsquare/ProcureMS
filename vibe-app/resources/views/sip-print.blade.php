@@ -53,7 +53,8 @@
 @include('partials.input-fixes')
 @include('partials.print-clean')
 <script>
-    /* Sets the size of 1rem from the width of the paper on screen (print sets it in CSS), and the size of the table text: 9.5pt. This runs before the shared print-pages script measures the rows. */
+    /* Sets the size of 1rem from the width of the paper on screen (print sets it in CSS), and the size of the table text: the largest from 10pt down
+       to 8pt (on the long bond paper) that keeps the pages the document needs at 8pt. This runs before the shared print-pages script measures the rows. */
     (function () {
         var MM = 96 / 25.4;
         var REM_PER_PT = 4 / 3 / 10.012;
@@ -70,12 +71,17 @@
             window.dispatchEvent(new Event('beforeprint'));
             return document.querySelectorAll('[data-official-page] > .doc-page').length;
         }
-        // A figure never prints over the next column: one too wide for its cell (a six-figure amount) takes just enough smaller type to fit it.
+        // A figure never prints over the next column. The amounts of the physical targets and the amounts of the financial targets each take the one size
+        // that fits the widest of them in its cell, so the columns stay even; the rest of the text keeps its size.
         function fitNumbers() {
             var cells = Array.prototype.slice.call(document.querySelectorAll('td.num'));
             cells.forEach(function (cell) { cell.style.fontSize = ''; });
-            cells.forEach(function (cell) {
-                if (cell.scrollWidth > cell.clientWidth + 1) { cell.style.fontSize = (parseFloat(getComputedStyle(cell).fontSize) * (cell.clientWidth - 1) / cell.scrollWidth) + 'px'; }
+            var groups = [[], []];
+            cells.forEach(function (cell) { groups[Array.prototype.indexOf.call(cell.parentNode.querySelectorAll('td.num'), cell) < 3 ? 0 : 1].push(cell); });
+            groups.forEach(function (group) {
+                var ratio = 1;
+                group.forEach(function (cell) { if (cell.scrollWidth > cell.clientWidth + 1) { ratio = Math.min(ratio, (cell.clientWidth - 1) / cell.scrollWidth); } });
+                if (ratio < 1) { group.forEach(function (cell) { cell.style.fontSize = (parseFloat(getComputedStyle(cell).fontSize) * ratio) + 'px'; }); }
             });
         }
         function fit() {
@@ -84,7 +90,15 @@
             try {
                 size();
                 seen = (document.getElementById('official-page-style') || {}).textContent;
-                pagesAt(9.5);
+                var steps = [];
+                for (var pt = 8; pt <= 10; pt += 0.25) { steps.push(pt); }
+                var needed = pagesAt(8);
+                var low = 0, high = steps.length - 1;
+                while (low < high) {
+                    var middle = Math.ceil((low + high) / 2);
+                    if (pagesAt(steps[middle]) <= needed) { low = middle; } else { high = middle - 1; }
+                }
+                pagesAt(steps[low]);
                 fitNumbers();
             } finally {
                 fitting = false;
