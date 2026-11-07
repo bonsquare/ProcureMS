@@ -26,7 +26,7 @@ class RequireActionPin
         'planning.sob.update', 'planning.sob.destroy', 'planning.sob.groups.update', 'planning.sob.groups.destroy', 'planning.sob.items.update', 'planning.sob.items.destroy',
         'procurement.update', 'suppliers.update', 'units.destroy',
         'school-settings.employees.update', 'school-settings.employees.destroy', 'school-settings.papers.destroy', 'school-settings.users.update',
-        'user-management.users.update', 'master-user.update', 'master-user.sub-masters.update', 'master-user.sub-masters.status',
+        'school-settings.printing.update', 'user-management.users.update', 'master-user.update', 'master-user.sub-masters.update', 'master-user.sub-masters.status',
     ];
 
     public function handle(Request $request, Closure $next): Response
