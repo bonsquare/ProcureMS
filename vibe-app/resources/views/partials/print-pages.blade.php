@@ -23,7 +23,7 @@
     .doc-footer { position: absolute; left: var(--sheet-pl, 0); right: var(--sheet-pr, 0); bottom: var(--sheet-pb, 0); display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; font-size: var(--doc-footer-size, .75rem); color: #333; line-height: 1.2; }
     .doc-footer .center { text-align: center; } .doc-footer .right { text-align: right; }
     @media print {
-        html .is-sheets .doc-page { min-height: var(--doc-page-h, 0) !important; }
+        html .is-sheets .doc-page { height: var(--doc-page-h, auto) !important; min-height: 0 !important; overflow: visible; }
         .doc-footer { left: 0; right: 0; bottom: 0; }
     }
 </style>
@@ -494,7 +494,7 @@
             blocks.forEach(function (element) { page.appendChild(element); });
             // Footer of every page: the page number in the middle, the title of the document (the value of data-page-footer) on the right.
             if (footed) {
-                root.style.setProperty('--doc-page-h', ((+spec[2] - spec[3] - spec[5]) * MM - 20) + 'px'); // 20 px (5 mm) of room: at some margins the last page was a few pixels taller than the sheet and its footer printed alone on one more page
+                root.style.setProperty('--doc-page-h', ((+spec[2] - spec[3] - spec[5]) * MM - 4) + 'px'); // 4 px of room: at some margins the last page was a few pixels taller than the sheet and its footer printed alone on one more page
                 blocks.forEach(function (element, number) {
                     var footer = document.createElement('div');
                     footer.setAttribute('data-doc-footer', '');

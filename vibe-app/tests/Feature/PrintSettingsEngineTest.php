@@ -95,4 +95,13 @@ class PrintSettingsEngineTest extends TestCase
 
         $this->assertStringContainsString('@page { margin: 15mm 10mm 15mm 10mm; }', view('partials.print-margin')->render());
     }
+
+    public function test_the_page_footer_is_out_of_the_flow_and_the_page_has_a_fixed_height(): void
+    {
+        $pages = File::get(resource_path('views/partials/print-pages.blade.php'));
+
+        $this->assertStringContainsString('height: var(--doc-page-h, auto) !important; min-height: 0 !important', $pages);
+        $this->assertStringContainsString('.doc-footer { position: absolute;', $pages);
+        $this->assertStringContainsString("* MM - 4) + 'px'", $pages);
+    }
 }
