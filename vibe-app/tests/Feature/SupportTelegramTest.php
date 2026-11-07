@@ -7,8 +7,10 @@ use App\Models\School;
 use App\Models\SupportMessage;
 use App\Models\SystemSetting;
 use App\Models\User;
+use App\Services\TelegramService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
@@ -113,5 +115,65 @@ class SupportTelegramTest extends TestCase
         $this->postJson(route('telegram.webhook', 'hook-secret'), ['message' => ['message_id' => 12, 'chat' => ['id' => 555], 'text' => 'Done', 'reply_to_message' => ['message_id' => 61]]])->assertOk();
 
         Http::assertSent(fn ($r) => str_contains($r->url(), '/sendMessage') && str_contains($r->body(), 'Support #'.$message->id.' answered') && str_contains($r->body(), '"reply_to_message_id":61'));
+    }
+
+    private function hook(array $message): void
+    {
+        $this->postJson(route('telegram.webhook', 'hook-secret'), ['message' => $message + ['message_id' => 500, 'chat' => ['id' => 555]]])->assertOk();
+    }
+
+    public function test_the_visitors_email_is_not_put_in_the_telegram_message(): void
+    {
+        config(['mail.default' => 'array']);
+        $this->configure();
+        Http::fake(['api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 5]])]);
+        $user = $this->user('tg7');
+
+        $this->actingAs($user)->post(route('support.send'), ['body' => 'Private question'])->assertRedirect();
+
+        Http::assertSent(fn ($r) => str_contains($r->body(), 'Private question') && ! str_contains($r->body(), $user->email));
+    }
+
+    public function test_a_staff_message_that_matches_no_ticket_is_not_delivered_and_staff_are_asked_to_reply_to_the_ticket(): void
+    {
+        $this->configure();
+        Http::fake(['api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 9]])]);
+        $user = $this->user('tg8');
+        $message = SupportMessage::create(['user_id' => $user->id, 'school_id' => $user->school_id, 'body' => 'Q', 'telegram_message_id' => 31, 'telegram_status' => 'sent']);
+
+        $this->hook(['text' => 'Sorry for the wait']);
+        $this->hook(['text' => '#9999 Wrong number', 'reply_to_message' => ['message_id' => 1]]);
+
+        $this->assertSame(0, $message->replies()->count());
+        $this->assertSame('open', $message->fresh()->status);
+        Http::assertSentCount(2);
+        Http::assertSent(fn ($r) => str_contains($r->body(), 'not delivered') && str_contains($r->body(), 'Reply to the ticket message'));
+    }
+
+    public function test_staff_can_close_a_ticket_and_the_page_shows_it(): void
+    {
+        $this->configure();
+        Http::fake(['api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 9]])]);
+        $user = $this->user('tg9');
+        $byReply = SupportMessage::create(['user_id' => $user->id, 'school_id' => $user->school_id, 'body' => 'One', 'telegram_message_id' => 41, 'telegram_status' => 'sent']);
+        $byNumber = SupportMessage::create(['user_id' => $user->id, 'school_id' => $user->school_id, 'body' => 'Two', 'telegram_message_id' => 42, 'telegram_status' => 'sent']);
+
+        $this->hook(['text' => '/close', 'reply_to_message' => ['message_id' => 41]]);
+        $this->hook(['text' => '/close '.$byNumber->id]);
+
+        $this->assertSame('closed', $byReply->fresh()->status);
+        $this->assertSame('closed', $byNumber->fresh()->status);
+        $this->actingAs($user)->get(route('support'))->assertSee('Closed');
+    }
+
+    public function test_a_failed_telegram_send_is_logged(): void
+    {
+        $this->configure();
+        Http::fake(['api.telegram.org/*' => Http::response(['ok' => false], 500)]);
+        Log::spy();
+
+        $this->assertNull(app(TelegramService::class)->send('hello'));
+
+        Log::shouldHaveReceived('warning')->once();
     }
 }

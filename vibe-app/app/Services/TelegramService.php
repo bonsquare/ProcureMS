@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /** The Telegram bot of Customer Services: sends a message to the Customer Services chat and registers the webhook that brings the replies back. */
@@ -22,8 +23,16 @@ class TelegramService
         try {
             $response = Http::timeout(8)->post($this->url('sendMessage'), array_filter(['chat_id' => config('services.telegram.chat_id'), 'text' => $text, 'reply_to_message_id' => $replyTo]));
 
-            return $response->successful() ? (int) $response->json('result.message_id') : null;
-        } catch (Throwable) {
+            if (! $response->successful()) {
+                Log::warning('Telegram message was not sent.', ['status' => $response->status(), 'error' => $response->json('description')]);
+
+                return null;
+            }
+
+            return (int) $response->json('result.message_id');
+        } catch (Throwable $exception) {
+            Log::warning('Telegram message was not sent.', ['error' => $exception->getMessage()]);
+
             return null;
         }
     }

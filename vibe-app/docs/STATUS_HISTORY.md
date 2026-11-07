@@ -180,3 +180,4 @@ Full dated log moved out of CLAUDE.md to keep that file short. Nothing was remov
 - 2026-11-07: Telegram webhook registered at procms.celsys.trade (secret set on Railway, deployment 3f0e4867): replies written in the Celsys Support Center group can reach the Support page.
 - 2026-11-07: Support messages also sent to the Telegram chat; replies come back to the Support page (docs/specs.md section 119). Deployed 2026-11-07 (7ef96463).
 - 2026-11-07: the Telegram chat is told which Support message was answered (docs/specs.md section 119). Deployed 2026-11-07 (c55c023a).
+- 2026-11-07: Support tickets in Telegram: no email in the chat, unmatched staff messages refused, /close, Closed status, failures logged (docs/specs.md section 119). Committed, not yet deployed.

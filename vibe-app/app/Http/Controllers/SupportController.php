@@ -50,13 +50,8 @@ class SupportController extends Controller
             }
         }
         // The same message goes to the Customer Services Telegram chat; a reply there comes back to this page.
-        $telegramId = $telegram->send("Support #{$message->id}
-School: ".($user->school?->name ?? '—')."
-From: {$user->name} ({$user->email})
-
-{$message->body}
-
-Reply to this message to answer.");
+        // The sender's email stays out of the chat; staff answer here and the reply reaches the user on this page.
+        $telegramId = $telegram->send("Support #{$message->id}\nSchool: ".($user->school?->name ?? '—')."\nFrom: {$user->name}\n\n{$message->body}\n\nReply to this message to answer, or send /close to close it.");
         // The telegram_status column records the delivery: email, or Telegram when that is the only way in.
         $message->update(['telegram_message_id' => $telegramId, 'telegram_status' => $telegramId && $status !== 'sent' ? 'sent' : $status]);
 
