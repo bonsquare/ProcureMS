@@ -22,11 +22,11 @@ class PaymentProof extends Model
     /** The proofs still waiting for a decision. */
     public const OPEN = [self::PENDING, self::FOR_PROCESS];
 
-    protected $fillable = ['organization_id', 'school_id', 'user_id', 'subscription_id', 'reference', 'bank_account_used', 'paid_at', 'transacted_at', 'remarks', 'submitted_by_name', 'submitted_by_username', 'list_price', 'discount_amount', 'promo_code_id', 'amount_to_pay', 'drive_file_id', 'drive_link', 'file_name', 'mime', 'size', 'sha256', 'status', 'reviewed_by', 'reviewed_at', 'reject_reason'];
+    protected $fillable = ['organization_id', 'school_id', 'user_id', 'subscription_id', 'reference', 'bank_account_used', 'paid_at', 'transacted_at', 'remarks', 'submitted_by_name', 'submitted_by_username', 'list_price', 'discount_amount', 'promo_code_id', 'amount_to_pay', 'drive_file_id', 'drive_link', 'file_name', 'mime', 'size', 'sha256', 'status', 'reviewed_by', 'reviewed_at', 'reject_reason', 'assigned_telegram_id', 'assigned_name', 'assigned_at'];
 
     protected function casts(): array
     {
-        return ['paid_at' => 'date', 'transacted_at' => 'datetime', 'list_price' => 'decimal:2', 'discount_amount' => 'decimal:2', 'amount_to_pay' => 'decimal:2', 'reviewed_at' => 'datetime', 'size' => 'integer'];
+        return ['paid_at' => 'date', 'transacted_at' => 'datetime', 'list_price' => 'decimal:2', 'discount_amount' => 'decimal:2', 'amount_to_pay' => 'decimal:2', 'reviewed_at' => 'datetime', 'assigned_at' => 'datetime', 'size' => 'integer'];
     }
 
     public function school()
@@ -42,6 +42,12 @@ class PaymentProof extends Model
     public function promoCode()
     {
         return $this->belongsTo(PromoCode::class);
+    }
+
+    /** The request number the group works with: SUB-date-time-id. */
+    public function getNumberAttribute(): string
+    {
+        return 'SUB-'.($this->created_at ?? now())->format('Ymd-Hi').'-'.str_pad((string) $this->id, 4, '0', STR_PAD_LEFT);
     }
 
     public function isPending(): bool

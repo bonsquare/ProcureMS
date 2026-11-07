@@ -7,6 +7,7 @@ use App\Models\PaymentProof;
 use App\Models\PromoCode;
 use App\Models\Subscription;
 use App\Models\SubscriptionPayment;
+use App\Models\SystemSetting;
 use App\Models\User;
 use App\Services\SubscriptionService;
 use App\Support\PaymentSettings;
@@ -419,5 +420,23 @@ class PaymentProofTest extends TestCase
         $this->assertSame('approved', $proof->fresh()->status);
         $this->assertNull($proof->fresh()->reject_reason);
         $this->assertSame(1, SubscriptionPayment::withoutGlobalScopes()->count());
+    }
+
+    public function test_a_proof_has_a_number_and_anyone_in_the_group_can_assign_it_to_staff(): void
+    {
+        SystemSetting::put('support_staff', json_encode(['1898359491' => 'Bonifacio Jr', '6377718069' => 'Rizza Mae']));
+        $proof = $this->telegramProof();
+        $this->assertMatchesRegularExpression('/^SUB-\d{8}-\d{4}-'.str_pad((string) $proof->id, 4, '0', STR_PAD_LEFT).'$/', $proof->number);
+        $this->telegramSaw('sendMessage', fn ($r) => str_contains((string) $r['text'], $proof->number) && str_contains(json_encode($r['reply_markup'] ?? []), 'p:'.$proof->id.':assign'));
+
+        $this->proofTap($proof, 'assign', 999, 'Stranger');
+        $this->telegramSaw('editMessageReplyMarkup', fn ($r) => str_contains(json_encode($r['reply_markup']), 'p:'.$proof->id.':to:6377718069'));
+
+        $this->postJson(route('telegram.webhook', 'hook-secret'), ['callback_query' => ['id' => 'pcb', 'from' => ['id' => 999, 'first_name' => 'Stranger'], 'data' => 'p:'.$proof->id.':to:6377718069', 'message' => ['message_id' => 5000, 'chat' => ['id' => 555]]]])->assertOk();
+
+        $this->assertSame(['Rizza Mae', 6377718069], [$proof->fresh()->assigned_name, $proof->fresh()->assigned_telegram_id]);
+        $this->assertSame('pending', $proof->fresh()->status);
+        $this->telegramSaw('sendMessage', fn ($r) => str_contains((string) $r['text'], 'assigned to Rizza Mae by Stranger'));
+        $this->telegramSaw('editMessageText', fn ($r) => str_contains((string) $r['text'], 'Assigned to: Rizza Mae'));
     }
 }

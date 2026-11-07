@@ -16,7 +16,7 @@ class ProofDecisions
 {
     private const REASON_MAX = 255;
 
-    public function __construct(private TelegramService $telegram, private PaymentProofReview $reviews) {}
+    public function __construct(private TelegramService $telegram, private PaymentProofReview $reviews, private SupportDesk $desk) {}
 
     /** The master user a Telegram account decides as; null when the account is not an approver. */
     public function actor(int $telegramId): ?User
@@ -34,11 +34,19 @@ class ProofDecisions
     }
 
     /** A tap on a button of a payment proof card ("p:{proof}:{action}"). */
-    public function button(array $callback, int $proofId, string $action): void
+    public function button(array $callback, int $proofId, string $action, int $staffId = 0): void
     {
         $from = (array) ($callback['from'] ?? []);
         $callbackId = (string) ($callback['id'] ?? '');
         $tapped = (int) data_get($callback, 'message.message_id');
+        if ((string) data_get($callback, 'message.chat.id') !== (string) config('services.telegram.chat_id')) {
+            return;
+        }
+        if (in_array($action, ['assign', 'to', 'back'], true)) {
+            $this->assignment($callbackId, $proofId, $action, $staffId, $tapped, $from);
+
+            return;
+        }
         $by = $this->actor((int) ($from['id'] ?? 0));
         if ($by === null) {
             $this->telegram->answer($callbackId, 'You are not allowed to decide payments.', true);
@@ -56,11 +64,42 @@ class ProofDecisions
 
         match ($action) {
             'approve' => $this->telegram->editKeyboard($tapped, PaymentProofNotice::confirmKeyboard($proof)),
-            'back' => $this->telegram->editKeyboard($tapped, PaymentProofNotice::keyboard($proof)),
             'yes' => $this->decide($proof, 'approve', $by, $name, "Approved in Telegram by {$name}", $tapped),
             'decline', 'process' => $this->ask($proof, $action, $tapped),
             default => null,
         };
+    }
+
+    /** Anyone in the Customer Services group can hand a proof to a staff member: "assign" shows the staff, "to" picks one. */
+    private function assignment(string $callbackId, int $proofId, string $action, int $staffId, int $tapped, array $from): void
+    {
+        $proof = PaymentProof::withoutGlobalScopes()->find($proofId);
+        if (! $proof || ! $proof->isPending()) {
+            $this->telegram->answer($callbackId, 'This proof was already decided.', true);
+
+            return;
+        }
+        $this->telegram->answer($callbackId);
+        if ($action === 'back') {
+            $this->telegram->editKeyboard($tapped, PaymentProofNotice::keyboard($proof));
+
+            return;
+        }
+        if ($action === 'assign') {
+            $staff = $this->desk->staff();
+            $staff ? $this->telegram->editKeyboard($tapped, PaymentProofNotice::staffKeyboard($proof, $staff)) : $this->telegram->send('No staff known yet. Staff appear here after they write once in this group.', $tapped ?: null);
+
+            return;
+        }
+        $name = $this->desk->staff()[$staffId] ?? null;
+        if ($name === null) {
+            return;
+        }
+        $proof->update(['assigned_telegram_id' => $staffId, 'assigned_name' => mb_substr($name, 0, 80), 'assigned_at' => now()]);
+        $school = School::withoutGlobalScopes()->findOrFail($proof->school_id);
+        $by = (string) ($from['first_name'] ?? 'Someone');
+        $this->telegram->send("👥 Payment proof {$proof->number} · {$school->name} — assigned to {$name} by {$by} · ".now()->format('M d, g:i A'), $tapped ?: null);
+        $this->telegram->edit($tapped, PaymentProofNotice::text($proof, $school), PaymentProofNotice::keyboard($proof));
     }
 
     /** A reply to one of the bot's "write the reason" questions: the reply is the reason. Returns false when the message is not such a reply. */

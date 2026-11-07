@@ -191,3 +191,4 @@ Full dated log moved out of CLAUDE.md to keep that file short. Nothing was remov
 - 2026-11-07: Support page as a chat with live refresh (docs/specs.md section 119). Deployed 2026-11-07 (a8148194).
 - 2026-11-07: Status buttons also under the client reply and the answered line (docs/specs.md section 119). Deployed 2026-11-07 (587a12e4).
 - 2026-11-07: Payment proofs approved, declined or put For process from Telegram, with a remark the school sees (docs/specs.md section 119). Deployed 2026-11-07 (587a12e4); TELEGRAM_APPROVERS = Bonifacio Jr only.
+- 2026-11-07: Payment proof number (SUB-...) and Assign to staff button in Telegram (docs/specs.md section 119). Committed, not yet deployed.

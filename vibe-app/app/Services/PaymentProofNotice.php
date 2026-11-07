@@ -25,7 +25,9 @@ final class PaymentProofNotice
         [$icon, $label] = self::STATUS[$proof->status] ?? self::STATUS[PaymentProof::PENDING];
 
         return "🧾 New Payment Proof · {$school->name}\n"
+            ."🎫 {$proof->number}\n"
             ."{$icon} Status: {$label}\n"
+            .($proof->assigned_name ? "👥 Assigned to: {$proof->assigned_name}\n" : '')
             .($proof->reject_reason && $proof->status !== PaymentProof::PENDING ? "💬 Remark to the school: {$proof->reject_reason}\n" : '')
             .'🏫 School: '.$school->name.($school->code ? " ({$school->code})" : '')."\n"
             ."👤 Sent by: {$proof->submitted_by_name} (@{$proof->submitted_by_username})\n"
@@ -45,10 +47,26 @@ final class PaymentProofNotice
             return [];
         }
         $button = fn (string $label, string $action) => ['text' => $label, 'callback_data' => "p:{$proof->id}:{$action}"];
-        $rows = [[$button('✅ Approve', 'approve'), $button('❌ Decline', 'decline')]];
+        $rows = [[$button($proof->assigned_name ? '🔁 Reassign' : '👥 Assign to staff', 'assign')], [$button('✅ Approve', 'approve'), $button('❌ Decline', 'decline')]];
         if ($proof->status === PaymentProof::PENDING) {
             $rows[] = [$button('⏳ For process', 'process')];
         }
+
+        return $rows;
+    }
+
+    /**
+     * The staff to pick from (two per row), then Back.
+     *
+     * @param  array<int, string>  $staff  Telegram id => name
+     */
+    public static function staffKeyboard(PaymentProof $proof, array $staff): array
+    {
+        $rows = [];
+        foreach (array_chunk(array_keys($staff), 2) as $pair) {
+            $rows[] = array_map(fn (int $id) => ['text' => '👤 '.$staff[$id], 'callback_data' => "p:{$proof->id}:to:{$id}"], $pair);
+        }
+        $rows[] = [['text' => '⬅️ Back', 'callback_data' => "p:{$proof->id}:back"]];
 
         return $rows;
     }

@@ -147,8 +147,8 @@ class TelegramWebhookController extends Controller
         $callbackId = (string) ($callback['id'] ?? '');
         $actorId = (int) ($from['id'] ?? 0);
         $actor = (string) ($from['first_name'] ?? 'Staff');
-        if (preg_match('/^p:(\d+):(\w+)$/', (string) ($callback['data'] ?? ''), $proof)) {
-            app(ProofDecisions::class)->button($callback, (int) $proof[1], $proof[2]);
+        if (preg_match('/^p:(\d+):(\w+)(?::(\d+))?$/', (string) ($callback['data'] ?? ''), $proof)) {
+            app(ProofDecisions::class)->button($callback, (int) $proof[1], $proof[2], (int) ($proof[3] ?? 0));
 
             return;
         }
