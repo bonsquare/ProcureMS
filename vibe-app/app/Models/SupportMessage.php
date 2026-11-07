@@ -16,6 +16,17 @@ class SupportMessage extends Model
         return ['resolved_at' => 'datetime'];
     }
 
+    /** The ticket number: the date and time the request was made, then its number (SUP-20261107-1745-0007). */
+    public function getTicketNoAttribute(): string
+    {
+        return 'SUP-'.$this->created_at->format('Ymd-Hi').'-'.str_pad((string) $this->id, 4, '0', STR_PAD_LEFT);
+    }
+
+    public function getFiledAtAttribute(): string
+    {
+        return $this->created_at->format('M d, Y g:i A');
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class)->withoutGlobalScopes();

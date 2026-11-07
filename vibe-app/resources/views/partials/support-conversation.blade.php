@@ -5,7 +5,7 @@
 @endphp
 <div class="flex flex-wrap items-start justify-between gap-2">
     <div class="min-w-0">
-        <p class="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant">Request #{{ $current->id }} · {{ $current->type === 'subscription' ? 'Subscription' : 'General help' }}@if($canEdit) · {{ $current->user?->name }}@if($current->school) · {{ $current->school->name }}@endif @endif</p>
+        <p class="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant">Ticket {{ $current->ticket_no }} · {{ $current->filed_at }} ·{{ $current->type === 'subscription' ? 'Subscription' : 'General help' }}@if($canEdit) · {{ $current->user?->name }}@if($current->school) · {{ $current->school->name }}@endif @endif</p>
         <h2 class="mt-0.5 break-words text-lg font-semibold">{{ $current->subject ?: 'Support request' }}</h2>
     </div>
     <span class="rounded-full px-2.5 py-1 text-[11px] font-bold {{ $chip($current->status) }}">{{ \App\Support\SupportStatus::label($current->status) }}</span>

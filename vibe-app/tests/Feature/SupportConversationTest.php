@@ -53,7 +53,7 @@ class SupportConversationTest extends TestCase
         $this->assertSame('user', $reply->sender);
         $this->assertSame($user->id, (int) $reply->user_id);
         $this->assertSame('It is still blank', $reply->body);
-        Http::assertSent(fn ($r) => str_contains((string) $r['text'], 'Support #'.$request->id) && str_contains((string) $r['text'], 'It is still blank') && (int) $r['reply_to_message_id'] === 71);
+        Http::assertSent(fn ($r) => str_contains((string) $r['text'], $request->ticket_no) && str_contains((string) $r['text'], 'It is still blank') && (int) $r['reply_to_message_id'] === 71);
     }
 
     public function test_a_resolved_request_cannot_be_answered(): void

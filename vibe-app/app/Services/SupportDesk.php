@@ -76,7 +76,7 @@ class SupportDesk
                 if ($shown++ >= self::QUEUE_LIMIT) {
                     break;
                 }
-                $lines[] = ($request->type === 'subscription' ? '🧾 ' : '').'#'.$request->id.' · '.($request->subject ?: 'Support request').' · '.($request->school?->name ?? '—').' · '.($request->assigned_name ? $this->firstName($request->assigned_name) : 'unassigned').' · '.$request->created_at->diffForHumans(null, true, true);
+                $lines[] = ($request->type === 'subscription' ? '🧾 ' : '').$request->ticket_no.' · '.($request->subject ?: 'Support request').' · '.($request->school?->name ?? '—').' · '.($request->assigned_name ? $this->firstName($request->assigned_name) : 'unassigned').' · '.$request->created_at->diffForHumans(null, true, true);
             }
         }
         if ($requests->count() > self::QUEUE_LIMIT) {

@@ -7,7 +7,7 @@ final class SupportStatus
 {
     public const ALL = ['pending', 'for_process', 'on_hold', 'approved', 'resolved'];
 
-    private const LABELS = ['pending' => 'Pending', 'for_process' => 'For process', 'on_hold' => 'On hold', 'approved' => 'Approved', 'resolved' => 'Resolved'];
+    private const LABELS = ['pending' => 'Pending', 'for_process' => 'On process', 'on_hold' => 'On hold', 'approved' => 'Approved', 'resolved' => 'Resolved'];
 
     public static function label(string $status): string
     {

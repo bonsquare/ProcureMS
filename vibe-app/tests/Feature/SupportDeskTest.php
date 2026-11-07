@@ -61,8 +61,8 @@ class SupportDeskTest extends TestCase
 
         $text = $desk->queue();
 
-        $this->assertStringContainsString('#'.$free->id.' · Free one', $text);
-        $this->assertStringContainsString('#'.$taken->id.' · Taken one', $text);
+        $this->assertStringContainsString($free->ticket_no.' · Free one', $text);
+        $this->assertStringContainsString($taken->ticket_no.' · Taken one', $text);
         $this->assertStringContainsString('Anna', $text);
         $this->assertStringContainsString('unassigned', $text);
         $this->assertStringNotContainsString('Done one', $text);
@@ -83,7 +83,7 @@ class SupportDeskTest extends TestCase
 
         $text = $desk->mine(5);
 
-        $this->assertStringContainsString('#'.$mine->id.' · Mine', $text);
+        $this->assertStringContainsString($mine->ticket_no.' · Mine', $text);
         $this->assertStringNotContainsString('Theirs', $text);
         $this->assertStringNotContainsString('Mine done', $text);
     }

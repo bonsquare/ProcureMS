@@ -16,7 +16,7 @@ class SupportRequestSchemaTest extends TestCase
     {
         $this->assertSame(['pending', 'for_process', 'on_hold', 'approved', 'resolved'], SupportStatus::ALL);
         $this->assertSame('On hold', SupportStatus::label('on_hold'));
-        $this->assertSame('For process', SupportStatus::label('for_process'));
+        $this->assertSame('On process', SupportStatus::label('for_process'));
         $this->assertTrue(SupportStatus::isOpen('approved'));
         $this->assertFalse(SupportStatus::isOpen('resolved'));
     }

@@ -19,7 +19,7 @@ class TelegramWebhookController extends Controller
 
     private const STATUS_OF = ['process' => 'for_process', 'hold' => 'on_hold', 'approve' => 'approved', 'resolve' => 'resolved', 'close' => 'resolved'];
 
-    private const CONFIRM = ['for_process' => '▶ Support #%d for process', 'on_hold' => '⏸ Support #%d on hold', 'approved' => '👍 Support #%d approved', 'resolved' => '✅ Support #%d resolved'];
+    private const CONFIRM = ['for_process' => '▶ %s on process', 'on_hold' => '⏸ %s on hold', 'approved' => '👍 %s approved', 'resolved' => '✅ %s resolved'];
 
     public function handle(Request $request, string $secret, TelegramService $telegram, SupportDesk $desk)
     {
@@ -46,20 +46,20 @@ class TelegramWebhookController extends Controller
         }
 
         $support = $this->repliedTicket($message);
-        if (! $support && preg_match('/^#(\d+)\s+(.+)$/s', $text, $parts)) {
+        if (! $support && preg_match('/^(?:#|SUP-\d{8}-\d{4}-)(\d+)\s+(.+)$/s', $text, $parts)) {
             $support = SupportMessage::query()->find((int) $parts[1]);
             $text = trim($parts[2]);
         }
 
         if ($support && ! SupportStatus::isOpen($support->status)) {
-            $telegram->send("Support #{$support->id} is resolved. Your message was not delivered.", $messageId);
+            $telegram->send("{$support->ticket_no} is resolved. Your message was not delivered.", $messageId);
         } elseif ($support) {
             $support->replies()->create(['body' => $text, 'sender' => 'staff', 'telegram_message_id' => $messageId]);
             if ($support->status === 'pending') {
                 $support->update(['status' => 'for_process']);
             }
             // Marks the question as answered in the chat, so nobody has to scroll to find what is still open.
-            $telegram->send("✅ Support #{$support->id} answered", $support->telegram_message_id);
+            $telegram->send("✅ {$support->ticket_no} answered", $support->telegram_message_id);
         } elseif (! str_starts_with($text, '/')) {
             // Never guess: a message that cannot be tied to one ticket is not sent to any user.
             Log::warning('Telegram staff message matched no support ticket and was not delivered.', ['telegram_message_id' => $messageId]);
@@ -84,7 +84,7 @@ class TelegramWebhookController extends Controller
         }
 
         $support = $this->repliedTicket($message);
-        if (! $support && preg_match('/#?(\d+)/', $argument, $number)) {
+        if (! $support && preg_match('/(?:SUP-\d{8}-\d{4}-|#)?(\d+)/', $argument, $number)) {
             $support = SupportMessage::query()->find((int) $number[1]);
         }
         if (! $support) {
@@ -95,7 +95,7 @@ class TelegramWebhookController extends Controller
         }
         $anchor = $support->telegram_message_id ? (int) $support->telegram_message_id : $messageId;
         if (! SupportStatus::isOpen($support->status)) {
-            $telegram->send("Support #{$support->id} is resolved.", $anchor);
+            $telegram->send("{$support->ticket_no} is resolved.", $anchor);
 
             return;
         }
@@ -103,11 +103,11 @@ class TelegramWebhookController extends Controller
         if ($name === 'assign') {
             if (preg_match('/@(\w+)/', $argument, $who)) {
                 $desk->assignToName($support, '@'.$who[1]);
-                $telegram->send("👤 Support #{$support->id} · @{$who[1]}", $anchor);
+                $telegram->send("👤 {$support->ticket_no} · @{$who[1]}", $anchor);
             } elseif ($desk->assign($support, (int) ($from['id'] ?? 0), (string) ($from['first_name'] ?? 'Staff'))) {
-                $telegram->send("👤 Support #{$support->id} · ".($support->fresh()->assigned_name), $anchor);
+                $telegram->send("👤 {$support->ticket_no} · ".($support->fresh()->assigned_name), $anchor);
             } else {
-                $telegram->send($support->fresh()->assigned_name." already has Support #{$support->id}.", $anchor);
+                $telegram->send($support->fresh()->assigned_name." already has {$support->ticket_no}.", $anchor);
             }
 
             return;
@@ -116,7 +116,7 @@ class TelegramWebhookController extends Controller
         $status = self::STATUS_OF[$name];
         $desk->setStatus($support, $status);
         $by = $support->fresh()->assigned_name;
-        $telegram->send(sprintf(self::CONFIRM[$status], $support->id).($by ? ' · '.$by : ''), $anchor);
+        $telegram->send(sprintf(self::CONFIRM[$status], $support->ticket_no).($by ? ' · '.$by : ''), $anchor);
     }
 
     private function repliedTicket(array $message): ?SupportMessage

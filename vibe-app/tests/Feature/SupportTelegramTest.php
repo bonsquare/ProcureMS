@@ -90,7 +90,7 @@ class SupportTelegramTest extends TestCase
         $this->assertSame('for_process', $message->status);
         $this->assertSame('We fixed it', $message->replies->first()->body);
 
-        $this->actingAs($user)->get(route('support.show', $message))->assertOk()->assertSee('We fixed it')->assertSee('For process');
+        $this->actingAs($user)->get(route('support.show', $message))->assertOk()->assertSee('We fixed it')->assertSee('On process');
         $this->actingAs($other)->get(route('support.show', $message))->assertNotFound();
         $this->actingAs($other)->get(route('support'))->assertOk()->assertDontSee('We fixed it')->assertDontSee('Need help');
     }
@@ -115,7 +115,7 @@ class SupportTelegramTest extends TestCase
 
         $this->postJson(route('telegram.webhook', 'hook-secret'), ['message' => ['message_id' => 12, 'chat' => ['id' => 555], 'text' => 'Done', 'reply_to_message' => ['message_id' => 61]]])->assertOk();
 
-        Http::assertSent(fn ($r) => str_contains($r->url(), '/sendMessage') && str_contains($r->body(), 'Support #'.$message->id.' answered') && str_contains($r->body(), '"reply_to_message_id":61'));
+        Http::assertSent(fn ($r) => str_contains($r->url(), '/sendMessage') && str_contains($r->body(), $message->ticket_no.' answered') && str_contains($r->body(), '"reply_to_message_id":61'));
     }
 
     private function hook(array $message): void

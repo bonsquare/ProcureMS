@@ -13,7 +13,8 @@
             <ul class="mt-3 space-y-2">
                 @foreach($messages as $item)
                     <li><a href="{{ route('support.show', $item) }}" @if($current && $current->id === $item->id) aria-current="page" @endif class="block rounded-xl border p-3 hover:bg-surface-low {{ $current && $current->id === $item->id ? 'border-primary bg-primary/5' : 'border-outline-variant/40' }}">
-                        <span class="block break-words text-sm font-semibold">#{{ $item->id }} · {{ $item->subject ?: 'Support request' }}</span>
+                        <span class="block break-words text-sm font-semibold">{{ $item->subject ?: 'Support request' }}</span>
+                        <span class="block break-all text-[11px] font-semibold text-on-surface-variant">{{ $item->ticket_no }}</span>
                         @if($canEdit)<span class="block break-words text-[11px] text-on-surface-variant">{{ $item->user?->name }}@if($item->school) · {{ $item->school->name }}@endif</span>@endif
                         <span class="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-on-surface-variant"><span class="rounded-full px-2 py-0.5 font-bold {{ $chipClass($item->status) }}">{{ \App\Support\SupportStatus::label($item->status) }}</span><span>{{ $item->created_at->format('M d, Y g:i A') }}</span></span>
                     </a></li>

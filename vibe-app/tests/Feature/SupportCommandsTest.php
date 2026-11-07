@@ -56,11 +56,11 @@ class SupportCommandsTest extends TestCase
         $this->say('/assign', $this->replyTo($ticket));
         $this->assertSame('Anna', $ticket->fresh()->assigned_name);
         $this->assertSame(11, (int) $ticket->fresh()->assigned_telegram_id);
-        $this->botSaid('Support #'.$ticket->id.' · Anna');
+        $this->botSaid($ticket->ticket_no.' · Anna');
 
         $this->postJson(route('telegram.webhook', 'hook-secret'), ['message' => ['message_id' => 701, 'chat' => ['id' => 555], 'from' => ['id' => 22, 'first_name' => 'Ben'], 'text' => '/assign'] + $this->replyTo($ticket)])->assertOk();
         $this->assertSame('Anna', $ticket->fresh()->assigned_name);
-        $this->botSaid('already has Support #'.$ticket->id);
+        $this->botSaid('already has '.$ticket->ticket_no);
     }
 
     public function test_assign_can_give_a_request_to_a_named_person_by_number(): void
@@ -79,7 +79,7 @@ class SupportCommandsTest extends TestCase
 
         $this->say('/process', $this->replyTo($byReply));
         $this->assertSame('for_process', $byReply->fresh()->status);
-        $this->botSaid('for process');
+        $this->botSaid('on process');
 
         $this->say('/hold '.$byNumber->id);
         $this->assertSame('on_hold', $byNumber->fresh()->status);
@@ -110,7 +110,7 @@ class SupportCommandsTest extends TestCase
 
         $this->assertSame('resolved', $ticket->fresh()->status);
         $this->assertSame(0, $ticket->replies()->count());
-        $this->botSaid('Support #'.$ticket->id.' is resolved');
+        $this->botSaid($ticket->ticket_no.' is resolved');
     }
 
     public function test_queue_and_mine_post_the_lists(): void
