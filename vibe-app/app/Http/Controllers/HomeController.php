@@ -2663,6 +2663,7 @@ class HomeController extends Controller
             'schools' => $schools,
             'selectedSchool' => $selectedSchool,
             'printSettings' => app(\App\Services\PrintSettings::class)->forSchool($selectedSchool?->id),
+            'printPaper' => app(\App\Services\PrintSettings::class)->paper($selectedSchool?->id),
             'selectedOrganization' => $selectedOrganization,
             'staff' => $staff,
             'isMasterUser' => $isMasterUser,

@@ -9,6 +9,15 @@ use Illuminate\Support\Facades\DB;
 /** Reads and saves the page margins of a school: one default and optional margins for a single document. */
 class PrintSettings
 {
+    /** The papers a school can choose as its default (the keys of PAPERS in partials/print-clean). */
+    public const PAPERS = [
+        'a4' => 'A4 (210 × 297 mm)',
+        'letter' => 'Letter (215.9 × 279.4 mm)',
+        'legal' => 'Legal (215.9 × 355.6 mm)',
+        'longbond' => 'Long bond (215.9 × 330.2 mm)',
+        'folio' => 'Folio (210 × 330 mm)',
+    ];
+
     /** The printable documents, by the data-doc key of their print page. */
     public const DOCUMENTS = [
         'aip' => 'Annual Implementation Plan (AIP)',
@@ -57,6 +66,19 @@ class PrintSettings
         ksort($found['documents']);
 
         return $found;
+    }
+
+    /** The paper every document of the school opens on, or null when each document keeps its own. */
+    public function paper(?int $schoolId): ?string
+    {
+        $paper = $schoolId ? School::withoutGlobalScopes()->whereKey($schoolId)->value('print_paper') : null;
+
+        return isset(self::PAPERS[$paper]) ? $paper : null;
+    }
+
+    public function savePaper(School $school, ?string $paper): void
+    {
+        School::withoutGlobalScopes()->whereKey($school->id)->update(['print_paper' => $paper]);
     }
 
     /** The default margins of the school, or null when it has none. */

@@ -110,4 +110,24 @@ class PrintSettingsEndpointTest extends TestCase
         $this->actingAs($user)->put(route('school-settings.printing.update'), $this->form($other))->assertStatus(404);
         $this->assertSame($this->none(), app(PrintSettings::class)->forSchool($other->id));
     }
+
+    public function test_the_paper_of_the_school_is_saved_cleared_and_recorded(): void
+    {
+        [$school, $user] = $this->tenant('endpoint-p');
+
+        $this->actingAs($user)->put(route('school-settings.printing.update'), ['school_id' => $school->id, 'paper' => 'folio'])->assertSessionHasNoErrors();
+        $this->assertSame('folio', app(PrintSettings::class)->paper($school->id));
+        $this->assertSame('folio', AuditLog::where('action', 'print_settings_changed')->latest('id')->firstOrFail()->metadata['after']['paper']);
+
+        $this->put(route('school-settings.printing.update'), ['school_id' => $school->id, 'paper' => ''])->assertSessionHasNoErrors();
+        $this->assertNull(app(PrintSettings::class)->paper($school->id));
+    }
+
+    public function test_an_unknown_paper_is_refused(): void
+    {
+        [$school, $user] = $this->tenant('endpoint-q');
+
+        $this->actingAs($user)->put(route('school-settings.printing.update'), ['school_id' => $school->id, 'paper' => 'poster'])->assertSessionHasErrors('paper');
+        $this->assertNull(app(PrintSettings::class)->paper($school->id));
+    }
 }

@@ -88,4 +88,12 @@ class PrintSettingsTabTest extends TestCase
 
         $this->actingAs($user)->get($this->tab($school))->assertSee('Own row only');
     }
+
+    public function test_the_paper_size_box_shows_the_saved_paper(): void
+    {
+        [$school, $user] = $this->tenant('tab-h');
+        app(PrintSettings::class)->savePaper($school, 'folio');
+
+        $this->actingAs($user)->get($this->tab($school))->assertOk()->assertSee('name="paper"', false)->assertSee('<option value="folio" selected>', false);
+    }
 }

@@ -104,7 +104,7 @@
         td, th { overflow-wrap: break-word; }
     }
 </style>
-<script type="application/json" id="print-settings">{!! json_encode(app(\App\Services\PrintSettings::class)->forSchool($printSchoolId ?? auth()->user()?->school_id), JSON_HEX_TAG | JSON_HEX_AMP) !!}</script>
+<script type="application/json" id="print-settings">{!! json_encode((fn ($id) => app(\App\Services\PrintSettings::class)->forSchool($id) + ['paper' => app(\App\Services\PrintSettings::class)->paper($id)])($printSchoolId ?? auth()->user()?->school_id), JSON_HEX_TAG | JSON_HEX_AMP) !!}</script>
 <script>
     function closePrintTab(fallbackUrl) {
         window.close();
@@ -127,13 +127,13 @@
             var single = first.hasAttribute('data-single-page');
             // The margins (mm): the document's own row of the school's print settings, else the school default (only for documents that carry a margin of
             // their own; ORS and DV are drawn to fit the sheet), else the margin written in the document's file.
-            var settings = { default: null, documents: {} };
+            var settings = { default: null, documents: {}, paper: null };
             try { settings = JSON.parse(document.getElementById('print-settings').textContent) || settings; } catch (e) { /* keeps the file's margin */ }
             var own = settings.documents && settings.documents[first.dataset.doc];
             var chosen = own || (settings.default && first.hasAttribute('data-margin') ? settings.default : null);
             var fileMargin = parseFloat(first.dataset.margin || '0');
             var fileM = chosen ? { top: +chosen.top, right: +chosen.right, bottom: +chosen.bottom, left: +chosen.left } : { top: fileMargin, right: fileMargin, bottom: fileMargin, left: fileMargin };
-            var state = Object.assign({ paper: first.dataset.paper || 'a4', orientation: first.dataset.orientation || 'portrait', width: 215.9, height: 330.2, zoom: 'fit' }, store(docKey) || {});
+            var state = Object.assign({ paper: (settings.paper && PAPERS[settings.paper] ? settings.paper : first.dataset.paper) || 'a4', orientation: first.dataset.orientation || 'portrait', width: 215.9, height: 330.2, zoom: 'fit' }, store(docKey) || {});
             // ?paper=a4&orientation=landscape (or paper=custom&width=&height=) opens the document on that paper.
             var query = new URLSearchParams(location.search);
             var fromUrl = false;

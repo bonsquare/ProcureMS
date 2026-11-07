@@ -104,4 +104,13 @@ class PrintSettingsEngineTest extends TestCase
         $this->assertStringContainsString('.doc-footer { position: absolute;', $pages);
         $this->assertStringContainsString("* MM - 4) + 'px'", $pages);
     }
+
+    public function test_the_engine_opens_a_document_on_the_paper_of_the_school(): void
+    {
+        [$fx, $plan] = $this->sob();
+        app(PrintSettings::class)->savePaper($fx['school'], 'folio');
+
+        $this->assertSame('folio', $this->settingsOf($this->get(route('planning.sob.print', $plan))->assertOk()->getContent())['paper']);
+        $this->assertStringContainsString('settings.paper', File::get(resource_path('views/partials/print-clean.blade.php')));
+    }
 }

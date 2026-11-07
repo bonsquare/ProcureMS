@@ -7,6 +7,7 @@ use App\Models\School;
 use App\Services\PrintSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 /** Saves the page margins of a school (the Printing tab of School Settings). */
@@ -17,7 +18,7 @@ class PrintSettingsController extends Controller
     public function update(Request $request, PrintSettings $settings): RedirectResponse
     {
         $margin = ['nullable', 'numeric', 'between:0,40'];
-        $rules = ['school_id' => ['required', 'integer'], 'default' => ['nullable', 'array'], 'documents' => ['nullable', 'array']];
+        $rules = ['school_id' => ['required', 'integer'], 'default' => ['nullable', 'array'], 'documents' => ['nullable', 'array'], 'paper' => ['nullable', Rule::in(array_keys(PrintSettings::PAPERS))]];
         foreach (self::SIDES as $side) {
             $rules['default.'.$side] = $margin;
             $rules['documents.*.'.$side] = $margin;
@@ -39,7 +40,12 @@ class PrintSettingsController extends Controller
             }
         }
 
+        $paperBefore = $settings->paper($school->id);
         $change = $settings->save($school, $default, $documents);
+        $paper = ($data['paper'] ?? '') === '' ? null : $data['paper'];
+        $settings->savePaper($school, $paper);
+        $change['before']['paper'] = $paperBefore;
+        $change['after']['paper'] = $paper;
         AuditLog::create(['user_id' => $request->user()->id, 'school_id' => $school->id, 'action' => 'print_settings_changed', 'metadata' => $change]);
 
         return redirect()->route('school-settings', ['ui' => 'staff-save-v7', 'school_id' => $school->id, 'tab' => 'printing'])->with('success', 'The print settings were saved.');

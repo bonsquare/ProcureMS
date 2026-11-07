@@ -3,6 +3,7 @@
     $sides = ['top' => 'Top', 'right' => 'Right', 'bottom' => 'Bottom', 'left' => 'Left'];
     $mm = fn ($value) => $value === null ? '' : rtrim(rtrim(number_format((float) $value, 2, '.', ''), '0'), '.');
     $default = $printSettings['default'] ?? null;
+    $paper = old('paper', $printPaper ?? null);
     // These pages have no margin of their own to replace, so only their own row changes them.
     $ownRowOnly = ['dv', 'ors', 'pr', 'reconciliation', 'rfq', 'po', 'ntp', 'noa', 'abstract', 'iar', 'ris', 'iars', 'ics', 'generic'];
     $box = 'mt-1 h-11 w-full min-w-0 rounded-lg border border-outline-variant bg-white px-3 text-sm font-normal outline-none focus:border-action focus:ring-2 focus:ring-action/20 disabled:bg-surface-low disabled:text-on-surface-variant';
@@ -36,6 +37,17 @@
             </div>
             <div class="print-sheet-demo" aria-hidden="true" id="print-demo"><span></span></div>
         </div>
+    </section>
+
+    <section class="rounded-xl border border-outline-variant/60 bg-white p-5 shadow-sm" aria-labelledby="print-paper">
+        <h3 id="print-paper" class="text-sm font-bold text-primary">Paper size</h3>
+        <label class="mt-3 block max-w-sm text-[11px] font-bold uppercase tracking-wide text-on-surface-variant">Every document opens on
+            <select name="paper" @disabled(! $canEdit) class="{{ $box }} font-semibold normal-case tracking-normal text-on-surface">
+                <option value="" @selected(! $paper)>Each document's own paper</option>
+                @foreach(\App\Services\PrintSettings::PAPERS as $key => $label)<option value="{{ $key }}" @selected($paper === $key)>{{ $label }}</option>@endforeach
+            </select>
+        </label>
+        <p class="mt-3 break-words text-xs text-on-surface-variant">Choose the paper that is loaded in your printer. If the printer has no paper of the size a document asks for, the browser swaps in a shorter one and a page prints across two sheets. A paper chosen in a document's own toolbar still wins for that document on that computer.</p>
     </section>
 
     <section class="rounded-xl border border-outline-variant/60 bg-white shadow-sm" aria-labelledby="print-documents">
