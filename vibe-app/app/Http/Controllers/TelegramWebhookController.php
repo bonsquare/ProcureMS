@@ -208,8 +208,9 @@ class TelegramWebhookController extends Controller
         if ($thread > 0 && ($inTopic = SupportMessage::query()->where('telegram_thread_id', $thread)->first())) {
             return $inTopic;
         }
-        $repliedTo = data_get($message, 'reply_to_message.message_id');
+        // A reply to a line the bot posted under a card (a record or an "answered" marker) counts as a reply to that card.
+        $ids = array_filter([data_get($message, 'reply_to_message.message_id'), data_get($message, 'reply_to_message.reply_to_message.message_id')]);
 
-        return $repliedTo ? SupportMessage::query()->where('telegram_message_id', (int) $repliedTo)->first() : null;
+        return $ids ? SupportMessage::query()->whereIn('telegram_message_id', array_map('intval', $ids))->first() : null;
     }
 }

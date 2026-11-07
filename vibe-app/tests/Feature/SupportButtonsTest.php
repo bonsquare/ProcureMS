@@ -165,4 +165,15 @@ class SupportButtonsTest extends TestCase
 
         $this->assertSame('pending', $ticket->fresh()->status);
     }
+
+    public function test_a_reply_to_a_bot_line_under_the_card_still_answers_that_request(): void
+    {
+        $ticket = $this->ticket();
+
+        // Telegram nests the message the bot line was itself a reply to: here, the card.
+        $this->postJson(route('telegram.webhook', 'hook-secret'), ['message' => ['message_id' => 702, 'chat' => ['id' => 555], 'from' => ['id' => 11, 'first_name' => 'Anna'], 'text' => 'Okay na po ba?',
+            'reply_to_message' => ['message_id' => 9001, 'reply_to_message' => ['message_id' => (int) $ticket->telegram_message_id]]]])->assertOk();
+
+        $this->assertSame('Okay na po ba?', $ticket->replies()->first()?->body);
+    }
 }
