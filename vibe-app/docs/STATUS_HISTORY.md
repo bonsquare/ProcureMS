@@ -182,7 +182,7 @@ Full dated log moved out of CLAUDE.md to keep that file short. Nothing was remov
 - 2026-11-07: the Telegram chat is told which Support message was answered (docs/specs.md section 119). Deployed 2026-11-07 (c55c023a).
 - 2026-11-07: Support tickets in Telegram: no email in the chat, unmatched staff messages refused, /close, Closed status, failures logged (docs/specs.md section 119). Deployed 2026-11-07 (517df530).
 - 2026-11-07: Support requests: conversation page, five statuses, Telegram assign/status/queue commands, attachments in the user's own Drive, 5-day purge (docs/specs.md section 119). Deployed 2026-11-07 (66c70410).
-- 2026-11-07: Support ticket numbers SUP-YYYYMMDD-HHMM-NNNN with date and time; Pending until answered, then On process (docs/specs.md section 119). Committed, not yet deployed.
-- 2026-11-07: Telegram request card with buttons (take, assign to staff, set status), each change recorded in the group (docs/specs.md section 119). Committed, not yet deployed.
-- 2026-11-07: Payment proof notice in Telegram now has the sender, payment details and the proof link (docs/specs.md section 119). Committed, not yet deployed.
-- 2026-11-07: Telegram topic per request (opens on take, closes on resolve/close, purged after 5 days); card buttons two per row (docs/specs.md section 119). Committed, not yet deployed.
+- 2026-11-07: Support ticket numbers SUP-YYYYMMDD-HHMM-NNNN with date and time; Pending until answered, then On process (docs/specs.md section 119). Deployed 2026-11-07 (e8f931b3).
+- 2026-11-07: Telegram request card with buttons (take, assign to staff, set status), each change recorded in the group (docs/specs.md section 119). Deployed 2026-11-07 (e8f931b3).
+- 2026-11-07: Payment proof notice in Telegram now has the sender, payment details and the proof link (docs/specs.md section 119). Deployed 2026-11-07 (e8f931b3).
+- 2026-11-07: Telegram topic per request (opens on take, closes on resolve/close, purged after 5 days); card buttons two per row (docs/specs.md section 119). Deployed 2026-11-07 (e8f931b3).
