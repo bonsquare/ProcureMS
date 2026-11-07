@@ -90,7 +90,8 @@ class SupportTelegramTest extends TestCase
         $this->assertSame('for_process', $message->status);
         $this->assertSame('We fixed it', $message->replies->first()->body);
 
-        $this->actingAs($user)->get(route('support'))->assertOk()->assertSee('We fixed it')->assertSee('For process');
+        $this->actingAs($user)->get(route('support.show', $message))->assertOk()->assertSee('We fixed it')->assertSee('For process');
+        $this->actingAs($other)->get(route('support.show', $message))->assertNotFound();
         $this->actingAs($other)->get(route('support'))->assertOk()->assertDontSee('We fixed it')->assertDontSee('Need help');
     }
 

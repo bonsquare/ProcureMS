@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SupportMessage;
 use App\Models\SystemSetting;
 use App\Services\TelegramService;
+use App\Support\SupportStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
@@ -17,16 +18,47 @@ class SupportController extends Controller
 
     public function show(Request $request)
     {
+        return $this->page($request, null);
+    }
+
+    /** One request opened as a conversation; only its owner (and the master user) can open it. */
+    public function thread(Request $request, SupportMessage $supportMessage)
+    {
+        abort_unless($request->user()->isMaster() || (int) $supportMessage->user_id === (int) $request->user()->id, 404);
+
+        return $this->page($request, $supportMessage->load(['replies', 'user', 'school']));
+    }
+
+    /** The user answers on a request that is still open; the answer goes to the Telegram chat under the request message. */
+    public function reply(Request $request, SupportMessage $supportMessage, TelegramService $telegram)
+    {
+        $user = $request->user();
+        abort_unless((int) $supportMessage->user_id === (int) $user->id, 404);
+        $data = $request->validate(['body' => ['required', 'string', 'max:2000']]);
+        if (! SupportStatus::isOpen($supportMessage->status)) {
+            return redirect()->route('support.show', $supportMessage)->with('error', 'This request is resolved. Create a new request if you still need help.');
+        }
+
+        $supportMessage->replies()->create(['body' => trim($data['body']), 'sender' => 'user', 'user_id' => $user->id]);
+        $supportMessage->touch();
+        $telegram->send("💬 Support #{$supportMessage->id} · {$user->name}\n\n".trim($data['body']), $supportMessage->telegram_message_id ? (int) $supportMessage->telegram_message_id : null);
+
+        return redirect()->route('support.show', $supportMessage)->with('success', 'Your answer was sent to Customer Services.');
+    }
+
+    private function page(Request $request, ?SupportMessage $current)
+    {
         $user = $request->user();
         // A user sees only their own conversation with Customer Services; the master sees all of them.
-        $messages = SupportMessage::query()->with(['replies', 'user', 'school'])
+        $messages = SupportMessage::query()->with(['user', 'school'])
             ->when(! $user->isMaster(), fn ($query) => $query->where('user_id', $user->id))
-            ->latest('id')->limit(50)->get();
+            ->latest('updated_at')->latest('id')->limit(50)->get();
 
         return view('support', [
             'contact' => collect(self::FIELDS)->mapWithKeys(fn (string $key) => [$key => (string) SystemSetting::get($key, '')])->all(),
             'canEdit' => $user->isMaster(),
             'messages' => $messages,
+            'current' => $current,
             'mailOn' => (string) SystemSetting::get('support_email', '') !== '',
         ]);
     }
