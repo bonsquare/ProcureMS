@@ -210,10 +210,10 @@ Binding decisions from that log:
 - 2026-11-08 Support is last in the sidebars and profile menu; floating Support chat popup at the bottom right with open-request list, unread highlight, attachments and new-message alert (docs/specs.md section 119). Deployed 2026-11-08 (37963aa0).
 - 2026-11-08 Support desk for the master user: split window (queue left, conversation right), answer/take/assign/status from the system with two-way Telegram sync, quick replies, redesigned notification bell with Clear all (docs/specs.md section 119). Deployed 2026-11-08 (b290599e).
 - 2026-11-08 Purchase Request print: the page padding above and under the form is removed (it was counted in the layout and left a long blank at the bottom of each page) (resources/views/procurement-print.blade.php). Deployed 2026-11-08 (0dbb2d91).
-- 2026-11-08 Print engine fix: a fixed form page taller than the paper is scaled to fit and no longer shrinks the table pages (RFQ on 8.5x13 printed 11 pages); see resources/views/partials/print-pages.blade.php (fitFixed).
+- 2026-11-08 Print engine fix: a fixed form page taller than the paper is scaled to fit and no longer shrinks the table pages (RFQ on 8.5x13 printed 11 pages); see resources/views/partials/print-pages.blade.php (fitFixed). Deployed 2026-11-08 (8496d74b).
 - The Planning page is `/planning`. The source is `resources/views/planning.blade.php`; the controller is `app/Http/Controllers/PlanningController.php`.
 - The last GitHub backup is commit `69d1d35` on `master`. Do not reset or discard local changes.
-- Live: Railway deployment 0dbb2d91 (2026-11-08 12:57), migrations through `add_user_read_reply_to_support_messages` (see the history file for later changes).
+- Live: Railway deployment 8496d74b (2026-11-08 13:09), migrations through `add_user_read_reply_to_support_messages` (see the history file for later changes).
 
 ## Standing workflow (owner's instruction 2026-10-16)
 
