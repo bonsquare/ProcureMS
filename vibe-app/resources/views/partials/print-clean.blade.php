@@ -133,7 +133,11 @@
             var chosen = own || (settings.default && first.hasAttribute('data-margin') ? settings.default : null);
             var fileMargin = parseFloat(first.dataset.margin || '0');
             var fileM = chosen ? { top: +chosen.top, right: +chosen.right, bottom: +chosen.bottom, left: +chosen.left } : { top: fileMargin, right: fileMargin, bottom: fileMargin, left: fileMargin };
-            var state = Object.assign({ paper: (settings.paper && PAPERS[settings.paper] ? settings.paper : first.dataset.paper) || 'a4', orientation: first.dataset.orientation || 'portrait', width: 215.9, height: 330.2, zoom: 'fit' }, store(docKey) || {});
+            var basePaper = (settings.paper && PAPERS[settings.paper] ? settings.paper : first.dataset.paper) || 'a4';
+            // The paper this browser remembered for the document counts only while the paper of the school (or of the form) is still the one it was chosen against; otherwise an old choice (A4, a custom size) would keep winning over the paper now set.
+            var remembered = store(docKey) || {};
+            if (remembered.basePaper !== basePaper) { delete remembered.paper; delete remembered.width; delete remembered.height; }
+            var state = Object.assign({ paper: basePaper, orientation: first.dataset.orientation || 'portrait', width: 215.9, height: 330.2, zoom: 'fit' }, remembered, { basePaper: basePaper });
             // ?paper=a4&orientation=landscape (or paper=custom&width=&height=) opens the document on that paper.
             var query = new URLSearchParams(location.search);
             var fromUrl = false;

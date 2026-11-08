@@ -188,4 +188,12 @@ class PrintSettingsEngineTest extends TestCase
         $this->assertStringContainsString("' /* fit */'", File::get(resource_path('views/partials/print-clean.blade.php')));
         $this->assertStringContainsString("data-fit-scale", File::get(resource_path('views/partials/print-pages.blade.php')));
     }
+
+    public function test_a_paper_remembered_by_the_browser_does_not_beat_the_paper_now_set(): void
+    {
+        $engine = File::get(resource_path('views/partials/print-clean.blade.php'));
+
+        $this->assertStringContainsString('if (remembered.basePaper !== basePaper)', $engine);
+        $this->assertStringContainsString('{ basePaper: basePaper }', $engine);
+    }
 }
