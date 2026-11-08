@@ -17,13 +17,13 @@
 @php
     // Each official form keeps its normal paper; the toolbar lets the user choose another.
     $paperByDocument = [
-        'request_for_quotation' => ['rfq', 'legal', 'portrait'], 'purchase_order' => ['po', 'longbond', 'portrait'],
-        'notice_to_proceed' => ['ntp', 'a4', 'portrait'], 'notice_to_award' => ['noa', 'a4', 'portrait'],
-        'abstract_of_bids_quotation' => ['abstract', 'legal', 'landscape'], 'inspection_acceptance_report' => ['iar', 'a4', 'portrait'],
-        'requisition_issuance_slip' => ['ris', 'longbond', 'portrait'], 'inventory_acknowledgement_receipt_supplies' => ['iars', 'a4', 'landscape'],
+        'request_for_quotation' => ['rfq', 'longbond', 'portrait'], 'purchase_order' => ['po', 'longbond', 'portrait'],
+        'notice_to_proceed' => ['ntp', 'longbond', 'portrait'], 'notice_to_award' => ['noa', 'longbond', 'portrait'],
+        'abstract_of_bids_quotation' => ['abstract', 'longbond', 'landscape'], 'inspection_acceptance_report' => ['iar', 'longbond', 'portrait'],
+        'requisition_issuance_slip' => ['ris', 'longbond', 'portrait'], 'inventory_acknowledgement_receipt_supplies' => ['iars', 'longbond', 'landscape'],
         'inventory_custodian_slip' => ['ics', 'longbond', 'portrait'],
     ];
-    [$docKey, $docPaper, $docOrientation] = $paperByDocument[$document->document_type] ?? ['generic', 'a4', 'portrait'];
+    [$docKey, $docPaper, $docOrientation] = $paperByDocument[$document->document_type] ?? ['generic', 'longbond', 'portrait'];
 @endphp
 <div data-official-page data-doc="{{ $docKey }}" data-paper="{{ $docPaper }}" data-orientation="{{ $docOrientation }}">
 @switch($document->document_type)

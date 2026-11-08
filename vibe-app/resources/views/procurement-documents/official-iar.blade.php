@@ -22,7 +22,7 @@
 @endphp
 
 <style>
-    .iar-page{width:210mm;min-height:297mm;padding:10mm 12mm;font-family:"Times New Roman",serif;color:#111;font-size:9pt;line-height:1.04}
+    .iar-page{width:215.9mm;min-height:330.2mm;padding:10mm 12mm;font-family:"Times New Roman",serif;color:#111;font-size:9pt;line-height:1.04}
     .iar-appendix{text-align:right;font-size:8.5pt;font-style:italic;margin-bottom:2mm}
     .iar-title{text-align:center;font-size:12pt;font-weight:700;margin:0 0 4mm}
     .iar-topline{display:grid;grid-template-columns:36mm 1fr 23mm 31mm;align-items:end;margin:0 1mm 1mm;font-weight:700;font-size:8.5pt}

@@ -11,7 +11,7 @@
         .print-actions { width: 210mm; margin: 12px auto; display: flex; justify-content: space-between; align-items: center; font: 13px Arial, sans-serif; }
         .print-actions a, .print-actions button { border: 1px solid #00236f; background: #fff; color: #00236f; border-radius: 3px; padding: 8px 13px; text-decoration: none; cursor: pointer; }
         .print-actions button { background: #00236f; color: #fff; }
-        .page { width: 210mm; min-height: 297mm; margin: 0 auto 12px; padding: 8.5mm 10mm; background: #fff; }
+        .page { width: 215.9mm; min-height: 330.2mm; margin: 0 auto 12px; padding: 8.5mm 10mm; background: #fff; }
         /* The sheet already keeps the paper margin on every page, and the print drops this padding: counting it on screen made the layout leave a blank at the bottom of each page that the printed page does not need. */
         [data-sheets] .page { padding-top: 0; padding-bottom: 0; }
         .form { width: 100%; border: 1px solid #111; }
@@ -71,7 +71,7 @@
     @php
         [$leftLogo, $rightLogo] = \App\Support\OfficialDocument::logos($procurementRequest->school, $agency);
     @endphp
-    <div data-official-page data-doc="pr" data-paper="a4"><div class="page">
+    <div data-official-page data-doc="pr" data-paper="longbond"><div class="page">
         <div class="form">
             <div class="header">
                 @if($leftLogo)<img class="left-logo official-logo" src="{{ $leftLogo }}" alt="Department logo" onerror="this.remove()">@endif
