@@ -225,6 +225,7 @@ Binding decisions from that log:
 - 2026-11-08 Folio is now 8.5 x 13 in (215.9 x 330.2 mm), the size of the owner's paper (it was 210 x 330 and left the forms 6 mm off-centre); the procurement forms are drawn at that size again and have 3 mm of padding above the form.
 - 2026-11-08 Print setup box: "Fit on one page" (also ?fit=1) scales a document down, as little as it takes, until it fills one sheet, and centres it; a document that cannot fit above 60% keeps its normal pages. Off by default. The PO split-tail parts are no longer lost when a page is laid out more than once.
 - 2026-11-08 Print setup: the paper a browser remembered for a document (localStorage officialPrint.<doc>) no longer beats the paper now set for the school or the form, so an old A4 choice stops printing the PO on A4 (print-clean basePaper).
+- 2026-11-08 PO: a part after the item table that is up to 2% too tall for the room left stays on the page (the page is scaled by that little), so the signatures of a 27-item PO stay on page 1 and only the funds box goes to page 2.
 - The Planning page is `/planning`. The source is `resources/views/planning.blade.php`; the controller is `app/Http/Controllers/PlanningController.php`.
 - The last GitHub backup is commit `69d1d35` on `master`. Do not reset or discard local changes.
 - Live: Railway deployment ccfef63d (2026-11-08 14:31), migrations through `add_user_read_reply_to_support_messages` (see the history file for later changes).

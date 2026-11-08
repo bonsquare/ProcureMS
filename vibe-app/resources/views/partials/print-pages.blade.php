@@ -471,10 +471,11 @@
                 var tailLevel = levels.filter(function (level) { return level.tail.length > 0; });
                 if (table.hasAttribute('data-split-tail') && tailLevel.length === 1) {
                     var tailParts = tailLevel[0].tail, used = made.position + made.around.bottom, keep = 0;
-                    while (keep < tailParts.length && used + tailLevel[0].tailSizes[keep] <= capacity) { used += tailLevel[0].tailSizes[keep]; keep++; }
+                    while (keep < tailParts.length && used + tailLevel[0].tailSizes[keep] <= capacity * tailRoom) { used += tailLevel[0].tailSizes[keep]; keep++; }
                     if (keep > 0 && keep < tailParts.length) {
                         movedTail = tailParts.slice(keep);
                         keptLevel = tailLevel[0];
+                        if (used > capacity) { current.container.setAttribute('data-tail-over', ''); }
                         tailPartsKept = tailParts.slice(0, keep);
                         tailPartsKept[keep - 1].setAttribute('data-cut-bottom', '');
                         movedTail[0].setAttribute('data-cut-top', '');
