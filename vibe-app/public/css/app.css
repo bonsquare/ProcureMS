@@ -58,6 +58,7 @@ aside.fixed.inset-y-0 > nav details a.bg-primary-container { color: #fff; font-w
 :is(aside.fixed.inset-y-0, #civic-navigation) > nav > a[href$="/subscriptions"] { order: 8; }
 :is(aside.fixed.inset-y-0, #civic-navigation) > nav > a[href$="/school-management"] { order: 9; }
 :is(aside.fixed.inset-y-0, #civic-navigation) > nav > a[href$="/school-settings"] { order: 10; }
+:is(aside.fixed.inset-y-0, #civic-navigation) > nav > a[href$="/support"] { order: 11; }
 :is(aside.fixed.inset-y-0, #civic-navigation) > nav > details > div { display: flex; flex-direction: column; gap: .125rem; }
 :is(aside.fixed.inset-y-0, #civic-navigation) > nav > details > div > a[href$="/budget"] { order: 1; }
 :is(aside.fixed.inset-y-0, #civic-navigation) > nav > details > div > a[href$="/accounting"] { order: 2; }

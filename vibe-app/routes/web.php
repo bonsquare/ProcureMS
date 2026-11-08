@@ -258,6 +258,7 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::put('/support', [SupportController::class, 'update'])->name('support.update');
     Route::post('/account/pin', [PinController::class, 'store'])->middleware('throttle:10,1')->name('account.pin');
     Route::post('/support/messages', [SupportController::class, 'send'])->middleware('throttle:10,1')->name('support.send');
+    Route::get('/support/widget', [SupportController::class, 'widget'])->middleware('throttle:90,1')->name('support.widget');
     Route::get('/support/{supportMessage}', [SupportController::class, 'thread'])->whereNumber('supportMessage')->name('support.show');
     Route::get('/support/{supportMessage}/poll', [SupportController::class, 'poll'])->whereNumber('supportMessage')->middleware('throttle:60,1')->name('support.poll');
     Route::post('/support/{supportMessage}/replies', [SupportController::class, 'reply'])->whereNumber('supportMessage')->middleware('throttle:20,1')->name('support.reply');

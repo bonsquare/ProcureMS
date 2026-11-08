@@ -193,3 +193,4 @@ Full dated log moved out of CLAUDE.md to keep that file short. Nothing was remov
 - 2026-11-07: Payment proofs approved, declined or put For process from Telegram, with a remark the school sees (docs/specs.md section 119). Deployed 2026-11-07 (587a12e4); TELEGRAM_APPROVERS = Bonifacio Jr only.
 - 2026-11-07: Payment proof number (SUB-...) and Assign to staff button in Telegram (docs/specs.md section 119). Deployed 2026-11-07 (cb2b69de).
 - 2026-11-08: Support is the last item in the sidebars and profile menu; floating Support icon at the bottom right of every signed-in page (docs/specs.md section 119). Committed, not yet deployed.
+- 2026-11-08: Support chat popup on the floating icon: open-request list with unread highlight, conversation with details strip, file attachments, new-message alert, animations; Support last in the sidebar order (docs/specs.md section 119). Committed, not yet deployed.
