@@ -80,7 +80,7 @@ class PrintSettingsEngineTest extends TestCase
         foreach (PrintSettings::PROCUREMENT as $key) {
             $this->assertStringContainsString('[data-doc="'.$key.'"]', $pages, $key);
         }
-        $this->assertStringContainsString('padding-top: 0 !important; padding-bottom: 0 !important;', $pages);
+        $this->assertStringContainsString('padding-top: 3mm !important; padding-bottom: 0 !important;', $pages);
     }
 
     public function test_a_document_with_margins_of_its_own_skips_the_printer_floors(): void

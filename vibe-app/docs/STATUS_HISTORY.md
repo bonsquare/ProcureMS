@@ -212,3 +212,4 @@ Full dated log moved out of CLAUDE.md to keep that file short. Nothing was remov
 - 2026-11-08 Extra Blank Rows can be up to 150 (was 100) on the PR form, the document form and in the validation (HomeController); PR, PO, RFQ and IAR with 150 rows or items flow across pages and fill each sheet to its margin.
 - 2026-11-08 PO: what follows the item table (total in words, penalty, signatures, funds) is three parts that can split between pages (print-pages data-split-tail), so page 1 keeps the total and as much as fits instead of leaving a gap.
 - 2026-11-08 Print engine: a page is scaled to fit its last box only by up to 2% (was 10%), so every page of a document has the same size (print-pages tailRoom 1.02, overAllow 0.04).
+- 2026-11-08 Folio is now 8.5 x 13 in (215.9 x 330.2 mm), the size of the owner's paper (it was 210 x 330 and left the forms 6 mm off-centre); the procurement forms are drawn at that size again and have 3 mm of padding above the form.

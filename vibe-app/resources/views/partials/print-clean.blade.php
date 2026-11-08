@@ -114,7 +114,7 @@
 
     (function () {
         var MM = 96 / 25.4;
-        var PAPERS = { a4: [210, 297], letter: [215.9, 279.4], legal: [215.9, 355.6], longbond: [215.9, 330.2], folio: [210, 330] };
+        var PAPERS = { a4: [210, 297], letter: [215.9, 279.4], legal: [215.9, 355.6], longbond: [215.9, 330.2], folio: [215.9, 330.2] };
         var pageStyle = null;
 
         function store(key, value) { try { if (value === undefined) { return JSON.parse(localStorage.getItem(key)); } localStorage.setItem(key, JSON.stringify(value)); } catch (e) { return null; } }

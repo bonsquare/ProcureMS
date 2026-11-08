@@ -15,7 +15,7 @@ class PrintSettings
         'letter' => 'Letter (215.9 × 279.4 mm)',
         'legal' => 'Legal (215.9 × 355.6 mm)',
         'longbond' => 'Long bond (215.9 × 330.2 mm)',
-        'folio' => 'Folio (210 × 330 mm)',
+        'folio' => 'Folio, 8.5 × 13 in (215.9 × 330.2 mm)',
     ];
 
     /** The printable documents, by the data-doc key of their print page. */

@@ -56,7 +56,7 @@ class PrintSettingsController extends Controller
     {
         $paper = $request->query('paper');
         $paper = isset(PrintSettings::PAPERS[$paper]) ? $paper : ($settings->paper($request->user()->school_id) ?? 'folio');
-        $sizes = ['a4' => [210, 297], 'letter' => [215.9, 279.4], 'legal' => [215.9, 355.6], 'longbond' => [215.9, 330.2], 'folio' => [210, 330]];
+        $sizes = ['a4' => [210, 297], 'letter' => [215.9, 279.4], 'legal' => [215.9, 355.6], 'longbond' => [215.9, 330.2], 'folio' => [215.9, 330.2]];
         [$width, $height] = $sizes[$paper];
         if ($request->query('orientation') === 'landscape') {
             [$width, $height] = [$height, $width];

@@ -25,7 +25,7 @@
                             <option value="letter">Letter / Short Bond (215.9 × 279.4 mm)</option>
                             <option value="legal">Legal (215.9 × 355.6 mm)</option>
                             <option value="longbond">Long Bond (215.9 × 330.2 mm)</option>
-                            <option value="folio">Folio (210 × 330 mm)</option>
+                            <option value="folio">Folio, 8.5 × 13 in (215.9 × 330.2 mm)</option>
                             <option value="custom">Custom</option>
                         </select>
                     </label>
