@@ -537,12 +537,31 @@
             root.style.setProperty('--preview-zoom', 1);
             var over = [];
             Array.prototype.forEach.call(page.querySelectorAll(':scope > .doc-page'), function (block, number) {
+                // A fixed form page (instructions, terms) cannot be repacked by lowering the room of the table pages: fitFixed below scales it.
+                if (!block.querySelector('table[data-paginate]')) { return; }
                 var top = block.getBoundingClientRect().top + parseFloat(getComputedStyle(block).paddingTop);
                 var bottom = Math.max.apply(null, Array.prototype.filter.call(block.children, function (child) { return !child.hasAttribute('data-doc-footer'); }).map(function (child) { return child.getBoundingClientRect().bottom; }).concat([top]));
                 if (bottom - top > availableHeight + 1) { over[number] = bottom - top - availableHeight; }
             });
             if (preview) { root.style.setProperty('--preview-zoom', preview); } else { root.style.removeProperty('--preview-zoom'); }
             return over.length ? over : [];
+        }
+
+        // A fixed form page taller than the paper (a form drawn for longer paper) is scaled down to the page instead of spilling a few lines onto a page of its own.
+        function fitFixed(page, availableHeight) {
+            var root = document.documentElement;
+            var preview = root.style.getPropertyValue('--preview-zoom');
+            root.style.setProperty('--preview-zoom', 1);
+            Array.prototype.forEach.call(page.querySelectorAll(':scope > .doc-page'), function (block) {
+                if (block.querySelector('table[data-paginate]')) { return; }
+                var kids = Array.prototype.filter.call(block.children, function (child) { return !child.hasAttribute('data-doc-footer'); });
+                kids.forEach(function (child) { child.style.zoom = ''; });
+                var top = block.getBoundingClientRect().top + parseFloat(getComputedStyle(block).paddingTop);
+                var bottom = Math.max.apply(null, kids.map(function (child) { return child.getBoundingClientRect().bottom; }).concat([top]));
+                var height = bottom - top;
+                if (height > availableHeight - 2) { var scale = (availableHeight - 4) / height; kids.forEach(function (child) { child.style.zoom = scale; }); }
+            });
+            if (preview) { root.style.setProperty('--preview-zoom', preview); } else { root.style.removeProperty('--preview-zoom'); }
         }
 
         function paginate() {
@@ -578,6 +597,7 @@
                         factor -= 0.05;
                     }
                 }
+                if (typeof availableHeight === 'number') { fitFixed(page, availableHeight); }
                 laidOutFor = key;
             } finally {
                 busy = false;
