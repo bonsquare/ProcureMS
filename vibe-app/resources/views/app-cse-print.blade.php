@@ -80,7 +80,7 @@
 
 @include('partials.official-toolbar', ['closeUrl' => route('planning.app-cse.show', $plan), 'context' => 'APP-CSE · FY '.$plan->fiscal_year])
 
-<main class="paper" data-official-page data-sheets data-doc="app-cse" data-paper="longbond" data-orientation="landscape" data-margin="8">
+<main class="paper" data-official-page data-sheets data-doc="app-cse" data-paper="folio" data-orientation="landscape" data-margin="8">
     <div class="form-title">APP-CSE 2020 FORM - 10 September 2019</div>
     <h1>ANNUAL PROCUREMENT PLAN-COMMON SUPPLIES AND EQUIPMENT (APP-CSE) {{ $plan->fiscal_year }} FORM</h1>
 

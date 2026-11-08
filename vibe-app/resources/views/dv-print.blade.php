@@ -66,7 +66,7 @@
     $shift = $entryCount > 4 ? round(max(0, $entryFirst + ($entryCount - 1) * $entryPitch + 4 - 497.68), 2) : 0;
 @endphp
 @include('partials.official-toolbar', ['closeUrl' => route('accounting', ['tab' => 'with_dv']), 'context' => 'Disbursement Voucher · '.$report->dv_number])
-<div class="sheet{{ $report->dv_include_appropriation ? '' : ' no-appropriation' }}" data-official-page data-single-page data-doc="dv" data-paper="longbond"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 612 936" preserveAspectRatio="xMidYMid meet" stroke="#000" fill="none">
+<div class="sheet{{ $report->dv_include_appropriation ? '' : ' no-appropriation' }}" data-official-page data-single-page data-doc="dv" data-paper="folio"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 612 936" preserveAspectRatio="xMidYMid meet" stroke="#000" fill="none">
 <g fill="none">
 <line x1="17.33" y1="40.20" x2="17.33" y2="{{ 782.56 + $shift }}" stroke-width="1.39"/>
 <line transform="translate(0 {{ $shift }})" x1="313.30" y1="496.98" x2="313.30" y2="679.97" stroke-width="1.39"/>

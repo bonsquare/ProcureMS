@@ -11,7 +11,7 @@
 @endphp
 
 <style>
-    .ntp-page{width:215.9mm;min-height:330.2mm;padding:9mm 16mm 16mm;font-family:Arial,sans-serif;font-size:10.5pt;line-height:1.35}
+    .ntp-page{width:210mm;min-height:330mm;padding:9mm 16mm 16mm;font-family:Arial,sans-serif;font-size:10.5pt;line-height:1.35}
     .ntp-letterhead{position:relative;text-align:center;line-height:1.24;font-size:9.5pt}
     .ntp-letterhead img{position:absolute;top:0;width:20mm;height:20mm;object-fit:contain}
     .ntp-letterhead .left-logo{left:0}
@@ -33,7 +33,7 @@
     .ntp-sign-line{width:58mm;margin-top:28mm;border-top:1px solid #111}
     .ntp-conforme-date{margin-top:4mm}
     .ntp-date-line{display:inline-block;width:48mm;border-bottom:1px solid #111}
-    @media print{.ntp-page{margin:0;width:215.9mm;min-height:328.7mm;box-shadow:none}.ntp-title{margin-top:25px}}
+    @media print{.ntp-page{margin:0;width:210mm;min-height:328.5mm;box-shadow:none}.ntp-title{margin-top:25px}}
 </style>
 
 <main class="page ntp-page">

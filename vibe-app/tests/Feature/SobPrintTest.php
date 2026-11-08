@@ -35,7 +35,7 @@ class SobPrintTest extends TestCase
 
         $this->get(route('planning.sob.print', $plan))->assertOk()
             ->assertSee('role="toolbar"', false)->assertSee('class="official-toolbar no-print"', false)->assertSee('Paper Size')->assertSee('Print / Save as PDF')
-            ->assertSee('data-official-page', false)->assertSee('data-doc="sob"', false)->assertSee('data-paper="legal"', false)->assertSee('data-orientation="portrait"', false)
+            ->assertSee('data-official-page', false)->assertSee('data-doc="sob"', false)->assertSee('data-paper="folio"', false)->assertSee('data-orientation="portrait"', false)
             ->assertSee('SCHOOL OPERATING BUDGET')->assertSee('FY 2026 SCHOOL MAINTENANCE AND OTHER OPERATING EXPENSES (MOOE)')->assertSee('1ST QUARTER')
             ->assertSee('PPAs/Expenditures/Item')->assertSee('Particulars')->assertSee('Frequency')->assertSee('Quantity')->assertSee('Unit of Measure')->assertSee('Unit Cost')->assertSee('Amount')
             ->assertSee('ACCESS')->assertSee('Program One')->assertSee('Sub-Total')->assertSee('GRAND TOTAL')->assertSee('Summary per object of expenditure')

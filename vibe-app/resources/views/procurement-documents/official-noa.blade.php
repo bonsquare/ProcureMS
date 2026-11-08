@@ -11,7 +11,7 @@
 @endphp
 
 <style>
-    .noa-page{width:215.9mm;min-height:330.2mm;padding:9mm 16mm 16mm;font-family:Arial,sans-serif;font-size:10.5pt;line-height:1.35}
+    .noa-page{width:210mm;min-height:330mm;padding:9mm 16mm 16mm;font-family:Arial,sans-serif;font-size:10.5pt;line-height:1.35}
     .noa-letterhead{position:relative;text-align:center;line-height:1.24;font-size:9.5pt}
     .noa-letterhead img{position:absolute;top:0;width:20mm;height:20mm;object-fit:contain}
     .noa-letterhead .left-logo{left:0}
@@ -34,7 +34,7 @@
     .noa-sign-line{width:58mm;margin-top:28mm;border-top:1px solid #111}
     .noa-conforme-date{margin-top:4mm}
     .noa-date-line{display:inline-block;width:48mm;border-bottom:1px solid #111}
-    @media print{.noa-page{margin:0;width:215.9mm;min-height:328.7mm;box-shadow:none}.noa-title{margin-top:25px}}
+    @media print{.noa-page{margin:0;width:210mm;min-height:328.5mm;box-shadow:none}.noa-title{margin-top:25px}}
 </style>
 
 <main class="page noa-page">

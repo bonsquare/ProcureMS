@@ -81,7 +81,7 @@
 
 @include('partials.official-toolbar', ['closeUrl' => route('planning.sob.show', $plan), 'context' => 'School Operating Budget · '.$plan->quarterLabel().' · FY '.$plan->fiscal_year])
 
-<main class="paper" data-official-page data-sheets data-page-footer="{{ $plan->documentTitle() }}" data-doc="sob" data-paper="legal" data-orientation="portrait" data-margin="10">
+<main class="paper" data-official-page data-sheets data-page-footer="{{ $plan->documentTitle() }}" data-doc="sob" data-paper="folio" data-orientation="portrait" data-margin="10">
     <header class="masthead">
         <div class="masthead-logo masthead-logo-left">@if($leftLogo)<img class="official-logo" src="{{ $leftLogo }}" alt="" onerror="this.remove()">@endif</div>
         <div>

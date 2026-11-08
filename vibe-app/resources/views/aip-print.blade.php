@@ -80,7 +80,7 @@
 
 @include('partials.official-toolbar', ['closeUrl' => route('aip.show', $aip), 'context' => 'Annual Implementation Plan · FY '.$aip->fiscal_year])
 
-<main class="paper" data-official-page data-sheets data-page-footer="Annual Implementation Plan" data-doc="aip" data-paper="longbond" data-orientation="landscape" data-margin="10">
+<main class="paper" data-official-page data-sheets data-page-footer="Annual Implementation Plan" data-doc="aip" data-paper="folio" data-orientation="landscape" data-margin="10">
     <header class="masthead">
         @if($leftLogo)<img class="left official-logo" src="{{ $leftLogo }}" alt="" onerror="this.remove()">@endif
         @if($rightLogo)<img class="right official-logo" src="{{ $rightLogo }}" alt="" onerror="this.remove()">@endif

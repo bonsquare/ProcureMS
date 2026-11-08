@@ -134,7 +134,7 @@
 
 @include('partials.official-toolbar', ['closeUrl' => route('cash', ['tab' => 'reports', 'school_id' => $school->id]), 'context' => 'Cash Disbursement Register · '.$report['period']])
 
-<main class="paper cdr" data-official-page data-sheets data-doc="cash-register" data-paper="longbond" data-orientation="landscape" data-margin="8">
+<main class="paper cdr" data-official-page data-sheets data-doc="cash-register" data-paper="folio" data-orientation="landscape" data-margin="8">
     <h1>CASH DISBURSEMENT REGISTER</h1>
     @if($data['liquidation']['incomplete'])<div data-incomplete style="border:2px solid #b00020;color:#b00020;font-weight:bold;text-align:center;padding:4px;margin:4px 0">INCOMPLETE - DRAFT ONLY: {{ $data['liquidation']['pending'] }} {{ \Illuminate\Support\Str::plural('check', $data['liquidation']['pending']) }} not yet liquidated (P{{ $money($data['liquidation']['unclassified']) }} is in no expense column). The Payments column does not equal the Breakdown of Payments columns.</div>@endif
 

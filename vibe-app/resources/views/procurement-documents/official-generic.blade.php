@@ -4,7 +4,7 @@
     $linkedPrices = $meta['awarded_item_prices'] ?? [];
     $linkedAmount = (float) ($meta['winning_bid_amount'] ?? $procurementRequest->amount);
 @endphp
-<style>.generic-page{width:215.9mm;min-height:330.2mm;padding:12mm;font-size:11px}@media print{.generic-page{box-shadow:none}}</style>
+<style>.generic-page{width:210mm;min-height:330mm;padding:12mm;font-size:11px}@media print{.generic-page{box-shadow:none}}</style>
 <main class="page generic-page">
     @include('procurement-documents._header')
     <h1 class="center upper" style="font-size:18px;margin:20px 0 14px">{{ $documentDefinition['label'] }}</h1>

@@ -62,7 +62,7 @@
 
 @include('partials.official-toolbar', ['closeUrl' => route('cash', ['tab' => 'reports', 'school_id' => $school->id]), 'context' => 'Checks and Advices to Debit Account · '.$report['period']])
 
-<main class="paper chk" data-official-page data-sheets data-doc="cash-checks-advices" data-paper="longbond" data-orientation="landscape" data-margin="8">
+<main class="paper chk" data-official-page data-sheets data-doc="cash-checks-advices" data-paper="folio" data-orientation="landscape" data-margin="8">
     <h1>CHECKS AND ADVICES TO DEBIT ACCOUNT DISBURSEMENT RECORD</h1>
 
     <table class="chk-info">

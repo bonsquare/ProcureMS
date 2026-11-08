@@ -53,7 +53,7 @@
     $showStatus = true; // Section C, Status of Obligation, is always part of the ORS
 @endphp
 @include('partials.official-toolbar', ['closeUrl' => route('budget'), 'context' => 'Obligation Request · '.$report->ors_number])
-<div class="sheet{{ $showStatus ? '' : ' no-status' }}" data-official-page data-single-page data-doc="ors" data-paper="longbond"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 612 936" preserveAspectRatio="xMidYMid meet" stroke="#000" fill="none">
+<div class="sheet{{ $showStatus ? '' : ' no-status' }}" data-official-page data-single-page data-doc="ors" data-paper="folio"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 612 936" preserveAspectRatio="xMidYMid meet" stroke="#000" fill="none">
 <g fill="none">
 <line x1="17.39" y1="44.92" x2="17.39" y2="{{ $showStatus ? '883.92' : '683.23' }}" stroke-width="1.45"/>
 <line x1="16.66" y1="528.18" x2="52.17" y2="528.18" stroke-width="1.45"/>

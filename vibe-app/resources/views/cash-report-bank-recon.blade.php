@@ -38,7 +38,7 @@
 
 @include('partials.official-toolbar', ['closeUrl' => route('cash', ['tab' => 'reports', 'school_id' => $school->id]), 'context' => 'Bank Reconciliation · '.$report['period']])
 
-<main class="paper" data-official-page data-sheets data-doc="cash-bank-recon" data-paper="longbond" data-orientation="landscape" data-margin="10">
+<main class="paper" data-official-page data-sheets data-doc="cash-bank-recon" data-paper="folio" data-orientation="landscape" data-margin="10">
     @include('partials.cash-report-header', ['title' => 'BANK RECONCILIATION', 'minimal' => true])
     @if($funds->isNotEmpty())<p style="margin:0 0 8px;font-weight:bold">Fund: <span style="text-decoration:underline">{{ $funds->map($fundLabel)->implode(', ') }}</span></p>@endif
 

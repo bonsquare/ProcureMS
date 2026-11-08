@@ -169,7 +169,7 @@
 
 @include('partials.official-toolbar', ['closeUrl' => route('planning').'#sip', 'context' => 'School Improvement Plan'])
 
-<main class="paper" data-official-page data-sheets data-page-footer="School Improvement Plan" data-doc="sip" data-paper="longbond" data-orientation="landscape" data-margin="10">
+<main class="paper" data-official-page data-sheets data-page-footer="School Improvement Plan" data-doc="sip" data-paper="folio" data-orientation="landscape" data-margin="10">
     <header class="masthead">
         @if($leftLogo)<img class="official-logo" src="{{ $leftLogo }}" alt="" onerror="this.remove()">@endif
         <div class="small">Republic of the Philippines</div>

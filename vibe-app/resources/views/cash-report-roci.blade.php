@@ -18,7 +18,7 @@
 
 @include('partials.official-toolbar', ['closeUrl' => route('cash', ['tab' => 'reports', 'school_id' => $report['school']->id]), 'context' => 'Report of Checks Issued · '.$report['period']])
 
-<main class="paper" data-official-page data-sheets data-doc="cash-roci" data-paper="longbond" data-orientation="landscape" data-margin="10">
+<main class="paper" data-official-page data-sheets data-doc="cash-roci" data-paper="folio" data-orientation="landscape" data-margin="10">
     @include('partials.cash-report-header', ['title' => 'REPORT OF CHECKS ISSUED', 'appendix' => 'Appendix 35', 'autoSheet' => true, 'compact' => true])
 
     <table class="report" data-paginate>

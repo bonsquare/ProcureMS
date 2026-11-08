@@ -78,7 +78,7 @@ class AppCsePrintTest extends TestCase
         }
         $this->assertStringContainsString('data-official-page', $html);
         $this->assertStringContainsString('data-orientation="landscape"', $html);
-        $this->assertStringContainsString('data-paper="longbond"', $html);
+        $this->assertStringContainsString('data-paper="folio"', $html);
         $this->assertStringContainsString('<thead', $html);
         $this->assertStringNotContainsString('<img', $html, 'the Procurement Service form has no logos');
     }

@@ -38,7 +38,7 @@
     <div class="missing no-print">Left out: the payee has no supplier in the Supplier Manager, or its 1600 and 0619E rates are not entered yet: {{ implode('; ', $report['missing']) }}.</div>
 @endif
 {{-- One sheet of paper per BIR form. --}}
-<main class="paper" data-official-page data-doc="alphalist" data-sheets data-paper="longbond" data-orientation="landscape" data-margin="10">
+<main class="paper" data-official-page data-doc="alphalist" data-sheets data-paper="folio" data-orientation="landscape" data-margin="10">
 
     @forelse($blocks as $form => $rows)
         <section class="doc-page" data-form="{{ $form }}">

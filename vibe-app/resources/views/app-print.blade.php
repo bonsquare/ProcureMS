@@ -68,7 +68,7 @@
 
 @include('partials.official-toolbar', ['closeUrl' => route('planning').'#app', 'context' => 'Annual Procurement Plan · FY '.$plan->fiscal_year])
 
-<main class="paper" data-official-page data-sheets data-doc="app" data-paper="legal" data-orientation="landscape" data-margin="10">
+<main class="paper" data-official-page data-sheets data-doc="app" data-paper="folio" data-orientation="landscape" data-margin="10">
     <header class="masthead">
         <div class="masthead-logo masthead-logo-left">@if($leftLogo)<img class="official-logo" src="{{ $leftLogo }}" alt="" onerror="this.remove()">@endif</div>
         <div>

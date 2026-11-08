@@ -217,6 +217,7 @@ Binding decisions from that log:
 - 2026-11-08 Printer margin test page: route school-settings.printing.margin-test (PrintSettingsController::marginTest, view print-margin-test), linked from the Printing tab. Deployed 2026-11-08 (ccfef63d).
 - 2026-11-08 Print engine: page capacity is divided by the print zoom of wide forms (print-pages build(): printZoom), so a scaled-down form fills the sheet.
 - 2026-11-08 Every fixed-size procurement form (PR, RFQ, PO, NTP, NOA, Abstract, IAR, IARS, ICS, generic, Delivery Reconciliation) is designed for long bond (215.9 x 330.2 mm) and opens on long bond (paper map in procurement-document-print.blade.php). SOB (legal) and POW (folio) are unchanged.
+- 2026-11-08 Every document now opens on folio (210 x 330 mm) by default: all data-paper values and the procurement paper map are folio, and the fixed-size procurement forms are drawn 210 x 330 mm. A school can still pick another paper in Settings, Printing.
 - The Planning page is `/planning`. The source is `resources/views/planning.blade.php`; the controller is `app/Http/Controllers/PlanningController.php`.
 - The last GitHub backup is commit `69d1d35` on `master`. Do not reset or discard local changes.
 - Live: Railway deployment ccfef63d (2026-11-08 14:31), migrations through `add_user_read_reply_to_support_messages` (see the history file for later changes).
