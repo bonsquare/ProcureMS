@@ -14,15 +14,31 @@
     [data-topbar-tools] .tt-panel { position: absolute; right: -2.9rem; top: calc(100% + .6rem); z-index: 120; width: min(22rem, calc(100vw - 1.5rem)); max-height: 70vh; overflow-y: auto; border-radius: 1rem; border: 1px solid rgba(16, 57, 103, .12); background: rgba(255, 255, 255, .96); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); box-shadow: 0 24px 56px -14px rgba(16, 57, 103, .45); transform-origin: top right; animation: tt-pop 220ms cubic-bezier(.2, .9, .25, 1.04); }
     [data-topbar-tools] .tt-panel[hidden] { display: none; }
     @keyframes tt-pop { from { opacity: 0; transform: translateY(-6px) scale(.97); } to { opacity: 1; transform: none; } }
-    [data-topbar-tools] .tt-panel h3 { margin: 0; padding: .8rem 1rem; font: 700 13px Inter, system-ui, sans-serif; letter-spacing: -.01em; border-bottom: 1px solid #e3eaf1; }
-    [data-topbar-tools] .tt-item { display: block; padding: .7rem 1rem; text-decoration: none; color: #1b2a3a; border-bottom: 1px solid #eef2f6; transition: background-color 140ms ease; }
+    [data-topbar-tools] .tt-head { display: flex; align-items: center; gap: .5rem; padding: .65rem .6rem .65rem 1rem; border-bottom: 1px solid #e3eaf1; }
+    [data-topbar-tools] .tt-head h3 { margin: 0; flex: 1; min-width: 0; padding: 0; border: 0; font: 700 13px Inter, system-ui, sans-serif; letter-spacing: -.01em; }
+    [data-topbar-tools] .tt-count { min-width: 20px; padding: 0 .4rem; border-radius: 10px; background: #14818f; color: #fff; font: 700 11px/20px Inter, system-ui, sans-serif; text-align: center; }
+    [data-topbar-tools] .tt-clearall { flex: none; padding: .3rem .55rem; border: 0; border-radius: .5rem; background: transparent; color: #14818f; font: 600 12px Inter, system-ui, sans-serif; cursor: pointer; }
+    [data-topbar-tools] .tt-clearall:hover { background: #e3f1f3; }
+    [data-topbar-tools] .tt-item { display: flex; align-items: flex-start; gap: .65rem; padding: .7rem .5rem .7rem .85rem; border-bottom: 1px solid #eef2f6; transition: background-color 140ms ease, opacity 160ms ease, transform 160ms ease; }
     [data-topbar-tools] .tt-item:hover { background: #f1f6fb; }
-    [data-topbar-tools] .tt-item strong { display: block; font: 600 13px/1.3 Inter, system-ui, sans-serif; }
-    [data-topbar-tools] .tt-item span { display: block; margin-top: 2px; font: 400 12px/1.35 Inter, system-ui, sans-serif; color: #536273; }
+    [data-topbar-tools] .tt-item.tt-leaving { opacity: 0; transform: translateX(16px); }
+    [data-topbar-tools] .tt-ico { flex: none; display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%; background: #e0f2f5; color: #14818f; }
+    [data-topbar-tools] .tt-ico .material-symbols-outlined { font-size: 18px; }
+    [data-topbar-tools] .tt-item[data-level="warn"] .tt-ico { background: #fdf0d9; color: #b45309; }
+    [data-topbar-tools] .tt-item[data-level="error"] .tt-ico { background: #fbe4e4; color: #ba1a1a; }
+    [data-topbar-tools] .tt-main { display: block; flex: 1; min-width: 0; text-decoration: none; color: #1b2a3a; }
+    [data-topbar-tools] .tt-main strong { display: block; font: 600 13px/1.3 Inter, system-ui, sans-serif; overflow-wrap: anywhere; }
+    [data-topbar-tools] .tt-main span { display: block; margin-top: 2px; font: 400 12px/1.35 Inter, system-ui, sans-serif; color: #536273; overflow-wrap: anywhere; }
+    [data-topbar-tools] .tt-x { flex: none; display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border: 0; border-radius: 50%; background: transparent; color: #7a8794; cursor: pointer; }
+    [data-topbar-tools] .tt-x:hover { background: #e8eef4; color: #ba1a1a; }
+    [data-topbar-tools] .tt-x .material-symbols-outlined { font-size: 16px; }
+    [data-topbar-tools] .tt-clearall:focus-visible, [data-topbar-tools] .tt-x:focus-visible, [data-topbar-tools] .tt-main:focus-visible { outline: 2px solid #14818f; outline-offset: 1px; }
     [data-topbar-tools] .tt-item[data-level="warn"] { border-left: 3px solid #d97706; }
     [data-topbar-tools] .tt-item[data-level="error"] { border-left: 3px solid #ba1a1a; }
     [data-topbar-tools] .tt-item[data-level="info"] { border-left: 3px solid #1a98a8; }
-    [data-topbar-tools] .tt-empty { padding: 1.25rem 1rem; text-align: center; font: 400 13px Inter, system-ui, sans-serif; color: #536273; }
+    [data-topbar-tools] .tt-empty { display: grid; justify-items: center; gap: .25rem; padding: 1.5rem 1rem; text-align: center; font: 400 13px Inter, system-ui, sans-serif; color: #536273; }
+    [data-topbar-tools] .tt-empty .material-symbols-outlined { font-size: 34px; color: #2aa86b; }
+    [data-topbar-tools] .tt-empty p { margin: 0; }
     /* The profile icon inside the capsule keeps its own size and its menu opens under it. */
     [data-topbar-tools] > :last-child { flex: none; }
     @media (max-width: 767px) {
@@ -34,7 +50,7 @@
         [data-topbar-tools] .tt-panel { position: fixed; top: 4.25rem; left: .75rem; right: .75rem; width: auto; }
     }
     @media (max-width: 380px) { [data-topbar-tools] .tt-sep { display: none; } [data-topbar-tools] .tt-clock { padding-right: .25rem; } }
-    @media (prefers-reduced-motion: reduce) { [data-topbar-tools] .tt-panel { animation: none; } }
+    @media (prefers-reduced-motion: reduce) { [data-topbar-tools] .tt-panel { animation: none; } [data-topbar-tools] .tt-item { transition: none; } }
     @media (prefers-reduced-transparency: reduce) { [data-topbar-tools], [data-topbar-tools] .tt-panel { background: #fff; -webkit-backdrop-filter: none; backdrop-filter: none; } }
     @media print { [data-topbar-tools] { display: none !important; } }
 </style>
@@ -91,16 +107,54 @@
                 tick();
             };
 
+            const clearedKey = 'bell-cleared-' + @json(auth()->id());
+            const readCleared = () => { try { return new Set(JSON.parse(localStorage.getItem(clearedKey) || '[]')); } catch (error) { return new Set(); } };
+            const writeCleared = (set) => { try { localStorage.setItem(clearedKey, JSON.stringify([...set].slice(-200))); } catch (error) { /* clearing then lasts until the page is reloaded */ } };
+            const keyOf = (entry) => entry.key || [entry.level, entry.title, entry.detail, entry.url].join('|');
+            const fallbackIcon = { error: 'error', warn: 'warning', info: 'info' };
+            let lastData = { count: 0, items: [] };
+            const el = (tag, className, text) => { const node = document.createElement(tag); if (className) node.className = className; if (text !== undefined) node.textContent = text; return node; };
+            const glyph = (name) => { const node = el('span', 'material-symbols-outlined', name); node.setAttribute('aria-hidden', 'true'); return node; };
+
             const render = (data) => {
-                badge.hidden = data.count === 0; badge.textContent = data.count > 9 ? '9+' : data.count;
-                bell.setAttribute('aria-label', 'Notifications' + (data.count ? ', ' + data.count + ' new' : ''));
+                lastData = data;
+                // A cleared notification stays hidden until it changes (a newer reply, another count); keys of notifications that are gone are forgotten.
+                const cleared = readCleared();
+                const present = new Set(data.items.map(keyOf));
+                const kept = new Set([...cleared].filter((key) => present.has(key)));
+                if (kept.size !== cleared.size) writeCleared(kept);
+                const items = data.items.filter((entry) => !kept.has(keyOf(entry)));
+
+                badge.hidden = items.length === 0; badge.textContent = items.length > 9 ? '9+' : items.length;
+                bell.setAttribute('aria-label', 'Notifications' + (items.length ? ', ' + items.length + ' new' : ''));
                 panel.replaceChildren();
-                const title = document.createElement('h3'); title.textContent = 'Notifications'; panel.append(title);
-                if (!data.items.length) { const none = document.createElement('p'); none.className = 'tt-empty'; none.textContent = 'You are all caught up.'; panel.append(none); return; }
-                data.items.forEach((entry) => {
-                    const link = document.createElement('a'); link.className = 'tt-item'; link.href = entry.url; link.dataset.level = entry.level;
-                    const head = document.createElement('strong'); head.textContent = entry.title; const detail = document.createElement('span'); detail.textContent = entry.detail;
-                    link.append(head, detail); panel.append(link);
+
+                const head = el('div', 'tt-head');
+                head.append(el('h3', '', 'Notifications'));
+                if (items.length) {
+                    head.append(el('span', 'tt-count', String(items.length)));
+                    const all = el('button', 'tt-clearall', 'Clear all'); all.type = 'button';
+                    all.addEventListener('click', (event) => { event.stopPropagation(); const next = readCleared(); items.forEach((entry) => next.add(keyOf(entry))); writeCleared(next); render(lastData); });
+                    head.append(all);
+                }
+                panel.append(head);
+
+                if (!items.length) {
+                    const none = el('div', 'tt-empty'); none.append(glyph('check_circle'), el('p', '', 'You are all caught up.'));
+                    panel.append(none); return;
+                }
+                items.forEach((entry) => {
+                    const row = el('div', 'tt-item'); row.dataset.level = entry.level;
+                    const icon = el('span', 'tt-ico'); icon.append(glyph(entry.icon || fallbackIcon[entry.level] || 'notifications'));
+                    const main = el('a', 'tt-main'); main.href = entry.url; main.append(el('strong', '', entry.title), el('span', '', entry.detail));
+                    const clear = el('button', 'tt-x'); clear.type = 'button'; clear.title = 'Clear this notification'; clear.setAttribute('aria-label', 'Clear notification: ' + entry.title); clear.append(glyph('close'));
+                    clear.addEventListener('click', (event) => {
+                        event.stopPropagation();
+                        const next = readCleared(); next.add(keyOf(entry)); writeCleared(next);
+                        row.classList.add('tt-leaving');
+                        setTimeout(() => render(lastData), 170);
+                    });
+                    row.append(icon, main, clear); panel.append(row);
                 });
             };
             const load = async () => {

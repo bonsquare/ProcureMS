@@ -259,8 +259,13 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::post('/account/pin', [PinController::class, 'store'])->middleware('throttle:10,1')->name('account.pin');
     Route::post('/support/messages', [SupportController::class, 'send'])->middleware('throttle:10,1')->name('support.send');
     Route::get('/support/widget', [SupportController::class, 'widget'])->middleware('throttle:90,1')->name('support.widget');
+    Route::get('/support/queue', [SupportController::class, 'queue'])->middleware('throttle:60,1')->name('support.queue');
+    Route::post('/support/take-next', [SupportController::class, 'takeNext'])->middleware('throttle:30,1')->name('support.take-next');
+    Route::post('/support/{supportMessage}/assign', [SupportController::class, 'assign'])->whereNumber('supportMessage')->middleware('throttle:30,1')->name('support.assign');
     Route::get('/support/{supportMessage}', [SupportController::class, 'thread'])->whereNumber('supportMessage')->name('support.show');
     Route::get('/support/{supportMessage}/poll', [SupportController::class, 'poll'])->whereNumber('supportMessage')->middleware('throttle:60,1')->name('support.poll');
+    Route::post('/support/{supportMessage}/staff-replies', [SupportController::class, 'staffReply'])->whereNumber('supportMessage')->middleware('throttle:30,1')->name('support.staff-reply');
+    Route::post('/support/{supportMessage}/status', [SupportController::class, 'staffStatus'])->whereNumber('supportMessage')->middleware('throttle:30,1')->name('support.status');
     Route::post('/support/{supportMessage}/replies', [SupportController::class, 'reply'])->whereNumber('supportMessage')->middleware('throttle:20,1')->name('support.reply');
     Route::post('/demo/reset', [DemoController::class, 'reset'])->name('demo.reset');
     Route::get('/user-management', [UserDirectoryController::class, 'index'])->name('user-management');

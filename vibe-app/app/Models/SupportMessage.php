@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 /** A message a user sent to Customer Services; the bot forwards it to Telegram and a reply there is saved as a SupportReply. */
 class SupportMessage extends Model
 {
-    protected $fillable = ['organization_id', 'school_id', 'user_id', 'body', 'telegram_message_id', 'telegram_status', 'status', 'type', 'subject', 'assigned_name', 'assigned_telegram_id', 'resolved_at', 'telegram_thread_id', 'telegram_thread_card_id'];
+    protected $fillable = ['organization_id', 'school_id', 'user_id', 'body', 'telegram_message_id', 'telegram_status', 'status', 'type', 'subject', 'assigned_name', 'assigned_telegram_id', 'resolved_at', 'telegram_thread_id', 'telegram_thread_card_id', 'user_read_reply_id'];
 
     protected $attributes = ['status' => 'pending'];
 
@@ -26,6 +26,16 @@ class SupportMessage extends Model
     public function getThreadSignatureAttribute(): string
     {
         return md5($this->status.'|'.$this->assigned_name.'|'.$this->replies()->count().'|'.$this->replies()->max('id'));
+    }
+
+    /** The owner has read every Customer Services answer so far (the bell stops telling about them). Does not touch updated_at. */
+    public function markAnswersRead(): void
+    {
+        $newest = (int) $this->replies()->where('sender', 'staff')->max('id');
+        if ($newest > (int) $this->user_read_reply_id) {
+            static::query()->whereKey($this->getKey())->toBase()->update(['user_read_reply_id' => $newest]);
+            $this->user_read_reply_id = $newest;
+        }
     }
 
     public function getFiledAtAttribute(): string

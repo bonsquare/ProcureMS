@@ -3,8 +3,8 @@
 @section('content')
 @php $inputClass = 'mt-1 w-full rounded border border-outline-variant/50 bg-white px-3 py-2.5 text-sm outline-none focus:border-primary'; @endphp
 <div class="mb-6">
-    <h1 class="text-3xl font-semibold tracking-tight">Support</h1>
-    <p class="mt-1 text-sm text-on-surface-variant">Reach Customer Services for help with your account, subscription or the system.</p>
+    <h1 class="text-3xl font-semibold tracking-tight">{{ $canEdit ? 'Support desk' : 'Support' }}</h1>
+    <p class="mt-1 text-sm text-on-surface-variant">{{ $canEdit ? 'The queue of requests from the schools: take, assign, answer and close them here or in the Customer Services Telegram chat.' : 'Reach Customer Services for help with your account, subscription or the system.' }}</p>
 </div>
 
 @if(session('success'))<div class="mb-5 rounded border border-secondary/30 bg-secondary/5 px-4 py-3 text-sm text-secondary">{{ session('success') }}</div>@endif

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\LiquidationReport;
 use App\Models\PaymentProof;
 use App\Models\School;
+use App\Models\SupportMessage;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,7 +18,7 @@ class NotificationController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        $items = $user->seesAllSchools() ? $this->forMaster($user) : $this->subscriptionNotice($user)->merge($this->work($user));
+        $items = ($user->seesAllSchools() ? $this->forMaster($user) : $this->subscriptionNotice($user)->merge($this->work($user)))->merge($this->supportAnswers($user));
 
         return response()->json(['count' => $items->count(), 'items' => $items->values()]);
     }
@@ -25,6 +26,28 @@ class NotificationController extends Controller
     public function serverTime(): JsonResponse
     {
         return response()->json(['now' => now()->toIso8601String(), 'timezone' => config('app.timezone')]);
+    }
+
+    /** The user's own support requests that Customer Services answered since the user last opened them. @return Collection<int, array{title: string, detail: string, url: string, level: string}> */
+    private function supportAnswers(User $user): Collection
+    {
+        $unread = SupportMessage::query()->where('user_id', $user->id)
+            ->whereRaw("(select max(id) from support_replies where support_replies.support_message_id = support_messages.id and support_replies.sender = 'staff') > coalesce(user_read_reply_id, 0)")
+            ->selectRaw("id, subject, (select max(id) from support_replies where support_replies.support_message_id = support_messages.id and support_replies.sender = 'staff') as newest")
+            ->latest('updated_at')->get();
+        if ($unread->isEmpty()) {
+            return collect();
+        }
+        $one = $unread->count() === 1;
+
+        return collect([$this->item(
+            $one ? 'New reply from Customer Services' : $unread->count().' support requests have a new reply',
+            $one ? Str::limit((string) ($unread->first()->subject ?: 'Support request'), 80) : 'Open Support to read the answers.',
+            $one ? route('support.show', $unread->first()) : route('support'),
+            'info',
+            'support_agent',
+            'support:'.$unread->map(fn (SupportMessage $message) => $message->id.'-'.$message->newest)->implode(','),
+        )]);
     }
 
     /** @return Collection<int, array{title: string, detail: string, url: string, level: string}> */
@@ -36,6 +59,10 @@ class NotificationController extends Controller
         }
         if ($user->hasAccess('subscriptions') && ($proofs = PaymentProof::withoutGlobalScopes()->whereIn('status', PaymentProof::OPEN)->count()) > 0) {
             $items->push($this->item($proofs.' '.Str::plural('proof', $proofs).' of payment to review', 'Check the proof in the school\'s Google Drive, then approve or reject it.', route('subscriptions'), 'warn'));
+        }
+
+        if (($queue = SupportMessage::query()->where('status', '!=', 'resolved')->whereNull('assigned_name')->count()) > 0) {
+            $items->push($this->item($queue.' support '.Str::plural('request', $queue).' waiting for someone', 'Open the support queue and take or assign them.', route('support', ['filter' => 'unassigned']), 'warn', 'support_agent', 'support-queue:'.$queue));
         }
 
         return $items;
@@ -92,9 +119,9 @@ class NotificationController extends Controller
         return $items;
     }
 
-    /** @return array{title: string, detail: string, url: string, level: string} */
-    private function item(string $title, string $detail, string $url, string $level): array
+    /** @return array{title: string, detail: string, url: string, level: string, icon: ?string, key: ?string} */
+    private function item(string $title, string $detail, string $url, string $level, ?string $icon = null, ?string $key = null): array
     {
-        return ['title' => $title, 'detail' => $detail, 'url' => $url, 'level' => $level];
+        return ['title' => $title, 'detail' => $detail, 'url' => $url, 'level' => $level, 'icon' => $icon, 'key' => $key];
     }
 }

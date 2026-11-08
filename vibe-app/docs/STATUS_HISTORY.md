@@ -194,3 +194,4 @@ Full dated log moved out of CLAUDE.md to keep that file short. Nothing was remov
 - 2026-11-07: Payment proof number (SUB-...) and Assign to staff button in Telegram (docs/specs.md section 119). Deployed 2026-11-07 (cb2b69de).
 - 2026-11-08: Support is the last item in the sidebars and profile menu; floating Support icon at the bottom right of every signed-in page (docs/specs.md section 119). Deployed 2026-11-08 (37963aa0).
 - 2026-11-08: Support chat popup on the floating icon: open-request list with unread highlight, conversation with details strip, file attachments, new-message alert, animations; Support last in the sidebar order (docs/specs.md section 119). Deployed 2026-11-08 (37963aa0).
+- 2026-11-08: Support desk for the master user: split window (queue left, conversation right), answer, take, assign and set status from the system with two-way Telegram sync, quick replies, redesigned notification bell with Clear all.
