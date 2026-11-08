@@ -67,7 +67,7 @@
                     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">@include('partials.signatory-picker', ['rows' => $signatoryRows])</div>
                 </section>
             @endforeach
-            @include('partials.extra-blank-rows', ['max' => 100, 'value' => old('extra_blank_rows', $editingRequest?->extra_blank_rows ?? 0)])
+            @include('partials.extra-blank-rows', ['max' => 150, 'value' => old('extra_blank_rows', $editingRequest?->extra_blank_rows ?? 0)])
             <div class="flex justify-end gap-2 border-t border-outline-variant/20 pt-6"><a href="{{ route('procurement') }}" class="rounded border border-outline-variant/50 px-4 py-2.5 text-xs font-semibold hover:border-primary hover:text-primary">Cancel</a><button type="submit" class="min-h-11 rounded-lg bg-primary px-5 text-xs font-bold text-white">Save request</button></div>
         </form>
     </section>
