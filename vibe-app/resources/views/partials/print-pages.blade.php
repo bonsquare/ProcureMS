@@ -466,6 +466,9 @@
             if (made.tailHeight && made.position + made.tailHeight + made.around.bottom > capacity * tailRoom) {
                 var spare = newBlock();
                 current = { container: spare, elements: boxesOf(spare, null) };
+            } else if (made.tailHeight && made.position + made.tailHeight + made.around.bottom > capacity) {
+                // The tail is a little too tall for the room left: this page is scaled to fit it (fitFixed).
+                current.container.setAttribute('data-tail-over', '');
             }
             // (On the first page the form's own boxes are still in place, with their parts beside them; only what follows a table that sits
             // directly in the page element is not inside the block yet.)
@@ -549,7 +552,7 @@
                 if (!block.querySelector('table[data-paginate]')) { return; }
                 var top = block.getBoundingClientRect().top + parseFloat(getComputedStyle(block).paddingTop);
                 var bottom = Math.max.apply(null, Array.prototype.filter.call(block.children, function (child) { return !child.hasAttribute('data-doc-footer'); }).map(function (child) { return child.getBoundingClientRect().bottom; }).concat([top]));
-                if (bottom - top > availableHeight * (1 + overAllow) + 1) { over[number] = bottom - top - availableHeight; }
+                if (bottom - top > availableHeight * (1 + (block.hasAttribute('data-tail-over') ? overAllow : 0)) + 1) { over[number] = bottom - top - availableHeight; }
             });
             if (preview) { root.style.setProperty('--preview-zoom', preview); } else { root.style.removeProperty('--preview-zoom'); }
             return over.length ? over : [];
@@ -593,7 +596,7 @@
                 var scalable = SCALABLE.indexOf(page.getAttribute('data-doc')) !== -1;
                 tailRoom = scalable ? 1.1 : 1;
                 overAllow = scalable ? 0.12 : 0;
-                var factor = 0.98;
+                var factor = scalable ? 1 : 0.98; // a procurement form uses the whole room set by its margins; the overflow check below lowers it when a page comes out too tall
                 var reserves = [];
                 var single = units.length === 1 && units[0].legacy;
                 for (var attempt = 0; attempt < 10; attempt++) {
