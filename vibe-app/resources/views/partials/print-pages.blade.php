@@ -484,7 +484,9 @@
             // A page that carries a footer (data-page-footer on the page element) keeps two lines of room at the bottom for it.
             var footed = page.hasAttribute('data-page-footer');
             var availableHeight = (+spec[2] - spec[3] - spec[5]) * MM - 3 - (footed ? 2 * parseFloat(getComputedStyle(root).fontSize) : 0);
-            var capacity = availableHeight * factor;
+            // A wide form is printed scaled down (zoom below 1): the rows are measured below at full size, so the same paper holds 1/zoom as many pixels of them.
+            var printZoom = parseFloat(page.style.zoom) || 1;
+            var capacity = availableHeight * factor / Math.min(1, Math.max(0.5, printZoom));
 
             // Measure the way the page prints: the paper inside its margins, at full size.
             var kept = { zoom: page.style.zoom, width: page.style.width, preview: root.style.getPropertyValue('--preview-zoom') };

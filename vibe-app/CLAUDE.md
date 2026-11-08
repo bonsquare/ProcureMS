@@ -215,6 +215,7 @@ Binding decisions from that log:
 - 2026-11-08 Procurement documents print without the page padding above and below the form (rule in partials/print-pages.blade.php, keyed by data-doc). Deployed 2026-11-08 (ef57007e).
 - 2026-11-08 Procurement print: a last box up to 10% too tall is fitted by scaling that page (print-pages SCALABLE/tailRoom) instead of a page of its own. Deployed 2026-11-08 (2324ca65).
 - 2026-11-08 Printer margin test page: route school-settings.printing.margin-test (PrintSettingsController::marginTest, view print-margin-test), linked from the Printing tab. Deployed 2026-11-08 (ccfef63d).
+- 2026-11-08 Print engine: page capacity is divided by the print zoom of wide forms (print-pages build(): printZoom), so a scaled-down form fills the sheet.
 - The Planning page is `/planning`. The source is `resources/views/planning.blade.php`; the controller is `app/Http/Controllers/PlanningController.php`.
 - The last GitHub backup is commit `69d1d35` on `master`. Do not reset or discard local changes.
 - Live: Railway deployment ccfef63d (2026-11-08 14:31), migrations through `add_user_read_reply_to_support_messages` (see the history file for later changes).
