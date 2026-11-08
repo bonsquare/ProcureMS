@@ -207,10 +207,10 @@ Binding decisions from that log:
 - 2026-11-07 Status buttons also under the client reply and the answered line (docs/specs.md section 119). Deployed 2026-11-07 (587a12e4).
 - 2026-11-07 Payment proofs approved, declined or For process from Telegram, with a remark the school sees (docs/specs.md section 119). Deployed 2026-11-07 (587a12e4); TELEGRAM_APPROVERS set to Bonifacio Jr only.
 - 2026-11-07 Payment proof number (SUB-...) and Assign to staff button in Telegram (docs/specs.md section 119). Deployed 2026-11-07 (cb2b69de).
-- 2026-11-08 Support is last in the sidebars and profile menu; floating Support chat popup at the bottom right with open-request list, unread highlight, attachments and new-message alert (docs/specs.md section 119). Committed, not yet deployed.
+- 2026-11-08 Support is last in the sidebars and profile menu; floating Support chat popup at the bottom right with open-request list, unread highlight, attachments and new-message alert (docs/specs.md section 119). Deployed 2026-11-08 (37963aa0).
 - The Planning page is `/planning`. The source is `resources/views/planning.blade.php`; the controller is `app/Http/Controllers/PlanningController.php`.
 - The last GitHub backup is commit `69d1d35` on `master`. Do not reset or discard local changes.
-- Live: Railway deployment cb2b69de (2026-11-07 21:30), migrations through `add_print_paper_to_schools_table` (see the history file for later changes).
+- Live: Railway deployment 37963aa0 (2026-11-08 08:59), migrations through `add_print_paper_to_schools_table` (see the history file for later changes).
 
 ## Standing workflow (owner's instruction 2026-10-16)
 
