@@ -209,7 +209,9 @@
                 // A document laid out page by page (data-sheets) counts its rows against the paper inside the margins. Printers refuse to print closer to the edge than
                 // their own limit (an Epson L3210 asks for 0.49" at the bottom), and the browser then makes the page shorter than counted: a row spills over and a
                 // page holding only the footer follows. A margin of 13 mm (0.51") is above those limits (14 mm and more made the AIP count its pages badly).
-                if (sheets.some(function (item) { return item.page.hasAttribute('data-sheets'); })) { mTop = Math.max(mTop, 13); mBottom = Math.max(mBottom, 13); }
+                // A form may lower that floor with data-min-margin (the Purchase Request: the margins are set in the browser's print dialog).
+                var floorM = Math.min.apply(null, sheets.filter(function (item) { return item.page.hasAttribute('data-sheets'); }).map(function (item) { return item.page.hasAttribute('data-min-margin') ? +item.page.getAttribute('data-min-margin') || 0 : 13; }).concat([13]));
+                if (sheets.some(function (item) { return item.page.hasAttribute('data-sheets'); })) { mTop = Math.max(mTop, floorM); mBottom = Math.max(mBottom, floorM); }
                 var result = sheets.map(function (item) {
                     var m = measure(item, pw);
                     var zoom = Math.min(1, ((pw - (item.page.hasAttribute('data-sheets') ? 0 : mLeft + mRight)) * MM) / m.width);

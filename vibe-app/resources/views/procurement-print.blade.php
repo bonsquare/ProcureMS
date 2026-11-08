@@ -71,7 +71,7 @@
     @php
         [$leftLogo, $rightLogo] = \App\Support\OfficialDocument::logos($procurementRequest->school, $agency);
     @endphp
-    <div data-official-page data-doc="pr" data-paper="a4"><div class="page">
+    <div data-official-page data-doc="pr" data-paper="a4" data-min-margin="0"><div class="page">
         <div class="form">
             <div class="header">
                 @if($leftLogo)<img class="left-logo official-logo" src="{{ $leftLogo }}" alt="Department logo" onerror="this.remove()">@endif
