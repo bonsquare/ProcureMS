@@ -220,7 +220,8 @@
                 });
                 // A form that runs past one page gets a small top/bottom page margin so continuation pages never touch the paper edge.
                 var flows = !paged && result.some(function (r) { return r.naturalH * r.zoom > (ph - mTop - mBottom) * MM + 2; });
-                if (flows) { mTop = Math.max(mTop, 8); mBottom = Math.max(mBottom, 8); }
+                // (A form with data-min-margin that has margins of its own in the school's print settings keeps exactly those.)
+                if (flows && !(own && first.hasAttribute('data-min-margin'))) { mTop = Math.max(mTop, 8); mBottom = Math.max(mBottom, 8); }
                 result.forEach(function (r) {
                     var availableH = (ph - mTop - mBottom) * MM - 3;
                     r.item.page.style.zoom = r.zoom;

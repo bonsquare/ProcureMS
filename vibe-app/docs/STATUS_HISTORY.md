@@ -197,3 +197,4 @@ Full dated log moved out of CLAUDE.md to keep that file short. Nothing was remov
 - 2026-11-08: Support desk for the master user: split window (queue left, conversation right), answer, take, assign and set status from the system with two-way Telegram sync, quick replies, redesigned notification bell with Clear all.
 - 2026-11-08: Purchase Request print: page padding above and under the form removed so each page holds one more row and the bottom blank is no longer than the top margin (owner's request).
 - 2026-11-08: Purchase Request print: the forced 13 mm minimum margin is lifted (data-min-margin in print-clean), so the margins the owner sets in print settings or the browser dialog decide how many rows fit a page.
+- 2026-11-08: Purchase Request print: when the school sets its own PR margins in print settings, the page layout counts exactly those (no 8 mm minimum), so the rows fill the page to the margin chosen.
