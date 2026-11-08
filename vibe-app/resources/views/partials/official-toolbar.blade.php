@@ -33,6 +33,7 @@
                         <label class="ot-field" for="op-width"><span>Width (mm)</span><input id="op-width" type="number" min="50" max="1000" step="0.1"></label>
                         <label class="ot-field" for="op-height"><span>Height (mm)</span><input id="op-height" type="number" min="50" max="1000" step="0.1"></label>
                     </span>
+                    <label class="ot-field" for="op-fit" style="flex-direction:row;align-items:center;gap:8px"><input id="op-fit" type="checkbox"><span>Fit on one page (smaller print)</span></label>
                     <div class="ot-row">
                         <label class="ot-field" for="op-orientation"><span>Orientation</span>
                             <select id="op-orientation"><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select>

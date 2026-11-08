@@ -181,4 +181,11 @@ class PrintSettingsEngineTest extends TestCase
         $this->assertSame(3, substr_count($order, 'class="po-part'));
         $this->assertStringContainsString('class="po-part po-accounting"', $order);
     }
+
+    public function test_the_print_setup_has_a_fit_on_one_page_choice_that_the_paginator_honours(): void
+    {
+        $this->assertStringContainsString('id="op-fit"', File::get(resource_path('views/partials/official-toolbar.blade.php')));
+        $this->assertStringContainsString("' /* fit */'", File::get(resource_path('views/partials/print-clean.blade.php')));
+        $this->assertStringContainsString("data-fit-scale", File::get(resource_path('views/partials/print-pages.blade.php')));
+    }
 }

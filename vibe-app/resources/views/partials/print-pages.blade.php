@@ -26,6 +26,7 @@
     :is([data-doc="pr"],[data-doc="rfq"],[data-doc="po"],[data-doc="ntp"],[data-doc="noa"],[data-doc="abstract"],[data-doc="iar"],[data-doc="ris"],[data-doc="iars"],[data-doc="ics"],[data-doc="reconciliation"],[data-doc="generic"])[data-sheets] > :not(.doc-page), :is([data-doc="pr"],[data-doc="rfq"],[data-doc="po"],[data-doc="ntp"],[data-doc="noa"],[data-doc="abstract"],[data-doc="iar"],[data-doc="ris"],[data-doc="iars"],[data-doc="ics"],[data-doc="reconciliation"],[data-doc="generic"])[data-sheets] > .doc-page > :not([data-doc-footer]) { padding-top: 3mm !important; padding-bottom: 0 !important; }
     /* On screen the form page was a white card with a shadow and its own 16px margin inside the white sheet: it looked like a second sheet over the first. */
     :is([data-doc="pr"],[data-doc="rfq"],[data-doc="po"],[data-doc="ntp"],[data-doc="noa"],[data-doc="abstract"],[data-doc="iar"],[data-doc="ris"],[data-doc="iars"],[data-doc="ics"],[data-doc="reconciliation"],[data-doc="generic"])[data-sheets] > :not(.doc-page), :is([data-doc="pr"],[data-doc="rfq"],[data-doc="po"],[data-doc="ntp"],[data-doc="noa"],[data-doc="abstract"],[data-doc="iar"],[data-doc="ris"],[data-doc="iars"],[data-doc="ics"],[data-doc="reconciliation"],[data-doc="generic"])[data-sheets] > .doc-page > :not([data-doc-footer]) { box-shadow: none !important; margin-top: 0 !important; margin-bottom: 0 !important; }
+    [data-fit-scale] > .doc-page { width: fit-content; margin-left: auto !important; margin-right: auto !important; }
     /* Footer of a page that has data-page-footer: the page number in the middle, the title on the right, at the bottom of the printable area. */
     .doc-footer { position: absolute; left: var(--sheet-pl, 0); right: var(--sheet-pr, 0); bottom: var(--sheet-pb, 0); display: grid; grid-template-columns: 1fr auto 1fr; align-items: baseline; column-gap: 12px; padding-top: 3px; border-top: .5pt solid #7b8794; font-size: var(--doc-footer-size, 8pt); letter-spacing: .02em; color: #1f2933; line-height: 1.25; }
     .doc-footer .center { text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; } .doc-footer .right { text-align: right; color: #3e4c59; overflow-wrap: anywhere; }
@@ -463,7 +464,8 @@
                 current = { container: container, elements: boxesOf(container, chunk) };
             });
             // What follows the table sits under the last rows; when it does not fit, a page of its own carries it.
-            var movedTail = null, tailPartsKept = null;
+            var movedTail = null, tailPartsKept = null, keptLevel = null;
+            levels.forEach(function (level) { level.tail.forEach(function (node) { node.removeAttribute('data-cut-top'); node.removeAttribute('data-cut-bottom'); }); });
             if (made.tailHeight && made.position + made.tailHeight + made.around.bottom > capacity * tailRoom) {
                 // A form that marks its table data-split-tail keeps the first parts of what follows under the last rows, as many as fit; the rest goes to the next page.
                 var tailLevel = levels.filter(function (level) { return level.tail.length > 0; });
@@ -472,8 +474,9 @@
                     while (keep < tailParts.length && used + tailLevel[0].tailSizes[keep] <= capacity) { used += tailLevel[0].tailSizes[keep]; keep++; }
                     if (keep > 0 && keep < tailParts.length) {
                         movedTail = tailParts.slice(keep);
-                        tailLevel[0].tail = tailPartsKept = tailParts.slice(0, keep);
-                        tailLevel[0].tail[keep - 1].setAttribute('data-cut-bottom', '');
+                        keptLevel = tailLevel[0];
+                        tailPartsKept = tailParts.slice(0, keep);
+                        tailPartsKept[keep - 1].setAttribute('data-cut-bottom', '');
                         movedTail[0].setAttribute('data-cut-top', '');
                     }
                 }
@@ -490,12 +493,12 @@
             for (var i = levels.length - 1; i >= 0; i--) {
                 if (current.container === first && !(unit.legacy && i === 0)) { continue; }
                 var parent = i === 0 ? current.container : current.elements[i - 1];
-                levels[i].tail.forEach(function (node) { parent.appendChild(node); });
+                (levels[i] === keptLevel ? tailPartsKept : levels[i].tail).forEach(function (node) { parent.appendChild(node); });
             }
             if (movedTail !== null) {
                 var rest = newBlock();
                 var restBoxes = boxesOf(rest, null);
-                var tailAt = levels.findIndex(function (level) { return level.tail === tailPartsKept; });
+                var tailAt = levels.indexOf(keptLevel);
                 var restParent = tailAt === 0 ? rest : restBoxes[tailAt - 1];
                 movedTail.forEach(function (node) { restParent.appendChild(node); });
             }
@@ -620,22 +623,43 @@
                 var scalable = SCALABLE.indexOf(page.getAttribute('data-doc')) !== -1;
                 tailRoom = scalable ? 1.02 : 1;
                 overAllow = scalable ? 0.04 : 0;
-                var factor = scalable ? 1 : 0.98; // a procurement form uses the whole room set by its margins; the overflow check below lowers it when a page comes out too tall
-                var reserves = [];
                 var single = units.length === 1 && units[0].legacy;
-                for (var attempt = 0; attempt < 10; attempt++) {
-                    restore(page, units);
-                    var availableHeight = build(page, units, spec, factor, reserves);
-                    var over = overflows(page, availableHeight);
-                    if (!over.length) { break; }
-                    if (single && attempt < 6) {
-                        // Only the page that came out too tall gets less room, so the other pages stay as full as they can be.
-                        over.forEach(function (excess, number) { if (excess) { reserves[number] = (reserves[number] || 0) + excess + 2; } });
-                    } else {
-                        factor -= 0.05;
+                var fixedScalable = scalable;
+                // "Fit on one page" (the print setup box adds /* fit */ to the page style): the whole form is scaled down, as little as it takes, until it fills one sheet.
+                var fit = /\/\* fit \*\//.test(style.textContent);
+                var fitBase = (parseFloat(page.style.zoom) || 1) / (parseFloat(page.getAttribute('data-fit-scale')) || 1);
+                page.removeAttribute('data-fit-scale');
+                page.style.zoom = fitBase;
+                var blocksNow = function () { return page.querySelectorAll(':scope > .doc-page').length; };
+                var run = function () {
+                    var reserves = [];
+                    var factor = scalable ? (fit ? 0.97 : 1) : 0.98; // a procurement form uses the whole room set by its margins; the overflow check below lowers it when a page comes out too tall
+                    var available;
+                    for (var attempt = 0; attempt < 10; attempt++) {
+                        restore(page, units);
+                        available = build(page, units, spec, factor, reserves);
+                        var over = overflows(page, available);
+                        if (!over.length) { break; }
+                        if (single && attempt < 6) {
+                            // Only the page that came out too tall gets less room, so the other pages stay as full as they can be.
+                            over.forEach(function (excess, number) { if (excess) { reserves[number] = (reserves[number] || 0) + excess + 2; } });
+                        } else {
+                            factor -= 0.05;
+                        }
                     }
+                    if (typeof available === 'number') { fitFixed(page, available, fixedScalable); }
+                    return available;
+                };
+                run();
+                if (fit && blocksNow() > 1) {
+                    var fitted = false;
+                    for (var scale = 0.97; scale >= 0.6; scale -= 0.03) {
+                        page.style.zoom = fitBase * scale;
+                        run();
+                        if (blocksNow() === 1) { page.setAttribute('data-fit-scale', scale.toFixed(2)); fitted = true; break; }
+                    }
+                    if (!fitted) { page.style.zoom = fitBase; run(); }
                 }
-                if (typeof availableHeight === 'number') { fitFixed(page, availableHeight, scalable); }
                 laidOutFor = key;
             } finally {
                 busy = false;

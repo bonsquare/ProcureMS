@@ -223,6 +223,7 @@ Binding decisions from that log:
 - 2026-11-08 PO: what follows the item table (total in words, penalty, signatures, funds) is three parts that can split between pages (print-pages data-split-tail), so page 1 keeps the total and as much as fits instead of leaving a gap.
 - 2026-11-08 Print engine: a page is scaled to fit its last box only by up to 2% (was 10%), so every page of a document has the same size (print-pages tailRoom 1.02, overAllow 0.04).
 - 2026-11-08 Folio is now 8.5 x 13 in (215.9 x 330.2 mm), the size of the owner's paper (it was 210 x 330 and left the forms 6 mm off-centre); the procurement forms are drawn at that size again and have 3 mm of padding above the form.
+- 2026-11-08 Print setup box: "Fit on one page" (also ?fit=1) scales a document down, as little as it takes, until it fills one sheet, and centres it; a document that cannot fit above 60% keeps its normal pages. Off by default. The PO split-tail parts are no longer lost when a page is laid out more than once.
 - The Planning page is `/planning`. The source is `resources/views/planning.blade.php`; the controller is `app/Http/Controllers/PlanningController.php`.
 - The last GitHub backup is commit `69d1d35` on `master`. Do not reset or discard local changes.
 - Live: Railway deployment ccfef63d (2026-11-08 14:31), migrations through `add_user_read_reply_to_support_messages` (see the history file for later changes).

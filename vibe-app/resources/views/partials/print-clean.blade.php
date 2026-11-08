@@ -138,6 +138,7 @@
             var query = new URLSearchParams(location.search);
             var fromUrl = false;
             ['paper', 'orientation', 'width', 'height'].forEach(function (key) { if (query.get(key)) { state[key] = query.get(key); fromUrl = true; } });
+            if (query.get('fit')) { state.fit = query.get('fit') === '1'; fromUrl = true; }
             if (!PAPERS[state.paper] && state.paper !== 'custom') { state.paper = 'a4'; }
 
             pageStyle = document.createElement('style');
@@ -162,7 +163,7 @@
 
             var controls = {
                 paper: document.getElementById('op-paper'), orient: document.getElementById('op-orientation'), width: document.getElementById('op-width'),
-                height: document.getElementById('op-height'), custom: document.getElementById('op-custom'), zoom: document.getElementById('op-zoom'),
+                height: document.getElementById('op-height'), custom: document.getElementById('op-custom'), zoom: document.getElementById('op-zoom'), fit: document.getElementById('op-fit'),
             };
 
             function paperMm() {
@@ -223,7 +224,7 @@
                 if (flows && !own) { mTop = Math.max(mTop, 8); mBottom = Math.max(mBottom, 8); }
                 result.forEach(function (r) {
                     var availableH = (ph - mTop - mBottom) * MM - 3;
-                    r.item.page.style.zoom = r.zoom;
+                    r.item.page.style.zoom = r.zoom * (state.fit ? (parseFloat(r.item.page.getAttribute('data-fit-scale')) || 1) : 1);
                     r.item.fills.forEach(function (node) {
                         var fillH = Math.max(0, availableH / r.zoom) + 'px';
                         node.classList.add('official-fill');
@@ -244,7 +245,7 @@
                     r.item.sheet.style.setProperty('--sheet-pb', mBottom + 'mm');
                     r.item.sheet.style.setProperty('--sheet-pl', mLeft + 'mm');
                 });
-                pageStyle.textContent = '@page { size: ' + pw + 'mm ' + ph + 'mm; margin: ' + mTop + 'mm ' + mRight + 'mm ' + mBottom + 'mm ' + mLeft + 'mm; }';
+                pageStyle.textContent = '@page { size: ' + pw + 'mm ' + ph + 'mm; margin: ' + mTop + 'mm ' + mRight + 'mm ' + mBottom + 'mm ' + mLeft + 'mm; }' + (state.fit ? ' /* fit */' : '');
                 var preview = state.zoom === 'fit' ? Math.min(1, (window.innerWidth - 40) / (pw * MM)) : (+state.zoom || 1);
                 document.documentElement.style.setProperty('--preview-zoom', preview);
             }
@@ -256,6 +257,7 @@
                 if (controls.height) { controls.height.value = state.height; }
                 if (controls.custom) { controls.custom.hidden = state.paper !== 'custom'; }
                 if (controls.zoom) { controls.zoom.value = String(state.zoom); }
+                if (controls.fit) { controls.fit.checked = !!state.fit; }
                 layout();
                 if (!fromUrl) { store(docKey, state); }
             }
@@ -265,6 +267,7 @@
             if (controls.width) { controls.width.addEventListener('input', function () { state.width = controls.width.value; sync(); }); }
             if (controls.height) { controls.height.addEventListener('input', function () { state.height = controls.height.value; sync(); }); }
             if (controls.zoom) { controls.zoom.addEventListener('change', function () { state.zoom = controls.zoom.value; sync(); }); }
+            if (controls.fit) { controls.fit.addEventListener('change', function () { state.fit = controls.fit.checked; sync(); }); }
             var printButton = document.getElementById('op-print');
             if (printButton) { printButton.addEventListener('click', function () { layout(); window.print(); }); }
             window.addEventListener('beforeprint', layout);
