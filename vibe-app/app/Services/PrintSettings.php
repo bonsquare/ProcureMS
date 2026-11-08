@@ -47,6 +47,9 @@ class PrintSettings
         'generic' => 'Other procurement documents',
     ];
 
+    /** The procurement documents (the "All procurement documents at once" button of the Printing tab fills their rows). */
+    public const PROCUREMENT = ['pr', 'rfq', 'po', 'ntp', 'noa', 'abstract', 'iar', 'ris', 'iars', 'ics', 'reconciliation', 'generic'];
+
     /** @return array{default: ?array{top: float, right: float, bottom: float, left: float}, documents: array<string, array{top: float, right: float, bottom: float, left: float}>} */
     public function forSchool(?int $schoolId): array
     {

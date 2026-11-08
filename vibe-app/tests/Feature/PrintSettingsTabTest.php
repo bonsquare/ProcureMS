@@ -96,4 +96,34 @@ class PrintSettingsTabTest extends TestCase
 
         $this->actingAs($user)->get($this->tab($school))->assertOk()->assertSee('name="paper"', false)->assertSee('<option value="folio" selected>', false);
     }
+
+    public function test_the_tab_can_fill_every_procurement_document_at_once(): void
+    {
+        [$school, $user] = $this->tenant('tab-d');
+
+        $page = $this->actingAs($user)->get($this->tab($school))->assertOk()
+            ->assertSee('All procurement documents at once')->assertSee('id="fill-procurement"', false)->assertSee('data-procurement-side="bottom"', false);
+
+        // Every procurement key has a row to fill, and the fixed financial forms are not among them.
+        foreach (PrintSettings::PROCUREMENT as $key) {
+            $this->assertArrayHasKey($key, PrintSettings::DOCUMENTS);
+            $page->assertSee('data-doc-row="'.$key.'"', false);
+        }
+        $this->assertNotContains('dv', PrintSettings::PROCUREMENT);
+        $this->assertNotContains('ors', PrintSettings::PROCUREMENT);
+        $this->assertNotContains('sob', PrintSettings::PROCUREMENT);
+    }
+
+    public function test_a_user_who_cannot_edit_does_not_get_the_fill_button(): void
+    {
+        [$school, $user] = $this->tenant('tab-e', 'school_staff');
+
+        $page = $this->actingAs($user)->get($this->tab($school));
+
+        if ($page->status() === 200) {
+            $page->assertDontSee('id="fill-procurement"', false);
+        } else {
+            $page->assertForbidden();
+        }
+    }
 }

@@ -33,7 +33,7 @@
                         </label>
                     @endforeach
                 </div>
-                <p class="mt-3 break-words text-xs text-on-surface-variant">Between 0 and 40 mm. Leave all four empty to keep the margins each document already has. Documents printed page by page (such as the SOB and the AIP) always keep at least 13 mm at the top and bottom, because printers cannot print closer to the paper edge.</p>
+                <p class="mt-3 break-words text-xs text-on-surface-variant">Between 0 and 40 mm. Leave all four empty to keep the margins each document already has. Documents printed page by page (such as the SOB and the AIP) keep at least 13 mm at the top and bottom, because printers cannot print closer to the paper edge, unless the document has margins of its own in the table below.</p>
             </div>
             <div class="print-sheet-demo" aria-hidden="true" id="print-demo"><span></span></div>
         </div>
@@ -49,6 +49,24 @@
         </label>
         <p class="mt-3 break-words text-xs text-on-surface-variant">Choose the paper that is loaded in your printer. If the printer has no paper of the size a document asks for, the browser swaps in a shorter one and a page prints across two sheets. A paper chosen in a document's own toolbar still wins for that document on that computer.</p>
     </section>
+
+    @if($canEdit)
+    <section class="rounded-xl border border-outline-variant/60 bg-white p-5 shadow-sm" aria-labelledby="print-procurement">
+        <h3 id="print-procurement" class="text-sm font-bold text-primary">All procurement documents at once</h3>
+        <p class="mt-1 break-words text-xs text-on-surface-variant">Type the margins you also use in the browser's print dialog, then press the button to fill the rows of the Purchase Request, RFQ, Purchase Order, Notice of Award, Notice to Proceed, Abstract, IAR, RIS, IAR (Supplies), ICS, Delivery Reconciliation and the other procurement documents. A document with its own margins uses exactly those: the 13 mm minimum no longer applies to it, so a page holds as many rows as fit. Nothing is saved until you press Save print settings.</p>
+        <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            @foreach($sides as $side => $label)
+                <label class="min-w-0 text-[11px] font-bold uppercase tracking-wide text-on-surface-variant">{{ $label }} (mm)
+                    <input type="number" inputmode="decimal" step="0.5" min="0" max="40" data-procurement-side="{{ $side }}" class="{{ $box }}">
+                </label>
+            @endforeach
+        </div>
+        <div class="mt-3 flex flex-wrap items-center gap-3">
+            <button type="button" id="fill-procurement" class="inline-flex min-h-11 items-center gap-2 rounded-lg border border-action px-4 text-sm font-bold text-action hover:bg-action/10"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">content_copy</span>Fill the procurement documents</button>
+            <p id="fill-procurement-note" role="status" class="min-w-0 break-words text-xs text-on-surface-variant"></p>
+        </div>
+    </section>
+    @endif
 
     <section class="rounded-xl border border-outline-variant/60 bg-white shadow-sm" aria-labelledby="print-documents">
         <div class="border-b border-outline-variant/40 bg-[#eef4fa] px-5 py-3">
@@ -101,6 +119,26 @@
             demo.style.setProperty(variable, (value / size * 100) + '%');
         });
         document.querySelectorAll('[data-demo]').forEach((input) => input.addEventListener('input', draw));
+        const fill = document.getElementById('fill-procurement');
+        if (fill) {
+            const note = document.getElementById('fill-procurement-note');
+            fill.addEventListener('click', () => {
+                const values = {};
+                let complete = true;
+                document.querySelectorAll('[data-procurement-side]').forEach((input) => {
+                    values[input.dataset.procurementSide] = input.value.trim();
+                    if (input.value.trim() === '' || isNaN(parseFloat(input.value))) { complete = false; }
+                });
+                if (!complete) { note.textContent = 'Fill all four margins first (top, right, bottom, left).'; return; }
+                const keys = @json(\App\Services\PrintSettings::PROCUREMENT);
+                keys.forEach((key) => {
+                    const row = document.querySelector('[data-doc-row="' + key + '"]');
+                    if (!row) { return; }
+                    Object.keys(values).forEach((side) => { const box = row.querySelector('input[name$="[' + side + ']"]'); if (box) { box.value = values[side]; } });
+                });
+                note.textContent = 'Filled ' + keys.length + ' documents. Press Save print settings to keep them.';
+            });
+        }
         document.querySelectorAll('[data-clear-row]').forEach((button) => button.addEventListener('click', () => {
             button.closest('tr').querySelectorAll('input').forEach((input) => { input.value = ''; });
         }));

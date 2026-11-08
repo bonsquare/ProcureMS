@@ -73,6 +73,14 @@ class PrintSettingsEngineTest extends TestCase
         $this->assertStringContainsString('getElementById(\'print-settings\')', $engine);
     }
 
+    public function test_a_document_with_margins_of_its_own_skips_the_printer_floors(): void
+    {
+        $engine = File::get(resource_path('views/partials/print-clean.blade.php'));
+
+        $this->assertStringContainsString('if (!own && sheets.some(', $engine);
+        $this->assertStringContainsString('if (flows && !own)', $engine);
+    }
+
     public function test_the_alphalist_page_has_its_document_key(): void
     {
         $this->assertStringContainsString('data-doc="alphalist"', File::get(resource_path('views/alphalist-print.blade.php')));
