@@ -104,7 +104,9 @@
         td, th { overflow-wrap: break-word; }
     }
 </style>
-<script type="application/json" id="print-settings">{!! json_encode((fn ($id) => app(\App\Services\PrintSettings::class)->forSchool($id) + ['paper' => app(\App\Services\PrintSettings::class)->paper($id)])($printSchoolId ?? auth()->user()?->school_id), JSON_HEX_TAG | JSON_HEX_AMP) !!}</script>
+@php $printManager = app(\App\Services\DocumentPrintManager::class); $printSchool = $printSchoolId ?? auth()->user()?->school_id; $printCss = $printManager->css($printManager->style($printSchool)); @endphp
+@if($printCss !== '')<style id="print-style">{!! $printCss !!}</style>@endif
+<script type="application/json" id="print-settings">{!! json_encode(app(\App\Services\DocumentPrintManager::class)->forSchool($printSchoolId ?? auth()->user()?->school_id), JSON_HEX_TAG | JSON_HEX_AMP) !!}</script>
 <script>
     function closePrintTab(fallbackUrl) {
         window.close();

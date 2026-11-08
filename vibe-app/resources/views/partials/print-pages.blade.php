@@ -505,11 +505,18 @@
             }
         }
 
+        // The optional style of the school (print-settings JSON, written by DocumentPrintManager).
+        function schoolStyle() {
+            try { return (JSON.parse(document.getElementById('print-settings').textContent) || {}).style || {}; } catch (e) { return {}; }
+        }
+
         function build(page, units, spec, factor, reserves) {
             var root = document.documentElement;
             // A page that carries a footer (data-page-footer on the page element) keeps two lines of room at the bottom for it.
             var footed = page.hasAttribute('data-page-footer');
-            var availableHeight = (+spec[2] - spec[3] - spec[5]) * MM - 3 - (footed ? 2 * parseFloat(getComputedStyle(root).fontSize) : 0);
+            // The school's own space above the page content (header_space) and above the footer (footer_space), set in the Printing tab, comes out of the room of every page.
+            var spaces = schoolStyle();
+            var availableHeight = (+spec[2] - spec[3] - spec[5]) * MM - 3 - (footed ? 2 * parseFloat(getComputedStyle(root).fontSize) + (spaces.footer_space || 0) * MM : 0) - (spaces.header_space || 0) * MM;
             // A wide form is printed scaled down (zoom below 1): the rows are measured below at full size, so the same paper holds 1/zoom as many pixels of them.
             var printZoom = parseFloat(page.style.zoom) || 1;
             var capacity = availableHeight * factor / Math.min(1, Math.max(0.5, printZoom));

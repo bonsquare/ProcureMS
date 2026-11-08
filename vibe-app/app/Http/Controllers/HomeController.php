@@ -31,6 +31,7 @@ use App\Services\AppItemLinkService;
 use App\Services\BudgetService;
 use App\Services\DashboardKpiService;
 use App\Services\DocumentNumberService;
+use App\Services\DocumentPrintManager;
 use App\Services\FiscalYearService;
 use App\Services\GoogleDriveService;
 use App\Services\LiquidationChecklistService;
@@ -2666,6 +2667,7 @@ class HomeController extends Controller
             'selectedSchool' => $selectedSchool,
             'printSettings' => app(PrintSettings::class)->forSchool($selectedSchool?->id),
             'printPaper' => app(PrintSettings::class)->paper($selectedSchool?->id),
+            'printStyle' => app(DocumentPrintManager::class)->style($selectedSchool?->id),
             'selectedOrganization' => $selectedOrganization,
             'staff' => $staff,
             'isMasterUser' => $isMasterUser,

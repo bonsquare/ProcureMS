@@ -48,6 +48,20 @@
         </div>
     </section>
 
+    <section class="rounded-xl border border-outline-variant/60 bg-white p-5 shadow-sm" aria-labelledby="print-sample">
+        <h3 id="print-sample" class="text-sm font-bold text-primary">Print test document</h3>
+        <p class="mt-1 break-words text-xs text-on-surface-variant">A sample document on the same print engine as the official forms, with long tables, long texts and signatures. Print it with your margins and paper to check how a table continues from page to page.</p>
+        <div class="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            @foreach(\App\Http\Controllers\PrintSettingsController::TEST_SCENARIOS as $key => $scenario)
+                <div class="flex flex-wrap items-center gap-2 rounded-lg border border-outline-variant/60 p-2">
+                    <span class="min-w-0 flex-1 break-words text-xs font-semibold text-on-surface">{{ $scenario[0] }}</span>
+                    <a href="{{ route('school-settings.printing.test-document', ['scenario' => $key, 'paper' => $paper]) }}" target="_blank" rel="noopener" class="inline-flex min-h-9 items-center rounded-lg border border-action px-3 text-xs font-bold text-action hover:bg-action/10">Portrait</a>
+                    <a href="{{ route('school-settings.printing.test-document', ['scenario' => $key, 'paper' => $paper, 'orientation' => 'landscape']) }}" target="_blank" rel="noopener" class="inline-flex min-h-9 items-center rounded-lg border border-action px-3 text-xs font-bold text-action hover:bg-action/10">Landscape</a>
+                </div>
+            @endforeach
+        </div>
+    </section>
+
     <section class="rounded-xl border border-outline-variant/60 bg-white p-5 shadow-sm" aria-labelledby="print-paper">
         <h3 id="print-paper" class="text-sm font-bold text-primary">Paper size</h3>
         <label class="mt-3 block max-w-sm text-[11px] font-bold uppercase tracking-wide text-on-surface-variant">Every document opens on
@@ -57,6 +71,25 @@
             </select>
         </label>
         <p class="mt-3 break-words text-xs text-on-surface-variant">Choose the paper that is loaded in your printer. If the printer has no paper of the size a document asks for, the browser swaps in a shorter one and a page prints across two sheets. A paper chosen in a document's own toolbar still wins for that document on that computer.</p>
+    </section>
+
+    <section class="rounded-xl border border-outline-variant/60 bg-white p-5 shadow-sm" aria-labelledby="print-style">
+        <h3 id="print-style" class="text-sm font-bold text-primary">Table and text style (optional)</h3>
+        <p class="mt-1 break-words text-xs text-on-surface-variant">Leave a box empty and every form keeps its own look. A value you type is used by every printed document of this school: the table text, the cell padding, the lines and the space around the page content.</p>
+        @php $style = old('style', $printStyle ?? []); @endphp
+        <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <label class="min-w-0 text-[11px] font-bold uppercase tracking-wide text-on-surface-variant">Font
+                <select name="style[font]" @disabled(! $canEdit) class="{{ $box }} font-semibold normal-case tracking-normal text-on-surface">
+                    <option value="" @selected(empty($style['font']))>Each form's own font</option>
+                    @foreach(\App\Services\DocumentPrintManager::FONTS as $key => $font)<option value="{{ $key }}" @selected(($style['font'] ?? null) === $key)>{{ $font[0] }}</option>@endforeach
+                </select>
+            </label>
+            @foreach(\App\Services\DocumentPrintManager::STYLE as $key => $rule)
+                <label class="min-w-0 text-[11px] font-bold uppercase tracking-wide text-on-surface-variant">{{ $rule['label'] }} ({{ $rule['unit'] }})
+                    <input type="number" inputmode="decimal" step="{{ $rule['step'] }}" min="{{ $rule['min'] }}" max="{{ $rule['max'] }}" name="style[{{ $key }}]" value="{{ $style[$key] ?? '' }}" @disabled(! $canEdit) class="{{ $box }}">
+                </label>
+            @endforeach
+        </div>
     </section>
 
     @if($canEdit)
