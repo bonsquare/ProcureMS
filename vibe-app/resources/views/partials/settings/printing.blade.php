@@ -39,6 +39,15 @@
         </div>
     </section>
 
+    <section class="rounded-xl border border-outline-variant/60 bg-white p-5 shadow-sm" aria-labelledby="print-test">
+        <h3 id="print-test" class="text-sm font-bold text-primary">Find the smallest margin of your printer</h3>
+        <p class="mt-1 break-words text-xs text-on-surface-variant">Every printer has a strip at the paper edge it cannot print on. Print the test page once with Margins: None and Scale: 100, read the smallest number you can see on each side, and use those numbers (plus 1 mm) as your margins. That fills the paper as much as your printer allows.</p>
+        <div class="mt-3 flex flex-wrap gap-2">
+            <a href="{{ route('school-settings.printing.margin-test', ['paper' => $paper, 'orientation' => 'portrait']) }}" target="_blank" rel="noopener" class="inline-flex min-h-11 items-center gap-2 rounded-lg border border-action px-4 text-sm font-bold text-action hover:bg-action/10"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">straighten</span>Test page (portrait)</a>
+            <a href="{{ route('school-settings.printing.margin-test', ['paper' => $paper, 'orientation' => 'landscape']) }}" target="_blank" rel="noopener" class="inline-flex min-h-11 items-center gap-2 rounded-lg border border-action px-4 text-sm font-bold text-action hover:bg-action/10"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">straighten</span>Test page (landscape)</a>
+        </div>
+    </section>
+
     <section class="rounded-xl border border-outline-variant/60 bg-white p-5 shadow-sm" aria-labelledby="print-paper">
         <h3 id="print-paper" class="text-sm font-bold text-primary">Paper size</h3>
         <label class="mt-3 block max-w-sm text-[11px] font-bold uppercase tracking-wide text-on-surface-variant">Every document opens on

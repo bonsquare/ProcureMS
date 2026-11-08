@@ -214,6 +214,7 @@ Binding decisions from that log:
 - 2026-11-08 Printing tab: a document with its own margin row ignores the 13/8 mm minimums (partials/print-clean `own`); "All procurement documents at once" box fills the procurement rows (PrintSettings::PROCUREMENT). Deployed 2026-11-08 (619efbd9).
 - 2026-11-08 Procurement documents print without the page padding above and below the form (rule in partials/print-pages.blade.php, keyed by data-doc). Deployed 2026-11-08 (ef57007e).
 - 2026-11-08 Procurement print: a last box up to 10% too tall is fitted by scaling that page (print-pages SCALABLE/tailRoom) instead of a page of its own. Deployed 2026-11-08 (2324ca65).
+- 2026-11-08 Printer margin test page: route school-settings.printing.margin-test (PrintSettingsController::marginTest, view print-margin-test), linked from the Printing tab.
 - The Planning page is `/planning`. The source is `resources/views/planning.blade.php`; the controller is `app/Http/Controllers/PlanningController.php`.
 - The last GitHub backup is commit `69d1d35` on `master`. Do not reset or discard local changes.
 - Live: Railway deployment 2324ca65 (2026-11-08 14:16), migrations through `add_user_read_reply_to_support_messages` (see the history file for later changes).

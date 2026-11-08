@@ -126,4 +126,28 @@ class PrintSettingsTabTest extends TestCase
             $page->assertForbidden();
         }
     }
+
+    public function test_the_margin_test_page_has_lines_from_every_edge_and_the_tab_links_to_it(): void
+    {
+        [$school, $user] = $this->tenant('tab-f');
+
+        $this->actingAs($user)->get($this->tab($school))->assertOk()->assertSee('Find the smallest margin of your printer')
+            ->assertSee(route('school-settings.printing.margin-test', ['paper' => null, 'orientation' => 'portrait']), false);
+
+        $page = $this->actingAs($user)->get(route('school-settings.printing.margin-test', ['paper' => 'longbond', 'orientation' => 'portrait']))->assertOk()
+            ->assertSee('Printer margin test')->assertSee('@page { size: 215.9mm 330.2mm; margin: 0; }', false)->assertSee('smallest number you can see');
+        foreach (['top: 0mm', 'bottom: 20mm', 'left: 13mm', 'right: 7mm'] as $line) {
+            $page->assertSee($line, false);
+        }
+
+        $this->actingAs($user)->get(route('school-settings.printing.margin-test', ['paper' => 'a4', 'orientation' => 'landscape']))->assertOk()
+            ->assertSee('@page { size: 297mm 210mm; margin: 0; }', false);
+    }
+
+    public function test_the_margin_test_page_needs_the_settings_permission(): void
+    {
+        [, $user] = $this->tenant('tab-g', 'school_staff');
+
+        $this->actingAs($user)->get(route('school-settings.printing.margin-test'))->assertForbidden();
+    }
 }

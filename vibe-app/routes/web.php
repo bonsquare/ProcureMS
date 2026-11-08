@@ -313,6 +313,7 @@ Route::middleware(['auth', 'subscription.writes'])->group(function () {
     Route::post('/school-settings/school', [HomeController::class, 'updateSchoolDetails'])->middleware('permission:organization.settings')->name('school-settings.school');
     Route::post('/school-settings/schools/{school}/approve', [HomeController::class, 'approveSchoolRegistration'])->name('school-settings.school.approve');
     Route::put('/school-settings/printing', [\App\Http\Controllers\PrintSettingsController::class, 'update'])->middleware('permission:organization.settings')->name('school-settings.printing.update');
+    Route::get('/school-settings/printing/margin-test', [\App\Http\Controllers\PrintSettingsController::class, 'marginTest'])->middleware('permission:organization.settings')->name('school-settings.printing.margin-test');
     Route::post('/school-settings/staff', [HomeController::class, 'updateSchoolStaff'])->middleware('permission:organization.settings')->name('school-settings.staff');
     Route::post('/school-settings/staff/add', [HomeController::class, 'addSchoolStaff'])->middleware('permission:organization.settings')->name('school-settings.staff.add');
     Route::put('/school-settings/users/{user}', [SchoolSettingsController::class, 'updateUser'])->middleware('permission:organization.settings')->name('school-settings.users.update');

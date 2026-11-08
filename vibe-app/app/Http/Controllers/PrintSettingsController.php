@@ -51,6 +51,20 @@ class PrintSettingsController extends Controller
         return redirect()->route('school-settings', ['ui' => 'staff-save-v7', 'school_id' => $school->id, 'tab' => 'printing'])->with('success', 'The print settings were saved.');
     }
 
+    /** A page of numbered lines drawn 0 to 20 mm from each paper edge: printed with no margins, the first line the printer shows on each side is its real minimum margin. */
+    public function marginTest(Request $request, PrintSettings $settings)
+    {
+        $paper = $request->query('paper');
+        $paper = isset(PrintSettings::PAPERS[$paper]) ? $paper : ($settings->paper($request->user()->school_id) ?? 'longbond');
+        $sizes = ['a4' => [210, 297], 'letter' => [215.9, 279.4], 'legal' => [215.9, 355.6], 'longbond' => [215.9, 330.2], 'folio' => [210, 330]];
+        [$width, $height] = $sizes[$paper];
+        if ($request->query('orientation') === 'landscape') {
+            [$width, $height] = [$height, $width];
+        }
+
+        return view('print-margin-test', ['paperName' => PrintSettings::PAPERS[$paper], 'width' => $width, 'height' => $height, 'landscape' => $width > $height]);
+    }
+
     /** Four margins in mm, or null when every box is blank (the default applies); a half-filled set is refused. */
     private function set(array $values, string $field): ?array
     {
