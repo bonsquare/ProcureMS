@@ -219,7 +219,6 @@ Binding decisions from that log:
 - 2026-11-08 Every fixed-size procurement form (PR, RFQ, PO, NTP, NOA, Abstract, IAR, IARS, ICS, generic, Delivery Reconciliation) is designed for long bond (215.9 x 330.2 mm) and opens on long bond (paper map in procurement-document-print.blade.php). SOB (legal) and POW (folio) are unchanged.
 - 2026-11-08 Every document now opens on folio (210 x 330 mm) by default: all data-paper values and the procurement paper map are folio, and the fixed-size procurement forms are drawn 210 x 330 mm. A school can still pick another paper in Settings, Printing.
 - 2026-11-08 Abstract: the Standard Form Number line sits above the header instead of on top of the logo (abstract-form-number no longer absolute).
-- 2026-11-08 Procurement print: a last box up to 20% too tall (was 10%) is fitted by scaling its page, so a PO with 27 items is one sheet instead of two (print-pages tailRoom 1.2, overAllow 0.22).
 - The Planning page is `/planning`. The source is `resources/views/planning.blade.php`; the controller is `app/Http/Controllers/PlanningController.php`.
 - The last GitHub backup is commit `69d1d35` on `master`. Do not reset or discard local changes.
 - Live: Railway deployment ccfef63d (2026-11-08 14:31), migrations through `add_user_read_reply_to_support_messages` (see the history file for later changes).

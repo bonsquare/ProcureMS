@@ -596,8 +596,8 @@
                     });
                 });
                 var scalable = SCALABLE.indexOf(page.getAttribute('data-doc')) !== -1;
-                tailRoom = scalable ? 1.2 : 1;
-                overAllow = scalable ? 0.22 : 0;
+                tailRoom = scalable ? 1.1 : 1;
+                overAllow = scalable ? 0.12 : 0;
                 var factor = scalable ? 1 : 0.98; // a procurement form uses the whole room set by its margins; the overflow check below lowers it when a page comes out too tall
                 var reserves = [];
                 var single = units.length === 1 && units[0].legacy;
