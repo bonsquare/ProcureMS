@@ -36,6 +36,9 @@
     (function () {
         var MM = 96 / 25.4;
         var busy = false, laidOutFor = null;
+        // The procurement forms may carry a tail (signatures, inspection box) that is up to 10% too tall for the room left: the page is then scaled to fit instead of sending the tail alone to a page of its own.
+        var SCALABLE = ['pr', 'rfq', 'po', 'ntp', 'noa', 'abstract', 'iar', 'ris', 'iars', 'ics', 'reconciliation', 'generic'];
+        var tailRoom = 1, overAllow = 0;
 
         function siblingsAfter(node) {
             var list = [];
@@ -458,7 +461,7 @@
                 current = { container: container, elements: boxesOf(container, chunk) };
             });
             // What follows the table sits under the last rows; when it does not fit, a page of its own carries it.
-            if (made.tailHeight && made.position + made.tailHeight + made.around.bottom > capacity) {
+            if (made.tailHeight && made.position + made.tailHeight + made.around.bottom > capacity * tailRoom) {
                 var spare = newBlock();
                 current = { container: spare, elements: boxesOf(spare, null) };
             }
@@ -544,19 +547,19 @@
                 if (!block.querySelector('table[data-paginate]')) { return; }
                 var top = block.getBoundingClientRect().top + parseFloat(getComputedStyle(block).paddingTop);
                 var bottom = Math.max.apply(null, Array.prototype.filter.call(block.children, function (child) { return !child.hasAttribute('data-doc-footer'); }).map(function (child) { return child.getBoundingClientRect().bottom; }).concat([top]));
-                if (bottom - top > availableHeight + 1) { over[number] = bottom - top - availableHeight; }
+                if (bottom - top > availableHeight * (1 + overAllow) + 1) { over[number] = bottom - top - availableHeight; }
             });
             if (preview) { root.style.setProperty('--preview-zoom', preview); } else { root.style.removeProperty('--preview-zoom'); }
             return over.length ? over : [];
         }
 
         // A fixed form page taller than the paper (a form drawn for longer paper) is scaled down to the page instead of spilling a few lines onto a page of its own.
-        function fitFixed(page, availableHeight) {
+        function fitFixed(page, availableHeight, all) {
             var root = document.documentElement;
             var preview = root.style.getPropertyValue('--preview-zoom');
             root.style.setProperty('--preview-zoom', 1);
             Array.prototype.forEach.call(page.querySelectorAll(':scope > .doc-page'), function (block) {
-                if (block.querySelector('table[data-paginate]')) { return; }
+                if (!all && block.querySelector('table[data-paginate]')) { return; }
                 var kids = Array.prototype.filter.call(block.children, function (child) { return !child.hasAttribute('data-doc-footer'); });
                 kids.forEach(function (child) { child.style.zoom = ''; });
                 var top = block.getBoundingClientRect().top + parseFloat(getComputedStyle(block).paddingTop);
@@ -585,6 +588,9 @@
                         Array.prototype.forEach.call(table.tBodies[0].querySelectorAll('[rowspan]'), function (cell) { if (!cell.dataset.rs) { cell.dataset.rs = cell.rowSpan; } });
                     });
                 });
+                var scalable = SCALABLE.indexOf(page.getAttribute('data-doc')) !== -1;
+                tailRoom = scalable ? 1.1 : 1;
+                overAllow = scalable ? 0.12 : 0;
                 var factor = 0.98;
                 var reserves = [];
                 var single = units.length === 1 && units[0].legacy;
@@ -600,7 +606,7 @@
                         factor -= 0.05;
                     }
                 }
-                if (typeof availableHeight === 'number') { fitFixed(page, availableHeight); }
+                if (typeof availableHeight === 'number') { fitFixed(page, availableHeight, scalable); }
                 laidOutFor = key;
             } finally {
                 busy = false;
