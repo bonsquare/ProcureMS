@@ -170,4 +170,15 @@ class PrintSettingsEngineTest extends TestCase
         $this->assertStringContainsString("querySelectorAll('[data-split-m]')", $pages);
         $this->assertStringNotContainsString('data-split-merged', File::get(resource_path('views/aip-print.blade.php')));
     }
+
+    public function test_the_purchase_order_keeps_what_follows_its_table_in_parts_that_can_move_to_the_next_page(): void
+    {
+        $engine = File::get(resource_path('views/partials/print-pages.blade.php'));
+        $order = File::get(resource_path('views/procurement-documents/official-po.blade.php'));
+
+        $this->assertStringContainsString("table.hasAttribute('data-split-tail')", $engine);
+        $this->assertStringContainsString('data-paginate data-split-tail>', $order);
+        $this->assertSame(3, substr_count($order, 'class="po-part'));
+        $this->assertStringContainsString('class="po-part po-accounting"', $order);
+    }
 }

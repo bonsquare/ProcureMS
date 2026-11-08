@@ -333,7 +333,7 @@
                 position += height;
             }
             var tailHeight = 0;
-            unit.levels.forEach(function (level) { level.tail.forEach(function (node) { tailHeight += outerHeight(node); }); });
+            unit.levels.forEach(function (level) { level.tailSizes = level.tail.map(function (node) { var size = outerHeight(node); tailHeight += size; return size; }); });
             return { rows: rows, starts: starts, position: position, tailHeight: tailHeight, around: around, repeated: repeated };
         }
 
@@ -463,9 +463,24 @@
                 current = { container: container, elements: boxesOf(container, chunk) };
             });
             // What follows the table sits under the last rows; when it does not fit, a page of its own carries it.
+            var movedTail = null, tailPartsKept = null;
             if (made.tailHeight && made.position + made.tailHeight + made.around.bottom > capacity * tailRoom) {
-                var spare = newBlock();
-                current = { container: spare, elements: boxesOf(spare, null) };
+                // A form that marks its table data-split-tail keeps the first parts of what follows under the last rows, as many as fit; the rest goes to the next page.
+                var tailLevel = levels.filter(function (level) { return level.tail.length > 0; });
+                if (table.hasAttribute('data-split-tail') && tailLevel.length === 1) {
+                    var tailParts = tailLevel[0].tail, used = made.position + made.around.bottom, keep = 0;
+                    while (keep < tailParts.length && used + tailLevel[0].tailSizes[keep] <= capacity) { used += tailLevel[0].tailSizes[keep]; keep++; }
+                    if (keep > 0 && keep < tailParts.length) {
+                        movedTail = tailParts.slice(keep);
+                        tailLevel[0].tail = tailPartsKept = tailParts.slice(0, keep);
+                        tailLevel[0].tail[keep - 1].setAttribute('data-cut-bottom', '');
+                        movedTail[0].setAttribute('data-cut-top', '');
+                    }
+                }
+                if (movedTail === null) {
+                    var spare = newBlock();
+                    current = { container: spare, elements: boxesOf(spare, null) };
+                }
             } else if (made.tailHeight && made.position + made.tailHeight + made.around.bottom > capacity) {
                 // The tail is a little too tall for the room left: this page is scaled to fit it (fitFixed).
                 current.container.setAttribute('data-tail-over', '');
@@ -476,6 +491,13 @@
                 if (current.container === first && !(unit.legacy && i === 0)) { continue; }
                 var parent = i === 0 ? current.container : current.elements[i - 1];
                 levels[i].tail.forEach(function (node) { parent.appendChild(node); });
+            }
+            if (movedTail !== null) {
+                var rest = newBlock();
+                var restBoxes = boxesOf(rest, null);
+                var tailAt = levels.findIndex(function (level) { return level.tail === tailPartsKept; });
+                var restParent = tailAt === 0 ? rest : restBoxes[tailAt - 1];
+                movedTail.forEach(function (node) { restParent.appendChild(node); });
             }
         }
 
