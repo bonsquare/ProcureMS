@@ -73,6 +73,16 @@ class PrintSettingsEngineTest extends TestCase
         $this->assertStringContainsString('getElementById(\'print-settings\')', $engine);
     }
 
+    public function test_every_procurement_document_drops_its_page_padding_above_and_below_the_form(): void
+    {
+        $pages = File::get(resource_path('views/partials/print-pages.blade.php'));
+
+        foreach (PrintSettings::PROCUREMENT as $key) {
+            $this->assertStringContainsString('[data-doc="'.$key.'"]', $pages, $key);
+        }
+        $this->assertStringContainsString('padding-top: 0 !important; padding-bottom: 0 !important;', $pages);
+    }
+
     public function test_a_document_with_margins_of_its_own_skips_the_printer_floors(): void
     {
         $engine = File::get(resource_path('views/partials/print-clean.blade.php'));

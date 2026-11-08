@@ -21,6 +21,9 @@
     - The paper (@page) comes from the shared print engine; this script only reads it.
 --}}
 <style>
+    /* The procurement forms carry their own padding above and below the form page. The sheet already keeps the paper margin, so that padding only made the room of every page smaller
+       (and the blank at the bottom longer) and sent the last box of a form to the next page: left and right padding stay. */
+    :is([data-doc="pr"],[data-doc="rfq"],[data-doc="po"],[data-doc="ntp"],[data-doc="noa"],[data-doc="abstract"],[data-doc="iar"],[data-doc="ris"],[data-doc="iars"],[data-doc="ics"],[data-doc="reconciliation"],[data-doc="generic"])[data-sheets] > :not(.doc-page), :is([data-doc="pr"],[data-doc="rfq"],[data-doc="po"],[data-doc="ntp"],[data-doc="noa"],[data-doc="abstract"],[data-doc="iar"],[data-doc="ris"],[data-doc="iars"],[data-doc="ics"],[data-doc="reconciliation"],[data-doc="generic"])[data-sheets] > .doc-page > :not([data-doc-footer]) { padding-top: 0 !important; padding-bottom: 0 !important; }
     /* Footer of a page that has data-page-footer: the page number in the middle, the title on the right, at the bottom of the printable area. */
     .doc-footer { position: absolute; left: var(--sheet-pl, 0); right: var(--sheet-pr, 0); bottom: var(--sheet-pb, 0); display: grid; grid-template-columns: 1fr auto 1fr; align-items: baseline; column-gap: 12px; padding-top: 3px; border-top: .5pt solid #7b8794; font-size: var(--doc-footer-size, 8pt); letter-spacing: .02em; color: #1f2933; line-height: 1.25; }
     .doc-footer .center { text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; } .doc-footer .right { text-align: right; color: #3e4c59; overflow-wrap: anywhere; }
