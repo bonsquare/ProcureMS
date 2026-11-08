@@ -12,8 +12,8 @@
         .print-actions a, .print-actions button { border: 1px solid #00236f; background: #fff; color: #00236f; border-radius: 3px; padding: 8px 13px; text-decoration: none; cursor: pointer; }
         .print-actions button { background: #00236f; color: #fff; }
         .page { width: 210mm; min-height: 297mm; margin: 0 auto 12px; padding: 8.5mm 10mm; background: #fff; }
-        /* The sheet already keeps the paper margin at the bottom of every page: the page padding below the form only made the bottom blank longer. */
-        [data-sheets] .page { padding-bottom: 0; }
+        /* The sheet already keeps the paper margin on every page, and the print drops this padding: counting it on screen made the layout leave a blank at the bottom of each page that the printed page does not need. */
+        [data-sheets] .page { padding-top: 0; padding-bottom: 0; }
         .form { width: 100%; border: 1px solid #111; }
         .header { position: relative; min-height: 21mm; border-bottom: 1px solid #111; text-align: center; padding: 2mm 2mm 1mm; }
         .header img { position: absolute; top: 2mm; width: 17mm; height: 17mm; object-fit: contain; }

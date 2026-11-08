@@ -209,7 +209,7 @@ Binding decisions from that log:
 - 2026-11-07 Payment proof number (SUB-...) and Assign to staff button in Telegram (docs/specs.md section 119). Deployed 2026-11-07 (cb2b69de).
 - 2026-11-08 Support is last in the sidebars and profile menu; floating Support chat popup at the bottom right with open-request list, unread highlight, attachments and new-message alert (docs/specs.md section 119). Deployed 2026-11-08 (37963aa0).
 - 2026-11-08 Support desk for the master user: split window (queue left, conversation right), answer/take/assign/status from the system with two-way Telegram sync, quick replies, redesigned notification bell with Clear all (docs/specs.md section 119). Deployed 2026-11-08 (b290599e).
-- 2026-11-08 Purchase Request print: the page padding under the form is removed so the bottom blank of each page matches the top (resources/views/procurement-print.blade.php). Deployed 2026-11-08 (5af13282).
+- 2026-11-08 Purchase Request print: the page padding above and under the form is removed (it was counted in the layout and left a long blank at the bottom of each page) (resources/views/procurement-print.blade.php). Deployed 2026-11-08 (5af13282).
 - The Planning page is `/planning`. The source is `resources/views/planning.blade.php`; the controller is `app/Http/Controllers/PlanningController.php`.
 - The last GitHub backup is commit `69d1d35` on `master`. Do not reset or discard local changes.
 - Live: Railway deployment 5af13282 (2026-11-08 12:32), migrations through `add_user_read_reply_to_support_messages` (see the history file for later changes).
